@@ -20,7 +20,7 @@ export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
               onClick={() => onModeChange(m.id)}
               className={`flex-1 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
                 mode === m.id
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-md scale-[1.02]'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-md scale-[1.02] ring-2 ring-guam-red dark:ring-guam-lightblue'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
               aria-pressed={mode === m.id}

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Trash2, AlertCircle, RefreshCw, Moon, Sun } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
+import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -15,8 +16,10 @@ export function Chat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
+  const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -40,6 +43,31 @@ export function Chat() {
     }
   }, [messages]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + K - Focus input
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        messageInputRef.current?.focus();
+      }
+      // Cmd/Ctrl + L - Clear chat
+      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
+        e.preventDefault();
+        if (messages.length > 0) {
+          setShowClearConfirm(true);
+        }
+      }
+      // Escape - Close modal
+      if (e.key === 'Escape') {
+        setShowClearConfirm(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [messages.length]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -52,6 +80,7 @@ export function Chat() {
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
+      timestamp: Date.now(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -65,6 +94,7 @@ export function Chat() {
         used_rag: response.used_rag,
         used_web_search: response.used_web_search,
         response_time: response.response_time,
+        timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
@@ -101,12 +131,14 @@ export function Chat() {
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-ocean-500/20 flex-shrink-0">
                 🌺
               </div>
-              <div className="min-w-0">
+              <div>
                 <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Chamorro Language Tutor
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
-                  AI-powered assistant
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate transition-all duration-500">
+                  <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
+                  <span className="text-gray-400 dark:text-gray-500 mx-1">•</span>
+                  <span className="text-gray-400 dark:text-gray-500">{greeting.english}</span>
                 </p>
               </div>
             </div>
@@ -123,6 +155,7 @@ export function Chat() {
                   onClick={() => setShowClearConfirm(true)}
                   className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2"
                   aria-label="Clear chat"
+                  title="Clear chat (⌘L)"
                 >
                   <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Clear</span>
@@ -182,7 +215,7 @@ export function Chat() {
       </div>
 
       {/* Message Input */}
-      <MessageInput onSend={handleSend} disabled={loading} />
+      <MessageInput onSend={handleSend} disabled={loading} inputRef={messageInputRef} />
 
       {/* Clear Confirmation Modal */}
       {showClearConfirm && (

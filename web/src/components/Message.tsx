@@ -1,4 +1,5 @@
-import { BookOpen, Search, Clock } from 'lucide-react';
+import { BookOpen, Search, Clock, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
 
@@ -9,10 +10,33 @@ interface MessageProps {
   used_rag?: boolean;
   used_web_search?: boolean;
   response_time?: number;
+  timestamp?: number;
 }
 
-export function Message({ role, content, sources, used_rag, used_web_search, response_time }: MessageProps) {
+export function Message({ role, content, sources, used_rag, used_web_search, response_time, timestamp }: MessageProps) {
   const isUser = role === 'user';
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const getRelativeTime = (ts: number) => {
+    const seconds = Math.floor((Date.now() - ts) / 1000);
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 animate-fade-in`}>
@@ -24,6 +48,11 @@ export function Message({ role, content, sources, used_rag, used_web_search, res
               🤖
             </div>
             <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Assistant</span>
+            {timestamp && (
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                {getRelativeTime(timestamp)}
+              </span>
+            )}
             {used_rag && (
               <span className="text-[10px] sm:text-xs font-medium bg-ocean-500 dark:bg-ocean-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
                 <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -38,6 +67,23 @@ export function Message({ role, content, sources, used_rag, used_web_search, res
                 <span className="sm:hidden">Web</span>
               </span>
             )}
+            <button
+              onClick={handleCopy}
+              className="ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center gap-1"
+              title="Copy message"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </button>
           </div>
         )}
         
@@ -138,6 +184,11 @@ export function Message({ role, content, sources, used_rag, used_web_search, res
         {/* User Avatar */}
         {isUser && (
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 px-1 justify-end">
+            {timestamp && (
+              <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                {getRelativeTime(timestamp)}
+              </span>
+            )}
             <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">You</span>
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-ocean-500 to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
               👤

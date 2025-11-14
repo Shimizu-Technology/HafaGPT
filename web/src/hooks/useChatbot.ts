@@ -13,6 +13,7 @@ export interface ChatMessage {
   used_rag?: boolean;
   used_web_search?: boolean;
   response_time?: number;
+  timestamp?: number;
 }
 
 export interface ChatResponse {
