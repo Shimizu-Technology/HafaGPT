@@ -3,8 +3,8 @@ services:
     name: hafagpt-api
     runtime: python
     plan: free
-    buildCommand: pip install uv && uv pip install --system -r requirements.txt
-    startCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 300
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 300
     healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
