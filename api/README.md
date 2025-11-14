@@ -693,7 +693,11 @@ See [documentation/MODEL_SWITCHING_GUIDE.md](documentation/MODEL_SWITCHING_GUIDE
 
 ### Render (Recommended)
 
-This project includes `render.yaml` for easy deployment to Render.com:
+This project includes `render.yaml` for easy deployment to Render.com.
+
+**Note:** The `requirements.txt` file is required for Render deployment (Render doesn't support `pyproject.toml` directly). This file is already included in the repo.
+
+**Deployment Steps:**
 
 1. **Create a Render account** at https://render.com
 
@@ -701,7 +705,7 @@ This project includes `render.yaml` for easy deployment to Render.com:
 
 3. **Create a new Web Service** on Render:
    - Connect your GitHub repository
-   - Render will automatically detect `render.yaml`
+   - Render will automatically detect `render.yaml` and configure build/start commands
 
 4. **Set Environment Variables** in Render dashboard:
    ```
