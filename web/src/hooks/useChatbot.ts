@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+function generateSessionId(): string {
+  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -24,6 +28,24 @@ export interface ChatResponse {
 export function useChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+
+  // Initialize session (check localStorage first)
+  useEffect(() => {
+    const existingSession = localStorage.getItem('chamorro_session_id');
+    
+    if (existingSession) {
+      // Reuse existing session
+      setSessionId(existingSession);
+      console.log('♻️  Reusing session:', existingSession);
+    } else {
+      // Create new session and save it
+      const newSession = generateSessionId();
+      setSessionId(newSession);
+      localStorage.setItem('chamorro_session_id', newSession);
+      console.log('🆕 New session:', newSession);
+    }
+  }, []);
 
   const sendMessage = async (
     message: string,
@@ -39,7 +61,7 @@ export function useChatbot() {
         body: JSON.stringify({
           message,
           mode,
-          session_id: null,
+          session_id: sessionId,
           conversation_history: null,
         }),
       });
@@ -60,5 +82,12 @@ export function useChatbot() {
     }
   };
 
-  return { sendMessage, loading, error, setError };
+  const resetSession = () => {
+    const newSession = generateSessionId();
+    setSessionId(newSession);
+    localStorage.setItem('chamorro_session_id', newSession);
+    console.log('🔄 Reset session:', newSession);
+  };
+
+  return { sendMessage, resetSession, loading, error, setError, sessionId };
 }

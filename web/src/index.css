@@ -11,10 +11,22 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent iOS text size adjustment */
+    -webkit-text-size-adjust: 100%;
   }
 
   html {
     scroll-behavior: smooth;
+    /* Ensure full height on mobile */
+    height: 100%;
+  }
+
+  body {
+    height: 100%;
+  }
+
+  #root {
+    height: 100%;
   }
 }
 
@@ -46,5 +58,28 @@
   /* Prevent transition on initial load */
   .no-transition {
     transition: none !important;
+  }
+
+  /* Safe area for iOS devices with notch */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Improved touch targets for mobile */
+  @media (hover: none) and (pointer: coarse) {
+    button, a, input[type="button"], input[type="submit"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
