@@ -6,7 +6,7 @@ Loads the Chamorro grammar vector database and provides search capabilities.
 import re
 import unicodedata
 from langchain_postgres import PGVector
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -64,10 +64,12 @@ class ChamorroRAG:
         
         connection = os.getenv("DATABASE_URL", connection)
         
-        # Load the same embedding model used during setup
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="paraphrase-multilingual-MiniLM-L12-v2",
-            model_kwargs={'device': 'cpu'}
+        # Use OpenAI embeddings (lightweight, no model download needed!)
+        # Cost: ~$0.0001 per query (negligible)
+        # Memory: ~10MB vs 500MB for HuggingFace model
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
+            openai_api_key=os.getenv("OPENAI_API_KEY")
         )
         
         # Load the PostgreSQL vector database
