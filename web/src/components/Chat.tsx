@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download } from 'lucide-react';
+import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -15,6 +15,7 @@ export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const greeting = useRotatingGreeting();
@@ -76,6 +77,21 @@ export function Chat() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  // Detect scroll position to show/hide scroll button
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
+      setShowScrollButton(!isNearBottom && messages.length > 2);
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [messages.length]);
 
   const handleSend = async (message: string) => {
     const userMessage: ChatMessage = {
@@ -201,13 +217,13 @@ End of Export
     <div className="flex flex-col h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
       {/* Header */}
       <header className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-10">
-        <div className="px-3 sm:px-6 py-3 sm:py-4">
-          <div className="flex items-center justify-between max-w-5xl mx-auto">
+        <div className="px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between max-w-5xl mx-auto gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-ocean-500/20 flex-shrink-0">
                 🌺
               </div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white truncate">
                   Chamorro Language Tutor
                 </h1>
@@ -221,7 +237,7 @@ End of Export
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={toggleTheme}
-                className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300"
+                className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300 active:scale-95"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -230,7 +246,7 @@ End of Export
                 <>
                   <button
                     onClick={() => setShowExportModal(true)}
-                    className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300"
+                    className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300 active:scale-95"
                     aria-label="Export chat"
                     title="Export chat history"
                   >
@@ -238,7 +254,7 @@ End of Export
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
-                    className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2"
+                    className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
                     aria-label="Clear chat"
                     title="Clear chat (⌘L)"
                   >
@@ -261,10 +277,9 @@ End of Export
       {/* Messages Area */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
       >
-        <div className="max-w-4xl mx-auto">
-          {messages.length === 0 && !loading ? (
+        <div className="max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
             <WelcomeMessage />
           ) : (
             <>
@@ -284,7 +299,7 @@ End of Export
                         <p className="text-xs text-red-700 dark:text-red-400 mb-3">{error}</p>
                         <button
                           onClick={handleRetry}
-                          className="text-xs bg-red-600 dark:bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center gap-1"
+                          className="text-xs bg-red-600 dark:bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center gap-1 active:scale-95"
                         >
                           <RefreshCw className="w-3 h-3" />
                           Retry
@@ -301,7 +316,22 @@ End of Export
       </div>
 
       {/* Message Input */}
-      <MessageInput onSend={handleSend} disabled={loading} inputRef={messageInputRef} />
+      <div className="relative">
+        {/* Scroll to Bottom Button */}
+        {showScrollButton && (
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-10 animate-scale-in">
+            <button
+              onClick={scrollToBottom}
+              className="p-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:scale-110 active:scale-95"
+              aria-label="Scroll to bottom"
+              title="Scroll to bottom"
+            >
+              <ArrowDown className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+        <MessageInput onSend={handleSend} disabled={loading} inputRef={messageInputRef} />
+      </div>
 
       {/* Export Modal */}
       {showExportModal && (

@@ -69,13 +69,13 @@ export function Message({ role, content, sources, used_rag, used_web_search, res
             )}
             <button
               onClick={handleCopy}
-              className="ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors flex items-center gap-1"
+              className="ml-auto text-xs text-gray-500 dark:text-gray-400 hover:text-ocean-600 dark:hover:text-ocean-400 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50"
               title="Copy message"
             >
               {copied ? (
                 <>
-                  <Check className="w-3 h-3" />
-                  <span className="hidden sm:inline">Copied!</span>
+                  <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+                  <span className="hidden sm:inline text-green-600 dark:text-green-400 font-medium">Copied!</span>
                 </>
               ) : (
                 <>
