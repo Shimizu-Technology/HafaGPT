@@ -87,7 +87,8 @@ class ChamorroRAG:
             print("☁️  Using CLOUD embeddings (OpenAI)")
             self.embeddings = OpenAIEmbeddings(
                 model="text-embedding-3-small",
-                openai_api_key=os.getenv("OPENAI_API_KEY")
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+                dimensions=384  # Match HuggingFace model dimensions for compatibility
             )
         
         # Load the PostgreSQL vector database
