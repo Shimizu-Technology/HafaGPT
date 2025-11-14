@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Trash2, AlertCircle, RefreshCw, Moon, Sun } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
+import { useTheme } from '../hooks/useTheme';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -13,6 +14,7 @@ export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const { sendMessage, loading, error, setError } = useChatbot();
+  const { theme, toggleTheme } = useTheme();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -65,39 +67,57 @@ export function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between max-w-4xl mx-auto">
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
+      {/* Header */}
+      <header className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-10">
+        <div className="px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between max-w-5xl mx-auto">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🌺</span>
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center text-2xl shadow-lg shadow-ocean-500/20">
+                🌺
+              </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Chamorro Language Tutor</h1>
-                <p className="text-sm text-gray-600">Learn Chamorro with AI-powered assistance</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                  Chamorro Language Tutor
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  AI-powered language assistant
+                </p>
               </div>
             </div>
-            {messages.length > 0 && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowClearConfirm(true)}
-                className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
-                aria-label="Clear chat"
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300"
+                aria-label="Toggle theme"
               >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Clear</span>
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </button>
-            )}
+              {messages.length > 0 && (
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-2"
+                  aria-label="Clear chat"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Clear</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
         <ModeSelector mode={mode} onModeChange={setMode} />
       </header>
 
+      {/* Quick Phrases */}
       {messages.length === 0 && !loading && (
         <QuickPhrases onSelect={handleSend} disabled={loading} />
       )}
 
+      {/* Messages Area */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-6"
+        className="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar"
       >
         <div className="max-w-4xl mx-auto">
           {messages.length === 0 && !loading ? (
@@ -109,18 +129,18 @@ export function Chat() {
               ))}
               {loading && <LoadingIndicator />}
               {error && (
-                <div className="flex justify-center mb-4">
-                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 max-w-md">
+                <div className="flex justify-center mb-4 animate-fade-in">
+                  <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm text-red-800 font-medium mb-2">
+                        <p className="text-sm text-red-800 dark:text-red-300 font-medium mb-2">
                           Failed to send message
                         </p>
-                        <p className="text-xs text-red-700 mb-3">{error}</p>
+                        <p className="text-xs text-red-700 dark:text-red-400 mb-3">{error}</p>
                         <button
                           onClick={handleRetry}
-                          className="text-xs bg-red-600 text-white px-3 py-1.5 rounded hover:bg-red-700 transition-colors flex items-center gap-1"
+                          className="text-xs bg-red-600 dark:bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center gap-1"
                         >
                           <RefreshCw className="w-3 h-3" />
                           Retry
@@ -136,25 +156,27 @@ export function Chat() {
         </div>
       </div>
 
+      {/* Message Input */}
       <MessageInput onSend={handleSend} disabled={loading} />
 
+      {/* Clear Confirmation Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Clear conversation?</h3>
-            <p className="text-sm text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-800 animate-slide-up">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Clear conversation?</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               This will delete all messages in the current conversation. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleClearChat}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
               >
                 Clear
               </button>

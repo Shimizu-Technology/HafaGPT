@@ -5,30 +5,35 @@ interface ModeSelectorProps {
 
 export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   const modes = [
-    { id: 'english' as const, label: 'English', icon: '🇺🇸', description: 'Default mode' },
-    { id: 'chamorro' as const, label: 'Chamorro', icon: '🇬🇺', description: 'Chamorro-only' },
-    { id: 'learn' as const, label: 'Learn', icon: '📚', description: 'Detailed learning' },
+    { id: 'english' as const, label: 'English', icon: '🇺🇸', description: 'English responses with Chamorro examples' },
+    { id: 'chamorro' as const, label: 'Chamorro', icon: '🇬🇺', description: 'Chamorro-only responses' },
+    { id: 'learn' as const, label: 'Learn', icon: '📚', description: 'Detailed learning explanations' },
   ];
 
   return (
-    <div className="flex gap-2 p-4 bg-white border-b border-gray-200">
-      {modes.map((m) => (
-        <button
-          key={m.id}
-          onClick={() => onModeChange(m.id)}
-          className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all ${
-            mode === m.id
-              ? 'bg-cyan-600 text-white shadow-md'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-          aria-pressed={mode === m.id}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-xl">{m.icon}</span>
-            <span className="hidden sm:inline">{m.label}</span>
-          </div>
-        </button>
-      ))}
+    <div className="px-4 sm:px-6 pb-3">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl">
+          {modes.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => onModeChange(m.id)}
+              className={`flex-1 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                mode === m.id
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-md scale-[1.02]'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              }`}
+              aria-pressed={mode === m.id}
+              title={m.description}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-lg">{m.icon}</span>
+                <span className="text-sm sm:text-base">{m.label}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

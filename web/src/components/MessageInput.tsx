@@ -26,8 +26,8 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white p-4">
-      <div className="flex gap-2 max-w-4xl mx-auto">
+    <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex gap-3 max-w-4xl mx-auto">
         <input
           type="text"
           value={input}
@@ -35,17 +35,17 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
           disabled={disabled}
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-ocean-500 dark:focus:ring-ocean-400 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           aria-label="Message input"
         />
         <button
           onClick={handleSend}
           disabled={disabled || !input.trim()}
-          className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="px-5 py-3 bg-gradient-to-br from-ocean-500 to-ocean-600 text-white rounded-xl hover:from-ocean-600 hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-ocean-500/20 hover:shadow-xl hover:shadow-ocean-500/30 disabled:shadow-none"
           aria-label="Send message"
         >
           <Send className="w-5 h-5" />
-          <span className="hidden sm:inline">Send</span>
+          <span className="hidden sm:inline font-medium">Send</span>
         </button>
       </div>
     </div>
