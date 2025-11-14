@@ -214,30 +214,30 @@ End of Export
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
+    <div className="flex flex-col h-screen bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
       {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-10">
+      <header className="border-b border-cream-300 dark:border-gray-800 bg-cream-50/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-10">
         <div className="px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between max-w-5xl mx-auto gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-ocean-500/20 flex-shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-xl sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
                 🌺
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white truncate">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold text-brown-800 dark:text-white truncate">
                   Chamorro Language Tutor
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate transition-all duration-500">
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 truncate transition-all duration-500">
                   <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                  <span className="text-gray-400 dark:text-gray-500 mx-1">•</span>
-                  <span className="text-gray-400 dark:text-gray-500">{greeting.english}</span>
+                  <span className="text-brown-500 dark:text-gray-500 mx-1">•</span>
+                  <span className="text-brown-500 dark:text-gray-500">{greeting.english}</span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={toggleTheme}
-                className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300 active:scale-95"
+                className="p-2 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
@@ -246,7 +246,7 @@ End of Export
                 <>
                   <button
                     onClick={() => setShowExportModal(true)}
-                    className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300 active:scale-95"
+                    className="p-2 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
                     aria-label="Export chat"
                     title="Export chat history"
                   >
@@ -254,7 +254,7 @@ End of Export
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
-                    className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
+                    className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
                     aria-label="Clear chat"
                     title="Clear chat (⌘L)"
                   >
@@ -289,17 +289,17 @@ End of Export
               {loading && <LoadingIndicator />}
               {error && (
                 <div className="flex justify-center mb-4 animate-fade-in">
-                  <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
+                  <div className="bg-hibiscus-50 dark:bg-red-950/30 border border-hibiscus-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
                     <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                      <AlertCircle className="w-5 h-5 text-hibiscus-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-sm text-red-800 dark:text-red-300 font-medium mb-2">
+                        <p className="text-sm text-hibiscus-800 dark:text-red-300 font-medium mb-2">
                           Failed to send message
                         </p>
-                        <p className="text-xs text-red-700 dark:text-red-400 mb-3">{error}</p>
+                        <p className="text-xs text-hibiscus-700 dark:text-red-400 mb-3">{error}</p>
                         <button
                           onClick={handleRetry}
-                          className="text-xs bg-red-600 dark:bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors flex items-center gap-1 active:scale-95"
+                          className="text-xs bg-hibiscus-600 dark:bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors flex items-center gap-1 active:scale-95"
                         >
                           <RefreshCw className="w-3 h-3" />
                           Retry
@@ -322,7 +322,7 @@ End of Export
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-10 animate-scale-in">
             <button
               onClick={scrollToBottom}
-              className="p-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 dark:border-gray-700 hover:scale-110 active:scale-95"
+              className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95"
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >
@@ -335,16 +335,16 @@ End of Export
 
       {/* Export Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-800 animate-slide-up">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Export Chat History</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Export Chat History</h3>
+            <p className="text-sm text-brown-600 dark:text-gray-400 mb-5">
               Choose your preferred format to download your conversation.
             </p>
             <div className="space-y-3">
               <button
                 onClick={() => handleExportChat('txt')}
-                className="w-full px-4 py-3 bg-ocean-500 hover:bg-ocean-600 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
+                className="w-full px-4 py-3 bg-teal-500 hover:bg-teal-600 dark:bg-ocean-500 dark:hover:bg-ocean-600 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
                   <span className="text-lg">📄</span>
@@ -354,7 +354,7 @@ End of Export
               </button>
               <button
                 onClick={() => handleExportChat('json')}
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
+                className="w-full px-4 py-3 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
                   <span className="text-lg">📊</span>
@@ -364,7 +364,7 @@ End of Export
               </button>
               <button
                 onClick={() => setShowExportModal(false)}
-                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium mt-2"
+                className="w-full px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium mt-2"
               >
                 Cancel
               </button>
@@ -375,22 +375,22 @@ End of Export
 
       {/* Clear Confirmation Modal */}
       {showClearConfirm && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-800 animate-slide-up">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Clear conversation?</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Clear conversation?</h3>
+            <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
               This will delete all messages in the current conversation. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowClearConfirm(false)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium"
               >
                 Cancel
               </button>
               <button
                 onClick={handleClearChat}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
+                className="flex-1 px-4 py-2.5 bg-hibiscus-600 dark:bg-red-600 text-white rounded-xl hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors font-medium"
               >
                 Clear
               </button>

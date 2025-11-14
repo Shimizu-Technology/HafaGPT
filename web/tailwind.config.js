@@ -5,22 +5,64 @@ export default {
   theme: {
     extend: {
       colors: {
-        ocean: {
-          50: '#f0fdff',
-          100: '#ccf7fe',
-          200: '#99eefd',
-          300: '#5de0fa',
-          400: '#1ac9f0',
-          500: '#00acd6',
-          600: '#0388b3',
-          700: '#0a6d91',
-          800: '#125876',
-          900: '#144963',
+        // New tropical color palette inspired by HafaGPT icon
+        coral: {
+          50: '#FEF3F1',
+          100: '#FCE7E3',
+          200: '#F9CFC7',
+          300: '#F5A598',
+          400: '#F17B6A',
+          500: '#E85D4B',  // Main coral - from icon circle
+          600: '#D84639',
+          700: '#B83730',
+          800: '#96302E',
+          900: '#7B2B2C',
         },
-        guam: {
-          red: '#CE1126',      // Guam flag red
-          blue: '#002868',     // Guam flag blue  
-          lightblue: '#0047AB', // Cobalt blue
+        teal: {
+          50: '#F0F9F9',
+          100: '#D9F1F1',
+          200: '#B8E6E6',
+          300: '#88D5D6',
+          400: '#6BC3C4',
+          500: '#5DAFB0',  // Main teal - from icon robot
+          600: '#4A8E8F',
+          700: '#3D7273',
+          800: '#355D5E',
+          900: '#304E4F',
+        },
+        cream: {
+          50: '#FEFDFB',
+          100: '#FFF8F0',  // Light mode surface
+          200: '#F5E6D3',  // Light mode background - from icon
+          300: '#E8D4BC',
+          400: '#D9BFA0',
+          500: '#C9A883',
+          600: '#B18E68',
+          700: '#8F7050',
+          800: '#6F5540',
+          900: '#584436',
+        },
+        brown: {
+          50: '#F7F3F0',
+          100: '#E8DED6',
+          200: '#D4BFB0',
+          300: '#B89B85',
+          400: '#9D7A5F',
+          500: '#76593E',
+          600: '#5A4430',
+          700: '#453428',  // Dark mode surfaces
+          800: '#3A2A1D',  // Main brown - from icon outlines
+          900: '#2A1F1A',  // Dark mode background
+        },
+        // Keep ocean for backward compatibility but add hibiscus
+        ocean: {
+          500: '#5DAFB0',  // Map to teal
+          600: '#4A8E8F',
+        },
+        hibiscus: {
+          400: '#F17B6A',
+          500: '#E96757',  // Hibiscus flower red
+          600: '#D8574A',
         },
       },
       animation: {

@@ -4,7 +4,7 @@
 
 @layer base {
   * {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-500 dark:focus-visible:ring-ocean-400 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:focus-visible:ring-ocean-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
   }
 
   body {
@@ -37,15 +37,15 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-900;
+    @apply bg-cream-100 dark:bg-gray-900;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+    @apply bg-cream-300 dark:bg-gray-700 rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-600;
+    @apply bg-cream-400 dark:bg-gray-600;
   }
 
   /* Smooth transitions for theme switching */

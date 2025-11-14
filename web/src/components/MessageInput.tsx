@@ -54,7 +54,7 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             rows={1}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-ocean-500/50 dark:focus:ring-ocean-400/50 focus:border-ocean-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm"
             aria-label="Message input"
             title="Focus input (⌘K)"
             style={{ maxHeight: '200px', minHeight: '44px' }}
@@ -62,7 +62,7 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
           <button
             onClick={handleSend}
             disabled={disabled || !input.trim()}
-            className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-br from-ocean-500 to-ocean-600 text-white rounded-2xl hover:from-ocean-600 hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-ocean-500/20 hover:shadow-xl hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
+            className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
             aria-label="Send message"
             title="Send message (Enter)"
             style={{ minHeight: '44px' }}
@@ -73,8 +73,8 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
         </div>
         
         {/* Disclaimer */}
-        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-2">
-          HafaGPT can make mistakes. Check important info.
+        <p className="text-center text-xs text-brown-600 dark:text-gray-400 mt-2">
+          HåfaGPT can make mistakes. Check important info.
         </p>
       </div>
     </div>
