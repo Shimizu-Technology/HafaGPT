@@ -8,9 +8,14 @@ the CLI application and the FastAPI service.
 import time
 import os
 import json
+import sys
 from datetime import datetime
+from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
+
+# Add parent directory to path for root-level imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import existing modules
 from chamorro_rag import rag

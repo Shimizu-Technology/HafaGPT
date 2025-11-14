@@ -22,6 +22,12 @@ from .models import (
     SourceInfo
 )
 from .chatbot_service import get_chatbot_response
+
+# Add parent directory to path for root-level imports
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from chamorro_rag import rag
 from manage_rag_db import RAGDatabaseManager
 

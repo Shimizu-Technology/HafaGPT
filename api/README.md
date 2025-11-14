@@ -77,26 +77,38 @@ psql postgres -c "CREATE DATABASE chamorro_rag;"
 psql chamorro_rag -c "CREATE EXTENSION vector;"
 ```
 
-### 2. Install Python Dependencies
+### 2. Install uv (Python package manager)
+```bash
+brew install uv
+```
+
+### 3. Install Python Dependencies
 ```bash
 uv sync
 ```
 
-### 3. Set Up Environment
-Create a `.env` file:
+### 4. Set Up Environment
+Create a `.env` file (copy from `.env.example`):
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values:
 ```env
-# Database
+# Required
+OPENAI_API_KEY=sk-your-key-here
 DATABASE_URL=postgresql://localhost/chamorro_rag
 
-# Cloud Model (GPT-4o-mini) - Optional
-OPENAI_API_KEY=sk-your-key-here
-
-# Local Model (LM Studio) - Optional
+# Optional - for local models
 OPENAI_API_BASE=http://localhost:1234/v1
-LOCAL_MODEL=qwen2.5-coder-32b-instruct-mlx
 
-# Web Search (Optional but recommended)
-BRAVE_API_KEY=your-brave-api-key
+# Optional - for web search
+TAVILY_API_KEY=your-tavily-key-here
+
+# API Configuration
+ALLOWED_ORIGINS=*
+RATE_LIMIT_REQUESTS=60
+RATE_LIMIT_WINDOW=60
 
 # Weather API (Optional)
 WEATHER_API_KEY=your-weather-api-key
@@ -115,9 +127,26 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 - **Weather:** `WEATHER_API_KEY` (free tier: 1M calls/month)
 - **Production API:** `ALLOWED_ORIGINS`, `RATE_LIMIT_REQUESTS` (optional, have defaults)
 
-### 4. Run the Chatbot
+### 5. Run the Application
 
-**Option A: CLI (Command Line Interface)**
+**Option A: FastAPI REST API (Recommended for production)**
+
+Easy startup with the helper script:
+```bash
+./start.sh
+```
+
+Or manually:
+```bash
+uv run python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Access the API:
+- **API Root:** http://localhost:8000
+- **Interactive Docs:** http://localhost:8000/api/docs
+- **Health Check:** http://localhost:8000/api/health
+
+**Option B: CLI (Command Line Interface)**
 
 **Cloud Mode (Default - Recommended):**
 ```bash
@@ -138,15 +167,20 @@ uv run python chamorro-chatbot-3.0.py --help
 
 ---
 
-**Option B: API Server (For Web/Mobile Apps)**
+## ⚠️ Common Issues
 
-**Start the API:**
-```bash
-cd api
-uv run uvicorn main:app --reload --port 8000
-```
+**Error: "ModuleNotFoundError: No module named 'langchain_postgres'"**
+- Fix: Always use `uv run` prefix to activate the virtual environment
+- Command: `uv run python -m uvicorn api.main:app --reload --port 8000`
 
-**Note:** The API uses GPT-4o-mini (cloud) only. For local model testing, use the CLI with `--local` flag.
+**Error: Database connection failed**
+- Check PostgreSQL is running: `brew services list`
+- Start it: `brew services start postgresql@16`
+- Verify database exists: `psql postgres -c "SELECT 1 FROM pg_database WHERE datname = 'chamorro_rag';"`
+
+**Error: Missing .env file**
+- Copy template: `cp .env.example .env`
+- Add your API keys to `.env`
 
 **View API Docs:**
 - Swagger UI: http://localhost:8000/docs
@@ -654,6 +688,64 @@ See [documentation/MODEL_SWITCHING_GUIDE.md](documentation/MODEL_SWITCHING_GUIDE
 ### Additional Resources
 - **[Chamorro Resources Research](documentation/CHAMORRO_RESOURCES_RESEARCH.md)** - Resource analysis
 - **[Archived Docs](archive/)** - Upgrade history and reference scripts
+
+## 🚀 Deployment
+
+### Render (Recommended)
+
+This project includes `render.yaml` for easy deployment to Render.com:
+
+1. **Create a Render account** at https://render.com
+
+2. **Fork this repository** to your GitHub account
+
+3. **Create a new Web Service** on Render:
+   - Connect your GitHub repository
+   - Render will automatically detect `render.yaml`
+
+4. **Set Environment Variables** in Render dashboard:
+   ```
+   OPENAI_API_KEY=sk-your-key-here
+   DATABASE_URL=your-postgresql-connection-string
+   ALLOWED_ORIGINS=https://your-frontend-domain.com
+   TAVILY_API_KEY=your-tavily-key-here  # Optional
+   ```
+
+5. **Database Setup:**
+   - Create a PostgreSQL database on Render
+   - Get the **Internal Database URL** (faster for server-to-server)
+   - Set as `DATABASE_URL` environment variable
+   - The API will handle migrations automatically
+
+6. **Deploy:**
+   - Push to your `main` branch
+   - Render will automatically build and deploy
+   - API will be available at `https://your-service.onrender.com`
+
+### Manual Deployment
+
+If deploying to other platforms (Heroku, Railway, etc.):
+
+1. Ensure Python 3.12+ is available
+2. Install dependencies: `pip install -r requirements.txt`
+3. Set all required environment variables
+4. Run: `python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+
+### Health Check
+
+After deployment, verify the API is running:
+```bash
+curl https://your-api-url.com/api/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "chunks": 44810
+}
+```
 
 ## 🤝 Contributing
 
