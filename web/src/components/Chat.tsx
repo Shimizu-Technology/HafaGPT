@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw, Moon, Sun } from 'lucide-react';
+import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -14,12 +14,13 @@ export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Load messages from localStorage on mount
   useEffect(() => {
@@ -111,6 +112,81 @@ export function Chat() {
     console.log('🗑️  Cleared messages from localStorage');
   };
 
+  const handleExportChat = (format: 'txt' | 'json') => {
+    if (messages.length === 0) return;
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      sessionId: localStorage.getItem('chamorro_session_id'),
+      messageCount: messages.length,
+      mode: mode,
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp ? new Date(msg.timestamp).toISOString() : null,
+        sources: msg.sources,
+        used_rag: msg.used_rag,
+        used_web_search: msg.used_web_search,
+        response_time: msg.response_time,
+      })),
+    };
+
+    if (format === 'txt') {
+      // Create text format
+      const textContent = `Chamorro Language Tutor - Chat Export
+Exported: ${new Date().toLocaleString()}
+Session: ${localStorage.getItem('chamorro_session_id')}
+Total Messages: ${messages.length}
+Mode: ${mode}
+
+${'='.repeat(60)}
+
+${messages.map((msg, i) => {
+  const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown';
+  const role = msg.role === 'user' ? 'You' : 'Assistant';
+  let content = `[${time}] ${role}:\n${msg.content}\n`;
+  
+  if (msg.sources && msg.sources.length > 0) {
+    content += `\nSources: ${msg.sources.map(s => `${s.name}${s.page ? ` (p. ${s.page})` : ''}`).join(', ')}\n`;
+  }
+  
+  if (msg.response_time) {
+    content += `Response time: ${msg.response_time.toFixed(2)}s\n`;
+  }
+  
+  return content;
+}).join('\n' + '-'.repeat(60) + '\n\n')}
+
+${'='.repeat(60)}
+End of Export
+`;
+
+      const blob = new Blob([textContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `chamorro-chat-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      // JSON format
+      const jsonBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const jsonUrl = URL.createObjectURL(jsonBlob);
+      const jsonA = document.createElement('a');
+      jsonA.href = jsonUrl;
+      jsonA.download = `chamorro-chat-${Date.now()}.json`;
+      document.body.appendChild(jsonA);
+      jsonA.click();
+      document.body.removeChild(jsonA);
+      URL.revokeObjectURL(jsonUrl);
+    }
+
+    setShowExportModal(false);
+    console.log(`📥 Chat exported as ${format.toUpperCase()}`);
+  };
+
   const handleRetry = () => {
     if (messages.length > 0) {
       const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
@@ -151,15 +227,25 @@ export function Chat() {
                 {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
               {messages.length > 0 && (
-                <button
-                  onClick={() => setShowClearConfirm(true)}
-                  className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2"
-                  aria-label="Clear chat"
-                  title="Clear chat (⌘L)"
-                >
-                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Clear</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowExportModal(true)}
+                    className="p-2 sm:p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 text-gray-700 dark:text-gray-300"
+                    aria-label="Export chat"
+                    title="Export chat history"
+                  >
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
+                  <button
+                    onClick={() => setShowClearConfirm(true)}
+                    className="px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2"
+                    aria-label="Clear chat"
+                    title="Clear chat (⌘L)"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Clear</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -216,6 +302,46 @@ export function Chat() {
 
       {/* Message Input */}
       <MessageInput onSend={handleSend} disabled={loading} inputRef={messageInputRef} />
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-gray-200 dark:border-gray-800 animate-slide-up">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Export Chat History</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+              Choose your preferred format to download your conversation.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleExportChat('txt')}
+                className="w-full px-4 py-3 bg-ocean-500 hover:bg-ocean-600 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-lg">📄</span>
+                  <span>Text File (.txt)</span>
+                </span>
+                <span className="text-xs opacity-80 group-hover:opacity-100">Readable format</span>
+              </button>
+              <button
+                onClick={() => handleExportChat('json')}
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-lg">📊</span>
+                  <span>JSON File (.json)</span>
+                </span>
+                <span className="text-xs opacity-80 group-hover:opacity-100">Structured data</span>
+              </button>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium mt-2"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Clear Confirmation Modal */}
       {showClearConfirm && (
