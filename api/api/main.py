@@ -77,6 +77,10 @@ app = FastAPI(
     redoc_url="/api/redoc"
 )
 
+# Log startup
+logger.info("🚀 FastAPI app created successfully")
+logger.info(f"📍 PORT environment variable: {os.getenv('PORT', 'NOT SET')}")
+
 # Get allowed origins from environment variable
 # Format: "https://domain1.com,https://domain2.com" or "*" for development
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "*")
@@ -96,6 +100,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger.info("✅ CORS middleware configured")
 
 
 @app.middleware("http")

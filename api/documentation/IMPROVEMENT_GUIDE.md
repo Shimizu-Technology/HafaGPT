@@ -14,7 +14,615 @@
 
 ---
 
-## 🎯 Upcoming Features (Priority Order)
+## 🎯 **ACTIVE ROADMAP** - Next Features to Implement
+
+### **Phase 1: Foundation (Week 1) - START HERE** 🔴
+
+**Goal:** Enable user tracking and authentication
+
+#### **1.1 Supabase Authentication Setup** (Day 1-2)
+
+**Why Supabase:**
+- ✅ Production-ready auth in 1 day
+- ✅ Free tier: 50k MAU
+- ✅ Built-in JWT, password reset, social login
+- ✅ Works with existing PostgreSQL
+- ✅ Handles all security concerns
+
+**Implementation Steps:**
+
+**Step 1: Create Supabase Project** (30 min)
+```bash
+# 1. Go to https://supabase.com/dashboard
+# 2. Create new project
+# 3. Copy these values to .env:
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_ANON_KEY=eyJhbGc...
+SUPABASE_SERVICE_KEY=eyJhbGc...  # For backend
+```
+
+**Step 2: Update Database Schema** (15 min)
+```sql
+-- Run in Supabase SQL Editor
+
+-- Users table (Supabase creates auth.users automatically)
+-- We just need to link to conversation_logs
+
+ALTER TABLE conversation_logs 
+ADD COLUMN user_id UUID REFERENCES auth.users(id);
+
+CREATE INDEX idx_user_conversations ON conversation_logs(user_id, session_id);
+CREATE INDEX idx_user_timestamp ON conversation_logs(user_id, timestamp);
+```
+
+**Step 3: Backend Integration** (2-3 hours)
+```bash
+# Install dependencies
+cd HafaGPT-API
+uv add supabase pyjwt
+
+# Update api/main.py
+```
+
+```python
+# api/auth.py (NEW FILE)
+from fastapi import Depends, HTTPException, Header
+from supabase import create_client
+import os
+
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_SERVICE_KEY")
+)
+
+async def get_current_user(authorization: str = Header(None)):
+    """Verify JWT token and return user_id"""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing token")
+    
+    token = authorization.split("Bearer ")[1]
+    
+    try:
+        # Verify JWT with Supabase
+        user = supabase.auth.get_user(token)
+        return user.user.id
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# api/main.py - Update endpoints
+@app.post("/api/chat")
+async def chat(
+    request: ChatRequest,
+    user_id: str = Depends(get_current_user)  # NEW!
+):
+    # Now save messages with user_id
+    log_conversation(
+        session_id=request.session_id,
+        user_id=user_id,  # NEW!
+        user_message=request.message,
+        bot_response=response
+    )
+```
+
+**Step 4: Frontend Integration** (3-4 hours)
+```bash
+# Install Supabase client
+cd HafaGPT-frontend
+npm install @supabase/supabase-js
+```
+
+```typescript
+// src/lib/supabase.ts (NEW FILE)
+import { createClient } from '@supabase/supabase-js'
+
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+)
+
+// src/hooks/useAuth.ts (NEW FILE)
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+
+export function useAuth() {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const signUp = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    return { data, error }
+  }
+
+  const signIn = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    })
+    return { data, error }
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  return { user, loading, signUp, signIn, signOut }
+}
+```
+
+**Step 5: Auth UI Components** (2 hours)
+```typescript
+// src/components/Auth.tsx (NEW FILE)
+import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+
+export function Auth() {
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const { signUp, signIn } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const { error } = isSignUp 
+      ? await signUp(email, password)
+      : await signIn(email, password)
+    
+    if (error) alert(error.message)
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-cream-100 dark:bg-gray-950">
+      <div className="max-w-md w-full bg-cream-50 dark:bg-gray-900 p-8 rounded-2xl shadow-xl">
+        <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-6">
+          {isSignUp ? 'Create Account' : 'Sign In'}
+        </h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border-2 border-cream-300 dark:border-gray-700"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl border-2 border-cream-300 dark:border-gray-700"
+          />
+          <button 
+            type="submit"
+            className="w-full py-3 bg-gradient-to-br from-coral-500 to-coral-600 text-white rounded-xl"
+          >
+            {isSignUp ? 'Sign Up' : 'Sign In'}
+          </button>
+        </form>
+
+        <button
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="mt-4 text-sm text-brown-600 dark:text-cream-300"
+        >
+          {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+**Step 6: Update Chat to Use Auth** (1 hour)
+```typescript
+// src/hooks/useChatbot.ts - Update to send auth token
+const sendMessage = async (message: string) => {
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  const response = await fetch(`${API_URL}/chat`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${session?.access_token}`,  // NEW!
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message, session_id })
+  })
+}
+```
+
+**Success Criteria:**
+- [ ] Users can register with email/password
+- [ ] Users can log in and stay logged in
+- [ ] Auth token sent with every API request
+- [ ] Backend verifies token and gets user_id
+- [ ] Conversations linked to user_id in database
+- [ ] Users can log out
+
+**Testing:**
+```bash
+# Test flow:
+1. Sign up with new email
+2. Verify email confirmation
+3. Log in
+4. Send a chat message
+5. Check database: conversation_logs should have user_id
+6. Log out and back in - session persists
+```
+
+---
+
+### **Phase 2: User Experience (Week 2)** 🟡
+
+**Goal:** Better conversation management + homework helper
+
+#### **2.1 Multiple Conversations** (Day 3)
+
+**Backend Endpoints:**
+```python
+# api/main.py - Add new endpoints
+
+@app.get("/api/conversations")
+async def list_conversations(
+    user_id: str = Depends(get_current_user),
+    limit: int = 50
+):
+    """List user's conversations"""
+    query = """
+    SELECT 
+        session_id,
+        MIN(timestamp) as created_at,
+        MAX(timestamp) as updated_at,
+        COUNT(*) as message_count,
+        (ARRAY_AGG(user_message ORDER BY timestamp ASC))[1] as first_message
+    FROM conversation_logs
+    WHERE user_id = %s
+    GROUP BY session_id
+    ORDER BY updated_at DESC
+    LIMIT %s
+    """
+    # Return list of conversations
+    pass
+
+@app.get("/api/conversations/{session_id}")
+async def get_conversation(
+    session_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get conversation history"""
+    # Verify user owns this conversation
+    # Return all messages
+    pass
+
+@app.delete("/api/conversations/{session_id}")
+async def delete_conversation(
+    session_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Delete a conversation"""
+    # Verify ownership and delete
+    pass
+
+@app.patch("/api/conversations/{session_id}")
+async def update_conversation(
+    session_id: str,
+    title: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Update conversation title"""
+    # Save custom title to new table
+    pass
+```
+
+**Frontend Components:**
+```typescript
+// src/components/ConversationSidebar.tsx (NEW FILE)
+export function ConversationSidebar() {
+  const [conversations, setConversations] = useState([])
+  const [currentSessionId, setCurrentSessionId] = useState(null)
+
+  // Load conversations
+  useEffect(() => {
+    fetch('/api/conversations', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => setConversations(data))
+  }, [])
+
+  return (
+    <div className="w-64 bg-cream-50 dark:bg-gray-900 border-r">
+      <button onClick={() => createNewConversation()}>
+        + New Chat
+      </button>
+      
+      {conversations.map(conv => (
+        <div 
+          key={conv.session_id}
+          onClick={() => loadConversation(conv.session_id)}
+          className="p-3 hover:bg-cream-100 cursor-pointer"
+        >
+          <div className="font-medium truncate">
+            {conv.first_message}
+          </div>
+          <div className="text-xs text-gray-500">
+            {conv.message_count} messages
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+**Success Criteria:**
+- [ ] Sidebar shows conversation list
+- [ ] Click conversation to load history
+- [ ] "New Chat" button creates new session_id
+- [ ] Delete conversation works
+- [ ] Conversations persist across devices
+
+---
+
+#### **2.2 Image Upload for Homework** (Day 4-5)
+
+**Why This Feature:**
+- 📸 Take photo of Chamorro homework
+- 🎯 Perfect for your daughter's use case
+- 💰 GPT-4o-mini vision is affordable
+- 📱 Works great on mobile PWA
+
+**Backend Implementation:**
+```python
+# api/main.py - Update chat endpoint
+
+from fastapi import File, UploadFile
+import base64
+
+@app.post("/api/chat")
+async def chat(
+    message: str = Form(...),
+    image: Optional[UploadFile] = File(None),  # NEW!
+    session_id: str = Form(...),
+    mode: str = Form("english"),
+    user_id: str = Depends(get_current_user)
+):
+    messages = []
+    
+    if image:
+        # Read and encode image
+        image_data = await image.read()
+        base64_image = base64.b64encode(image_data).decode('utf-8')
+        
+        # Format for GPT-4o-mini vision
+        messages.append({
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": message or "What does this say in Chamorro?"
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{base64_image}",
+                        "detail": "low"  # Cost-effective, good for text
+                    }
+                }
+            ]
+        })
+    else:
+        # Regular text-only message
+        messages.append({"role": "user", "content": message})
+    
+    # Call OpenAI with vision support
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=messages,
+        temperature=0.7
+    )
+    
+    return {"response": response.choices[0].message.content}
+```
+
+**Frontend Implementation:**
+```typescript
+// src/components/MessageInput.tsx - Add image upload
+
+export function MessageInput({ onSend }) {
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImage(file)
+      setPreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleSend = async () => {
+    const formData = new FormData()
+    formData.append('message', input)
+    formData.append('session_id', sessionId)
+    if (image) {
+      formData.append('image', image)
+    }
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    })
+
+    // Clear image after sending
+    setImage(null)
+    setPreview(null)
+  }
+
+  return (
+    <div>
+      {/* Image Preview */}
+      {preview && (
+        <div className="mb-2 relative">
+          <img src={preview} className="max-h-32 rounded-lg" />
+          <button 
+            onClick={() => { setImage(null); setPreview(null) }}
+            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        {/* Image Upload Button */}
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="p-3 rounded-xl hover:bg-cream-200"
+          title="Upload image"
+        >
+          📷
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"  // Opens camera on mobile
+          onChange={handleImageSelect}
+          className="hidden"
+        />
+
+        {/* Text Input */}
+        <textarea value={input} onChange={(e) => setInput(e.target.value)} />
+        
+        {/* Send Button */}
+        <button onClick={handleSend}>Send</button>
+      </div>
+    </div>
+  )
+}
+```
+
+**Mobile Optimization:**
+```typescript
+// Add camera capture option
+<input
+  type="file"
+  accept="image/*"
+  capture="environment"  // Back camera
+  // OR
+  capture="user"  // Front camera
+/>
+```
+
+**Success Criteria:**
+- [ ] Camera button visible on mobile
+- [ ] Can take photo directly from camera
+- [ ] Can upload from photo library
+- [ ] Image preview shows before sending
+- [ ] GPT-4o-mini correctly reads Chamorro text
+- [ ] Works on both mobile and desktop
+
+**Test Cases:**
+```
+Test 1: Homework Photo
+- Take photo of Chamorro homework
+- Ask: "What does this say?"
+- Expected: Translation + explanation
+
+Test 2: Sign/Menu Photo
+- Upload photo of Chamorro sign
+- Ask: "Translate this"
+- Expected: Accurate translation
+
+Test 3: Text Quality
+- Test with blurry photo
+- Test with good lighting
+- Test with handwritten vs printed text
+```
+
+**Cost Estimate:**
+```
+GPT-4o-mini Vision Pricing:
+- Low detail: ~85 tokens per image = $0.0000127/image
+- High detail: ~765 tokens = $0.000115/image
+
+Example monthly usage:
+- 100 homework photos/month (low detail)
+- = 100 × $0.0000127 = $0.00127
+- ≈ $0.13/month for images!
+- + ~$2-5 for text responses
+- Total: ~$2-6/month 🎉
+```
+
+---
+
+### **Phase 3: Learning Features (Week 3-4)** 🟢
+
+#### **3.1 Flashcards** (Day 6-7)
+
+[Previous flashcard implementation details remain...]
+
+---
+
+## 💰 **Total Cost Estimate**
+
+**With Auth + Multiple Conversations + Images:**
+- Supabase: **FREE** (50k MAU)
+- PostgreSQL: **FREE** (500MB)
+- GPT-4o-mini text: **$2-5/month**
+- GPT-4o-mini images: **$0.10-0.50/month**
+- **Total: $2-6/month** 🎉
+
+---
+
+## 📋 **Implementation Timeline**
+
+| Week | Feature | Days | Status |
+|------|---------|------|--------|
+| **Week 1** | Authentication | 2-3 | 📋 Ready to implement |
+| **Week 1** | Testing/Polish | 0.5 | 📋 Ready to implement |
+| **Week 2** | Multiple Conversations | 1 | 📋 Ready to implement |
+| **Week 2** | Image Upload | 1-2 | 📋 Ready to implement |
+| **Week 2** | Testing/Polish | 0.5 | 📋 Ready to implement |
+| **Week 3+** | Flashcards | 1-2 | 📋 Planned |
+| **Total** | All Features | **6-9 days** | 📋 Ready! |
+
+---
+
+## ✅ **Next Steps**
+
+**To start implementation:**
+1. Create Supabase account at https://supabase.com
+2. Tell me when ready and I'll begin with auth setup
+3. We'll test thoroughly before moving to next feature
+4. Each feature builds on the previous one
+
+**Questions before starting:**
+- Do you want social login (Google/GitHub) or just email/password?
+- Any specific auth requirements?
+- Ready to create the Supabase project?
+
+---
+
+## 🎯 Original Improvement Ideas (Previous Work)
 
 ### 🔴 **HIGH PRIORITY: Authentication System**
 
