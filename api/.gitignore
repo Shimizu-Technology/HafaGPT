@@ -1,0 +1,47 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment variables
+.env
+
+# RAG Database & Documents (too large for git)
+chroma_db/
+documents/*.pdf
+rag_metadata.json
+uv.lock
+
+# Knowledge base (PDFs are too large for git)
+knowledge_base/
+backups/
+archive/
+
+# Crawl logs (too large for git)
+*.log
+chamoru_crawl.log
+chamoru_extended_crawl.log
+
+# Conversation logs (sensitive user data)
+conversation_logs.jsonl
+conversation_logs_*.jsonl
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

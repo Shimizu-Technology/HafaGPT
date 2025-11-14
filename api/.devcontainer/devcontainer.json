@@ -1,0 +1,15 @@
+{
+  "name": "AI Engineering Course",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bullseye",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  },
+
+  "postCreateCommand": "pip install uv python-dotenv openai numpy matplotlib"
+}
