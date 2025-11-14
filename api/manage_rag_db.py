@@ -7,7 +7,7 @@ Docling for better PDF processing, and improved token-aware chunking.
 """
 
 from langchain_postgres import PGVector
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from improved_chunker import create_improved_chunker, create_docling_processor
 import os
@@ -30,11 +30,25 @@ class RAGDatabaseManager:
         self.connection = os.getenv("DATABASE_URL", connection)
         self.metadata_file = metadata_file
         
-        # Load embeddings
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="paraphrase-multilingual-MiniLM-L12-v2",
-            model_kwargs={'device': 'cpu'}
-        )
+        # Load embeddings based on EMBEDDING_MODE
+        embedding_mode = os.getenv("EMBEDDING_MODE", "openai").lower()
+        
+        if embedding_mode == "local":
+            # LOCAL EMBEDDINGS (HuggingFace)
+            print("🔧 Using LOCAL embeddings (HuggingFace) for indexing")
+            from langchain_huggingface import HuggingFaceEmbeddings
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="paraphrase-multilingual-MiniLM-L12-v2",
+                model_kwargs={'device': 'cpu'}
+            )
+        else:
+            # CLOUD EMBEDDINGS (OpenAI) - DEFAULT
+            print("☁️  Using CLOUD embeddings (OpenAI) for indexing")
+            self.embeddings = OpenAIEmbeddings(
+                model="text-embedding-3-small",
+                openai_api_key=os.getenv("OPENAI_API_KEY"),
+                dimensions=384  # Match existing database dimensions
+            )
         
         # Load PostgreSQL vector database
         self.vectorstore = PGVector(

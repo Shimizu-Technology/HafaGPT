@@ -134,6 +134,29 @@ python -m uvicorn api.main:app --reload
 
 ---
 
+## 📝 Adding New Data
+
+**IMPORTANT:** When adding new documents to your RAG database, the `manage_rag_db.py` script will automatically use the `EMBEDDING_MODE` environment variable!
+
+### Adding PDFs:
+```bash
+# With OpenAI embeddings (default)
+export EMBEDDING_MODE=openai
+uv run python manage_rag_db.py add-all knowledge_base/pdfs/
+
+# With Local embeddings
+export EMBEDDING_MODE=local
+uv run python manage_rag_db.py add-all knowledge_base/pdfs/
+```
+
+**The script will show which mode it's using:**
+- `☁️  Using CLOUD embeddings (OpenAI) for indexing` - OpenAI mode
+- `🔧 Using LOCAL embeddings (HuggingFace) for indexing` - Local mode
+
+**Make sure you use the SAME mode as your existing data!** Otherwise you'll have mixed embeddings in your database.
+
+---
+
 ## 💡 Pro Tips
 
 1. **Start with OpenAI** - Get deployed fast, switch to local later if needed

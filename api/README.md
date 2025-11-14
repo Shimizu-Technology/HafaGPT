@@ -632,6 +632,16 @@ pip install sentence-transformers transformers
 
 **📖 See [EMBEDDINGS_GUIDE.md](EMBEDDINGS_GUIDE.md) for complete documentation, cost analysis, and when to use each mode.**
 
+### 🔄 Compatibility Note
+
+**Both embedding modes use 384 dimensions** to ensure complete compatibility:
+- ✅ Switch between OpenAI and HuggingFace anytime
+- ✅ Mix modes (query with cloud, index locally, or vice versa)
+- ✅ No re-indexing needed when switching
+- ✅ OpenAI is configured to match HuggingFace dimensions
+
+This means you can start with OpenAI (cloud) and switch to HuggingFace (local) later without any database changes!
+
 ---
 
 ## 🔄 Switching Between Local & Cloud LLM Models
