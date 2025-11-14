@@ -99,7 +99,10 @@ Edit `.env` with your values:
 OPENAI_API_KEY=sk-your-key-here
 DATABASE_URL=postgresql://localhost/chamorro_rag
 
-# Optional - for local models
+# Embeddings Configuration (NEW!)
+EMBEDDING_MODE=openai  # "openai" (cloud, default) or "local" (self-hosted)
+
+# Optional - for local LLM
 OPENAI_API_BASE=http://localhost:1234/v1
 
 # Optional - for web search
@@ -122,7 +125,8 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 **Note:** You only need the keys for features you want to use:
 - **Required:** `DATABASE_URL`
 - **Cloud mode:** `OPENAI_API_KEY`
-- **Local mode:** `OPENAI_API_BASE` + `LOCAL_MODEL`
+- **Embeddings:** `EMBEDDING_MODE` (openai/local, see below)
+- **Local LLM mode:** `OPENAI_API_BASE` + `LOCAL_MODEL`
 - **Web search:** `BRAVE_API_KEY` (free tier: 2,000 queries/month)
 - **Weather:** `WEATHER_API_KEY` (free tier: 1M calls/month)
 - **Production API:** `ALLOWED_ORIGINS`, `RATE_LIMIT_REQUESTS` (optional, have defaults)
@@ -530,7 +534,7 @@ llm-project/
 - **Document Processing:** Docling (advanced PDF understanding)
 - **Web Scraping:** Crawl4AI (AI-optimized web content extraction)
 - **Chunking:** Token-aware semantic chunking (350 tokens/chunk)
-- **Embeddings:** HuggingFace multilingual-MiniLM-L12-v2
+- **Embeddings:** OpenAI text-embedding-3-small (cloud, default) or HuggingFace multilingual-MiniLM-L12-v2 (local)
 - **UI:** prompt_toolkit for enhanced CLI
 - **Data Validation:** Pydantic models
 - **Logging:** PostgreSQL conversation logs with session tracking
@@ -578,7 +582,59 @@ This ensures modern, conversational Chamorro appears first in search results!
 
 **Note:** The knowledge base contains 927 tracked sources in `rag_metadata.json`. The actual PostgreSQL database has 23,564 indexed chunks (some early content was added before comprehensive tracking was implemented).
 
-## 🔄 Switching Between Local & Cloud Models
+## 🔄 Embeddings Configuration (NEW!)
+
+The chatbot now supports **two embedding modes** for maximum flexibility:
+
+### OpenAI Embeddings (Cloud) ☁️ - Default
+
+**Best for:** Render deployment, low memory servers, getting started
+
+```bash
+# In .env
+EMBEDDING_MODE=openai
+OPENAI_API_KEY=sk-...
+```
+
+**Pros:**
+- ✅ Tiny memory (~10MB vs 500MB)
+- ✅ Instant startup
+- ✅ Better quality
+- ✅ Works on Render Starter ($7/mo)
+
+**Cons:**
+- ❌ ~$0.0001 per query (~$0.30/month for 3k queries)
+- ❌ Requires internet
+
+**Cost:** For typical usage (100 queries/day), expect **$0.30/month** in embedding costs.
+
+### HuggingFace Embeddings (Local) 🔧
+
+**Best for:** Self-hosting, high traffic (30k+ queries/month), privacy-critical apps
+
+```bash
+# In .env
+EMBEDDING_MODE=local
+
+# Install additional dependencies
+pip install sentence-transformers transformers
+```
+
+**Pros:**
+- ✅ Completely free
+- ✅ Private (data never leaves your server)
+- ✅ Works offline
+
+**Cons:**
+- ❌ 500MB+ RAM usage
+- ❌ 5-10 second startup time
+- ❌ Needs 4GB+ server (Render Pro $85/mo)
+
+**📖 See [EMBEDDINGS_GUIDE.md](EMBEDDINGS_GUIDE.md) for complete documentation, cost analysis, and when to use each mode.**
+
+---
+
+## 🔄 Switching Between Local & Cloud LLM Models
 
 The chatbot supports both **local models** (via LM Studio) and **cloud models** (via OpenAI API) with a simple CLI flag.
 

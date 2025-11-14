@@ -14,6 +14,7 @@ FastAPI wrapper for the Chamorro Language Learning Chatbot.
 - ✅ **Conversation Memory** - Automatic context retrieval from database
 - ✅ **Session Management** - Track full conversations with `session_id`
 - ✅ **Cloud Model** - Uses GPT-4o-mini for fast, reliable responses
+- ✅ **Flexible Embeddings** - OpenAI (cloud, default) or HuggingFace (local)
 
 **Note:** The API uses GPT-4o-mini (cloud) only. For local model testing, use the CLI with `--local` flag.
 
@@ -314,6 +315,12 @@ That's it! Backend handles all the context management automatically! 🎉
 Required:
 - `OPENAI_API_KEY` - OpenAI API key
 - `DATABASE_URL` - PostgreSQL connection string
+
+Embeddings:
+- `EMBEDDING_MODE` - `openai` (default, cloud) or `local` (self-hosted)
+  - **OpenAI (default):** ~10MB RAM, $0.0001/query, better quality
+  - **Local:** 500MB RAM, free, requires 4GB+ server
+  - See [EMBEDDINGS_GUIDE.md](../EMBEDDINGS_GUIDE.md) for details
 
 Optional:
 - `BRAVE_API_KEY` - Web search

@@ -64,13 +64,31 @@ class ChamorroRAG:
         
         connection = os.getenv("DATABASE_URL", connection)
         
-        # Use OpenAI embeddings (lightweight, no model download needed!)
-        # Cost: ~$0.0001 per query (negligible)
-        # Memory: ~10MB vs 500MB for HuggingFace model
-        self.embeddings = OpenAIEmbeddings(
-            model="text-embedding-3-small",
-            openai_api_key=os.getenv("OPENAI_API_KEY")
-        )
+        # EMBEDDING CONFIGURATION
+        # Choose between local (free, private, memory-heavy) or cloud (paid, fast, lightweight)
+        embedding_mode = os.getenv("EMBEDDING_MODE", "openai").lower()
+        
+        if embedding_mode == "local":
+            # LOCAL EMBEDDINGS (HuggingFace)
+            # Pros: Free, private, offline, multilingual
+            # Cons: 500MB RAM, slow startup, needs 4GB+ server
+            # Good for: High traffic (30k+ queries/month), privacy concerns, self-hosting
+            print("🔧 Using LOCAL embeddings (HuggingFace)")
+            from langchain_huggingface import HuggingFaceEmbeddings
+            self.embeddings = HuggingFaceEmbeddings(
+                model_name="paraphrase-multilingual-MiniLM-L12-v2",
+                model_kwargs={'device': 'cpu'}
+            )
+        else:
+            # CLOUD EMBEDDINGS (OpenAI) - DEFAULT
+            # Pros: 10MB RAM, instant startup, better quality, scalable
+            # Cons: ~$0.0001 per query, network latency, requires API key
+            # Good for: Low-medium traffic, memory-constrained servers, Render free/starter
+            print("☁️  Using CLOUD embeddings (OpenAI)")
+            self.embeddings = OpenAIEmbeddings(
+                model="text-embedding-3-small",
+                openai_api_key=os.getenv("OPENAI_API_KEY")
+            )
         
         # Load the PostgreSQL vector database
         self.vectorstore = PGVector(

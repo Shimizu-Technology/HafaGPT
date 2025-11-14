@@ -17,9 +17,8 @@ from openai import OpenAI
 # Add parent directory to path for root-level imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# DON'T import heavy modules at startup!
-# Lazy-load them when needed to save memory on free tier
-# from chamorro_rag import rag
+# Import RAG module (now memory-efficient with OpenAI embeddings)
+from chamorro_rag import rag
 from web_search_tool import web_search, format_search_results
 
 # Load environment
@@ -330,9 +329,6 @@ def get_rag_context(user_input: str, conversation_length: int = 0) -> tuple[str,
         return "", []
     
     try:
-        # Lazy-load RAG module only when needed (saves memory on startup)
-        from chamorro_rag import rag
-        
         # Adjust retrieval size based on mode
         k = 1 if rag_mode == "light" else 3
         context, sources = rag.create_context(user_input, k=k)
