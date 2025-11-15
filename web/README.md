@@ -83,11 +83,27 @@ Get your Clerk key from: https://clerk.com
 
 ### 3. Start Development Server
 
+**Local Development (Desktop Only):**
 ```bash
 npm run dev
 ```
 
 Visit: http://localhost:5173
+
+**Mobile Testing (Network Access):**
+```bash
+./dev-network.sh
+```
+
+This will:
+- ✅ Auto-detect your local IP address
+- ✅ Start the dev server on your network (accessible from phone)
+- ✅ Display the URL to access from your mobile device
+- ✅ Example: `http://192.168.1.190:5173`
+
+**Requirements:**
+- Phone and computer must be on the same WiFi network
+- Make sure firewall allows port 5173
 
 ### 4. Build for Production
 
