@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
+import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Menu } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
-import { useUser } from '@clerk/clerk-react';
+import { useConversations } from '../hooks/useConversations';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
@@ -11,6 +11,7 @@ import { MessageInput } from './MessageInput';
 import { QuickPhrases } from './QuickPhrases';
 import { WelcomeMessage } from './WelcomeMessage';
 import { LoadingIndicator } from './LoadingIndicator';
+import { ConversationSidebar } from './ConversationSidebar';
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,9 +19,17 @@ export function Chat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  // const { user, isSignedIn } = useUser(); // Available for future use (Phase 2: Billing)
+  const { 
+    conversations, 
+    activeConversationId,
+    setActiveConversationId,
+    createConversation,
+    deleteConversation,
+    fetchConversations
+  } = useConversations();
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -106,6 +115,18 @@ export function Chat() {
   }, [messages.length]);
 
   const handleSend = async (message: string) => {
+    // Create conversation if none exists
+    if (!activeConversationId) {
+      try {
+        const newConv = await createConversation('New Chat');
+        setActiveConversationId(newConv.id);
+      } catch (err) {
+        console.error('Failed to create conversation:', err);
+        setError('Failed to create conversation');
+        return;
+      }
+    }
+
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
@@ -115,7 +136,7 @@ export function Chat() {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await sendMessage(message, mode);
+      const response = await sendMessage(message, mode, activeConversationId);
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response.response,
@@ -126,8 +147,39 @@ export function Chat() {
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      
+      // Refresh conversations to update message count
+      fetchConversations();
     } catch (err) {
       console.error('Failed to send message:', err);
+    }
+  };
+
+  const handleNewConversation = async () => {
+    try {
+      const newConv = await createConversation('New Chat');
+      setMessages([]);
+      setActiveConversationId(newConv.id);
+      setSidebarOpen(false); // Close sidebar on mobile
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
+    }
+  };
+
+  const handleSelectConversation = async (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setMessages([]); // TODO: Load messages from API
+    setSidebarOpen(false); // Close sidebar on mobile
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+      if (conversationId === activeConversationId) {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
     }
   };
 
@@ -226,25 +278,47 @@ End of Export
   };
 
   return (
-    <div className="flex flex-col h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
-      {/* Header - Fixed Position */}
-      <header className="fixed top-0 left-0 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
-        <div className="px-3 sm:px-6 py-2 sm:py-4">
-          <div className="flex items-center justify-between max-w-5xl mx-auto gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
-                🌺
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
-                  HåfaGPT
-                </h1>
-                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight">
-                  Expert in Chamorro language, culture & Guam
-                </p>
-                <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden sm:block">
-                  <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                  <span className="mx-1">•</span>
+    <div className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
+      {/* Sidebar */}
+      <ConversationSidebar
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
+      {/* Main chat area */}
+      <div className="flex flex-col flex-1 h-full">
+        {/* Header - Fixed Position */}
+        <header className="fixed top-0 left-0 md:left-64 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
+          <div className="px-3 sm:px-6 py-2 sm:py-4">
+            <div className="flex items-center justify-between max-w-5xl mx-auto gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {/* Hamburger menu for mobile */}
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="md:hidden p-1.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300"
+                  aria-label="Toggle sidebar"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
+                  🌺
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
+                    HåfaGPT
+                  </h1>
+                  <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight">
+                    Expert in Chamorro language, culture & Guam
+                  </p>
+                  <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden sm:block">
+                    <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
+                    <span className="mx-1">•</span>
                   <span>{greeting.english}</span>
                 </p>
               </div>
@@ -424,6 +498,7 @@ End of Export
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

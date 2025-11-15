@@ -52,7 +52,8 @@ export function useChatbot() {
 
   const sendMessage = async (
     message: string,
-    mode: 'english' | 'chamorro' | 'learn' = 'english'
+    mode: 'english' | 'chamorro' | 'learn' = 'english',
+    conversationId?: string | null
   ): Promise<ChatResponse> => {
     setLoading(true);
     setError(null);
@@ -80,6 +81,7 @@ export function useChatbot() {
           mode,
           session_id: sessionId,
           user_id: user?.id || null,  // Send user ID if logged in
+          conversation_id: conversationId,  // Added
           conversation_history: null,
         }),
       });
