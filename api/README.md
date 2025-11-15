@@ -2,7 +2,7 @@
 
 An AI-powered chatbot for learning Chamorro (the native language of Guam) with **Retrieval-Augmented Generation (RAG)** using authoritative grammar books, dictionaries, and online resources.
 
-**🆕 LATEST:** FastAPI REST API + PostgreSQL conversation logging + automatic conversation memory! 🚀
+**🆕 LATEST:** Speech-to-text input + Image upload with GPT-4o-mini Vision + S3 storage! 🎤📸
 
 ## ✨ Features
 
@@ -10,6 +10,12 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **General Chat** - Ask anything about Chamorro in English
   - **Immersion Mode** (`/chamorro`) - Chamorro-only responses
   - **Learning Mode** (`/learn`) - Chamorro with English breakdowns
+
+- 🎤 **Multimodal Input:**
+  - **Speech-to-Text** - Speak your questions using browser microphone (Web Speech API)
+  - **Image Upload** - Take photos of Chamorro documents/text for translation and explanation
+  - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
+  - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
 
 - 📚 **RAG-Enhanced Knowledge (44,810 chunks):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database
@@ -56,11 +62,17 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
 - 💬 **Conversation Management:**
   - **Create & Organize** - Create conversations with custom titles
   - **List & Switch** - View all conversations, switch between topics
-  - **Rename** - Update conversation titles anytime
+  - **Rename** - Update conversation titles anytime (double-click or right-click)
   - **Soft Delete** - Hide conversations while preserving data for training
   - **Message Counts** - Track messages per conversation
-  - **Auto-naming** - Conversations titled from first message
+  - **Auto-naming** - Conversations titled from first message (first 50 characters)
   - **Persistence** - Active conversation maintained across refreshes
+
+- 📱 **Mobile-Optimized UI:**
+  - **Responsive Design** - Optimized for both mobile and desktop
+  - **Hamburger Menu** - Smooth sidebar transitions with backdrop overlay
+  - **Touch-Friendly** - Large tap targets for buttons and controls
+  - **Adaptive Layout** - Content scales properly on all screen sizes
 
 ## 🚀 Quick Start
 
@@ -138,6 +150,12 @@ DATABASE_URL=postgresql://localhost/chamorro_rag
 # Authentication (Optional - enables user tracking)
 CLERK_SECRET_KEY=sk_test_your-clerk-secret-key  # Get from https://clerk.com
 
+# AWS S3 (Optional - for persistent image storage)
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_REGION=us-west-2  # or your preferred region
+AWS_S3_BUCKET=your-bucket-name
+
 # Embeddings (see EMBEDDINGS_GUIDE.md)
 EMBEDDING_MODE=openai  # or "local" for HuggingFace
 
@@ -162,9 +180,10 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 ```
 
 **Note:** You only need the keys for features you want to use:
-- **Required:** `DATABASE_URL`
-- **Cloud mode:** `OPENAI_API_KEY`
+- **Required:** `DATABASE_URL`, `OPENAI_API_KEY`
 - **Embeddings:** `EMBEDDING_MODE` (openai/local, see below)
+- **Authentication:** `CLERK_SECRET_KEY` (for user tracking)
+- **Image Upload:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET` (for persistent images)
 - **Local LLM mode:** `OPENAI_API_BASE` + `LOCAL_MODEL`
 - **Web search:** `BRAVE_API_KEY` (free tier: 2,000 queries/month)
 - **Weather:** `WEATHER_API_KEY` (free tier: 1M calls/month)

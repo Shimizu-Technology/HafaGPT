@@ -186,14 +186,13 @@ def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> O
         file_extension = filename.split('.')[-1] if '.' in filename else 'jpg'
         s3_key = f"chamorro_uploads/{timestamp}_{filename}"
         
-        # Upload to S3
+        # Upload to S3 (without ACL - bucket policy handles public access)
         s3_client.put_object(
             Bucket=S3_BUCKET,
             Key=s3_key,
             Body=image_data,
-            ContentType=content_type,
-            # Make publicly readable
-            ACL='public-read'
+            ContentType=content_type
+            # No ACL needed - bucket policy makes objects public
         )
         
         # Construct public URL
