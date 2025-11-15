@@ -4,7 +4,7 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
@@ -13,15 +13,30 @@ import logging
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Optional
 
 from .models import (
     ChatRequest,
     ChatResponse,
     HealthResponse,
     ErrorResponse,
-    SourceInfo
+    SourceInfo,
+    ConversationCreate,
+    ConversationResponse,
+    ConversationListResponse,
+    MessagesResponse
 )
 from .chatbot_service import get_chatbot_response
+from . import conversations
+
+# Clerk for authentication
+try:
+    from clerk_backend_api import Clerk
+    CLERK_AVAILABLE = True
+except ImportError:
+    CLERK_AVAILABLE = False
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.warning("⚠️  clerk-backend-api not installed. Authentication disabled.")
 
 # Add parent directory to path for root-level imports
 import sys
@@ -42,6 +57,45 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Initialize Clerk client (if available and configured)
+clerk = None
+if CLERK_AVAILABLE and os.getenv("CLERK_SECRET_KEY"):
+    try:
+        clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
+        logger.info(f"✅ Clerk initialized: {os.getenv('CLERK_SECRET_KEY')[:15]}...")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize Clerk: {e}")
+else:
+    if not os.getenv("CLERK_SECRET_KEY"):
+        logger.warning("⚠️  CLERK_SECRET_KEY not set. Running without authentication.")
+
+async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[str]:
+    """
+    Verify Clerk JWT token and return user ID.
+    Returns None if no token (allows anonymous users for now).
+    """
+    if not authorization:
+        return None  # Anonymous user
+    
+    if not clerk:
+        logger.warning("⚠️  Clerk not initialized. Accepting request without verification.")
+        return None
+    
+    try:
+        # Extract token from "Bearer <token>"
+        token = authorization.replace("Bearer ", "")
+        
+        # Verify JWT with Clerk
+        session = clerk.sessions.verify_token(token)
+        user_id = session.user_id
+        
+        logger.info(f"✅ Authenticated user: {user_id}")
+        return user_id
+        
+    except Exception as e:
+        logger.warning(f"⚠️  Invalid auth token: {e}")
+        return None  # Invalid token, treat as anonymous
 
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
 rate_limit_storage = defaultdict(list)
@@ -184,7 +238,10 @@ async def health_check():
 
 
 @app.post("/api/chat", response_model=ChatResponse, tags=["Chat"])
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    authorization: Optional[str] = Header(None)
+):
     """
     Send a message to the chatbot
     
@@ -193,12 +250,18 @@ async def chat(request: ChatRequest):
     - `chamorro`: Chamorro-only immersion mode
     - `learn`: Learning mode with explanations
     
+    **Authentication (Optional):**
+    - Send `Authorization: Bearer <token>` header with Clerk JWT
+    - Unauthenticated users are allowed (anonymous mode)
+    - Authenticated users get their conversations tracked
+    
     **Example request:**
     ```json
     {
         "message": "How do I say good morning?",
         "mode": "english",
-        "session_id": "session_1234567890_abc"
+        "session_id": "session_1234567890_abc",
+        "user_id": "user_2abc123def"
     }
     ```
     """
@@ -212,14 +275,23 @@ async def chat(request: ChatRequest):
                 detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
             )
         
-        logger.info(f"Chat request: mode={request.mode}, session_id={request.session_id}")
+        # Verify user authentication (optional)
+        user_id = await verify_user(authorization)
+        
+        # Use user_id from request body if provided (fallback for testing)
+        if not user_id and request.user_id:
+            user_id = request.user_id
+        
+        logger.info(f"Chat request: mode={request.mode}, user_id={user_id or 'anonymous'}, session_id={request.session_id}")
         
         # Get response from chatbot service
         result = get_chatbot_response(
             message=request.message,
             mode=request.mode,
             conversation_length=0,  # For now, stateless (no session history)
-            session_id=request.session_id  # Pass session_id for logging
+            session_id=request.session_id,  # Pass session_id for logging
+            user_id=user_id,  # Pass user_id for tracking
+            conversation_id=request.conversation_id  # Pass conversation_id for multi-conversation support
         )
         
         # Convert sources to SourceInfo models
@@ -248,6 +320,146 @@ async def chat(request: ChatRequest):
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
+
+
+# --- Conversation Management Endpoints ---
+
+@app.post("/api/conversations", response_model=ConversationResponse, tags=["Conversations"])
+async def create_conversation_endpoint(
+    request: ConversationCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new conversation.
+    
+    Anonymous users can create conversations (user_id will be NULL).
+    Authenticated users get conversations tied to their account.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Create conversation
+        conversation = conversations.create_conversation(
+            user_id=user_id,
+            title=request.title or "New Chat"
+        )
+        
+        logger.info(f"Created conversation: {conversation.id} for user: {user_id or 'anonymous'}")
+        return conversation
+    except Exception as e:
+        logger.error(f"Failed to create conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations", response_model=ConversationListResponse, tags=["Conversations"])
+async def list_conversations(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    List all conversations for the authenticated user.
+    
+    Returns empty list for anonymous users (no auth token).
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Get conversations
+        conversation_list = conversations.get_conversations(user_id=user_id)
+        
+        logger.info(f"Listed {len(conversation_list.conversations)} conversations for user: {user_id or 'anonymous'}")
+        return conversation_list
+    except Exception as e:
+        logger.error(f"Failed to list conversations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations/{conversation_id}/messages", response_model=MessagesResponse, tags=["Conversations"])
+async def get_conversation_messages_endpoint(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get all messages for a specific conversation.
+    
+    TODO: Add ownership verification for security.
+    """
+    try:
+        # Get messages
+        messages = conversations.get_conversation_messages(conversation_id)
+        
+        logger.info(f"Retrieved {len(messages.messages)} messages for conversation: {conversation_id}")
+        return messages
+    except Exception as e:
+        logger.error(f"Failed to get messages: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/conversations/{conversation_id}", tags=["Conversations"])
+async def update_conversation_endpoint(
+    conversation_id: str,
+    request: ConversationCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a conversation's title.
+    
+    Only the owner can update their conversation.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        if not request.title:
+            raise HTTPException(status_code=400, detail="Title is required")
+        
+        # Update conversation
+        updated = conversations.update_conversation_title(
+            conversation_id=conversation_id,
+            title=request.title,
+            user_id=user_id
+        )
+        
+        if not updated:
+            raise HTTPException(status_code=404, detail="Conversation not found or access denied")
+        
+        logger.info(f"Updated conversation: {conversation_id} title to '{request.title}' for user: {user_id or 'anonymous'}")
+        return {"success": True, "message": "Conversation updated"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/conversations/{conversation_id}", tags=["Conversations"])
+async def delete_conversation_endpoint(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete a conversation (and all its messages).
+    
+    Only the owner can delete their conversation.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Delete conversation
+        deleted = conversations.delete_conversation(conversation_id, user_id=user_id)
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Conversation not found or access denied")
+        
+        logger.info(f"Deleted conversation: {conversation_id} for user: {user_id or 'anonymous'}")
+        return {"success": True, "message": "Conversation deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.exception_handler(HTTPException)

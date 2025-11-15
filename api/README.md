@@ -46,6 +46,22 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Health Checks** - `/api/health` endpoint for monitoring
   - **Stateless Design** - Scale horizontally with ease
 
+- 🔐 **Authentication & User Management:**
+  - **Clerk Authentication** - Secure JWT-based user authentication
+  - **Optional Authentication** - Anonymous users supported (no login required)
+  - **User Tracking** - Conversations linked to `user_id` when authenticated
+  - **Database Migrations** - Alembic for schema version control
+  - **Future-Ready** - Prepared for per-user conversations and billing integration
+
+- 💬 **Conversation Management:**
+  - **Create & Organize** - Create conversations with custom titles
+  - **List & Switch** - View all conversations, switch between topics
+  - **Rename** - Update conversation titles anytime
+  - **Soft Delete** - Hide conversations while preserving data for training
+  - **Message Counts** - Track messages per conversation
+  - **Auto-naming** - Conversations titled from first message
+  - **Persistence** - Active conversation maintained across refreshes
+
 ## 🚀 Quick Start
 
 ### Option 1: GitHub Codespaces
@@ -99,8 +115,11 @@ Edit `.env` with your values:
 OPENAI_API_KEY=sk-your-key-here
 DATABASE_URL=postgresql://localhost/chamorro_rag
 
-# Embeddings Configuration (NEW!)
-EMBEDDING_MODE=openai  # "openai" (cloud, default) or "local" (self-hosted)
+# Authentication (Optional - enables user tracking)
+CLERK_SECRET_KEY=sk_test_your-clerk-secret-key  # Get from https://clerk.com
+
+# Embeddings (see EMBEDDINGS_GUIDE.md)
+EMBEDDING_MODE=openai  # or "local" for HuggingFace
 
 # Optional - for local LLM
 OPENAI_API_BASE=http://localhost:1234/v1
@@ -168,6 +187,73 @@ uv run python chamorro-chatbot-3.0.py --local
 ```bash
 uv run python chamorro-chatbot-3.0.py --help
 ```
+
+---
+
+## 🗄️ Database Migrations (Alembic)
+
+We use **Alembic** for database schema version control (similar to Rails migrations).
+
+### Running Migrations
+
+**Apply all pending migrations:**
+```bash
+uv run alembic upgrade head
+```
+
+**View migration history:**
+```bash
+uv run alembic history
+```
+
+**Check current version:**
+```bash
+uv run alembic current
+```
+
+### Creating New Migrations
+
+**Auto-generate migration from schema changes:**
+```bash
+uv run alembic revision --autogenerate -m "add new column"
+```
+
+**Create blank migration:**
+```bash
+uv run alembic revision -m "description of change"
+```
+
+**Rollback one migration:**
+```bash
+uv run alembic downgrade -1
+```
+
+### How It Works
+
+1. **Alembic tracks schema versions** in `alembic_version` table
+2. **Migration files** are stored in `alembic/versions/`
+3. **Configuration** in `alembic.ini` and `alembic/env.py`
+4. **Database URL** is read from `.env` file automatically
+
+### Example: The `user_id` Migration
+
+```python
+# alembic/versions/8297443c236c_add_user_id_to_conversation_logs.py
+def upgrade():
+    op.add_column('conversation_logs', sa.Column('user_id', sa.String(), nullable=True))
+    op.create_index('idx_conversation_logs_user_id', 'conversation_logs', ['user_id'])
+
+def downgrade():
+    op.drop_index('idx_conversation_logs_user_id', table_name='conversation_logs')
+    op.drop_column('conversation_logs', 'user_id')
+```
+
+**Benefits over raw SQL:**
+- ✅ Version control for database schema
+- ✅ Reversible changes (upgrade/downgrade)
+- ✅ Team collaboration (no manual SQL scripts)
+- ✅ Automatic migration generation
+- ✅ Production-safe deployments
 
 ---
 
@@ -289,6 +375,44 @@ Both work great - choose based on your needs! 🌺
 ## 📊 Conversation Analytics
 
 All conversations are logged to PostgreSQL for analytics and future model fine-tuning!
+
+### Database Schema
+
+**`conversations` table** - User-facing conversation management:
+- `id` (UUID) - Unique conversation identifier
+- `user_id` (String, nullable) - Linked to Clerk user (NULL for anonymous)
+- `title` (String) - Conversation name
+- `created_at`, `updated_at` (Timestamp) - Tracking
+- `deleted_at` (Timestamp, nullable) - Soft delete marker
+- `message_count` (Integer, computed) - Number of messages
+
+**`conversation_logs` table** - Complete message history:
+- All user/assistant messages
+- Conversation ID linkage
+- RAG usage, sources, response times
+- **Preserved even when conversations are soft-deleted**
+
+### View Recent Conversations
+```sql
+psql chamorro_rag -c "
+SELECT id, title, message_count, created_at
+FROM conversations
+WHERE deleted_at IS NULL
+ORDER BY updated_at DESC
+LIMIT 10;
+"
+```
+
+### Check Soft-Deleted Conversations
+```sql
+psql chamorro_rag -c "
+SELECT c.id, c.title, c.deleted_at, COUNT(cl.id) as message_count
+FROM conversations c
+LEFT JOIN conversation_logs cl ON c.id = cl.conversation_id
+WHERE c.deleted_at IS NOT NULL
+GROUP BY c.id, c.title, c.deleted_at;
+"
+```
 
 ### View Recent Conversations
 ```sql

@@ -6,6 +6,8 @@ aiohttp==3.13.2
     # via langchain-community
 aiosignal==1.4.0
     # via aiohttp
+alembic==1.17.2
+    # via llm-project (pyproject.toml)
 annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
@@ -37,12 +39,16 @@ certifi==2025.11.12
     #   httpx
     #   kubernetes
     #   requests
+cffi==2.0.0 ; platform_python_implementation != 'PyPy'
+    # via cryptography
 charset-normalizer==3.4.4
     # via requests
 chromadb==1.3.4
     # via
     #   llm-project (pyproject.toml)
     #   langchain-chroma
+clerk-backend-api==4.0.0
+    # via llm-project (pyproject.toml)
 click==8.3.0
     # via
     #   typer
@@ -55,6 +61,8 @@ colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
     #   uvicorn
 coloredlogs==15.0.1
     # via onnxruntime
+cryptography==45.0.7
+    # via clerk-backend-api
 dataclasses-json==0.6.7
     # via langchain-community
 distro==1.9.0
@@ -92,12 +100,15 @@ h11==0.16.0
 hf-xet==1.2.0 ; platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'arm64' or platform_machine == 'x86_64'
     # via huggingface-hub
 httpcore==1.0.9
-    # via httpx
+    # via
+    #   clerk-backend-api
+    #   httpx
 httptools==0.7.1
     # via uvicorn
 httpx==0.28.1
     # via
     #   chromadb
+    #   clerk-backend-api
     #   langgraph-sdk
     #   langsmith
     #   openai
@@ -170,8 +181,12 @@ langsmith==0.4.42
     #   langchain-classic
     #   langchain-community
     #   langchain-core
+mako==1.3.10
+    # via alembic
 markdown-it-py==4.0.0
     # via rich
+markupsafe==3.0.3
+    # via mako
 marshmallow==3.26.1
     # via dataclasses-json
 mdurl==0.1.2
@@ -270,9 +285,12 @@ pyasn1-modules==0.4.2
     # via google-auth
 pybase64==1.4.2
     # via chromadb
+pycparser==2.23 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'
+    # via cffi
 pydantic==2.12.4
     # via
     #   chromadb
+    #   clerk-backend-api
     #   fastapi
     #   langchain
     #   langchain-classic
@@ -287,6 +305,8 @@ pydantic-settings==2.12.0
     # via langchain-community
 pygments==2.19.2
     # via rich
+pyjwt==2.10.1
+    # via clerk-backend-api
 pypika==0.48.9
     # via chromadb
 pyproject-hooks==1.2.0
@@ -356,6 +376,7 @@ sniffio==1.3.1
     #   openai
 sqlalchemy==2.0.44
     # via
+    #   alembic
     #   langchain-classic
     #   langchain-community
     #   langchain-postgres
@@ -382,6 +403,7 @@ typer==0.19.2
 typing-extensions==4.15.0
     # via
     #   aiosignal
+    #   alembic
     #   anyio
     #   chromadb
     #   fastapi
