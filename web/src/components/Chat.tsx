@@ -355,20 +355,23 @@ End of Export
       {/* Main chat area */}
       <div className="flex flex-col flex-1 h-full w-full overflow-x-hidden">
         {/* Header - Fixed Position */}
-        <header className={`fixed top-0 right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${sidebarOpen ? 'md:left-64' : 'md:left-0'}`}>
+        <header className="fixed top-0 right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300">
           <div className="px-3 sm:px-6 py-2 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                {/* Sidebar toggle button - visible on mobile */}
+                {/* Sidebar toggle button - visible on mobile AND desktop */}
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="md:hidden p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
+                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
                   aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                  title="View conversations"
                 >
                   {/* Hamburger icon */}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                   </svg>
+                  {/* Label - hidden on very small screens */}
+                  <span className="hidden sm:inline text-sm font-medium">Chats</span>
                 </button>
                 
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">

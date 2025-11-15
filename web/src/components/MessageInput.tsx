@@ -133,7 +133,7 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
 
   return (
     <div className="pb-1 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
-      <div className="w-full sm:max-w-3xl sm:mx-auto">
+      <div className="w-full max-w-3xl mx-auto">
         {/* Image Preview */}
         {imagePreview && (
           <div className="mb-2 relative inline-block">

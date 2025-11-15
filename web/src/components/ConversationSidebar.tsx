@@ -25,6 +25,7 @@ export function ConversationSidebar({
 }: ConversationSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; conversationId: string } | null>(null);
 
@@ -68,8 +69,19 @@ export function ConversationSidebar({
   };
 
   const handleDelete = (conversationId: string) => {
-    onDeleteConversation(conversationId);
+    setDeleteConfirmId(conversationId);
     setContextMenu(null);
+  };
+  
+  const handleConfirmDelete = () => {
+    if (deleteConfirmId) {
+      onDeleteConversation(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
+  };
+  
+  const handleCancelDelete = () => {
+    setDeleteConfirmId(null);
   };
 
   const handleSave = async (conversationId: string) => {
@@ -101,23 +113,23 @@ export function ConversationSidebar({
   };
   return (
     <>
-      {/* Mobile backdrop overlay */}
+      {/* Backdrop overlay - mobile AND desktop */}
       {isOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
           onClick={onToggle}
           aria-hidden="true"
         />
       )}
       
-      {/* Sidebar */}
+      {/* Sidebar - fixed overlay on both mobile and desktop */}
       <div className={`
-        fixed md:relative top-0 left-0 h-full 
+        fixed top-0 left-0 h-full 
         bg-cream-50 dark:bg-gray-950
         border-r border-cream-300 dark:border-gray-800
         transform transition-all duration-300 ease-in-out z-50
         overflow-hidden
-        ${isOpen ? 'w-64' : 'w-0 md:w-0'}
+        ${isOpen ? 'w-64' : 'w-0'}
       `}>
         {/* Sidebar content - with opacity transition */}
         <div className={`
@@ -204,32 +216,8 @@ export function ConversationSidebar({
                 </div>
               )}
             </div>
-          </div>
         </div>
-
-      {/* Toggle button - visible on desktop only */}
-      <button
-        onClick={onToggle}
-        className={`
-          hidden md:block fixed top-4 z-50 p-2 rounded-lg
-          bg-cream-100 dark:bg-gray-900 hover:bg-cream-200 dark:hover:bg-gray-800
-          border border-cream-300 dark:border-gray-700
-          text-brown-700 dark:text-gray-300
-          shadow-lg transition-all duration-300
-          ${isOpen ? 'left-[calc(16rem+0.75rem)]' : 'left-3'}
-        `}
-        aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
-      >
-        {isOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-      </button>
-
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={onToggle}
-        />
-      )}
+      </div>
 
       {/* Context Menu */}
       {contextMenu && (
@@ -256,6 +244,37 @@ export function ConversationSidebar({
           >
             Delete
           </button>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 animate-fade-in" onClick={handleCancelDelete}>
+          <div 
+            className="bg-cream-50 dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-scale-in border border-cream-300 dark:border-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-3">
+              Clear conversation?
+            </h3>
+            <p className="text-sm text-brown-600 dark:text-gray-400 mb-6">
+              This will hide this conversation from your list. Your messages will be preserved for training purposes but won't be visible to you anymore.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelDelete}
+                className="flex-1 px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-800 dark:text-gray-200 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 px-4 py-2.5 bg-hibiscus-600 dark:bg-red-600 text-white rounded-xl hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors font-medium"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>
