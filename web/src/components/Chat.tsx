@@ -273,7 +273,7 @@ End of Export
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-[95px] sm:h-[130px] flex-shrink-0" aria-hidden="true"></div>
+      <div className="h-[140px] sm:h-[180px] flex-shrink-0" aria-hidden="true"></div>
 
       {/* Quick Phrases */}
       {messages.length === 0 && !loading && (
@@ -285,10 +285,10 @@ End of Export
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar overscroll-contain"
+        className="flex-1 overflow-y-scroll overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
+          overscrollBehaviorY: 'auto',
           paddingBottom: '100px' // Space for fixed input
         }}
       >
