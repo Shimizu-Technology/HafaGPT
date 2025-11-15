@@ -53,6 +53,15 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Database Migrations** - Alembic for schema version control
   - **Future-Ready** - Prepared for per-user conversations and billing integration
 
+- 💬 **Conversation Management:**
+  - **Create & Organize** - Create conversations with custom titles
+  - **List & Switch** - View all conversations, switch between topics
+  - **Rename** - Update conversation titles anytime
+  - **Soft Delete** - Hide conversations while preserving data for training
+  - **Message Counts** - Track messages per conversation
+  - **Auto-naming** - Conversations titled from first message
+  - **Persistence** - Active conversation maintained across refreshes
+
 ## 🚀 Quick Start
 
 ### Option 1: GitHub Codespaces
@@ -366,6 +375,44 @@ Both work great - choose based on your needs! 🌺
 ## 📊 Conversation Analytics
 
 All conversations are logged to PostgreSQL for analytics and future model fine-tuning!
+
+### Database Schema
+
+**`conversations` table** - User-facing conversation management:
+- `id` (UUID) - Unique conversation identifier
+- `user_id` (String, nullable) - Linked to Clerk user (NULL for anonymous)
+- `title` (String) - Conversation name
+- `created_at`, `updated_at` (Timestamp) - Tracking
+- `deleted_at` (Timestamp, nullable) - Soft delete marker
+- `message_count` (Integer, computed) - Number of messages
+
+**`conversation_logs` table** - Complete message history:
+- All user/assistant messages
+- Conversation ID linkage
+- RAG usage, sources, response times
+- **Preserved even when conversations are soft-deleted**
+
+### View Recent Conversations
+```sql
+psql chamorro_rag -c "
+SELECT id, title, message_count, created_at
+FROM conversations
+WHERE deleted_at IS NULL
+ORDER BY updated_at DESC
+LIMIT 10;
+"
+```
+
+### Check Soft-Deleted Conversations
+```sql
+psql chamorro_rag -c "
+SELECT c.id, c.title, c.deleted_at, COUNT(cl.id) as message_count
+FROM conversations c
+LEFT JOIN conversation_logs cl ON c.id = cl.conversation_id
+WHERE c.deleted_at IS NOT NULL
+GROUP BY c.id, c.title, c.deleted_at;
+"
+```
 
 ### View Recent Conversations
 ```sql
