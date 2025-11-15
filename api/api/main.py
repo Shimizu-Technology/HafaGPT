@@ -4,12 +4,13 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
-from fastapi import FastAPI, HTTPException, Request, Header
+from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
 import os
 import logging
+import base64
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -285,37 +286,71 @@ async def health_check():
 
 @app.post("/api/chat", response_model=ChatResponse, tags=["Chat"])
 async def chat(
-    request: ChatRequest,
-    authorization: Optional[str] = Header(None)
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    # Form parameters (for multipart/form-data with images)
+    message: Optional[str] = Form(None),
+    mode: Optional[str] = Form(None),
+    session_id: Optional[str] = Form(None),
+    conversation_id: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None)
 ):
     """
-    Send a message to the chatbot
+    Send a message to the chatbot (supports text and images)
+    
+    **Accepts:**
+    - `application/json` for text-only messages
+    - `multipart/form-data` for messages with images
     
     **Modes:**
     - `english`: General conversation (default)
     - `chamorro`: Chamorro-only immersion mode
     - `learn`: Learning mode with explanations
     
+    **Image Upload (Optional):**
+    - Upload an image of Chamorro text, documents, or signs
+    - Supported formats: JPEG, PNG, WebP, GIF
+    - The chatbot will read and translate the text in the image
+    
     **Authentication (Optional):**
     - Send `Authorization: Bearer <token>` header with Clerk JWT
     - Unauthenticated users are allowed (anonymous mode)
     - Authenticated users get their conversations tracked
     
-    **Example request:**
-    ```json
-    {
-        "message": "How do I say good morning?",
-        "mode": "english",
-        "session_id": "session_1234567890_abc",
-        "user_id": "user_2abc123def"
-    }
-    ```
+    **Example request (with image):**
+    - Content-Type: multipart/form-data
+    - message: "What does this say?"
+    - mode: "english"
+    - image: [file upload]
+    - session_id: "session_1234567890_abc"
     """
     try:
+        # Check if this is a JSON request (no image) or FormData request (with/without image)
+        content_type = request.headers.get('content-type', '')
+        
+        if 'application/json' in content_type:
+            # Parse JSON body for text-only messages
+            body = await request.json()
+            message = body.get('message')
+            mode = body.get('mode', 'english')
+            session_id = body.get('session_id')
+            conversation_id = body.get('conversation_id')
+            image = None
+        else:
+            # FormData is already parsed by Form() parameters above
+            mode = mode or 'english'
+        
+        # Validate required fields
+        if not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Message is required"
+            )
+        
         # Validate mode
         valid_modes = ["english", "chamorro", "learn"]
-        if request.mode not in valid_modes:
-            logger.warning(f"Invalid mode requested: {request.mode}")
+        if mode not in valid_modes:
+            logger.warning(f"Invalid mode requested: {mode}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
@@ -324,20 +359,39 @@ async def chat(
         # Verify user authentication (optional)
         user_id = await verify_user(authorization)
         
-        # Use user_id from request body if provided (fallback for testing)
-        if not user_id and request.user_id:
-            user_id = request.user_id
+        # Process image if present
+        image_base64 = None
+        if image:
+            # Validate file type
+            if not image.content_type or not image.content_type.startswith('image/'):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid file type. Please upload an image file (JPEG, PNG, WebP, GIF)"
+                )
+            
+            # Read and encode image
+            try:
+                image_data = await image.read()
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
+                logger.info(f"📸 Image uploaded: {image.filename} ({len(image_data)} bytes)")
+            except Exception as e:
+                logger.error(f"Failed to process image: {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to process image: {str(e)}"
+                )
         
-        logger.info(f"Chat request: mode={request.mode}, user_id={user_id or 'anonymous'}, session_id={request.session_id}")
+        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_image={image is not None}")
         
         # Get response from chatbot service
         result = get_chatbot_response(
-            message=request.message,
-            mode=request.mode,
+            message=message,
+            mode=mode,
             conversation_length=0,  # For now, stateless (no session history)
-            session_id=request.session_id,  # Pass session_id for logging
+            session_id=session_id,  # Pass session_id for logging
             user_id=user_id,  # Pass user_id for tracking
-            conversation_id=request.conversation_id  # Pass conversation_id for multi-conversation support
+            conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
+            image_base64=image_base64  # NEW: Pass base64-encoded image
         )
         
         # Convert sources to SourceInfo models
@@ -350,7 +404,7 @@ async def chat(
         
         return ChatResponse(
             response=result["response"],
-            mode=request.mode,
+            mode=mode,
             sources=sources,
             used_rag=result["used_rag"],
             used_web_search=result["used_web_search"],

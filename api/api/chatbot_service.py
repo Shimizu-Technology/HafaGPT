@@ -350,7 +350,8 @@ def get_chatbot_response(
     conversation_length: int = 0,
     session_id: str = None,
     user_id: str = None,
-    conversation_id: str = None  # Added
+    conversation_id: str = None,  # Added
+    image_base64: str = None  # NEW: Base64-encoded image
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -362,6 +363,7 @@ def get_chatbot_response(
         session_id: Session identifier for tracking conversations
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
+        image_base64: Optional base64-encoded image for vision analysis
     
     Returns:
         dict: {
@@ -393,6 +395,23 @@ def get_chatbot_response(
     # Build system prompt
     system_prompt = mode_config["prompt"]
     
+    # Add document analysis instructions if image is present
+    if image_base64:
+        system_prompt += """
+
+DOCUMENT ANALYSIS MODE:
+- You are analyzing a Chamorro language document/text via an uploaded image
+- Carefully read all visible Chamorro text in the image
+- Provide:
+  1. Full transcription of the Chamorro text you can see
+  2. English translation
+  3. Grammar explanations for key structures
+  4. Cultural context if relevant
+- If the text is unclear or partially visible, mention which parts you're uncertain about
+- If it appears to be homework, help explain the concepts and guide learning (don't just give direct answers)
+- Be thorough but friendly in your explanation
+"""
+    
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
@@ -414,18 +433,41 @@ def get_chatbot_response(
         # Update conversation_length for RAG decisions
         conversation_length = len(past_messages) // 2  # Divide by 2 to get message pairs
     
+    # Build user message (text + optional image)
+    if image_base64:
+        # Vision message with image
+        user_message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": message or "What does this say in Chamorro?"
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{image_base64}",
+                        "detail": "low"  # Cost-effective for text recognition
+                    }
+                }
+            ]
+        }
+    else:
+        # Regular text-only message
+        user_message = {"role": "user", "content": message}
+    
     # Add current user message
-    history.append({"role": "user", "content": message})
+    history.append(user_message)
     
     # Get LLM response
     try:
-        response = llm.responses.create(
+        response = llm.chat.completions.create(
             model="gpt-4o-mini",
             temperature=0.7,
-            input=history
+            messages=history
         )
         
-        response_text = response.output_text
+        response_text = response.choices[0].message.content
         
     except Exception as e:
         response_text = f"Error: {str(e)}"

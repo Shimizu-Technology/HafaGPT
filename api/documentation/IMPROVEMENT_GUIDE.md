@@ -10,6 +10,8 @@
 - ✅ **Clerk Authentication** - JWT-based user authentication (COMPLETED!)
 - ✅ **Conversation Management** - Multiple conversations per user (COMPLETED!)
 - ✅ **Web Search Tool** - Real-time information from the internet (COMPLETED!)
+- ✅ **Speech-to-Text Input** - Browser-native voice input (COMPLETED!)
+- ✅ **Image Upload (Phase 1)** - GPT-4o-mini Vision for document analysis (COMPLETED!)
 
 **Performance:**
 - Cloud (GPT-4o-mini): 2-8s responses, 99% accurate
@@ -48,302 +50,199 @@
 - **Current Events** - Answers questions about news, weather, events
 - **Fills Knowledge Gaps** - Supplements RAG with latest information
 
+### **Speech-to-Text Input** ✅
+- **Browser-Native** - Uses Web Speech API (Chrome, Safari)
+- **Hands-Free** - Speak your message instead of typing
+- **Visual Feedback** - Red pulsing button when recording
+- **Mobile Optimized** - Works great on mobile devices
+- **Zero Cost** - No API fees, uses browser built-in
+
+### **Image Upload (Phase 1)** ✅
+- **GPT-4o-mini Vision** - Read and translate Chamorro text in images
+- **Camera & Gallery** - Take photo or upload existing image
+- **Base64 Encoding** - No server-side storage in Phase 1
+- **Image Preview** - See image before and after sending
+- **Mobile Optimized** - Camera access on mobile devices
+- **Cost-Effective** - ~$0.0000127 per image with low detail
+
 ---
 
 ## 🎯 **ACTIVE ROADMAP** - Next Features to Implement
 
-### **Phase 1: Speech-to-Text Input** 🔴 **HIGH PRIORITY**
+### **Phase 1: Image Upload (Phase 2)** 🟡 **MEDIUM PRIORITY**
 
-**Status:** 📋 Ready to implement  
-**Complexity:** Very Easy  
-**Effort:** 30-60 minutes  
-**Cost:** FREE (uses browser's Web Speech API)
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 1-2 days  
+**Cost:** ~$0.02-0.10/month (AWS S3)
 
-**Why This Feature:**
-- 🎤 Practice speaking Chamorro out loud
-- ⚡ Faster input than typing
-- 📱 Perfect for mobile users
-- 🆓 No API costs - uses browser built-in
-- 🎯 Encourages active language practice
+**Current Implementation:**
+- ✅ GPT-4o-mini Vision working
+- ✅ Base64 image encoding
+- ✅ Camera & gallery upload
+- ✅ Image preview in chat history
+- ❌ No server-side storage (images not persisted)
 
-**Implementation:**
-```typescript
-// src/components/MessageInput.tsx - Add speech recognition
+**Phase 2 Goals:**
+- 📦 **Persistent Storage** - Save images to AWS S3
+- 🔗 **Reference URLs** - Store S3 URLs in database
+- 📊 **Analytics** - Track image upload patterns
+- 🎯 **Homework Archive** - Build library of solved homework
 
-import { useState, useRef } from 'react'
+**Implementation Plan:**
+```python
+# api/main.py - Add S3 upload
 
-export function MessageInput({ input, setInput, onSend }) {
-  const [isListening, setIsListening] = useState(false)
-  const recognitionRef = useRef<any>(null)
+import boto3
+from datetime import datetime
 
-  const startListening = () => {
-    // Check browser support
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) {
-      alert('Speech recognition not supported in this browser. Try Chrome or Safari.')
-      return
-    }
+s3_client = boto3.client('s3')
+BUCKET_NAME = os.getenv('AWS_S3_BUCKET')
 
-    // Create recognition instance
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false  // Stop after one phrase
-    recognition.interimResults = false
-    recognition.lang = 'en-US'  // Can also try 'ch-CH' for Chamorro if available
-
-    recognition.onstart = () => {
-      setIsListening(true)
-    }
-
-    recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript
-      setInput(input + transcript)  // Append to existing text
-    }
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error)
-      setIsListening(false)
-    }
-
-    recognition.onend = () => {
-      setIsListening(false)
-    }
-
-    recognitionRef.current = recognition
-    recognition.start()
-  }
-
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop()
-    }
-  }
-
-  return (
-    <div className="flex gap-2">
-      {/* Microphone Button */}
-      <button
-        onClick={isListening ? stopListening : startListening}
-        className={`p-3 rounded-xl transition-colors ${
-          isListening 
-            ? 'bg-red-500 text-white animate-pulse' 
-            : 'hover:bg-cream-200 dark:hover:bg-gray-700'
-        }`}
-        title={isListening ? 'Stop recording' : 'Start voice input'}
-      >
-        {isListening ? '🔴' : '🎤'}
-      </button>
-
-      {/* Text Input */}
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Type or speak your message..."
-        className="flex-1 p-3 rounded-xl border-2"
-      />
-
-      {/* Send Button */}
-      <button onClick={onSend}>Send</button>
-    </div>
-  )
-}
+@app.post("/api/chat")
+async def chat(..., image: Optional[UploadFile] = File(None)):
+    image_url = None
+    
+    if image:
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"chamorro_uploads/{timestamp}_{image.filename}"
+        
+        # Upload to S3
+        image_data = await image.read()
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=filename,
+            Body=image_data,
+            ContentType=image.content_type
+        )
+        
+        # Get public URL
+        image_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        
+        # Still base64 encode for GPT-4o-mini
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+    
+    # Log message with image_url
+    log_conversation(..., image_url=image_url)
 ```
 
-**Browser Support:**
-- ✅ Chrome/Edge: Excellent support
-- ✅ Safari (iOS/Mac): Good support
-- ⚠️ Firefox: Limited support
-- ❌ Older browsers: Fallback to typing
+**Database Updates:**
+```sql
+-- Add image_url column to conversation_logs
+ALTER TABLE conversation_logs 
+ADD COLUMN image_url TEXT;
 
-**Success Criteria:**
-- [ ] Microphone button visible
-- [ ] Click to start/stop recording
-- [ ] Transcribed text appears in input box
-- [ ] Can edit text before sending
-- [ ] Visual feedback when recording (red pulse)
-- [ ] Works on mobile devices
+-- Query images by user
+SELECT message_text, image_url, created_at
+FROM conversation_logs
+WHERE user_id = 'user_123' AND image_url IS NOT NULL
+ORDER BY created_at DESC;
+```
 
-**User Experience:**
-1. User clicks microphone button 🎤
-2. Browser asks for microphone permission (first time only)
-3. User speaks: "How do I say hello in Chamorro?"
-4. Text appears in input box automatically
-5. User can edit if needed, then press Send
+**Benefits:**
+- 📚 Build homework archive for future reference
+- 📊 Analyze which types of documents users struggle with
+- 🎓 Create training dataset for fine-tuning
+- 🔍 Search past homework by image
 
-**Cost:** FREE! No API needed - uses browser's built-in Web Speech API
+**Cost Estimate:**
+- AWS S3: $0.023/GB storage + $0.0004/1000 requests
+- Example: 100 images/month @ 500KB each = 50MB = $0.001/month
+- Plus minimal request costs
+- **Total: ~$0.02-0.10/month**
 
 ---
 
-### **Phase 2: Image Upload for Homework** 🔴 **HIGH PRIORITY**
+### **Phase 2: General File Upload** 🟡 **MEDIUM PRIORITY**
 
-**Status:** 📋 Ready to implement  
-**Complexity:** Easy  
-**Effort:** 1-2 days  
-**Cost:** ~$0.10-0.50/month
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 2-3 days  
+**Cost:** Same as image storage
 
 **Why This Feature:**
-- 📸 Take photo of Chamorro homework
-- 🎯 Perfect for your daughter's use case
-- 💰 GPT-4o-mini vision is affordable ($0.0000127/image)
-- 📱 Works great on mobile PWA
+- 📄 Upload PDFs, Word docs, text files
+- 📚 Analyze multi-page Chamorro documents
+- 🎓 Process entire homework assignments at once
+- 📖 Extract text from scanned documents (OCR)
 
-**Backend Implementation:**
+**Supported File Types:**
+- 📄 **PDF** - Extract text, analyze structure
+- 📝 **Word (.docx)** - Parse formatted documents
+- 📋 **Text (.txt)** - Plain text Chamorro files
+- 🖼️ **Images** (already supported)
+
+**Implementation:**
 ```python
-# api/main.py - Update chat endpoint
-
-from fastapi import File, UploadFile, Form
-import base64
+# Backend
+from PyPDF2 import PdfReader
+from docx import Document
+import pytesseract  # For OCR
 
 @app.post("/api/chat")
 async def chat(
     message: str = Form(...),
-    image: Optional[UploadFile] = File(None),  # NEW!
-    conversation_id: Optional[str] = Form(None),
-    mode: str = Form("english"),
-    user_id: Optional[str] = Depends(verify_user)
+    file: Optional[UploadFile] = File(None),  # Renamed from 'image'
+    ...
 ):
-    messages = []
+    file_content = None
     
-    if image:
-        # Read and encode image
-        image_data = await image.read()
-        base64_image = base64.b64encode(image_data).decode('utf-8')
+    if file:
+        if file.content_type == 'application/pdf':
+            # Extract PDF text
+            pdf = PdfReader(io.BytesIO(await file.read()))
+            file_content = "\n".join([page.extract_text() for page in pdf.pages])
+            
+        elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            # Extract Word document text
+            doc = Document(io.BytesIO(await file.read()))
+            file_content = "\n".join([para.text for para in doc.paragraphs])
+            
+        elif file.content_type.startswith('image/'):
+            # Use existing image handling (GPT-4o-mini Vision)
+            # OR use OCR for text extraction
+            image_data = await file.read()
+            file_content = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
         
-        # Format for GPT-4o-mini vision
+        # Add file content to prompt
         messages.append({
             "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": message or "What does this say in Chamorro?"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{base64_image}",
-                        "detail": "low"  # Cost-effective, good for text
-                    }
-                }
-            ]
+            "content": f"{message}\n\nDocument content:\n{file_content}"
         })
-    else:
-        # Regular text-only message
-        messages.append({"role": "user", "content": message})
-    
-    # Call OpenAI with vision support
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-        temperature=0.7
-    )
-    
-    return {"response": response.choices[0].message.content}
 ```
 
-**Frontend Implementation:**
+**Frontend Updates:**
 ```typescript
-// src/components/MessageInput.tsx - Add image upload
+// Change accept attribute to allow more file types
+<input
+  type="file"
+  accept="image/*,.pdf,.docx,.txt"
+  onChange={handleFileSelect}
+/>
 
-export function MessageInput({ onSend }) {
-  const [image, setImage] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImage(file)
-      setPreview(URL.createObjectURL(file))
-    }
-  }
-
-  const handleSend = async () => {
-    const formData = new FormData()
-    formData.append('message', input)
-    formData.append('conversation_id', conversationId)
-    if (image) {
-      formData.append('image', image)
-    }
-
-    const response = await fetch(`${API_URL}/chat`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData
-    })
-
-    // Clear image after sending
-    setImage(null)
-    setPreview(null)
-  }
-
-  return (
-    <div>
-      {/* Image Preview */}
-      {preview && (
-        <div className="mb-2 relative">
-          <img src={preview} className="max-h-32 rounded-lg" />
-          <button 
-            onClick={() => { setImage(null); setPreview(null) }}
-            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      <div className="flex gap-2">
-        {/* Image Upload Button */}
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          className="p-3 rounded-xl hover:bg-cream-200"
-          title="Upload image"
-        >
-          📷
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"  // Opens camera on mobile
-          onChange={handleImageSelect}
-          className="hidden"
-        />
-
-        {/* Text Input */}
-        <textarea value={input} onChange={(e) => setInput(e.target.value)} />
-        
-        {/* Send Button */}
-        <button onClick={handleSend}>Send</button>
-      </div>
-    </div>
-  )
-}
+// Display file type icon based on extension
+{selectedFile && (
+  <div className="flex items-center gap-2">
+    {selectedFile.type.startsWith('image/') && <Camera />}
+    {selectedFile.type === 'application/pdf' && <FileText />}
+    {selectedFile.type.includes('word') && <FileText />}
+    <span>{selectedFile.name}</span>
+  </div>
+)}
 ```
 
 **Success Criteria:**
-- [ ] Camera button visible on mobile
-- [ ] Can take photo directly from camera
-- [ ] Can upload from photo library
-- [ ] Image preview shows before sending
-- [ ] GPT-4o-mini correctly reads Chamorro text
-- [ ] Works on both mobile and desktop
-
-**Cost Estimate:**
-```
-GPT-4o-mini Vision Pricing:
-- Low detail: ~85 tokens per image = $0.0000127/image
-- High detail: ~765 tokens = $0.000115/image
-
-Example monthly usage:
-- 100 homework photos/month (low detail)
-- = 100 × $0.0000127 = $0.00127
-- ≈ $0.13/month for images!
-- + ~$2-5 for text responses
-- Total: ~$2-6/month 🎉
-```
+- [ ] Upload PDF files
+- [ ] Upload Word documents
+- [ ] Extract text from multi-page PDFs
+- [ ] Display file name and type in chat
+- [ ] Store file URL in database (with S3)
+- [ ] Download/view uploaded files later
 
 ---
 
-### **Phase 2: Flashcards & Learning Tools** 🟡
+### **Phase 3: Flashcards & Learning Tools** 🟢 **LOW PRIORITY**
 
 **Status:** 📋 Planned  
 **Complexity:** Medium  
@@ -433,22 +332,25 @@ CREATE TABLE user_flashcard_progress (
 | **Phase 1** | ✅ Conversation Management | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Mobile UX Optimization | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Web Search Tool | - | ✅ **COMPLETED** |
-| **Phase 2** | Speech-to-Text | 30-60 min | 📋 Ready to implement |
-| **Phase 3** | Image Upload | 1-2 days | 📋 Ready to implement |
-| **Phase 4** | Flashcards | 2-3 days | 📋 Planned |
-| **Total** | Remaining Features | **3-5 days** | 📋 Ready! |
+| **Phase 1** | ✅ Speech-to-Text | - | ✅ **COMPLETED** |
+| **Phase 1** | ✅ Image Upload (Phase 1) | - | ✅ **COMPLETED** |
+| **Phase 2** | Image Storage (S3) | 1-2 days | 📋 Planned |
+| **Phase 2** | File Upload (PDF/Word) | 2-3 days | 📋 Planned |
+| **Phase 3** | Flashcards | 2-3 days | 📋 Planned |
+| **Total** | Remaining Features | **5-8 days** | 📋 Ready! |
 
 ---
 
 ## 🎯 **Next Steps**
 
 **Ready to implement next:**
-1. **Image Upload** - Allow users to take photos of Chamorro homework or signs
-2. **Flashcards** - Generate personalized vocabulary learning from conversations
+1. **Image Storage (S3)** - Persist uploaded images for homework archive
+2. **File Upload** - Support PDFs and Word documents
+3. **Flashcards** - Generate personalized vocabulary learning from conversations
 
 **Questions:**
-- Do you want to implement image upload first (great for homework help)?
-- Or would you prefer flashcards (structured vocabulary learning)?
+- Do you want to implement S3 storage next (persist images for homework archive)?
+- Or would you prefer file upload support (PDFs, Word docs)?
 - Any other features you'd like to prioritize?
 
 ---
