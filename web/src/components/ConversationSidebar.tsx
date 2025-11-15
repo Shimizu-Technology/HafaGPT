@@ -107,7 +107,7 @@ export function ConversationSidebar({
           border border-cream-300 dark:border-gray-700
           text-brown-700 dark:text-gray-300
           shadow-lg transition-all duration-300
-          ${isOpen ? 'left-[calc(16rem+0.75rem)]' : 'left-3'}
+          ${isOpen ? 'left-[calc(16rem+0.75rem)] md:left-[calc(16rem+0.75rem)]' : 'left-3'}
         `}
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
