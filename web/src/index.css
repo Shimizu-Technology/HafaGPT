@@ -17,16 +17,24 @@
 
   html {
     scroll-behavior: smooth;
-    /* Ensure full height on mobile */
-    height: 100%;
+    /* Lock viewport height to prevent keyboard resize */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
   }
 
   body {
     height: 100%;
+    overflow: hidden;
+    /* Prevent pull-to-refresh and overscroll */
+    overscroll-behavior: none;
+    position: fixed;
+    width: 100%;
   }
 
   #root {
     height: 100%;
+    overflow: hidden;
   }
 }
 
