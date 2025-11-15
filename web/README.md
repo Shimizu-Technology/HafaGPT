@@ -18,6 +18,13 @@ A beautiful, modern React web interface for learning Chamorro (the native langua
   - Source citations with page numbers
   - Response time tracking
 
+- **🎤 Speech-to-Text Input:**
+  - Click microphone button to speak your question
+  - Automatic transcription to text (FREE - uses browser's Web Speech API)
+  - Edit transcribed text before sending
+  - Visual feedback with red pulse when recording
+  - Works on Chrome, Safari, and modern browsers
+
 ### 💬 Conversation Management
 - **Create & Organize** - Multiple conversations for different learning topics
 - **Auto-naming** - Conversations titled from your first message
@@ -94,9 +101,16 @@ Output in `dist/` directory.
 
 ### Basic Chat
 1. Select a learning mode (English/Chamorro/Learn)
-2. Type your message or question
+2. Type your message or click 🎤 to speak
 3. Get AI-powered responses with sources
 4. Continue the conversation naturally
+
+### Using Voice Input
+1. Click the microphone button 🎤
+2. Allow microphone access (first time only)
+3. Speak your question clearly
+4. Text appears automatically in the input box
+5. Edit if needed, then press Send
 
 ### Managing Conversations
 - **New Chat**: Click "+ New chat" button
