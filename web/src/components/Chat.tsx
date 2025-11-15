@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Menu } from 'lucide-react';
+import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -19,7 +19,7 @@ export function Chat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { 
@@ -160,7 +160,10 @@ export function Chat() {
       const newConv = await createConversation('New Chat');
       setMessages([]);
       setActiveConversationId(newConv.id);
-      setSidebarOpen(false); // Close sidebar on mobile
+      // Close sidebar only on mobile
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
     } catch (err) {
       console.error('Failed to create conversation:', err);
     }
@@ -169,7 +172,10 @@ export function Chat() {
   const handleSelectConversation = async (conversationId: string) => {
     setActiveConversationId(conversationId);
     setMessages([]); // TODO: Load messages from API
-    setSidebarOpen(false); // Close sidebar on mobile
+    // Close sidebar only on mobile
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -287,25 +293,16 @@ End of Export
         onNewConversation={handleNewConversation}
         onDeleteConversation={handleDeleteConversation}
         isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
       {/* Main chat area */}
       <div className="flex flex-col flex-1 h-full">
         {/* Header - Fixed Position */}
-        <header className="fixed top-0 left-0 md:left-64 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
+        <header className={`fixed top-0 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${sidebarOpen ? 'left-64' : 'left-0'}`}>
           <div className="px-3 sm:px-6 py-2 sm:py-4">
             <div className="flex items-center justify-between max-w-5xl mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                {/* Hamburger menu for mobile */}
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="md:hidden p-1.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300"
-                  aria-label="Toggle sidebar"
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
                   🌺
                 </div>
