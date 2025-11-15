@@ -175,7 +175,8 @@ def log_conversation(
     used_rag: bool,
     used_web_search: bool,
     response_time: float,
-    session_id: str = None
+    session_id: str = None,
+    user_id: str = None
 ):
     """
     Log conversation to PostgreSQL database for future training/analysis.
@@ -189,6 +190,7 @@ def log_conversation(
         used_web_search: Whether web search was used
         response_time: Time taken to generate response
         session_id: Session identifier for tracking conversations
+        user_id: Optional user ID from Clerk authentication
     """
     try:
         import psycopg
@@ -200,14 +202,15 @@ def log_conversation(
         conn = psycopg.connect(database_url)
         cursor = conn.cursor()
         
-        # Insert conversation log
+        # Insert conversation log (with user_id)
         cursor.execute("""
             INSERT INTO conversation_logs (
-                session_id, mode, user_message, bot_response,
+                session_id, user_id, mode, user_message, bot_response,
                 sources_used, used_rag, used_web_search, response_time_seconds
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             session_id,
+            user_id,  # Add user_id
             mode,
             user_message,
             bot_response,
@@ -342,7 +345,8 @@ def get_chatbot_response(
     message: str,
     mode: str = "english",
     conversation_length: int = 0,
-    session_id: str = None
+    session_id: str = None,
+    user_id: str = None
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -352,6 +356,7 @@ def get_chatbot_response(
         mode: Chat mode ("english", "chamorro", or "learn")
         conversation_length: Number of messages so far
         session_id: Session identifier for tracking conversations
+        user_id: Optional user ID from Clerk authentication
     
     Returns:
         dict: {
@@ -441,7 +446,8 @@ def get_chatbot_response(
         used_rag=used_rag,
         used_web_search=use_web,
         response_time=response_time,
-        session_id=session_id
+        session_id=session_id,
+        user_id=user_id  # Add user_id
     )
     
     return {

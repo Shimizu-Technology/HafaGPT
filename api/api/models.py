@@ -19,13 +19,18 @@ class ChatRequest(BaseModel):
         default=None,
         description="Optional session ID for conversation continuity"
     )
+    user_id: Optional[str] = Field(
+        default=None,
+        description="Optional user ID from Clerk authentication"
+    )
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "message": "How do I say good morning?",
-                    "mode": "english"
+                    "mode": "english",
+                    "user_id": "user_2abc123def"
                 },
                 {
                     "message": "Håfa adai?",

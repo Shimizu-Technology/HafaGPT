@@ -4,7 +4,7 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
@@ -13,6 +13,7 @@ import logging
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Optional
 
 from .models import (
     ChatRequest,
@@ -22,6 +23,15 @@ from .models import (
     SourceInfo
 )
 from .chatbot_service import get_chatbot_response
+
+# Clerk for authentication
+try:
+    from clerk_backend_api import Clerk
+    CLERK_AVAILABLE = True
+except ImportError:
+    CLERK_AVAILABLE = False
+    logger_temp = logging.getLogger(__name__)
+    logger_temp.warning("⚠️  clerk-backend-api not installed. Authentication disabled.")
 
 # Add parent directory to path for root-level imports
 import sys
@@ -42,6 +52,45 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Initialize Clerk client (if available and configured)
+clerk = None
+if CLERK_AVAILABLE and os.getenv("CLERK_SECRET_KEY"):
+    try:
+        clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
+        logger.info(f"✅ Clerk initialized: {os.getenv('CLERK_SECRET_KEY')[:15]}...")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize Clerk: {e}")
+else:
+    if not os.getenv("CLERK_SECRET_KEY"):
+        logger.warning("⚠️  CLERK_SECRET_KEY not set. Running without authentication.")
+
+async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[str]:
+    """
+    Verify Clerk JWT token and return user ID.
+    Returns None if no token (allows anonymous users for now).
+    """
+    if not authorization:
+        return None  # Anonymous user
+    
+    if not clerk:
+        logger.warning("⚠️  Clerk not initialized. Accepting request without verification.")
+        return None
+    
+    try:
+        # Extract token from "Bearer <token>"
+        token = authorization.replace("Bearer ", "")
+        
+        # Verify JWT with Clerk
+        session = clerk.sessions.verify_token(token)
+        user_id = session.user_id
+        
+        logger.info(f"✅ Authenticated user: {user_id}")
+        return user_id
+        
+    except Exception as e:
+        logger.warning(f"⚠️  Invalid auth token: {e}")
+        return None  # Invalid token, treat as anonymous
 
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
 rate_limit_storage = defaultdict(list)
@@ -184,7 +233,10 @@ async def health_check():
 
 
 @app.post("/api/chat", response_model=ChatResponse, tags=["Chat"])
-async def chat(request: ChatRequest):
+async def chat(
+    request: ChatRequest,
+    authorization: Optional[str] = Header(None)
+):
     """
     Send a message to the chatbot
     
@@ -193,12 +245,18 @@ async def chat(request: ChatRequest):
     - `chamorro`: Chamorro-only immersion mode
     - `learn`: Learning mode with explanations
     
+    **Authentication (Optional):**
+    - Send `Authorization: Bearer <token>` header with Clerk JWT
+    - Unauthenticated users are allowed (anonymous mode)
+    - Authenticated users get their conversations tracked
+    
     **Example request:**
     ```json
     {
         "message": "How do I say good morning?",
         "mode": "english",
-        "session_id": "session_1234567890_abc"
+        "session_id": "session_1234567890_abc",
+        "user_id": "user_2abc123def"
     }
     ```
     """
@@ -212,14 +270,22 @@ async def chat(request: ChatRequest):
                 detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
             )
         
-        logger.info(f"Chat request: mode={request.mode}, session_id={request.session_id}")
+        # Verify user authentication (optional)
+        user_id = await verify_user(authorization)
+        
+        # Use user_id from request body if provided (fallback for testing)
+        if not user_id and request.user_id:
+            user_id = request.user_id
+        
+        logger.info(f"Chat request: mode={request.mode}, user_id={user_id or 'anonymous'}, session_id={request.session_id}")
         
         # Get response from chatbot service
         result = get_chatbot_response(
             message=request.message,
             mode=request.mode,
             conversation_length=0,  # For now, stateless (no session history)
-            session_id=request.session_id  # Pass session_id for logging
+            session_id=request.session_id,  # Pass session_id for logging
+            user_id=user_id  # Pass user_id for tracking
         )
         
         # Convert sources to SourceInfo models
