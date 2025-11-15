@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.png'],
       manifest: {
-        name: 'Chamorro Language Tutor - HafaGPT',
+        name: 'HåfaGPT - Chamorro Language Tutor',
         short_name: 'HåfaGPT',
         description: 'Learn Chamorro language with AI-powered assistance. Practice Chamorro words, phrases, grammar, and culture.',
         theme_color: '#E85D4B',

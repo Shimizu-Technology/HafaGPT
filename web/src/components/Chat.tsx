@@ -214,9 +214,9 @@ End of Export
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
-      {/* Header */}
-      <header className="border-b border-cream-300 dark:border-gray-800 bg-cream-50/80 dark:bg-gray-900/80 backdrop-blur-xl sticky top-0 z-10 flex-shrink-0">
+    <div className="flex flex-col h-[100dvh] bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-hidden">
+      {/* Header - Fixed Position */}
+      <header className="fixed top-0 left-0 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
         <div className="px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between max-w-5xl mx-auto gap-3">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -224,8 +224,8 @@ End of Export
                 🌺
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg md:text-xl font-bold text-brown-800 dark:text-white truncate">
-                  Chamorro Language Tutor
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate">
+                  HåfaGPT
                 </h1>
                 <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 truncate transition-all duration-500">
                   <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
@@ -269,6 +269,9 @@ End of Export
         <ModeSelector mode={mode} onModeChange={setMode} />
       </header>
 
+      {/* Spacer for fixed header */}
+      <div className="h-[120px] sm:h-[130px] flex-shrink-0" aria-hidden="true"></div>
+
       {/* Quick Phrases */}
       {messages.length === 0 && !loading && (
         <div className="flex-shrink-0">
@@ -276,13 +279,14 @@ End of Export
         </div>
       )}
 
-      {/* Messages Area */}
+      {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar overscroll-contain"
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y'
+          touchAction: 'pan-y',
+          paddingBottom: '100px' // Space for fixed input
         }}
       >
         <div className="max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
@@ -321,8 +325,8 @@ End of Export
         </div>
       </div>
 
-      {/* Message Input */}
-      <div className="relative flex-shrink-0">
+      {/* Message Input - Fixed at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 safe-area-bottom">
         {/* Scroll to Bottom Button */}
         {showScrollButton && (
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-10 animate-scale-in">
