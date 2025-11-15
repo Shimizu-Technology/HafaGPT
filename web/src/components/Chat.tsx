@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
-import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -18,7 +17,6 @@ export function Chat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -157,7 +155,7 @@ Mode: ${mode}
 
 ${'='.repeat(60)}
 
-${messages.map((msg, i) => {
+${messages.map((msg) => {
   const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'Unknown';
   const role = msg.role === 'user' ? 'You' : 'Assistant';
   let content = `[${time}] ${role}:\n${msg.content}\n`;
@@ -227,10 +225,8 @@ End of Export
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate">
                   HåfaGPT
                 </h1>
-                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 truncate transition-all duration-500">
-                  <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                  <span className="text-brown-500 dark:text-gray-500 mx-1">•</span>
-                  <span className="text-brown-500 dark:text-gray-500">{greeting.english}</span>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 truncate">
+                  Expert in Chamorro language, culture & Guam
                 </p>
               </div>
             </div>
