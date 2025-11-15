@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -100,13 +100,6 @@ export function Chat() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         messageInputRef.current?.focus();
-      }
-      // Cmd/Ctrl + L - Clear chat
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault();
-        if (messages.length > 0) {
-          setShowClearConfirm(true);
-        }
       }
       // Escape - Close modal
       if (e.key === 'Escape') {
@@ -397,31 +390,20 @@ End of Export
               
               <button
                 onClick={toggleTheme}
-                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
+                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
               </button>
               {messages.length > 0 && (
-                <>
-                  <button
-                    onClick={() => setShowExportModal(true)}
-                    className="hidden sm:flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
-                    aria-label="Export chat"
-                    title="Export chat history"
-                  >
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </button>
-                  <button
-                    onClick={() => setShowClearConfirm(true)}
-                    className="p-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
-                    aria-label="Clear chat"
-                    title="Clear chat (⌘L)"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    <span className="hidden sm:inline">Clear</span>
-                  </button>
-                </>
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  className="hidden sm:flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center"
+                  aria-label="Export chat"
+                  title="Export chat history"
+                >
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
               )}
             </div>
           </div>

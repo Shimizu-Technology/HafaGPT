@@ -204,7 +204,7 @@ export function ConversationSidebar({
                               e.stopPropagation();
                               handleDelete(conversation.id);
                             }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity"
+                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity flex items-center justify-center"
                             title="Delete conversation"
                           >
                             <Trash2 className="w-3.5 h-3.5 text-hibiscus-600 dark:text-red-400" />
