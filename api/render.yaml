@@ -3,7 +3,7 @@ services:
     name: hafagpt-api
     runtime: python
     plan: free
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && alembic upgrade head
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT --timeout-keep-alive 300
     healthCheckPath: /api/health
     envVars:
@@ -13,6 +13,10 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: EMBEDDING_MODE
+        value: openai
       - key: ALLOWED_ORIGINS
         value: "*"
       - key: RATE_LIMIT_REQUESTS
