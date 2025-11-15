@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
+import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -17,6 +18,7 @@ export function Chat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
+  const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -227,6 +229,11 @@ End of Export
                 </h1>
                 <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 truncate">
                   Expert in Chamorro language, culture & Guam
+                </p>
+                <p className="text-[10px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate mt-0.5 transition-all duration-500">
+                  <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
+                  <span className="mx-1">•</span>
+                  <span>{greeting.english}</span>
                 </p>
               </div>
             </div>
