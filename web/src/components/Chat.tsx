@@ -289,7 +289,7 @@ End of Export
         style={{ 
           WebkitOverflowScrolling: 'touch',
           overscrollBehaviorY: 'auto',
-          paddingBottom: '100px' // Space for fixed input
+          paddingBottom: '140px' // Space for fixed input + disclaimer
         }}
       >
         <div className="max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
