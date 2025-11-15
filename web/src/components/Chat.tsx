@@ -3,12 +3,15 @@ import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from '
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
+import { useConversations } from '../hooks/useConversations';
+import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 import { QuickPhrases } from './QuickPhrases';
 import { WelcomeMessage } from './WelcomeMessage';
 import { LoadingIndicator } from './LoadingIndicator';
+import { ConversationSidebar } from './ConversationSidebar';
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -16,34 +19,63 @@ export function Chat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  // Default sidebar open on desktop, closed on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768; // md breakpoint
+    }
+    return true;
+  });
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
+  const { 
+    conversations, 
+    activeConversationId,
+    setActiveConversationId,
+    createConversation,
+    deleteConversation,
+    fetchConversations,
+    fetchConversationMessages,
+    updateConversationTitle
+  } = useConversations();
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load messages from localStorage on mount
+  // Load messages when activeConversationId changes
   useEffect(() => {
-    const savedMessages = localStorage.getItem('chamorro_messages');
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages);
-        setMessages(parsed);
-        console.log('💬 Restored', parsed.length, 'messages from localStorage');
-      } catch (e) {
-        console.error('Failed to parse saved messages:', e);
-        localStorage.removeItem('chamorro_messages');
+    const loadMessages = async () => {
+      if (!activeConversationId) {
+        setMessages([]);
+        return;
       }
-    }
-  }, []);
 
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('chamorro_messages', JSON.stringify(messages));
-    }
-  }, [messages]);
+      try {
+        const apiMessages = await fetchConversationMessages(activeConversationId);
+        // Convert API messages to ChatMessage format
+        const chatMessages: ChatMessage[] = apiMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp).getTime(),
+          sources: msg.sources?.map(src => ({
+            name: src.name,
+            page: src.page ?? null
+          })) || [],
+          used_rag: msg.used_rag || false,
+          used_web_search: msg.used_web_search || false,
+          response_time: undefined // API doesn't return this per message
+        }));
+        setMessages(chatMessages);
+      } catch (err) {
+        console.error('Failed to load messages:', err);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]); // fetchConversationMessages is stable, no need to include
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -85,15 +117,41 @@ export function Chat() {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
+      const isScrollable = scrollHeight > clientHeight;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
-      setShowScrollButton(!isNearBottom && messages.length > 2);
+      
+      // Only show button if:
+      // 1. There are messages to show
+      // 2. Container is actually scrollable
+      // 3. User has scrolled up (not near bottom)
+      setShowScrollButton(messages.length > 0 && isScrollable && !isNearBottom);
     };
 
+    // Check immediately on mount/update
+    handleScroll();
+    
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
 
   const handleSend = async (message: string) => {
+    let currentConversationId = activeConversationId;
+
+    // Create conversation if none exists
+    if (!currentConversationId) {
+      try {
+        // Generate title from the message immediately (first 50 chars)
+        const generatedTitle = message.trim().slice(0, 50);
+        const newConv = await createConversation(generatedTitle);
+        currentConversationId = newConv.id;
+        setActiveConversationId(newConv.id);
+      } catch (err) {
+        console.error('Failed to create conversation:', err);
+        setError('Failed to create conversation');
+        return;
+      }
+    }
+
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
@@ -103,7 +161,7 @@ export function Chat() {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await sendMessage(message, mode);
+      const response = await sendMessage(message, mode, currentConversationId);
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response.response,
@@ -114,18 +172,67 @@ export function Chat() {
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, assistantMessage]);
+      
+      // Refresh conversations to update message count in sidebar
+      await fetchConversations();
     } catch (err) {
       console.error('Failed to send message:', err);
     }
   };
 
-  const handleClearChat = () => {
+  const handleNewConversation = async () => {
+    try {
+      // Don't create conversation yet - just clear messages
+      // Conversation will be created when user sends first message
+      setActiveConversationId(null);
+      setMessages([]);
+      // Close sidebar only on mobile
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
+    }
+  };
+
+  const handleSelectConversation = async (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    // Messages will be loaded automatically by useEffect when activeConversationId changes
+    // Close sidebar only on mobile
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+      if (conversationId === activeConversationId) {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (activeConversationId) {
+      // Delete the conversation from the database
+      try {
+        await deleteConversation(activeConversationId);
+        setActiveConversationId(null);
+      } catch (err) {
+        console.error('Failed to delete conversation:', err);
+        setError('Failed to clear conversation');
+        return;
+      }
+    }
+    
     setMessages([]);
     setShowClearConfirm(false);
     setError(null);
     resetSession(); // Start a new conversation session
-    localStorage.removeItem('chamorro_messages'); // Clear saved messages
-    console.log('🗑️  Cleared messages from localStorage');
+    console.log('🗑️  Cleared and deleted conversation');
   };
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -214,30 +321,59 @@ End of Export
   };
 
   return (
-    <div className="flex flex-col h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-hidden">
-      {/* Header - Fixed Position */}
-      <header className="fixed top-0 left-0 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
-        <div className="px-3 sm:px-6 py-2 sm:py-4">
-          <div className="flex items-center justify-between max-w-5xl mx-auto gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
-                🌺
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-base sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
-                  HåfaGPT
-                </h1>
-                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight">
-                  Expert in Chamorro language, culture & Guam
-                </p>
-                <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden sm:block">
-                  <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                  <span className="mx-1">•</span>
+    <div className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
+      {/* Sidebar */}
+      <ConversationSidebar
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={updateConversationTitle}
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
+
+      {/* Main chat area */}
+      <div className="flex flex-col flex-1 h-full w-full overflow-x-hidden">
+        {/* Header - Fixed Position */}
+        <header className={`fixed top-0 right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${sidebarOpen ? 'md:left-64' : 'md:left-0'}`}>
+          <div className="px-3 sm:px-6 py-2 sm:py-4">
+            <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                {/* Sidebar toggle button - visible on mobile */}
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="md:hidden p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
+                  aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                >
+                  {/* Hamburger icon */}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
+                  🌺
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
+                    HåfaGPT
+                  </h1>
+                  <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden xs:block">
+                    Expert in Chamorro language, culture & Guam
+                  </p>
+                  <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden lg:block">
+                    <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
+                    <span className="mx-1">•</span>
                   <span>{greeting.english}</span>
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Auth Button - Always visible */}
+              <AuthButton />
+              
               <button
                 onClick={toggleTheme}
                 className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
@@ -249,7 +385,7 @@ End of Export
                 <>
                   <button
                     onClick={() => setShowExportModal(true)}
-                    className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
+                    className="hidden sm:flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
                     aria-label="Export chat"
                     title="Export chat history"
                   >
@@ -257,7 +393,7 @@ End of Export
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
-                    className="px-2 sm:px-3 py-1.5 sm:py-2.5 text-xs sm:text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
+                    className="p-1.5 sm:px-3 sm:py-2.5 text-xs sm:text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 rounded-xl transition-all duration-200 flex items-center gap-1 sm:gap-2 active:scale-95"
                     aria-label="Clear chat"
                     title="Clear chat (⌘L)"
                   >
@@ -285,14 +421,12 @@ End of Export
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-scroll overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
         style={{ 
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehaviorY: 'auto',
           paddingBottom: '140px' // Space for fixed input + disclaimer
         }}
       >
-        <div className="max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
+        <div className="w-full max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
             <WelcomeMessage />
           ) : (
             <>
@@ -392,7 +526,7 @@ End of Export
           <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
             <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Clear conversation?</h3>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
-              This will delete all messages in the current conversation. This action cannot be undone.
+              This will hide this conversation from your list. Your messages will be preserved for training purposes but won't be visible to you anymore.
             </p>
             <div className="flex gap-3">
               <button
@@ -411,6 +545,7 @@ End of Export
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

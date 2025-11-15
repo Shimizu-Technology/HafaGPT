@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -30,6 +31,8 @@ export function useChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const { user } = useUser();
+  const { getToken } = useAuth();
 
   // Initialize session (check localStorage first)
   useEffect(() => {
@@ -50,19 +53,36 @@ export function useChatbot() {
 
   const sendMessage = async (
     message: string,
-    mode: 'english' | 'chamorro' | 'learn' = 'english'
+    mode: 'english' | 'chamorro' | 'learn' = 'english',
+    conversationId?: string | null
   ): Promise<ChatResponse> => {
     setLoading(true);
     setError(null);
 
     try {
+      // Get auth token if user is signed in
+      let token = null;
+      if (user && getToken) {
+        try {
+          token = await getToken();
+        } catch (e) {
+          console.warn('Could not get auth token:', e);
+        }
+      }
+      
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          // Add Authorization header if user is logged in
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({
           message,
           mode,
           session_id: sessionId,
+          user_id: user?.id || null,  // Send user ID if logged in
+          conversation_id: conversationId,  // Added
           conversation_history: null,
         }),
       });

@@ -13,7 +13,7 @@ export function QuickPhrases({ onSelect, disabled }: QuickPhrasesProps) {
 
   return (
     <div className="px-3 sm:px-4 py-3 sm:py-3 bg-cream-50 dark:bg-gray-900/50 border-b border-cream-300 dark:border-gray-800">
-      <div className="max-w-4xl mx-auto">
+      <div className="w-full sm:max-w-4xl sm:mx-auto">
         <p className="text-[10px] sm:text-xs font-medium text-brown-600 dark:text-gray-400 mb-2 sm:mb-2">Quick start:</p>
         {/* Mobile: Horizontal scroll */}
         <div className="flex sm:hidden gap-2 overflow-x-auto -mx-3 px-3 scrollbar-hide snap-x snap-mandatory">
