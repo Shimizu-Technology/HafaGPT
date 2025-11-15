@@ -32,6 +32,7 @@ export function useConversations() {
 
   // Fetch conversations from API
   const fetchConversations = async () => {
+    console.log('📡 fetchConversations called, user:', user?.id);
     setLoading(true);
     setError(null);
     
@@ -41,25 +42,32 @@ export function useConversations() {
       if (user && getToken) {
         try {
           token = await getToken();
+          console.log('🔑 Got auth token:', token ? 'Yes' : 'No');
         } catch (e) {
           console.warn('Could not get auth token:', e);
         }
       }
 
+      console.log('🌐 Fetching conversations from API...');
       const response = await fetch(`${API_URL}/api/conversations`, {
         headers: {
           ...(token && { 'Authorization': `Bearer ${token}` })
         }
       });
 
-      if (!response.ok) throw new Error('Failed to fetch conversations');
+      if (!response.ok) {
+        console.error('❌ API response not OK:', response.status);
+        throw new Error('Failed to fetch conversations');
+      }
 
       const data = await response.json();
+      console.log('📥 Received conversations:', data.conversations?.length || 0, 'conversations');
+      console.log('📋 Conversations:', data.conversations);
       setConversations(data.conversations || []);
       
       // Don't set activeConversationId here - let the restoration effect handle it
     } catch (err) {
-      console.error('Error fetching conversations:', err);
+      console.error('❌ Error fetching conversations:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch conversations');
     } finally {
       setLoading(false);
@@ -200,9 +208,28 @@ export function useConversations() {
     }
   };
 
-  // Fetch conversations on mount
+  // Fetch conversations on mount and when user changes
   useEffect(() => {
-    fetchConversations();
+    console.log('🔄 useConversations: user?.id changed:', user?.id);
+    console.log('🔄 isLoaded:', user !== undefined, 'isSignedIn:', !!user?.id);
+    
+    // Only act when Clerk has finished loading (user is not undefined)
+    if (user === undefined) {
+      console.log('⏳ Clerk still loading, waiting...');
+      return;
+    }
+    
+    if (user?.id) {
+      // User is signed in - fetch their conversations
+      console.log('✅ User signed in, fetching conversations...');
+      fetchConversations();
+    } else {
+      // User is signed out - clear conversations
+      console.log('❌ User signed out, clearing conversations');
+      setConversations([]);
+      setActiveConversationId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Re-fetch when user changes
 
   // Persist activeConversationId to localStorage

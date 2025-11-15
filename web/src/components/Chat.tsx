@@ -4,6 +4,7 @@ import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { useConversations } from '../hooks/useConversations';
+import { useUser } from '@clerk/clerk-react';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
@@ -28,6 +29,7 @@ export function Chat() {
   });
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
+  const { user, isSignedIn } = useUser();
   const { 
     conversations, 
     activeConversationId,
@@ -76,6 +78,23 @@ export function Chat() {
     loadMessages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId]); // fetchConversationMessages is stable, no need to include
+
+  // Clear state when user signs out
+  useEffect(() => {
+    console.log('🔄 Chat: isSignedIn changed:', isSignedIn);
+    console.log('🔄 Chat: user:', user?.id);
+    
+    // Only clear if explicitly signed out (not just undefined during loading)
+    if (isSignedIn === false) {
+      // User signed out - clear all authenticated user data
+      console.log('🧹 Clearing messages and localStorage');
+      setMessages([]);
+      setActiveConversationId(null);
+      localStorage.removeItem('active_conversation_id');
+      // Note: conversations will be cleared automatically by useConversations hook
+      // when it detects no auth token
+    }
+  }, [isSignedIn, setActiveConversationId]);
 
   // Keyboard shortcuts
   useEffect(() => {
