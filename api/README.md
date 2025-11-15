@@ -193,6 +193,8 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 
 **Option A: FastAPI REST API (Recommended for production)**
 
+**Local Development (Desktop Only):**
+
 Easy startup with the helper script:
 ```bash
 ./start.sh
@@ -207,6 +209,23 @@ Access the API:
 - **API Root:** http://localhost:8000
 - **Interactive Docs:** http://localhost:8000/api/docs
 - **Health Check:** http://localhost:8000/api/health
+
+**Mobile Testing (Network Access):**
+
+```bash
+./dev-network.sh
+```
+
+This will:
+- ✅ Auto-detect your local IP address
+- ✅ Start FastAPI on your network (accessible from phone)
+- ✅ Display URLs for API, docs, and mobile access
+- ✅ Example: `http://192.168.1.190:8000`
+
+**Requirements:**
+- Phone and computer must be on the same WiFi network
+- Make sure firewall allows port 8000
+- Backend will be accessible at `http://YOUR_IP:8000`
 
 **Option B: CLI (Command Line Interface)**
 
