@@ -59,6 +59,7 @@ export function Chat() {
         const chatMessages: ChatMessage[] = apiMessages.map(msg => ({
           role: msg.role,
           content: msg.content,
+          imageUrl: msg.image_url || undefined,  // Use S3 URL from API
           timestamp: new Date(msg.timestamp).getTime(),
           sources: msg.sources?.map(src => ({
             name: src.name,
