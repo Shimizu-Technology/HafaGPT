@@ -44,7 +44,7 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
   };
 
   return (
-    <div className="pb-2 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
+    <div className="pb-1 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="max-w-3xl mx-auto">
         <div className="flex gap-2 sm:gap-3 items-end">
           <textarea
