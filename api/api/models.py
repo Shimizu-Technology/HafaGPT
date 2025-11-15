@@ -118,6 +118,7 @@ class MessageResponse(BaseModel):
     sources: list[SourceInfo] = Field(default=[], description="Sources used (for assistant messages)")
     used_rag: bool = Field(default=False, description="Whether RAG was used")
     used_web_search: bool = Field(default=False, description="Whether web search was used")
+    image_url: Optional[str] = Field(default=None, description="S3 URL of uploaded image (for user messages)")
 
 
 class MessagesResponse(BaseModel):

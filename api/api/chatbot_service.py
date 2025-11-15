@@ -177,7 +177,8 @@ def log_conversation(
     response_time: float,
     session_id: str = None,
     user_id: str = None,
-    conversation_id: str = None  # Added
+    conversation_id: str = None,
+    image_url: str = None  # NEW: S3 URL of uploaded image
 ):
     """
     Log conversation to PostgreSQL database for future training/analysis.
@@ -193,6 +194,7 @@ def log_conversation(
         session_id: Session identifier for tracking conversations
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
+        image_url: Optional S3 URL of uploaded image
     """
     try:
         import psycopg
@@ -204,23 +206,24 @@ def log_conversation(
         conn = psycopg.connect(database_url)
         cursor = conn.cursor()
         
-        # Insert conversation log (with user_id and conversation_id)
+        # Insert conversation log (with user_id, conversation_id, and image_url)
         cursor.execute("""
             INSERT INTO conversation_logs (
                 session_id, user_id, conversation_id, mode, user_message, bot_response,
-                sources_used, used_rag, used_web_search, response_time_seconds
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                sources_used, used_rag, used_web_search, response_time_seconds, image_url
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             session_id,
             user_id,  # Add user_id
-            conversation_id,  # Added conversation_id
+            conversation_id,  # Add conversation_id
             mode,
             user_message,
             bot_response,
             json.dumps(sources),  # JSONB field
             used_rag,
             used_web_search,
-            round(response_time, 2)
+            response_time,
+            image_url  # NEW: Add S3 image URL
         ))
         
         conn.commit()
@@ -350,8 +353,9 @@ def get_chatbot_response(
     conversation_length: int = 0,
     session_id: str = None,
     user_id: str = None,
-    conversation_id: str = None,  # Added
-    image_base64: str = None  # NEW: Base64-encoded image
+    conversation_id: str = None,
+    image_base64: str = None,  # Base64-encoded image
+    image_url: str = None  # NEW: S3 URL of uploaded image
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -364,6 +368,7 @@ def get_chatbot_response(
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
         image_base64: Optional base64-encoded image for vision analysis
+        image_url: Optional S3 URL of uploaded image (for logging)
     
     Returns:
         dict: {
@@ -494,8 +499,9 @@ DOCUMENT ANALYSIS MODE:
         used_web_search=use_web,
         response_time=response_time,
         session_id=session_id,
-        user_id=user_id,  # Add user_id
-        conversation_id=conversation_id  # Added conversation_id
+        user_id=user_id,
+        conversation_id=conversation_id,
+        image_url=image_url  # NEW: Log S3 URL
     )
     
     return {

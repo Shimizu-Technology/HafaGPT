@@ -11,6 +11,8 @@ import time
 import os
 import logging
 import base64
+import boto3
+from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -143,6 +145,68 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[s
     except Exception as e:
         logger.warning(f"⚠️  Invalid auth token: {e}")
         return None  # Invalid token, treat as anonymous
+
+# Initialize S3 client for image uploads
+try:
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+        region_name=os.getenv('AWS_REGION', 'us-west-2')
+    )
+    S3_BUCKET = os.getenv('AWS_S3_BUCKET')
+    S3_AVAILABLE = bool(S3_BUCKET)
+    if S3_AVAILABLE:
+        logger.info(f"✅ S3 client initialized for bucket: {S3_BUCKET}")
+    else:
+        logger.warning("⚠️  AWS_S3_BUCKET not set. Image uploads will not be persisted.")
+except Exception as e:
+    S3_AVAILABLE = False
+    logger.warning(f"⚠️  Failed to initialize S3 client: {e}")
+
+def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> Optional[str]:
+    """
+    Upload image to S3 and return public URL.
+    
+    Args:
+        image_data: Binary image data
+        filename: Original filename
+        content_type: MIME type (e.g., 'image/jpeg')
+    
+    Returns:
+        S3 public URL or None if upload fails
+    """
+    if not S3_AVAILABLE:
+        logger.warning("S3 not available, skipping image upload")
+        return None
+    
+    try:
+        # Generate unique filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_extension = filename.split('.')[-1] if '.' in filename else 'jpg'
+        s3_key = f"chamorro_uploads/{timestamp}_{filename}"
+        
+        # Upload to S3
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=s3_key,
+            Body=image_data,
+            ContentType=content_type,
+            # Make publicly readable
+            ACL='public-read'
+        )
+        
+        # Construct public URL
+        image_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+        logger.info(f"✅ Image uploaded to S3: {image_url}")
+        return image_url
+        
+    except ClientError as e:
+        logger.error(f"Failed to upload image to S3: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error uploading to S3: {e}")
+        return None
 
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
 rate_limit_storage = defaultdict(list)
@@ -361,6 +425,7 @@ async def chat(
         
         # Process image if present
         image_base64 = None
+        image_url = None  # S3 URL
         if image:
             # Validate file type
             if not image.content_type or not image.content_type.startswith('image/'):
@@ -369,11 +434,24 @@ async def chat(
                     detail="Invalid file type. Please upload an image file (JPEG, PNG, WebP, GIF)"
                 )
             
-            # Read and encode image
+            # Read and process image
             try:
                 image_data = await image.read()
+                
+                # Upload to S3 (for persistence)
+                image_url = upload_image_to_s3(
+                    image_data=image_data,
+                    filename=image.filename,
+                    content_type=image.content_type
+                )
+                
+                # Base64 encode for GPT-4o-mini Vision
                 image_base64 = base64.b64encode(image_data).decode('utf-8')
+                
                 logger.info(f"📸 Image uploaded: {image.filename} ({len(image_data)} bytes)")
+                if image_url:
+                    logger.info(f"🔗 S3 URL: {image_url}")
+                    
             except Exception as e:
                 logger.error(f"Failed to process image: {e}")
                 raise HTTPException(
@@ -391,7 +469,8 @@ async def chat(
             session_id=session_id,  # Pass session_id for logging
             user_id=user_id,  # Pass user_id for tracking
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
-            image_base64=image_base64  # NEW: Pass base64-encoded image
+            image_base64=image_base64,  # Pass base64-encoded image for Vision
+            image_url=image_url  # NEW: Pass S3 URL for logging
         )
         
         # Convert sources to SourceInfo models

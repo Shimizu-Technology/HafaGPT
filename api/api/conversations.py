@@ -170,7 +170,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 timestamp,
                 sources_used,
                 used_rag,
-                used_web_search
+                used_web_search,
+                image_url
             FROM conversation_logs
             WHERE conversation_id = %s
             ORDER BY timestamp ASC
@@ -189,7 +190,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 timestamp=row[3],
                 sources=[],
                 used_rag=False,
-                used_web_search=False
+                used_web_search=False,
+                image_url=row[7]  # NEW: Include S3 image URL
             ))
             
             # Assistant message
@@ -208,7 +210,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 timestamp=row[3],
                 sources=sources,
                 used_rag=row[5],
-                used_web_search=row[6]
+                used_web_search=row[6],
+                image_url=None  # Assistant messages don't have images
             ))
         
         cursor.close()
