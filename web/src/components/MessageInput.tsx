@@ -1,8 +1,8 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, MicOff } from 'lucide-react';
+import { Send, Mic, Camera, X } from 'lucide-react';
 
 interface MessageInputProps {
-  onSend: (message: string) => void;
+  onSend: (message: string, image?: File) => void;
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
 }
@@ -10,9 +10,12 @@ interface MessageInputProps {
 export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-resize textarea as content grows
   useEffect(() => {
@@ -22,14 +25,36 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
     }
   }, [input, textareaRef]);
 
-  // Cleanup speech recognition on unmount
+  // Cleanup speech recognition and image preview on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
     };
-  }, []);
+  }, [imagePreview]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = () => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const startListening = () => {
     // Check browser support
@@ -83,9 +108,10 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
   };
 
   const handleSend = () => {
-    if (input.trim() && !disabled) {
-      onSend(input.trim());
+    if ((input.trim() || selectedImage) && !disabled) {
+      onSend(input.trim() || 'What does this say?', selectedImage || undefined);
       setInput('');
+      removeImage();
       // Reset height after sending
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -108,6 +134,24 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
   return (
     <div className="pb-1 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="w-full sm:max-w-3xl sm:mx-auto">
+        {/* Image Preview */}
+        {imagePreview && (
+          <div className="mb-2 relative inline-block">
+            <img 
+              src={imagePreview} 
+              alt="Upload preview" 
+              className="max-h-32 rounded-lg shadow-md"
+            />
+            <button
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg transition-colors"
+              aria-label="Remove image"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2 sm:gap-3 items-end">
           {/* Microphone Button */}
           <button
@@ -125,6 +169,25 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
             {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
 
+          {/* Camera/Image Upload Button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end"
+            aria-label="Upload image"
+            title="Upload image of Chamorro text"
+            style={{ minHeight: '44px', minWidth: '44px' }}
+          >
+            <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+
           <textarea
             ref={textareaRef}
             value={input}
@@ -139,7 +202,7 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
           />
           <button
             onClick={handleSend}
-            disabled={disabled || !input.trim()}
+            disabled={disabled || (!input.trim() && !selectedImage)}
             className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
             aria-label="Send message"
             title="Send message (Enter)"

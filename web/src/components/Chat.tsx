@@ -153,7 +153,7 @@ export function Chat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
 
-  const handleSend = async (message: string) => {
+  const handleSend = async (message: string, image?: File) => {
     let currentConversationId = activeConversationId;
 
     // Create conversation if none exists
@@ -171,16 +171,20 @@ export function Chat() {
       }
     }
 
+    // Create image preview URL if image exists
+    const imageUrl = image ? URL.createObjectURL(image) : undefined;
+
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
+      imageUrl, // Add image preview URL
       timestamp: Date.now(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await sendMessage(message, mode, currentConversationId);
+      const response = await sendMessage(message, mode, currentConversationId, image);
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response.response,

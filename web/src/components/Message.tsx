@@ -6,6 +6,7 @@ import { SourceCitation } from './SourceCitation';
 interface MessageProps {
   role: 'user' | 'assistant';
   content: string;
+  imageUrl?: string; // For displaying uploaded images
   sources?: Array<{ name: string; page: number | null }>;
   used_rag?: boolean;
   used_web_search?: boolean;
@@ -13,7 +14,7 @@ interface MessageProps {
   timestamp?: number;
 }
 
-export function Message({ role, content, sources, used_rag, used_web_search, response_time, timestamp }: MessageProps) {
+export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp }: MessageProps) {
   const isUser = role === 'user';
   const [copied, setCopied] = useState(false);
 
@@ -96,8 +97,21 @@ export function Message({ role, content, sources, used_rag, used_web_search, res
           }`}
         >
           {isUser ? (
-            <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
-              {content}
+            <div className="space-y-2">
+              {/* Image Preview */}
+              {imageUrl && (
+                <div className="mb-2">
+                  <img 
+                    src={imageUrl} 
+                    alt="Uploaded content" 
+                    className="max-h-48 rounded-lg shadow-md"
+                  />
+                </div>
+              )}
+              {/* Text Content */}
+              <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
+                {content}
+              </div>
             </div>
           ) : (
             <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none">

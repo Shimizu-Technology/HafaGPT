@@ -10,6 +10,7 @@ function generateSessionId(): string {
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  imageUrl?: string; // For displaying uploaded images in chat history
   sources?: Array<{ name: string; page: number | null }>;
   used_rag?: boolean;
   used_web_search?: boolean;
@@ -54,7 +55,8 @@ export function useChatbot() {
   const sendMessage = async (
     message: string,
     mode: 'english' | 'chamorro' | 'learn' = 'english',
-    conversationId?: string | null
+    conversationId?: string | null,
+    image?: File
   ): Promise<ChatResponse> => {
     setLoading(true);
     setError(null);
@@ -70,21 +72,42 @@ export function useChatbot() {
         }
       }
       
-      const response = await fetch(`${API_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          // Add Authorization header if user is logged in
-          ...(token && { 'Authorization': `Bearer ${token}` })
-        },
-        body: JSON.stringify({
+      // Use FormData if image is present, otherwise JSON
+      let body: FormData | string;
+      let headers: Record<string, string> = {
+        // Add Authorization header if user is logged in
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+
+      if (image) {
+        // FormData for image upload
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('mode', mode);
+        formData.append('session_id', sessionId || '');
+        if (conversationId) {
+          formData.append('conversation_id', conversationId);
+        }
+        formData.append('image', image);
+        body = formData;
+        // Don't set Content-Type for FormData - browser will set it with boundary
+      } else {
+        // JSON for text-only messages
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify({
           message,
           mode,
           session_id: sessionId,
-          user_id: user?.id || null,  // Send user ID if logged in
-          conversation_id: conversationId,  // Added
+          user_id: user?.id || null,
+          conversation_id: conversationId,
           conversation_history: null,
-        }),
+        });
+      }
+      
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers,
+        body,
       });
 
       if (!response.ok) {
