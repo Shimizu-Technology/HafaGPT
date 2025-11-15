@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -32,6 +32,7 @@ export function useChatbot() {
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const { user } = useUser();
+  const { getToken } = useAuth();
 
   // Initialize session (check localStorage first)
   useEffect(() => {
@@ -61,9 +62,9 @@ export function useChatbot() {
     try {
       // Get auth token if user is signed in
       let token = null;
-      if (user) {
+      if (user && getToken) {
         try {
-          token = await user.getToken();
+          token = await getToken();
         } catch (e) {
           console.warn('Could not get auth token:', e);
         }

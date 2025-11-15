@@ -34,34 +34,48 @@ export function Chat() {
     setActiveConversationId,
     createConversation,
     deleteConversation,
-    fetchConversations
+    fetchConversations,
+    fetchConversationMessages,
+    updateConversationTitle
   } = useConversations();
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load messages from localStorage on mount
+  // Load messages when activeConversationId changes
   useEffect(() => {
-    const savedMessages = localStorage.getItem('chamorro_messages');
-    if (savedMessages) {
-      try {
-        const parsed = JSON.parse(savedMessages);
-        setMessages(parsed);
-        console.log('💬 Restored', parsed.length, 'messages from localStorage');
-      } catch (e) {
-        console.error('Failed to parse saved messages:', e);
-        localStorage.removeItem('chamorro_messages');
+    const loadMessages = async () => {
+      if (!activeConversationId) {
+        setMessages([]);
+        return;
       }
-    }
-  }, []);
 
-  // Save messages to localStorage whenever they change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('chamorro_messages', JSON.stringify(messages));
-    }
-  }, [messages]);
+      try {
+        const apiMessages = await fetchConversationMessages(activeConversationId);
+        // Convert API messages to ChatMessage format
+        const chatMessages: ChatMessage[] = apiMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp).getTime(),
+          sources: msg.sources?.map(src => ({
+            name: src.name,
+            page: src.page ?? null
+          })) || [],
+          used_rag: msg.used_rag || false,
+          used_web_search: msg.used_web_search || false,
+          response_time: undefined // API doesn't return this per message
+        }));
+        setMessages(chatMessages);
+      } catch (err) {
+        console.error('Failed to load messages:', err);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]); // fetchConversationMessages is stable, no need to include
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -121,10 +135,15 @@ export function Chat() {
   }, [messages.length]);
 
   const handleSend = async (message: string) => {
+    let currentConversationId = activeConversationId;
+
     // Create conversation if none exists
-    if (!activeConversationId) {
+    if (!currentConversationId) {
       try {
-        const newConv = await createConversation('New Chat');
+        // Generate title from the message immediately (first 50 chars)
+        const generatedTitle = message.trim().slice(0, 50);
+        const newConv = await createConversation(generatedTitle);
+        currentConversationId = newConv.id;
         setActiveConversationId(newConv.id);
       } catch (err) {
         console.error('Failed to create conversation:', err);
@@ -142,7 +161,7 @@ export function Chat() {
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await sendMessage(message, mode, activeConversationId);
+      const response = await sendMessage(message, mode, currentConversationId);
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response.response,
@@ -154,8 +173,8 @@ export function Chat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Refresh conversations to update message count
-      fetchConversations();
+      // Refresh conversations to update message count in sidebar
+      await fetchConversations();
     } catch (err) {
       console.error('Failed to send message:', err);
     }
@@ -163,9 +182,10 @@ export function Chat() {
 
   const handleNewConversation = async () => {
     try {
-      const newConv = await createConversation('New Chat');
+      // Don't create conversation yet - just clear messages
+      // Conversation will be created when user sends first message
+      setActiveConversationId(null);
       setMessages([]);
-      setActiveConversationId(newConv.id);
       // Close sidebar only on mobile
       if (window.innerWidth < 768) {
         setSidebarOpen(false);
@@ -177,7 +197,7 @@ export function Chat() {
 
   const handleSelectConversation = async (conversationId: string) => {
     setActiveConversationId(conversationId);
-    setMessages([]); // TODO: Load messages from API
+    // Messages will be loaded automatically by useEffect when activeConversationId changes
     // Close sidebar only on mobile
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
@@ -195,13 +215,24 @@ export function Chat() {
     }
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
+    if (activeConversationId) {
+      // Delete the conversation from the database
+      try {
+        await deleteConversation(activeConversationId);
+        setActiveConversationId(null);
+      } catch (err) {
+        console.error('Failed to delete conversation:', err);
+        setError('Failed to clear conversation');
+        return;
+      }
+    }
+    
     setMessages([]);
     setShowClearConfirm(false);
     setError(null);
     resetSession(); // Start a new conversation session
-    localStorage.removeItem('chamorro_messages'); // Clear saved messages
-    console.log('🗑️  Cleared messages from localStorage');
+    console.log('🗑️  Cleared and deleted conversation');
   };
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -298,6 +329,7 @@ End of Export
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
         onDeleteConversation={handleDeleteConversation}
+        onRenameConversation={updateConversationTitle}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -482,7 +514,7 @@ End of Export
           <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
             <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Clear conversation?</h3>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
-              This will delete all messages in the current conversation. This action cannot be undone.
+              This will hide this conversation from your list. Your messages will be preserved for training purposes but won't be visible to you anymore.
             </p>
             <div className="flex gap-3">
               <button

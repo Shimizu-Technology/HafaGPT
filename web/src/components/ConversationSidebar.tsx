@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Conversation } from '../hooks/useConversations';
 
@@ -7,6 +8,7 @@ interface ConversationSidebarProps {
   onSelectConversation: (id: string) => void;
   onNewConversation: () => void;
   onDeleteConversation: (id: string) => void;
+  onRenameConversation: (id: string, title: string) => Promise<void>;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -17,9 +19,86 @@ export function ConversationSidebar({
   onSelectConversation,
   onNewConversation,
   onDeleteConversation,
+  onRenameConversation,
   isOpen,
   onToggle
 }: ConversationSidebarProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; conversationId: string } | null>(null);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingId && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingId]);
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    if (contextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [contextMenu]);
+
+  const handleDoubleClick = (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation();
+    setEditingId(conversation.id);
+    setEditingTitle(conversation.title);
+    setContextMenu(null);
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, conversation: Conversation) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      conversationId: conversation.id
+    });
+  };
+
+  const handleRename = (conversation: Conversation) => {
+    setEditingId(conversation.id);
+    setEditingTitle(conversation.title);
+    setContextMenu(null);
+  };
+
+  const handleDelete = (conversationId: string) => {
+    onDeleteConversation(conversationId);
+    setContextMenu(null);
+  };
+
+  const handleSave = async (conversationId: string) => {
+    const trimmedTitle = editingTitle.trim();
+    if (trimmedTitle && trimmedTitle !== conversations.find(c => c.id === conversationId)?.title) {
+      try {
+        await onRenameConversation(conversationId, trimmedTitle);
+      } catch (err) {
+        console.error('Failed to rename conversation:', err);
+      }
+    }
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditingTitle('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, conversationId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave(conversationId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancel();
+    }
+  };
   return (
     <>
       {/* Sidebar */}
@@ -55,13 +134,16 @@ export function ConversationSidebar({
                     <div
                       key={conversation.id}
                       className={`
-                        group relative px-3 py-2 rounded-lg cursor-pointer transition-all duration-200
+                        group relative px-3 py-2 rounded-lg transition-all duration-200
                         ${activeConversationId === conversation.id
                           ? 'bg-cream-200 dark:bg-gray-800'
                           : 'hover:bg-cream-100 dark:hover:bg-gray-900'
                         }
+                        ${editingId === conversation.id ? '' : 'cursor-pointer'}
                       `}
-                      onClick={() => onSelectConversation(conversation.id)}
+                      onClick={() => editingId !== conversation.id && onSelectConversation(conversation.id)}
+                      onDoubleClick={(e) => handleDoubleClick(e, conversation)}
+                      onContextMenu={(e) => handleContextMenu(e, conversation)}
                     >
                       <div className="flex items-center gap-2">
                         <MessageSquare className={`w-4 h-4 flex-shrink-0 ${
@@ -69,25 +151,40 @@ export function ConversationSidebar({
                             ? 'text-teal-600 dark:text-ocean-400'
                             : 'text-brown-500 dark:text-gray-500'
                         }`} />
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium truncate ${
-                            activeConversationId === conversation.id
-                              ? 'text-brown-900 dark:text-gray-100'
-                              : 'text-brown-700 dark:text-gray-300'
-                          }`}>
-                            {conversation.title}
-                          </p>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteConversation(conversation.id);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity"
-                          title="Delete conversation"
-                        >
-                          <Trash2 className="w-3.5 h-3.5 text-hibiscus-600 dark:text-red-400" />
-                        </button>
+                        {editingId === conversation.id ? (
+                          <input
+                            ref={inputRef}
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onBlur={() => handleSave(conversation.id)}
+                            onKeyDown={(e) => handleKeyDown(e, conversation.id)}
+                            className="flex-1 min-w-0 px-2 py-1 text-sm bg-cream-50 dark:bg-gray-900 border border-teal-500 dark:border-ocean-400 rounded focus:outline-none focus:ring-2 focus:ring-teal-500 dark:focus:ring-ocean-400 text-brown-900 dark:text-gray-100"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        ) : (
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-medium truncate ${
+                              activeConversationId === conversation.id
+                                ? 'text-brown-900 dark:text-gray-100'
+                                : 'text-brown-700 dark:text-gray-300'
+                            }`}>
+                              {conversation.title}
+                            </p>
+                          </div>
+                        )}
+                        {editingId !== conversation.id && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(conversation.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity"
+                            title="Delete conversation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-hibiscus-600 dark:text-red-400" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -120,6 +217,34 @@ export function ConversationSidebar({
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={onToggle}
         />
+      )}
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed z-[100] bg-cream-50 dark:bg-gray-800 rounded-lg shadow-xl border border-cream-300 dark:border-gray-700 py-1 min-w-[160px]"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => {
+              const conversation = conversations.find(c => c.id === contextMenu.conversationId);
+              if (conversation) handleRename(conversation);
+            }}
+            className="w-full px-4 py-2 text-left text-sm text-brown-800 dark:text-gray-200 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            Rename
+          </button>
+          <button
+            onClick={() => handleDelete(contextMenu.conversationId)}
+            className="w-full px-4 py-2 text-left text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
       )}
     </>
   );
