@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, Pencil } from 'lucide-react';
 import { Conversation } from '../hooks/useConversations';
 
 interface ConversationSidebarProps {
@@ -28,8 +28,6 @@ export function ConversationSidebar({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; conversationId: string } | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [lastTap, setLastTap] = useState<{ id: string; time: number } | null>(null);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -84,53 +82,6 @@ export function ConversationSidebar({
   
   const handleCancelDelete = () => {
     setDeleteConfirmId(null);
-  };
-
-  // Long press handler for mobile
-  const handleTouchStart = (e: React.TouchEvent, conversation: Conversation) => {
-    const timer = setTimeout(() => {
-      // Show context menu after 500ms hold
-      const touch = e.touches[0];
-      setContextMenu({
-        x: touch.clientX,
-        y: touch.clientY,
-        conversationId: conversation.id
-      });
-    }, 500);
-    setLongPressTimer(timer);
-  };
-
-  const handleTouchEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  };
-
-  const handleTouchMove = () => {
-    // Cancel long press if user moves finger
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-  };
-
-  // Double-tap handler for quick edit on mobile
-  const handleDoubleTap = (conversation: Conversation) => {
-    const now = Date.now();
-    
-    if (lastTap && lastTap.id === conversation.id && now - lastTap.time < 300) {
-      // Double tap detected - start editing
-      handleRename(conversation);
-      setLastTap(null);
-    } else {
-      // First tap - record it
-      setLastTap({ id: conversation.id, time: now });
-      // Select conversation if not in edit mode
-      if (editingId !== conversation.id) {
-        onSelectConversation(conversation.id);
-      }
-    }
   };
 
   const handleSave = async (conversationId: string) => {
@@ -215,12 +166,9 @@ export function ConversationSidebar({
                         }
                         ${editingId === conversation.id ? '' : 'cursor-pointer'}
                       `}
-                      onClick={() => editingId !== conversation.id && handleDoubleTap(conversation)}
+                      onClick={() => editingId !== conversation.id && onSelectConversation(conversation.id)}
                       onDoubleClick={(e) => handleDoubleClick(e, conversation)}
                       onContextMenu={(e) => handleContextMenu(e, conversation)}
-                      onTouchStart={(e) => handleTouchStart(e, conversation)}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchMove={handleTouchMove}
                     >
                       <div className="flex items-center gap-2">
                         <MessageSquare className={`w-4 h-4 flex-shrink-0 ${
@@ -251,16 +199,30 @@ export function ConversationSidebar({
                           </div>
                         )}
                         {editingId !== conversation.id && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(conversation.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity flex items-center justify-center"
-                            title="Delete conversation"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-hibiscus-600 dark:text-red-400" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {/* Edit button - visible on mobile, hidden on desktop unless hover */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRename(conversation);
+                              }}
+                              className="md:opacity-0 md:group-hover:opacity-100 p-1.5 hover:bg-cream-200 dark:hover:bg-gray-800 rounded transition-opacity flex items-center justify-center"
+                              title="Rename conversation"
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-brown-600 dark:text-gray-400" />
+                            </button>
+                            {/* Delete button - visible on mobile, hidden on desktop unless hover */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(conversation.id);
+                              }}
+                              className="md:opacity-0 md:group-hover:opacity-100 p-1.5 hover:bg-hibiscus-100 dark:hover:bg-red-950/30 rounded transition-opacity flex items-center justify-center"
+                              title="Delete conversation"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-hibiscus-600 dark:text-red-400" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
