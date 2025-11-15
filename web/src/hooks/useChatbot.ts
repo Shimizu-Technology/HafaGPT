@@ -42,13 +42,11 @@ export function useChatbot() {
     if (existingSession) {
       // Reuse existing session
       setSessionId(existingSession);
-      console.log('♻️  Reusing session:', existingSession);
     } else {
       // Create new session and save it
       const newSession = generateSessionId();
       setSessionId(newSession);
       localStorage.setItem('chamorro_session_id', newSession);
-      console.log('🆕 New session:', newSession);
     }
   }, []);
 
@@ -130,7 +128,6 @@ export function useChatbot() {
     const newSession = generateSessionId();
     setSessionId(newSession);
     localStorage.setItem('chamorro_session_id', newSession);
-    console.log('🔄 Reset session:', newSession);
   };
 
   return { sendMessage, resetSession, loading, error, setError, sessionId };

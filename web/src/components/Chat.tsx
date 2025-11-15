@@ -29,7 +29,7 @@ export function Chat() {
   });
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  const { user, isSignedIn } = useUser();
+  const { isSignedIn } = useUser();
   const { 
     conversations, 
     activeConversationId,
@@ -82,13 +82,9 @@ export function Chat() {
 
   // Clear state when user signs out
   useEffect(() => {
-    console.log('🔄 Chat: isSignedIn changed:', isSignedIn);
-    console.log('🔄 Chat: user:', user?.id);
-    
     // Only clear if explicitly signed out (not just undefined during loading)
     if (isSignedIn === false) {
       // User signed out - clear all authenticated user data
-      console.log('🧹 Clearing messages and localStorage');
       setMessages([]);
       setActiveConversationId(null);
       localStorage.removeItem('active_conversation_id');
@@ -256,7 +252,6 @@ export function Chat() {
     setShowClearConfirm(false);
     setError(null);
     resetSession(); // Start a new conversation session
-    console.log('🗑️  Cleared and deleted conversation');
   };
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -331,7 +326,6 @@ End of Export
     }
 
     setShowExportModal(false);
-    console.log(`📥 Chat exported as ${format.toUpperCase()}`);
   };
 
   const handleRetry = () => {
