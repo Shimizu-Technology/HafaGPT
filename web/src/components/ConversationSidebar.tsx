@@ -195,16 +195,16 @@ export function ConversationSidebar({
         )}
       </div>
 
-      {/* Toggle button - always visible */}
+      {/* Toggle button - visible on desktop only */}
       <button
         onClick={onToggle}
         className={`
-          fixed top-4 z-50 p-2 rounded-lg
+          hidden md:block fixed top-4 z-50 p-2 rounded-lg
           bg-cream-100 dark:bg-gray-900 hover:bg-cream-200 dark:hover:bg-gray-800
           border border-cream-300 dark:border-gray-700
           text-brown-700 dark:text-gray-300
           shadow-lg transition-all duration-300
-          ${isOpen ? 'left-[calc(16rem+0.75rem)] md:left-[calc(16rem+0.75rem)]' : 'left-3'}
+          ${isOpen ? 'left-[calc(16rem+0.75rem)]' : 'left-3'}
         `}
         aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
       >
