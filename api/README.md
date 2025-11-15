@@ -103,6 +103,26 @@ brew install uv
 uv sync
 ```
 
+**⚠️ IMPORTANT: Dependency Management**
+
+This project uses TWO dependency management systems:
+
+1. **`pyproject.toml`** (for local development with `uv`)
+   - Used when running locally: `uv sync`
+   - Managed by: `uv` package manager
+
+2. **`requirements.txt`** (for production deployment on Render)
+   - Used for deployment: `pip install -r requirements.txt`
+   - Managed by: `uv pip compile pyproject.toml --universal -o requirements.txt`
+
+**When adding a new dependency:**
+1. Add it to `pyproject.toml` under `[project.dependencies]`
+2. Run `uv sync` to install locally
+3. Run `uv pip compile pyproject.toml --universal -o requirements.txt` to update requirements.txt
+4. Commit BOTH files to git
+
+**Why both?** Render uses `requirements.txt` for compatibility, while `uv` provides faster local development with better dependency resolution.
+
 ### 4. Set Up Environment
 Create a `.env` file (copy from `.env.example`):
 ```bash

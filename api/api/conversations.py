@@ -41,6 +41,7 @@ def create_conversation(user_id: Optional[str] = None, title: str = "New Chat") 
         ConversationResponse with new conversation details
     """
     conversation_id = str(uuid.uuid4())
+    logger.info(f"🆕 Creating conversation: id={conversation_id}, user_id={user_id}, title={title}")
     
     try:
         conn = get_db_connection()
@@ -57,7 +58,7 @@ def create_conversation(user_id: Optional[str] = None, title: str = "New Chat") 
         cursor.close()
         conn.close()
         
-        return ConversationResponse(
+        result = ConversationResponse(
             id=row[0],
             user_id=row[1],
             title=row[2],
@@ -65,6 +66,8 @@ def create_conversation(user_id: Optional[str] = None, title: str = "New Chat") 
             updated_at=row[4],
             message_count=0
         )
+        logger.info(f"✅ Created conversation: {result.id} for user: {result.user_id}")
+        return result
     except Exception as e:
         logger.error(f"Failed to create conversation: {e}")
         raise
@@ -82,6 +85,7 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
         ConversationListResponse with list of conversations
     """
     try:
+        logger.info(f"🔍 get_conversations called with user_id: {user_id}")
         conn = get_db_connection()
         cursor = conn.cursor()
         
@@ -100,17 +104,25 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
         """
         
         if user_id:
+            # Authenticated user - only show their conversations
             query += " AND c.user_id = %s"
             params = (user_id,)
+            logger.info(f"🔍 Filtering for user_id: {user_id}")
         else:
-            query += " AND c.user_id IS NULL"
-            params = ()
+            # Anonymous user - don't show any conversations (they can't persist anyway)
+            # Return empty list for anonymous users
+            logger.info("❌ No user_id provided, returning empty list for anonymous user")
+            cursor.close()
+            conn.close()
+            return ConversationListResponse(conversations=[])
         
         query += " GROUP BY c.id ORDER BY c.updated_at DESC LIMIT %s"
         params = params + (limit,)
         
+        logger.info(f"📝 Executing query with params: {params}")
         cursor.execute(query, params)
         rows = cursor.fetchall()
+        logger.info(f"📊 Query returned {len(rows)} rows")
         
         conversations = [
             ConversationResponse(
@@ -124,6 +136,7 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
             for row in rows
         ]
         
+        logger.info(f"✅ Returning {len(conversations)} conversations")
         cursor.close()
         conn.close()
         

@@ -75,6 +75,9 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[s
     Verify Clerk JWT token and return user ID.
     Returns None if no token (allows anonymous users for now).
     """
+    from jose import jwt
+    from jose.exceptions import JWTError
+    
     if not authorization:
         return None  # Anonymous user
     
@@ -86,13 +89,56 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[s
         # Extract token from "Bearer <token>"
         token = authorization.replace("Bearer ", "")
         
-        # Verify JWT with Clerk
-        session = clerk.sessions.verify_token(token)
-        user_id = session.user_id
+        # Get JWKS from Clerk - use get_jwks() method
+        jwks_response = clerk.jwks.get_jwks()
+        
+        # Decode and verify JWT
+        # First, decode without verification to get the kid (key ID)
+        unverified_header = jwt.get_unverified_header(token)
+        kid = unverified_header.get('kid')
+        
+        # Find the matching key in JWKS
+        jwks_keys = jwks_response.keys if hasattr(jwks_response, 'keys') else []
+        matching_key = None
+        for key in jwks_keys:
+            if hasattr(key, 'kid') and key.kid == kid:
+                matching_key = key
+                break
+        
+        if not matching_key:
+            logger.warning(f"⚠️  No matching key found for kid: {kid}")
+            return None
+        
+        # Verify and decode the JWT
+        # Convert the key to dict format for jose
+        key_dict = {
+            'kty': matching_key.kty,
+            'use': matching_key.use,
+            'kid': matching_key.kid,
+            'n': matching_key.n,
+            'e': matching_key.e,
+        }
+        
+        # Decode the token
+        payload = jwt.decode(
+            token,
+            key_dict,
+            algorithms=['RS256'],
+            options={'verify_aud': False}  # Clerk doesn't always set aud
+        )
+        
+        user_id = payload.get('sub')
+        
+        if not user_id:
+            logger.warning("⚠️  JWT verified but no user_id in payload")
+            return None
         
         logger.info(f"✅ Authenticated user: {user_id}")
         return user_id
         
+    except JWTError as e:
+        logger.warning(f"⚠️  JWT verification failed: {e}")
+        return None
     except Exception as e:
         logger.warning(f"⚠️  Invalid auth token: {e}")
         return None  # Invalid token, treat as anonymous

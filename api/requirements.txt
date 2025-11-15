@@ -62,7 +62,9 @@ colorama==0.4.6 ; os_name == 'nt' or sys_platform == 'win32'
 coloredlogs==15.0.1
     # via onnxruntime
 cryptography==45.0.7
-    # via clerk-backend-api
+    # via
+    #   clerk-backend-api
+    #   python-jose
 dataclasses-json==0.6.7
     # via langchain-community
 distro==1.9.0
@@ -71,6 +73,8 @@ distro==1.9.0
     #   posthog
 durationpy==0.10
     # via kubernetes
+ecdsa==0.19.1
+    # via python-jose
 fastapi==0.121.2
     # via llm-project (pyproject.toml)
 filelock==3.20.0
@@ -280,6 +284,7 @@ psycopg2-binary==2.9.11
 pyasn1==0.6.1
     # via
     #   pyasn1-modules
+    #   python-jose
     #   rsa
 pyasn1-modules==0.4.2
     # via google-auth
@@ -322,6 +327,8 @@ python-dotenv==1.2.1
     #   llm-project (pyproject.toml)
     #   pydantic-settings
     #   uvicorn
+python-jose==3.5.0
+    # via llm-project (pyproject.toml)
 pyyaml==6.0.3
     # via
     #   chromadb
@@ -362,11 +369,14 @@ rpds-py==0.28.0
     #   jsonschema
     #   referencing
 rsa==4.9.1
-    # via google-auth
+    # via
+    #   google-auth
+    #   python-jose
 shellingham==1.5.4
     # via typer
 six==1.17.0
     # via
+    #   ecdsa
     #   kubernetes
     #   posthog
     #   python-dateutil
