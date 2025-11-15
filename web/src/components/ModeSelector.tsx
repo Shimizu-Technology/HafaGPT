@@ -12,7 +12,7 @@ export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
 
   return (
     <div className="px-3 sm:px-6 pb-2 sm:pb-3">
-      <div className="max-w-5xl mx-auto">
+      <div className="w-full sm:max-w-5xl sm:mx-auto">
         <div className="flex gap-1.5 sm:gap-2 bg-cream-200 dark:bg-gray-800 p-1 sm:p-1.5 rounded-xl">
           {modes.map((m) => (
             <button

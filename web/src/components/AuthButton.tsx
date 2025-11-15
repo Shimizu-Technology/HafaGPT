@@ -23,6 +23,15 @@ export function AuthButton() {
               userButtonPopoverActionButton: "hover:bg-teal-50 dark:hover:bg-gray-800",
             }
           }}
+          // Center the popover on mobile, default alignment on desktop
+          userProfileMode="modal"
+          userProfileProps={{
+            appearance: {
+              elements: {
+                modalContent: "mx-auto"
+              }
+            }
+          }}
         />
       </SignedIn>
     </>

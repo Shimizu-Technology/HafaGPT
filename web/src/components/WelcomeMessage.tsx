@@ -1,7 +1,7 @@
 export function WelcomeMessage() {
   return (
-    <div className="flex items-center justify-center h-full p-4 sm:p-8">
-      <div className="text-center max-w-2xl animate-fade-in">
+    <div className="flex items-center justify-center h-full p-4 sm:p-8 w-full">
+      <div className="text-center w-full sm:max-w-2xl animate-fade-in">
         <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-3xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center text-4xl sm:text-5xl shadow-2xl shadow-coral-500/30 dark:shadow-ocean-500/30">
           🌺
         </div>

@@ -101,35 +101,48 @@ export function ConversationSidebar({
   };
   return (
     <>
+      {/* Mobile backdrop overlay */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
+          onClick={onToggle}
+          aria-hidden="true"
+        />
+      )}
+      
       {/* Sidebar */}
       <div className={`
         fixed md:relative top-0 left-0 h-full 
         bg-cream-50 dark:bg-gray-950
         border-r border-cream-300 dark:border-gray-800
         transform transition-all duration-300 ease-in-out z-50
+        overflow-hidden
         ${isOpen ? 'w-64' : 'w-0 md:w-0'}
       `}>
-        {isOpen && (
-          <div className="flex flex-col h-full w-64">
-            {/* Header with New Chat button */}
-            <div className="p-3 border-b border-cream-300 dark:border-gray-800">
-              <button
-                onClick={onNewConversation}
-                className="w-full px-3 py-2 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-200 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-              >
-                <Plus className="w-4 h-4" />
-                <span>New chat</span>
-              </button>
-            </div>
+        {/* Sidebar content - with opacity transition */}
+        <div className={`
+          flex flex-col h-full w-64 transition-opacity duration-300
+          ${isOpen ? 'opacity-100 delay-150' : 'opacity-0 pointer-events-none'}
+        `}>
+          {/* Header with New Chat button */}
+          <div className="p-3 border-b border-cream-300 dark:border-gray-800">
+            <button
+              onClick={onNewConversation}
+              className="w-full px-3 py-2 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-200 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New chat</span>
+            </button>
+          </div>
 
-            {/* Conversations list - scrollable */}
-            <div className="flex-1 overflow-y-auto p-2">
-              {conversations.length === 0 ? (
-                <div className="text-center text-brown-500 dark:text-gray-500 text-sm py-8 px-4">
-                  No conversations yet
-                </div>
-              ) : (
-                <div className="space-y-1">
+          {/* Conversations list - scrollable */}
+          <div className="flex-1 overflow-y-auto p-2">
+            {conversations.length === 0 ? (
+              <div className="text-center text-brown-500 dark:text-gray-500 text-sm py-8 px-4">
+                No conversations yet
+              </div>
+            ) : (
+              <div className="space-y-1">
                   {conversations.map((conversation) => (
                     <div
                       key={conversation.id}
@@ -192,8 +205,7 @@ export function ConversationSidebar({
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
       {/* Toggle button - visible on desktop only */}
       <button
