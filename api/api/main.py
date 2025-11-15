@@ -20,9 +20,14 @@ from .models import (
     ChatResponse,
     HealthResponse,
     ErrorResponse,
-    SourceInfo
+    SourceInfo,
+    ConversationCreate,
+    ConversationResponse,
+    ConversationListResponse,
+    MessagesResponse
 )
 from .chatbot_service import get_chatbot_response
+from . import conversations
 
 # Clerk for authentication
 try:
@@ -285,7 +290,8 @@ async def chat(
             mode=request.mode,
             conversation_length=0,  # For now, stateless (no session history)
             session_id=request.session_id,  # Pass session_id for logging
-            user_id=user_id  # Pass user_id for tracking
+            user_id=user_id,  # Pass user_id for tracking
+            conversation_id=request.conversation_id  # Pass conversation_id for multi-conversation support
         )
         
         # Convert sources to SourceInfo models
@@ -314,6 +320,109 @@ async def chat(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
+
+
+# --- Conversation Management Endpoints ---
+
+@app.post("/api/conversations", response_model=ConversationResponse, tags=["Conversations"])
+async def create_conversation_endpoint(
+    request: ConversationCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a new conversation.
+    
+    Anonymous users can create conversations (user_id will be NULL).
+    Authenticated users get conversations tied to their account.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Create conversation
+        conversation = conversations.create_conversation(
+            user_id=user_id,
+            title=request.title or "New Chat"
+        )
+        
+        logger.info(f"Created conversation: {conversation.id} for user: {user_id or 'anonymous'}")
+        return conversation
+    except Exception as e:
+        logger.error(f"Failed to create conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations", response_model=ConversationListResponse, tags=["Conversations"])
+async def list_conversations(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    List all conversations for the authenticated user.
+    
+    Returns empty list for anonymous users (no auth token).
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Get conversations
+        conversation_list = conversations.get_conversations(user_id=user_id)
+        
+        logger.info(f"Listed {len(conversation_list.conversations)} conversations for user: {user_id or 'anonymous'}")
+        return conversation_list
+    except Exception as e:
+        logger.error(f"Failed to list conversations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations/{conversation_id}/messages", response_model=MessagesResponse, tags=["Conversations"])
+async def get_conversation_messages_endpoint(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get all messages for a specific conversation.
+    
+    TODO: Add ownership verification for security.
+    """
+    try:
+        # Get messages
+        messages = conversations.get_conversation_messages(conversation_id)
+        
+        logger.info(f"Retrieved {len(messages.messages)} messages for conversation: {conversation_id}")
+        return messages
+    except Exception as e:
+        logger.error(f"Failed to get messages: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/conversations/{conversation_id}", tags=["Conversations"])
+async def delete_conversation_endpoint(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete a conversation (and all its messages).
+    
+    Only the owner can delete their conversation.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Delete conversation
+        deleted = conversations.delete_conversation(conversation_id, user_id=user_id)
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Conversation not found or access denied")
+        
+        logger.info(f"Deleted conversation: {conversation_id} for user: {user_id or 'anonymous'}")
+        return {"success": True, "message": "Conversation deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.exception_handler(HTTPException)
