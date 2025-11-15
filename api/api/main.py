@@ -396,6 +396,43 @@ async def get_conversation_messages_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.patch("/api/conversations/{conversation_id}", tags=["Conversations"])
+async def update_conversation_endpoint(
+    conversation_id: str,
+    request: ConversationCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a conversation's title.
+    
+    Only the owner can update their conversation.
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        if not request.title:
+            raise HTTPException(status_code=400, detail="Title is required")
+        
+        # Update conversation
+        updated = conversations.update_conversation_title(
+            conversation_id=conversation_id,
+            title=request.title,
+            user_id=user_id
+        )
+        
+        if not updated:
+            raise HTTPException(status_code=404, detail="Conversation not found or access denied")
+        
+        logger.info(f"Updated conversation: {conversation_id} title to '{request.title}' for user: {user_id or 'anonymous'}")
+        return {"success": True, "message": "Conversation updated"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.delete("/api/conversations/{conversation_id}", tags=["Conversations"])
 async def delete_conversation_endpoint(
     conversation_id: str,

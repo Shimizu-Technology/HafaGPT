@@ -85,7 +85,7 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get conversations with message counts
+        # Get conversations with message counts (excluding soft-deleted)
         query = """
             SELECT 
                 c.id,
@@ -96,13 +96,14 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
                 COUNT(cl.id) as message_count
             FROM conversations c
             LEFT JOIN conversation_logs cl ON c.id = cl.conversation_id
+            WHERE c.deleted_at IS NULL
         """
         
         if user_id:
-            query += " WHERE c.user_id = %s"
+            query += " AND c.user_id = %s"
             params = (user_id,)
         else:
-            query += " WHERE c.user_id IS NULL"
+            query += " AND c.user_id IS NULL"
             params = ()
         
         query += " GROUP BY c.id ORDER BY c.updated_at DESC LIMIT %s"
@@ -146,7 +147,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get messages for conversation
+        # Get messages for conversation (even if conversation is soft-deleted)
+        # This allows access to historical data for analytics
         cursor.execute("""
             SELECT 
                 id,
@@ -210,7 +212,10 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
 
 def delete_conversation(conversation_id: str, user_id: Optional[str] = None) -> bool:
     """
-    Delete a conversation (and all its messages via CASCADE).
+    Soft delete a conversation (sets deleted_at timestamp).
+    
+    This preserves conversation_logs for training/analytics while hiding
+    the conversation from the user's list.
     
     Args:
         conversation_id: Conversation ID to delete
@@ -223,22 +228,27 @@ def delete_conversation(conversation_id: str, user_id: Optional[str] = None) -> 
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Delete with optional user_id check for security
+        # Soft delete with optional user_id check for security
         if user_id:
             cursor.execute("""
-                DELETE FROM conversations
-                WHERE id = %s AND user_id = %s
+                UPDATE conversations
+                SET deleted_at = NOW()
+                WHERE id = %s AND user_id = %s AND deleted_at IS NULL
             """, (conversation_id, user_id))
         else:
             cursor.execute("""
-                DELETE FROM conversations
-                WHERE id = %s AND user_id IS NULL
+                UPDATE conversations
+                SET deleted_at = NOW()
+                WHERE id = %s AND user_id IS NULL AND deleted_at IS NULL
             """, (conversation_id,))
         
         deleted = cursor.rowcount > 0
         conn.commit()
         cursor.close()
         conn.close()
+        
+        if deleted:
+            logger.info(f"Soft deleted conversation {conversation_id} (logs preserved for training)")
         
         return deleted
     except Exception as e:
@@ -266,13 +276,13 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
             cursor.execute("""
                 UPDATE conversations
                 SET title = %s, updated_at = NOW()
-                WHERE id = %s AND user_id = %s
+                WHERE id = %s AND user_id = %s AND deleted_at IS NULL
             """, (title, conversation_id, user_id))
         else:
             cursor.execute("""
                 UPDATE conversations
                 SET title = %s, updated_at = NOW()
-                WHERE id = %s AND user_id IS NULL
+                WHERE id = %s AND user_id IS NULL AND deleted_at IS NULL
             """, (title, conversation_id))
         
         updated = cursor.rowcount > 0
@@ -284,4 +294,7 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
     except Exception as e:
         logger.error(f"Failed to update conversation: {e}")
         raise
+
+
+
 
