@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Mic, MicOff } from 'lucide-react';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
@@ -9,8 +9,10 @@ interface MessageInputProps {
 
 export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) {
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Auto-resize textarea as content grows
   useEffect(() => {
@@ -19,6 +21,66 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
     }
   }, [input, textareaRef]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+    };
+  }, []);
+
+  const startListening = () => {
+    // Check browser support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please try Chrome or Safari.');
+      return;
+    }
+
+    // Create recognition instance
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false; // Stop after one phrase
+    recognition.interimResults = false;
+    recognition.lang = 'en-US'; // English as primary language
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      // Append to existing text with a space if there's already content
+      setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+      
+      // Show user-friendly error messages
+      if (event.error === 'not-allowed') {
+        alert('Microphone access was denied. Please allow microphone access to use voice input.');
+      } else if (event.error === 'no-speech') {
+        // Silent error - user just didn't speak
+        console.log('No speech detected');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  };
 
   const handleSend = () => {
     if (input.trim() && !disabled) {
@@ -47,12 +109,28 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
     <div className="pb-1 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="w-full sm:max-w-3xl sm:mx-auto">
         <div className="flex gap-2 sm:gap-3 items-end">
+          {/* Microphone Button */}
+          <button
+            onClick={isListening ? stopListening : startListening}
+            disabled={disabled}
+            className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+              isListening
+                ? 'bg-red-500 text-white animate-pulse hover:bg-red-600 shadow-red-500/30'
+                : 'bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50'
+            }`}
+            aria-label={isListening ? 'Stop recording' : 'Start voice input'}
+            title={isListening ? 'Stop recording' : 'Start voice input'}
+            style={{ minHeight: '44px', minWidth: '44px' }}
+          >
+            {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
+          </button>
+
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
+            placeholder="Type or speak your message..."
             rows={1}
             className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm"
             aria-label="Message input"
