@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -30,6 +31,7 @@ export function useChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const { user } = useUser();
 
   // Initialize session (check localStorage first)
   useEffect(() => {
@@ -56,13 +58,28 @@ export function useChatbot() {
     setError(null);
 
     try {
+      // Get auth token if user is signed in
+      let token = null;
+      if (user) {
+        try {
+          token = await user.getToken();
+        } catch (e) {
+          console.warn('Could not get auth token:', e);
+        }
+      }
+      
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          // Add Authorization header if user is logged in
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({
           message,
           mode,
           session_id: sessionId,
+          user_id: user?.id || null,  // Send user ID if logged in
           conversation_history: null,
         }),
       });

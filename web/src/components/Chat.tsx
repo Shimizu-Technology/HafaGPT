@@ -3,6 +3,8 @@ import { Trash2, AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from '
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
+import { useUser } from '@clerk/clerk-react';
+import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
@@ -18,6 +20,7 @@ export function Chat() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
+  // const { user, isSignedIn } = useUser(); // Available for future use (Phase 2: Billing)
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -85,10 +88,19 @@ export function Chat() {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
+      const isScrollable = scrollHeight > clientHeight;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
-      setShowScrollButton(!isNearBottom && messages.length > 2);
+      
+      // Only show button if:
+      // 1. There are messages to show
+      // 2. Container is actually scrollable
+      // 3. User has scrolled up (not near bottom)
+      setShowScrollButton(messages.length > 0 && isScrollable && !isNearBottom);
     };
 
+    // Check immediately on mount/update
+    handleScroll();
+    
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
@@ -214,7 +226,7 @@ End of Export
   };
 
   return (
-    <div className="flex flex-col h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-hidden">
+    <div className="flex flex-col h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
       {/* Header - Fixed Position */}
       <header className="fixed top-0 left-0 right-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-50 safe-area-top">
         <div className="px-3 sm:px-6 py-2 sm:py-4">
@@ -238,6 +250,9 @@ End of Export
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Auth Button - Always visible */}
+              <AuthButton />
+              
               <button
                 onClick={toggleTheme}
                 className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95"
@@ -285,10 +300,8 @@ End of Export
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-scroll overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
         style={{ 
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehaviorY: 'auto',
           paddingBottom: '140px' // Space for fixed input + disclaimer
         }}
       >
