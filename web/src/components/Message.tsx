@@ -1,7 +1,8 @@
-import { BookOpen, Search, Clock, Copy, Check } from 'lucide-react';
+import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
+import { useSpeech } from '../hooks/useSpeech';
 
 interface MessageProps {
   role: 'user' | 'assistant' | 'system';
@@ -21,6 +22,7 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
+  const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
 
   const handleCopy = async () => {
     console.log('🔵 Copy button clicked!'); // Debug log
@@ -298,6 +300,76 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
         
         {/* Sources */}
         {!isUser && sources && sources.length > 0 && <SourceCitation sources={sources} />}
+        
+        {/* Assistant Actions (Copy + Listen) */}
+        {!isUser && !isSystem && (
+          <div className="flex items-center gap-2 mt-2">
+            {/* Copy Button */}
+            <button
+              onClick={handleCopy}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleCopy();
+              }}
+              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              title="Copy message"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
+                  <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </button>
+
+            {/* Listen Button (Speech) */}
+            {isSupported && (
+              <button
+                onClick={() => {
+                  if (isSpeaking) {
+                    stop();
+                  } else {
+                    // Try to extract Chamorro text, fallback to full content
+                    const textToSpeak = extractChamorroText(content);
+                    speak(textToSpeak);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (isSpeaking) {
+                    stop();
+                  } else {
+                    const textToSpeak = extractChamorroText(content);
+                    speak(textToSpeak);
+                  }
+                }}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  isSpeaking 
+                    ? 'text-coral-600 dark:text-coral-400 bg-coral-100 dark:bg-coral-900/30' 
+                    : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                }`}
+                title={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
+              >
+                {isSpeaking ? (
+                  <>
+                    <VolumeX className="w-3 h-3 animate-pulse" />
+                    <span className="hidden sm:inline font-medium">Stop</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">Listen</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
         
         {/* User Avatar */}
         {isUser && (
