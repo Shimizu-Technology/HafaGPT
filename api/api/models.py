@@ -112,17 +112,26 @@ class ConversationListResponse(BaseModel):
 class MessageResponse(BaseModel):
     """Response model for a single message"""
     id: int = Field(..., description="Message ID")
-    role: str = Field(..., description="Message role: 'user' or 'assistant'")
+    role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
     content: str = Field(..., description="Message content")
     timestamp: datetime = Field(..., description="Message timestamp")
     sources: list[SourceInfo] = Field(default=[], description="Sources used (for assistant messages)")
     used_rag: bool = Field(default=False, description="Whether RAG was used")
     used_web_search: bool = Field(default=False, description="Whether web search was used")
     image_url: Optional[str] = Field(default=None, description="S3 URL of uploaded image (for user messages)")
+    mode: Optional[str] = Field(default=None, description="Mode for system messages (english/chamorro/learn)")
 
 
 class MessagesResponse(BaseModel):
     """Response model for conversation messages"""
     conversation_id: str = Field(..., description="Conversation ID")
     messages: list[MessageResponse] = Field(default=[], description="List of messages")
+
+
+class SystemMessageCreate(BaseModel):
+    """Request to create a system message (e.g., mode change)"""
+    conversation_id: str = Field(..., description="Conversation ID")
+    content: str = Field(..., description="System message content")
+    mode: Optional[str] = Field(None, description="Mode for mode change messages")
+
 

@@ -165,13 +165,15 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         cursor.execute("""
             SELECT 
                 id,
+                role,
                 user_message,
                 bot_response,
                 timestamp,
                 sources_used,
                 used_rag,
                 used_web_search,
-                image_url
+                image_url,
+                mode
             FROM conversation_logs
             WHERE conversation_id = %s
             ORDER BY timestamp ASC
@@ -180,39 +182,55 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         rows = cursor.fetchall()
         messages = []
         
-        # Convert to message pairs (user + assistant)
+        # Convert to messages based on role
         for row in rows:
-            # User message
-            messages.append(MessageResponse(
-                id=row[0],
-                role="user",
-                content=row[1],
-                timestamp=row[3],
-                sources=[],
-                used_rag=False,
-                used_web_search=False,
-                image_url=row[7]  # NEW: Include S3 image URL
-            ))
+            role = row[1]
             
-            # Assistant message
-            sources = []
-            if row[4]:  # sources_used (JSONB)
-                for source in row[4]:
-                    sources.append(SourceInfo(
-                        name=source.get("name", ""),
-                        page=source.get("page")
-                    ))
-            
-            messages.append(MessageResponse(
-                id=row[0],
-                role="assistant",
-                content=row[2],
-                timestamp=row[3],
-                sources=sources,
-                used_rag=row[5],
-                used_web_search=row[6],
-                image_url=None  # Assistant messages don't have images
-            ))
+            if role == 'system':
+                # System message (mode change, etc.)
+                messages.append(MessageResponse(
+                    id=row[0],
+                    role="system",
+                    content=row[2] or "",  # System message stored in user_message column
+                    timestamp=row[4],
+                    sources=[],
+                    used_rag=False,
+                    used_web_search=False,
+                    image_url=None,
+                    mode=row[9]  # Mode from database
+                ))
+            else:
+                # User message
+                messages.append(MessageResponse(
+                    id=row[0],
+                    role="user",
+                    content=row[2],
+                    timestamp=row[4],
+                    sources=[],
+                    used_rag=False,
+                    used_web_search=False,
+                    image_url=row[8]  # S3 image URL
+                ))
+                
+                # Assistant message
+                sources = []
+                if row[5]:  # sources_used (JSONB)
+                    for source in row[5]:
+                        sources.append(SourceInfo(
+                            name=source.get("name", ""),
+                            page=source.get("page")
+                        ))
+                
+                messages.append(MessageResponse(
+                    id=row[0],
+                    role="assistant",
+                    content=row[3],
+                    timestamp=row[4],
+                    sources=sources,
+                    used_rag=row[6],
+                    used_web_search=row[7],
+                    image_url=None  # Assistant messages don't have images
+                ))
         
         cursor.close()
         conn.close()
@@ -309,6 +327,62 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
         return updated
     except Exception as e:
         logger.error(f"Failed to update conversation: {e}")
+        raise
+
+
+def create_system_message(
+    conversation_id: str,
+    content: str,
+    mode: Optional[str] = None,
+    user_id: Optional[str] = None,
+    session_id: Optional[str] = None
+) -> bool:
+    """
+    Create a system message (e.g., mode change indicator).
+    
+    Args:
+        conversation_id: Conversation ID
+        content: System message content
+        mode: Mode for mode change messages
+        user_id: Optional user ID
+        session_id: Optional session ID
+        
+    Returns:
+        True if created successfully
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Insert system message
+        cursor.execute("""
+            INSERT INTO conversation_logs (
+                session_id, user_id, conversation_id, role, mode,
+                user_message, bot_response, sources_used,
+                used_rag, used_web_search, response_time_seconds
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            session_id,
+            user_id,
+            conversation_id,
+            'system',  # role
+            mode,  # mode (for mode changes)
+            content,  # store in user_message column
+            '',  # empty bot_response
+            '[]',  # empty sources
+            False,  # used_rag
+            False,  # used_web_search
+            0.0  # response_time
+        ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ Created system message in conversation {conversation_id}: {content}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to create system message: {e}")
         raise
 
 

@@ -27,7 +27,8 @@ from .models import (
     ConversationCreate,
     ConversationResponse,
     ConversationListResponse,
-    MessagesResponse
+    MessagesResponse,
+    SystemMessageCreate
 )
 from .chatbot_service import get_chatbot_response
 from . import conversations
@@ -637,6 +638,50 @@ async def delete_conversation_endpoint(
         raise
     except Exception as e:
         logger.error(f"Failed to delete conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/conversations/system-message", tags=["Conversations"])
+async def create_system_message_endpoint(
+    request: SystemMessageCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a system message (e.g., mode change indicator).
+    
+    System messages are used to track events like mode switching for analytics
+    and to provide context in conversation history.
+    """
+    try:
+        # Verify authentication (optional - allow anonymous users too)
+        user_id = None
+        try:
+            user_id = await verify_user(authorization)
+        except:
+            pass  # Allow anonymous users
+        
+        # Get session ID from somewhere (we'll need to add this to the request model)
+        session_id = None
+        # TODO: Consider adding session_id to SystemMessageCreate if needed
+        
+        # Create system message
+        success = conversations.create_system_message(
+            conversation_id=request.conversation_id,
+            content=request.content,
+            mode=request.mode,
+            user_id=user_id,
+            session_id=session_id
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to create system message")
+        
+        logger.info(f"Created system message in conversation {request.conversation_id}: {request.content}")
+        return {"success": True, "message": "System message created"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create system message: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
