@@ -5,6 +5,7 @@ Loads the Chamorro grammar vector database and provides search capabilities.
 
 import re
 import unicodedata
+import time
 from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 
@@ -102,6 +103,9 @@ class ChamorroRAG:
         
         connection = os.getenv("DATABASE_URL", connection)
         
+        # Store connection string for reconnection
+        self.connection = connection
+        
         # EMBEDDING CONFIGURATION
         # Choose between local (free, private, memory-heavy) or cloud (paid, fast, lightweight)
         embedding_mode = os.getenv("EMBEDDING_MODE", "openai").lower()
@@ -129,16 +133,44 @@ class ChamorroRAG:
                 dimensions=384  # Match HuggingFace model dimensions for compatibility
             )
         
-        # Load the PostgreSQL vector database
+        # Initialize vector store connection
+        self._init_vectorstore()
+        
+        print("✅ Knowledge base loaded!")
+    
+    def _init_vectorstore(self):
+        """Initialize or reinitialize the vector store connection."""
         self.vectorstore = PGVector(
             embeddings=self.embeddings,
             collection_name="chamorro_grammar",
-            connection=connection,
+            connection=self.connection,
             use_jsonb=True,
             embedding_length=384  # Explicit embedding dimensions for PGVector
         )
+    
+    def _retry_on_connection_error(self, func, *args, **kwargs):
+        """
+        Retry a function if it fails due to database connection errors.
+        Common with Neon/serverless PostgreSQL that close idle connections.
+        """
+        max_retries = 3
+        retry_delay = 1  # seconds
         
-        print("✅ Knowledge base loaded!")
+        for attempt in range(max_retries):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                error_msg = str(e)
+                # Check if it's a connection error
+                if any(keyword in error_msg.lower() for keyword in ['ssl', 'connection', 'closed', 'timeout']):
+                    if attempt < max_retries - 1:
+                        print(f"⚠️  Database connection error (attempt {attempt + 1}/{max_retries}), retrying...")
+                        time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                        # Reinitialize connection
+                        self._init_vectorstore()
+                        continue
+                # If not a connection error or max retries reached, raise
+                raise
     
     def search(self, query, k=3):
         """
@@ -154,6 +186,10 @@ class ChamorroRAG:
         Returns:
             List of tuples (content, metadata) for relevant chunks
         """
+        return self._retry_on_connection_error(self._search_impl, query, k)
+    
+    def _search_impl(self, query, k=3):
+        """Implementation of search with retry wrapper."""
         query_lower = query.lower()
         
         # Normalize query for better matching (handles accents, glottal stops, etc.)
@@ -324,6 +360,7 @@ class ChamorroRAG:
             source_file = metadata.get('source', 'Unknown source')
             source_type = metadata.get('source_type', '')
             page = metadata.get('page', 0)
+            era_priority = metadata.get('era_priority', 0)  # Extract era_priority from metadata
             
             # Create friendly source name based on type
             if 'guampdn.com' in source_file:

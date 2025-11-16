@@ -142,3 +142,21 @@ class InitResponse(BaseModel):
     active_conversation_id: Optional[str] = Field(None, description="ID of the active conversation")
 
 
+# --- Flashcard Models ---
+
+class FlashcardResponse(BaseModel):
+    """Response model for a single flashcard"""
+    front: str = Field(..., description="Front of card (Chamorro word/phrase)")
+    back: str = Field(..., description="Back of card (English translation)")
+    pronunciation: Optional[str] = Field(None, description="Phonetic pronunciation guide")
+    example: Optional[str] = Field(None, description="Example sentence in Chamorro")
+    category: str = Field(..., description="Category/topic of the card")
+
+
+class GenerateFlashcardsResponse(BaseModel):
+    """Response model for flashcard generation"""
+    flashcards: list[FlashcardResponse] = Field(..., description="Generated flashcards")
+    topic: str = Field(..., description="Topic of the flashcards")
+    count: int = Field(..., description="Number of cards generated")
+
+

@@ -2,7 +2,7 @@
 
 An AI-powered chatbot for learning Chamorro (the native language of Guam) with **Retrieval-Augmented Generation (RAG)** using authoritative grammar books, dictionaries, and online resources.
 
-**🆕 LATEST:** Speech-to-text input + Image upload with GPT-4o-mini Vision + S3 storage! 🎤📸
+**🆕 LATEST:** Speech-to-text input + Image upload with GPT-4o-mini Vision + S3 storage + Flashcards! 🎤📸🎴
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
@@ -19,6 +19,15 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Image Upload** - Take photos of Chamorro documents/text for translation and explanation
   - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
   - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
+
+- 🎴 **Flashcards & Learning:**
+  - **6 Default Decks** - Pre-made cards for Greetings, Family, Food, Numbers, Verbs, Phrases (60 cards total)
+  - **Custom AI Generation** - RAG-powered flashcards tailored to each topic
+  - **Progressive Loading** - Generate 3 cards at a time (15-20s total) for better UX
+  - **Dual Mode Toggle** - Switch between instant default cards and custom AI cards
+  - **Beautiful UI** - 3D flip animation, swipe gestures, keyboard navigation
+  - **Mobile Optimized** - Touch-friendly, responsive design
+  - **Future:** Spaced repetition, progress tracking, learning analytics
 
 - 📚 **RAG-Enhanced Knowledge (54,303 chunks):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database
@@ -71,6 +80,7 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Message Counts** - Track messages per conversation
   - **Auto-naming** - Conversations titled from first message (first 50 characters)
   - **Persistence** - Active conversation maintained across refreshes
+  - **React Query** - Modern state management with automatic caching and background sync
 
 - 📱 **Mobile-Optimized UI:**
   - **Responsive Design** - Optimized for both mobile and desktop
@@ -336,9 +346,16 @@ def downgrade():
 
 **Test API:**
 ```bash
+# Test chat endpoint
 curl -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hafa adai!", "mode": "english", "session_id": "test-123"}'
+
+# Test flashcard generation
+curl -X POST http://localhost:8000/api/generate-flashcards \
+  -F "topic=greetings" \
+  -F "count=3" \
+  -F "variety=basic"
 ```
 
 **See [api/README.md](api/README.md) for full API documentation.**
@@ -759,6 +776,13 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 - **TypeScript** - Type-safe JavaScript
 - **Vite** - Fast build tool and dev server
 - **Tailwind CSS** - Utility-first styling
+- **React Router** - Client-side routing for flashcards and navigation
+- **React Query (TanStack Query)** - Server state management
+  - Automatic caching and background sync
+  - Optimistic updates for instant UX
+  - Smart refetching and invalidation
+  - Replaces sessionStorage with production-ready cache
+- **Clerk React** - Authentication UI components
 - **Deployment:** Netlify (auto-deploy on push)
 
 ---
@@ -1018,8 +1042,9 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 | **TOTAL** | | **~$13-24/month** |
 
 **Notes:**
-- OpenAI costs scale with usage (~100-300 queries/day)
+- OpenAI costs scale with usage (~100-300 queries/day + flashcard generation)
 - TTS costs: ~$0.60 per 100 pronunciations (HD quality)
+- Flashcards: ~$0.02 per custom deck generation (3-9 cards)
 - Can reduce to ~$7/month with local embeddings (requires Render Pro $85)
 - S3 costs depend on image uploads (typical: 10-50 images/month)
 - Database can be free tier (<0.5GB) or Pro ($19/month for growth)

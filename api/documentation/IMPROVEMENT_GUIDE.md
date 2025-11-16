@@ -92,8 +92,23 @@
   - Loading skeleton provides better UX feedback
 - **Impact**: App feels much faster for users with many conversations
 
-**Future Performance Ideas** (when needed):
-- **Optimistic UI with localStorage** - Cache conversations locally, show instantly (~300ms savings)
+**State Management:**
+- **React Query (TanStack Query)** - Production-ready API data management ✅
+  - Handles caching, refetching, invalidation automatically
+  - Built-in optimistic updates and background sync
+  - Perfect for API-heavy features (chat, flashcards, conversations)
+  - ~$0 cost, modern standard for data fetching
+  - **Migrated**: Replaced sessionStorage caching with React Query on Nov 16, 2025
+  - **Benefits**: Instant navigation, automatic background refetch, cleaner code
+  - Cache persists between route changes (instant flashcard ↔ chat navigation)
+  - Automatic cache invalidation on user sign-out
+- **Future Consideration: Zustand** - Optional, for complex client-side state
+  - Lightweight (1KB) global state manager
+  - Great for UI state (theme, sidebar, active mode)
+  - Less boilerplate than Redux
+  - **When to add**: If UI state becomes complex (multiple modals, complex forms)
+
+**Other Future Performance Ideas** (when needed):
 - **Parallel Clerk + Data Loading** - Don't wait for auth sequentially (~200ms savings)
 - **Service Worker Caching** - PWA feature for instant loads on repeat visits (~400ms savings)
 - **Response Streaming** - Stream conversations first, then messages (progressive loading)
@@ -219,28 +234,43 @@ async def chat(
 
 ---
 
-### **Phase 3: Flashcards & Learning Tools** 🟢 **LOW PRIORITY**
+### **Phase 3: Flashcards & Learning Tools** ✅ **COMPLETED (Phase 1)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Phase 1 Complete (Stateless MVP) | 🚧 Phase 2 Planned (User Progress)  
 **Complexity:** Medium  
-**Effort:** 2-3 days  
+**Effort:** Phase 1: 1-2 days (✅ Done) | Phase 2: 2-3 days (📋 Planned)  
 **Cost:** Minimal (uses existing GPT-4o-mini)
 
-**Why This Feature:**
-- 📚 Structured vocabulary learning
-- 🔁 Spaced repetition for retention
-- 📊 Track learning progress
-- 🎯 Generated from user's actual conversations
+---
 
-**LLM-Generated Flashcards** ⭐ RECOMMENDED
+### **✅ Phase 1: Stateless MVP (COMPLETED - Nov 2025)**
+
+**What We Built:**
+- 🎴 **6 Default Card Decks** - Pre-made, high-quality cards
+  - Greetings & Basics (10 cards)
+  - Family Members (10 cards)
+  - Food & Cooking (10 cards)
+  - Numbers 1-20 (10 cards)
+  - Common Verbs (10 cards)
+  - Everyday Phrases (10 cards)
+- 🤖 **Custom AI Generation** - Progressive loading (3 cards → 3 more → 3 more)
+  - Uses RAG for context-aware, unique flashcards
+  - Variety levels: `basic`, `conversational`, `advanced`
+  - Auto-adds new cards to deck as they're generated
+  - 15-20s total load time (much better UX than 30s all at once)
+- 🎯 **Dual Mode Toggle** - Switch between Default and Custom AI on deck list
+- 🎨 **Beautiful UI** - 3D flip animation, swipe gestures, keyboard navigation
+- 📱 **Mobile Optimized** - Touch gestures, responsive design
+- ⚡ **Instant Loading** - Default cards load instantly
+- 🎨 **Consistent Styling** - Matches chat page (coral/ocean theme)
+
+**API Endpoint (Custom Cards):**
 ```python
-# Generate flashcards from conversation history
 POST /api/generate-flashcards
-Body: {
-    "user_id": "user-456",     # all user's conversations
-    "count": 10,
-    "topic": "greetings",      # optional: filter by topic
-    "difficulty": "beginner"   # optional: easy/medium/hard
+Form Data: {
+    "topic": "greetings",        # Topic name
+    "count": 3,                  # Number of cards to generate
+    "variety": "basic"           # basic | conversational | advanced
 }
 
 Response: {
@@ -248,44 +278,141 @@ Response: {
         {
             "front": "Håfa Adai",
             "back": "Hello / How are you (standard Chamorro greeting)",
-            "pronunciation": "HAH-fah ah-DYE",
-            "category": "greetings"
+            "pronunciation": "HAH-fah ah-DYE"
         }
     ]
 }
 ```
 
-**Frontend Features:**
-- Flashcard deck viewer (flip animation)
-- Progress tracker (X/Y cards reviewed today)
-- Spaced repetition scheduler
-- Swipe left/right (mobile)
-- Keyboard shortcuts (desktop)
-- Track review statistics
+**Frontend Implementation:**
+- **React Router** - `/flashcards` (deck list), `/flashcards/:topic` (viewer)
+- **Default Cards** - Stored in `defaultFlashcards.ts` (no API needed)
+- **Custom Cards** - Generated via API with RAG context
+- **Progressive Loading** - Generate in batches, auto-add to deck
+- **No Database** - Stateless for MVP validation
+
+**Benefits:**
+- ✅ Validates user interest in flashcards
+- ✅ No database complexity
+- ✅ Fast to implement and test
+- ✅ Great UX with progressive loading
+
+---
+
+### **🚧 Phase 2: User Progress Tracking (PLANNED)**
+
+**Why This Phase:**
+- 📊 Track which cards users have mastered
+- 🔁 Spaced repetition for better retention
+- 🎯 Personalized learning paths
+- 📈 Learning analytics and streaks
+- 💾 Persist user's custom AI-generated cards
 
 **Database Schema:**
 ```sql
+-- Store user-generated or saved flashcard decks
+CREATE TABLE flashcard_decks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    topic TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    is_default BOOLEAN DEFAULT false,  -- true for pre-made decks
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Store individual flashcards (both default and user-generated)
 CREATE TABLE flashcards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id TEXT,
+    deck_id UUID REFERENCES flashcard_decks(id) ON DELETE CASCADE,
     front TEXT NOT NULL,
     back TEXT NOT NULL,
     pronunciation TEXT,
-    category TEXT,
-    difficulty TEXT,
+    example TEXT,
+    difficulty TEXT,  -- beginner | intermediate | advanced
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Track user progress per card (spaced repetition)
 CREATE TABLE user_flashcard_progress (
-    user_id TEXT,
-    flashcard_id UUID REFERENCES flashcards(id),
+    user_id TEXT NOT NULL,
+    flashcard_id UUID REFERENCES flashcards(id) ON DELETE CASCADE,
     times_reviewed INTEGER DEFAULT 0,
     last_reviewed TIMESTAMPTZ,
-    next_review TIMESTAMPTZ,
-    confidence INTEGER,  -- 1-5 rating
+    next_review TIMESTAMPTZ,  -- When to show again (spaced repetition)
+    confidence INTEGER,       -- 1-5 rating (1=hard, 5=easy)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, flashcard_id)
 );
+
+-- Track daily/weekly stats
+CREATE TABLE user_flashcard_stats (
+    user_id TEXT NOT NULL,
+    date DATE NOT NULL,
+    cards_reviewed INTEGER DEFAULT 0,
+    cards_mastered INTEGER DEFAULT 0,
+    study_time_seconds INTEGER DEFAULT 0,
+    PRIMARY KEY (user_id, date)
+);
+
+CREATE INDEX idx_flashcard_progress_user ON user_flashcard_progress(user_id);
+CREATE INDEX idx_flashcard_progress_next_review ON user_flashcard_progress(next_review);
+CREATE INDEX idx_flashcard_stats_user ON user_flashcard_stats(user_id);
 ```
+
+**New API Endpoints:**
+```python
+# Save custom AI cards to user's deck
+POST /api/flashcards/decks/{deck_id}/save
+Body: { "flashcards": [...] }
+
+# Get user's saved decks
+GET /api/flashcards/decks?user_id=user-123
+
+# Mark card as reviewed (updates spaced repetition)
+POST /api/flashcards/progress
+Body: {
+    "flashcard_id": "uuid-...",
+    "confidence": 4  # 1-5 rating
+}
+
+# Get next cards to review (due for spaced repetition)
+GET /api/flashcards/review?user_id=user-123&limit=10
+
+# Get user stats
+GET /api/flashcards/stats?user_id=user-123&period=week
+```
+
+**Frontend Features:**
+- 📊 **Progress Dashboard** - Cards reviewed today, streak, mastery %
+- 🔁 **Spaced Repetition** - Cards appear based on confidence level
+- 💾 **Save Custom Cards** - Save AI-generated cards to your deck
+- 📈 **Learning Analytics** - Weekly/monthly review stats
+- 🎯 **Due Cards Indicator** - Show how many cards need review
+- ⭐ **Mastery Levels** - Visual indicators for card mastery
+
+**Spaced Repetition Algorithm:**
+- **Confidence 1 (Hard):** Review in 1 day
+- **Confidence 2:** Review in 3 days
+- **Confidence 3 (Good):** Review in 7 days
+- **Confidence 4:** Review in 14 days
+- **Confidence 5 (Easy):** Review in 30 days
+
+**Implementation Priority:**
+1. Database schema + migrations
+2. Backend API endpoints
+3. Save custom cards to user deck
+4. Track review progress
+5. Spaced repetition logic
+6. Progress dashboard UI
+
+**Why Wait for Phase 2:**
+- ✅ Phase 1 validates user interest
+- ✅ Can gather feedback on card quality/topics
+- ✅ No premature optimization
+- ✅ Users can test flashcards without commitment
 
 ---
 
@@ -314,9 +441,10 @@ CREATE TABLE user_flashcard_progress (
 | **Phase 1** | ✅ Speech-to-Text | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Audio Pronunciation (OpenAI TTS HD) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Image Upload + S3 Storage | - | ✅ **COMPLETED** |
-| **Phase 1** | ✅ Performance Optimizations | - | ✅ **COMPLETED** |
+| **Phase 1** | ✅ Performance Optimizations (React Query) | - | ✅ **COMPLETED** |
+| **Phase 1** | ✅ Flashcards (Stateless MVP) | - | ✅ **COMPLETED** |
 | **Phase 2** | File Upload (PDF/Word) | 2-3 days | 📋 Planned |
-| **Phase 3** | Flashcards | 2-3 days | 📋 Planned |
+| **Phase 2** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
 | **Total** | Remaining Features | **4-6 days** | 📋 Ready! |
 
 ---
@@ -324,12 +452,12 @@ CREATE TABLE user_flashcard_progress (
 ## 🎯 **Next Steps**
 
 **Ready to implement next:**
-1. **File Upload** - Support PDFs and Word documents
-2. **Flashcards** - Generate personalized vocabulary learning from conversations
+1. **Flashcard User Progress** - Track mastery, spaced repetition, learning analytics
+2. **File Upload** - Support PDFs and Word documents
 
 **Questions:**
-- Do you want to implement file upload support (PDFs, Word docs)?
-- Or would you prefer flashcards for structured learning?
+- Do you want to add flashcard progress tracking and spaced repetition?
+- Or would you prefer file upload support (PDFs, Word docs)?
 - Any other features you'd like to prioritize?
 
 ---

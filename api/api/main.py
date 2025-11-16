@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Optional
+import json
 
 from .models import (
     ChatRequest,
@@ -29,7 +30,9 @@ from .models import (
     ConversationListResponse,
     MessagesResponse,
     SystemMessageCreate,
-    InitResponse
+    InitResponse,
+    FlashcardResponse,
+    GenerateFlashcardsResponse
 )
 from .chatbot_service import get_chatbot_response
 from . import conversations
@@ -846,6 +849,227 @@ async def text_to_speech(
     except Exception as e:
         logger.error(f"❌ TTS failed: {e}")
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+
+
+# --- Flashcard Generation Endpoint ---
+
+@app.post("/api/generate-flashcards", response_model=GenerateFlashcardsResponse, tags=["Flashcards"])
+async def generate_flashcards(
+    topic: str = Form(...),
+    count: int = Form(default=20),
+    variety: str = Form(default="basic"),  # New parameter: basic, conversational, or advanced
+):
+    """
+    Generate Chamorro language flashcards using GPT + RAG knowledge.
+    
+    No database storage - generates fresh cards each time (stateless MVP).
+    
+    Available topics:
+    - greetings: Greetings & basic phrases
+    - family: Family members & relationships
+    - food: Food & cooking vocabulary
+    - numbers: Numbers 1-20
+    - verbs: Common action verbs
+    - common-phrases: Everyday phrases
+    
+    Args:
+        topic: Topic category for flashcards
+        count: Number of cards to generate (default: 20, max: 30)
+        variety: Card variety level (basic, conversational, advanced)
+    
+    Returns:
+        JSON with array of flashcards
+    """
+    import time
+    start_time = time.time()
+    logger.info(f"🎴 [FLASHCARDS] Request received - topic: {topic}, count: {count}, variety: {variety}")
+    
+    try:
+        # Validate topic
+        valid_topics = ["greetings", "family", "food", "numbers", "verbs", "common-phrases"]
+        if topic not in valid_topics:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid topic. Must be one of: {', '.join(valid_topics)}"
+            )
+        
+        # Limit count
+        count = min(count, 30)
+        
+        logger.info(f"🎴 [FLASHCARDS] Starting RAG search...")
+        rag_start = time.time()
+        
+        # Import RAG and OpenAI
+        from src.rag.chamorro_rag import rag
+        from openai import OpenAI
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+        client = OpenAI(api_key=api_key)
+        
+        # Use RAG to get relevant content for the topic
+        topic_queries = {
+            "greetings": "Chamorro greetings, hello, good morning, good night, how are you",
+            "family": "Chamorro family members, mother, father, brother, sister, relatives",
+            "food": "Chamorro food vocabulary, cooking, eating, meals, ingredients",
+            "numbers": "Chamorro numbers, counting, one through twenty",
+            "verbs": "Chamorro action verbs, common verbs, doing words",
+            "common-phrases": "Chamorro everyday phrases, useful expressions, conversations"
+        }
+        
+        query = topic_queries.get(topic, f"Chamorro {topic} vocabulary")
+        
+        # Search RAG database for relevant content
+        rag_context, rag_sources = rag.create_context(query, k=10)  # Get top 10 chunks
+        
+        rag_end = time.time()
+        logger.info(f"🎴 [FLASHCARDS] RAG search took: {(rag_end - rag_start):.2f}s")
+        logger.info(f"🎴 [FLASHCARDS] Retrieved {len(rag_sources)} sources")
+        
+        # Create GPT prompt with variety-specific instructions
+        logger.info(f"🎴 [FLASHCARDS] Building GPT prompt with variety: {variety}...")
+        
+        # Variety-specific instructions
+        variety_instructions = {
+            "basic": """- Focus on BASIC everyday usage and common expressions
+- Use simple, direct translations
+- Prefer the most frequently used words/phrases
+- Keep examples straightforward and practical""",
+            "conversational": """- Focus on CONVERSATIONAL variations and contextual usage
+- Include phrases you'd hear in daily conversations
+- Show how words are used in real-life situations
+- Add some colloquial or informal expressions""",
+            "advanced": """- Focus on ADVANCED expressions and nuanced meanings
+- Include less common variations or regional differences
+- Show more complex sentence structures
+- Include idiomatic or cultural expressions"""
+        }
+        
+        variety_instruction = variety_instructions.get(variety, variety_instructions["basic"])
+        
+        prompt = f"""You are a Chamorro language teacher creating educational flashcards.
+
+Generate {count} HIGH-QUALITY, UNIQUE Chamorro language flashcards for the topic: {topic}
+
+IMPORTANT: Generate DIFFERENT content than what's typically found in basic dictionaries or common phrasebooks.
+Avoid the most obvious/common phrases like "Håfa Adai", "Si Yu'os Ma'åse'", "Maolek ha' yu'" unless specifically relevant.
+
+Use the reference materials provided below to create accurate flashcards with proper translations and pronunciation.
+
+REFERENCE MATERIALS:
+{rag_context}
+
+VARIETY LEVEL: {variety.upper()}
+{variety_instruction}
+
+REQUIREMENTS:
+1. Each flashcard should have:
+   - front: Chamorro word or phrase
+   - back: Clear English translation
+   - pronunciation: Phonetic guide (e.g., "HAH-fah ah-DYE")
+   - example: A simple example sentence showing usage in Chamorro
+   - category: "{topic}"
+
+2. Focus on UNIQUE and INTERESTING content (not just the most basic phrases)
+3. Use proper Chamorro spelling (å, ñ characters)
+4. Provide accurate pronunciation guides
+5. Keep examples simple but authentic
+6. Ensure each card is DISTINCT and offers new learning value
+
+Return ONLY a valid JSON array with this exact structure:
+[
+  {{
+    "front": "Kao un gof guaiya este?",
+    "back": "Do you really like this?",
+    "pronunciation": "kah-oh oon goff gwah-EE-yah EH-steh",
+    "example": "Kao un gof guaiya este kandet? (Do you really like this candy?)",
+    "category": "{topic}"
+  }}
+]
+
+Generate exactly {count} flashcards. Return only the JSON array, no other text."""
+
+        # Call GPT-4o-mini
+        logger.info("🎴 [FLASHCARDS] Calling GPT-4o-mini...")
+        gpt_start = time.time()
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a Chamorro language expert creating educational flashcards. Always respond with valid JSON arrays only."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7,  # Some creativity for variety
+            max_tokens=3000
+        )
+        
+        gpt_end = time.time()
+        logger.info(f"🎴 [FLASHCARDS] GPT call took: {(gpt_end - gpt_start):.2f}s")
+        
+        # Parse GPT response
+        logger.info(f"🎴 [FLASHCARDS] Parsing GPT response...")
+        parse_start = time.time()
+        
+        response_text = response.choices[0].message.content.strip()
+        
+        # Clean up response (remove markdown code blocks if present)
+        if response_text.startswith("```"):
+            # Remove ```json and ``` markers
+            response_text = response_text.split("```")[1]
+            if response_text.startswith("json"):
+                response_text = response_text[4:]
+        
+        response_text = response_text.strip()
+        
+        # Parse JSON
+        flashcards_data = json.loads(response_text)
+        
+        # Validate and convert to FlashcardResponse objects
+        flashcards = []
+        for card_data in flashcards_data:
+            flashcard = FlashcardResponse(
+                front=card_data.get("front", ""),
+                back=card_data.get("back", ""),
+                pronunciation=card_data.get("pronunciation"),
+                example=card_data.get("example"),
+                category=card_data.get("category", topic)
+            )
+            flashcards.append(flashcard)
+        
+        parse_end = time.time()
+        logger.info(f"🎴 [FLASHCARDS] Parsing took: {(parse_end - parse_start):.2f}s")
+        
+        total_time = time.time() - start_time
+        logger.info(f"🎴 [FLASHCARDS] ✅ Total request time: {total_time:.2f}s")
+        logger.info(f"🎴 [FLASHCARDS] Breakdown: RAG={rag_end-rag_start:.1f}s, GPT={gpt_end-gpt_start:.1f}s, Parse={parse_end-parse_start:.1f}s")
+        
+        return GenerateFlashcardsResponse(
+            flashcards=flashcards,
+            topic=topic,
+            count=len(flashcards)
+        )
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ Failed to parse GPT response as JSON: {e}")
+        logger.error(f"Response was: {response_text[:500]}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to generate flashcards: Invalid response format"
+        )
+    except Exception as e:
+        logger.error(f"❌ Flashcard generation failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Flashcard generation failed: {str(e)}"
+        )
 
 
 @app.exception_handler(HTTPException)
