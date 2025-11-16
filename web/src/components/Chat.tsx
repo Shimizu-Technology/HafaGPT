@@ -41,7 +41,6 @@ export function Chat() {
     setActiveConversationId,
     createConversation,
     deleteConversation,
-    fetchConversations,
     fetchConversationMessages,
     updateConversationTitle
   } = useConversations();
@@ -254,8 +253,8 @@ export function Chat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Refresh conversations to update message count in sidebar
-      await fetchConversations();
+      // No need to refetch all conversations - sidebar doesn't need live updates
+      // The conversation is already in the list with correct timestamp
     } catch (err) {
       console.error('Failed to send message:', err);
     } finally {
