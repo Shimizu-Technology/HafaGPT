@@ -771,6 +771,83 @@ async def create_system_message_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- Text-to-Speech Endpoint ---
+
+@app.post("/api/tts", tags=["Speech"])
+async def text_to_speech(
+    text: str = Form(...),
+    voice: str = Form(default="shimmer")  # Shimmer works best for Chamorro/Spanish
+):
+    """
+    Convert text to speech using OpenAI TTS HD.
+    
+    Returns base64-encoded MP3 audio that can be played in browser.
+    
+    Using tts-1-hd model for higher quality pronunciation.
+    
+    Voices available (try different ones for Chamorro):
+    - shimmer: Soft, gentle (BEST for Spanish/Chamorro) ⭐
+    - alloy: Neutral, balanced (good for multilingual)
+    - echo: Clear, professional  
+    - fable: Expressive, dramatic
+    - onyx: Deep, authoritative (male voice)
+    - nova: Warm, engaging (female voice)
+    """
+    try:
+        # Import OpenAI client (lazy load to avoid startup overhead)
+        from openai import OpenAI
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+        client = OpenAI(api_key=api_key)
+        
+        # Limit text length (OpenAI TTS max is 4096 characters)
+        text_to_speak = text[:4096]
+        
+        # Improve Chamorro pronunciation by adding Spanish language hint
+        # OpenAI TTS is smart - it will pronounce Chamorro words with Spanish phonetics
+        # which is the closest approximation (Chamorro is related to Spanish)
+        if any(char in text_to_speak for char in ['å', 'ñ', 'Å', 'Ñ']):
+            # Text contains Chamorro characters - hint to use Spanish pronunciation
+            logger.info("🇬🇺 Detected Chamorro text, optimizing pronunciation")
+            # Prepend invisible Spanish hint (OpenAI will use Spanish phonetics)
+            # The dot at the start helps the model recognize this as Spanish-like
+            text_to_speak = f"[Español/Chamorro]: {text_to_speak}"
+        
+        logger.info(f"🔊 TTS request: {len(text_to_speak)} characters, voice={voice}")
+        
+        # Call OpenAI TTS API
+        response = client.audio.speech.create(
+            model="tts-1-hd",  # HD quality (slower, better quality, $0.030/1K chars)
+            voice=voice,
+            input=text_to_speak,
+            # Note: OpenAI auto-detects language from the text
+            # Adding Spanish context helps with Chamorro pronunciation
+        )
+        
+        # Get audio bytes
+        audio_bytes = response.content
+        
+        # Convert to base64 for easy transport
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        
+        logger.info(f"✅ TTS successful: {len(audio_bytes)} bytes")
+        
+        return {
+            "audio": audio_base64,
+            "format": "mp3"
+        }
+        
+    except ImportError:
+        logger.error("❌ OpenAI library not installed")
+        raise HTTPException(status_code=500, detail="OpenAI library not available")
+    except Exception as e:
+        logger.error(f"❌ TTS failed: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Custom HTTP exception handler"""

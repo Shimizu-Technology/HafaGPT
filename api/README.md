@@ -15,6 +15,7 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
 
 - 🎤 **Multimodal Input:**
   - **Speech-to-Text** - Speak your questions using browser microphone (Web Speech API)
+  - **Text-to-Speech** - Listen to Chamorro pronunciations using OpenAI TTS HD (automatic fallback to browser TTS offline)
   - **Image Upload** - Take photos of Chamorro documents/text for translation and explanation
   - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
   - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
@@ -945,6 +946,15 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 - **Use Case:** Voice input for Chamorro questions
 - **Language:** English (automatic transcription)
 
+#### **OpenAI TTS HD** - Text-to-Speech (Audio Pronunciation)
+- **Provider:** OpenAI
+- **Model:** tts-1-hd (high definition)
+- **Voice:** Shimmer (optimized for Spanish/Chamorro pronunciation)
+- **Cost:** $0.030 per 1K characters (~$0.60 for 100 pronunciations)
+- **Fallback:** Browser TTS (Web Speech API) when offline
+- **Language Hint:** Spanish phonetics for better Chamorro pronunciation
+- **Use Case:** Listen to correct Chamorro pronunciations
+
 #### **GPT-4o-mini Vision** - Image Analysis
 - **Provider:** OpenAI
 - **Cost:** Included in LLM costs
@@ -1001,7 +1011,7 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 | **Render** (API hosting) | Starter | $7.00 |
 | **Neon** (Database) | Free tier | $0.00 |
 | **Netlify** (Frontend) | Free tier | $0.00 |
-| **OpenAI** (LLM + Embeddings) | Pay-as-you-go | ~$5-15 |
+| **OpenAI** (LLM + Embeddings + TTS) | Pay-as-you-go | ~$5-15 |
 | **AWS S3** (Image storage) | Pay-as-you-go | ~$1-2 |
 | **Clerk** (Authentication) | Free tier | $0.00 |
 | **Brave Search** | Free tier | $0.00 |
@@ -1009,6 +1019,7 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 
 **Notes:**
 - OpenAI costs scale with usage (~100-300 queries/day)
+- TTS costs: ~$0.60 per 100 pronunciations (HD quality)
 - Can reduce to ~$7/month with local embeddings (requires Render Pro $85)
 - S3 costs depend on image uploads (typical: 10-50 images/month)
 - Database can be free tier (<0.5GB) or Pro ($19/month for growth)

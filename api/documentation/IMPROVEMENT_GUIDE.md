@@ -58,6 +58,15 @@
 - **Mobile Optimized** - Works great on mobile devices
 - **Zero Cost** - No API fees, uses browser built-in
 
+### **Text-to-Speech Pronunciation** ✅
+- **OpenAI TTS HD** - High-quality audio pronunciation (tts-1-hd model)
+- **Shimmer Voice** - Optimized for Spanish/Chamorro pronunciation
+- **Automatic Fallback** - Uses browser TTS when offline
+- **Language Hint** - Spanish phonetics for better Chamorro pronunciation
+- **Listen Button** - Click to hear assistant messages spoken aloud
+- **Mobile Optimized** - Works great on mobile devices
+- **Cost-Effective** - ~$0.60 per 100 pronunciations (HD quality)
+
 ### **Image Upload (Phase 1)** ✅
 - **GPT-4o-mini Vision** - Read and translate Chamorro text in images
 - **Camera & Gallery** - Take photo or upload existing image
@@ -286,10 +295,11 @@ CREATE TABLE user_flashcard_progress (
 - Clerk Development: **FREE** (10,000 MAU)
 - PostgreSQL (Neon): **FREE** (500MB)
 - GPT-4o-mini text: **$2-5/month**
+- OpenAI TTS HD: **~$0.50-2/month** (typical usage: 50-200 pronunciations)
 - Brave Search API: **FREE** (2,000 queries/month)
 - GPT-4o-mini images: **$0.10-0.50/month**
 - AWS S3 (image storage): **$0.02-0.10/month**
-- **Total: $2-6/month** 🎉
+- **Total: $2.62-8.60/month** 🎉
 
 ---
 
@@ -302,6 +312,7 @@ CREATE TABLE user_flashcard_progress (
 | **Phase 1** | ✅ Mobile UX Optimization | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Web Search Tool | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Speech-to-Text | - | ✅ **COMPLETED** |
+| **Phase 1** | ✅ Audio Pronunciation (OpenAI TTS HD) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Image Upload + S3 Storage | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Performance Optimizations | - | ✅ **COMPLETED** |
 | **Phase 2** | File Upload (PDF/Word) | 2-3 days | 📋 Planned |
@@ -325,10 +336,18 @@ CREATE TABLE user_flashcard_progress (
 
 ## 📚 **Additional Feature Ideas** (Lower Priority)
 
-### **1. Audio Pronunciation** 🔊
-- Text-to-Speech for Chamorro words
-- Use Spanish TTS as approximation
-- Or link to YouTube pronunciation videos
+### **1. Enhanced Audio Pronunciation (ElevenLabs)** 🔊 **FUTURE UPGRADE**
+**Current:** OpenAI TTS HD with Spanish hints (acceptable quality)
+**Future Upgrade:** ElevenLabs for significantly better pronunciation
+- **Why ElevenLabs:**
+  - Professional-grade voice quality (best in industry)
+  - Voice cloning capability (can clone a real Chamorro speaker)
+  - Better handling of non-English phonetics
+  - More natural intonation and rhythm
+- **Cost:** ~$11/month (Starter plan, 30K characters/month)
+- **Use Case:** If pronunciation quality becomes a priority for users
+- **Implementation:** Simple API swap, keep OpenAI TTS as fallback
+- **Decision Point:** Wait for user feedback - current TTS HD may be sufficient
 
 ### **2. Quiz Mode** ❓
 - Multiple choice vocabulary quizzes
