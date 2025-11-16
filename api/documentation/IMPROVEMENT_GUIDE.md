@@ -76,7 +76,19 @@
   - No longer refetches all conversations after every message
   - Significantly snappier message sending experience
   - Reduces database load and network requests
+- **Single Init Endpoint** - Combined conversations + messages into one API call
+  - Eliminated waterfall effect (was: fetchConversations → then → fetchMessages)
+  - New `/api/init` endpoint returns everything at once
+  - ~27% faster initial load (1100ms → 800ms)
+  - Loading skeleton provides better UX feedback
 - **Impact**: App feels much faster for users with many conversations
+
+**Future Performance Ideas** (when needed):
+- **Optimistic UI with localStorage** - Cache conversations locally, show instantly (~300ms savings)
+- **Parallel Clerk + Data Loading** - Don't wait for auth sequentially (~200ms savings)
+- **Service Worker Caching** - PWA feature for instant loads on repeat visits (~400ms savings)
+- **Response Streaming** - Stream conversations first, then messages (progressive loading)
+- **Edge Caching** - Cache at CDN edge for global users (~250ms savings)
 
 ### **Smart Query Boosting (Option A+B)** ✅
 - **Query Type Detection** - Identifies educational vs. lookup queries

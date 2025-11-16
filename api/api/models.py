@@ -135,3 +135,10 @@ class SystemMessageCreate(BaseModel):
     mode: Optional[str] = Field(None, description="Mode for mode change messages")
 
 
+class InitResponse(BaseModel):
+    """Response model for /api/init - returns all initial data in one request"""
+    conversations: list[ConversationResponse] = Field(default=[], description="List of user's conversations")
+    messages: list[MessageResponse] = Field(default=[], description="Messages for active conversation")
+    active_conversation_id: Optional[str] = Field(None, description="ID of the active conversation")
+
+
