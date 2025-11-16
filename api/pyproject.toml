@@ -14,7 +14,8 @@ dependencies = [
     "langchain>=1.0.5",
     "langchain-chroma>=1.0.0",
     "langchain-community>=0.4.1",
-    "langchain-huggingface>=1.0.1",
+    # REMOVED: langchain-huggingface (900MB+ with torch/transformers)
+    # We use langchain-openai for cloud embeddings (tiny memory footprint)
     "langchain-openai>=0.3.12",
     "langchain-postgres>=0.0.16",
     "openai>=2.7.1",
@@ -24,7 +25,7 @@ dependencies = [
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.20",
     "requests>=2.32.3",
-    "sentence-transformers>=5.1.2",
+    # REMOVED: sentence-transformers (500MB+, only needed for local embeddings)
     "uvicorn>=0.34.0",
 ]
 

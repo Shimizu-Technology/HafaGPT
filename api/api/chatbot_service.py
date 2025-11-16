@@ -17,7 +17,7 @@ from openai import OpenAI
 # Add parent directory to path for root-level imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Import RAG module (now memory-efficient with OpenAI embeddings)
+# Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
 from src.rag.web_search_tool import web_search, format_search_results
 
