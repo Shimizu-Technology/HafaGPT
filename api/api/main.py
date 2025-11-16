@@ -49,8 +49,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # DON'T import heavy modules at startup - lazy load them!
 # This saves ~400MB of memory on free tier
-# from chamorro_rag import rag
-# from manage_rag_db import RAGDatabaseManager
+# from src.rag.chamorro_rag import rag
+from src.rag.manage_rag_db import RAGDatabaseManager
 
 # Load environment variables
 load_dotenv()

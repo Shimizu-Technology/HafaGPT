@@ -52,6 +52,44 @@ def normalize_chamorro_text(text: str) -> str:
     
     return text
 
+
+def detect_query_type(query: str) -> str:
+    """
+    Detect if query is educational (wants to learn) or lookup (wants definition).
+    
+    Educational queries benefit from lessons, stories, and contextual examples.
+    Lookup queries are best served by dictionary definitions.
+    
+    Args:
+        query: User's question
+        
+    Returns:
+        'educational': User wants to learn/understand (prioritize lessons)
+        'lookup': User wants definition/translation (allow dictionary)
+    """
+    query_lower = query.lower()
+    
+    # Educational keywords - user wants to learn, not just look up
+    educational_keywords = [
+        'how do i', 'how to', 'how can i', 'how would i',
+        'teach me', 'show me', 'explain', 'learn',
+        'lesson', 'grammar', 'conjugate', 'conjugation',
+        'story', 'stories', 'tell me a', 'tell me about',
+        'example', 'examples', 'use in a sentence',
+        'practice', 'exercise', 'form sentences',
+        'word order', 'sentence structure',
+        'speak', 'conversation', 'talk about'
+    ]
+    
+    # Check for educational intent
+    for keyword in educational_keywords:
+        if keyword in query_lower:
+            return 'educational'
+    
+    # Default to lookup (most queries are vocabulary lookups)
+    return 'lookup'
+
+
 class ChamorroRAG:
     def __init__(self, connection="postgresql://localhost/chamorro_rag"):
         """Initialize the RAG system with the Chamorro grammar database."""
@@ -155,8 +193,11 @@ class ChamorroRAG:
                     keyword_results.append(doc)
                     break  # Only need one chunk from greetings table
         
-        # Stage 2: Semantic search with boosting
-        results = self.vectorstore.similarity_search(query, k=k*5)
+        # Stage 2: Detect query type for smart boosting (Option B)
+        query_type = detect_query_type(query)
+        
+        # Stage 3: Semantic search with expanded results for filtering
+        results = self.vectorstore.similarity_search(query, k=k*10)  # Get more candidates
         
         # Score and rerank
         scored_results = []
@@ -165,13 +206,14 @@ class ChamorroRAG:
         for doc in keyword_results:
             scored_results.append((doc, 1000))  # Very high score for keyword matches
         
-        # Add semantic search results
+        # Add semantic search results with SMART BOOSTING (Option A + B)
         for doc in results:
             # Skip if already added from keyword search
             if doc in keyword_results:
                 continue
                 
             source = doc.metadata.get('source', '').lower()
+            source_type = doc.metadata.get('source_type', '')
             
             # Base score (similarity is already factored in by order)
             score = 100 - len(scored_results)
@@ -179,7 +221,13 @@ class ChamorroRAG:
             # PRIMARY BOOST: Use era metadata if available
             era_priority = doc.metadata.get('era_priority', 0)
             if era_priority > 0:
-                score += era_priority
+                # OPTION A: Exponential boost for educational content
+                if era_priority >= 110:  # Lengguahi-ta lessons/stories (priority 110-115)
+                    score = score * 3 + era_priority  # 3x multiplier + priority bonus
+                elif era_priority >= 100:  # Guampedia, grammar books (priority 100-105)
+                    score = score * 2 + era_priority  # 2x multiplier + priority bonus
+                else:
+                    score += era_priority  # Normal additive boost for lower priorities
             else:
                 # Fallback to source-based boosting if era not set
                 if 'guampdn.com' in source:
@@ -198,6 +246,15 @@ class ChamorroRAG:
                     score -= 40  # Archival
                 elif '1865' in source or 'cu31924026914501' in source:
                     score -= 50  # Archival
+            
+            # OPTION B: Query-based additional boosting/filtering
+            if query_type == 'educational':
+                # Further boost educational sources for educational queries
+                if source_type in ['lengguahita', 'guampedia'] or era_priority >= 100:
+                    score = score * 1.5  # Additional 50% boost for educational queries
+                # Penalize pure dictionary for "how to" questions
+                elif era_priority < 100 and 'dictionary' in source:
+                    score = score * 0.5  # 50% penalty - user wants to learn, not just look up
             
             scored_results.append((doc, score))
         
@@ -280,16 +337,40 @@ class ChamorroRAG:
                 else:
                     source_name = "Pacific Daily News (Chamorro Opinion Column)"
                 page = None
-            elif source_type in ['website', 'website_entry']:
-                # Website source - extract word from URL or content
-                if 'action=view&id=' in source_file:
-                    # Individual entry page
-                    source_name = "Chamoru.info Dictionary"
-                elif 'action=search' in source_file:
-                    # Letter search page
-                    source_name = "Chamoru.info Dictionary"
+            elif source_type == 'lengguahita':
+                # Lengguahi-ta educational content
+                if '/chamorro-lessons-beginner/' in source_file or '/category/chamorro-lessons-beginner' in source_file:
+                    source_name = "Lengguahi-ta: Beginner Chamorro Lessons (Schyuler Lujan)"
+                elif '/chamorro-lessons-intermediate/' in source_file or '/category/chamorro-lessons-intermediate' in source_file:
+                    source_name = "Lengguahi-ta: Intermediate Chamorro Lessons (Schyuler Lujan)"
+                elif '/chamorro-stories/' in source_file or '/category/chamorro-stories' in source_file:
+                    source_name = "Lengguahi-ta: Chamorro Stories (Schyuler Lujan)"
+                elif '/chamorro-legends/' in source_file or '/category/chamorro-legends' in source_file:
+                    source_name = "Lengguahi-ta: Chamorro Legends (Schyuler Lujan)"
+                elif '/chamorro-songs/' in source_file or '/category/chamorro-songs' in source_file:
+                    source_name = "Lengguahi-ta: Chamorro Songs (Schyuler Lujan)"
                 else:
-                    source_name = "Chamoru.info Dictionary"
+                    source_name = "Lengguahi-ta (Schyuler Lujan)"
+                page = None
+            elif source_type == 'guampedia':
+                # Guampedia encyclopedia
+                source_name = "Guampedia: Guam Encyclopedia"
+                page = None
+            elif source_type in ['website', 'website_entry']:
+                # Website source - check if it's chamoru.info
+                if 'chamoru.info' in source_file.lower():
+                    # Differentiate between dictionary and language lessons
+                    if '/language-lessons/' in source_file or era_priority >= 100:
+                        source_name = "Chamoru.info: Language Lessons"
+                    else:
+                        source_name = "Chamoru.info Dictionary"
+                elif 'guampedia.com' in source_file.lower():
+                    source_name = "Guampedia: Guam Encyclopedia"
+                elif 'lengguahita.com' in source_file.lower():
+                    source_name = "Lengguahi-ta (Schyuler Lujan)"
+                else:
+                    # Generic website
+                    source_name = "Online Resource"
                 # Website sources don't have page numbers
                 page = None
             elif 'chamorro_grammar_dr._sandra_chung' in source_file:

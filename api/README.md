@@ -19,20 +19,21 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
   - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
 
-- 📚 **RAG-Enhanced Knowledge (44,810 chunks):**
+- 📚 **RAG-Enhanced Knowledge (54,303 chunks):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database
-  - 📖 **Complete Chamoru.info Dictionary** - All 10,500 dictionary entries (IDs 1-10,500) ✨ **COMPLETE!**
-  - 📰 **85 Bilingual PDN Articles** - Peter Onedera's Chamorro opinion columns (2016-2022)
-  - 📚 **Grammar Books & Dictionaries** - Authoritative references from Dr. Sandra Chung & historical sources
+  - 📖 **Chamoru.info Dictionary** - Complete 10,500-entry modern Chamorro dictionary ✨
+  - 🌐 **Guampedia Encyclopedia** - 2,853 pages of Guam's history, culture, and Chamorro language
+  - 📝 **Lengguahi-ta Lessons** - Structured bilingual grammar lessons by Schyuler Lujan (in progress)
+  - 📚 **Academic Grammar Books** - Dr. Sandra Chung's authoritative grammar + historical references
   - 🔍 **Powered by Docling** - Advanced PDF processing with table detection
-  - 🌐 **Web Crawling** - Crawl4AI integration with site-specific crawlers
+  - 🌐 **Powered by Crawl4AI** - Smart web content extraction for online resources
   - 🔎 **Web Search** - Brave Search API for real-time information
   - ⚡ **Hybrid RAG** - Smart detection: full search for Chamorro questions, skip for simple chat
-  - 🎯 **Smart Source Prioritization** - Modern bilingual content prioritized (PDN +110 score boost)
+  - 🎯 **Smart Source Prioritization** - Educational content prioritized (Lengguahi-ta: priority 115)
   - 🔤 **Character Normalization** - Handles spelling variations (glottal stops, accents, case)
   - 🧠 **Dynamic Source System** - Automatically describes available knowledge sources
   - **Token-aware chunking** - Optimal semantic boundaries for better retrieval
-  - **Source citations** - Shows which sources and page numbers were referenced
+  - **Source citations** - Shows which sources were referenced
 
 - 🎯 **Smart Features:**
   - **Character normalization** - Type "manana si yuos" instead of "Mañana si Yu'os" ✨
@@ -739,62 +740,397 @@ HafaGPT-API/
 └── README.md                  # 📖 This file
 ```
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Services
 
-- **Language:** Python 3.12+
-- **LLM:** Cloud (GPT-4o-mini) or Local (LM Studio - Qwen 2.5 Coder 32B)
-- **Database:** PostgreSQL 16 + PGVector for vector storage
-- **API Framework:** FastAPI + Uvicorn (ASGI server)
-- **Document Processing:** Docling (advanced PDF understanding)
-- **Web Scraping:** Crawl4AI (AI-optimized web content extraction)
-- **Chunking:** Token-aware semantic chunking (350 tokens/chunk)
-- **Embeddings:** OpenAI text-embedding-3-small (cloud, default) or HuggingFace multilingual-MiniLM-L12-v2 (local)
-- **UI:** prompt_toolkit for enhanced CLI
-- **Data Validation:** Pydantic models
-- **Logging:** PostgreSQL conversation logs with session tracking
-- **Dependencies:** See `pyproject.toml`
-
-## 📚 Indexed Resources
-
-**Current knowledge base: ~1,150+ sources, 44,810 chunks** ✨
-
-### **🌟 Bilingual Modern Content (Prioritized):**
-1. **Pacific Daily News - Chamorro Opinion Columns** (85 articles, 2016-2022)
-   - Author: Peter R. Onedera (Chamorro language advocate)
-   - Format: Full Chamorro text + English translations
-   - Topics: Culture, politics, health, community, FestPac, language preservation
-   - **Score boost: +110** (highest priority in search results)
-
-### **📖 Dictionary & Language Resources:**
-2. **Chamoru.info Dictionary** (10,500 entries - **COMPLETE!** ✅)
-   - All dictionary entries from IDs 1-10,500
-   - Modern dictionary with definitions, examples, pronunciation, etymology
-   - Contemporary Chamorro usage and idioms
-   - **Two-phase crawl system:** Phase 1 (IDs 1-6,500: 6,500 entries) + Phase 2 (IDs 6,501-10,500: 4,000 entries)
-   - Total chunks from dictionary: ~13,700
-   
-### **📚 Grammar Books & Reference Materials (PDFs):**
-3. **Chamorro Grammar** by Dr. Sandra Chung (1998, 754 pages)
-4. **Dictionary and Grammar of the Chamorro Language** (1865, historical reference)
-5. **Revised Chamorro Dictionary** (comprehensive vocabulary)
-6. **Rosetta Project Chamorro Vocabulary** (linguistic documentation)
-
-### **Source Prioritization:**
-The RAG system automatically prioritizes sources based on:
-- **+110 boost:** Pacific Daily News bilingual articles (modern, contextual)
-- **+100 boost:** Chamorro Grammar by Dr. Sandra Chung (authoritative)
-- **+80 boost:** Chamoru.info (contemporary usage)
-- **+50 boost:** Other dictionaries and reference materials
-
-This ensures modern, conversational Chamorro appears first in search results!
-
-### **Real-Time Information:**
-- **Web Search (Brave API):** Current events, news, recipes, cultural information
-- **Weather Data:** Integrated weather information with Chamorro vocabulary
+This project uses a combination of open-source tools, cloud services, and APIs to deliver a production-ready Chamorro language learning experience.
 
 ---
 
-**Note:** The knowledge base contains 927 tracked sources in `rag_metadata.json`. The actual PostgreSQL database has 23,564 indexed chunks (some early content was added before comprehensive tracking was implemented).
+### **🐍 Core Technology**
+
+#### **Programming Language**
+- **Python 3.12+** - Modern Python with type hints and async support
+- **Package Management:** `uv` (local development) + `pip` (production)
+- **Dependency Files:** `pyproject.toml` + `requirements.txt`
+
+#### **Frontend (Separate Repository)**
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe JavaScript
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first styling
+- **Deployment:** Netlify (auto-deploy on push)
+
+---
+
+### **🤖 AI & Language Models**
+
+#### **Large Language Models (LLMs)**
+- **OpenAI GPT-4o-mini** (Cloud, Default)
+  - **Cost:** ~$0.15/1M input tokens, ~$0.60/1M output tokens
+  - **Use Case:** Production API, fast responses (5-15s)
+  - **Context:** 128K tokens
+  - **Vision:** Supports image analysis for document translation
+  
+- **LM Studio + Qwen 2.5 Coder 32B** (Local, Optional)
+  - **Cost:** Free (runs locally)
+  - **Use Case:** Privacy-focused, offline use
+  - **Speed:** Slower (30-60s responses)
+  - **Models Tested:** Qwen 2.5 Coder 32B, Phi-4-mini
+
+#### **Embeddings (Vector Search)**
+- **OpenAI text-embedding-3-small** (Cloud, Default)
+  - **Dimensions:** 384 (configured for compatibility)
+  - **Cost:** ~$0.0001 per query (~$0.30/month typical usage)
+  - **Use Case:** Production deployment, Render Starter plan
+  
+- **HuggingFace paraphrase-multilingual-MiniLM-L12-v2** (Local, Optional)
+  - **Dimensions:** 384 (compatible with OpenAI)
+  - **Cost:** Free (runs locally)
+  - **Memory:** ~500MB RAM
+  - **Use Case:** Self-hosting, high traffic, privacy
+
+**Note:** Both embedding modes are 100% compatible - switch anytime without re-indexing!
+
+---
+
+### **🗄️ Database & Storage**
+
+#### **Primary Database**
+- **PostgreSQL 16** - Production-grade relational database
+- **PGVector Extension** - Vector similarity search for RAG
+- **Provider:** Neon.tech (production) or Local (development)
+- **Schema Management:** Alembic migrations
+- **Tables:**
+  - `conversations` - User-facing conversation management
+  - `conversation_logs` - Complete message history
+  - `langchain_pg_embedding` - Vector embeddings (54,303 chunks)
+  - `langchain_pg_collection` - RAG collections
+
+#### **File Storage**
+- **AWS S3** - Persistent image storage
+  - **Region:** Configurable (e.g., us-west-2)
+  - **Use Case:** Uploaded images for vision AI
+  - **Cost:** ~$0.023/GB/month + ~$0.005/1K requests
+  - **Bucket Policy:** Public read access for image URLs
+  
+---
+
+### **🔐 Authentication & User Management**
+
+#### **Clerk** - User Authentication & Management
+- **Website:** https://clerk.com
+- **Features:**
+  - JWT-based authentication
+  - Social login (Google, Facebook, etc.)
+  - User profiles and metadata
+  - Session management
+  - Development + Production instances
+- **Integration:** React frontend + FastAPI backend JWT verification
+- **Future:** User billing and subscription management
+- **Cost:** Free tier (10,000 MAUs), then $25/month
+
+#### **Stripe** (Planned) - Payment Processing
+- **Use Case:** Future subscription billing
+- **Status:** 🔜 Not yet implemented
+- **Plan:** Integrate with Clerk for user billing
+
+---
+
+### **🌐 API & Web Framework**
+
+#### **FastAPI** - Modern Python Web Framework
+- **Features:**
+  - Async request handling
+  - Automatic OpenAPI docs
+  - Pydantic data validation
+  - Type hints throughout
+  - Built-in CORS support
+  
+- **Server:** Uvicorn (ASGI)
+- **Security:**
+  - Rate limiting (60 req/min per IP, configurable)
+  - CORS protection
+  - JWT verification (Clerk)
+  - Environment-based config
+
+---
+
+### **📚 Document Processing & Web Crawling**
+
+#### **Docling** - Advanced PDF Processing
+- **Purpose:** Extract text, tables, and structure from PDFs
+- **Features:**
+  - Table detection and parsing
+  - Layout understanding
+  - Token-aware chunking
+- **Use Case:** Grammar books, dictionaries, academic papers
+- **Provider:** IBM Research open-source
+
+#### **Crawl4AI** - AI-Optimized Web Scraping
+- **Purpose:** Extract clean content from websites
+- **Features:**
+  - JavaScript rendering
+  - Content cleaning (removes nav, ads, footers)
+  - Markdown conversion
+  - Internal link discovery
+  - Rate limiting and polite crawling
+- **Use Case:** Guampedia, Lengguahi-ta, Chamoru.info
+- **Provider:** Open-source
+
+#### **Beautiful Soup** - HTML Parsing
+- **Purpose:** Parse and clean HTML content
+- **Use Case:** Supplementary web scraping
+
+---
+
+### **🔍 Search & Retrieval**
+
+#### **RAG (Retrieval-Augmented Generation) System**
+- **Vector Store:** PostgreSQL + PGVector
+- **Framework:** LangChain
+- **Chunking:** Token-aware (350 tokens/chunk, 40 token overlap)
+- **Retrieval:** Semantic similarity search (top-k)
+- **Re-ranking:** Priority-based scoring system
+
+#### **Brave Search API** - Web Search
+- **Purpose:** Real-time information (news, weather, current events)
+- **Cost:** Free tier (2,000 queries/month)
+- **Use Case:** Supplement static knowledge with current information
+- **Provider:** Brave.com
+
+---
+
+### **🚀 Deployment & Infrastructure**
+
+#### **Backend Hosting**
+- **Render.com** - API deployment
+  - **Plan:** Starter ($7/month) or Pro ($85/month)
+  - **Features:** Auto-deploy on push, environment variables, health checks
+  - **Build:** Automatic from `render.yaml`
+  - **Migrations:** Auto-run on deploy
+
+#### **Frontend Hosting**
+- **Netlify** - React app deployment
+  - **Plan:** Free tier
+  - **Features:** Auto-deploy on push, environment variables, custom domains
+  - **Build:** Automatic from GitHub
+
+#### **Database Hosting**
+- **Neon.tech** - Serverless PostgreSQL
+  - **Plan:** Free tier (0.5GB storage) or Pro ($19/month)
+  - **Features:** Auto-scaling, branching, point-in-time recovery
+  - **Connection:** Internal URL for server-to-server
+
+---
+
+### **📊 Analytics & Monitoring**
+
+#### **Logging**
+- **Python logging module** - Structured application logs
+- **PostgreSQL** - Conversation analytics and training data
+- **Render Dashboard** - Server logs and metrics
+
+#### **Conversation Tracking**
+- **Database:** All messages logged to `conversation_logs`
+- **Metrics:** Session duration, message counts, RAG usage, response times
+- **Future:** User analytics, learning progress tracking
+
+---
+
+### **🎤 Multimedia & Input**
+
+#### **Web Speech API** - Speech-to-Text
+- **Provider:** Browser-native (Chrome, Edge, Safari)
+- **Cost:** Free
+- **Use Case:** Voice input for Chamorro questions
+- **Language:** English (automatic transcription)
+
+#### **GPT-4o-mini Vision** - Image Analysis
+- **Provider:** OpenAI
+- **Cost:** Included in LLM costs
+- **Use Case:** Translate Chamorro text in photos/documents
+- **Integration:** S3 storage + Base64 encoding
+
+---
+
+### **📦 Key Python Libraries**
+
+**AI & LLM:**
+- `openai` - OpenAI API client
+- `langchain` - LLM orchestration framework
+- `langchain-postgres` - PostgreSQL vector store
+- `langchain-openai` - OpenAI embeddings integration
+- `langchain-huggingface` - Local embeddings (optional)
+
+**Web & API:**
+- `fastapi` - Web framework
+- `uvicorn` - ASGI server
+- `pydantic` - Data validation
+- `python-multipart` - File upload support
+- `httpx` - Async HTTP client
+
+**Database:**
+- `psycopg2` - PostgreSQL adapter
+- `alembic` - Database migrations
+- `sqlalchemy` - ORM (used by LangChain)
+
+**Authentication:**
+- `clerk-backend-api` - Clerk SDK (deprecated in our usage)
+- `python-jose[cryptography]` - JWT verification
+
+**Document Processing:**
+- `docling` - PDF processing
+- `crawl4ai` - Web crawling
+- `beautifulsoup4` - HTML parsing
+
+**Storage:**
+- `boto3` - AWS S3 SDK
+
+**Development:**
+- `python-dotenv` - Environment variables
+- `prompt-toolkit` - Enhanced CLI
+
+---
+
+### **💰 Estimated Monthly Costs**
+
+**Production Deployment (Moderate Usage):**
+
+| Service | Plan | Cost |
+|---------|------|------|
+| **Render** (API hosting) | Starter | $7.00 |
+| **Neon** (Database) | Free tier | $0.00 |
+| **Netlify** (Frontend) | Free tier | $0.00 |
+| **OpenAI** (LLM + Embeddings) | Pay-as-you-go | ~$5-15 |
+| **AWS S3** (Image storage) | Pay-as-you-go | ~$1-2 |
+| **Clerk** (Authentication) | Free tier | $0.00 |
+| **Brave Search** | Free tier | $0.00 |
+| **TOTAL** | | **~$13-24/month** |
+
+**Notes:**
+- OpenAI costs scale with usage (~100-300 queries/day)
+- Can reduce to ~$7/month with local embeddings (requires Render Pro $85)
+- S3 costs depend on image uploads (typical: 10-50 images/month)
+- Database can be free tier (<0.5GB) or Pro ($19/month for growth)
+
+**Development (Local):**
+- **Cost:** $0 (all free/local tools)
+- Uses: Local PostgreSQL, local LLM (LM Studio), local embeddings
+
+---
+
+### **🔧 Development Tools**
+
+- **uv** - Fast Python package manager
+- **Git** - Version control
+- **VS Code / Cursor** - Code editor
+- **Alembic** - Database migrations
+- **Render CLI** - Deployment management
+- **Netlify CLI** - Frontend deployment
+
+---
+
+### **📖 Why These Tools?**
+
+**OpenAI vs. Local LLM:**
+- ✅ OpenAI: Fast (5-15s), accurate, cheap (~$0.01/request), vision support
+- ✅ Local: Private, free, offline, but slower (30-60s)
+
+**PostgreSQL + PGVector vs. Pinecone/Weaviate:**
+- ✅ Single database for everything (vectors + conversations)
+- ✅ Mature, battle-tested, easy backups
+- ✅ No separate vector DB subscription
+
+**Clerk vs. Auth0/Firebase:**
+- ✅ Modern developer experience
+- ✅ React/TypeScript first-class support
+- ✅ Built-in user management UI
+- ✅ Free tier generous for learning projects
+
+**S3 vs. Cloudinary/ImgBB:**
+- ✅ Industry standard, battle-tested
+- ✅ Cheap (~$0.023/GB/month)
+- ✅ Integrates with everything
+- ✅ Direct URL access
+
+**FastAPI vs. Flask/Django:**
+- ✅ Async-first (better for LLM calls)
+- ✅ Automatic API docs
+- ✅ Type hints + validation
+- ✅ Modern Python features
+
+**Render vs. Heroku/Railway:**
+- ✅ Simple deployment (render.yaml)
+- ✅ Free PostgreSQL
+- ✅ Auto-migrations on deploy
+- ✅ Reasonable pricing
+
+---
+
+**See `pyproject.toml` for complete dependency list.**
+
+## 📚 Data Sources & Attribution
+
+**Knowledge Base: 54,303 chunks from 14,108 unique sources** ✨
+
+All content is used for educational purposes to help preserve and teach the Chamorro language.
+
+### **Major Sources:**
+
+#### **🗄️ Chamoru.info Dictionary** (34,256 chunks)
+- Complete modern Chamorro dictionary with 10,500+ entries
+- Definitions, examples, pronunciation guides, etymology
+- **Priority:** 50 (standard dictionary lookups)
+
+#### **🌐 Guampedia Encyclopedia** (9,435 chunks from 2,853 pages)
+- Comprehensive encyclopedia of Guam's history, culture, and language
+- Chamorro folktales, legends, cultural practices, historical articles
+- **Priority:** 85-105 (high priority for cultural content)
+
+#### **📝 Lengguahi-ta Educational Resources** (58+ chunks, growing)
+- Structured bilingual Chamorro lessons by Schyuler Lujan
+- Beginner/intermediate grammar, stories, legends, songs
+- **Priority:** 100-115 (highest priority for educational content)
+- **Status:** 🚧 Currently crawling (~200+ lessons)
+
+#### **📚 Academic Grammar Books** (10,554 chunks)
+- Dr. Sandra Chung's authoritative Chamorro Grammar (1998)
+- Historical dictionaries and reference materials
+- **Priority:** 15-100 (authoritative grammar reference)
+
+### **Smart Priority System:**
+
+The RAG system automatically prioritizes content based on your question:
+
+- **115** → Grammar lessons (Lengguahi-ta)
+- **110** → Stories, modern bilingual content
+- **100** → Educational lessons, authoritative grammar
+- **50** → Dictionary entries, vocabulary lookups
+
+When you ask "How do I form sentences?", you get **grammar lessons**, not dictionary definitions! 🎓
+
+### **Real-Time Information:**
+- **Web Search:** Brave Search API for current events
+- **Weather:** Live weather with Chamorro vocabulary
+
+---
+
+**📖 For complete attribution, detailed credits, and academic citations, see [docs/SOURCES.md](docs/SOURCES.md)**
+
+**🔧 For developer guide on adding new sources, see [docs/SOURCE_CITATION_SYSTEM.md](docs/SOURCE_CITATION_SYSTEM.md)**
+
+---
+
+### **🙏 Acknowledgments:**
+
+**Si Yu'os Ma'åse'** (Thank you) to everyone preserving the Chamorro language:
+
+- **Chamoru.info** - Modern online dictionary
+- **Guampedia.com** - Guam's encyclopedia
+- **Schyuler Lujan** - Lengguahi-ta educational content
+- **Dr. Sandra Chung** - Authoritative Chamorro grammar
+- **Peter R. Onedera** - Bilingual Chamorro journalism
+- **All Chamorro language educators and content creators** 🌺
 
 ## 🔄 Embeddings Configuration (NEW!)
 
@@ -1044,9 +1380,27 @@ Educational project for learning Chamorro language.
 
 ## 🙏 Acknowledgments
 
-- Dr. Sandra Chung's comprehensive Chamorro Grammar
-- The Chamorro language community
-- LM Studio for local LLM support
+This project would not be possible without the following contributors to Chamorro language preservation and education:
+
+### **Content Creators & Educators**
+- **Chamoru.info** - Comprehensive online Chamorro dictionary (10,500+ entries)
+- **Guampedia.com** - Encyclopedia of Guam's history, culture, and language (2,853 pages)
+- **Schyuler Lujan (Lengguahi-ta)** - Structured bilingual Chamorro lessons and educational materials
+- **Dr. Sandra Chung (UC Santa Cruz)** - Authoritative academic grammar of Chamorro
+- **Peter R. Onedera** - Bilingual Chamorro journalism and language advocacy
+- **Rosetta Project** - Linguistic documentation and language preservation
+
+### **Technology & Infrastructure**
+- **LM Studio** - Local LLM support for privacy-focused deployments
+- **OpenAI** - GPT-4o-mini for cloud-based language processing
+- **Brave Search** - Real-time web search integration
+- **PostgreSQL + PGVector** - Vector database for semantic search
+
+### **Community**
+- **The Chamorro language community** - For keeping the language alive and sharing knowledge
+- **All educators, parents, and learners** - For their dedication to language preservation
+
+**Si Yu'os Ma'åse'** (Thank you) to everyone working to preserve and teach the Chamorro language! 🌺
 
 ---
 

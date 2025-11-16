@@ -251,8 +251,8 @@ async def crawl_url(start_url, max_depth=2, max_pages=50, same_domain_only=True)
                     ))
                     
                     # Extract internal links for recursive crawling
-                    if max_depth == 0 or current_depth < max_depth - 1:
-                        # Filter for Lengguahi-ta content pages only
+                    if max_depth == 0 or current_depth < max_depth:
+                        # Crawl all internal links (Lengguahi-ta uses date-based URLs)
                         for link in result.links.get("internal", []):
                             link_url = link.get("href", "")
                             if not link_url:
@@ -262,18 +262,15 @@ async def crawl_url(start_url, max_depth=2, max_pages=50, same_domain_only=True)
                             if not link_url.startswith("http"):
                                 link_url = urljoin(current_url, link_url)
                             
-                            # Only crawl content pages (stories, lessons, songs, legends)
-                            if any(x in link_url.lower() for x in [
-                                '/chamorro-stories/',
-                                '/chamorro-songs/',
-                                '/chamorro-legends/',
-                                '/beginner-chamorro-grammar/',
-                                '/intermediate-chamorro-grammar/',
-                                'category/chamorro',
-                            ]):
-                                link_domain = urlparse(link_url).netloc
-                                if (not same_domain_only or link_domain == start_domain) and link_url not in visited:
-                                    to_crawl.append((link_url, current_depth + 1))
+                            # Skip non-content URLs (search, feed, etc.)
+                            skip_patterns = ['/?s=', '/feed', '/wp-', '/author/', '/tag/', '/comment']
+                            if any(pattern in link_url.lower() for pattern in skip_patterns):
+                                continue
+                            
+                            # Crawl all Lengguahi-ta content (includes date-based URLs like /2024/01/title/)
+                            link_domain = urlparse(link_url).netloc
+                            if (not same_domain_only or link_domain == start_domain) and link_url not in visited:
+                                to_crawl.append((link_url, current_depth + 1))
                 else:
                     print(f"       ❌ Failed: {result.error_message}")
                 
