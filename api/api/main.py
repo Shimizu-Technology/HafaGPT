@@ -50,7 +50,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # DON'T import heavy modules at startup - lazy load them!
 # This saves ~400MB of memory on free tier
 # from src.rag.chamorro_rag import rag
-from src.rag.manage_rag_db import RAGDatabaseManager
+# RAGDatabaseManager is only needed for health check stats, not API runtime
+# from src.rag.manage_rag_db import RAGDatabaseManager
 
 # Load environment variables
 load_dotenv()
@@ -329,15 +330,24 @@ async def health_check():
     Returns service status and database information.
     """
     try:
-        # Try to get database stats
-        manager = RAGDatabaseManager()
-        chunk_count = manager._get_chunk_count()
+        # Try to get database stats (lazy load RAGDatabaseManager)
+        # This may fail if transformers isn't installed (production optimization)
+        try:
+            from src.rag.manage_rag_db import RAGDatabaseManager
+            manager = RAGDatabaseManager()
+            chunk_count = manager._get_chunk_count()
+        except ImportError as e:
+            logger.warning(f"Could not load RAGDatabaseManager (transformers not installed): {e}")
+            chunk_count = -1  # Indicate stats unavailable
+        except Exception as e:
+            logger.warning(f"Could not get chunk count: {e}")
+            chunk_count = -1
         
         logger.info("Health check successful")
         return HealthResponse(
             status="healthy",
-            database="connected",
-            chunks=chunk_count
+            database="connected" if chunk_count >= 0 else "stats_unavailable",
+            chunks=chunk_count if chunk_count >= 0 else 0
         )
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
@@ -427,6 +437,8 @@ async def chat(
         image_base64 = None
         image_url = None  # S3 URL
         if image:
+            logger.info(f"📸 Image received: filename={image.filename}, content_type={image.content_type}")
+            
             # Validate file type
             if not image.content_type or not image.content_type.startswith('image/'):
                 raise HTTPException(
@@ -437,6 +449,7 @@ async def chat(
             # Read and process image
             try:
                 image_data = await image.read()
+                logger.info(f"📦 Image data read: {len(image_data)} bytes")
                 
                 # Upload to S3 (for persistence)
                 image_url = upload_image_to_s3(
@@ -445,21 +458,23 @@ async def chat(
                     content_type=image.content_type
                 )
                 
+                if image_url:
+                    logger.info(f"✅ S3 upload successful: {image_url}")
+                else:
+                    logger.warning("⚠️  S3 upload failed, but continuing with base64")
+                
                 # Base64 encode for GPT-4o-mini Vision
                 image_base64 = base64.b64encode(image_data).decode('utf-8')
-                
-                logger.info(f"📸 Image uploaded: {image.filename} ({len(image_data)} bytes)")
-                if image_url:
-                    logger.info(f"🔗 S3 URL: {image_url}")
+                logger.info(f"✅ Image base64 encoded: {len(image_base64)} chars")
                     
             except Exception as e:
-                logger.error(f"Failed to process image: {e}")
+                logger.error(f"❌ Failed to process image: {e}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"Failed to process image: {str(e)}"
                 )
         
-        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_image={image is not None}")
+        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_image={image is not None}, image_base64_length={len(image_base64) if image_base64 else 0}")
         
         # Get response from chatbot service
         result = get_chatbot_response(
@@ -472,6 +487,8 @@ async def chat(
             image_base64=image_base64,  # Pass base64-encoded image for Vision
             image_url=image_url  # NEW: Pass S3 URL for logging
         )
+        
+        logger.info(f"Chatbot service called successfully with image_base64={'present' if image_base64 else 'None'}")
         
         # Convert sources to SourceInfo models
         sources = [

@@ -138,9 +138,9 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         # Get last N messages for this session
         # Use subquery to get last N messages DESC, then order them ASC (chronological)
         cursor.execute("""
-            SELECT user_message, bot_response, timestamp
+            SELECT user_message, bot_response, image_url, timestamp
             FROM (
-                SELECT user_message, bot_response, timestamp
+                SELECT user_message, bot_response, image_url, timestamp
                 FROM conversation_logs
                 WHERE session_id = %s
                 ORDER BY timestamp DESC
@@ -154,9 +154,24 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         conn.close()
         
         # Build conversation history (already in chronological order)
+        # Include images if they exist
         history = []
-        for user_msg, bot_msg, timestamp in rows:
-            history.append({"role": "user", "content": user_msg})
+        for user_msg, bot_msg, img_url, timestamp in rows:
+            # Build user message (with image if available)
+            if img_url:
+                # Reconstruct vision message with image URL
+                history.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": user_msg or "What does this say?"},
+                        {"type": "image_url", "image_url": {"url": img_url, "detail": "low"}}
+                    ]
+                })
+            else:
+                # Regular text-only message
+                history.append({"role": "user", "content": user_msg})
+            
+            # Add bot response
             history.append({"role": "assistant", "content": bot_msg})
         
         return history
@@ -405,16 +420,42 @@ def get_chatbot_response(
         system_prompt += """
 
 DOCUMENT ANALYSIS MODE:
-- You are analyzing a Chamorro language document/text via an uploaded image
-- Carefully read all visible Chamorro text in the image
-- Provide:
-  1. Full transcription of the Chamorro text you can see
-  2. English translation
-  3. Grammar explanations for key structures
-  4. Cultural context if relevant
-- If the text is unclear or partially visible, mention which parts you're uncertain about
+You are analyzing a Chamorro language document/text via an uploaded image.
+Be thorough and proactive - provide a COMPLETE analysis in ONE response!
+
+Provide the following in a well-organized format:
+
+1. **FULL TRANSCRIPTION**
+   - Type out all visible Chamorro text exactly as shown
+   - Maintain the original structure and formatting
+
+2. **ENGLISH TRANSLATION**
+   - Translate the complete text to English
+   - Keep the same structure and organization
+
+3. **KEY INFORMATION EXTRACTION** (Be proactive!)
+   - 📅 **Dates and Times**: List ALL dates, deadlines, or time-related information
+   - 🎯 **Events/Activities**: What events, meetings, or activities are mentioned?
+   - 📞 **Contact Info**: Phone numbers, emails, websites, addresses
+   - ⚠️ **Important Notices**: Warnings, requirements, or critical information
+   - 📍 **Locations**: Places, addresses, or venues mentioned
+   - 👥 **Names**: People, organizations, or entities referenced
+
+4. **GRAMMAR & CULTURAL NOTES**
+   - Explain interesting Chamorro grammar structures
+   - Provide cultural context if relevant
+   - Clarify any idiomatic expressions or cultural references
+
+5. **SUMMARY**
+   - Brief overview of the document's purpose
+   - Who it's for and what action (if any) is needed
+   - Key takeaways
+
+**Important Guidelines:**
+- If text is unclear or partially visible, mention which parts you're uncertain about and why
 - If it appears to be homework, help explain the concepts and guide learning (don't just give direct answers)
-- Be thorough but friendly in your explanation
+- Be thorough but friendly and conversational in your explanation
+- Don't make users ask follow-up questions for information that's visible in the image!
 """
     
     # Add RAG context if available
