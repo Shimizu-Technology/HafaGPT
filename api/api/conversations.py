@@ -89,17 +89,15 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get conversations with message counts (excluding soft-deleted)
+        # Get conversations (excluding soft-deleted) - optimized without COUNT
         query = """
             SELECT 
                 c.id,
                 c.user_id,
                 c.title,
                 c.created_at,
-                c.updated_at,
-                COUNT(cl.id) as message_count
+                c.updated_at
             FROM conversations c
-            LEFT JOIN conversation_logs cl ON c.id = cl.conversation_id
             WHERE c.deleted_at IS NULL
         """
         
@@ -116,7 +114,7 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
             conn.close()
             return ConversationListResponse(conversations=[])
         
-        query += " GROUP BY c.id ORDER BY c.updated_at DESC LIMIT %s"
+        query += " ORDER BY c.updated_at DESC LIMIT %s"
         params = params + (limit,)
         
         logger.info(f"📝 Executing query with params: {params}")
@@ -131,7 +129,7 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
                 title=row[2],
                 created_at=row[3],
                 updated_at=row[4],
-                message_count=row[5]
+                message_count=0  # Default to 0 - not counting for performance
             )
             for row in rows
         ]
