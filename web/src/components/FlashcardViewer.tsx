@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { useUser } from '@clerk/clerk-react';
+import { useSaveDeck } from '../hooks/useFlashcardsQuery';
 
 interface FlashcardData {
   front: string;
@@ -30,6 +32,7 @@ const topicTitles: Record<string, string> = {
 export function FlashcardViewer() {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
+  const { user } = useUser();
   const [searchParams] = useSearchParams();
   const cardTypeParam = searchParams.get('type') as 'default' | 'custom' | null;
   const [cardType] = useState<'default' | 'custom'>(cardTypeParam || 'default'); // Read from URL
@@ -43,6 +46,30 @@ export function FlashcardViewer() {
   const hasFetchedRef = useRef(false); // Prevent duplicate fetches
   const hasGeneratedMoreRef = useRef(false); // Prevent duplicate background generation
   const batchCountRef = useRef(0); // Track how many batches generated
+  const [isCardFlipped, setIsCardFlipped] = useState(false); // Track if current card is flipped
+  const [isDeckSaved, setIsDeckSaved] = useState(false); // Track if custom deck has been saved
+
+  // Use React Query mutation for saving decks
+  const saveDeckMutation = useSaveDeck();
+
+  // Helper function to save cards to localStorage
+  const saveToLocalStorage = (cards: FlashcardData[]) => {
+    if (cardType === 'custom' && topic) {
+      const tempCardsKey = `flashcards_temp_${topic}`;
+      localStorage.setItem(tempCardsKey, JSON.stringify({
+        cards: cards,
+        timestamp: Date.now()
+      }));
+    }
+  };
+
+  // Helper function to clear localStorage
+  const clearLocalStorage = () => {
+    if (topic) {
+      const tempCardsKey = `flashcards_temp_${topic}`;
+      localStorage.removeItem(tempCardsKey);
+    }
+  };
 
   // Load cards based on cardType from URL
   useEffect(() => {
@@ -51,6 +78,33 @@ export function FlashcardViewer() {
     if (cardType === 'default') {
       loadDefaultCards();
     } else {
+      // Check if there are temporary cards in localStorage
+      const tempCardsKey = `flashcards_temp_${topic}`;
+      const tempCardsData = localStorage.getItem(tempCardsKey);
+      
+      if (tempCardsData) {
+        try {
+          const parsedCards = JSON.parse(tempCardsData);
+          const timestamp = parsedCards.timestamp;
+          const oneHourAgo = Date.now() - (60 * 60 * 1000); // 1 hour
+          
+          // Only use temp cards if they're less than 1 hour old
+          if (timestamp && timestamp > oneHourAgo) {
+            setFlashcards(parsedCards.cards);
+            setCurrentIndex(0);
+            console.log(`✅ Loaded ${parsedCards.cards.length} cards from localStorage`);
+            return;
+          } else {
+            // Clear stale data
+            localStorage.removeItem(tempCardsKey);
+          }
+        } catch (err) {
+          console.error('Failed to parse temp cards:', err);
+          localStorage.removeItem(tempCardsKey);
+        }
+      }
+      
+      // No temp cards or they're stale, generate new ones
       loadCustomCards();
     }
   }, [topic, cardType]);
@@ -113,7 +167,9 @@ export function FlashcardViewer() {
       }
 
       const data: FlashcardsResponse = await response.json();
-      setFlashcards(data.flashcards);
+      const newCards = data.flashcards;
+      setFlashcards(newCards);
+      saveToLocalStorage(newCards); // Save to localStorage
       setLoading(false);
       batchCountRef.current = 1;
       
@@ -128,7 +184,7 @@ export function FlashcardViewer() {
   };
 
   // Background generation of additional cards (3 at a time, up to 9 total)
-  const generateMoreCards = async (variety: 'conversational' | 'advanced') => {
+  const generateMoreCards = async (variety: 'conversational' | 'advanced', previousCardsList?: FlashcardData[]) => {
     if (!topic || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
     
     hasGeneratedMoreRef.current = true;
@@ -141,6 +197,18 @@ export function FlashcardViewer() {
       formData.append('count', '3'); // Generate 3 more cards
       formData.append('variety', variety); // Batch 2: conversational, Batch 3: advanced
       
+      // Pass current flashcards to avoid duplicates
+      // Use provided previousCardsList if available (for chaining), otherwise use state
+      const cardsToCheck = previousCardsList || flashcards;
+      formData.append('previous_cards', JSON.stringify(
+        cardsToCheck.map(card => ({
+          front: card.front,
+          back: card.back
+        }))
+      ));
+      
+      console.log(`🎴 [FRONTEND] Batch ${batchCountRef.current + 1}: Checking against ${cardsToCheck.length} previous cards`);
+      
       const response = await fetch(`${API_URL}/api/generate-flashcards`, {
         method: 'POST',
         body: formData
@@ -151,20 +219,43 @@ export function FlashcardViewer() {
       }
 
       const data: FlashcardsResponse = await response.json();
-      setNewCards(data.flashcards);
+      
+      // Frontend safety net: Remove any duplicates that slipped through
+      const existingFronts = new Set(cardsToCheck.map(c => c.front.toLowerCase().trim()));
+      const existingBacks = new Set(cardsToCheck.map(c => c.back.toLowerCase().trim()));
+      
+      const uniqueNewCards = data.flashcards.filter(card => {
+        const frontLower = card.front.toLowerCase().trim();
+        const backLower = card.back.toLowerCase().trim();
+        return !existingFronts.has(frontLower) && !existingBacks.has(backLower);
+      });
+      
+      if (uniqueNewCards.length < data.flashcards.length) {
+        console.warn(`🎴 [FRONTEND] Filtered out ${data.flashcards.length - uniqueNewCards.length} duplicate(s) from batch ${batchCountRef.current + 1}`);
+      }
+      
+      setNewCards(uniqueNewCards);
       setIsGeneratingMore(false);
       
       // Auto-add new cards to deck after 1 second
       setTimeout(() => {
-        setFlashcards(prev => [...prev, ...data.flashcards]);
+        setFlashcards(prev => {
+          const updatedCards = [...prev, ...uniqueNewCards];
+          saveToLocalStorage(updatedCards); // Save to localStorage
+          
+          // Generate another batch if we haven't hit 9 cards yet (batch 3)
+          // Pass updatedCards to the next batch to avoid race conditions
+          if (batchCountRef.current === 1) {
+            hasGeneratedMoreRef.current = false;
+            batchCountRef.current = 2;
+            setTimeout(() => generateMoreCards('advanced', updatedCards), 1000);
+          } else {
+            batchCountRef.current += 1;
+          }
+          
+          return updatedCards;
+        });
         setShowNewCardsNotification(false);
-        batchCountRef.current += 1;
-        
-        // Generate another batch if we haven't hit 9 cards yet (batch 3)
-        if (batchCountRef.current === 2) {
-          hasGeneratedMoreRef.current = false;
-          setTimeout(() => generateMoreCards('advanced'), 1000);
-        }
       }, 1000);
       
       setShowNewCardsNotification(true);
@@ -178,13 +269,69 @@ export function FlashcardViewer() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+      setIsCardFlipped(false); // Reset flip state
     }
   };
 
   const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      setIsCardFlipped(false); // Reset flip state
     }
+  };
+
+  // Handle card flip
+  const handleCardFlip = (flipped: boolean) => {
+    setIsCardFlipped(flipped);
+  };
+
+  // Handle card rating (Hard/Good/Easy)
+  const handleRating = async (confidence: 1 | 2 | 3) => {
+    // For now, just log the rating (we'll wire up the API later)
+    console.log(`Card rated: ${confidence} (1=Hard, 2=Good, 3=Easy)`);
+    
+    // TODO: Add toast notification
+    const ratingLabels = { 1: 'Hard', 2: 'Good', 3: 'Easy' };
+    console.log(`✅ Rated as ${ratingLabels[confidence]}!`);
+    
+    // Move to next card
+    handleNext();
+  };
+
+  // Handle saving custom deck
+  const handleSaveDeck = async () => {
+    if (!user) {
+      alert('Please sign in to save custom flashcard decks!');
+      return;
+    }
+
+    if (flashcards.length === 0) {
+      alert('No cards to save!');
+      return;
+    }
+
+    // Use React Query mutation
+    saveDeckMutation.mutate({
+      user_id: user.id,
+      topic: topic!,
+      title: `My ${topicTitles[topic || ''] || topic} Cards`,
+      card_type: 'custom',
+      cards: flashcards.map(card => ({
+        front: card.front,
+        back: card.back,
+        pronunciation: card.pronunciation || null,
+        example: card.example || null
+      }))
+    }, {
+      onSuccess: (data) => {
+        alert(`✅ ${data.message}`);
+        clearLocalStorage(); // Clear temp cards after successful save
+        setIsDeckSaved(true); // Mark deck as saved
+      },
+      onError: () => {
+        alert('Failed to save deck. Please try again.');
+      }
+    });
   };
 
   // Keyboard navigation
@@ -282,21 +429,53 @@ export function FlashcardViewer() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <button
             onClick={() => navigate('/flashcards')}
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
+            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors flex-shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
           </button>
           
-          <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-white flex-1 text-center">
             {topicTitles[topic || ''] || topic}
           </h1>
           
-          <div className="text-sm font-bold text-coral-600 dark:text-ocean-400">
-            {currentIndex + 1} / {flashcards.length}
-          </div>
+          {/* Save Deck Button (for custom cards only) */}
+          {cardType === 'custom' && flashcards.length > 0 && (
+            <button
+              onClick={handleSaveDeck}
+              disabled={saveDeckMutation.isPending || isGeneratingMore || isDeckSaved}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all disabled:cursor-not-allowed flex-shrink-0 ${
+                isDeckSaved 
+                  ? 'bg-green-500 dark:bg-green-600 text-white opacity-90' 
+                  : 'bg-coral-500 hover:bg-coral-600 dark:bg-ocean-600 dark:hover:bg-ocean-700 text-white disabled:opacity-50'
+              }`}
+              title={
+                isDeckSaved 
+                  ? "Deck saved! View in My Decks" 
+                  : isGeneratingMore 
+                    ? "Wait for all cards to finish generating" 
+                    : "Save this deck"
+              }
+            >
+              {saveDeckMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {isDeckSaved ? '✓ Saved' : isGeneratingMore ? 'Generating...' : 'Save'}
+              </span>
+            </button>
+          )}
+
+          {/* Card Counter */}
+          {cardType === 'default' && (
+            <div className="text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+              {currentIndex + 1} / {flashcards.length}
+            </div>
+          )}
         </div>
       </div>
 
@@ -313,8 +492,41 @@ export function FlashcardViewer() {
             back={currentCard.back}
             pronunciation={currentCard.pronunciation}
             example={currentCard.example}
+            onFlip={handleCardFlip}
           />
         </div>
+
+        {/* Rating Buttons (show after flip) */}
+        {/* Rating Buttons - Only show if card is flipped AND (deck is default OR saved) */}
+        {isCardFlipped && (cardType === 'default' || isDeckSaved) && (
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <button
+              onClick={() => handleRating(1)}
+              className="px-6 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
+            >
+              Hard
+            </button>
+            <button
+              onClick={() => handleRating(2)}
+              className="px-6 py-3 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
+            >
+              Good
+            </button>
+            <button
+              onClick={() => handleRating(3)}
+              className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
+            >
+              Easy
+            </button>
+          </div>
+        )}
+        
+        {/* Help text for unsaved custom cards */}
+        {cardType === 'custom' && !isDeckSaved && isCardFlipped && (
+          <div className="mt-6 text-center text-sm text-brown-600 dark:text-gray-400 italic">
+            💡 Save this deck to track your progress with ratings
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="flex items-center justify-center gap-4 mt-8">

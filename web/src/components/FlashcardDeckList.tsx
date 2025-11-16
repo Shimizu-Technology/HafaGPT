@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Users, Utensils, Hash, Activity, MessageCircle, Zap, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpen, Users, Utensils, Hash, Activity, MessageCircle, Zap, Sparkles, Library } from 'lucide-react';
 
 interface Deck {
   topic: string;
@@ -69,19 +69,30 @@ export function FlashcardDeckList() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-3">
-          <Link
-            to="/"
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
-            <h1 className="text-xl font-semibold text-brown-800 dark:text-white">
-              Study Chamorro
-            </h1>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/"
+              className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
+              <h1 className="text-xl font-semibold text-brown-800 dark:text-white">
+                Study Chamorro
+              </h1>
+            </div>
           </div>
+
+          {/* My Decks Button */}
+          <Link
+            to="/flashcards/my-decks"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-300 hover:bg-coral-200 dark:hover:bg-ocean-800/50 transition-colors font-medium"
+          >
+            <Library className="w-4 h-4" />
+            <span className="hidden sm:inline">My Decks</span>
+          </Link>
         </div>
       </div>
 

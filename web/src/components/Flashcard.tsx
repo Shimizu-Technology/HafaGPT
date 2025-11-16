@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Volume2 } from 'lucide-react';
 import { useSpeech } from '../hooks/useSpeech';
 
@@ -7,14 +7,25 @@ interface FlashcardProps {
   back: string;
   pronunciation?: string;
   example?: string;
+  onFlip?: (isFlipped: boolean) => void; // Callback when card is flipped
 }
 
-export function Flashcard({ front, back, pronunciation, example }: FlashcardProps) {
+export function Flashcard({ front, back, pronunciation, example, onFlip }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const { speak, stop, isSpeaking, isSupported } = useSpeech();
 
+  // Reset flip state when card content changes
+  useEffect(() => {
+    setIsFlipped(false);
+  }, [front, back]);
+
   const handleFlip = () => {
-    setIsFlipped(!isFlipped);
+    const newFlippedState = !isFlipped;
+    setIsFlipped(newFlippedState);
+    // Notify parent when flipped to back (true)
+    if (onFlip && newFlippedState) {
+      onFlip(newFlippedState);
+    }
   };
 
   const handleSpeak = (e: React.MouseEvent) => {
