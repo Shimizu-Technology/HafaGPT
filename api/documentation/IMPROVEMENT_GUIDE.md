@@ -4,7 +4,7 @@
 - ✅ Hybrid RAG implemented (30% faster responses)
 - ✅ Character normalization (handles accents/glottal stops)
 - ✅ Conversation context awareness (cloud mode)
-- ✅ 44,810 chunks indexed (complete chamoru.info dictionary + PDN articles)
+- ✅ **54,303 chunks indexed** (Chamoru.info, Guampedia, Lengguahi-ta, academic books)
 - ✅ FastAPI REST API with conversation memory
 - ✅ PostgreSQL conversation logging with session tracking
 - ✅ **Clerk Authentication** - JWT-based user authentication (COMPLETED!)
@@ -12,6 +12,7 @@
 - ✅ **Web Search Tool** - Real-time information from the internet (COMPLETED!)
 - ✅ **Speech-to-Text Input** - Browser-native voice input (COMPLETED!)
 - ✅ **Image Upload (Phase 1)** - GPT-4o-mini Vision for document analysis (COMPLETED!)
+- ✅ **Smart Query Boosting (Option A+B)** - Educational content prioritized (COMPLETED!)
 
 **Performance:**
 - Cloud (GPT-4o-mini): 2-8s responses, 99% accurate
@@ -76,6 +77,25 @@
   - Significantly snappier message sending experience
   - Reduces database load and network requests
 - **Impact**: App feels much faster for users with many conversations
+
+### **Smart Query Boosting (Option A+B)** ✅
+- **Query Type Detection** - Identifies educational vs. lookup queries
+  - "How do I form sentences?" → Educational
+  - "What is the word for house?" → Lookup
+- **Exponential Score Boosting** - 2x-3x multipliers for priority 100+ sources
+  - Priority 115 (Lengguahi-ta lessons): 3x boost
+  - Priority 100-109 (Educational content): 2x boost
+  - Priority 50 (Dictionary): Normal ranking
+- **Query-Based Filtering** - Adaptive ranking based on intent
+  - Educational queries boost lessons 1.5x, penalize dictionary 0.5x
+  - Lookup queries allow dictionary to rank naturally
+- **Improved Source Naming** - Proper differentiation
+  - "Chamoru.info: Language Lessons" vs. "Chamoru.info Dictionary"
+  - "Lengguahi-ta: Beginner Lessons" vs. "Lengguahi-ta: Stories"
+- **Impact**: Educational queries now return lessons with examples, not just definitions
+  - BEFORE: "How to say hello?" → Dictionary, Dictionary, Dictionary
+  - AFTER: "How to say hello?" → Lessons, Cultural Context, Examples
+- **Your chatbot is now a TUTOR, not just a TRANSLATOR!** 🎓
 
 **Future Optimizations** (only if needed):
 - **Message Pagination**: Load messages in batches (50 at a time)
