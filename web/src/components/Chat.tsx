@@ -34,7 +34,7 @@ export function Chat() {
   });
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
   const { 
     conversations, 
     activeConversationId,
@@ -42,7 +42,9 @@ export function Chat() {
     createConversation,
     deleteConversation,
     fetchConversationMessages,
-    updateConversationTitle
+    updateConversationTitle,
+    initUserData,
+    loading: conversationsLoading
   } = useConversations();
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,6 +52,7 @@ export function Chat() {
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
+  const [isInitialized, setIsInitialized] = useState(false); // Track if we've loaded initial data
 
   const getModeDetails = (modeName: 'english' | 'chamorro' | 'learn') => {
     const modes = {
@@ -59,6 +62,61 @@ export function Chat() {
     };
     return modes[modeName];
   };
+
+  // Initialize conversations AND messages in ONE API call (eliminates waterfall)
+  useEffect(() => {
+    const initialize = async () => {
+      // Wait for Clerk to finish loading
+      if (user === undefined) {
+        return;
+      }
+
+      // Only initialize for signed-in users
+      if (!user?.id) {
+        setIsInitialized(true);
+        return;
+      }
+
+      try {
+        const data = await initUserData();
+        
+        // Set conversations (from hook state)
+        // Note: conversations state is updated inside initUserData via setConversations
+        
+        // Set active conversation ID
+        if (data.activeConversationId) {
+          setActiveConversationId(data.activeConversationId);
+        }
+        
+        // Convert and set messages
+        const chatMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+          role: msg.role,
+          content: msg.content,
+          imageUrl: msg.image_url || undefined,
+          timestamp: new Date(msg.timestamp).getTime(),
+          sources: msg.sources?.map((src: any) => ({
+            name: src.name,
+            page: src.page ?? null
+          })) || [],
+          used_rag: msg.used_rag || false,
+          used_web_search: msg.used_web_search || false,
+          response_time: undefined,
+          systemType: msg.role === 'system' ? 'mode_change' : undefined,
+          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
+        }));
+        
+        setMessages(chatMessages);
+        setIsInitialized(true);
+        
+      } catch (err) {
+        console.error('Failed to initialize:', err);
+        setIsInitialized(true);
+      }
+    };
+
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Re-initialize when user changes
 
   // Detect mode changes and add system message + toast
   useEffect(() => {
@@ -499,7 +557,19 @@ End of Export
           paddingBottom: '140px' // Space for fixed input + disclaimer
         }}
       >
-        <div className="w-full max-w-4xl mx-auto">{messages.length === 0 && !loading ? (
+        <div className="w-full max-w-4xl mx-auto">
+          {/* Loading skeleton while initializing */}
+          {!isInitialized || conversationsLoading ? (
+            <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
+              <div className="w-16 h-16 border-4 border-teal-200 dark:border-ocean-900 border-t-teal-600 dark:border-t-ocean-400 rounded-full animate-spin"></div>
+              <p className="mt-6 text-brown-600 dark:text-gray-400 text-lg font-medium">
+                Loading your conversations...
+              </p>
+              <p className="mt-2 text-sm text-brown-500 dark:text-gray-500">
+                This will only take a moment
+              </p>
+            </div>
+          ) : messages.length === 0 && !loading ? (
             <WelcomeMessage />
           ) : (
             <>

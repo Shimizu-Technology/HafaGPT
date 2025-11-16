@@ -70,6 +70,64 @@ export function useConversations() {
     }
   };
 
+  // Initialize user data (conversations + messages) in a single request
+  const initUserData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Get auth token if user is signed in
+      let token = null;
+      if (user && getToken) {
+        try {
+          token = await getToken();
+        } catch (e) {
+          console.warn('Could not get auth token:', e);
+        }
+      }
+
+      // Get saved conversation ID from localStorage
+      const savedConversationId = localStorage.getItem('active_conversation_id');
+      
+      // Build URL with optional conversation ID
+      const url = savedConversationId 
+        ? `${API_URL}/api/init?active_conversation_id=${savedConversationId}`
+        : `${API_URL}/api/init`;
+
+      const response = await fetch(url, {
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to initialize user data');
+      }
+
+      const data = await response.json();
+      
+      // Set conversations in state
+      setConversations(data.conversations || []);
+      
+      return {
+        conversations: data.conversations || [],
+        messages: data.messages || [],
+        activeConversationId: data.active_conversation_id || null
+      };
+      
+    } catch (err) {
+      console.error('Error initializing user data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize user data');
+      return {
+        conversations: [],
+        messages: [],
+        activeConversationId: null
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Create a new conversation
   const createConversation = async (title: string = 'New Chat') => {
     try {
@@ -204,7 +262,7 @@ export function useConversations() {
     }
   };
 
-  // Fetch conversations on mount and when user changes
+  // Initialize user data on mount and when user changes
   useEffect(() => {
     // Only act when Clerk has finished loading (user is not undefined)
     if (user === undefined) {
@@ -212,15 +270,16 @@ export function useConversations() {
     }
     
     if (user?.id) {
-      // User is signed in - fetch their conversations
-      fetchConversations();
+      // User is signed in - initialize conversations AND messages in one call
+      // This replaces the old waterfall of: fetchConversations() → then → fetchMessages()
+      // Note: The Chat component will handle the returned messages
     } else {
       // User is signed out - clear conversations
       setConversations([]);
       setActiveConversationId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Re-fetch when user changes
+  }, [user?.id]); // Re-initialize when user changes
 
   // Persist activeConversationId to localStorage
   useEffect(() => {
@@ -229,36 +288,13 @@ export function useConversations() {
     }
   }, [activeConversationId]);
 
-  // Restore activeConversationId from localStorage AFTER conversations are loaded
-  useEffect(() => {
-    if (conversations.length === 0) {
-      return; // Wait until conversations are loaded
-    }
-    
-    const savedId = localStorage.getItem('active_conversation_id');
-    
-    if (savedId && conversations.some(c => c.id === savedId)) {
-      // Only restore if we don't already have an active conversation
-      if (activeConversationId !== savedId) {
-        setActiveConversationId(savedId);
-      }
-    } else if (!activeConversationId && conversations.length > 0) {
-      // No saved ID or it doesn't exist anymore, select first conversation
-      setActiveConversationId(conversations[0].id);
-    } else if (savedId && !conversations.some(c => c.id === savedId)) {
-      // Saved conversation no longer exists, select first one
-      if (conversations.length > 0) {
-        setActiveConversationId(conversations[0].id);
-      }
-    }
-  }, [conversations.length]); // Only run when conversation COUNT changes, not the array itself
-
   return {
     conversations,
     activeConversationId,
     setActiveConversationId,
     loading,
     error,
+    initUserData,
     fetchConversations,
     fetchConversationMessages,
     createConversation,
