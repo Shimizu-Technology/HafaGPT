@@ -8,7 +8,7 @@ function generateSessionId(): string {
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   imageUrl?: string; // For displaying uploaded images in chat history
   sources?: Array<{ name: string; page: number | null }>;
@@ -16,6 +16,8 @@ export interface ChatMessage {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
+  systemType?: 'mode_change'; // Type of system message
+  mode?: 'english' | 'chamorro' | 'learn'; // For mode change messages
 }
 
 export interface ChatResponse {

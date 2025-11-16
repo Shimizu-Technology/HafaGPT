@@ -13,6 +13,8 @@ import { QuickPhrases } from './QuickPhrases';
 import { WelcomeMessage } from './WelcomeMessage';
 import { LoadingIndicator } from './LoadingIndicator';
 import { ConversationSidebar } from './ConversationSidebar';
+import { Toast } from './Toast';
+import { ImageModal } from './ImageModal';
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -20,6 +22,9 @@ export function Chat() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   // Default sidebar open on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -44,12 +49,69 @@ export function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
+  const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
+
+  const getModeDetails = (modeName: 'english' | 'chamorro' | 'learn') => {
+    const modes = {
+      english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
+      chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
+      learn: { icon: '📚', label: 'Learn', description: 'Detailed learning explanations' },
+    };
+    return modes[modeName];
+  };
+
+  // Detect mode changes and add system message + toast
+  useEffect(() => {
+    if (previousModeRef.current !== mode && messages.length > 0) {
+      const modeDetails = getModeDetails(mode);
+      
+      // Add system message to local chat
+      const systemMessage: ChatMessage = {
+        role: 'system',
+        content: `Switched to ${modeDetails.label} mode`,
+        timestamp: Date.now(),
+        systemType: 'mode_change',
+        mode: mode,
+      };
+      setMessages((prev) => [...prev, systemMessage]);
+
+      // Save system message to database if there's an active conversation
+      if (activeConversationId) {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/system-message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            conversation_id: activeConversationId,
+            content: `Switched to ${modeDetails.label} mode`,
+            mode: mode,
+          }),
+        }).catch(err => console.error('Failed to save system message:', err));
+      }
+
+      // Show toast notification
+      setToastData({
+        icon: modeDetails.icon,
+        message: `Switched to ${modeDetails.label} mode`,
+        description: modeDetails.description,
+      });
+      setShowToast(true);
+    }
+    previousModeRef.current = mode;
+  }, [mode, messages.length, activeConversationId]);
 
   // Load messages when activeConversationId changes
   useEffect(() => {
     const loadMessages = async () => {
       if (!activeConversationId) {
         setMessages([]);
+        return;
+      }
+
+      // Don't reload messages if we're currently sending one (prevents race condition)
+      if (isSendingMessageRef.current) {
         return;
       }
 
@@ -67,7 +129,9 @@ export function Chat() {
           })) || [],
           used_rag: msg.used_rag || false,
           used_web_search: msg.used_web_search || false,
-          response_time: undefined // API doesn't return this per message
+          response_time: undefined, // API doesn't return this per message
+          systemType: msg.role === 'system' ? 'mode_change' : undefined,
+          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
         }));
         setMessages(chatMessages);
       } catch (err) {
@@ -144,6 +208,9 @@ export function Chat() {
   }, [messages.length]);
 
   const handleSend = async (message: string, image?: File) => {
+    // Mark that we're sending a message (prevents race condition with message loading)
+    isSendingMessageRef.current = true;
+    
     let currentConversationId = activeConversationId;
 
     // Create conversation if none exists
@@ -157,6 +224,7 @@ export function Chat() {
       } catch (err) {
         console.error('Failed to create conversation:', err);
         setError('Failed to create conversation');
+        isSendingMessageRef.current = false;
         return;
       }
     }
@@ -190,6 +258,9 @@ export function Chat() {
       await fetchConversations();
     } catch (err) {
       console.error('Failed to send message:', err);
+    } finally {
+      // Message sending complete - allow message loading again
+      isSendingMessageRef.current = false;
     }
   };
 
@@ -434,7 +505,20 @@ End of Export
           ) : (
             <>
               {messages.map((message, index) => (
-                <Message key={index} {...message} />
+                <Message 
+                  key={index} 
+                  role={message.role}
+                  content={message.content}
+                  imageUrl={message.imageUrl}
+                  sources={message.sources}
+                  used_rag={message.used_rag}
+                  used_web_search={message.used_web_search}
+                  response_time={message.response_time}
+                  timestamp={message.timestamp}
+                  systemType={message.systemType}
+                  mode={message.mode}
+                  onImageClick={setSelectedImage}
+                />
               ))}
               {loading && <LoadingIndicator />}
               {error && (
@@ -548,7 +632,25 @@ End of Export
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Toast Notification */}
+      {showToast && toastData && (
+        <Toast
+          icon={toastData.icon}
+          message={toastData.message}
+          description={toastData.description}
+          onClose={() => setShowToast(false)}
+        />
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage}
+          onClose={() => setSelectedImage(null)}
+        />
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
 
 interface MessageProps {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   imageUrl?: string; // For displaying uploaded images
   sources?: Array<{ name: string; page: number | null }>;
@@ -12,10 +12,14 @@ interface MessageProps {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
+  systemType?: 'mode_change';
+  mode?: 'english' | 'chamorro' | 'learn';
+  onImageClick?: (imageUrl: string) => void; // Callback for image clicks
 }
 
-export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp }: MessageProps) {
+export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick }: MessageProps) {
   const isUser = role === 'user';
+  const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -38,6 +42,35 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
+
+  const getModeDetails = (modeName: string) => {
+    const modes = {
+      english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
+      chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
+      learn: { icon: '📚', label: 'Learn', description: 'Detailed learning explanations' },
+    };
+    return modes[modeName as keyof typeof modes] || modes.english;
+  };
+
+  // System message (mode change indicator)
+  if (isSystem && systemType === 'mode_change' && mode) {
+    const modeDetails = getModeDetails(mode);
+    return (
+      <div className="flex justify-center mb-4 sm:mb-6 animate-fade-in">
+        <div className="bg-cream-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-cream-300 dark:border-gray-700 rounded-xl px-4 py-2 shadow-sm max-w-md">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <span className="text-lg">{modeDetails.icon}</span>
+            <span className="font-semibold text-brown-800 dark:text-white">
+              Switched to {modeDetails.label} mode
+            </span>
+          </div>
+          <p className="text-xs text-brown-600 dark:text-gray-400 text-center mt-1">
+            {modeDetails.description}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 animate-fade-in`}>
@@ -70,7 +103,11 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
             )}
             <button
               onClick={handleCopy}
-              className="ml-auto text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 transition-all duration-200 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50"
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleCopy();
+              }}
+              className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
               title="Copy message"
             >
               {copied ? (
@@ -104,7 +141,9 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                   <img 
                     src={imageUrl} 
                     alt="Uploaded content" 
-                    className="max-h-48 rounded-lg shadow-md"
+                    className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                    onClick={() => onImageClick?.(imageUrl)}
+                    title="Click to enlarge"
                   />
                 </div>
               )}
@@ -160,12 +199,33 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                   li: ({ children }) => (
                     <li className="leading-relaxed">{children}</li>
                   ),
-                  // Code
-                  code: ({ children }) => (
-                    <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono">
+                  // Code blocks (multi-line)
+                  pre: ({ children }) => (
+                    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 overflow-x-auto max-w-full">
                       {children}
-                    </code>
+                    </pre>
                   ),
+                  // Inline code and code within pre
+                  code: ({ className, children }) => {
+                    // Check if it's inside a pre block (multi-line code)
+                    const isInline = !className;
+                    
+                    if (isInline) {
+                      // Inline code (single backticks)
+                      return (
+                        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono">
+                          {children}
+                        </code>
+                      );
+                    }
+                    
+                    // Code block content (triple backticks)
+                    return (
+                      <code className="text-xs sm:text-sm font-mono block whitespace-pre text-brown-800 dark:text-gray-100">
+                        {children}
+                      </code>
+                    );
+                  },
                   // Blockquotes
                   blockquote: ({ children }) => (
                     <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-gray-300">
@@ -203,6 +263,27 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                 {getRelativeTime(timestamp)}
               </span>
             )}
+            <button
+              onClick={handleCopy}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleCopy();
+              }}
+              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              title="Copy message"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-coral-600 dark:text-green-400" />
+                  <span className="hidden sm:inline text-coral-600 dark:text-green-400 font-medium">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </button>
             <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">You</span>
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
               👤

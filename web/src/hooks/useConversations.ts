@@ -14,13 +14,14 @@ export interface Conversation {
 
 export interface ConversationMessage {
   id: number;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
   sources?: Array<{ name: string; page?: number }>;
   used_rag?: boolean;
   used_web_search?: boolean;
   image_url?: string; // S3 URL of uploaded image (for user messages)
+  mode?: string; // Mode for system messages (english/chamorro/learn)
 }
 
 export function useConversations() {
