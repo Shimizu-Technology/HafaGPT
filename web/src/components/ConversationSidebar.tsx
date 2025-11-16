@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, Plus, Trash2, Pencil } from 'lucide-react';
-import { Conversation } from '../hooks/useConversations';
+import { Conversation } from '../hooks/useConversationsQuery';
 
 interface ConversationSidebarProps {
   conversations: Conversation[];

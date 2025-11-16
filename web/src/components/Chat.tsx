@@ -1,10 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, BookOpen } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
-import { useConversations } from '../hooks/useConversations';
+import { 
+  useInitUserData, 
+  useCreateConversation, 
+  useDeleteConversation, 
+  useUpdateConversationTitle,
+  ConversationMessage 
+} from '../hooks/useConversationsQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
@@ -17,7 +25,6 @@ import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
 
 export function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -25,34 +32,43 @@ export function Chat() {
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  // Default sidebar open on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 768; // md breakpoint
     }
     return true;
   });
+  
+  // Get active conversation ID from localStorage
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
+    return localStorage.getItem('active_conversation_id');
+  });
+  
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user } = useUser();
-  const { 
-    conversations, 
+  const queryClient = useQueryClient();
+  
+  // React Query hooks - replaces old useConversations hook
+  const { data: initData, isLoading: conversationsLoading } = useInitUserData(
     activeConversationId,
-    setActiveConversationId,
-    createConversation,
-    deleteConversation,
-    fetchConversationMessages,
-    updateConversationTitle,
-    initUserData,
-    loading: conversationsLoading
-  } = useConversations();
+    !!user?.id // Only fetch when user is signed in
+  );
+  
+  const createConversationMutation = useCreateConversation();
+  const deleteConversationMutation = useDeleteConversation();
+  const updateConversationTitleMutation = useUpdateConversationTitle();
+  
+  // Extract data from React Query
+  const conversations = initData?.conversations || [];
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  
   const greeting = useRotatingGreeting();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
-  const [isInitialized, setIsInitialized] = useState(false); // Track if we've loaded initial data
 
   const getModeDetails = (modeName: 'english' | 'chamorro' | 'learn') => {
     const modes = {
@@ -63,60 +79,52 @@ export function Chat() {
     return modes[modeName];
   };
 
-  // Initialize conversations AND messages in ONE API call (eliminates waterfall)
+  // Load messages from React Query data when it changes
   useEffect(() => {
-    const initialize = async () => {
-      // Wait for Clerk to finish loading
-      if (user === undefined) {
-        return;
-      }
+    if (initData?.messages) {
+      const chatMessages: ChatMessage[] = initData.messages.map((msg: ConversationMessage) => ({
+        role: msg.role,
+        content: msg.content,
+        imageUrl: msg.image_url || undefined,
+        timestamp: new Date(msg.timestamp).getTime(),
+        sources: msg.sources?.map((src) => ({
+          name: src.name,
+          page: src.page ?? null
+        })) || [],
+        used_rag: msg.used_rag || false,
+        used_web_search: msg.used_web_search || false,
+        response_time: undefined,
+        systemType: msg.role === 'system' ? 'mode_change' : undefined,
+        mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
+      }));
+      setMessages(chatMessages);
+    }
+  }, [initData?.messages]);
 
-      // Only initialize for signed-in users
-      if (!user?.id) {
-        setIsInitialized(true);
-        return;
-      }
+  // Update activeConversationId when initData changes
+  // ONLY if we started with null and got one back from the API
+  useEffect(() => {
+    // Only update if:
+    // 1. We don't currently have an activeConversationId AND
+    // 2. The API returned one
+    // This prevents triggering a second query when we already have the conversation ID
+    if (!activeConversationId && initData?.active_conversation_id) {
+      setActiveConversationId(initData.active_conversation_id);
+      localStorage.setItem('active_conversation_id', initData.active_conversation_id);
+    }
+  }, [initData?.active_conversation_id, activeConversationId]);
 
-      try {
-        const data = await initUserData();
-        
-        // Set conversations (from hook state)
-        // Note: conversations state is updated inside initUserData via setConversations
-        
-        // Set active conversation ID
-        if (data.activeConversationId) {
-          setActiveConversationId(data.activeConversationId);
-        }
-        
-        // Convert and set messages
-        const chatMessages: ChatMessage[] = data.messages.map((msg: any) => ({
-          role: msg.role,
-          content: msg.content,
-          imageUrl: msg.image_url || undefined,
-          timestamp: new Date(msg.timestamp).getTime(),
-          sources: msg.sources?.map((src: any) => ({
-            name: src.name,
-            page: src.page ?? null
-          })) || [],
-          used_rag: msg.used_rag || false,
-          used_web_search: msg.used_web_search || false,
-          response_time: undefined,
-          systemType: msg.role === 'system' ? 'mode_change' : undefined,
-          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
-        }));
-        
-        setMessages(chatMessages);
-        setIsInitialized(true);
-        
-      } catch (err) {
-        console.error('Failed to initialize:', err);
-        setIsInitialized(true);
-      }
-    };
-
-    initialize();
+  // Clear data when user signs out
+  useEffect(() => {
+    if (isSignedIn === false) {
+      setMessages([]);
+      setActiveConversationId(null);
+      localStorage.removeItem('active_conversation_id');
+      // Invalidate all queries to clear cache
+      queryClient.clear();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]); // Re-initialize when user changes
+  }, [isSignedIn]); // Only depend on isSignedIn
 
   // Detect mode changes and add system message + toast
   useEffect(() => {
@@ -160,59 +168,25 @@ export function Chat() {
   }, [mode, messages.length, activeConversationId]);
 
   // Load messages when activeConversationId changes
+  // NOTE: This is now handled by React Query (initUserData), but we keep this
+  // for switching between conversations without full re-init
   useEffect(() => {
-    const loadMessages = async () => {
-      if (!activeConversationId) {
-        setMessages([]);
-        return;
-      }
-
-      // Don't reload messages if we're currently sending one (prevents race condition)
-      if (isSendingMessageRef.current) {
-        return;
-      }
-
-      try {
-        const apiMessages = await fetchConversationMessages(activeConversationId);
-        // Convert API messages to ChatMessage format
-        const chatMessages: ChatMessage[] = apiMessages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          imageUrl: msg.image_url || undefined,  // Use S3 URL from API
-          timestamp: new Date(msg.timestamp).getTime(),
-          sources: msg.sources?.map(src => ({
-            name: src.name,
-            page: src.page ?? null
-          })) || [],
-          used_rag: msg.used_rag || false,
-          used_web_search: msg.used_web_search || false,
-          response_time: undefined, // API doesn't return this per message
-          systemType: msg.role === 'system' ? 'mode_change' : undefined,
-          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
-        }));
-        setMessages(chatMessages);
-      } catch (err) {
-        console.error('Failed to load messages:', err);
-        setMessages([]);
-      }
-    };
-
-    loadMessages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeConversationId]); // fetchConversationMessages is stable, no need to include
+    // This effect is intentionally empty - messages are now loaded via React Query
+    // when activeConversationId changes, the `handleSelectConversation` invalidates
+    // the query which triggers a refetch automatically
+  }, [activeConversationId]);
 
   // Clear state when user signs out
   useEffect(() => {
-    // Only clear if explicitly signed out (not just undefined during loading)
     if (isSignedIn === false) {
-      // User signed out - clear all authenticated user data
       setMessages([]);
       setActiveConversationId(null);
       localStorage.removeItem('active_conversation_id');
-      // Note: conversations will be cleared automatically by useConversations hook
-      // when it detects no auth token
+      // Invalidate all queries to clear cache
+      queryClient.clear();
     }
-  }, [isSignedIn, setActiveConversationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn]); // Only depend on isSignedIn
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -275,9 +249,10 @@ export function Chat() {
       try {
         // Generate title from the message immediately (first 50 chars)
         const generatedTitle = message.trim().slice(0, 50);
-        const newConv = await createConversation(generatedTitle);
+        const newConv = await createConversationMutation.mutateAsync(generatedTitle);
         currentConversationId = newConv.id;
         setActiveConversationId(newConv.id);
+        localStorage.setItem('active_conversation_id', newConv.id);
       } catch (err) {
         console.error('Failed to create conversation:', err);
         setError('Failed to create conversation');
@@ -326,6 +301,7 @@ export function Chat() {
       // Don't create conversation yet - just clear messages
       // Conversation will be created when user sends first message
       setActiveConversationId(null);
+      localStorage.removeItem('active_conversation_id');
       setMessages([]);
       // Close sidebar only on mobile
       if (window.innerWidth < 768) {
@@ -338,7 +314,11 @@ export function Chat() {
 
   const handleSelectConversation = async (conversationId: string) => {
     setActiveConversationId(conversationId);
-    // Messages will be loaded automatically by useEffect when activeConversationId changes
+    localStorage.setItem('active_conversation_id', conversationId);
+    
+    // Invalidate query to refetch messages for this conversation
+    queryClient.invalidateQueries({ queryKey: ['init', conversationId] });
+    
     // Close sidebar only on mobile
     if (window.innerWidth < 768) {
       setSidebarOpen(false);
@@ -347,9 +327,11 @@ export function Chat() {
 
   const handleDeleteConversation = async (conversationId: string) => {
     try {
-      await deleteConversation(conversationId);
+      await deleteConversationMutation.mutateAsync(conversationId);
       if (conversationId === activeConversationId) {
         setMessages([]);
+        setActiveConversationId(null);
+        localStorage.removeItem('active_conversation_id');
       }
     } catch (err) {
       console.error('Failed to delete conversation:', err);
@@ -360,8 +342,9 @@ export function Chat() {
     if (activeConversationId) {
       // Delete the conversation from the database
       try {
-        await deleteConversation(activeConversationId);
+        await deleteConversationMutation.mutateAsync(activeConversationId);
         setActiveConversationId(null);
+        localStorage.removeItem('active_conversation_id');
       } catch (err) {
         console.error('Failed to delete conversation:', err);
         setError('Failed to clear conversation');
@@ -373,6 +356,14 @@ export function Chat() {
     setShowClearConfirm(false);
     setError(null);
     resetSession(); // Start a new conversation session
+  };
+
+  const handleRenameConversation = async (conversationId: string, title: string) => {
+    try {
+      await updateConversationTitleMutation.mutateAsync({ conversationId, title });
+    } catch (err) {
+      console.error('Failed to rename conversation:', err);
+    }
   };
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -468,7 +459,7 @@ End of Export
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
         onDeleteConversation={handleDeleteConversation}
-        onRenameConversation={updateConversationTitle}
+        onRenameConversation={handleRenameConversation}
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -516,6 +507,16 @@ End of Export
               {/* Auth Button - Always visible */}
               <AuthButton />
               
+              {/* Study Button - Link to Flashcards */}
+              <Link
+                to="/flashcards"
+                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
+                aria-label="Study flashcards"
+              >
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden md:inline text-sm font-medium">Study</span>
+              </Link>
+              
               <button
                 onClick={toggleTheme}
                 className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center"
@@ -559,7 +560,7 @@ End of Export
       >
         <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
-          {!isInitialized || conversationsLoading ? (
+          {conversationsLoading ? (
             <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
               <div className="w-16 h-16 border-4 border-teal-200 dark:border-ocean-900 border-t-teal-600 dark:border-t-ocean-400 rounded-full animate-spin"></div>
               <p className="mt-6 text-brown-600 dark:text-gray-400 text-lg font-medium">

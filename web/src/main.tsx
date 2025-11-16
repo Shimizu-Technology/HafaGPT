@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
@@ -12,6 +13,18 @@ registerSW({
   },
   onOfflineReady() {
     console.log('App ready to work offline.');
+  },
+});
+
+// Create a QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+      gcTime: 30 * 60 * 1000, // 30 minutes - cache time (formerly cacheTime)
+      refetchOnWindowFocus: false, // Don't refetch when switching tabs
+      retry: 1, // Retry failed requests once
+    },
   },
 });
 
@@ -49,34 +62,36 @@ function ClerkWrapper() {
   }, []);
 
   return (
-    <ClerkProvider 
-      publishableKey={CLERK_PUBLISHABLE_KEY}
-      appearance={{
-        variables: {
-          colorPrimary: isDark ? '#5DAFB0' : '#E85D4B',  // Teal for dark, Coral for light
-          colorBackground: isDark ? '#1e293b' : '#ffffff',  // Lighter slate or white
-          colorInputBackground: isDark ? '#334155' : '#FFF8F0',  // Even lighter slate or cream
-          colorInputText: isDark ? '#ffffff' : '#3A2A1D',  // Pure white or brown
-          colorText: isDark ? '#ffffff' : '#2d2d2d',  // Pure white for dark, dark gray for light
-          colorTextSecondary: isDark ? '#e2e8f0' : '#6B5D52',  // Light gray or brown (secondary)
-          borderRadius: '0.75rem',
-        },
-        elements: {
-          // Hide "Development mode" badge
-          badge: 'hidden',
-          rootBox: '[&_[data-localization-key="badge__development"]]:hidden',
-          // Force white text in dark mode
-          userButtonPopoverCard: isDark ? 'text-white' : '',
-          userButtonPopoverActionButton: isDark ? 'text-white hover:text-white' : '',
-          userButtonPopoverActionButtonText: isDark ? 'text-white' : '',
-          userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
-          userPreviewMainIdentifier: isDark ? 'text-white' : '',
-          userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
-        },
-      }}
-    >
-      <App />
-    </ClerkProvider>
+    <QueryClientProvider client={queryClient}>
+      <ClerkProvider 
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        appearance={{
+          variables: {
+            colorPrimary: isDark ? '#5DAFB0' : '#E85D4B',  // Teal for dark, Coral for light
+            colorBackground: isDark ? '#1e293b' : '#ffffff',  // Lighter slate or white
+            colorInputBackground: isDark ? '#334155' : '#FFF8F0',  // Even lighter slate or cream
+            colorInputText: isDark ? '#ffffff' : '#3A2A1D',  // Pure white or brown
+            colorText: isDark ? '#ffffff' : '#2d2d2d',  // Pure white for dark, dark gray for light
+            colorTextSecondary: isDark ? '#e2e8f0' : '#6B5D52',  // Light gray or brown (secondary)
+            borderRadius: '0.75rem',
+          },
+          elements: {
+            // Hide "Development mode" badge
+            badge: 'hidden',
+            rootBox: '[&_[data-localization-key="badge__development"]]:hidden',
+            // Force white text in dark mode
+            userButtonPopoverCard: isDark ? 'text-white' : '',
+            userButtonPopoverActionButton: isDark ? 'text-white hover:text-white' : '',
+            userButtonPopoverActionButtonText: isDark ? 'text-white' : '',
+            userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
+            userPreviewMainIdentifier: isDark ? 'text-white' : '',
+            userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
+          },
+        }}
+      >
+        <App />
+      </ClerkProvider>
+    </QueryClientProvider>
   );
 }
 
