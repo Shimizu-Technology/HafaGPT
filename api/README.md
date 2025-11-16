@@ -4,6 +4,8 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
 
 **🆕 LATEST:** Speech-to-text input + Image upload with GPT-4o-mini Vision + S3 storage! 🎤📸
 
+> **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
+
 ## ✨ Features
 
 - 🤖 **3 Learning Modes:**
@@ -193,57 +195,53 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 
 **Option A: FastAPI REST API (Recommended for production)**
 
-**Local Development (Desktop Only):**
+**Start the API Server (Recommended):**
 
 Easy startup with the helper script:
 ```bash
-./start.sh
-```
-
-Or manually:
-```bash
-uv run python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Access the API:
-- **API Root:** http://localhost:8000
-- **Interactive Docs:** http://localhost:8000/api/docs
-- **Health Check:** http://localhost:8000/api/health
-
-**Mobile Testing (Network Access):**
-
-```bash
-./dev-network.sh
+./scripts/dev-network.sh
 ```
 
 This will:
 - ✅ Auto-detect your local IP address
-- ✅ Start FastAPI on your network (accessible from phone)
+- ✅ Start FastAPI on your network (accessible from phone & desktop)
 - ✅ Display URLs for API, docs, and mobile access
-- ✅ Example: `http://192.168.1.190:8000`
+- ✅ Example: `http://192.168.1.190:8000` (phone) + `http://localhost:8000` (desktop)
 
-**Requirements:**
-- Phone and computer must be on the same WiFi network
-- Make sure firewall allows port 8000
-- Backend will be accessible at `http://YOUR_IP:8000`
+**Benefits:**
+- 📱 Test on mobile devices (same WiFi network)
+- 💻 Still works on localhost for desktop development
+- 🔧 Hot reload enabled (code changes auto-restart server)
+
+**Or start manually (localhost only):**
+
+If you only need localhost access:
+```bash
+uv run python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Access the API:**
+- **API Root:** http://localhost:8000
+- **Interactive Docs:** http://localhost:8000/api/docs
+- **Health Check:** http://localhost:8000/api/health
 
 **Option B: CLI (Command Line Interface)**
 
 **Cloud Mode (Default - Recommended):**
 ```bash
 # Uses GPT-4o-mini via OpenAI API (fast, accurate, cheap)
-uv run python chamorro-chatbot-3.0.py
+uv run python tests/chamorro-chatbot-3.0.py
 ```
 
 **Local Mode (Private & Free):**
 ```bash
 # Uses local model via LM Studio (slower, but free)
-uv run python chamorro-chatbot-3.0.py --local
+uv run python tests/chamorro-chatbot-3.0.py --local
 ```
 
 **View Help:**
 ```bash
-uv run python chamorro-chatbot-3.0.py --help
+uv run python tests/chamorro-chatbot-3.0.py --help
 ```
 
 ---
@@ -623,88 +621,122 @@ Page numbers are shown both in the response text and in the references at the bo
 
 ### View Indexed Documents
 ```bash
-uv run python manage_rag_db.py list
+uv run python src/rag/manage_rag_db.py list
 ```
 
 ### Add All PDFs from a Folder
 ```bash
 # Simple! Finds all PDFs and indexes them (skips duplicates automatically)
-uv run python manage_rag_db.py add-all knowledge_base/pdfs/
+uv run python src/rag/manage_rag_db.py add-all knowledge_base/pdfs/
 ```
 
 ### Add Individual PDFs
 ```bash
-uv run python manage_rag_db.py add knowledge_base/pdfs/new_vocab.pdf
+uv run python src/rag/manage_rag_db.py add knowledge_base/pdfs/new_vocab.pdf
 ```
 
 ### Add Website Content (NEW!)
 ```bash
 # Add a webpage
-uv run python crawl_website.py http://www.chamoru.info/dictionary/
+uv run python src/crawlers/crawl_website.py http://www.chamoru.info/dictionary/
 
 # Crawl deeper (follow internal links)
-uv run python crawl_website.py https://guampedia.com --max-depth 2
+uv run python src/crawlers/crawl_website.py https://guampedia.com --max-depth 2
 ```
 
 **Perfect for:** Online dictionaries, language learning sites, cultural resources
 
 ### Check for Duplicates
 ```bash
-uv run python manage_rag_db.py check knowledge_base/pdfs/grammar.pdf
+uv run python src/rag/manage_rag_db.py check knowledge_base/pdfs/grammar.pdf
 ```
 
 ### Database Stats
 ```bash
-uv run python manage_rag_db.py stats
+uv run python src/rag/manage_rag_db.py stats
 ```
 
 See [documentation/RAG_MANAGEMENT_GUIDE.md](documentation/RAG_MANAGEMENT_GUIDE.md) for complete documentation.
 
 ## 📁 Project Structure
 
+> **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete, detailed codebase organization guide.
+
 ```
-llm-project/
-├── chamorro-chatbot-3.0.py    # Main chatbot CLI (dynamic source system)
-├── chamorro_rag.py            # RAG system (PostgreSQL + character normalization)
-├── manage_rag_db.py           # Database management tool
-├── improved_chunker.py        # Docling processor + token-aware chunker
-├── web_search_tool.py         # Web search integration (Brave API)
-├── crawl_website.py           # Generic web crawling (Crawl4AI)
-├── crawl_pdn_batch.sh         # Batch crawler for PDN articles
-├── pdn_urls.txt               # URL list for batch processing
-├── README.md                  # This file
-├── pyproject.toml             # Project dependencies
-├── .env                       # API configuration (keys, database URL)
-├── rag_metadata.json          # Document & website tracking (~1,150 sources)
+HafaGPT-API/
 ├── api/                       # 🌐 FastAPI web service
 │   ├── main.py                # FastAPI app & routes
 │   ├── models.py              # Pydantic request/response models
 │   ├── chatbot_service.py     # Core chatbot logic (shared with CLI)
+│   ├── conversations.py       # Conversation CRUD operations
 │   └── README.md              # API documentation
-├── crawlers/                  # 🕷️ Site-specific crawlers
+│
+├── src/                       # 📦 All Python source code
+│   ├── crawlers/              # 🕷️ Web crawlers for data ingestion
+│   │   ├── crawl_website.py   # Generic website crawler (Guampedia)
+│   │   └── crawl_lengguahita.py # Lengguahi-ta specific crawler
+│   ├── importers/             # 📥 Data importers
+│   │   ├── import_dictionary.py # Import dictionary JSON files
+│   │   └── import_news_articles.py # Import news articles
+│   ├── rag/                   # 🧠 RAG system
+│   │   ├── chamorro_rag.py    # RAG search & retrieval logic
+│   │   ├── manage_rag_db.py   # Database management tool
+│   │   └── web_search_tool.py # Web search integration (Brave API)
+│   └── utils/                 # 🔧 Utility scripts
+│       ├── inspect_rag_db.py  # Database inspection tool
+│       ├── improved_chunker.py # Docling processor + token-aware chunker
+│       ├── sync_metadata.py   # Metadata synchronization
+│       ├── update_metadata_from_db.py # Update metadata from DB
+│       └── find_max_id.py     # Find max IDs in DB
+│
+├── scripts/                   # 🚀 All shell scripts
+│   ├── crawlers/              # Crawler wrapper scripts
+│   │   ├── crawl_guampedia.sh # Full Guampedia crawl
+│   │   ├── crawl_guampedia_test.sh # Test Guampedia crawl
+│   │   ├── crawl_lengguahita.sh # Full Lengguahi-ta crawl
+│   │   └── crawl_pdn_batch.sh # Pacific Daily News batch crawl
+│   ├── importers/             # Importer wrapper scripts
+│   │   ├── download_dictionaries.sh # Download dictionary files
+│   │   ├── import_dictionaries.sh # Import dictionaries
+│   │   └── import_news_articles.sh # Import news articles
+│   ├── inspect_db.sh          # Database inspection
+│   ├── dev-network.sh         # Start dev server on network
+│   └── start.sh               # Start production server
+│
+├── docs/                      # 📖 All documentation
+│   ├── setup/                 # Setup & configuration docs
+│   ├── crawlers/              # Crawler documentation
+│   ├── CODEBASE_STRUCTURE.md  # Complete structure guide
+│   ├── DATA_IMPORT_MASTER_PLAN.md
+│   └── RAG_PRIORITY_SYSTEM.md
+│
+├── tests/                     # 🧪 Test files
+│   ├── test_system.py         # System tests
+│   └── chamorro-chatbot-3.0.py # CLI version (legacy)
+│
+├── logs/                      # 📝 Log files
+├── data/                      # 📊 Data files
+├── alembic/                   # 🗄️ Database migrations
+├── knowledge_base/            # 📚 RAG source materials (PDFs)
+├── backups/                   # 💾 Database backups
+├── archive/                   # 📦 Archived scripts & docs
+├── crawlers/                  # 🕷️ Old site-specific crawlers
 │   ├── README.md              # Crawler usage guide
 │   ├── SOURCES.md             # Human-readable source tracker
 │   ├── pacific_daily_news.py  # PDN crawler with content cleaning
 │   └── _template.py           # Template for new site crawlers
-├── documentation/             # 📖 All project documentation
-│   ├── RAG_MANAGEMENT_GUIDE.md         # Database & content management
-│   ├── MODEL_SWITCHING_GUIDE.md        # Local vs cloud models
-│   ├── IMPROVEMENT_GUIDE.md            # Roadmap & optimization triggers
-│   ├── CHAMORRO_RESOURCES_RESEARCH.md  # Resource analysis
-│   ├── FRONTEND_INTEGRATION_GUIDE.md   # API integration for frontends
-│   ├── FRONTEND_SESSION_TRACKING_GUIDE.md  # Session management
-│   └── FRONTEND_SESSION_PERSISTENCE_GUIDE.md  # localStorage persistence
-├── CONVERSATION_ANALYTICS.md  # 📊 SQL queries & analytics scripts
-├── AI_BUILDER_PROMPT.md       # 🤖 Prompt for AI frontend builders
-├── knowledge_base/            # 📚 RAG source materials
-│   ├── pdfs/                  # Chamorro grammar books & dictionaries
-│   └── README.md              # Source documentation
-└── archive/                   # 📦 Archived scripts & docs
-    ├── old-chatbot-versions/  # Previous versions
-    ├── learning-examples/     # Learning scripts
-    ├── crawl-scripts/         # Archived crawl patterns
-    ├── migration/             # ChromaDB → PostgreSQL migration
-    └── upgrade-docs/          # Technical documentation
+│
+├── documentation/             # 📖 Old documentation (to be migrated)
+│   ├── RAG_MANAGEMENT_GUIDE.md
+│   ├── MODEL_SWITCHING_GUIDE.md
+│   └── IMPROVEMENT_GUIDE.md
+│
+├── .env                       # 🔐 API configuration (keys, database URL)
+├── pyproject.toml             # 📦 Project dependencies (uv)
+├── requirements.txt           # 📦 Production dependencies (pip)
+├── render.yaml                # 🚀 Render deployment config
+├── rag_metadata.json          # 📊 Document & website tracking
+└── README.md                  # 📖 This file
 ```
 
 ## 🛠️ Tech Stack
@@ -834,7 +866,7 @@ The chatbot supports both **local models** (via LM Studio) and **cloud models** 
 
 **Cloud Mode (Default - Recommended):**
 ```bash
-uv run python chamorro-chatbot-3.0.py
+uv run python tests/chamorro-chatbot-3.0.py
 ```
 - ✅ Fast (5-15s responses)
 - ✅ Smart (GPT-4o-mini)
@@ -843,7 +875,7 @@ uv run python chamorro-chatbot-3.0.py
 
 **Local Mode:**
 ```bash
-uv run python chamorro-chatbot-3.0.py --local
+uv run python tests/chamorro-chatbot-3.0.py --local
 ```
 - ✅ Private (all local)
 - ✅ Free (no API costs)
@@ -861,13 +893,13 @@ uv run python chamorro-chatbot-3.0.py --local
    OPENAI_API_KEY=sk-your-actual-key-here
    # No need for OPENAI_API_BASE
    ```
-3. Run: `uv run python chamorro-chatbot-3.0.py`
+3. Run: `uv run python tests/chamorro-chatbot-3.0.py`
 
 **Local Setup (LM Studio):**
 1. Install LM Studio from https://lmstudio.ai/
 2. Download a model (Qwen 2.5 Coder 32B recommended)
 3. Start LM Studio server on port 1234
-4. Run: `uv run python chamorro-chatbot-3.0.py --local`
+4. Run: `uv run python tests/chamorro-chatbot-3.0.py --local`
 
 **Custom Local Model:**
 Set `LOCAL_MODEL` in `.env`:

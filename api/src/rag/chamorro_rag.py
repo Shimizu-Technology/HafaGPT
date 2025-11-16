@@ -96,7 +96,8 @@ class ChamorroRAG:
             embeddings=self.embeddings,
             collection_name="chamorro_grammar",
             connection=connection,
-            use_jsonb=True
+            use_jsonb=True,
+            embedding_length=384  # Explicit embedding dimensions for PGVector
         )
         
         print("✅ Knowledge base loaded!")

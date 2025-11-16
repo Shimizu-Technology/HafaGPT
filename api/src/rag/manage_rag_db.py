@@ -9,7 +9,7 @@ Docling for better PDF processing, and improved token-aware chunking.
 from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
-from improved_chunker import create_improved_chunker, create_docling_processor
+from src.utils.improved_chunker import create_improved_chunker, create_docling_processor
 import os
 import json
 import hashlib
@@ -54,7 +54,7 @@ class RAGDatabaseManager:
         self.vectorstore = PGVector(
             embeddings=self.embeddings,
             collection_name="chamorro_grammar",
-            connection=connection,
+            connection=self.connection,  # Use self.connection (from env) not the parameter!
             use_jsonb=True
         )
         

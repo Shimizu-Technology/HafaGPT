@@ -18,8 +18,8 @@ from openai import OpenAI
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Import RAG module (now memory-efficient with OpenAI embeddings)
-from chamorro_rag import rag
-from web_search_tool import web_search, format_search_results
+from src.rag.chamorro_rag import rag
+from src.rag.web_search_tool import web_search, format_search_results
 
 # Load environment
 load_dotenv()

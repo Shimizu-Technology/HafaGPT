@@ -1,6 +1,9 @@
 #!/bin/bash
 # Local development startup script
 
+# Change to project root (one level up from scripts/)
+cd "$(dirname "$0")/.." || exit 1
+
 # Check if .env exists
 if [ ! -f .env ]; then
     echo "⚠️  Warning: .env file not found!"

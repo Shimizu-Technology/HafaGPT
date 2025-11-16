@@ -23,7 +23,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from langchain_core.documents import Document
-from manage_rag_db import RAGDatabaseManager
+from src.rag.manage_rag_db import RAGDatabaseManager
 
 
 def load_metadata(metadata_file="./rag_metadata.json"):

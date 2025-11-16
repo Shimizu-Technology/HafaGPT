@@ -8,7 +8,7 @@ and updates the metadata file accordingly.
 
 import json
 from datetime import datetime
-from manage_rag_db import RAGDatabaseManager
+from src.rag.manage_rag_db import RAGDatabaseManager
 
 def sync_metadata():
     """Sync metadata with database reality"""
