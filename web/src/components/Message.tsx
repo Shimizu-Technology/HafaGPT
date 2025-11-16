@@ -23,12 +23,54 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    console.log('🔵 Copy button clicked!'); // Debug log
+    
     try {
-      await navigator.clipboard.writeText(content);
+      // Method 1: Try modern clipboard API first (works on desktop and some mobile)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(content);
+        console.log('✅ Text copied via Clipboard API');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+    } catch (err) {
+      console.warn('⚠️ Clipboard API failed, trying fallback...', err);
+    }
+    
+    // Method 2: Fallback for iOS Safari and older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      
+      // Make it invisible but accessible
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      textArea.style.opacity = '0';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      // For iOS
+      textArea.setSelectionRange(0, 99999);
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        console.log('✅ Text copied via fallback method');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (err) {
+      console.error('❌ All copy methods failed:', err);
+      // Still show feedback even if copy failed
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
     }
   };
 
@@ -77,7 +119,7 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
       <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] ${isUser ? 'order-2' : 'order-1'}`}>
         {/* Bot Header */}
         {!isUser && (
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 px-1 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 px-1 flex-wrap relative">
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
               🤖
             </div>
@@ -102,13 +144,15 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
               </span>
             )}
             <button
-              onClick={handleCopy}
-              onTouchEnd={(e) => {
-                e.preventDefault();
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
                 handleCopy();
               }}
-              className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation relative z-10 cursor-pointer"
               title="Copy message"
+              aria-label="Copy message"
+              style={{ WebkitTapHighlightColor: 'rgba(20, 184, 166, 0.3)', userSelect: 'none' }}
             >
               {copied ? (
                 <>
