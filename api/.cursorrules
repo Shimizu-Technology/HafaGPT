@@ -1,0 +1,127 @@
+# HåfaGPT Project Rules
+
+## Project Structure
+- **Frontend**: React + TypeScript + Vite (HafaGPT-frontend/)
+- **Backend**: FastAPI + Python 3.12+ (HafaGPT-API/)
+- **Database**: PostgreSQL + PGVector
+
+## Python Dependency Management (Backend)
+
+⚠️ **CRITICAL: This project uses TWO dependency management systems**
+
+### When adding a Python dependency:
+1. Add to `HafaGPT-API/pyproject.toml` under `[project.dependencies]`
+2. Run `cd HafaGPT-API && uv sync` (installs for local development)
+3. Run `cd HafaGPT-API && uv pip compile pyproject.toml --universal -o requirements.txt` (updates for Render deployment)
+4. Commit BOTH `pyproject.toml` AND `requirements.txt`
+
+### Why both?
+- `pyproject.toml` → Used by `uv` for fast local development
+- `requirements.txt` → Used by Render for production deployment
+
+### Memory-Intensive Dependencies (⚠️ IMPORTANT):
+**DO NOT ADD** these to production (Render's Starter plan = 512MB RAM):
+- ❌ `torch` (900MB) - PyTorch machine learning framework
+- ❌ `transformers` (400MB) - HuggingFace transformers
+- ❌ `sentence-transformers` (500MB) - Local embeddings
+- ❌ `langchain-huggingface` (50MB + pulls in torch)
+
+**Instead, use cloud-based alternatives:**
+- ✅ `langchain-openai` - Cloud embeddings (~10MB, $0.30/month)
+- ✅ Keep `EMBEDDING_MODE=openai` in production
+
+### Never:
+- Only update one file
+- Install with pip directly (use `uv sync` instead)
+- Forget to regenerate `requirements.txt` after changing `pyproject.toml`
+- Add local embedding dependencies (too memory-intensive for Render Starter)
+
+## Frontend Dependency Management
+
+### When adding a Node dependency:
+1. Run `cd HafaGPT-frontend && npm install <package>`
+2. Commit `package.json` AND `package-lock.json`
+
+## Git Workflow
+
+### User prefers:
+- **⚠️ CRITICAL: NO AUTO-COMMITS OR AUTO-PUSH**: Always wait for user to test and review before committing/pushing
+- **Let user handle git**: User will commit and push when ready after testing
+- **Minimal documentation**: Only essential READMEs, no excessive markdown files
+- **Step-by-step guidance**: Ensure optimization for both mobile and desktop views
+
+## Code Conventions
+
+### Backend (Python):
+- Use Python 3.12+ features
+- Type hints for all function signatures
+- Logging via Python's `logging` module
+- Environment variables via `.env` file
+- FastAPI for REST endpoints
+- Async functions where applicable
+
+### Frontend (TypeScript/React):
+- Functional components with hooks
+- TypeScript strict mode
+- Tailwind CSS for styling
+- Responsive design (mobile-first)
+- Clerk for authentication
+
+## Database
+
+### Migrations:
+- Use Alembic for schema changes
+- Run locally: `cd HafaGPT-API && alembic upgrade head`
+- Render auto-runs migrations via `render.yaml` buildCommand
+
+### Queries:
+- Use parameterized queries (prevent SQL injection)
+- Handle NULL values for anonymous users
+- Use soft deletes (`deleted_at` column) for user-facing data
+
+## Testing Workflow
+
+1. Test locally first
+2. User reviews and tests
+3. User commits when ready (agent doesn't auto-commit)
+4. Push triggers auto-deployment:
+   - Frontend: Netlify (auto-deploy on push)
+   - Backend: Render (auto-deploy on push)
+
+## Authentication
+
+- **Clerk Development Instance**: Used for both local and production (for now)
+- **JWT verification**: Uses `python-jose` with Clerk JWKS endpoint
+  - Backend: `clerk.jwks.get_jwks()` to fetch public keys
+  - Decode JWT with `jose.jwt.decode()` using RS256 algorithm
+  - Extract `user_id` from JWT `sub` claim
+- User ID stored as `user_id` in database
+- Anonymous users: `user_id = NULL`, tracked by `session_id`
+
+## Conversation Management
+
+### Database Schema
+- **`conversations` table**: User-facing (soft delete support)
+  - `id` (UUID), `user_id` (nullable), `title`, `created_at`, `updated_at`, `deleted_at`
+- **`conversation_logs` table**: Complete message history (never deleted)
+  - Preserved for training/analytics even when conversations are soft-deleted
+
+### Key Features
+- **Auto-naming**: First 50 chars of first message becomes conversation title
+- **Soft Delete**: Sets `deleted_at` timestamp, preserves data for training
+- **Persistence**: Frontend stores `active_conversation_id` in localStorage
+- **User Isolation**: Conversations filtered by `user_id`, anonymous users see no history
+
+### Frontend Hooks
+- `useConversations`: Manages conversation CRUD and active conversation state
+- `useChatbot`: Handles message sending with conversation_id
+- State clears on sign-out (`isSignedIn === false`, not `!isSignedIn`)
+- Wait for Clerk load (`user !== undefined`) before fetching conversations
+
+## Important Notes
+
+- Keep solutions simple, don't overcomplicate
+- Modal sizes should be fixed, not content-dependent
+- Use `rails runner` for ad-hoc backend tests (if Rails present)
+- Frontend auto-deploys on GitHub push to Netlify
+
