@@ -32,7 +32,17 @@ from .models import (
     SystemMessageCreate,
     InitResponse,
     FlashcardResponse,
-    GenerateFlashcardsResponse
+    GenerateFlashcardsResponse,
+    # Flashcard Progress Models
+    SaveDeckRequest,
+    SaveDeckResponse,
+    FlashcardProgressInfo,
+    FlashcardWithProgress,
+    UserDeckResponse,
+    UserDecksResponse,
+    DeckCardsResponse,
+    ReviewCardRequest,
+    ReviewCardResponse
 )
 from .chatbot_service import get_chatbot_response
 from . import conversations
@@ -858,6 +868,7 @@ async def generate_flashcards(
     topic: str = Form(...),
     count: int = Form(default=20),
     variety: str = Form(default="basic"),  # New parameter: basic, conversational, or advanced
+    previous_cards: str = Form(default="[]"),  # JSON string of previously generated cards
 ):
     """
     Generate Chamorro language flashcards using GPT + RAG knowledge.
@@ -885,6 +896,15 @@ async def generate_flashcards(
     logger.info(f"🎴 [FLASHCARDS] Request received - topic: {topic}, count: {count}, variety: {variety}")
     
     try:
+        # Parse previous cards if provided
+        previous_cards_list = []
+        try:
+            previous_cards_list = json.loads(previous_cards)
+            if previous_cards_list:
+                logger.info(f"🎴 [FLASHCARDS] Received {len(previous_cards_list)} previous cards to avoid duplicates")
+        except json.JSONDecodeError:
+            logger.warning(f"🎴 [FLASHCARDS] Failed to parse previous_cards, ignoring")
+        
         # Validate topic
         valid_topics = ["greetings", "family", "food", "numbers", "verbs", "common-phrases"]
         if topic not in valid_topics:
@@ -922,7 +942,7 @@ async def generate_flashcards(
         query = topic_queries.get(topic, f"Chamorro {topic} vocabulary")
         
         # Search RAG database for relevant content
-        rag_context, rag_sources = rag.create_context(query, k=10)  # Get top 10 chunks
+        rag_context, rag_sources = rag.create_context(query, k=5)  # Reduced from 10 to 5 for faster retrieval
         
         rag_end = time.time()
         logger.info(f"🎴 [FLASHCARDS] RAG search took: {(rag_end - rag_start):.2f}s")
@@ -949,6 +969,31 @@ async def generate_flashcards(
         
         variety_instruction = variety_instructions.get(variety, variety_instructions["basic"])
         
+        # Build previous cards section if any exist
+        previous_cards_section = ""
+        if previous_cards_list:
+            previous_cards_text = "\n".join([
+                f"  • {card.get('front', '')} = {card.get('back', '')}" 
+                for card in previous_cards_list
+            ])
+            previous_cards_section = f"""
+⚠️ CRITICAL - AVOID ALL DUPLICATES ⚠️
+
+You have ALREADY generated these {len(previous_cards_list)} cards:
+{previous_cards_text}
+
+DO NOT create cards that:
+1. Use the SAME Chamorro word/phrase (case-insensitive)
+2. Use the SAME English translation (case-insensitive)
+3. Have SIMILAR or OVERLAPPING meanings
+4. Are SYNONYMS or NEAR-SYNONYMS of previous cards
+
+MUST GENERATE: {count} COMPLETELY NEW, UNIQUE, DIFFERENT cards.
+- Choose DIFFERENT Chamorro words/phrases NOT in the list above
+- Choose DIFFERENT English meanings NOT in the list above
+- Explore DIFFERENT aspects of the topic
+"""
+        
         prompt = f"""You are a Chamorro language teacher creating educational flashcards.
 
 Generate {count} HIGH-QUALITY, UNIQUE Chamorro language flashcards for the topic: {topic}
@@ -963,6 +1008,8 @@ REFERENCE MATERIALS:
 
 VARIETY LEVEL: {variety.upper()}
 {variety_instruction}
+
+{previous_cards_section}
 
 REQUIREMENTS:
 1. Each flashcard should have:
@@ -1008,7 +1055,7 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
                 }
             ],
             temperature=0.7,  # Some creativity for variety
-            max_tokens=3000
+            max_tokens=1500  # Reduced from 3000 - sufficient for 3 cards
         )
         
         gpt_end = time.time()
@@ -1032,9 +1079,43 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         # Parse JSON
         flashcards_data = json.loads(response_text)
         
+        # Deduplicate flashcards (safety net)
+        # Pre-populate with previous cards to check against ALL cards (not just current batch)
+        seen_fronts = set()
+        seen_backs = set()
+        
+        # Add previous cards to seen sets
+        for prev_card in previous_cards_list:
+            prev_front = prev_card.get('front', '').lower().strip()
+            prev_back = prev_card.get('back', '').lower().strip()
+            if prev_front:
+                seen_fronts.add(prev_front)
+            if prev_back:
+                seen_backs.add(prev_back)
+        
+        logger.info(f"🎴 [FLASHCARDS] Checking for duplicates against {len(seen_fronts)} previous fronts and {len(seen_backs)} previous backs")
+        
+        unique_flashcards_data = []
+        duplicates_found = 0
+        
+        for card_data in flashcards_data:
+            front_lower = card_data.get('front', '').lower().strip()
+            back_lower = card_data.get('back', '').lower().strip()
+            
+            # Check if we've seen this card before (in previous batches OR current batch)
+            if front_lower and back_lower and front_lower not in seen_fronts and back_lower not in seen_backs:
+                seen_fronts.add(front_lower)
+                seen_backs.add(back_lower)
+                unique_flashcards_data.append(card_data)
+            else:
+                duplicates_found += 1
+                logger.warning(f"🎴 [FLASHCARDS] ❌ Skipping duplicate card: '{card_data.get('front', '')}' = '{card_data.get('back', '')}'")
+        
+        logger.info(f"🎴 [FLASHCARDS] ✅ Kept {len(unique_flashcards_data)} unique cards out of {len(flashcards_data)} generated ({duplicates_found} duplicates removed)")
+        
         # Validate and convert to FlashcardResponse objects
         flashcards = []
-        for card_data in flashcards_data:
+        for card_data in unique_flashcards_data:
             flashcard = FlashcardResponse(
                 front=card_data.get("front", ""),
                 back=card_data.get("back", ""),
@@ -1069,6 +1150,328 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         raise HTTPException(
             status_code=500,
             detail=f"Flashcard generation failed: {str(e)}"
+        )
+
+
+# ===========================
+# Flashcard Progress Endpoints
+# ===========================
+
+@app.post("/api/flashcards/decks", response_model=SaveDeckResponse, tags=["Flashcard Progress"])
+async def save_flashcard_deck(request: SaveDeckRequest):
+    """
+    Save a deck of flashcards to the user's collection.
+    
+    This allows users to save custom AI-generated cards or create their own decks.
+    
+    Args:
+        request: SaveDeckRequest with user_id, topic, title, card_type, and cards
+    
+    Returns:
+        SaveDeckResponse with the created deck_id
+    """
+    import psycopg
+    from datetime import datetime
+    import uuid
+    
+    logger.info(f"💾 [SAVE DECK] User {request.user_id} saving deck: {request.title} ({len(request.cards)} cards)")
+    
+    try:
+        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        
+        # Create the deck
+        deck_id = str(uuid.uuid4())
+        cursor.execute(
+            """
+            INSERT INTO flashcard_decks (id, user_id, topic, title, card_type, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (deck_id, request.user_id, request.topic, request.title, request.card_type, datetime.now())
+        )
+        
+        # Insert all cards
+        for card in request.cards:
+            cursor.execute(
+                """
+                INSERT INTO flashcards (deck_id, front, back, pronunciation, example, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (deck_id, card.front, card.back, card.pronunciation, card.example, datetime.now())
+            )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [SAVE DECK] Successfully saved deck {deck_id} with {len(request.cards)} cards")
+        
+        return SaveDeckResponse(
+            deck_id=deck_id,
+            message=f"Successfully saved {len(request.cards)} cards to '{request.title}'"
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ [SAVE DECK] Failed to save deck: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save deck: {str(e)}"
+        )
+
+
+@app.get("/api/flashcards/decks", response_model=UserDecksResponse, tags=["Flashcard Progress"])
+async def get_user_decks(user_id: str):
+    """
+    Get all flashcard decks for a user with progress statistics.
+    
+    Returns each deck with:
+    - Total cards
+    - Cards reviewed (at least once)
+    - Cards due for review today
+    
+    Args:
+        user_id: User ID from Clerk
+    
+    Returns:
+        UserDecksResponse with list of decks
+    """
+    import psycopg
+    from datetime import datetime
+    
+    logger.info(f"📚 [GET DECKS] Fetching decks for user: {user_id}")
+    
+    try:
+        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        
+        # Get all decks for the user with stats
+        cursor.execute(
+            """
+            SELECT 
+                d.id,
+                d.topic,
+                d.title,
+                d.card_type,
+                d.created_at,
+                COUNT(f.id) as total_cards,
+                COUNT(p.flashcard_id) as cards_reviewed,
+                COUNT(CASE WHEN p.next_review <= %s THEN 1 END) as cards_due
+            FROM flashcard_decks d
+            LEFT JOIN flashcards f ON d.id = f.deck_id
+            LEFT JOIN user_flashcard_progress p ON f.id = p.flashcard_id AND p.user_id = %s
+            WHERE d.user_id = %s
+            GROUP BY d.id, d.topic, d.title, d.card_type, d.created_at
+            ORDER BY d.created_at DESC
+            """,
+            (datetime.now(), user_id, user_id)
+        )
+        
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        decks = []
+        for row in rows:
+            decks.append(UserDeckResponse(
+                id=str(row[0]),
+                topic=row[1],
+                title=row[2],
+                card_type=row[3],
+                created_at=row[4],
+                total_cards=row[5] or 0,
+                cards_reviewed=row[6] or 0,
+                cards_due=row[7] or 0
+            ))
+        
+        logger.info(f"✅ [GET DECKS] Found {len(decks)} decks for user {user_id}")
+        
+        return UserDecksResponse(decks=decks)
+        
+    except Exception as e:
+        logger.error(f"❌ [GET DECKS] Failed to fetch decks: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch decks: {str(e)}"
+        )
+
+
+@app.get("/api/flashcards/decks/{deck_id}/cards", response_model=DeckCardsResponse, tags=["Flashcard Progress"])
+async def get_deck_cards(deck_id: str, user_id: str):
+    """
+    Get all cards in a deck with user progress.
+    
+    Args:
+        deck_id: UUID of the deck
+        user_id: User ID from Clerk
+    
+    Returns:
+        DeckCardsResponse with cards and progress
+    """
+    import psycopg
+    
+    logger.info(f"🃏 [GET CARDS] Fetching cards for deck: {deck_id}, user: {user_id}")
+    
+    try:
+        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        
+        # Get deck info
+        cursor.execute(
+            "SELECT topic, title FROM flashcard_decks WHERE id = %s AND user_id = %s",
+            (deck_id, user_id)
+        )
+        deck_row = cursor.fetchone()
+        
+        if not deck_row:
+            raise HTTPException(status_code=404, detail="Deck not found")
+        
+        topic, title = deck_row
+        
+        # Get cards with progress
+        cursor.execute(
+            """
+            SELECT 
+                f.id,
+                f.front,
+                f.back,
+                f.pronunciation,
+                f.example,
+                p.times_reviewed,
+                p.last_reviewed,
+                p.next_review,
+                p.confidence
+            FROM flashcards f
+            LEFT JOIN user_flashcard_progress p ON f.id = p.flashcard_id AND p.user_id = %s
+            WHERE f.deck_id = %s
+            ORDER BY f.created_at
+            """,
+            (user_id, deck_id)
+        )
+        
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        cards = []
+        for row in rows:
+            progress = None
+            if row[5] is not None:  # Has progress
+                progress = FlashcardProgressInfo(
+                    times_reviewed=row[5],
+                    last_reviewed=row[6],
+                    next_review=row[7],
+                    confidence=row[8]
+                )
+            
+            cards.append(FlashcardWithProgress(
+                id=str(row[0]),
+                front=row[1],
+                back=row[2],
+                pronunciation=row[3],
+                example=row[4],
+                progress=progress
+            ))
+        
+        logger.info(f"✅ [GET CARDS] Found {len(cards)} cards in deck {deck_id}")
+        
+        return DeckCardsResponse(
+            deck_id=deck_id,
+            topic=topic,
+            title=title,
+            cards=cards
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GET CARDS] Failed to fetch cards: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch cards: {str(e)}"
+        )
+
+
+@app.post("/api/flashcards/review", response_model=ReviewCardResponse, tags=["Flashcard Progress"])
+async def review_flashcard(request: ReviewCardRequest):
+    """
+    Mark a flashcard as reviewed and update spaced repetition schedule.
+    
+    Confidence levels:
+    - 1 (Hard): Review tomorrow (1 day)
+    - 2 (Good): Review in 1 week (7 days)
+    - 3 (Easy): Review in 1 month (30 days)
+    
+    Args:
+        request: ReviewCardRequest with user_id, flashcard_id, and confidence
+    
+    Returns:
+        ReviewCardResponse with next review date
+    """
+    import psycopg
+    from datetime import datetime, timedelta
+    
+    logger.info(f"✍️ [REVIEW] User {request.user_id} reviewed card {request.flashcard_id} with confidence {request.confidence}")
+    
+    try:
+        # Calculate next review date based on confidence
+        intervals = {
+            1: 1,   # Hard: 1 day
+            2: 7,   # Good: 7 days
+            3: 30   # Easy: 30 days
+        }
+        days = intervals[request.confidence]
+        next_review = datetime.now() + timedelta(days=days)
+        
+        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        
+        # Upsert progress record
+        cursor.execute(
+            """
+            INSERT INTO user_flashcard_progress 
+                (user_id, flashcard_id, times_reviewed, last_reviewed, next_review, confidence, created_at, updated_at)
+            VALUES 
+                (%s, %s, 1, %s, %s, %s, %s, %s)
+            ON CONFLICT (user_id, flashcard_id)
+            DO UPDATE SET
+                times_reviewed = user_flashcard_progress.times_reviewed + 1,
+                last_reviewed = %s,
+                next_review = %s,
+                confidence = %s,
+                updated_at = %s
+            """,
+            (
+                request.user_id, request.flashcard_id, datetime.now(), next_review, request.confidence,
+                datetime.now(), datetime.now(),
+                datetime.now(), next_review, request.confidence, datetime.now()
+            )
+        )
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Create feedback message
+        messages = {
+            1: f"Let's practice this again tomorrow! 💪",
+            2: f"Good job! See you in a week! 👍",
+            3: f"Awesome! You've mastered this! See you in a month! 🎉"
+        }
+        
+        logger.info(f"✅ [REVIEW] Updated progress for card {request.flashcard_id}, next review in {days} days")
+        
+        return ReviewCardResponse(
+            next_review=next_review,
+            message=messages[request.confidence],
+            days_until_next=days
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ [REVIEW] Failed to update progress: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update progress: {str(e)}"
         )
 
 

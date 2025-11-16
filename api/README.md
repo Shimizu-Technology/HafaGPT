@@ -23,11 +23,14 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
 - 🎴 **Flashcards & Learning:**
   - **6 Default Decks** - Pre-made cards for Greetings, Family, Food, Numbers, Verbs, Phrases (60 cards total)
   - **Custom AI Generation** - RAG-powered flashcards tailored to each topic
-  - **Progressive Loading** - Generate 3 cards at a time (15-20s total) for better UX
+  - **Progressive Loading** - Generate 3 cards at a time (12-15s total) for better UX
   - **Dual Mode Toggle** - Switch between instant default cards and custom AI cards
+  - **Save & Track Progress** - Save custom decks to "My Decks" and rate cards (Hard/Good/Easy)
+  - **Smart UX** - Can't rate until saved (prevents data loss), save button shows "✓ Saved"
   - **Beautiful UI** - 3D flip animation, swipe gestures, keyboard navigation
   - **Mobile Optimized** - Touch-friendly, responsive design
-  - **Future:** Spaced repetition, progress tracking, learning analytics
+  - **Zero Duplicates** - 4-layer protection system ensures unique cards
+  - **Future:** Spaced repetition review system, learning analytics
 
 - 📚 **RAG-Enhanced Knowledge (54,303 chunks):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database

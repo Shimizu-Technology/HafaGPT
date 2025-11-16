@@ -160,3 +160,84 @@ class GenerateFlashcardsResponse(BaseModel):
     count: int = Field(..., description="Number of cards generated")
 
 
+# --- Flashcard Progress Models ---
+
+class FlashcardCard(BaseModel):
+    """A single flashcard for saving"""
+    front: str
+    back: str
+    pronunciation: Optional[str] = None
+    example: Optional[str] = None
+
+
+class SaveDeckRequest(BaseModel):
+    """Request to save a deck of flashcards"""
+    user_id: str = Field(..., description="User ID from Clerk")
+    topic: str = Field(..., description="Topic (e.g., 'greetings', 'family')")
+    title: str = Field(..., description="Deck title (e.g., 'My Greetings Cards')")
+    card_type: str = Field(default="custom", description="Type: 'default' or 'custom'")
+    cards: list[FlashcardCard] = Field(..., description="List of flashcards to save")
+
+
+class SaveDeckResponse(BaseModel):
+    """Response after saving a deck"""
+    deck_id: str = Field(..., description="UUID of the saved deck")
+    message: str = Field(..., description="Success message")
+
+
+class FlashcardProgressInfo(BaseModel):
+    """Progress information for a single flashcard"""
+    times_reviewed: int = Field(default=0, description="Number of times reviewed")
+    last_reviewed: Optional[datetime] = Field(None, description="Last review timestamp")
+    next_review: Optional[datetime] = Field(None, description="Next review timestamp")
+    confidence: int = Field(default=1, description="Confidence level (1=hard, 2=good, 3=easy)")
+
+
+class FlashcardWithProgress(BaseModel):
+    """Flashcard with user progress"""
+    id: str = Field(..., description="Flashcard UUID")
+    front: str
+    back: str
+    pronunciation: Optional[str] = None
+    example: Optional[str] = None
+    progress: Optional[FlashcardProgressInfo] = None
+
+
+class UserDeckResponse(BaseModel):
+    """Response model for a user's flashcard deck"""
+    id: str = Field(..., description="Deck UUID")
+    topic: str
+    title: str
+    card_type: str
+    total_cards: int = Field(..., description="Total cards in deck")
+    cards_reviewed: int = Field(default=0, description="Cards reviewed at least once")
+    cards_due: int = Field(default=0, description="Cards due for review today")
+    created_at: datetime
+
+
+class UserDecksResponse(BaseModel):
+    """Response model for listing user's decks"""
+    decks: list[UserDeckResponse]
+
+
+class DeckCardsResponse(BaseModel):
+    """Response model for getting cards in a deck"""
+    deck_id: str
+    topic: str
+    title: str
+    cards: list[FlashcardWithProgress]
+
+
+class ReviewCardRequest(BaseModel):
+    """Request to mark a card as reviewed"""
+    user_id: str = Field(..., description="User ID from Clerk")
+    flashcard_id: str = Field(..., description="Flashcard UUID")
+    confidence: int = Field(..., ge=1, le=3, description="Confidence: 1=hard, 2=good, 3=easy")
+
+
+class ReviewCardResponse(BaseModel):
+    """Response after reviewing a card"""
+    next_review: datetime = Field(..., description="When to review this card next")
+    message: str = Field(..., description="Feedback message")
+    days_until_next: int = Field(..., description="Days until next review")
+
