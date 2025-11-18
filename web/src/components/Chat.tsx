@@ -81,6 +81,13 @@ export function Chat() {
 
   // Load messages from React Query data when it changes
   useEffect(() => {
+    // If activeConversationId is null, clear messages (new chat)
+    if (!activeConversationId) {
+      setMessages([]);
+      return;
+    }
+    
+    // Otherwise, load messages from the API response
     if (initData?.messages) {
       const chatMessages: ChatMessage[] = initData.messages.map((msg: ConversationMessage) => ({
           role: msg.role,
@@ -99,7 +106,7 @@ export function Chat() {
         }));
         setMessages(chatMessages);
     }
-  }, [initData?.messages]);
+  }, [initData?.messages, activeConversationId]);
 
   // Update activeConversationId when initData changes
   // ONLY if we started with null and got one back from the API
