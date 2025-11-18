@@ -628,14 +628,10 @@ async def init_user_data(
                 logger.info(f"✅ Loaded {len(messages_list)} messages for conversation: {active_conversation_id}")
             else:
                 logger.warning(f"⚠️  Conversation {active_conversation_id} not found in user's list")
-        
-        # If no active conversation or it doesn't exist, use first conversation
-        if not validated_conversation_id and conversation_list.conversations:
-            first_conversation = conversation_list.conversations[0]
-            messages_response = conversations.get_conversation_messages(first_conversation.id)
-            messages_list = messages_response.messages
-            validated_conversation_id = first_conversation.id
-            logger.info(f"✅ Loaded {len(messages_list)} messages for first conversation: {first_conversation.id}")
+        else:
+            # No active_conversation_id provided = user wants a new chat
+            # Return empty messages and null conversation ID
+            logger.info("🆕 No active conversation provided - returning empty state for new chat")
         
         logger.info(
             f"🚀 Init complete: {len(conversation_list.conversations)} conversations, "
