@@ -45,3 +45,6 @@ conversation_logs_*.jsonl
 *.swp
 *.swo
 *~
+
+# Dictionary data files (already imported to database)
+dictionary_data/

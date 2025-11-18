@@ -19,9 +19,14 @@ Examples:
 
 import json
 import sys
+import os
 import argparse
 import time
 from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from langchain_core.documents import Document
 from src.rag.manage_rag_db import RAGDatabaseManager
 
@@ -39,45 +44,68 @@ def format_revised_dictionary_entry(word, entry):
     """
     Format entries from revised_and_updated_chamorro_dictionary.json
     
-    Structure:
-    {
-      "word": {
-        "wc": "word_class (noun, verb, etc.)",
-        "df": "definition",
-        "il": "example sentence (optional)",
-        "cf": "cross-reference (optional)"
-      }
-    }
+    Two possible structures:
+    1. Old format: { "wc": "...", "df": "...", "il": "..." }
+    2. New format: { "PartOfSpeech": "...", "Definition": "...", "Other": [...] }
     """
-    # Extract fields
-    word_class = entry.get("wc", "")
-    definition = entry.get("df", "")
-    example = entry.get("il", "")
-    cross_ref = entry.get("cf", "")
-    
-    # Build content
-    content_parts = [f"**{word}**"]
-    
-    if word_class:
-        content_parts.append(f"*({word_class})*")
-    
-    if definition:
-        content_parts.append(f"\n\n{definition}")
-    
-    if example:
-        content_parts.append(f"\n\n**Example:** {example}")
-    
-    if cross_ref:
-        content_parts.append(f"\n\n**See also:** {cross_ref}")
-    
-    content = " ".join(content_parts)
-    
-    return content, {
-        "word": word,
-        "word_class": word_class,
-        "definition": definition,
-        "has_example": bool(example),
-    }
+    # Check if it's the new format (has PartOfSpeech and Definition)
+    if "PartOfSpeech" in entry and "Definition" in entry:
+        pos = entry.get("PartOfSpeech", "")
+        definition = entry.get("Definition", "")
+        other = entry.get("Other", [])
+        
+        # Build content
+        content_parts = [f"**{word}**"]
+        
+        if pos:
+            content_parts.append(f"*({pos})*")
+        
+        if definition:
+            content_parts.append(f"\n\n{definition}")
+        
+        # Add examples from Other array (filter empty strings)
+        examples = [item.strip() for item in other if item and item.strip()]
+        if examples:
+            content_parts.append(f"\n\n**Examples:**\n" + "\n".join(f"- {ex}" for ex in examples[:3]))  # Limit to 3 examples
+        
+        content = " ".join(content_parts)
+        
+        return content, {
+            "word": word,
+            "word_class": pos,
+            "definition": definition,
+            "has_example": bool(examples),
+        }
+    else:
+        # Old format (wc, df, il)
+        word_class = entry.get("wc", "")
+        definition = entry.get("df", "")
+        example = entry.get("il", "")
+        cross_ref = entry.get("cf", "")
+        
+        # Build content
+        content_parts = [f"**{word}**"]
+        
+        if word_class:
+            content_parts.append(f"*({word_class})*")
+        
+        if definition:
+            content_parts.append(f"\n\n{definition}")
+        
+        if example:
+            content_parts.append(f"\n\n**Example:** {example}")
+        
+        if cross_ref:
+            content_parts.append(f"\n\n**See also:** {cross_ref}")
+        
+        content = " ".join(content_parts)
+        
+        return content, {
+            "word": word,
+            "word_class": word_class,
+            "definition": definition,
+            "has_example": bool(example),
+        }
 
 
 def format_tod_dictionary_entry(word, entry):
@@ -123,9 +151,13 @@ def detect_dictionary_format(data):
     first_key = list(data.keys())[0]
     first_entry = data[first_key]
     
-    # Check if it's a dict with structured fields (revised/TOD format)
-    if isinstance(first_entry, dict) and "df" in first_entry:
-        return "structured"  # revised or TOD format
+    # Check if it's the new format with PartOfSpeech and Definition
+    if isinstance(first_entry, dict) and "PartOfSpeech" in first_entry:
+        return "structured"  # New revised format
+    
+    # Check if it's a dict with old structured fields (df, wc)
+    elif isinstance(first_entry, dict) and "df" in first_entry:
+        return "structured"  # Old revised or TOD format
     
     # Check if it's a simple string (chamoru.info format)
     elif isinstance(first_entry, str):
@@ -217,16 +249,18 @@ def import_dictionary(file_path, manager):
         batch_num = (i // batch_size) + 1
         total_batches = (len(documents) + batch_size - 1) // batch_size
         
-        print(f"   Batch {batch_num}/{total_batches}: {len(batch)} entries...", end=" ")
+        print(f"   Batch {batch_num}/{total_batches}: {len(batch)} entries...", end=" ", flush=True)
         
-        chunk_count = manager.add_documents(batch)
+        # Use vectorstore.add_documents directly (not manager.add_document which is for PDFs)
+        manager.vectorstore.add_documents(batch)
+        chunk_count = len(batch)  # Dictionary entries are 1:1 (no chunking needed)
         total_chunks += chunk_count
         
         # Force commit
         manager.vectorstore._engine.dispose()
         time.sleep(0.1)
         
-        print(f"✅ {chunk_count} chunks")
+        print(f"✅ {chunk_count} entries")
     
     print(f"\n🎉 Dictionary import complete!")
     print(f"   Total entries: {processed:,}")

@@ -1,7 +1,7 @@
 # 📚 Data Sources & Attribution - Detailed Reference
 
-**Last Updated:** November 16, 2025  
-**Database Version:** 54,303 chunks from 14,108 unique sources
+**Last Updated:** November 17, 2025  
+**Database Version:** 74,605 chunks from 14,615+ unique sources
 
 This document provides comprehensive attribution for all data sources used in the HåfaGPT Chamorro Language Learning Chatbot.
 
@@ -17,26 +17,31 @@ All content in this knowledge base is used for **educational purposes only** to 
 
 | Source Category | Chunks | Unique Sources | Percentage |
 |-----------------|--------|----------------|------------|
-| Chamoru.info Dictionary | 34,256 | 10,500 | 63.1% |
-| Guampedia Encyclopedia | 9,435 | 2,853 | 17.4% |
-| Online Resources | 6,480 | 696 | 11.9% |
-| Legacy Content | 4,074 | 9 | 7.5% |
+| Dictionaries (Total) | 53,757 | ~20,000 | 72.1% |
+| - Chamoru.info (web) | 34,256 | 10,500 | 45.9% |
+| - TOD Dictionary (JSON) | 9,151 | 9,151 | 12.3% |
+| - Revised Dictionary (JSON) | 10,350 | 10,350 | 13.9% |
+| Guampedia Encyclopedia | 9,435 | 2,853 | 12.6% |
+| Academic Books & PDFs | 10,554 | 9 | 14.1% |
+| Chamorro Language Blogs | 551 | 507 | 0.7% |
 | Lengguahi-ta | 58 | 50 | 0.1% |
-| **TOTAL** | **54,303** | **14,108** | **100%** |
+| Other Online Resources | 250+ | 100+ | 0.3% |
+| **TOTAL** | **74,605** | **~33,500** | **100%** |
 
 ---
 
 ## 🌐 Online Dictionaries & Language Resources
 
-### 1. Chamoru.info Dictionary
+### 1. Chamoru.info Dictionary (Web-Crawled)
 
 **Website:** http://www.chamoru.info/dictionary/
 
 **Statistics:**
-- **Chunks:** 34,256 (63.1% of database)
+- **Chunks:** 34,256 (46.3% of database)
 - **Dictionary Entries:** 10,500 (complete coverage of IDs 1-10,500)
 - **Priority Level:** 50 (standard dictionary lookups)
 - **Format:** Web pages with structured entries
+- **Import Method:** Web crawler (Crawl4AI)
 
 **Content Includes:**
 - Chamorro word definitions
@@ -66,7 +71,144 @@ http://www.chamoru.info/dictionary/display.php?id=2
 
 ---
 
-### 2. Guampedia - Guam Encyclopedia
+### 2. TOD Chamorro-English Dictionary (JSON Import)
+
+**Source:** GitHub repository (Schyuler Lujan's collection)  
+**File:** `chamorro_english_dictionary_TOD.json`
+
+**Statistics:**
+- **Chunks:** 9,151 (12.4% of database)
+- **Dictionary Entries:** 9,151 unique entries
+- **Priority Level:** 50 (standard dictionary lookups)
+- **Format:** Structured JSON with fields: `df` (definition), `wc` (word class), `il` (example)
+- **Import Method:** Direct JSON import to vector database
+- **Import Date:** November 16, 2025
+
+**Content Includes:**
+- Chamorro-English definitions
+- Word class classifications (noun, verb, adjective, etc.)
+- Usage examples for many entries
+- Cross-references to related words
+
+**Why This Source:**
+- Complements web-crawled dictionary with additional entries
+- Provides structured, machine-readable format
+- Includes vocabulary not found in Chamoru.info web version
+- Well-formatted for programmatic access
+
+**How We Use It:**
+- Additional vocabulary coverage
+- Definition cross-referencing
+- Word class information for grammar assistance
+- Example sentences for context
+
+**Attribution:**
+- Part of Schyuler Lujan's Chamorro language preservation efforts
+- Used for educational purposes
+- Complements existing dictionary sources
+
+**Example Entry:**
+```json
+{
+  "mames": {
+    "wc": "adj.",
+    "df": "sweet (taste)",
+    "il": "Mames este na kandi. (This candy is sweet.)"
+  }
+}
+```
+
+---
+
+### 3. Revised & Updated Chamorro Dictionary (JSON Import)
+
+**Source:** GitHub repository (Schyuler Lujan's collection)  
+**File:** `revised_and_updated_chamorro_dictionary.json`
+
+**Statistics:**
+- **Chunks:** 10,350 (14.0% of database)
+- **Dictionary Entries:** 10,350 unique entries
+- **Priority Level:** 50 (standard dictionary lookups)
+- **Format:** Structured JSON with fields: `PartOfSpeech`, `Definition`, `Other` (examples array)
+- **Import Method:** Direct JSON import to vector database
+- **Import Date:** November 16, 2025
+
+**Content Includes:**
+- Comprehensive Chamorro-English definitions
+- Detailed part-of-speech classifications
+- Rich example sentences (multiple per entry)
+- Bilingual usage examples (Chamorro + English)
+- Modern vocabulary and contemporary usage
+
+**Why This Source:**
+- Most comprehensive modern dictionary available
+- Extensive example sentences for each word
+- Bilingual format ideal for learners
+- Up-to-date vocabulary with modern usage
+- Rich contextual information
+
+**How We Use It:**
+- Primary source for detailed definitions
+- Example sentences for natural usage
+- Modern vocabulary reference
+- Bilingual learning support
+- Contextual understanding of words
+
+**Attribution:**
+- Compiled and maintained by Chamorro language preservation community
+- Part of Schyuler Lujan's educational resources
+- Used for educational purposes
+- Represents collective knowledge of native speakers
+
+**Example Entry:**
+```json
+{
+  "áttilong": {
+    "PartOfSpeech": "adj.",
+    "Definition": "deaf; unable to hear",
+    "Other": [
+      "Áttilong i lalåhi.",
+      "The man is deaf.",
+      "Ti siña huhungok i palao'an sa' áttilong.",
+      "The woman cannot hear because she is deaf."
+    ]
+  }
+}
+```
+
+**What Makes This Dictionary Special:**
+- **Comprehensive Examples:** Most entries include 2-4 real usage examples
+- **Bilingual Format:** Every example has both Chamorro and English
+- **Modern Usage:** Reflects contemporary Chamorro as spoken today
+- **Educational Focus:** Designed specifically for language learners
+- **Cultural Context:** Examples often include cultural references
+
+---
+
+### 4. Chamoru.info Dictionary (Historical - Skipped for Duplication)
+
+**File:** `chamoru_info_dictionary.json`  
+**Status:** ❌ **NOT IMPORTED** (confirmed duplicate)
+
+**Why Skipped:**
+- This JSON file contains the same 10,500 entries already web-crawled from Chamoru.info
+- Importing would create ~10,500 duplicate entries in the database
+- Duplicate content in RAG systems reduces diversity of retrieved context
+- Pollutes search results with redundant information
+
+**Verification:**
+- Cross-referenced entries between web-crawled and JSON sources
+- Confirmed identical content and structure
+- Preserved database quality by avoiding duplication
+
+**Decision:**
+✅ Successfully avoided polluting the database with duplicates  
+✅ Maintained high-quality, diverse knowledge base  
+✅ All unique dictionary entries preserved (53,757 total)
+
+---
+
+### 5. Guampedia - Guam Encyclopedia
 
 **Website:** https://www.guampedia.com/
 
@@ -117,7 +259,7 @@ https://www.guampedia.com/chamorro-culture/
 
 ---
 
-### 3. Lengguahi-ta Digital Resources
+### 6. Lengguahi-ta Digital Resources
 
 **Website:** https://lengguahita.com/  
 **Creator:** Schyuler Lujan (Chamorro language educator)  
@@ -181,7 +323,7 @@ https://www.guampedia.com/chamorro-culture/
 
 ---
 
-### 4. Additional Online Resources
+### 7. Additional Online Resources
 
 **Statistics:**
 - **Chunks:** 6,480 (11.9% of database)
@@ -210,7 +352,7 @@ https://www.guampedia.com/chamorro-culture/
 
 ## 📚 Academic & Reference Books (PDFs)
 
-### 5. Chamorro Grammar by Dr. Sandra Chung (1998)
+### 8. Chamorro Grammar by Dr. Sandra Chung (1998)
 
 **Author:** Dr. Sandra Chung, Professor of Linguistics, UC Santa Cruz  
 **Publisher:** Academic Press  
@@ -240,7 +382,7 @@ Dr. Chung's grammar is the most comprehensive and authoritative modern linguisti
 
 ---
 
-### 6. Dictionary and Grammar of the Chamorro Language (1865)
+### 9. Dictionary and Grammar of the Chamorro Language (1865)
 
 **Author:** Pale' Roman Maria de Vera  
 **Year:** 1865  
@@ -265,7 +407,7 @@ One of the earliest comprehensive written records of the Chamorro language, docu
 
 ---
 
-### 7. Revised Chamorro Dictionary
+### 10. Revised Chamorro Dictionary
 
 **Content:**
 - Comprehensive Chamorro-English vocabulary
@@ -281,7 +423,7 @@ One of the earliest comprehensive written records of the Chamorro language, docu
 
 ---
 
-### 8. Rosetta Project Chamorro Vocabulary
+### 11. Rosetta Project Chamorro Vocabulary
 
 **Source:** Rosetta Project (linguistic preservation initiative)  
 **Organization:** The Long Now Foundation
@@ -306,7 +448,151 @@ The Rosetta Project is a global collaboration of language specialists working to
 
 ## 🗞️ News & Contemporary Content
 
-### 9. Pacific Daily News - Chamorro Opinion Columns
+---
+
+### 12. Chamorro Language Blogs
+
+**Type:** Educational blogs focused on Chamorro language preservation  
+**Import Date:** November 17, 2025  
+**Import Method:** Smart web crawler with year-based archive navigation
+
+**Statistics:**
+- **Total Chunks:** 551 (0.7% of database)
+- **Total Posts:** 507 blog posts
+- **Priority Levels:** 50-115 (varies by content type)
+- **Format:** Web pages with blog posts
+
+---
+
+#### A. Fino'Chamoru Blog
+
+**URL:** https://finochamoru.blogspot.com/  
+**Author:** Aaron Matanane (Chamorro language educator)  
+**Date Range:** 2009-2016
+
+**Statistics:**
+- **Chunks:** 454
+- **Posts:** ~422 posts indexed
+- **Priority Distribution:**
+  - Priority 115 (Lessons): 70+ posts
+  - Priority 105 (Word of the Day): 300+ posts
+  - Priority 85-95 (Songs, Stories): 50+ posts
+
+**Content Types:**
+1. **Palåbra para på'gu (Word of the Day)** - Priority 105
+   - Daily Chamorro vocabulary with examples
+   - Pronunciation guides
+   - Usage in context
+   - English translations
+
+2. **Leksion Chamoru (Chamorro Lessons)** - Priority 115
+   - Pronouns (Klå'an Siha)
+   - Prefixes (ma-, ha-, tak-, san-, etc.)
+   - Verb constructions ("man" verbs, "um" verbs)
+   - Articles and grammar structures
+   - Possessives (Gai'iyo)
+
+3. **Kantan Chamoru (Chamorro Songs)** - Priority 85
+   - Traditional songs with lyrics
+   - Cultural context
+   - Artist information
+
+4. **Estorian Chamoru (Chamorro Stories)** - Priority 85
+   - Folktales and legends
+   - Cultural stories
+
+**Why It's Important:**
+- **Daily Vocabulary Building:** Consistent Word of the Day format ideal for learners
+- **Structured Lessons:** Grammar lessons with clear explanations and examples
+- **Active Learning:** Designed for language learners with practical examples
+- **Cultural Context:** Language presented with cultural understanding
+
+**How We Use It:**
+- Vocabulary lookups (Word of the Day posts)
+- Grammar instruction (lesson series)
+- Example sentences and usage patterns
+- Pronunciation guidance
+
+**Attribution:**
+- Content created by Aaron Matanane
+- Educational fair use for language learning
+- Blog posts preserved for educational purposes
+
+**Example Posts:**
+```
+https://finochamoru.blogspot.com/2009/06/leksion-chamoru-klaan-siha-pronouns.html
+https://finochamoru.blogspot.com/2016/05/palabra-para-pago-gonaf-scale.html
+https://finochamoru.blogspot.com/2011/08/leksion-chamoru-prefix-san.html
+```
+
+---
+
+#### B. Chamorro Language & Culture Blog
+
+**URL:** https://chamorrolanguage.blogspot.com/  
+**Date Range:** 2007-2016
+
+**Statistics:**
+- **Chunks:** 97
+- **Posts:** ~85 posts indexed
+- **Priority Distribution:**
+  - Priority 115 (Language Lessons): 10+ posts
+  - Priority 100 (Cultural/History): 30+ posts
+  - Priority 95 (Books/Media): 20+ posts
+  - Priority 85 (General): 25+ posts
+
+**Content Types:**
+1. **Language Lessons** - Priority 115
+   - Beginner's guides
+   - Intermediate lessons
+   - Advanced instruction
+   - Grammar explanations
+
+2. **Cultural Content** - Priority 100
+   - Chamorro history
+   - Catholic prayers in Chamorro
+   - Traditions and customs
+   - Folklore and legends
+
+3. **Literature & Media** - Priority 95
+   - Book reviews and recommendations
+   - Author spotlights (Chamorro authors)
+   - Music and videos
+   - Cultural media
+
+4. **General Blog Posts** - Priority 85
+   - News and current events
+   - Community discussions
+   - Language advocacy
+   - Cultural observations
+
+**Why It's Important:**
+- **Cultural Integration:** Language presented within cultural context
+- **Resource Recommendations:** Points to additional learning materials
+- **Community Voice:** Authentic perspective from language community
+- **Diverse Content:** Covers language, culture, history, and arts
+
+**How We Use It:**
+- Cultural context for language learning
+- Literature and resource recommendations
+- Chamorro prayers and religious texts
+- Historical and cultural background
+
+**Attribution:**
+- Community-contributed content
+- Educational fair use for cultural preservation
+- Blog posts preserved for educational purposes
+
+**Example Posts:**
+```
+https://chamorrolanguage.blogspot.com/2015/03/everyday-chamorro-chamorro-language.html
+https://chamorrolanguage.blogspot.com/2016/02/chamorro-literature-spotlight-tanya.html
+https://chamorrolanguage.blogspot.com/2007/12/finatinas-guinaiya-act-of-love.html
+```
+
+---
+
+### 13. Pacific Daily News - Chamorro Opinion Columns
 
 **Author:** Peter R. Onedera (Chamorro language advocate)  
 **Publication:** Pacific Daily News (Guam's primary newspaper)  
@@ -378,21 +664,21 @@ The RAG system uses a priority-based ranking system to ensure the most relevant 
 
 | Priority | Source Type | Purpose | Chunks |
 |----------|-------------|---------|--------|
-| **115** | Lengguahi-ta lessons (beginner/intermediate) | Structured grammar instruction | 14 |
-| **110** | Lengguahi-ta stories, modern bilingual articles | Conversational Chamorro | 180 |
-| **105** | Lengguahi-ta songs, Guampedia cultural content | Cultural context and songs | 107 |
-| **100** | Dr. Sandra Chung grammar, dictionary homepage | Authoritative grammar | 6,863 |
-| **95** | Guampedia educational lessons | Language learning resources | 306 |
-| **90** | Guampedia main articles | Encyclopedia content | 7,858 |
-| **85** | Guampedia folktales and legends | Traditional storytelling | 1,176 |
-| **50** | Standard dictionary entries, reference books | Basic vocabulary lookups | 7,713 |
+| **115** | Lengguahi-ta lessons, Blog grammar lessons | Structured grammar instruction | 103 |
+| **110** | Lengguahi-ta stories, modern bilingual articles | Conversational Chamorro | 184 |
+| **105** | Blog Word of the Day, Lengguahi-ta songs, cultural | Vocabulary building & culture | 470 |
+| **100** | Dr. Sandra Chung grammar, dictionary homepage | Authoritative grammar | 6,893 |
+| **95** | Guampedia educational, blog media | Learning resources | 323 |
+| **90** | Guampedia main articles | Encyclopedia content | 7,871 |
+| **85** | Guampedia folktales, blog general | Traditional storytelling | 1,200 |
+| **50** | Standard dictionary entries, reference books | Basic vocabulary lookups | 7,724 |
 | **5** | Legacy/unknown sources | Fallback content | 2,403 |
 
 ### How Ranking Works
 
 When you ask a question, the chatbot:
 
-1. **Searches** all 54,303 chunks for semantically similar content
+1. **Searches** all 74,605 chunks for semantically similar content
 2. **Ranks** results by:
    - Semantic similarity (how well content matches your question)
    - Priority score (content quality and type)
@@ -515,19 +801,53 @@ If you are a content creator and:
 
 ## 📅 Version History
 
-### November 16, 2025
-- **Chamoru.info:** 34,256 chunks (10,500 entries complete)
+### November 17, 2025 - Blog Integration Update
+- **Fino'Chamoru Blog:** 454 chunks (422 posts) ✨ **NEW**
+- **Chamorro Language & Culture Blog:** 97 chunks (85 posts) ✨ **NEW**
+- **Chamoru.info (web):** 34,256 chunks (10,500 entries)
+- **TOD Dictionary (JSON):** 9,151 chunks
+- **Revised Chamorro Dictionary (JSON):** 10,350 chunks
+- **Guampedia:** 9,435 chunks (2,853 pages)
+- **Lengguahi-ta:** 58 chunks (crawl in progress)
+- **Academic sources:** 10,554 chunks
+- **Total:** 74,605 chunks from ~33,500 sources (+0.74% growth)
+
+**Major Changes:**
+- ✅ Added 507 blog posts from 2 Chamorro language blogs
+- ✅ Smart year-based crawler with content-aware prioritization
+- ✅ New vocabulary source: 300+ "Word of the Day" posts (Priority 105)
+- ✅ New grammar lessons: 70+ educational posts (Priority 115)
+- ✅ Verified blog content working correctly in RAG retrieval
+- ✅ Author attribution: Aaron Matanane (Fino'Chamoru Blog)
+
+### November 16, 2025 - Dictionary Expansion Update
+- **Chamoru.info (web):** 34,256 chunks (10,500 entries complete)
+- **TOD Dictionary (JSON import):** 9,151 chunks ✨ **NEW**
+- **Revised Chamorro Dictionary (JSON import):** 10,350 chunks ✨ **NEW**
 - **Guampedia:** 9,435 chunks (2,853 pages)
 - **Lengguahi-ta:** 58 chunks (crawl in progress, ~200+ expected)
+- **Academic sources:** 10,554 chunks
+- **Total:** 74,054 chunks from ~33,000 sources (+35.7% growth)
+
+**Major Changes:**
+- ✅ Imported 19,501 new dictionary entries from JSON files
+- ✅ Identified and skipped `chamoru_info_dictionary.json` (confirmed duplicate)
+- ✅ Expanded dictionary coverage from 10,500 to ~30,000 unique entries
+- ✅ All tests passed: New dictionaries working correctly with RAG system
+
+### October-November 2025 - Initial Build
+- **Chamoru.info:** 34,256 chunks (10,500 entries complete)
+- **Guampedia:** 9,435 chunks (2,853 pages)
+- **Lengguahi-ta:** 58 chunks
 - **Other sources:** 10,554 chunks
 - **Total:** 54,303 chunks from 14,108 sources
 
 ### Future Plans
 - Complete Lengguahi-ta crawl (~200+ pages)
-- Import Schyuler's dictionary JSON data
-- Import news articles from GitHub
 - Add Pacific Daily News bilingual columns
 - Expand Guampedia coverage
+- Explore additional Chamorro language blogs and resources
+- Continue monitoring for new Chamorro language resources
 
 ---
 

@@ -21,6 +21,10 @@ import os
 import time
 from datetime import datetime
 from urllib.parse import urlparse
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from langchain_core.documents import Document
 from src.rag.manage_rag_db import RAGDatabaseManager
@@ -466,6 +470,11 @@ async def main():
         action="store_true",
         help="Only crawl pages on the same domain (always enabled)"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-crawl without prompting"
+    )
     
     args = parser.parse_args()
     
@@ -489,10 +498,11 @@ async def main():
         print(f"   Chunks: {existing['chunk_count']}")
         print(f"   Max depth: {existing['max_depth']}")
         
-        response = input("\n   Re-crawl anyway? (y/n): ").strip().lower()
-        if response != 'y':
-            print("\n❌ Cancelled.")
-            sys.exit(0)
+        if not args.force:
+            response = input("\n   Re-crawl anyway? (y/n): ").strip().lower()
+            if response != 'y':
+                print("\n❌ Cancelled.")
+                sys.exit(0)
         print("\n✅ Re-crawling...")
     
     # Initialize database manager

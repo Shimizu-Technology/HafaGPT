@@ -209,26 +209,26 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     used_web_search=False,
                     image_url=row[8]  # S3 image URL
                 ))
-                
-                # Assistant message
-                sources = []
-                if row[5]:  # sources_used (JSONB)
-                    for source in row[5]:
-                        sources.append(SourceInfo(
-                            name=source.get("name", ""),
-                            page=source.get("page")
-                        ))
-                
-                messages.append(MessageResponse(
-                    id=row[0],
-                    role="assistant",
+            
+            # Assistant message
+            sources = []
+            if row[5]:  # sources_used (JSONB)
+                for source in row[5]:
+                    sources.append(SourceInfo(
+                        name=source.get("name", ""),
+                        page=source.get("page")
+                    ))
+            
+            messages.append(MessageResponse(
+                id=row[0],
+                role="assistant",
                     content=row[3],
                     timestamp=row[4],
-                    sources=sources,
+                sources=sources,
                     used_rag=row[6],
                     used_web_search=row[7],
-                    image_url=None  # Assistant messages don't have images
-                ))
+                image_url=None  # Assistant messages don't have images
+            ))
         
         cursor.close()
         conn.close()

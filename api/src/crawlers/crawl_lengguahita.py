@@ -31,6 +31,10 @@ import time
 import re
 from datetime import datetime
 from urllib.parse import urlparse, urljoin
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from langchain_core.documents import Document
 from src.rag.manage_rag_db import RAGDatabaseManager
@@ -74,50 +78,68 @@ def clean_lengguahita_content(text):
     """
     Remove navigation, sidebars, and keep only educational content.
     Preserves Chamorro text, English translations, and language notes.
+    
+    Updated with improved regex patterns for better content extraction.
     """
-    # Remove WordPress.com boilerplate
-    nav_patterns = [
+    
+    # Step 1: Remove top navigation (everything before article title)
+    patterns_to_remove_start = [
+        r'^.*?(?=# [A-Z])',  # Remove until first H1 title
         r'Skip to content.*?\n',
-        r'Search for:.*?\n',
-        r'Lengguahi-ta\s*Digital lessons and learning resources.*?\n',
-        r'Menu\s*Search.*?(?=\n##|\Z)',
-        r'\* About\s*\* About This Blog.*?(?=\n##|\Z)',
-        r'\* Free Lessons\s*\* Beginner Chamorro.*?(?=\n##|\Z)',
-        r'\* Chamorro Stories.*?\n',
-        r'\* Chamorro Songs.*?\n',
-        r'\* Chamorro Dictionary.*?\n',
-        r'\* Chamorro Words.*?\n',
-        r'\* Online Resources.*?\n',
-        r'Posts navigation.*?\n',
-        r'Older posts.*?\n',
-        r'Newer posts.*?\n',
-        r'Fanaligao\s*Type your email.*?Subscribe.*?\n',
-        r'Håfa Adai yan Tirow!.*?Welcome to Lengguahi-ta.*?(?=\n##|\Z)',
-        r'Join Our Online Study Groups.*?Contact Form if you want to join us!.*?\n',
-        r'Enjoying the content and feel compelled.*?Buy Me A Coffee!.*?\n',
-        r'\* Announcements \(\d+\).*?\n',
-        r'\* Chamorro Legends \(\d+\).*?\n',
-        r'\* Chamorro Lessons: Beginner \(\d+\).*?\n',
-        r'\* Chamorro Lessons: Intermediate \(\d+\).*?\n',
-        r'\* 2025 \(\d+\).*?(?=\n##|\Z)',
-        r'\* 2024 \(\d+\).*?(?=\n##|\Z)',
-        r'\* 2023 \(\d+\).*?(?=\n##|\Z)',
-        r'Alicia Aguigui Dart.*?Yu\' Type Pronouns \(\d+\).*?(?=\n##|\Z)',
-        r'© 2020-2025 Schyuler Lujan.*?lengguahita\.com\)\..*?\n',
-        r'Website Powered by WordPress\.com\..*?\n',
-        r'Subscribe Subscribed.*?Already have a WordPress\.com account.*?(?=\n##|\Z)',
-        r'Loading Comments\.\.\..*?\n',
-        r'Write a Comment\.\.\..*?\n',
-        r'Email \(Required\).*?\n',
-        r'Name \(Required\).*?\n',
-        r'Website.*?\n',
+        r'\[Skip to content\].*?\n',
+        r'Menu\s*Search.*?\n',
+        r'Search for:.*?Search\s*\n',
     ]
     
-    for pattern in nav_patterns:
+    for pattern in patterns_to_remove_start:
+        text = re.sub(pattern, '', text, flags=re.DOTALL)
+    
+    # Step 2: Remove social sharing and interaction widgets
+    patterns_to_remove_inline = [
+        # Social sharing
+        r'### Share this:.*?(?=\n#|\Z)',
+        r'\* \[ Click to share on.*?\n',
+        r'Like Loading\.\.\..*?\n',
+        
+        # Related posts images (keep the links but remove inline images)
+        r'\[.*?\]\(https://lengguahita\.files\.wordpress\.com.*?\)',
+        
+        # WordPress subscription widgets
+        r'Subscribe Subscribed.*?(?=\n#|\Z)',
+        r'\* \[ View post in Reader \].*?\n',
+        r'\* \[Manage subscriptions\].*?\n',
+        r'\* \[Collapse this bar\].*?\n',
+        r'Already have a WordPress\.com account\?.*?\n',
+    ]
+    
+    for pattern in patterns_to_remove_inline:
         text = re.sub(pattern, '', text, flags=re.DOTALL | re.MULTILINE)
     
-    # Clean up excessive blank lines
+    # Step 3: Remove footer content
+    patterns_to_remove_end = [
+        # Sidebar sections (Fanaligao, Archives, Tags) - these appear at the end
+        r'Fanaligao\s*Type your email.*',
+        r'Δ\s*Fanaligao.*',
+        # Note: We're keeping comment threads for now as they sometimes contain
+        # educational Q&A that supplements the lesson content
+    ]
+    
+    for pattern in patterns_to_remove_end:
+        text = re.sub(pattern, '', text, flags=re.DOTALL)
+    
+    # Step 4: Clean up specific WordPress artifacts
+    artifacts = [
+        r'%d\s*$',  # WordPress tracking
+        r'!\[\]\(https://pixel\.wp\.com.*?\)',  # Tracking pixels
+        r'!\[\]\(https://i\d+\.wp\.com.*?\)',  # Small tracking images
+    ]
+    
+    for artifact in artifacts:
+        text = re.sub(artifact, '', text, flags=re.MULTILINE)
+    
+    # Step 5: Clean up excessive whitespace
     text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r'[ \t]+\n', '\n', text)  # Remove trailing spaces
     
     return text.strip()
 
@@ -347,6 +369,11 @@ async def main():
         default=True,
         help="Only crawl links within lengguahita.com"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-crawl even if already crawled"
+    )
     
     args = parser.parse_args()
     
@@ -357,7 +384,7 @@ async def main():
     metadata = load_metadata()
     
     # Check if already crawled
-    if is_website_crawled(start_url, metadata):
+    if is_website_crawled(start_url, metadata) and not args.force:
         print(f"⚠️  Website {start_url} was already crawled.")
         print(f"    Previous crawl: {metadata['websites'][start_url]['crawled_at']}")
         print(f"    Chunks added: {metadata['websites'][start_url]['chunk_count']}")

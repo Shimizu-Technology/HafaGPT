@@ -172,7 +172,7 @@ class ChamorroRAG:
                 # If not a connection error or max retries reached, raise
                 raise
     
-    def search(self, query, k=3):
+    def search(self, query, k=3, card_type=None):
         """
         Search for relevant information in the Chamorro grammar book.
         Uses a two-stage approach:
@@ -182,13 +182,14 @@ class ChamorroRAG:
         Args:
             query: The user's question
             k: Number of relevant chunks to retrieve (default 3)
+            card_type: Optional card type for source prioritization ('words', 'phrases', 'numbers', 'cultural')
             
         Returns:
             List of tuples (content, metadata) for relevant chunks
         """
-        return self._retry_on_connection_error(self._search_impl, query, k)
+        return self._retry_on_connection_error(self._search_impl, query, k, card_type)
     
-    def _search_impl(self, query, k=3):
+    def _search_impl(self, query, k=3, card_type=None):
         """Implementation of search with retry wrapper."""
         query_lower = query.lower()
         
@@ -292,6 +293,45 @@ class ChamorroRAG:
                 elif era_priority < 100 and 'dictionary' in source:
                     score = score * 0.5  # 50% penalty - user wants to learn, not just look up
             
+            # FLASHCARD PRIORITIZATION: Card-type specific source boost
+            if card_type:
+                if card_type == 'words':
+                    # Word flashcards → Prioritize dictionaries
+                    if 'dictionary' in source or 'TOD' in source or 'Revised' in source:
+                        score = score * 2.0  # 2x boost for dictionaries
+                    # Penalize lessons for word-only queries
+                    elif era_priority >= 110:  # Lengguahi-ta lessons
+                        score = score * 0.7
+                
+                elif card_type in ['phrases', 'common-phrases']:
+                    # Phrase flashcards → Prioritize lessons and conversational content
+                    if era_priority >= 110 or source_type == 'lengguahita':  # Lessons
+                        score = score * 2.5  # 2.5x boost for lessons
+                    elif 'Blog' in source:  # Blog conversational content
+                        score = score * 2.0
+                    # Penalize dictionary definitions for phrases
+                    elif 'dictionary' in source:
+                        score = score * 0.5
+                
+                elif card_type == 'numbers':
+                    # Numbers → Prioritize lessons (they teach counting)
+                    if era_priority >= 110 or source_type == 'lengguahita':
+                        score = score * 2.5
+                    elif 'Blog' in source:
+                        score = score * 1.8
+                
+                elif card_type == 'cultural':
+                    # Cultural → Prioritize Guampedia and blogs
+                    if source_type == 'guampedia' or 'guampedia' in source:
+                        score = score * 2.5
+                    elif 'Blog' in source:
+                        score = score * 2.0
+                    elif era_priority >= 110:  # Stories/legends
+                        score = score * 1.8
+                    # Heavily penalize dictionary for cultural content
+                    elif 'dictionary' in source:
+                        score = score * 0.3
+            
             scored_results.append((doc, score))
         
         # Sort by score and take top k
@@ -300,19 +340,20 @@ class ChamorroRAG:
         
         return [(doc.page_content, doc.metadata) for doc, score in top_results]
     
-    def create_context(self, query, k=3):
+    def create_context(self, query, k=3, card_type=None):
         """
         Create a context string for the LLM from retrieved documents.
         
         Args:
             query: The user's question
             k: Number of chunks to retrieve
+            card_type: Optional card type for flashcard generation ('words', 'phrases', 'numbers', 'cultural')
             
         Returns:
             Tuple of (formatted_context, source_info_list) for the LLM prompt
             source_info_list contains tuples of (source_name, page_number)
         """
-        chunks = self.search(query, k=k)
+        chunks = self.search(query, k=k, card_type=card_type)
         
         if not chunks:
             return "", []

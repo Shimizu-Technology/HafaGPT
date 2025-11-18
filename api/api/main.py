@@ -939,10 +939,23 @@ async def generate_flashcards(
             "common-phrases": "Chamorro everyday phrases, useful expressions, conversations"
         }
         
-        query = topic_queries.get(topic, f"Chamorro {topic} vocabulary")
+        # Map topics to card types for source prioritization
+        topic_to_card_type = {
+            "greetings": "phrases",         # Greetings are conversational
+            "family": "words",               # Family members are vocabulary
+            "food": "words",                 # Food items are vocabulary
+            "numbers": "numbers",            # Numbers get special treatment
+            "verbs": "words",                # Verbs are vocabulary
+            "common-phrases": "phrases"      # Phrases need conversational context
+        }
         
-        # Search RAG database for relevant content
-        rag_context, rag_sources = rag.create_context(query, k=5)  # Reduced from 10 to 5 for faster retrieval
+        query = topic_queries.get(topic, f"Chamorro {topic} vocabulary")
+        card_type = topic_to_card_type.get(topic, "words")  # Default to words
+        
+        logger.info(f"🎴 [FLASHCARDS] Card type: {card_type} (will prioritize appropriate sources)")
+        
+        # Search RAG database for relevant content with card-type specific prioritization
+        rag_context, rag_sources = rag.create_context(query, k=5, card_type=card_type)  # Pass card_type!
         
         rag_end = time.time()
         logger.info(f"🎴 [FLASHCARDS] RAG search took: {(rag_end - rag_start):.2f}s")
