@@ -83,21 +83,21 @@ export function Chat() {
   useEffect(() => {
     if (initData?.messages) {
       const chatMessages: ChatMessage[] = initData.messages.map((msg: ConversationMessage) => ({
-        role: msg.role,
-        content: msg.content,
+          role: msg.role,
+          content: msg.content,
         imageUrl: msg.image_url || undefined,
-        timestamp: new Date(msg.timestamp).getTime(),
+          timestamp: new Date(msg.timestamp).getTime(),
         sources: msg.sources?.map((src) => ({
-          name: src.name,
-          page: src.page ?? null
-        })) || [],
-        used_rag: msg.used_rag || false,
-        used_web_search: msg.used_web_search || false,
+            name: src.name,
+            page: src.page ?? null
+          })) || [],
+          used_rag: msg.used_rag || false,
+          used_web_search: msg.used_web_search || false,
         response_time: undefined,
         systemType: msg.role === 'system' ? 'mode_change' : undefined,
         mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
-      }));
-      setMessages(chatMessages);
+        }));
+        setMessages(chatMessages);
     }
   }, [initData?.messages]);
 
@@ -117,12 +117,12 @@ export function Chat() {
   // Clear data when user signs out
   useEffect(() => {
     if (isSignedIn === false) {
-      setMessages([]);
+        setMessages([]);
       setActiveConversationId(null);
       localStorage.removeItem('active_conversation_id');
       // Invalidate all queries to clear cache
       queryClient.clear();
-    }
+      }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]); // Only depend on isSignedIn
 
@@ -702,7 +702,7 @@ End of Export
           </div>
         </div>
       )}
-      </div>
+    </div>
 
       {/* Toast Notification */}
       {showToast && toastData && (

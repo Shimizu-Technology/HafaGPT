@@ -30,7 +30,7 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
     try {
       // Method 1: Try modern clipboard API first (works on desktop and some mobile)
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(content);
+      await navigator.clipboard.writeText(content);
         console.log('✅ Text copied via Clipboard API');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
