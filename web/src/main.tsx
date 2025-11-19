@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import posthog from 'posthog-js';
 import App from './App.tsx';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
@@ -13,6 +14,27 @@ registerSW({
   },
   onOfflineReady() {
     console.log('App ready to work offline.');
+  },
+});
+
+// Initialize PostHog
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+  person_profiles: 'identified_only', // Only create profiles for logged-in users
+  capture_pageview: true, // Automatically capture page views
+  capture_pageleave: true, // Track when users leave
+  session_recording: {
+    maskAllInputs: true, // Mask all input fields (privacy)
+    maskTextSelector: '[data-private]', // Mask elements with data-private attribute
+  },
+  autocapture: {
+    dom_event_allowlist: ['click'], // Only auto-capture clicks
+    url_allowlist: [window.location.origin], // Only track your domain
+  },
+  loaded: (posthog) => {
+    if (import.meta.env.DEV) {
+      console.log('✅ PostHog loaded successfully');
+    }
   },
 });
 

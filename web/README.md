@@ -42,11 +42,19 @@ A beautiful, modern React web interface for learning Chamorro (the native langua
 - **Loading States** - Visual feedback with response times
 - **Rotating Greetings** - "Håfa Adai" in multiple languages
 
-### 🔐 Authentication (Optional)
+### 🔐 Authentication & Security
 - **Clerk Integration** - Secure user authentication
-- **Anonymous Mode** - Use without signing in
+- **Required Sign-in** - Must be logged in to use chat
+- **Public Landing Page** - Beautiful read-only demo for new users
 - **User Accounts** - Save your conversations across devices
 - **Profile Management** - Update settings and preferences
+
+### 📊 Analytics & Monitoring
+- **PostHog Integration** - User behavior analytics and product insights
+- **Session Replay** - Watch user sessions to debug issues (privacy-protected)
+- **Event Tracking** - Monitor feature usage and user engagement
+- **Privacy-First** - Input fields masked, only metadata tracked
+- **Performance Monitoring** - Track page load times and app performance
 
 ### ⚡ Performance
 - **Progressive Web App (PWA)** - Install as native app on mobile/desktop
@@ -75,11 +83,16 @@ Create a `.env` file in the root:
 VITE_API_URL=http://localhost:8000  # Development
 # VITE_API_URL=https://your-api.onrender.com  # Production
 
-# Clerk Authentication (Optional)
+# Clerk Authentication
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_your-clerk-key
+
+# PostHog Analytics (Optional)
+VITE_PUBLIC_POSTHOG_KEY=phc_your-posthog-key
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 Get your Clerk key from: https://clerk.com
+Get your PostHog key from: https://posthog.com
 
 ### 3. Start Development Server
 
@@ -147,7 +160,8 @@ Output in `dist/` directory.
 - **Styling:** Tailwind CSS
 - **Icons:** Lucide React
 - **Authentication:** Clerk
-- **State Management:** React Hooks (useState, useEffect, useContext)
+- **Analytics:** PostHog
+- **State Management:** React Query (TanStack Query)
 - **HTTP Client:** Fetch API
 - **PWA:** Vite PWA Plugin
 - **Deployment:** Netlify (auto-deploy on push)
@@ -221,6 +235,8 @@ See [API Documentation](../HafaGPT-API/api/README.md) for details.
    ```
    VITE_API_URL=https://your-api.onrender.com
    VITE_CLERK_PUBLISHABLE_KEY=pk_live_your-key
+   VITE_PUBLIC_POSTHOG_KEY=phc_your-posthog-key
+   VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
    ```
 5. Deploy! 🚀
 
@@ -268,12 +284,16 @@ npm run lint         # Run ESLint
 ```env
 VITE_API_URL=http://localhost:8000
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_PUBLIC_POSTHOG_KEY=phc_...
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 **Production (Netlify):**
 ```env
 VITE_API_URL=https://your-api.onrender.com
 VITE_CLERK_PUBLISHABLE_KEY=pk_live_...
+VITE_PUBLIC_POSTHOG_KEY=phc_...
+VITE_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 ## 🐛 Troubleshooting
@@ -298,6 +318,7 @@ VITE_CLERK_PUBLISHABLE_KEY=pk_live_...
 - **Backend API:** [HafaGPT-API README](../HafaGPT-API/README.md)
 - **API Endpoints:** [API Documentation](../HafaGPT-API/api/README.md)
 - **Clerk Auth:** https://clerk.com/docs
+- **PostHog Analytics:** https://posthog.com/docs
 - **Vite:** https://vitejs.dev
 - **React:** https://react.dev
 
@@ -318,6 +339,7 @@ Educational project for learning Chamorro language.
 - Chamorro language community
 - Dr. Sandra Chung's Chamorro Grammar
 - Clerk for authentication
+- PostHog for analytics
 - OpenAI for GPT-4o-mini
 - Netlify for hosting
 
