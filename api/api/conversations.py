@@ -29,12 +29,12 @@ def get_db_connection():
     return psycopg.connect(database_url)
 
 
-def create_conversation(user_id: Optional[str] = None, title: str = "New Chat") -> ConversationResponse:
+def create_conversation(user_id: str, title: str = "New Chat") -> ConversationResponse:
     """
     Create a new conversation.
     
     Args:
-        user_id: Optional user ID (None for anonymous)
+        user_id: User ID (required - authentication enforced)
         title: Conversation title
         
     Returns:
@@ -73,12 +73,12 @@ def create_conversation(user_id: Optional[str] = None, title: str = "New Chat") 
         raise
 
 
-def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> ConversationListResponse:
+def get_conversations(user_id: str, limit: int = 50) -> ConversationListResponse:
     """
     Get list of conversations for a user.
     
     Args:
-        user_id: User ID to filter by (None for anonymous/all)
+        user_id: User ID to filter by (required - authentication enforced)
         limit: Max number of conversations to return
         
     Returns:
@@ -99,23 +99,12 @@ def get_conversations(user_id: Optional[str] = None, limit: int = 50) -> Convers
                 c.updated_at
             FROM conversations c
             WHERE c.deleted_at IS NULL
+              AND c.user_id = %s
+            ORDER BY c.updated_at DESC 
+            LIMIT %s
         """
         
-        if user_id:
-            # Authenticated user - only show their conversations
-            query += " AND c.user_id = %s"
-            params = (user_id,)
-            logger.info(f"🔍 Filtering for user_id: {user_id}")
-        else:
-            # Anonymous user - don't show any conversations (they can't persist anyway)
-            # Return empty list for anonymous users
-            logger.info("❌ No user_id provided, returning empty list for anonymous user")
-            cursor.close()
-            conn.close()
-            return ConversationListResponse(conversations=[])
-        
-        query += " ORDER BY c.updated_at DESC LIMIT %s"
-        params = params + (limit,)
+        params = (user_id, limit)
         
         logger.info(f"📝 Executing query with params: {params}")
         cursor.execute(query, params)
@@ -171,7 +160,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 used_rag,
                 used_web_search,
                 image_url,
-                mode
+                mode,
+                response_time_seconds
             FROM conversation_logs
             WHERE conversation_id = %s
             ORDER BY timestamp ASC
@@ -195,7 +185,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     used_rag=False,
                     used_web_search=False,
                     image_url=None,
-                    mode=row[9]  # Mode from database
+                    mode=row[9],  # Mode from database
+                    response_time=None  # System messages don't have response time
                 ))
             else:
                 # User message
@@ -207,7 +198,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     sources=[],
                     used_rag=False,
                     used_web_search=False,
-                    image_url=row[8]  # S3 image URL
+                    image_url=row[8],  # S3 image URL
+                    response_time=None  # User messages don't have response time
                 ))
             
             # Assistant message
@@ -227,7 +219,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 sources=sources,
                     used_rag=row[6],
                     used_web_search=row[7],
-                image_url=None  # Assistant messages don't have images
+                image_url=None,  # Assistant messages don't have images
+                response_time=row[10]  # Response time from database
             ))
         
         cursor.close()

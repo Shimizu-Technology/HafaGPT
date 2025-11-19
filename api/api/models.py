@@ -120,6 +120,7 @@ class MessageResponse(BaseModel):
     used_web_search: bool = Field(default=False, description="Whether web search was used")
     image_url: Optional[str] = Field(default=None, description="S3 URL of uploaded image (for user messages)")
     mode: Optional[str] = Field(default=None, description="Mode for system messages (english/chamorro/learn)")
+    response_time: Optional[float] = Field(default=None, description="Response time in seconds (for assistant messages)")
 
 
 class MessagesResponse(BaseModel):

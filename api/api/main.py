@@ -89,20 +89,36 @@ else:
     if not os.getenv("CLERK_SECRET_KEY"):
         logger.warning("⚠️  CLERK_SECRET_KEY not set. Running without authentication.")
 
-async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[str]:
+async def verify_user(authorization: Optional[str] = Header(None)) -> str:
     """
     Verify Clerk JWT token and return user ID.
-    Returns None if no token (allows anonymous users for now).
+    
+    Authentication is REQUIRED - raises HTTPException if not authenticated.
+    
+    Args:
+        authorization: Bearer token from request header
+        
+    Returns:
+        user_id: Clerk user ID
+        
+    Raises:
+        HTTPException: 401 if not authenticated or invalid token
     """
     from jose import jwt
     from jose.exceptions import JWTError
     
     if not authorization:
-        return None  # Anonymous user
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Please sign in to use HåfaGPT."
+        )
     
     if not clerk:
-        logger.warning("⚠️  Clerk not initialized. Accepting request without verification.")
-        return None
+        logger.error("⚠️  Clerk not initialized but authentication required")
+        raise HTTPException(
+            status_code=500,
+            detail="Authentication service unavailable"
+        )
     
     try:
         # Extract token from "Bearer <token>"
@@ -126,7 +142,10 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[s
         
         if not matching_key:
             logger.warning(f"⚠️  No matching key found for kid: {kid}")
-            return None
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid authentication token. Please sign in again."
+            )
         
         # Verify and decode the JWT
         # Convert the key to dict format for jose
@@ -150,17 +169,29 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> Optional[s
         
         if not user_id:
             logger.warning("⚠️  JWT verified but no user_id in payload")
-            return None
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid user data in token. Please sign in again."
+            )
         
         logger.info(f"✅ Authenticated user: {user_id}")
         return user_id
         
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except JWTError as e:
         logger.warning(f"⚠️  JWT verification failed: {e}")
-        return None
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token. Please sign in again."
+        )
     except Exception as e:
-        logger.warning(f"⚠️  Invalid auth token: {e}")
-        return None  # Invalid token, treat as anonymous
+        logger.warning(f"⚠️  Authentication error: {e}")
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication failed. Please sign in again."
+        )
 
 # Initialize S3 client for image uploads
 try:

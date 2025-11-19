@@ -140,12 +140,16 @@ class ChamorroRAG:
     
     def _init_vectorstore(self):
         """Initialize or reinitialize the vector store connection."""
+        # Create a fresh connection for the vector store
+        # This helps with serverless databases (like Neon) that close idle connections
         self.vectorstore = PGVector(
             embeddings=self.embeddings,
             collection_name="chamorro_grammar",
             connection=self.connection,
             use_jsonb=True,
-            embedding_length=384  # Explicit embedding dimensions for PGVector
+            embedding_length=384,  # Explicit embedding dimensions for PGVector
+            # Add connection pool settings for better reliability
+            pre_delete_collection=False  # Don't delete collection on init
         )
     
     def _retry_on_connection_error(self, func, *args, **kwargs):
@@ -153,8 +157,8 @@ class ChamorroRAG:
         Retry a function if it fails due to database connection errors.
         Common with Neon/serverless PostgreSQL that close idle connections.
         """
-        max_retries = 3
-        retry_delay = 1  # seconds
+        max_retries = 2  # Reduced from 3 - faster failure if real issue
+        retry_delay = 0.5  # Reduced from 1 - faster retry
         
         for attempt in range(max_retries):
             try:
@@ -164,8 +168,10 @@ class ChamorroRAG:
                 # Check if it's a connection error
                 if any(keyword in error_msg.lower() for keyword in ['ssl', 'connection', 'closed', 'timeout']):
                     if attempt < max_retries - 1:
-                        print(f"⚠️  Database connection error (attempt {attempt + 1}/{max_retries}), retrying...")
-                        time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                        # Only log on first retry to reduce noise
+                        if attempt == 0:
+                            print(f"⚠️  Database connection issue, reconnecting...")
+                        time.sleep(retry_delay * (attempt + 1))  # Exponential backoff: 0.5s, 1s
                         # Reinitialize connection
                         self._init_vectorstore()
                         continue
