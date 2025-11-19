@@ -11,7 +11,7 @@ import {
   useUpdateConversationTitle,
   ConversationMessage 
 } from '../hooks/useConversationsQuery';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
@@ -23,6 +23,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { ConversationSidebar } from './ConversationSidebar';
 import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
+import { PublicBanner } from './PublicBanner';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -39,20 +40,21 @@ export function Chat() {
     return true;
   });
   
-  // Get active conversation ID from localStorage
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
-    return localStorage.getItem('active_conversation_id');
-  });
+  // Always start with new chat (like ChatGPT)
+  // Users can click into their conversation history to continue a chat
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
+  const clerk = useClerk();
   const queryClient = useQueryClient();
   
   // React Query hooks - replaces old useConversations hook
-  const { data: initData, isLoading: conversationsLoading } = useInitUserData(
+  // Only enable when Clerk is fully loaded AND user is signed in
+  const { data: initData, isLoading: conversationsLoading, error: initError } = useInitUserData(
     activeConversationId,
-    !!user?.id // Only fetch when user is signed in
+    isLoaded && !!user?.id // Wait for Clerk to load AND user to be signed in
   );
   
   const createConversationMutation = useCreateConversation();
@@ -81,6 +83,11 @@ export function Chat() {
 
   // Load messages from React Query data when it changes
   useEffect(() => {
+    // Don't load messages if we're currently sending one (prevents race condition)
+    if (isSendingMessageRef.current) {
+      return;
+    }
+    
     // If activeConversationId is null, clear messages (new chat)
     if (!activeConversationId) {
       setMessages([]);
@@ -100,26 +107,13 @@ export function Chat() {
           })) || [],
           used_rag: msg.used_rag || false,
           used_web_search: msg.used_web_search || false,
-        response_time: undefined,
+        response_time: msg.response_time || undefined,
         systemType: msg.role === 'system' ? 'mode_change' : undefined,
         mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
         }));
         setMessages(chatMessages);
     }
   }, [initData?.messages, activeConversationId]);
-
-  // Update activeConversationId when initData changes
-  // ONLY if we started with null and got one back from the API
-  useEffect(() => {
-    // Only update if:
-    // 1. We don't currently have an activeConversationId AND
-    // 2. The API returned one
-    // This prevents triggering a second query when we already have the conversation ID
-    if (!activeConversationId && initData?.active_conversation_id) {
-      setActiveConversationId(initData.active_conversation_id);
-      localStorage.setItem('active_conversation_id', initData.active_conversation_id);
-    }
-  }, [initData?.active_conversation_id, activeConversationId]);
 
   // Clear data when user signs out
   useEffect(() => {
@@ -245,6 +239,11 @@ export function Chat() {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [messages.length]);
 
+  // Handler to open sign-in modal for unauthenticated users
+  const handleSignInClick = () => {
+    clerk.openSignIn();
+  };
+
   const handleSend = async (message: string, image?: File) => {
     // Mark that we're sending a message (prevents race condition with message loading)
     isSendingMessageRef.current = true;
@@ -293,8 +292,10 @@ export function Chat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // No need to refetch all conversations - sidebar doesn't need live updates
-      // The conversation is already in the list with correct timestamp
+      // Invalidate the init query so it refetches with the new conversation ID
+      // This ensures messages are persisted properly for the new conversation
+      await queryClient.invalidateQueries({ queryKey: ['initUserData', currentConversationId] });
+      
     } catch (err) {
       console.error('Failed to send message:', err);
     } finally {
@@ -459,39 +460,50 @@ End of Export
 
   return (
     <div className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
-      {/* Sidebar */}
-      <ConversationSidebar
-        conversations={conversations}
-        activeConversationId={activeConversationId}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-        onDeleteConversation={handleDeleteConversation}
-        onRenameConversation={handleRenameConversation}
-        isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
-      />
+      {/* Public Banner - Only show if not signed in */}
+      {!isSignedIn && (
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <PublicBanner />
+        </div>
+      )}
+      
+      {/* Sidebar - Only show if signed in */}
+      {isSignedIn && (
+        <ConversationSidebar
+          conversations={conversations}
+          activeConversationId={activeConversationId}
+          onSelectConversation={handleSelectConversation}
+          onNewConversation={handleNewConversation}
+          onDeleteConversation={handleDeleteConversation}
+          onRenameConversation={handleRenameConversation}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
+      )}
 
       {/* Main chat area */}
-      <div className="flex flex-col flex-1 h-full w-full overflow-x-hidden">
+      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-16' : ''}`}>
         {/* Header - Fixed Position */}
         <header className="fixed top-0 right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300">
           <div className="px-3 sm:px-6 py-2 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                {/* Sidebar toggle button - visible on mobile AND desktop */}
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="flex items-center gap-2 p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
-                  aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-                  title="View conversations"
-                >
-                  {/* Hamburger icon */}
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                  {/* Label - hidden on very small screens */}
-                  <span className="hidden sm:inline text-sm font-medium">Chats</span>
-                </button>
+                {/* Sidebar toggle button - only show if signed in */}
+                {isSignedIn && (
+                  <button
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
+                    aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                    title="View conversations"
+                  >
+                    {/* Hamburger icon */}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    {/* Label - hidden on very small screens */}
+                    <span className="hidden sm:inline text-sm font-medium">Chats</span>
+                  </button>
+                )}
                 
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
                   🌺
@@ -641,7 +653,13 @@ End of Export
             </button>
           </div>
         )}
-        <MessageInput onSend={handleSend} disabled={loading} inputRef={messageInputRef} />
+        <MessageInput 
+          onSend={handleSend} 
+          disabled={!isSignedIn || loading} 
+          inputRef={messageInputRef}
+          placeholder={!isSignedIn ? "Sign in to start learning Chamorro..." : undefined}
+          onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
+        />
       </div>
 
       {/* Export Modal */}

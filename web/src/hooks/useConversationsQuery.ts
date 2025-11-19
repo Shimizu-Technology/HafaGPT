@@ -27,6 +27,7 @@ export interface ConversationMessage {
   used_web_search?: boolean;
   image_url?: string;
   mode?: string;
+  response_time?: number;
 }
 
 interface InitResponse {

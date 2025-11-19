@@ -5,9 +5,11 @@ interface MessageInputProps {
   onSend: (message: string, image?: File) => void;
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
+  placeholder?: string;
+  onDisabledClick?: () => void;
 }
 
-export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) {
+export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -193,11 +195,12 @@ export function MessageInput({ onSend, disabled, inputRef }: MessageInputProps) 
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type or speak your message..."
+            placeholder={placeholder || "Type or speak your message..."}
             rows={1}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm disabled:cursor-pointer"
             aria-label="Message input"
-            title="Focus input (⌘K)"
+            title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
+            onClick={() => disabled && onDisabledClick && onDisabledClick()}
             style={{ maxHeight: '200px', minHeight: '44px' }}
           />
           <button

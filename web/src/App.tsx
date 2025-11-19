@@ -4,16 +4,20 @@ import { FlashcardDeckList } from './components/FlashcardDeckList';
 import { FlashcardViewer } from './components/FlashcardViewer';
 import { MyDecks } from './components/MyDecks';
 import { SavedDeckViewer } from './components/SavedDeckViewer';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public route - anyone can see the chat UI */}
         <Route path="/" element={<Chat />} />
-        <Route path="/flashcards" element={<FlashcardDeckList />} />
-        <Route path="/flashcards/:topic" element={<FlashcardViewer />} />
-        <Route path="/flashcards/my-decks" element={<MyDecks />} />
-        <Route path="/flashcards/my-deck/:deckId" element={<SavedDeckViewer />} />
+        
+        {/* Protected routes - require authentication */}
+        <Route path="/flashcards" element={<ProtectedRoute><FlashcardDeckList /></ProtectedRoute>} />
+        <Route path="/flashcards/:topic" element={<ProtectedRoute><FlashcardViewer /></ProtectedRoute>} />
+        <Route path="/flashcards/my-decks" element={<ProtectedRoute><MyDecks /></ProtectedRoute>} />
+        <Route path="/flashcards/my-deck/:deckId" element={<ProtectedRoute><SavedDeckViewer /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
