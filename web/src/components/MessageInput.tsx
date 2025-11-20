@@ -134,7 +134,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   };
 
   return (
-    <div className="pb-1 sm:pb-4 pt-2 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
+    <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="w-full max-w-3xl mx-auto">
         {/* Image Preview */}
         {imagePreview && (
@@ -159,14 +159,14 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           <button
             onClick={isListening ? stopListening : startListening}
             disabled={disabled}
-            className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+            className={`px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
               isListening
                 ? 'bg-red-500 text-white animate-pulse hover:bg-red-600 shadow-red-500/30'
                 : 'bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50'
             }`}
             aria-label={isListening ? 'Stop recording' : 'Start voice input'}
             title={isListening ? 'Stop recording' : 'Start voice input'}
-            style={{ minHeight: '44px', minWidth: '44px' }}
+            style={{ minHeight: '40px', minWidth: '40px' }}
           >
             {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
@@ -175,10 +175,10 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end"
+            className="px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end"
             aria-label="Upload image"
             title="Upload image of Chamorro text"
-            style={{ minHeight: '44px', minWidth: '44px' }}
+            style={{ minHeight: '40px', minWidth: '40px' }}
           >
             <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -197,19 +197,19 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             onKeyDown={handleKeyDown}
             placeholder={placeholder || "Type or speak your message..."}
             rows={1}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm disabled:cursor-pointer"
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm disabled:cursor-pointer"
             aria-label="Message input"
             title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            style={{ maxHeight: '200px', minHeight: '44px' }}
+            style={{ maxHeight: '200px', minHeight: '40px' }}
           />
           <button
             onClick={handleSend}
             disabled={disabled || (!input.trim() && !selectedImage)}
-            className="px-4 sm:px-5 py-2.5 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
+            className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
             aria-label="Send message"
             title="Send message (Enter)"
-            style={{ minHeight: '44px' }}
+            style={{ minHeight: '40px' }}
           >
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="hidden sm:inline">Send</span>
@@ -217,7 +217,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
         </div>
         
         {/* Disclaimer */}
-        <p className="text-center text-xs text-brown-600 dark:text-gray-400 mt-1.5 sm:mt-2">
+        <p className="text-center text-[10px] sm:text-xs text-brown-600 dark:text-gray-400 mt-1 sm:mt-2">
           HåfaGPT can make mistakes. Check important info.
         </p>
       </div>

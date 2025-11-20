@@ -6,6 +6,7 @@ import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { 
   useInitUserData, 
+  useConversationMessages,
   useCreateConversation, 
   useDeleteConversation, 
   useUpdateConversationTitle,
@@ -33,16 +34,21 @@ export function Chat() {
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768; // md breakpoint
-    }
-    return true;
-  });
   
-  // Always start with new chat (like ChatGPT)
-  // Users can click into their conversation history to continue a chat
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  // Sidebar closed by default for cleaner UX
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // On mount, check if user has an active conversation from a previous session (page refresh)
+  // If first login, start with new chat. If page refresh, restore their conversation.
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem('active_conversation_id');
+      // Only restore if user is already signed in (page refresh scenario)
+      // For fresh login, this will be null and we'll start with new chat
+      return savedId;
+    }
+    return null;
+  });
   
   const { sendMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
@@ -53,8 +59,13 @@ export function Chat() {
   // React Query hooks - replaces old useConversations hook
   // Only enable when Clerk is fully loaded AND user is signed in
   const { data: initData, isLoading: conversationsLoading, error: initError } = useInitUserData(
-    activeConversationId,
+    null, // Always load conversations list without specific conversation
     isLoaded && !!user?.id // Wait for Clerk to load AND user to be signed in
+  );
+  
+  // Separate query for messages of the active conversation (for fast switching)
+  const { data: conversationMessages, isLoading: messagesLoading } = useConversationMessages(
+    activeConversationId
   );
   
   const createConversationMutation = useCreateConversation();
@@ -81,22 +92,31 @@ export function Chat() {
     return modes[modeName];
   };
 
-  // Load messages from React Query data when it changes
+  // Clear active conversation and messages when user signs out (for fresh login next time)
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      setActiveConversationId(null);
+      setMessages([]);
+      localStorage.removeItem('active_conversation_id');
+    }
+  }, [isLoaded, isSignedIn]);
+
+  // Load messages from the separate messages query (for fast conversation switching)
   useEffect(() => {
     // Don't load messages if we're currently sending one (prevents race condition)
     if (isSendingMessageRef.current) {
       return;
     }
     
-    // If activeConversationId is null, clear messages (new chat)
+    // If no active conversation, clear messages (new chat)
     if (!activeConversationId) {
       setMessages([]);
       return;
     }
     
-    // Otherwise, load messages from the API response
-    if (initData?.messages) {
-      const chatMessages: ChatMessage[] = initData.messages.map((msg: ConversationMessage) => ({
+    // Load messages from the separate conversation messages query
+    if (conversationMessages) {
+      const chatMessages: ChatMessage[] = conversationMessages.map((msg: ConversationMessage) => ({
           role: msg.role,
           content: msg.content,
         imageUrl: msg.image_url || undefined,
@@ -113,7 +133,7 @@ export function Chat() {
         }));
         setMessages(chatMessages);
     }
-  }, [initData?.messages, activeConversationId]);
+  }, [conversationMessages, activeConversationId]);
 
   // Clear data when user signs out
   useEffect(() => {
@@ -292,9 +312,8 @@ export function Chat() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Invalidate the init query so it refetches with the new conversation ID
-      // This ensures messages are persisted properly for the new conversation
-      await queryClient.invalidateQueries({ queryKey: ['initUserData', currentConversationId] });
+      // Invalidate the messages query so it refetches with the persisted messages
+      await queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
       
     } catch (err) {
       console.error('Failed to send message:', err);
@@ -324,8 +343,8 @@ export function Chat() {
     setActiveConversationId(conversationId);
     localStorage.setItem('active_conversation_id', conversationId);
     
-    // Invalidate query to refetch messages for this conversation
-    queryClient.invalidateQueries({ queryKey: ['init', conversationId] });
+    // No need to invalidate - the useConversationMessages hook will automatically
+    // fetch messages for the new conversationId via its dependency
     
     // Close sidebar only on mobile
     if (window.innerWidth < 768) {
@@ -482,12 +501,12 @@ End of Export
       )}
 
       {/* Main chat area */}
-      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-16' : ''}`}>
+      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
         {/* Header - Fixed Position */}
-        <header className="fixed top-0 right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300">
-          <div className="px-3 sm:px-6 py-2 sm:py-4">
+        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn ? 'top-[52px] sm:top-[56px] pt-3' : 'top-0'}`}>
+          <div className="px-3 sm:px-6 py-1.5 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {/* Sidebar toggle button - only show if signed in */}
                 {isSignedIn && (
                   <button
@@ -505,14 +524,14 @@ End of Export
                   </button>
                 )}
                 
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-lg sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-base sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
                   🌺
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-base sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
+                  <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
                     HåfaGPT
                   </h1>
-                  <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden xs:block">
+                  <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden sm:block">
                     Expert in Chamorro language, culture & Guam
                   </p>
                   <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden lg:block">
@@ -526,7 +545,7 @@ End of Export
               {/* Auth Button - Always visible */}
               <AuthButton />
               
-              {/* Study Button - Link to Flashcards */}
+              {/* Study Button - Link to Flashcards - Compact on mobile */}
               <Link
                 to="/flashcards"
                 className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
@@ -560,7 +579,7 @@ End of Export
       </header>
 
       {/* Spacer for fixed header */}
-      <div className="h-[140px] sm:h-[180px] flex-shrink-0" aria-hidden="true"></div>
+      <div className="h-[100px] sm:h-[170px] flex-shrink-0" aria-hidden="true"></div>
 
       {/* Quick Phrases */}
       {messages.length === 0 && !loading && (
@@ -657,7 +676,7 @@ End of Export
           onSend={handleSend} 
           disabled={!isSignedIn || loading} 
           inputRef={messageInputRef}
-          placeholder={!isSignedIn ? "Sign in to start learning Chamorro..." : undefined}
+          placeholder={!isSignedIn ? "Sign in to chat..." : undefined}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
         />
       </div>

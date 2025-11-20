@@ -11,14 +11,14 @@ export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   ];
 
   return (
-    <div className="px-3 sm:px-6 pb-2 sm:pb-3">
+    <div className="px-3 sm:px-6 pb-0">
       <div className="w-full sm:max-w-5xl sm:mx-auto">
-        <div className="flex gap-1.5 sm:gap-2 bg-cream-200 dark:bg-gray-800 p-1 sm:p-1.5 rounded-xl">
+        <div className="flex gap-1.5 sm:gap-2 bg-cream-200 dark:bg-gray-800 p-0.5 sm:p-1.5 rounded-xl">
           {modes.map((m) => (
             <button
               key={m.id}
               onClick={() => onModeChange(m.id)}
-              className={`flex-1 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg font-medium transition-all duration-200 ${
+              className={`flex-1 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-lg font-medium transition-all duration-200 ${
                 mode === m.id
                   ? 'bg-cream-50 dark:bg-gray-700 text-brown-800 dark:text-white shadow-md scale-[1.02] ring-2 ring-teal-500 dark:ring-ocean-500'
                   : 'text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200'
