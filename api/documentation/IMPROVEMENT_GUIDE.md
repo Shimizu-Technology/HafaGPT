@@ -493,7 +493,36 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 
 ## 📚 **Additional Feature Ideas** (Lower Priority)
 
-### **1. Enhanced Audio Pronunciation (ElevenLabs)** 🔊 **FUTURE UPGRADE**
+### **1. PostHog + Stripe Analytics Integration** 📊 **FUTURE ENHANCEMENT**
+**Status:** Frontend analytics already integrated (Nov 2025)  
+**Future:** Connect Stripe payment data when monetization is added
+
+**Current Setup:**
+- ✅ PostHog frontend tracking (user behavior, session replay, events)
+- ✅ Auto-capture clicks, page views, feature usage
+- ✅ Session recordings with privacy masking
+- ✅ User identification via Clerk
+
+**Future Integration (When Adding Payments):**
+- 🔜 **Stripe + PostHog Link** - Track revenue alongside user behavior
+  - Free vs. paid user segmentation
+  - Conversion funnel analysis (signup → feature usage → upgrade)
+  - Revenue per user tracking
+  - Churn prediction and analysis
+- 🔜 **Clerk + PostHog Identity** - Link user profiles across systems
+- 🔜 **Feature → Revenue Correlation** - Which features drive conversions?
+
+**How to Add Later:**
+1. PostHog Dashboard → Settings → Integrations → Link Data
+2. Connect Stripe account
+3. Configure revenue tracking
+4. Build conversion dashboards
+
+**Cost:** $0 additional (PostHog Starter plan includes Stripe integration)
+
+---
+
+### **2. Enhanced Audio Pronunciation (ElevenLabs)** 🔊 **FUTURE UPGRADE**
 **Current:** OpenAI TTS HD with Spanish hints (acceptable quality)
 **Future Upgrade:** ElevenLabs for significantly better pronunciation
 - **Why ElevenLabs:**
