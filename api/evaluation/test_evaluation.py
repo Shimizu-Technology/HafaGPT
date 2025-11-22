@@ -39,17 +39,47 @@ def load_test_queries(file_path: str) -> Dict:
     with open(file_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+def normalize_for_comparison(text: str) -> str:
+    """
+    Normalize text for comparison by removing diacritics and glottal stops.
+    This allows 'påtgon' to match 'patgon', 'guma'' to match 'guma', etc.
+    
+    Args:
+        text: Text to normalize
+        
+    Returns:
+        Normalized text (lowercase, no diacritics, no glottal stops)
+    """
+    import unicodedata
+    import re
+    
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove glottal stops (apostrophes)
+    text = re.sub(r"['ʼ`'']", "", text)
+    
+    # Remove diacritics (å→a, ñ→n, etc.)
+    # NFD = decompose characters (å becomes a + combining ring)
+    text = unicodedata.normalize('NFD', text)
+    # Filter out combining marks
+    text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
+    
+    return text
+
 def check_keywords_present(response: str, expected_keywords: List[str]) -> tuple[bool, List[str]]:
     """
     Check if any expected keywords are present in the response.
+    Uses diacritic normalization for fuzzy matching.
     Returns (passed, found_keywords)
     """
-    response_lower = response.lower()
+    response_normalized = normalize_for_comparison(response)
     found_keywords = []
     
     for keyword in expected_keywords:
-        # Normalize for comparison (remove diacritics for fuzzy matching)
-        if keyword.lower() in response_lower:
+        keyword_normalized = normalize_for_comparison(keyword)
+        # Check if normalized keyword is in normalized response
+        if keyword_normalized in response_normalized:
             found_keywords.append(keyword)
     
     # Pass if at least one expected keyword is found

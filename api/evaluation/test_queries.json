@@ -80,10 +80,10 @@
     {
       "id": 9,
       "query": "How do you say 'eat' in Chamorro?",
-      "expected_keywords": ["chumocho", "kånno'", "kanno"],
+      "expected_keywords": ["chumocho", "chocho", "kånno'", "kanno"],
       "category": "translation",
       "difficulty": "medium",
-      "notes": "Common verb"
+      "notes": "Common verb - chocho (root), chumocho (conjugated), kånno' (transitive)"
     },
     {
       "id": 10,
@@ -112,10 +112,10 @@
     {
       "id": 13,
       "query": "What is 'friend' in Chamorro?",
-      "expected_keywords": ["gachong", "amigo"],
+      "expected_keywords": ["abok", "gachong", "amigo"],
       "category": "translation",
       "difficulty": "easy",
-      "notes": "Common noun, may have Spanish loanword"
+      "notes": "Common noun - abok (modern), gachong (traditional), amigo (Spanish)"
     },
     {
       "id": 14,

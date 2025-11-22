@@ -1,0 +1,68 @@
+================================================================================
+HafaGPT EVALUATION REPORT
+================================================================================
+
+Timestamp: 2025-11-22T21:50:08.637483
+Mode: english
+API URL: http://localhost:8000
+
+--------------------------------------------------------------------------------
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+
+Total Tests: 60
+Passed: 54 (90.0%)
+Failed: 6 (10.0%)
+Average Score: 74.2%
+Average Response Time: 5.47s
+
+--------------------------------------------------------------------------------
+CATEGORY BREAKDOWN
+--------------------------------------------------------------------------------
+
+CULTURAL: 10/10 (100.0%) - Avg Score: 84.0%
+EDGE_CASES: 6/6 (100.0%) - Avg Score: 65.0%
+GRAMMAR: 11/12 (91.7%) - Avg Score: 73.3%
+PHRASES: 8/8 (100.0%) - Avg Score: 80.0%
+TRANSLATION: 19/24 (79.2%) - Avg Score: 70.8%
+
+--------------------------------------------------------------------------------
+FAILED QUERIES (6 total)
+--------------------------------------------------------------------------------
+
+ID: 5
+Query: What does 'gofli'e'' mean?
+Category: translation | Difficulty: easy
+Expected Keywords: love, adore
+Response: I don't have that specific translation in my dictionary sources. If you have any other words or phrases you want to know about in Chamorro, feel free to ask!...
+
+ID: 7
+Query: How do I say 'house' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: guma'
+Response: In Chamorro, the word for 'house' is **gima**. [Source: chamorro_english_dictionary_TOD] If you have any other words or phrases you'd like to learn, feel free to ask!...
+
+ID: 11
+Query: What does 'mañålao' mean?
+Category: translation | Difficulty: medium
+Expected Keywords: shame, embarrass, shy
+Response: I don't have that specific translation in my dictionary sources. However, if you have any context or a sentence where you've seen "mañålao," I might be able to help you understand its meaning better! ...
+
+ID: 16
+Query: What is 'mother' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: nana, nanå
+Response: In Chamorro, the word for 'mother' is **nene**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 21
+Query: How do I say 'one' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: unu, håcha
+Response: In Chamorro, 'one' is **uno**. This comes directly from the Spanish influence on the language. If you have more questions about numbers or anything else in Chamorro, feel free to ask!...
+
+ID: 29
+Query: How do I say 'my name' in Chamorro?
+Category: grammar | Difficulty: medium
+Expected Keywords: na'ån-hu, naan-hu
+Response: In Chamorro, you would say "iyo-ku nene'" for "my name." The word "iyo-ku" means "my," and "nene'" means "name." So if you want to introduce yourself, you can say, "Guahu, iyo-ku nene' [Your Name]." K...
+
