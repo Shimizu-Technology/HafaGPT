@@ -431,10 +431,9 @@ async def chat(
     - Supported formats: JPEG, PNG, WebP, GIF
     - The chatbot will read and translate the text in the image
     
-    **Authentication (Optional):**
+    **Authentication:**
     - Send `Authorization: Bearer <token>` header with Clerk JWT
-    - Unauthenticated users are allowed (anonymous mode)
-    - Authenticated users get their conversations tracked
+    - Authentication is REQUIRED for all users
     
     **Example request (with image):**
     - Content-Type: multipart/form-data
@@ -475,7 +474,7 @@ async def chat(
                 detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
             )
         
-        # Verify user authentication (optional)
+        # Verify user authentication (REQUIRED)
         user_id = await verify_user(authorization)
         
         # Process image if present
@@ -557,6 +556,94 @@ async def chat(
     except Exception as e:
         # Log error with proper logging
         logger.error(f"Error in chat endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+# --- Evaluation Endpoint (For Testing Only) ---
+
+@app.post("/api/eval/chat", response_model=ChatResponse, tags=["Evaluation"])
+async def eval_chat(
+    request: Request,
+    message: Optional[str] = Form(None),
+    mode: Optional[str] = Form(None),
+    session_id: Optional[str] = Form(None)
+):
+    """
+    **EVALUATION ENDPOINT** - No authentication required.
+    
+    This endpoint is for automated testing and evaluation only.
+    It bypasses authentication to allow automated test suites to run.
+    
+    **DO NOT USE THIS IN PRODUCTION CLIENT** - Use `/api/chat` instead.
+    
+    **Modes:**
+    - `english`: General conversation (default)
+    - `chamorro`: Chamorro-only immersion mode
+    - `learn`: Learning mode with explanations
+    """
+    try:
+        # Check if this is a JSON request
+        content_type = request.headers.get('content-type', '')
+        
+        if 'application/json' in content_type:
+            body = await request.json()
+            message = body.get('message')
+            mode = body.get('mode', 'english')
+            session_id = body.get('session_id')
+        else:
+            mode = mode or 'english'
+        
+        # Validate required fields
+        if not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Message is required"
+            )
+        
+        # Validate mode
+        valid_modes = ["english", "chamorro", "learn"]
+        if mode not in valid_modes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
+            )
+        
+        logger.info(f"Eval chat request: mode={mode}, session_id={session_id}")
+        
+        # Get response from chatbot service (no auth required for eval)
+        result = get_chatbot_response(
+            message=message,
+            mode=mode,
+            conversation_length=0,
+            session_id=session_id or f"eval_{int(time.time())}",
+            user_id=None,  # No user tracking for eval
+            conversation_id=None,
+            image_base64=None,
+            image_url=None
+        )
+        
+        # Convert sources to SourceInfo models
+        sources = [
+            SourceInfo(name=s["name"], page=s["page"])
+            for s in result["sources"]
+        ]
+        
+        return ChatResponse(
+            response=result["response"],
+            mode=mode,
+            sources=sources,
+            used_rag=result["used_rag"],
+            used_web_search=result["used_web_search"],
+            response_time=result["response_time"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in eval chat endpoint: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"

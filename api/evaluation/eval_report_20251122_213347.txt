@@ -1,0 +1,104 @@
+================================================================================
+HafaGPT EVALUATION REPORT
+================================================================================
+
+Timestamp: 2025-11-22T21:33:47.474998
+Mode: english
+API URL: http://localhost:8000
+
+--------------------------------------------------------------------------------
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+
+Total Tests: 60
+Passed: 48 (80.0%)
+Failed: 12 (20.0%)
+Average Score: 62.3%
+Average Response Time: 5.43s
+
+--------------------------------------------------------------------------------
+CATEGORY BREAKDOWN
+--------------------------------------------------------------------------------
+
+CULTURAL: 10/10 (100.0%) - Avg Score: 85.0%
+EDGE_CASES: 6/6 (100.0%) - Avg Score: 60.0%
+GRAMMAR: 11/12 (91.7%) - Avg Score: 70.0%
+PHRASES: 8/8 (100.0%) - Avg Score: 76.2%
+TRANSLATION: 13/24 (54.2%) - Avg Score: 45.0%
+
+--------------------------------------------------------------------------------
+FAILED QUERIES (12 total)
+--------------------------------------------------------------------------------
+
+ID: 3
+Query: How do you say thank you in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: Si Yu'os Må'åse', Si Yu'os Ma'ase
+Response: In Chamorro, you say "thank you" as **Si Yu'os Ma'åse'**. It's a common phrase that expresses gratitude. If you want to sound even more casual, you can simply say **Ma'åse'**. Keep practicing, and you...
+
+ID: 5
+Query: What does 'gofli'e'' mean?
+Category: translation | Difficulty: easy
+Expected Keywords: love, adore
+Response: I don't have that specific translation in my dictionary sources. If you have any other words or phrases you'd like to know about in Chamorro, feel free to ask!...
+
+ID: 7
+Query: How do I say 'house' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: guma'
+Response: In Chamorro, the word for 'house' is **gima**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 9
+Query: How do you say 'eat' in Chamorro?
+Category: translation | Difficulty: medium
+Expected Keywords: chumocho, kånno', kanno
+Response: In Chamorro, the word for 'eat' is **chocho**. [Source: chamoru_info_dictionary]...
+
+ID: 11
+Query: What does 'mañålao' mean?
+Category: translation | Difficulty: medium
+Expected Keywords: shame, embarrass, shy
+Response: The word "mañålao" in Chamorro translates to "to be angry" or "to be mad." It expresses a state of anger or frustration. If you need more examples or context about how to use it in a sentence, feel fr...
+
+ID: 13
+Query: What is 'friend' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: gachong, amigo
+Response: In Chamorro, the word for 'friend' can be translated to several terms based on the context. You can use **abok** for a general friend, **agofli'e'** for a buddy or pal, or **åmiga** specifically for a...
+
+ID: 15
+Query: Translate 'child' to Chamorro
+Category: translation | Difficulty: easy
+Expected Keywords: patgon
+Response: In Chamorro, the word for 'child' is **påtgon**. [Source: chamoru_info_dictionary]...
+
+ID: 16
+Query: What is 'mother' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: nana, nanå
+Response: In Chamorro, the word for 'mother' is **måtå**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 17
+Query: How do I say 'father' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: tata, tatå
+Response: In Chamorro, the word for 'father' is **tåta**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 21
+Query: How do I say 'one' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: unu, håcha
+Response: In Chamorro, the word for 'one' is **tåtte**. [Source: chamorro_english_dictionary_TOD] If you have any more questions about numbers or anything else in Chamorro, feel free to ask!...
+
+ID: 25
+Query: What is 'now' in Chamorro?
+Category: translation | Difficulty: medium
+Expected Keywords: pågo, pago
+Response: In Chamorro, 'now' is **på'go**. You can use it when you want to refer to the present moment. For example, you could say, "Hu chule' på'go," which means "I will eat now." [Source: chamorro_english_dic...
+
+ID: 29
+Query: How do I say 'my name' in Chamorro?
+Category: grammar | Difficulty: medium
+Expected Keywords: na'ån-hu, naan-hu
+Response: In Chamorro, you would say 'my name' as **iyo-ku nòmine**. Here, **iyo-ku** means "my," and **nòmine** means "name." So if you want to introduce yourself, you could say, "Si [Your Name], iyo-ku nòmine...
+

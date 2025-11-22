@@ -91,6 +91,42 @@ def detect_query_type(query: str) -> str:
     return 'lookup'
 
 
+def extract_target_word(query: str) -> str:
+    """
+    Extract the English word being translated from a query.
+    
+    Examples:
+        "What is 'listen' in Chamorro?" → "listen"
+        "How do you say 'house'?" → "house"
+        "Translate 'apple' to Chamorro" → "apple"
+        "What is the Chamorro word for 'water'?" → "water"
+    
+    Args:
+        query: The user's question
+        
+    Returns:
+        The extracted word, or empty string if not found
+    """
+    import re
+    
+    # Pattern 1: Word in quotes
+    match = re.search(r"['\"]([^'\"]+)['\"]", query)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 2: "word for X"
+    match = re.search(r"word for (\w+)", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 3: "translate X to"
+    match = re.search(r"translate (\w+) to", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    return ""
+
+
 class ChamorroRAG:
     def __init__(self, connection="postgresql://localhost/chamorro_rag"):
         """Initialize the RAG system with the Chamorro grammar database."""
@@ -178,6 +214,54 @@ class ChamorroRAG:
                 # If not a connection error or max retries reached, raise
                 raise
     
+    def _keyword_search_dictionaries(self, target_word, k=3):
+        """
+        Fast keyword search for dictionary entries containing the target English word.
+        Uses exact text matching, much faster than semantic search.
+        
+        Args:
+            target_word: The English word to look up (e.g., "listen", "house")
+            k: Number of results to return
+            
+        Returns:
+            List of documents from dictionaries containing the word
+        """
+        if not target_word:
+            return []
+        
+        try:
+            # Search for documents containing the target word
+            # Use the word itself as the query for better matching
+            results = self.vectorstore.similarity_search(
+                target_word,  # Simple word, not full question
+                k=k*5,  # Get more candidates
+                filter=None  # No filter yet, we'll filter manually
+            )
+            
+            # Filter to only dictionary sources containing the target word
+            dict_results = []
+            target_lower = target_word.lower()
+            
+            for doc in results:
+                source = doc.metadata.get('source', '').lower()
+                content = doc.page_content.lower()
+                
+                # Must be from a dictionary
+                if not any(dict_name in source for dict_name in ['dictionary', 'TOD', 'chamoru_info']):
+                    continue
+                
+                # Must contain the target word (or very close variant)
+                if target_lower in content:
+                    dict_results.append(doc)
+                    if len(dict_results) >= k:
+                        break
+            
+            return dict_results
+            
+        except Exception as e:
+            print(f"⚠️  Keyword search error: {e}")
+            return []
+    
     def search(self, query, k=3, card_type=None):
         """
         Search for relevant information in the Chamorro grammar book.
@@ -202,7 +286,22 @@ class ChamorroRAG:
         # Normalize query for better matching (handles accents, glottal stops, etc.)
         normalized_query = normalize_chamorro_text(query)
         
-        # Stage 1: Keyword-based retrieval for specific content
+        # Stage 0: PHASE 3 - Try keyword search for word translations first!
+        query_type = detect_query_type(query)
+        
+        if query_type == 'lookup':
+            # Try to extract the target word
+            target_word = extract_target_word(query)
+            
+            if target_word:
+                # Try keyword search in dictionaries
+                keyword_dict_results = self._keyword_search_dictionaries(target_word, k=k)
+                
+                if keyword_dict_results:
+                    # Found dictionary entries! Return them directly
+                    return [(doc.page_content, doc.metadata) for doc in keyword_dict_results]
+        
+        # Stage 1: Keyword-based retrieval for specific content (greetings, etc.)
         keyword_results = []
         
         # Common greetings - retrieve greeting table
@@ -236,10 +335,7 @@ class ChamorroRAG:
                     keyword_results.append(doc)
                     break  # Only need one chunk from greetings table
         
-        # Stage 2: Detect query type for smart boosting (Option B)
-        query_type = detect_query_type(query)
-        
-        # Stage 3: Semantic search with expanded results for filtering
+        # Stage 2: Semantic search with expanded results for filtering
         results = self.vectorstore.similarity_search(query, k=k*10)  # Get more candidates
         
         # Score and rerank
@@ -291,7 +387,14 @@ class ChamorroRAG:
                     score -= 50  # Archival
             
             # OPTION B: Query-based additional boosting/filtering
-            if query_type == 'educational':
+            if query_type == 'lookup':
+                # WORD TRANSLATION QUERY → Massively boost dictionaries!
+                if 'dictionary' in source or 'TOD' in source or 'Revised' in source or 'chamoru_info' in source:
+                    score = score * 5.0  # 5x boost for dictionaries on word lookups!
+                # Penalize blogs/articles for single-word translations
+                elif 'lengguahita.com' in source or 'guampedia.com' in source or 'visitguam.com' in source:
+                    score = score * 0.3  # 70% penalty - these are contextual, not definitional
+            elif query_type == 'educational':
                 # Further boost educational sources for educational queries
                 if source_type in ['lengguahita', 'guampedia'] or era_priority >= 100:
                     score = score * 1.5  # Additional 50% boost for educational queries
