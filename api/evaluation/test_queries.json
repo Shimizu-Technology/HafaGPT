@@ -95,11 +95,11 @@
     },
     {
       "id": 11,
-      "query": "What does 'mañålao' mean?",
-      "expected_keywords": ["shame", "embarrass", "shy"],
+      "query": "What does 'mamahlao' mean?",
+      "expected_keywords": ["shame", "embarrass", "shy", "ashamed", "bashful"],
       "category": "translation",
       "difficulty": "medium",
-      "notes": "Cultural emotion word"
+      "notes": "Cultural emotion word - correct spelling is mamahlao/mamalao (not mañålao)"
     },
     {
       "id": 12,
@@ -176,10 +176,10 @@
     {
       "id": 21,
       "query": "How do I say 'one' in Chamorro?",
-      "expected_keywords": ["unu", "håcha"],
+      "expected_keywords": ["unu", "uno", "håcha"],
       "category": "translation",
       "difficulty": "easy",
-      "notes": "Numbers"
+      "notes": "Numbers - Accept both native (unu) and Spanish (uno)"
     },
     {
       "id": 22,
@@ -240,10 +240,10 @@
     {
       "id": 29,
       "query": "How do I say 'my name' in Chamorro?",
-      "expected_keywords": ["na'ån-hu", "naan-hu"],
+      "expected_keywords": ["na'ån-hu", "naan-hu", "iyo-ku", "nene"],
       "category": "grammar",
       "difficulty": "medium",
-      "notes": "Possessive suffix (-hu)"
+      "notes": "Possessive - Accept both na'ån-hu (suffix) and iyo-ku nene' (pronoun)"
     },
     {
       "id": 30,

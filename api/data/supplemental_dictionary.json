@@ -1,0 +1,72 @@
+{
+  "nana": {
+    "definition": "mother; mom",
+    "part_of_speech": "noun",
+    "examples": ["Si nana gumupu iyo-ku. (Mother helped me.)", "Kao guaha si nana-mu? (Is your mother there?)"],
+    "notes": "Common word for mother. Often used with possessive suffixes: nana-hu (my mother), nana-mu (your mother), nana-ña (his/her mother)"
+  },
+  "nanå": {
+    "definition": "mother; mom",
+    "part_of_speech": "noun",
+    "notes": "Alternate spelling of nana with diacritics"
+  },
+  "guma'": {
+    "definition": "house; home; building; dwelling; residence",
+    "part_of_speech": "noun",
+    "examples": ["Bunitu i guma'-hu. (My house is beautiful.)", "Mañåga para i guma'. (Go to the house.)"],
+    "notes": "Often used with possessive suffixes: guma'-hu (my house), guma'-mu (your house), guma'-ña (his/her house)"
+  },
+  "unu": {
+    "definition": "one",
+    "part_of_speech": "number",
+    "examples": ["Unu na patgon. (One child.)", "Bente i unu. (Twenty-one.)"],
+    "notes": "Native Chamorro word for 'one' in counting"
+  },
+  "hugua": {
+    "definition": "two",
+    "part_of_speech": "number",
+    "examples": ["Hugua na lemmai. (Two days.)", "Bente i hugua. (Twenty-two.)"],
+    "notes": "Native Chamorro word for 'two' in counting"
+  },
+  "tulu": {
+    "definition": "three",
+    "part_of_speech": "number",
+    "examples": ["Tulu na biåhi. (Three times.)"],
+    "notes": "Native Chamorro word for 'three' in counting"
+  },
+  "fatfat": {
+    "definition": "four",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'four' in counting"
+  },
+  "lima": {
+    "definition": "five",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'five' in counting"
+  },
+  "gunum": {
+    "definition": "six",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'six' in counting"
+  },
+  "fiti": {
+    "definition": "seven",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'seven' in counting"
+  },
+  "guålu": {
+    "definition": "eight",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'eight' in counting"
+  },
+  "sigua": {
+    "definition": "nine",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'nine' in counting"
+  },
+  "månot": {
+    "definition": "ten",
+    "part_of_speech": "number",
+    "notes": "Native Chamorro word for 'ten' in counting"
+  }
+}
