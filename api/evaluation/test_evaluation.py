@@ -6,13 +6,15 @@ Automatically tests the chatbot against a comprehensive test suite
 and generates detailed performance reports.
 
 Usage:
-    python test_evaluation.py [--mode english] [--limit 10]
+    python test_evaluation.py [--mode english] [--limit 10] [--test-file test_queries_v2.json]
 
 Options:
-    --mode      Chat mode to test (english, chamorro, learn). Default: english
-    --limit     Number of queries to test (for quick testing). Default: all
-    --api-url   API endpoint URL. Default: http://localhost:8000
-    --output    Output directory for results. Default: ./evaluation
+    --mode       Chat mode to test (english, chamorro, learn). Default: english
+    --limit      Number of queries to test (for quick testing). Default: all
+    --api-url    API endpoint URL. Default: http://localhost:8000
+    --output     Output directory for results. Default: ./evaluation
+    --test-file  Test file to use. Default: evaluation/test_queries.json
+                 Use test_queries_v2.json for expanded 100-test suite
 """
 
 import json
@@ -356,20 +358,32 @@ def main():
                        help='API endpoint URL')
     parser.add_argument('--output', default='./evaluation',
                        help='Output directory for results')
+    parser.add_argument('--test-file', default='test_queries.json',
+                       help='Test file to use (default: test_queries.json, or use test_queries_v2.json for 100 tests)')
     
     args = parser.parse_args()
     
     # Setup
     script_dir = Path(__file__).parent
-    test_file = script_dir / 'test_queries.json'
+    test_file = script_dir / args.test_file
     output_dir = Path(args.output)
     output_dir.mkdir(exist_ok=True)
     
+    # Check if test file exists
+    if not test_file.exists():
+        print(f"{Colors.RED}❌ Test file not found: {test_file}{Colors.END}")
+        print(f"{Colors.YELLOW}Available test files:{Colors.END}")
+        for f in script_dir.glob('test_queries*.json'):
+            print(f"  - {f.name}")
+        sys.exit(1)
+    
     # Load test queries
-    print(f"{Colors.BOLD}📂 Loading test queries from: {test_file}{Colors.END}")
+    print(f"{Colors.BOLD}📂 Loading test queries from: {test_file.name}{Colors.END}")
     test_data = load_test_queries(test_file)
     test_queries = test_data['test_queries']
+    test_version = test_data.get('metadata', {}).get('version', '1.0')
     
+    print(f"{Colors.BOLD}📊 Test Suite Version: {test_version}{Colors.END}")
     print(f"{Colors.BOLD}📊 Found {len(test_queries)} test queries{Colors.END}")
     print(f"{Colors.BOLD}🎯 Testing mode: {args.mode}{Colors.END}")
     print(f"{Colors.BOLD}🌐 API URL: {args.api_url}{Colors.END}")
