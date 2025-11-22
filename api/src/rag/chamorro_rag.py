@@ -95,6 +95,8 @@ def extract_target_word(query: str) -> str:
     """
     Extract the target word from a lookup query (English→Chamorro OR Chamorro→English).
     
+    Handles Chamorro words with apostrophes inside them (e.g., gofli'e', ga'lågu).
+    
     Examples:
         English→Chamorro:
         - "What is 'listen' in Chamorro?" → "listen"
@@ -107,6 +109,7 @@ def extract_target_word(query: str) -> str:
         - "What does patgon mean in English?" → "patgon"
         - "Translate 'ga'lågu' to English" → "ga'lågu"
         - "What is 'bunitu' in English?" → "bunitu"
+        - "What does 'gofli'e'' mean?" → "gofli'e'"
     
     Args:
         query: The user's question
@@ -116,28 +119,37 @@ def extract_target_word(query: str) -> str:
     """
     import re
     
-    # Pattern 1: Word in quotes (handles both directions)
-    match = re.search(r"['\"]([^'\"]+)['\"]", query)
+    # Pattern 1: Word between single quotes (as delimiters, not apostrophes in word)
+    # Use non-greedy match (.*?) to get content between OUTER quotes
+    # Key: Match quotes that are preceded by whitespace or start of string (not word chars)
+    # This avoids matching apostrophes INSIDE words like gofli'e'
+    match = re.search(r"(?:^|\s)'(.+?)'(?=\s|to|in|mean|\?|$)", query)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 2: "what does X mean" (Chamorro→English)
-    match = re.search(r"what does ([^\s?]+) mean", query, re.IGNORECASE)
+    # Pattern 2: Word between double quotes
+    match = re.search(r'(?:^|\s)"(.+?)"(?=\s|to|in|mean|\?|$)', query)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 3: "what is X in English" (Chamorro→English)
-    match = re.search(r"what is ([^\s?]+) in english", query, re.IGNORECASE)
+    # Pattern 3: "what does X mean" (Chamorro→English, NO quotes)
+    # Match word that can contain apostrophes
+    match = re.search(r"what does ([^\s?,]+(?:'[^\s?,]+)*) mean", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 4: "word for X" (English→Chamorro)
-    match = re.search(r"word for (\w+)", query, re.IGNORECASE)
+    # Pattern 4: "what is X in English" (Chamorro→English, NO quotes)
+    match = re.search(r"what is ([^\s?,]+(?:'[^\s?,]+)*) in english", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 5: "translate X to" (handles both directions)
-    match = re.search(r"translate (\w+) to", query, re.IGNORECASE)
+    # Pattern 5: "word for X" (English→Chamorro)
+    match = re.search(r"word for ([^\s?,]+)", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 6: "translate X to" (handles both directions)
+    match = re.search(r"translate ([^\s?,]+(?:'[^\s?,]+)*) to", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
@@ -400,7 +412,12 @@ class ChamorroRAG:
                 
                 # Also check if query explicitly asks for English translation
                 is_cham_to_eng = any(phrase in query_lower for phrase in [
-                    'mean in english', 'to english', 'mean?', 'does ', 'translate to english'
+                    'in english',          # "What is X in English?"
+                    'to english',          # "Translate X to English"
+                    'mean in english',     # "What does X mean in English?"
+                    'mean?',               # "What does X mean?"
+                    'does ',               # "What does X..."
+                    'translate to english' # Explicit translation request
                 ])
                 
                 if is_chamorro_word or is_cham_to_eng:

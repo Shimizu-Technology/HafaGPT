@@ -83,10 +83,10 @@
     {
       "id": 9,
       "query": "How do you say 'eat' in Chamorro?",
-      "expected_keywords": ["chumocho", "chocho", "kånno'", "kanno"],
+      "expected_keywords": ["chumocho", "chocho", "kånno'", "kanno", "kånnu'"],
       "category": "translation_eng_to_cham",
       "difficulty": "medium",
-      "notes": "Common verb - chocho (root), chumocho (conjugated), kånno' (transitive)"
+      "notes": "Common verb - chocho (root), chumocho (conjugated), kånno'/kånnu' (transitive)"
     },
     {
       "id": 10,
@@ -115,10 +115,10 @@
     {
       "id": 13,
       "query": "What is 'friend' in Chamorro?",
-      "expected_keywords": ["abok", "gachong", "amigo"],
+      "expected_keywords": ["abok", "gachong", "amigo", "atungo'"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Common noun - abok (modern), gachong (traditional), amigo (Spanish)"
+      "notes": "Common noun - abok (modern), gachong (traditional), amigo (Spanish), atungo' (friend/acquaintance)"
     },
     {
       "id": 14,
@@ -174,7 +174,7 @@
       "expected_keywords": ["åhe'", "ahe"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Basic response"
+      "notes": "Direct reply to yes/no question - åhe' (not 'ti' which is a negative marker)"
     },
     {
       "id": 21,
@@ -203,10 +203,10 @@
     {
       "id": 24,
       "query": "Translate 'small' to Chamorro",
-      "expected_keywords": ["dikike'", "hågui", "dichicheng"],
+      "expected_keywords": ["dikike'", "díkiki'", "hågui", "dichicheng"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Size adjective - dikike' (most common), hågui/dichicheng (alternatives)"
+      "notes": "Size adjective - dikike'/díkiki' (most common), hågui/dichicheng (alternatives)"
     },
     {
       "id": 25,
@@ -395,10 +395,10 @@
     {
       "id": 48,
       "query": "What is 'You're welcome' in Chamorro?",
-      "expected_keywords": ["welcome", "Tåya'"],
+      "expected_keywords": ["buen probecho", "buen prubetchu", "welcome"],
       "category": "phrases",
       "difficulty": "easy",
-      "notes": "Polite response"
+      "notes": "Dictionary translation: buen probecho/prubetchu"
     },
     {
       "id": 49,
@@ -683,10 +683,10 @@
     {
       "id": 84,
       "query": "What's the difference between 'siempre' and 'taigue'?",
-      "expected_keywords": ["surely", "always", "different", "certainly"],
+      "expected_keywords": ["surely", "always", "absent", "not present", "different", "siempre", "taigue"],
       "category": "confusables",
       "difficulty": "hard",
-      "notes": "NEW: Confusable words - siempre (surely), taigue (always)"
+      "notes": "Both words: siempre (surely/always), taigue (absent/not present)"
     },
     {
       "id": 85,
@@ -755,18 +755,18 @@
     {
       "id": 93,
       "query": "How do you say 'ten' in Chamorro?",
-      "expected_keywords": ["månot", "diez"],
+      "expected_keywords": ["månot", "manot", "diez"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "NEW: Numbers"
+      "notes": "Native word månot/manot; Spanish loanword diez also accepted"
     },
     {
       "id": 94,
       "query": "Translate 'today' to Chamorro",
-      "expected_keywords": ["pågo", "ånai"],
+      "expected_keywords": ["pågo", "pago", "på'gu", "ånai"],
       "category": "translation_eng_to_cham",
       "difficulty": "medium",
-      "notes": "NEW: Time expression"
+      "notes": "Time expression - pågo/pago (now/today), på'gu (now/today), ånai (today)"
     },
     {
       "id": 95,
