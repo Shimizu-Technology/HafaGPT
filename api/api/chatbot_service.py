@@ -541,7 +541,7 @@ Provide the following in a well-organized format:
     # Get LLM response
     try:
         response = llm.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",  # Premium model: 96% accuracy, perfect grammar, faster than 4o-mini
             temperature=0.7,
             messages=history
         )

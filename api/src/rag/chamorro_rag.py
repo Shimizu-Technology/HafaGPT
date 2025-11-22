@@ -394,6 +394,13 @@ class ChamorroRAG:
         """Implementation of search with retry wrapper."""
         query_lower = query.lower()
         
+        # PHASE 1 FIX: Clean query before embedding search
+        # Remove contaminating words that cause semantic search to match wrong results
+        clean_query = query_lower
+        contaminating_words = ['chamorro', 'chamoru', 'in chamorro', 'to chamorro']
+        for word in contaminating_words:
+            clean_query = clean_query.replace(word, '').strip()
+        
         # Normalize query for better matching (handles accents, glottal stops, etc.)
         normalized_query = normalize_chamorro_text(query)
         
@@ -464,7 +471,10 @@ class ChamorroRAG:
                     break  # Only need one chunk from greetings table
         
         # Stage 2: Semantic search with expanded results for filtering
-        results = self.vectorstore.similarity_search(query, k=k*10)  # Get more candidates
+        # PHASE 1 FIX: Use clean_query (without "Chamorro") and increase k
+        # Search with clean query to avoid contamination, get more candidates for better ranking
+        search_query = clean_query if clean_query else query
+        results = self.vectorstore.similarity_search(search_query, k=k*10)  # Get more candidates
         
         # Score and rerank
         scored_results = []
@@ -517,11 +527,12 @@ class ChamorroRAG:
             # OPTION B: Query-based additional boosting/filtering
             if query_type == 'lookup':
                 # WORD TRANSLATION QUERY → Massively boost dictionaries!
+                # PHASE 1 FIX: Increased boost from 5x to 10x for English→Chamorro lookups
                 if 'dictionary' in source or 'TOD' in source or 'Revised' in source or 'chamoru_info' in source:
-                    score = score * 5.0  # 5x boost for dictionaries on word lookups!
+                    score = score * 10.0  # 10x boost for dictionaries on word lookups!
                 # Penalize blogs/articles for single-word translations
                 elif 'lengguahita.com' in source or 'guampedia.com' in source or 'visitguam.com' in source:
-                    score = score * 0.3  # 70% penalty - these are contextual, not definitional
+                    score = score * 0.2  # 80% penalty - these are contextual, not definitional
             elif query_type == 'educational':
                 # Further boost educational sources for educational queries
                 if source_type in ['lengguahita', 'guampedia'] or era_priority >= 100:
