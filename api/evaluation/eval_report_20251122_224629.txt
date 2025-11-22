@@ -1,0 +1,50 @@
+================================================================================
+HafaGPT EVALUATION REPORT
+================================================================================
+
+Timestamp: 2025-11-22T22:46:29.608999
+Mode: english
+API URL: http://localhost:8000
+
+--------------------------------------------------------------------------------
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+
+Total Tests: 60
+Passed: 57 (95.0%)
+Failed: 3 (5.0%)
+Average Score: 77.5%
+Average Response Time: 5.57s
+
+--------------------------------------------------------------------------------
+CATEGORY BREAKDOWN
+--------------------------------------------------------------------------------
+
+CULTURAL: 10/10 (100.0%) - Avg Score: 88.0%
+EDGE_CASES: 6/6 (100.0%) - Avg Score: 70.0%
+GRAMMAR: 12/12 (100.0%) - Avg Score: 74.2%
+PHRASES: 8/8 (100.0%) - Avg Score: 80.0%
+TRANSLATION: 21/24 (87.5%) - Avg Score: 75.8%
+
+--------------------------------------------------------------------------------
+FAILED QUERIES (3 total)
+--------------------------------------------------------------------------------
+
+ID: 4
+Query: Translate 'apple' to Chamorro
+Category: translation | Difficulty: easy
+Expected Keywords: mansåna, mansana
+Response: In Chamorro, 'apple' is **mångsana**. [Source: chamoru_info_dictionary]...
+
+ID: 5
+Query: What does 'gofli'e'' mean?
+Category: translation | Difficulty: easy
+Expected Keywords: love, adore
+Response: I don't have that specific translation in my dictionary sources. However, if you have any context or a sentence where you've seen "gofli'e'", I might be able to help you understand it better!...
+
+ID: 11
+Query: What does 'mamahlao' mean?
+Category: translation | Difficulty: medium
+Expected Keywords: shame, embarrass, shy, ashamed, bashful
+Response: The word 'mamahlao' in Chamorro means "to be afraid" or "to be frightened." It captures the feeling of fear or apprehension. If you have any specific context in which you want to use this word, feel f...
+

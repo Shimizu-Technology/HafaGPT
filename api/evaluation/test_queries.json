@@ -104,10 +104,10 @@
     {
       "id": 12,
       "query": "How do I say 'beautiful' in Chamorro?",
-      "expected_keywords": ["bunita", "bonitu"],
+      "expected_keywords": ["bunita", "bonitu", "bunitu"],
       "category": "translation",
       "difficulty": "easy",
-      "notes": "Common adjective"
+      "notes": "Common adjective - bunitu (general), bunita (feminine)"
     },
     {
       "id": 13,
@@ -200,10 +200,10 @@
     {
       "id": 24,
       "query": "Translate 'small' to Chamorro",
-      "expected_keywords": ["dikike'"],
+      "expected_keywords": ["dikike'", "hågui", "dichicheng"],
       "category": "translation",
       "difficulty": "easy",
-      "notes": "Size adjective"
+      "notes": "Size adjective - dikike' (most common), hågui/dichicheng (alternatives)"
     },
     {
       "id": 25,

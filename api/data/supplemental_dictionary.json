@@ -13,8 +13,14 @@
   "guma'": {
     "definition": "house; home; building; dwelling; residence",
     "part_of_speech": "noun",
-    "examples": ["Bunitu i guma'-hu. (My house is beautiful.)", "Mañåga para i guma'. (Go to the house.)"],
-    "notes": "Often used with possessive suffixes: guma'-hu (my house), guma'-mu (your house), guma'-ña (his/her house)"
+    "examples": ["Bunitu i guma'-hu. (My house is beautiful.)", "Mañåga para i guma'. (Go to the house.)", "Kao maolek i guma'-mu? (Is your house good?)"],
+    "notes": "Most common word for 'house' in Chamorro. Often used with possessive suffixes: guma'-hu (my house), guma'-mu (your house), guma'-ña (his/her house)"
+  },
+  "house": {
+    "definition": "guma' (noun). The most common Chamorro word for house, home, or building.",
+    "part_of_speech": "translation",
+    "examples": ["house = guma'", "my house = guma'-hu", "your house = guma'-mu"],
+    "notes": "English→Chamorro: house = guma' (preferred over håsienda/hasienda which is Spanish loanword)"
   },
   "unu": {
     "definition": "one",

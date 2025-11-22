@@ -216,11 +216,11 @@ class ChamorroRAG:
     
     def _keyword_search_dictionaries(self, target_word, k=3):
         """
-        Fast keyword search for dictionary entries containing the target English word.
-        Uses exact text matching, much faster than semantic search.
+        Fast keyword search for dictionary entries containing the target word.
+        Handles both English→Chamorro and Chamorro→English lookups.
         
         Args:
-            target_word: The English word to look up (e.g., "listen", "house")
+            target_word: The word to look up (e.g., "listen", "house", "mamahlao", "gofli'e'")
             k: Number of results to return
             
         Returns:
@@ -230,8 +230,50 @@ class ChamorroRAG:
             return []
         
         try:
-            # Search for documents containing the target word
-            # Use the word itself as the query for better matching
+            target_lower = target_word.lower()
+            
+            # For Chamorro words with special characters (apostrophes, special letters),
+            # try direct SQL search for exact headword entries
+            # Only do this for words that look distinctly Chamorro (have apostrophe or å, ñ, etc.)
+            has_special_chars = any(c in target_word for c in ["'", "å", "ñ", "ó", "é", "í", "ú"])
+            
+            if has_special_chars:
+                import psycopg
+                import os
+                
+                try:
+                    conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                    cur = conn.cursor()
+                    
+                    # Search for EXACT headword match (documents starting with **word** followed by newline or space)
+                    cur.execute("""
+                        SELECT 
+                            document,
+                            cmetadata
+                        FROM langchain_pg_embedding 
+                        WHERE (cmetadata->>'source' LIKE '%%dictionary%%')
+                        AND (
+                            document LIKE %s
+                            OR document LIKE %s
+                        )
+                        LIMIT %s
+                    """, (f'**{target_lower}**\n%%', f'**{target_lower}** %%', k))
+                    
+                    results = cur.fetchall()
+                    conn.close()
+                    
+                    if results:
+                        # Found exact headword entries!
+                        from langchain_core.documents import Document
+                        docs = []
+                        for content, metadata in results:
+                            docs.append(Document(page_content=content, metadata=metadata))
+                        return docs
+                except Exception as e:
+                    print(f"⚠️  SQL search error: {e}")
+                    # Fall through to semantic search
+            
+            # Fall back to semantic search + filtering for English words or if SQL failed
             results = self.vectorstore.similarity_search(
                 target_word,  # Simple word, not full question
                 k=k*5,  # Get more candidates
@@ -240,7 +282,6 @@ class ChamorroRAG:
             
             # Filter to only dictionary sources containing the target word
             dict_results = []
-            target_lower = target_word.lower()
             
             for doc in results:
                 source = doc.metadata.get('source', '').lower()
