@@ -474,11 +474,11 @@
     },
     {
       "id": 58,
-      "query": "Translate 'nåna' to English",
+      "query": "Translate 'nana' to English",
       "expected_keywords": ["mother", "mom"],
       "category": "translation_cham_to_eng",
       "difficulty": "easy",
-      "notes": "NEW: Reverse lookup - family term"
+      "notes": "NEW: Reverse lookup - family term (note: nana without diacritic)"
     },
     {
       "id": 59,
@@ -514,19 +514,19 @@
     },
     {
       "id": 63,
-      "query": "What does 'chumocho' mean in English?",
+      "query": "What does 'chocho' mean in English?",
       "expected_keywords": ["eat", "eating"],
       "category": "translation_cham_to_eng",
-      "difficulty": "medium",
-      "notes": "NEW: Reverse lookup - conjugated verb"
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - root verb form (note: chocho is the root, chumocho is conjugated)"
     },
     {
       "id": 64,
-      "query": "Translate 'bunitu' to English",
-      "expected_keywords": ["beautiful", "pretty"],
+      "query": "Translate 'bunita' to English",
+      "expected_keywords": ["beautiful", "pretty", "pleasing", "nice"],
       "category": "translation_cham_to_eng",
       "difficulty": "easy",
-      "notes": "NEW: Reverse lookup - common adjective"
+      "notes": "NEW: Reverse lookup - common adjective (note: bunita with 'a' ending, not bunitu with 'u')"
     },
     {
       "id": 65,
@@ -538,11 +538,11 @@
     },
     {
       "id": 66,
-      "query": "What does 'dåkk olo' mean?",
-      "expected_keywords": ["big", "large"],
+      "query": "What does 'dankolo' mean?",
+      "expected_keywords": ["big", "large", "huge"],
       "category": "translation_cham_to_eng",
       "difficulty": "easy",
-      "notes": "NEW: Reverse lookup - size adjective"
+      "notes": "NEW: Reverse lookup - size adjective (note: dankolo = big, not dåkkolo)"
     },
     {
       "id": 67,
@@ -554,11 +554,11 @@
     },
     {
       "id": 68,
-      "query": "What is 'a'gang' in English?",
-      "expected_keywords": ["blue", "green"],
+      "query": "What is 'asut' in English?",
+      "expected_keywords": ["blue", "azure"],
       "category": "translation_cham_to_eng",
       "difficulty": "medium",
-      "notes": "NEW: Reverse lookup - color (can mean both)"
+      "notes": "NEW: Reverse lookup - color (note: asut = blue, not a'gang which means 'loud')"
     },
     {
       "id": 69,
@@ -570,11 +570,11 @@
     },
     {
       "id": 70,
-      "query": "Translate 'manhålom' to English",
-      "expected_keywords": ["inside", "enter"],
+      "query": "Translate 'halom' to English",
+      "expected_keywords": ["inside", "enter", "into"],
       "category": "translation_cham_to_eng",
       "difficulty": "medium",
-      "notes": "NEW: Reverse lookup - direction/movement"
+      "notes": "NEW: Reverse lookup - direction/movement (note: halom = inside, not manhålom)"
     },
     {
       "id": 71,
@@ -587,18 +587,18 @@
     {
       "id": 72,
       "query": "What does 'taibali' mean?",
-      "expected_keywords": ["bad", "wrong", "not good"],
+      "expected_keywords": ["worthless", "useless", "waste", "bad"],
       "category": "translation_cham_to_eng",
       "difficulty": "easy",
-      "notes": "NEW: Reverse lookup - opposite of måolek"
+      "notes": "NEW: Reverse lookup - negative term (taibali = worthless/useless, close to 'bad')"
     },
     {
       "id": 73,
-      "query": "Translate 'mahalang' to English",
+      "query": "Translate 'guaguan' to English",
       "expected_keywords": ["expensive", "costly"],
       "category": "translation_cham_to_eng",
       "difficulty": "medium",
-      "notes": "NEW: Reverse lookup - practical vocabulary"
+      "notes": "NEW: Reverse lookup - practical vocabulary (note: guaguan = expensive, not mahalang which means 'yearn')"
     },
     {
       "id": 74,

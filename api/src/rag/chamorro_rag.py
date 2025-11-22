@@ -93,13 +93,20 @@ def detect_query_type(query: str) -> str:
 
 def extract_target_word(query: str) -> str:
     """
-    Extract the English word being translated from a query.
+    Extract the target word from a lookup query (English→Chamorro OR Chamorro→English).
     
     Examples:
-        "What is 'listen' in Chamorro?" → "listen"
-        "How do you say 'house'?" → "house"
-        "Translate 'apple' to Chamorro" → "apple"
-        "What is the Chamorro word for 'water'?" → "water"
+        English→Chamorro:
+        - "What is 'listen' in Chamorro?" → "listen"
+        - "How do you say 'house'?" → "house"
+        - "Translate 'apple' to Chamorro" → "apple"
+        - "What is the Chamorro word for 'water'?" → "water"
+        
+        Chamorro→English:
+        - "What does 'patgon' mean?" → "patgon"
+        - "What does patgon mean in English?" → "patgon"
+        - "Translate 'ga'lågu' to English" → "ga'lågu"
+        - "What is 'bunitu' in English?" → "bunitu"
     
     Args:
         query: The user's question
@@ -109,17 +116,27 @@ def extract_target_word(query: str) -> str:
     """
     import re
     
-    # Pattern 1: Word in quotes
+    # Pattern 1: Word in quotes (handles both directions)
     match = re.search(r"['\"]([^'\"]+)['\"]", query)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 2: "word for X"
+    # Pattern 2: "what does X mean" (Chamorro→English)
+    match = re.search(r"what does ([^\s?]+) mean", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 3: "what is X in English" (Chamorro→English)
+    match = re.search(r"what is ([^\s?]+) in english", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 4: "word for X" (English→Chamorro)
     match = re.search(r"word for (\w+)", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 3: "translate X to"
+    # Pattern 5: "translate X to" (handles both directions)
     match = re.search(r"translate (\w+) to", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
@@ -216,68 +233,109 @@ class ChamorroRAG:
     
     def _keyword_search_dictionaries(self, target_word, k=3):
         """
-        Fast keyword search for dictionary entries containing the target word.
-        Handles both English→Chamorro and Chamorro→English lookups.
+        Fast keyword search for dictionary entries.
+        
+        IMPORTANT: Our dictionaries have CHAMORRO headwords, not English headwords.
+        Format: **hånom** noun. water; liquid.
+        
+        This method uses SQL for CHAMORRO→ENGLISH lookups (exact headword match).
+        For ENGLISH→CHAMORRO, we rely on semantic search (see _search_impl).
         
         Args:
-            target_word: The word to look up (e.g., "listen", "house", "mamahlao", "gofli'e'")
+            target_word: The Chamorro word to look up (e.g., "mamahlao", "gofli'e'", "patgon")
             k: Number of results to return
             
         Returns:
-            List of documents from dictionaries containing the word
+            List of documents from dictionaries containing the Chamorro word
         """
         if not target_word:
             return []
         
         try:
+            import psycopg
+            import os
+            from langchain_core.documents import Document
+            
             target_lower = target_word.lower()
             
-            # For Chamorro words with special characters (apostrophes, special letters),
-            # try direct SQL search for exact headword entries
-            # Only do this for words that look distinctly Chamorro (have apostrophe or å, ñ, etc.)
-            has_special_chars = any(c in target_word for c in ["'", "å", "ñ", "ó", "é", "í", "ú"])
-            
-            if has_special_chars:
-                import psycopg
-                import os
+            # SQL search for Chamorro headwords (fast and accurate)
+            try:
+                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                cur = conn.cursor()
                 
-                try:
-                    conn = psycopg.connect(os.getenv("DATABASE_URL"))
-                    cur = conn.cursor()
+                # Search for Chamorro headword entries
+                # Priority: exact headword match > word in definition > word anywhere
+                cur.execute("""
+                    SELECT 
+                        document,
+                        cmetadata,
+                        CASE
+                            -- Priority 1: Exact headword match (at start of entry)
+                            WHEN document ILIKE %s OR document ILIKE %s THEN 1
+                            -- Priority 2: Word in first few lines (definition area)
+                            WHEN document ILIKE %s THEN 2
+                            ELSE 3
+                        END as priority
+                    FROM langchain_pg_embedding 
+                    WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
+                           OR cmetadata->>'source' LIKE '%%TOD%%'
+                           OR cmetadata->>'source' LIKE '%%supplemental%%')
+                    AND (
+                        document ILIKE %s
+                        OR document ILIKE %s
+                        OR document ILIKE %s
+                    )
+                    ORDER BY priority ASC, LENGTH(document) ASC
+                    LIMIT %s
+                """, (
+                    # Priority 1: Headword patterns
+                    f'**{target_lower}**\n%%',  # Headword with newline
+                    f'**{target_lower}** %%',   # Headword with space
+                    # Priority 2: In definition
+                    f'%%\n{target_lower}%%',    # Word in definition (after newline)
+                    # Search patterns (repeated for WHERE clause)
+                    f'**{target_lower}**\n%%',
+                    f'**{target_lower}** %%',
+                    f'%%\n{target_lower}%%',
+                    k * 2  # Get extra results, we'll filter further
+                ))
+                
+                results = cur.fetchall()
+                conn.close()
+                
+                if results:
+                    docs = []
+                    seen_content = set()  # Deduplicate
                     
-                    # Search for EXACT headword match (documents starting with **word** followed by newline or space)
-                    cur.execute("""
-                        SELECT 
-                            document,
-                            cmetadata
-                        FROM langchain_pg_embedding 
-                        WHERE (cmetadata->>'source' LIKE '%%dictionary%%')
-                        AND (
-                            document LIKE %s
-                            OR document LIKE %s
-                        )
-                        LIMIT %s
-                    """, (f'**{target_lower}**\n%%', f'**{target_lower}** %%', k))
-                    
-                    results = cur.fetchall()
-                    conn.close()
-                    
-                    if results:
-                        # Found exact headword entries!
-                        from langchain_core.documents import Document
-                        docs = []
-                        for content, metadata in results:
+                    for content, metadata, priority in results:
+                        # Skip duplicates
+                        if content in seen_content:
+                            continue
+                        
+                        # Extract the first 3-4 lines (headword and definition, before examples)
+                        lines = content.split('\n')
+                        first_lines = '\n'.join(lines[:4]).lower()
+                        
+                        # Word must appear in first few lines (headword/definition area, not examples)
+                        if target_lower in first_lines:
+                            seen_content.add(content)
                             docs.append(Document(page_content=content, metadata=metadata))
+                            
+                            if len(docs) >= k:
+                                break
+                    
+                    if docs:
                         return docs
-                except Exception as e:
-                    print(f"⚠️  SQL search error: {e}")
-                    # Fall through to semantic search
+                        
+            except Exception as e:
+                print(f"⚠️  SQL search error: {e}")
+                # Fall through to semantic search
             
-            # Fall back to semantic search + filtering for English words or if SQL failed
+            # Fall back to semantic search + filtering if SQL failed
             results = self.vectorstore.similarity_search(
-                target_word,  # Simple word, not full question
-                k=k*5,  # Get more candidates
-                filter=None  # No filter yet, we'll filter manually
+                target_word,
+                k=k*5,
+                filter=None
             )
             
             # Filter to only dictionary sources containing the target word
@@ -288,10 +346,10 @@ class ChamorroRAG:
                 content = doc.page_content.lower()
                 
                 # Must be from a dictionary
-                if not any(dict_name in source for dict_name in ['dictionary', 'TOD', 'chamoru_info']):
+                if not any(dict_name in source for dict_name in ['dictionary', 'TOD', 'chamoru_info', 'supplemental']):
                     continue
                 
-                # Must contain the target word (or very close variant)
+                # Must contain the target word
                 if target_lower in content:
                     dict_results.append(doc)
                     if len(dict_results) >= k:
@@ -335,12 +393,24 @@ class ChamorroRAG:
             target_word = extract_target_word(query)
             
             if target_word:
-                # Try keyword search in dictionaries
-                keyword_dict_results = self._keyword_search_dictionaries(target_word, k=k)
+                # IMPORTANT: Only use SQL keyword search for CHAMORRO→ENGLISH lookups
+                # Our dictionaries have Chamorro headwords, not English headwords
+                # Detect if target word is likely Chamorro (has special chars or common patterns)
+                is_chamorro_word = any(c in target_word for c in ["'", "å", "ñ", "ó", "é", "í", "ú", "ü"])
                 
-                if keyword_dict_results:
-                    # Found dictionary entries! Return them directly
-                    return [(doc.page_content, doc.metadata) for doc in keyword_dict_results]
+                # Also check if query explicitly asks for English translation
+                is_cham_to_eng = any(phrase in query_lower for phrase in [
+                    'mean in english', 'to english', 'mean?', 'does ', 'translate to english'
+                ])
+                
+                if is_chamorro_word or is_cham_to_eng:
+                    # Chamorro→English: Use fast SQL keyword search for exact headword match
+                    keyword_dict_results = self._keyword_search_dictionaries(target_word, k=k)
+                    
+                    if keyword_dict_results:
+                        # Found dictionary entries! Return them directly
+                        return [(doc.page_content, doc.metadata) for doc in keyword_dict_results]
+                # For English→Chamorro, we fall through to semantic search below
         
         # Stage 1: Keyword-based retrieval for specific content (greetings, etc.)
         keyword_results = []
