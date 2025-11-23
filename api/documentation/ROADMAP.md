@@ -1,7 +1,9 @@
-# 🎯 HåfaGPT - Updated Progress & Next Steps
+# 🎯 HåfaGPT Evaluation & Improvement Roadmap
 
 **Last Updated:** November 23, 2025  
 **Current Status:** 96% accuracy with GPT-4o 🎉
+
+> **Note:** This is the living roadmap. Historical documents archived in `documentation/archive/`.
 
 ---
 
