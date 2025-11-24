@@ -242,3 +242,21 @@ class ReviewCardResponse(BaseModel):
     message: str = Field(..., description="Feedback message")
     days_until_next: int = Field(..., description="Days until next review")
 
+
+# Message Feedback Models
+
+class MessageFeedbackRequest(BaseModel):
+    """Request to submit feedback on a message"""
+    message_id: Optional[str] = Field(None, description="Message UUID (if available)")
+    conversation_id: Optional[str] = Field(None, description="Conversation UUID")
+    feedback_type: str = Field(..., description="Feedback type: 'up' or 'down'", pattern="^(up|down)$")
+    user_query: Optional[str] = Field(None, description="The user's query")
+    bot_response: Optional[str] = Field(None, description="The bot's response")
+
+
+class MessageFeedbackResponse(BaseModel):
+    """Response after submitting feedback"""
+    status: str = Field(..., description="Status message")
+    feedback_id: str = Field(..., description="UUID of created feedback")
+
+

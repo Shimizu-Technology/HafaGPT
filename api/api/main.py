@@ -42,7 +42,10 @@ from .models import (
     UserDecksResponse,
     DeckCardsResponse,
     ReviewCardRequest,
-    ReviewCardResponse
+    ReviewCardResponse,
+    # Feedback Models
+    MessageFeedbackRequest,
+    MessageFeedbackResponse
 )
 from .chatbot_service import get_chatbot_response
 from . import conversations
@@ -1599,6 +1602,73 @@ async def review_flashcard(request: ReviewCardRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update progress: {str(e)}"
+        )
+
+
+# ==========================================
+# Message Feedback Endpoint
+# ==========================================
+
+@app.post("/api/feedback", response_model=MessageFeedbackResponse)
+async def submit_feedback(request: MessageFeedbackRequest, authorization: Optional[str] = Header(None)):
+    """
+    Submit feedback (thumbs up/down) on a message.
+    
+    Allows both authenticated and anonymous users to provide feedback.
+    """
+    try:
+        # Try to verify user, but allow anonymous feedback
+        user_id = None
+        try:
+            user_id = await verify_user(authorization)
+        except HTTPException:
+            # Anonymous user - that's okay for feedback
+            logger.info("📊 [FEEDBACK] Anonymous user submitting feedback")
+        
+        # Validate feedback type
+        if request.feedback_type not in ['up', 'down']:
+            raise HTTPException(
+                status_code=400,
+                detail="feedback_type must be 'up' or 'down'"
+            )
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Insert feedback
+        cursor.execute("""
+            INSERT INTO message_feedback (
+                message_id, conversation_id, user_id, feedback_type, user_query, bot_response
+            )
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            request.message_id,
+            request.conversation_id,
+            user_id,
+            request.feedback_type,
+            request.user_query,
+            request.bot_response
+        ))
+        
+        feedback_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [FEEDBACK] {request.feedback_type} - user: {user_id or 'anonymous'}, message: {request.message_id}")
+        
+        return MessageFeedbackResponse(
+            status="success",
+            feedback_id=str(feedback_id)
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ [FEEDBACK] Failed to save feedback: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save feedback: {str(e)}"
         )
 
 
