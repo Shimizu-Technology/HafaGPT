@@ -8,6 +8,7 @@ function generateSessionId(): string {
 }
 
 export interface ChatMessage {
+  id?: string; // Message UUID from database
   role: 'user' | 'assistant' | 'system';
   content: string;
   imageUrl?: string; // For displaying uploaded images in chat history
@@ -18,6 +19,7 @@ export interface ChatMessage {
   timestamp?: number;
   systemType?: 'mode_change'; // Type of system message
   mode?: 'english' | 'chamorro' | 'learn'; // For mode change messages
+  conversation_id?: string; // Conversation UUID
 }
 
 export interface ChatResponse {

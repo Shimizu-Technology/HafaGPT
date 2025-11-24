@@ -1,4 +1,4 @@
-import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
@@ -16,12 +16,16 @@ interface MessageProps {
   systemType?: 'mode_change';
   mode?: 'english' | 'chamorro' | 'learn';
   onImageClick?: (imageUrl: string) => void; // Callback for image clicks
+  messageId?: string; // Message UUID for feedback
+  conversationId?: string; // Conversation UUID for feedback
 }
 
-export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick }: MessageProps) {
+export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
 
   const handleCopy = async () => {
@@ -73,6 +77,59 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
       // Still show feedback even if copy failed
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleFeedback = async (type: 'up' | 'down') => {
+    // If already submitted this feedback, ignore
+    if (feedback === type || feedbackSubmitting) return;
+
+    setFeedbackSubmitting(true);
+    setFeedback(type);
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      
+      const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('clerk-token') && {
+            'Authorization': `Bearer ${localStorage.getItem('clerk-token')}`
+          })
+        },
+        body: JSON.stringify({
+          message_id: messageId,
+          conversation_id: conversationId,
+          feedback_type: type,
+          bot_response: content
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      console.log(`✅ Feedback submitted: ${type}`);
+      
+      // Track in PostHog (if available)
+      if (window.posthog) {
+        window.posthog.capture('message_feedback', {
+          feedback_type: type,
+          message_id: messageId,
+          conversation_id: conversationId,
+          has_sources: sources && sources.length > 0,
+          used_rag,
+          used_web_search,
+          response_time
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to submit feedback:', error);
+      // Reset feedback state on error
+      setFeedback(null);
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -368,6 +425,37 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                 )}
               </button>
             )}
+
+            {/* Feedback Buttons */}
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-cream-300 dark:border-gray-600">
+              {/* Thumbs Up */}
+              <button
+                onClick={() => handleFeedback('up')}
+                disabled={feedbackSubmitting || feedback === 'up'}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  feedback === 'up'
+                    ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                title="This was helpful"
+              >
+                <ThumbsUp className={`w-3 h-3 ${feedback === 'up' ? 'fill-current' : ''}`} />
+              </button>
+
+              {/* Thumbs Down */}
+              <button
+                onClick={() => handleFeedback('down')}
+                disabled={feedbackSubmitting || feedback === 'down'}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  feedback === 'down'
+                    ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                title="This wasn't helpful"
+              >
+                <ThumbsDown className={`w-3 h-3 ${feedback === 'down' ? 'fill-current' : ''}`} />
+              </button>
+            </div>
           </div>
         )}
         

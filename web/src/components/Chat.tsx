@@ -626,6 +626,8 @@ End of Export
                   systemType={message.systemType}
                   mode={message.mode}
                   onImageClick={setSelectedImage}
+                  messageId={message.id}
+                  conversationId={activeConversationId || undefined}
                 />
               ))}
               {loading && <LoadingIndicator />}
