@@ -522,32 +522,41 @@ CREATE TABLE quiz_results (
 
 ---
 
-### **Phase 2B: Daily Word/Phrase** 📅 **QUICK WIN**
+### **Phase 2B: Daily Word/Phrase** 📅 ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Complete  
 **Complexity:** Low  
 **Effort:** 1 day  
-**Cost:** None
+**Cost:** None (frontend only)
 
-**Why This Feature:**
-- 📅 Builds daily learning habit
-- 🎯 Bite-sized learning (1 word/phrase per day)
-- 🔔 Engagement driver (reason to open app daily)
-- 👶 Simple enough for kids
+**What's Implemented:**
+- 🌟 **76 words/phrases** across 7 categories
+- 📊 **Difficulty mix:** Beginner (70%), Intermediate (26%), Advanced (4%)
+- 🔊 **TTS pronunciation** button
+- 📝 **Example sentences** (expandable)
+- 🏷️ **Difficulty badges** and category labels
+- 🌙 **Dark mode support** with shadow/depth effects
+- 📱 **Mobile optimized** - collapsible mode explanations
 
-**Implementation:**
-- Homepage widget showing today's word
-- Word, pronunciation guide, meaning, example sentence
-- "Add to Flashcards" button
-- Calendar view of past words
-- Streak tracking (days in a row)
+**Categories:**
+- Greetings, Family, Food & Drink, Numbers, Colors, Common Phrases, Culture, Verbs
 
-**Features:**
-- [ ] Daily word selection (rotate through vocabulary)
-- [ ] Homepage widget
+**How It Works:**
+- Rotates daily based on day of year
+- Everyone sees the same word on the same day
+- Cycles through all 76 words, then repeats
+- Changes at midnight (user's local time)
+
+**Architecture:** Frontend-only (`dailyWords.ts`)
+- No backend/database needed
+- Instant loading
+- Works offline
+
+**Future Enhancements:**
 - [ ] "Add to Flashcards" integration
-- [ ] Streak counter
+- [ ] Streak tracking (days in a row)
 - [ ] Past words calendar/history
+- [ ] User can mark as "learned"
 
 ---
 
@@ -802,7 +811,7 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 1** | ✅ User Feedback System (Thumbs Up/Down) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ File Upload (PDF/Word/Text) | - | ✅ **COMPLETED** |
 | **Phase 2A** | ✅ Quiz Mode (Stateless MVP) | - | ✅ **COMPLETED** |
-| **Phase 2B** | Daily Word/Phrase | 1 day | 🔴 **UP NEXT** |
+| **Phase 2B** | ✅ Daily Word/Phrase | - | ✅ **COMPLETED** |
 | **Phase 2C** | Progress Dashboard | 2-3 days | 📋 Planned |
 | **Phase 2D** | Vocabulary Browser | 1-2 days | 📋 Planned |
 | **Phase 2E** | Story Mode (Text-Only) | 2-3 days | 📋 Planned |
@@ -822,11 +831,11 @@ DATABASE_URL=postgresql://neon.tech/...
    - 6 categories, 48 questions, 3 question types
    - Hardcoded in frontend for instant loading
 
-2. **Daily Word/Phrase** - 1 day 🔴 **START HERE**
-   - Quick win, builds habit
-   - Easy to implement
+2. ~~**Daily Word/Phrase**~~ ✅ **COMPLETED**
+   - 76 words across 7 categories
+   - Homepage widget with TTS, examples, difficulty badges
 
-3. **Progress Dashboard** - 2-3 days
+3. **Progress Dashboard** - 2-3 days 🔴 **START HERE**
    - Motivation for continued learning
    - Visual progress tracking
 
