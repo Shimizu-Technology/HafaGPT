@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, BookOpen } from 'lucide-react';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, BookOpen, Brain } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -550,9 +550,21 @@ End of Export
                 to="/flashcards"
                 className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
                 aria-label="Study flashcards"
+                title="Study flashcards"
               >
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden md:inline text-sm font-medium">Study</span>
+                <span className="hidden lg:inline text-sm font-medium">Study</span>
+              </Link>
+              
+              {/* Quiz Button - Link to Quiz Mode */}
+              <Link
+                to="/quiz"
+                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
+                aria-label="Take a quiz"
+                title="Take a quiz"
+              >
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden lg:inline text-sm font-medium">Quiz</span>
               </Link>
               
               <button
