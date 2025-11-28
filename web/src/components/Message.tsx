@@ -1,13 +1,32 @@
-import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
 
+// Helper to determine file type from URL
+function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'unknown' {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/)) return 'image';
+  if (lowerUrl.match(/\.pdf(\?|$)/)) return 'pdf';
+  if (lowerUrl.match(/\.(docx|doc)(\?|$)/)) return 'docx';
+  if (lowerUrl.match(/\.txt(\?|$)/)) return 'txt';
+  return 'unknown';
+}
+
+// Helper to get filename from URL
+function getFilenameFromUrl(url: string): string {
+  const parts = url.split('/');
+  const filename = parts[parts.length - 1].split('?')[0];
+  // Remove timestamp prefix if present (format: YYYYMMDD_HHMMSS_)
+  const cleanName = filename.replace(/^\d{8}_\d{6}_/, '');
+  return cleanName || 'document';
+}
+
 interface MessageProps {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  imageUrl?: string; // For displaying uploaded images
+  imageUrl?: string; // For displaying uploaded files (images and documents)
   sources?: Array<{ name: string; page: number | null }>;
   used_rag?: boolean;
   used_web_search?: boolean;
@@ -113,8 +132,10 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
       console.log(`✅ Feedback submitted: ${type}`);
       
       // Track in PostHog (if available)
-      if (window.posthog) {
-        window.posthog.capture('message_feedback', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ph = (window as any).posthog;
+      if (ph) {
+        ph.capture('message_feedback', {
           feedback_type: type,
           message_id: messageId,
           conversation_id: conversationId,
@@ -238,16 +259,41 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
         >
           {isUser ? (
             <div className="space-y-2">
-              {/* Image Preview */}
+              {/* File/Image Preview */}
               {imageUrl && (
                 <div className="mb-2">
-                  <img 
-                    src={imageUrl} 
-                    alt="Uploaded content" 
-                    className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
-                    onClick={() => onImageClick?.(imageUrl)}
-                    title="Click to enlarge"
-                  />
+                  {getFileTypeFromUrl(imageUrl) === 'image' ? (
+                    // Image preview
+                    <img 
+                      src={imageUrl} 
+                      alt="Uploaded content" 
+                      className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                      onClick={() => onImageClick?.(imageUrl)}
+                      title="Click to enlarge"
+                    />
+                  ) : (
+                    // Document preview (PDF, Word, Text)
+                    <a
+                      href={imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 bg-white/20 dark:bg-black/20 rounded-lg hover:bg-white/30 dark:hover:bg-black/30 transition-colors max-w-fit"
+                    >
+                      {getFileTypeFromUrl(imageUrl) === 'pdf' && <FileText className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'docx' && <FileText className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'txt' && <File className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'unknown' && <File className="w-5 h-5" />}
+                      <div className="flex flex-col">
+                        <span className="text-xs opacity-80">
+                          {getFileTypeFromUrl(imageUrl).toUpperCase()}
+                        </span>
+                        <span className="text-sm font-medium max-w-[200px] truncate">
+                          {getFilenameFromUrl(imageUrl)}
+                        </span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 opacity-60" />
+                    </a>
+                  )}
                 </div>
               )}
               {/* Text Content */}

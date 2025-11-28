@@ -74,7 +74,7 @@ export function useChatbot() {
         }
       }
       
-      // Use FormData if image is present, otherwise JSON
+      // Use FormData if file is present, otherwise JSON
       let body: FormData | string;
       let headers: Record<string, string> = {
         // Add Authorization header if user is logged in
@@ -82,7 +82,7 @@ export function useChatbot() {
       };
 
       if (image) {
-        // FormData for image upload
+        // FormData for file upload (images, PDFs, Word docs, text files)
         const formData = new FormData();
         formData.append('message', message);
         formData.append('mode', mode);
@@ -90,7 +90,7 @@ export function useChatbot() {
         if (conversationId) {
           formData.append('conversation_id', conversationId);
         }
-        formData.append('image', image);
+        formData.append('file', image); // Changed from 'image' to 'file' to support all file types
         body = formData;
         // Don't set Content-Type for FormData - browser will set it with boundary
       } else {

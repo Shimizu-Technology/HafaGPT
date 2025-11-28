@@ -1,8 +1,24 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File } from 'lucide-react';
+
+// Supported file types
+const SUPPORTED_FILE_TYPES = [
+  // Images
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  // Documents
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'text/plain',
+];
+
+// Accept string for file input
+const FILE_ACCEPT = 'image/*,.pdf,.docx,.txt';
 
 interface MessageInputProps {
-  onSend: (message: string, image?: File) => void;
+  onSend: (message: string, file?: File) => void;
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
@@ -12,8 +28,8 @@ interface MessageInputProps {
 export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -27,35 +43,61 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
     }
   }, [input, textareaRef]);
 
-  // Cleanup speech recognition and image preview on unmount
+  // Cleanup speech recognition and file preview on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
+      if (filePreview) {
+        URL.revokeObjectURL(filePreview);
       }
     };
-  }, [imagePreview]);
+  }, [filePreview]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
+    if (!file) return;
+    
+    // Check if file type is supported
+    if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
+      alert('Unsupported file type. Please upload an image, PDF, Word document (.docx), or text file.');
+      return;
+    }
+    
+    setSelectedFile(file);
+    
+    // Create preview for images only
+    if (file.type.startsWith('image/')) {
+      setFilePreview(URL.createObjectURL(file));
+    } else {
+      setFilePreview(null); // No preview for documents
     }
   };
 
-  const removeImage = () => {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
+  const removeFile = () => {
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
     }
-    setSelectedImage(null);
-    setImagePreview(null);
+    setSelectedFile(null);
+    setFilePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Helper to get file type icon and label
+  const getFileTypeInfo = (file: File): { icon: React.ReactNode; label: string } => {
+    if (file.type.startsWith('image/')) {
+      return { icon: <Camera className="w-4 h-4" />, label: 'Image' };
+    } else if (file.type === 'application/pdf') {
+      return { icon: <FileText className="w-4 h-4" />, label: 'PDF' };
+    } else if (file.type.includes('wordprocessingml') || file.type === 'application/msword') {
+      return { icon: <FileText className="w-4 h-4" />, label: 'Word' };
+    } else if (file.type === 'text/plain') {
+      return { icon: <File className="w-4 h-4" />, label: 'Text' };
+    }
+    return { icon: <File className="w-4 h-4" />, label: 'File' };
   };
 
   const startListening = () => {
@@ -110,10 +152,22 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   };
 
   const handleSend = () => {
-    if ((input.trim() || selectedImage) && !disabled) {
-      onSend(input.trim() || 'What does this say?', selectedImage || undefined);
+    if ((input.trim() || selectedFile) && !disabled) {
+      // Default message based on file type
+      let defaultMessage = 'What does this say?';
+      if (selectedFile) {
+        if (selectedFile.type === 'application/pdf') {
+          defaultMessage = 'Please analyze this PDF document';
+        } else if (selectedFile.type.includes('wordprocessingml')) {
+          defaultMessage = 'Please analyze this Word document';
+        } else if (selectedFile.type === 'text/plain') {
+          defaultMessage = 'Please analyze this text file';
+        }
+      }
+      
+      onSend(input.trim() || defaultMessage, selectedFile || undefined);
       setInput('');
-      removeImage();
+      removeFile();
       // Reset height after sending
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -136,18 +190,34 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   return (
     <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="w-full max-w-3xl mx-auto">
-        {/* Image Preview */}
-        {imagePreview && (
+        {/* File Preview */}
+        {selectedFile && (
           <div className="mb-2 relative inline-block">
-            <img 
-              src={imagePreview} 
-              alt="Upload preview" 
-              className="max-h-32 rounded-lg shadow-md"
-            />
+            {filePreview ? (
+              // Image preview
+              <img 
+                src={filePreview} 
+                alt="Upload preview" 
+                className="max-h-32 rounded-lg shadow-md"
+              />
+            ) : (
+              // Document preview (non-image)
+              <div className="flex items-center gap-2 px-3 py-2 bg-cream-100 dark:bg-gray-700 rounded-lg shadow-md">
+                {getFileTypeInfo(selectedFile).icon}
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-brown-600 dark:text-gray-300">
+                    {getFileTypeInfo(selectedFile).label}
+                  </span>
+                  <span className="text-sm text-brown-800 dark:text-gray-100 max-w-[200px] truncate">
+                    {selectedFile.name}
+                  </span>
+                </div>
+              </div>
+            )}
             <button
-              onClick={removeImage}
+              onClick={removeFile}
               className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg transition-colors"
-              aria-label="Remove image"
+              aria-label="Remove file"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -171,13 +241,13 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
 
-          {/* Camera/Image Upload Button */}
+          {/* Camera/File Upload Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
             className="px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end"
-            aria-label="Upload image"
-            title="Upload image of Chamorro text"
+            aria-label="Upload file"
+            title="Upload image, PDF, Word doc, or text file"
             style={{ minHeight: '40px', minWidth: '40px' }}
           >
             <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -185,8 +255,8 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
+            accept={FILE_ACCEPT}
+            onChange={handleFileSelect}
             className="hidden"
           />
 
@@ -205,7 +275,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           />
           <button
             onClick={handleSend}
-            disabled={disabled || (!input.trim() && !selectedImage)}
+            disabled={disabled || (!input.trim() && !selectedFile)}
             className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
             aria-label="Send message"
             title="Send message (Enter)"
