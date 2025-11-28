@@ -6,7 +6,7 @@
 
 HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - 🤖 **AI Chat Tutor** - Ask questions, practice conversations, get translations
-- 📖 **Story Mode** - Read 17 Chamorro stories with tap-to-translate
+- 📖 **Story Mode** - Read 24 Chamorro stories with tap-to-translate
 - 🎴 **Flashcards** - Study vocabulary with curated decks or AI-generated cards
 - 📝 **Quizzes** - Test your knowledge with multiple question types
 - 📚 **Vocabulary Browser** - Explore 10,350+ dictionary words by category
@@ -21,7 +21,7 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 
 ### **Core Learning Tools**
 - ✅ **AI Chat Tutor** - 3 modes: English, Chamorro immersion, Learning mode
-- ✅ **Story Mode** - 17 stories (6 curated + 11 Lengguahi-ta) with tap-to-translate
+- ✅ **Story Mode** - 24 stories (6 curated + 18 Lengguahi-ta) with tap-to-translate
 - ✅ **Flashcards** - 6 curated decks + dictionary-based cards (10,350+ words)
 - ✅ **Quizzes** - 6 categories with curated + dictionary-generated questions
 - ✅ **Vocabulary Browser** - Browse, search, and learn from full dictionary
@@ -669,7 +669,7 @@ CREATE TABLE quiz_results (
 **Cost:** None
 
 **What's Implemented:**
-- 📚 **17 Total Stories** - 6 curated + 11 pre-extracted from Lengguahi-ta
+- 📚 **24 Total Stories** - 6 curated + 18 pre-extracted from Lengguahi-ta
 - 🔤 **Tap-to-Translate** - Click any word to see translation
 - 🧠 **Chamorro Morphology** - Strips possessive suffixes (-ña, -hu, -mu) to find root words
 - 📖 **Paragraph Navigation** - Progress through stories one paragraph at a time
@@ -685,11 +685,13 @@ CREATE TABLE quiz_results (
   - I Taotao Mo'na (Intermediate - Spirits)
   - I Fiestas Chamorro (Intermediate - Culture)
   - I Haligi yan i Tasa (Advanced - History)
-- **Lengguahi-ta Stories (11)** - Pre-extracted bilingual stories
+- **Lengguahi-ta Stories (18)** - Pre-extracted bilingual stories
   - The Sandpiper Girl (50 paragraphs)
   - The Women of Guam and Their Land (27 paragraphs)
+  - Taga's Youngest Son (25 paragraphs)
   - The Canary and The White Tern (27 paragraphs)
-  - And 8 more...
+  - When Taga Became Chief of Tinian (14 paragraphs)
+  - And 13 more...
 
 **Technical Implementation:**
 - **Backend:**
@@ -729,12 +731,21 @@ CREATE TABLE quiz_results (
 **Effort:** 1-2 days per source  
 **Cost:** None
 
-**Goal:** Grow from 17 stories to 50+ stories for more learning variety.
+**Goal:** Grow from 24 stories to 50+ stories for more learning variety.
 
-**Current Story Count:**
+**Current Story Count:** *(Updated Nov 2025)*
 - 6 Curated Stories (hand-crafted with quizzes)
-- 11 Lengguahi-ta Stories (pre-extracted)
-- **Total: 17 stories**
+- 18 Lengguahi-ta Stories (pre-extracted, up from 11!)
+- **Total: 24 stories**
+
+**Recent Additions (Nov 2025):**
+- ✅ Taga's Youngest Son (25 paragraphs)
+- ✅ When Taga Became Chief of Tinian (14 paragraphs)
+- ✅ What Caused The Fruitbats To Have No Friends (10 paragraphs)
+- ✅ Truly Beautiful (6 paragraphs)
+- ✅ The Old Man and His Grandson (beginner)
+- ✅ Why the Yellow Bittern is Skinny (beginner)
+- ✅ The Beautiful Mango (beginner)
 
 **Potential Sources to Add:**
 
@@ -748,16 +759,20 @@ CREATE TABLE quiz_results (
   3. Script auto-validates quality and rejects bad content
 - **Estimated New Stories:** 10-20+
 
-#### **2. Guampedia Legends & Folktales** 🎯 **HIGH PRIORITY**
-- **URL:** https://guampedia.com/category/chamorro-legends/
+#### **2. Guampedia Legends & Folktales** ⚠️ **ENGLISH-ONLY**
+- **URL:** https://guampedia.com/i-man-chamorro/chamorro-folktales/
 - **Content Type:** Traditional Chamorro legends, cultural stories
-- **Why:** Rich cultural content, authoritative source
-- **Challenge:** Most content is English-only (no Chamorro text)
-- **Options:**
-  - A) Use as English-only cultural reading
+- **Status:** ⚠️ INVESTIGATED - English-only content, not suitable for tap-to-translate
+- **Available Stories:** ~9 folktales (Gadao's Strength, Puntan & Fu'una, Sirena, etc.)
+- **Why Not Suitable:** 
+  - Stories are written entirely in English
+  - Only occasional Chamorro words (maga'låhi, Guåhan, etc.)
+  - No bilingual Chamorro/English format
+- **Options for Future:**
+  - A) Add as "English Cultural Reading" category (no tap-to-translate)
   - B) Use AI to generate Chamorro translations (with disclaimer)
   - C) Partner with Guampedia for bilingual versions
-- **Estimated Stories:** 20-30 legends
+- **Recommendation:** Skip for now, focus on Lengguahi-ta which has bilingual content
 
 #### **3. Chamorro Language Blogs** 🔄 **MEDIUM PRIORITY**
 - **URLs:** 
@@ -782,21 +797,19 @@ CREATE TABLE quiz_results (
 
 **Implementation Plan:**
 
-**Phase 1: Lengguahi-ta Expansion (1 day)**
-1. Re-crawl Lengguahi-ta website
-2. Run extraction script
-3. Manually review new stories
-4. Update `extracted_stories.json`
+**Phase 1: Lengguahi-ta Expansion** ✅ **COMPLETED (Nov 2025)**
+1. ✅ Updated extraction script to find more content
+2. ✅ Extracted 7 new stories (11 → 18 total)
+3. ✅ Added 3 beginner-level stories
+4. ✅ Updated `extracted_stories.json`
 
-**Phase 2: Guampedia Legends (2-3 days)**
-1. Create new extraction script for Guampedia format
-2. Extract legend content (English)
-3. Decide on bilingual approach
-4. Add to story library with "English-only" tag
+**Phase 2: Guampedia Legends** ⏸️ **DEFERRED**
+- Investigated: Content is English-only, not suitable for tap-to-translate
+- Options: Add as English reading category, or AI-translate (future)
 
-**Phase 3: Blog Content (1-2 days)**
+**Phase 3: Blog Content (1-2 days)** 📋 **PLANNED**
 1. Create extraction script for blog format
-2. Extract short readings
+2. Extract short readings from Chamorro blogs
 3. Add as "Quick Reads" category
 
 **Success Metrics:**
@@ -971,7 +984,7 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2B** | ✅ Daily Word/Phrase (API-powered) | - | ✅ **COMPLETED** |
 | **Phase 2C** | ✅ Progress Dashboard + Quiz Review | - | ✅ **COMPLETED** |
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
-| **Phase 2E** | ✅ Story Mode (17 stories + tap-to-translate) | - | ✅ **COMPLETED** |
+| **Phase 2E** | ✅ Story Mode (24 stories + tap-to-translate) | - | ✅ **COMPLETED** |
 | **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
 | **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 🚧 In Progress |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
@@ -1004,7 +1017,7 @@ DATABASE_URL=postgresql://neon.tech/...
    - Pagination, categories, TTS pronunciation
 
 5. ~~**Story Mode**~~ ✅ **COMPLETED**
-   - 17 stories (6 curated + 11 Lengguahi-ta)
+   - 24 stories (6 curated + 18 Lengguahi-ta)
    - Tap-to-translate with Chamorro morphology
    - Comprehension quizzes for curated stories
    - Enhanced word lookup (root word extraction)
