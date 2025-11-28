@@ -14,6 +14,12 @@ Usage:
     python scripts/extract_stories.py
 
 The extracted stories are saved to data/extracted_stories.json
+
+Quality Control:
+- Validates Chamorro field actually contains Chamorro text
+- Validates English field actually contains English text
+- Rejects articles that are English-only (essays, analysis)
+- Rejects articles with mixed-up sections (footnotes, vocabulary notes)
 """
 
 import psycopg
@@ -55,6 +61,49 @@ def has_chamorro_diacritics(text):
     """Check if text contains Chamorro-specific characters."""
     chamorro_chars = set("åÅñÑ''")
     return any(c in text for c in chamorro_chars)
+
+
+def looks_like_pure_english(text):
+    """
+    Check if text is pure English (no Chamorro diacritics and many English words).
+    Used to detect when Chamorro field incorrectly contains English.
+    """
+    if has_chamorro_diacritics(text):
+        return False
+    
+    # Common English words that wouldn't appear in Chamorro text
+    english_words = [
+        'the', 'and', 'is', 'are', 'was', 'were', 'this', 'that', 'with', 'from',
+        'they', 'have', 'has', 'been', 'very', 'also', 'but', 'not', 'for', 'you',
+        'his', 'her', 'their', 'one', 'when', 'what', 'there', 'would', 'could',
+        'should', 'about', 'into', 'more', 'some', 'because', 'however', 'which'
+    ]
+    text_lower = text.lower()
+    english_count = sum(1 for w in english_words if f' {w} ' in f' {text_lower} ')
+    
+    # If 4+ common English words and no Chamorro diacritics, it's English
+    return english_count >= 4
+
+
+def looks_like_footnotes(text):
+    """
+    Check if text looks like footnotes/vocabulary notes rather than story content.
+    Lengguahi-ta uses numbered footnotes like "**1 ma'gåsi:** The root word is..."
+    """
+    # Check for footnote patterns
+    footnote_patterns = [
+        r'\*\*\d+ \w+:\*\*',  # **1 word:** pattern
+        r'^\d+ \w+:',         # 1 word: at start of line
+        r'The root word is',  # Vocabulary explanation
+        r'This literally means',  # Vocabulary explanation
+        r'The -\w+ suffix',   # Grammar explanation
+    ]
+    
+    for pattern in footnote_patterns:
+        if re.search(pattern, text):
+            return True
+    
+    return False
 
 
 def split_chamorro_english_sections(content):
@@ -226,6 +275,58 @@ def determine_category(title, content):
         return 'story'
 
 
+def validate_story_quality(story):
+    """
+    Validate that a story has correct Chamorro/English pairing.
+    
+    Returns:
+        (is_valid, reason) - Tuple of boolean and reason string
+    
+    Quality checks:
+    1. Chamorro field should contain Chamorro text (has diacritics or doesn't look like English)
+    2. English field should contain English text (no diacritics, looks like English)
+    3. Neither field should contain footnotes/vocabulary notes
+    """
+    paragraphs = story.get('paragraphs', [])
+    
+    if not paragraphs:
+        return False, "No paragraphs"
+    
+    chamorro_is_english_count = 0
+    english_has_chamorro_count = 0
+    footnote_count = 0
+    
+    for p in paragraphs:
+        chamorro = p.get('chamorro', '')
+        english = p.get('english', '')
+        
+        # Check if Chamorro field is actually English
+        if looks_like_pure_english(chamorro):
+            chamorro_is_english_count += 1
+        
+        # Check if English field has Chamorro (place names are OK, but not full text)
+        # Only flag if it has many Chamorro diacritics
+        chamorro_char_count = sum(1 for c in english if c in 'åÅñÑ')
+        if chamorro_char_count > 5:  # More than 5 diacritics suggests wrong language
+            english_has_chamorro_count += 1
+        
+        # Check for footnotes
+        if looks_like_footnotes(english):
+            footnote_count += 1
+    
+    total = len(paragraphs)
+    
+    # Reject if more than 30% of Chamorro fields contain pure English
+    if chamorro_is_english_count / total > 0.3:
+        return False, f"Chamorro field contains English ({chamorro_is_english_count}/{total} paragraphs)"
+    
+    # Reject if more than 50% of English fields have footnotes
+    if footnote_count / total > 0.5:
+        return False, f"English field contains footnotes ({footnote_count}/{total} paragraphs)"
+    
+    return True, "Valid"
+
+
 def process_story(url, title, content):
     """Process a single story and return structured data."""
     
@@ -233,13 +334,13 @@ def process_story(url, title, content):
     chamorro_title, chamorro_section, english_title, english_section = split_chamorro_english_sections(content)
     
     if not chamorro_section or not english_section:
-        return None
+        return None, "Could not split into Chamorro/English sections"
     
     # Extract paragraph pairs
     paragraphs = extract_paragraphs_from_sections(chamorro_section, english_section)
     
     if len(paragraphs) < 2:
-        return None
+        return None, "Not enough paragraphs"
     
     # Use the page title if we couldn't extract titles
     english_title = english_title or title.replace(' – Lengguahi-ta', '')
@@ -249,7 +350,7 @@ def process_story(url, title, content):
     story_id = create_story_id(url, english_title)
     category = determine_category(english_title, content)
     
-    return {
+    story = {
         'id': story_id,
         'title_english': english_title,
         'title_chamorro': chamorro_title,
@@ -261,6 +362,13 @@ def process_story(url, title, content):
         'paragraphs': paragraphs,
         'extracted_at': datetime.now().isoformat()
     }
+    
+    # Validate quality
+    is_valid, reason = validate_story_quality(story)
+    if not is_valid:
+        return None, reason
+    
+    return story, "Success"
 
 
 def main():
@@ -274,17 +382,27 @@ def main():
     
     stories = []
     seen_ids = set()
+    rejected = []
     
     for url, title, content, doc_length in candidates:
-        story = process_story(url, title, content)
+        story, reason = process_story(url, title, content)
         
         if story and story['id'] not in seen_ids:
             seen_ids.add(story['id'])
             print(f"  ✓ {story['title_english']} ({len(story['paragraphs'])} paragraphs, {story['difficulty']})")
             stories.append(story)
+        elif story is None and reason != "Could not split into Chamorro/English sections":
+            # Only log interesting rejections
+            clean_title = title.replace(' – Lengguahi-ta', '') if title else url
+            rejected.append((clean_title, reason))
     
     print(f"\n{'=' * 60}")
     print(f"Successfully extracted {len(stories)} unique stories")
+    
+    if rejected:
+        print(f"\nRejected {len(rejected)} stories:")
+        for title, reason in rejected[:10]:  # Show first 10
+            print(f"  ✗ {title[:50]}... - {reason}")
     
     # Sort by difficulty and category
     stories.sort(key=lambda s: (

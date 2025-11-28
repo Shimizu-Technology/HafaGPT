@@ -6,6 +6,7 @@
 
 HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - 🤖 **AI Chat Tutor** - Ask questions, practice conversations, get translations
+- 📖 **Story Mode** - Read 17 Chamorro stories with tap-to-translate
 - 🎴 **Flashcards** - Study vocabulary with curated decks or AI-generated cards
 - 📝 **Quizzes** - Test your knowledge with multiple question types
 - 📚 **Vocabulary Browser** - Explore 10,350+ dictionary words by category
@@ -20,6 +21,7 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 
 ### **Core Learning Tools**
 - ✅ **AI Chat Tutor** - 3 modes: English, Chamorro immersion, Learning mode
+- ✅ **Story Mode** - 17 stories (6 curated + 11 Lengguahi-ta) with tap-to-translate
 - ✅ **Flashcards** - 6 curated decks + dictionary-based cards (10,350+ words)
 - ✅ **Quizzes** - 6 categories with curated + dictionary-generated questions
 - ✅ **Vocabulary Browser** - Browse, search, and learn from full dictionary
@@ -659,37 +661,64 @@ CREATE TABLE quiz_results (
 
 ---
 
-### **Phase 2E: Story Mode (Text-Only)** 📖 **GREAT FOR KIDS**
+### **Phase 2E: Story Mode (Text-Only)** 📖 ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Complete  
 **Complexity:** Medium  
-**Effort:** 2-3 days  
+**Effort:** 3 days  
 **Cost:** None
 
-**Why This Feature:**
-- 📖 Reading practice in context
-- 🎭 Chamorro legends and stories (cultural learning!)
-- 👶 Perfect for parent-child reading time
-- 🔤 Tap-to-translate builds vocabulary naturally
-
-**Implementation:**
-- Curated Chamorro stories (from Lengguahi-ta, Guampedia legends)
-- **Tap any word** → Popup shows translation
-- Difficulty levels (simple → intermediate → advanced)
-- Comprehension questions after story
-- Track stories read
+**What's Implemented:**
+- 📚 **17 Total Stories** - 6 curated + 11 pre-extracted from Lengguahi-ta
+- 🔤 **Tap-to-Translate** - Click any word to see translation
+- 🧠 **Chamorro Morphology** - Strips possessive suffixes (-ña, -hu, -mu) to find root words
+- 📖 **Paragraph Navigation** - Progress through stories one paragraph at a time
+- 🔊 **TTS Pronunciation** - Listen to Chamorro text
+- ❓ **Comprehension Quizzes** - Test understanding after curated stories
+- 📱 **Mobile Optimized** - Touch-friendly, responsive design
 
 **Story Sources:**
-- Lengguahi-ta beginner stories
-- Guampedia Chamorro legends
-- Simple original stories for beginners
+- **Curated Stories (6)** - Hand-crafted with comprehension quizzes
+  - Håfa Adai, Maria! (Beginner - Greetings)
+  - I Familia-hu (Beginner - Family)
+  - I Gima'-hu (Beginner - House)
+  - I Taotao Mo'na (Intermediate - Spirits)
+  - I Fiestas Chamorro (Intermediate - Culture)
+  - I Haligi yan i Tasa (Advanced - History)
+- **Lengguahi-ta Stories (11)** - Pre-extracted bilingual stories
+  - The Sandpiper Girl (50 paragraphs)
+  - The Women of Guam and Their Land (27 paragraphs)
+  - The Canary and The White Tern (27 paragraphs)
+  - And 8 more...
 
-**Features:**
-- [ ] Story library with difficulty levels
-- [ ] Tap-to-translate on any word
-- [ ] Comprehension quiz after story
-- [ ] Progress tracking (stories read)
+**Technical Implementation:**
+- **Backend:**
+  - `api/story_service.py` - Serves pre-extracted stories from JSON
+  - `api/chamorro_morphology.py` - Root word extraction for tap-to-translate
+  - `scripts/extract_stories.py` - Quality-validated story extraction
+  - Enhanced `/api/vocabulary/word/{word}?enhanced=true` endpoint
+- **Frontend:**
+  - `StoryList.tsx` - Story library with Curated/Lengguahi-ta tabs
+  - `StoryViewer.tsx` - Curated stories with quizzes
+  - `LengguahitaStoryViewer.tsx` - Pre-extracted story viewer
+  - `useStoryQuery.ts` - React Query hooks for story API
+
+**Enhanced Word Lookup:**
+- **Morphology Support** - "hagon-ña" → finds "hagon" (leaf) + note "form of hagon"
+- **Contextual Fallback** - Shows English translation paragraph if word not found
+- **Ask HåfaGPT Button** - Navigate to chat with pre-filled question
+
+**Quality Control (Extraction Script):**
+- Validates Chamorro field contains actual Chamorro text
+- Rejects English-only articles (essays, analysis)
+- Rejects articles with mixed-up sections (footnotes in wrong field)
+- Removes duplicate stories (same URL with query parameters)
+
+**Future Enhancements:**
+- [ ] Add more stories from Guampedia legends
+- [ ] Story completion tracking
 - [ ] Bookmark/continue later
+- [ ] Difficulty filtering
 
 ---
 
@@ -851,12 +880,12 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2B** | ✅ Daily Word/Phrase (API-powered) | - | ✅ **COMPLETED** |
 | **Phase 2C** | ✅ Progress Dashboard + Quiz Review | - | ✅ **COMPLETED** |
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
-| **Phase 2E** | Story Mode (Text-Only) | 2-3 days | 📋 Planned |
+| **Phase 2E** | ✅ Story Mode (17 stories + tap-to-translate) | - | ✅ **COMPLETED** |
 | **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
 | **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 🚧 In Progress |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
 | **Future** | Full Offline/Local Mode | 5-6 days | ⏸️ Planned |
-| **Total** | Learning Features | **~10-15 days remaining** | 🎉 80% Complete! |
+| **Total** | Learning Features | **~5-8 days remaining** | 🎉 90% Complete! |
 
 ---
 
@@ -883,15 +912,21 @@ DATABASE_URL=postgresql://neon.tech/...
    - Search with diacritic handling and spelling variants
    - Pagination, categories, TTS pronunciation
 
-**📋 Next Up:**
+5. ~~**Story Mode**~~ ✅ **COMPLETED**
+   - 17 stories (6 curated + 11 Lengguahi-ta)
+   - Tap-to-translate with Chamorro morphology
+   - Comprehension quizzes for curated stories
+   - Enhanced word lookup (root word extraction)
 
-5. **Story Mode** - 2-3 days
-   - Reading practice with tap-to-translate
-   - Great for parent-child time
+**📋 Next Up:**
 
 6. **Conversation Practice** - 2-3 days
    - Immersive scenarios
    - Practical application
+
+7. **Flashcard User Progress** - 2-3 days
+   - Database tracking for spaced repetition
+   - Rating system (Hard/Good/Easy)
 
 ---
 
