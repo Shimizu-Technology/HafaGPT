@@ -88,6 +88,13 @@ An AI-powered chatbot for learning Chamorro (the native language of Guam) with *
   - **Persistence** - Active conversation maintained across refreshes
   - **React Query** - Modern state management with automatic caching and background sync
 
+- 👍 **User Feedback System:**
+  - **Thumbs Up/Down** - Rate every assistant message
+  - **Database Storage** - All feedback saved to `message_feedback` table
+  - **PostHog Tracking** - Events tracked for analytics
+  - **Anonymous Support** - Both logged-in and anonymous users can rate
+  - **Query Analytics** - SQL queries to find problem areas and satisfaction trends
+
 - 📱 **Mobile-Optimized UI:**
   - **Responsive Design** - Optimized for both mobile and desktop
   - **Hamburger Menu** - Smooth sidebar transitions with backdrop overlay
@@ -519,6 +526,45 @@ GROUP BY mode;
 uv run python export_for_finetuning.py
 # Creates chamorro_training_data.jsonl
 ```
+
+### User Feedback Analytics 👍👎
+
+Users can rate assistant messages with thumbs up/down. Query the `message_feedback` table:
+
+```sql
+-- Overall satisfaction rate
+psql chamorro_rag -c "
+SELECT 
+  feedback_type,
+  COUNT(*) as count,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) as percentage
+FROM message_feedback
+GROUP BY feedback_type;
+"
+
+-- Most downvoted responses (find problem areas)
+psql chamorro_rag -c "
+SELECT LEFT(user_query, 50) as query, LEFT(bot_response, 80) as response, created_at
+FROM message_feedback
+WHERE feedback_type = 'down'
+ORDER BY created_at DESC
+LIMIT 10;
+"
+
+-- Feedback trend by day
+psql chamorro_rag -c "
+SELECT 
+  DATE(created_at) as date,
+  SUM(CASE WHEN feedback_type = 'up' THEN 1 ELSE 0 END) as thumbs_up,
+  SUM(CASE WHEN feedback_type = 'down' THEN 1 ELSE 0 END) as thumbs_down
+FROM message_feedback
+GROUP BY DATE(created_at)
+ORDER BY date DESC
+LIMIT 7;
+"
+```
+
+**See [documentation/IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md) for PostHog dashboard plans.**
 
 **See [CONVERSATION_ANALYTICS.md](CONVERSATION_ANALYTICS.md) for more SQL queries and Python analytics scripts!**
 

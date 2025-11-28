@@ -491,6 +491,65 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 
 ---
 
+## 📊 **User Feedback System** ✅ **COMPLETED (Nov 2025)**
+
+### **What's Implemented:**
+- ✅ **Thumbs Up/Down Buttons** - On every assistant message
+- ✅ **Database Storage** - `message_feedback` table stores all ratings
+- ✅ **PostHog Events** - `message_feedback` event tracked with metadata
+- ✅ **Anonymous Support** - Both logged-in and anonymous users can rate
+
+### **Current Usage: Manual SQL Queries**
+
+Query the database to analyze feedback:
+
+```sql
+-- Overall satisfaction rate
+SELECT 
+  feedback_type,
+  COUNT(*) as count,
+  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1) as percentage
+FROM message_feedback
+GROUP BY feedback_type;
+
+-- Most downvoted responses (find problem areas)
+SELECT user_query, LEFT(bot_response, 100) as response_preview, created_at
+FROM message_feedback
+WHERE feedback_type = 'down'
+ORDER BY created_at DESC
+LIMIT 10;
+
+-- Feedback trend by day
+SELECT 
+  DATE(created_at) as date,
+  SUM(CASE WHEN feedback_type = 'up' THEN 1 ELSE 0 END) as thumbs_up,
+  SUM(CASE WHEN feedback_type = 'down' THEN 1 ELSE 0 END) as thumbs_down
+FROM message_feedback
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+```
+
+### **Future Enhancement: PostHog Dashboard** 🔜
+
+When you have enough feedback data (50+ ratings), create a visual dashboard:
+
+**Dashboard Components:**
+- 📈 **Satisfaction Trend** - Line chart of thumbs up % over time
+- 🔢 **Total Ratings** - Count of up/down ratings
+- 👎 **Problem Queries** - Table of most downvoted responses
+- ⏱️ **Response Time Correlation** - Does slower = more downvotes?
+- 🎯 **By Mode** - Satisfaction breakdown by English/Chamorro/Learn mode
+
+**How to Create:**
+1. Go to PostHog Dashboard
+2. Create new Insight → Filter by `message_feedback` event
+3. Breakdown by `feedback_type` property
+4. Add to dashboard
+
+**When to Build:** After collecting 50-100 feedback ratings
+
+---
+
 ## 📚 **Additional Feature Ideas** (Lower Priority)
 
 ### **1. PostHog + Stripe Analytics Integration** 📊 **FUTURE ENHANCEMENT**
