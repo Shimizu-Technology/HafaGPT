@@ -389,6 +389,12 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 
 **Goal:** Make HåfaGPT a complete learning application for self-study and teaching children.
 
+**Design Principles:**
+- 📱 **Mobile-first** - Optimized for phone use, scales up to desktop
+- 🎯 **Intuitive navigation** - Users should easily find Study, Quiz, Daily Word
+- 👶 **Kid-friendly** - Large touch targets, clear feedback, encouraging UI
+- ⚡ **Fast & responsive** - Instant loading, no waiting
+
 **Note:** Audio/pronunciation features deferred until a quality Chamorro TTS model is available.
 
 ---
@@ -430,11 +436,26 @@ Quiz data is stored in `quizData.ts` (frontend), NOT fetched from backend API.
 - `/quiz/:categoryId` - Quiz viewer (questions, scoring, results)
 
 **Future Enhancements (Phase 2):**
+
+*More Content:*
+- [ ] Add more categories: Animals, Body Parts, Days/Time, Weather
+- [ ] Expand to 12-15 questions per category (currently 8)
+- [ ] Add difficulty levels (Easy/Medium/Hard toggle)
+
+*New Quiz Types:*
+- [ ] Picture quiz (show image → pick word) - great for kids!
+- [ ] Matching quiz (drag & drop pairs)
+- [ ] Listening quiz (when Chamorro TTS available)
+
+*Gamification & Tracking:*
 - [ ] Database score tracking (`quiz_results` table)
+- [ ] High score persistence per user
 - [ ] Leaderboards and achievements
+- [ ] Sound effects (ding for correct, buzz for incorrect)
+
+*Advanced:*
 - [ ] AI-generated quizzes from RAG
-- [ ] Picture quiz (show image → pick word)
-- [ ] Matching quiz (drag & drop)
+- [ ] Adaptive difficulty (harder questions after correct streaks)
 
 **Why This Feature:**
 - 🎯 Test knowledge retention (not just passive learning)
