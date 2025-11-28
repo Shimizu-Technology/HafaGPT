@@ -4,7 +4,7 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
 
 > **HåfaGPT has evolved from a simple chatbot into a complete learning platform for self-study and teaching children Chamorro!**
 
-**🆕 LATEST:** Vocabulary Browser with 10,350+ dictionary words, Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
+**🆕 LATEST:** Story Mode with 17 bilingual stories + tap-to-translate! 📖 Plus Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
@@ -16,6 +16,14 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
   - **General Chat** - Ask anything about Chamorro in English
   - **Immersion Mode** (`/chamorro`) - Chamorro-only responses
   - **Learning Mode** (`/learn`) - Chamorro with English breakdowns
+
+- 📖 **Story Mode** (17 stories):
+  - **6 Curated Stories** - Hand-crafted with comprehension quizzes
+  - **11 Lengguahi-ta Stories** - Pre-extracted bilingual stories
+  - **Tap-to-Translate** - Click any Chamorro word to see translation
+  - **Chamorro Morphology** - Strips prefixes/suffixes to find root words
+  - **TTS Pronunciation** - Listen to Chamorro text spoken aloud
+  - **Quality-Validated Extraction** - Script auto-rejects bad content
 
 - 📚 **Vocabulary Browser** (10,350+ words):
   - **12 Categories** - Greetings, Family, Numbers, Colors, Food, Animals, Body, Nature, Places, Time, Verbs, Phrases
