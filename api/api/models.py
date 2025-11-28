@@ -260,3 +260,36 @@ class MessageFeedbackResponse(BaseModel):
     feedback_id: str = Field(..., description="UUID of created feedback")
 
 
+# --- Quiz Result Models ---
+
+class QuizResultCreate(BaseModel):
+    """Request to save a quiz result"""
+    category_id: str = Field(..., description="Quiz category ID (e.g., 'greetings')")
+    category_title: Optional[str] = Field(None, description="Human-readable category title")
+    score: int = Field(..., ge=0, description="Number of correct answers")
+    total: int = Field(..., gt=0, description="Total number of questions")
+    time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz in seconds")
+
+
+class QuizResultResponse(BaseModel):
+    """Response model for a single quiz result"""
+    id: str = Field(..., description="Quiz result UUID")
+    category_id: str = Field(..., description="Quiz category ID")
+    category_title: Optional[str] = Field(None, description="Human-readable category title")
+    score: int = Field(..., description="Number of correct answers")
+    total: int = Field(..., description="Total number of questions")
+    percentage: float = Field(..., description="Score percentage")
+    time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz")
+    created_at: datetime = Field(..., description="When the quiz was taken")
+
+
+class QuizStatsResponse(BaseModel):
+    """Response model for user's quiz statistics"""
+    total_quizzes: int = Field(..., description="Total quizzes taken")
+    average_score: float = Field(..., description="Average score percentage")
+    best_category: Optional[str] = Field(None, description="Best performing category ID")
+    best_category_title: Optional[str] = Field(None, description="Best performing category title")
+    best_category_percentage: Optional[float] = Field(None, description="Best category average percentage")
+    recent_results: list[QuizResultResponse] = Field(default=[], description="Recent quiz results")
+
+

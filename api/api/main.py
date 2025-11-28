@@ -45,7 +45,11 @@ from .models import (
     ReviewCardResponse,
     # Feedback Models
     MessageFeedbackRequest,
-    MessageFeedbackResponse
+    MessageFeedbackResponse,
+    # Quiz Result Models
+    QuizResultCreate,
+    QuizResultResponse,
+    QuizStatsResponse
 )
 from .chatbot_service import get_chatbot_response
 from . import conversations
@@ -1845,6 +1849,180 @@ async def submit_feedback(request: MessageFeedbackRequest, authorization: Option
         raise HTTPException(
             status_code=500,
             detail=f"Failed to save feedback: {str(e)}"
+        )
+
+
+# ==========================================
+# Quiz Results Endpoints
+# ==========================================
+
+@app.post("/api/quiz/results", response_model=QuizResultResponse, tags=["Quiz"])
+async def save_quiz_result(
+    request: QuizResultCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Save a quiz result for the authenticated user.
+    
+    Requires authentication.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Calculate percentage
+        percentage = (request.score / request.total) * 100 if request.total > 0 else 0
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Insert quiz result
+        cursor.execute("""
+            INSERT INTO quiz_results (
+                user_id, category_id, category_title, score, total, percentage, time_spent_seconds
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, created_at
+        """, (
+            user_id,
+            request.category_id,
+            request.category_title,
+            request.score,
+            request.total,
+            percentage,
+            request.time_spent_seconds
+        ))
+        
+        result = cursor.fetchone()
+        result_id = result[0]
+        created_at = result[1]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [QUIZ] Saved result for user {user_id}: {request.score}/{request.total} ({percentage:.1f}%) in {request.category_id}")
+        
+        return QuizResultResponse(
+            id=str(result_id),
+            category_id=request.category_id,
+            category_title=request.category_title,
+            score=request.score,
+            total=request.total,
+            percentage=percentage,
+            time_spent_seconds=request.time_spent_seconds,
+            created_at=created_at
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [QUIZ] Failed to save result: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save quiz result: {str(e)}"
+        )
+
+
+@app.get("/api/quiz/stats", response_model=QuizStatsResponse, tags=["Quiz"])
+async def get_quiz_stats(authorization: Optional[str] = Header(None)):
+    """
+    Get quiz statistics for the authenticated user.
+    
+    Returns total quizzes, average score, best category, and recent results.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get total quizzes and average score
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_quizzes,
+                COALESCE(AVG(percentage), 0) as average_score
+            FROM quiz_results
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        stats = cursor.fetchone()
+        total_quizzes = stats[0]
+        average_score = float(stats[1])
+        
+        # Get best category (category with highest average score, min 2 attempts)
+        cursor.execute("""
+            SELECT 
+                category_id,
+                category_title,
+                AVG(percentage) as avg_percentage,
+                COUNT(*) as attempts
+            FROM quiz_results
+            WHERE user_id = %s
+            GROUP BY category_id, category_title
+            HAVING COUNT(*) >= 1
+            ORDER BY avg_percentage DESC
+            LIMIT 1
+        """, (user_id,))
+        
+        best_category_row = cursor.fetchone()
+        best_category = None
+        best_category_title = None
+        best_category_percentage = None
+        
+        if best_category_row:
+            best_category = best_category_row[0]
+            best_category_title = best_category_row[1]
+            best_category_percentage = float(best_category_row[2])
+        
+        # Get recent results (last 10)
+        cursor.execute("""
+            SELECT id, category_id, category_title, score, total, percentage, time_spent_seconds, created_at
+            FROM quiz_results
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (user_id,))
+        
+        recent_rows = cursor.fetchall()
+        recent_results = [
+            QuizResultResponse(
+                id=str(row[0]),
+                category_id=row[1],
+                category_title=row[2],
+                score=row[3],
+                total=row[4],
+                percentage=float(row[5]),
+                time_spent_seconds=row[6],
+                created_at=row[7]
+            )
+            for row in recent_rows
+        ]
+        
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [QUIZ] Retrieved stats for user {user_id}: {total_quizzes} quizzes, {average_score:.1f}% avg")
+        
+        return QuizStatsResponse(
+            total_quizzes=total_quizzes,
+            average_score=average_score,
+            best_category=best_category,
+            best_category_title=best_category_title,
+            best_category_percentage=best_category_percentage,
+            recent_results=recent_results
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [QUIZ] Failed to get stats: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get quiz stats: {str(e)}"
         )
 
 
