@@ -94,11 +94,11 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
       {
         id: id('greet', 8),
         type: 'fill_blank',
-        question: 'Complete: "I na\'ån-hu si ___" (My name is...)',
-        correctAnswer: '[your name]',
-        acceptableAnswers: ['[your name]', 'Juan', 'Maria', 'any'],
-        hint: 'Fill in any name',
-        explanation: '"I na\'ån-hu si" means "My name is" followed by your name.'
+        question: 'Complete: "Buenas ___" (Good morning)',
+        correctAnswer: 'dias',
+        acceptableAnswers: ['dias', 'días', 'dihas'],
+        hint: 'Think of the Spanish word for "days"',
+        explanation: '"Buenas dias" means "Good morning" - borrowed from Spanish "Buenos días".'
       }
     ]
   },
@@ -514,11 +514,6 @@ export function checkAnswer(question: QuizQuestion, userAnswer: string): boolean
     return question.acceptableAnswers.some(
       ans => ans.toLowerCase() === normalizedUser
     );
-  }
-  
-  // Special case for fill-in-blank with [your name] placeholder
-  if (question.correctAnswer === '[your name]') {
-    return userAnswer.trim().length > 0;
   }
   
   return false;

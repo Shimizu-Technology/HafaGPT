@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -9,27 +8,27 @@ import {
   Trophy,
   TrendingUp,
   Flame,
-  Target,
   ChevronRight
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
+import { useQuizStats } from '../hooks/useQuizQuery';
 import { useUser } from '@clerk/clerk-react';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 
-// Types for localStorage quiz data
-interface QuizAttempt {
+// Types for localStorage quiz data (fallback)
+interface LocalQuizAttempt {
   categoryId: string;
   score: number;
   total: number;
   timestamp: number;
 }
 
-interface QuizStats {
-  attempts: QuizAttempt[];
+interface LocalQuizStats {
+  attempts: LocalQuizAttempt[];
 }
 
-// Helper to get quiz stats from localStorage
-function getQuizStats(): QuizStats {
+// Helper to get quiz stats from localStorage (fallback for offline)
+function getLocalQuizStats(): LocalQuizStats {
   try {
     const stored = localStorage.getItem('hafagpt_quiz_stats');
     return stored ? JSON.parse(stored) : { attempts: [] };
@@ -38,9 +37,9 @@ function getQuizStats(): QuizStats {
   }
 }
 
-// Helper to save quiz attempt
+// Helper to save quiz attempt to localStorage (always save locally too)
 export function saveQuizAttempt(categoryId: string, score: number, total: number) {
-  const stats = getQuizStats();
+  const stats = getLocalQuizStats();
   stats.attempts.push({
     categoryId,
     score,
@@ -56,45 +55,24 @@ export function saveQuizAttempt(categoryId: string, score: number, total: number
 
 export function Dashboard() {
   const { user, isLoaded } = useUser();
-  const { data: initData, isLoading } = useInitUserData(null, isLoaded && !!user?.id);
+  const { data: initData, isLoading: conversationsLoading } = useInitUserData(null, isLoaded && !!user?.id);
+  const { data: quizStatsData, isLoading: quizLoading } = useQuizStats();
   
-  const [quizStats, setQuizStats] = useState<QuizStats>({ attempts: [] });
-  
-  // Load quiz stats from localStorage
-  useEffect(() => {
-    setQuizStats(getQuizStats());
-  }, []);
+  const isLoading = conversationsLoading || quizLoading;
   
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
   
-  // Calculate total messages from conversations
-  const totalMessages = conversations.reduce((sum, conv) => sum + (conv.message_count || 0), 0);
+  // Use API quiz stats (or 0 if not loaded yet)
+  const totalQuizzes = quizStatsData?.total_quizzes || 0;
+  const averageScore = Math.round(quizStatsData?.average_score || 0);
   
-  // Calculate quiz stats
-  const totalQuizzes = quizStats.attempts.length;
-  const averageScore = totalQuizzes > 0 
-    ? Math.round(quizStats.attempts.reduce((sum, a) => sum + (a.score / a.total) * 100, 0) / totalQuizzes)
-    : 0;
-  
-  // Get best quiz category
-  const categoryScores = quizStats.attempts.reduce((acc, attempt) => {
-    if (!acc[attempt.categoryId]) {
-      acc[attempt.categoryId] = { total: 0, correct: 0, count: 0 };
-    }
-    acc[attempt.categoryId].total += attempt.total;
-    acc[attempt.categoryId].correct += attempt.score;
-    acc[attempt.categoryId].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; correct: number; count: number }>);
-  
-  const bestCategory = Object.entries(categoryScores)
-    .map(([id, stats]) => ({
-      id,
-      percentage: Math.round((stats.correct / stats.total) * 100),
-      count: stats.count
-    }))
-    .sort((a, b) => b.percentage - a.percentage)[0];
+  // Best category from API
+  const bestCategory = quizStatsData?.best_category ? {
+    id: quizStatsData.best_category,
+    percentage: Math.round(quizStatsData.best_category_percentage || 0),
+    count: 1 // API doesn't return count, but we don't display it
+  } : null;
   
   const bestCategoryInfo = bestCategory 
     ? QUIZ_CATEGORIES.find(c => c.id === bestCategory.id)
@@ -155,7 +133,7 @@ export function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
           {/* Conversations */}
           <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-2">
@@ -167,22 +145,7 @@ export function Dashboard() {
               {isLoading ? '...' : totalConversations}
             </p>
             <p className="text-xs text-brown-500 dark:text-gray-400">
-              Conversations
-            </p>
-          </div>
-
-          {/* Messages */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Target className="w-4 h-4 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">
-              {isLoading ? '...' : totalMessages}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Messages
+              Chats
             </p>
           </div>
 
@@ -197,7 +160,7 @@ export function Dashboard() {
               {totalQuizzes}
             </p>
             <p className="text-xs text-brown-500 dark:text-gray-400">
-              Quizzes Taken
+              Quizzes
             </p>
           </div>
 
@@ -212,7 +175,7 @@ export function Dashboard() {
               {totalQuizzes > 0 ? `${averageScore}%` : '-'}
             </p>
             <p className="text-xs text-brown-500 dark:text-gray-400">
-              Quiz Average
+              Avg Score
             </p>
           </div>
         </div>
@@ -302,16 +265,16 @@ export function Dashboard() {
         </div>
 
         {/* Recent Quiz History */}
-        {quizStats.attempts.length > 0 && (
+        {quizStatsData && quizStatsData.recent_results.length > 0 && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
               Recent Quizzes
             </h3>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
-              {quizStats.attempts.slice(-5).reverse().map((attempt, idx) => {
-                const category = QUIZ_CATEGORIES.find(c => c.id === attempt.categoryId);
-                const percentage = Math.round((attempt.score / attempt.total) * 100);
-                const date = new Date(attempt.timestamp);
+              {quizStatsData.recent_results.slice(0, 5).map((result, idx) => {
+                const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id);
+                const percentage = Math.round(result.percentage);
+                const date = new Date(result.created_at);
                 
                 return (
                   <div key={idx} className="flex items-center justify-between p-4">

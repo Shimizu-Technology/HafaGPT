@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from './Dashboard';
+import { useSaveQuizResult } from '../hooks/useQuizQuery';
+import { useUser } from '@clerk/clerk-react';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -16,6 +18,9 @@ export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isSignedIn } = useUser();
+  const saveQuizResultMutation = useSaveQuizResult();
+  const startTimeRef = useRef<number>(Date.now());
   
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -73,11 +78,24 @@ export function QuizViewer() {
       setAnswerState('unanswered');
       setShowHint(false);
     } else {
-      // Save quiz results to localStorage before showing results
-      if (categoryId) {
-        const finalCorrectCount = results.filter(r => r.isCorrect).length + (answerState === 'correct' ? 0 : 0);
-        // Note: results already includes current answer from handleAnswer
-        saveQuizAttempt(categoryId, results.filter(r => r.isCorrect).length, questions.length);
+      // Quiz finished - save results
+      if (categoryId && category) {
+        const finalScore = results.filter(r => r.isCorrect).length;
+        const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
+        
+        // Always save to localStorage (works offline)
+        saveQuizAttempt(categoryId, finalScore, questions.length);
+        
+        // If signed in, also save to database
+        if (isSignedIn) {
+          saveQuizResultMutation.mutate({
+            category_id: categoryId,
+            category_title: category.title,
+            score: finalScore,
+            total: questions.length,
+            time_spent_seconds: timeSpent,
+          });
+        }
       }
       setShowResults(true);
     }
@@ -91,6 +109,7 @@ export function QuizViewer() {
     setResults([]);
     setShowResults(false);
     setShowHint(false);
+    startTimeRef.current = Date.now(); // Reset timer
   };
 
   const correctCount = results.filter(r => r.isCorrect).length;

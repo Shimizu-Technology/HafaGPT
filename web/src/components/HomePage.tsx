@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, 
@@ -12,33 +12,12 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
+import { useQuizStats } from '../hooks/useQuizQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useTheme } from '../hooks/useTheme';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { DailyWord } from './DailyWord';
 import { AuthButton } from './AuthButton';
-
-// Types for localStorage quiz data
-interface QuizAttempt {
-  categoryId: string;
-  score: number;
-  total: number;
-  timestamp: number;
-}
-
-interface QuizStats {
-  attempts: QuizAttempt[];
-}
-
-// Helper to get quiz stats from localStorage
-function getQuizStats(): QuizStats {
-  try {
-    const stored = localStorage.getItem('hafagpt_quiz_stats');
-    return stored ? JSON.parse(stored) : { attempts: [] };
-  } catch {
-    return { attempts: [] };
-  }
-}
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -46,42 +25,23 @@ export function HomePage() {
   const clerk = useClerk();
   const { theme, toggleTheme } = useTheme();
   const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
+  const { data: quizStatsData } = useQuizStats();
   
-  const [quizStats, setQuizStats] = useState<QuizStats>({ attempts: [] });
   const [quickMessage, setQuickMessage] = useState('');
-  
-  // Load quiz stats from localStorage
-  useEffect(() => {
-    setQuizStats(getQuizStats());
-  }, []);
   
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
   
-  // Calculate quiz stats
-  const totalQuizzes = quizStats.attempts.length;
-  const averageScore = totalQuizzes > 0 
-    ? Math.round(quizStats.attempts.reduce((sum, a) => sum + (a.score / a.total) * 100, 0) / totalQuizzes)
-    : 0;
+  // Use API quiz stats
+  const totalQuizzes = quizStatsData?.total_quizzes || 0;
+  const averageScore = Math.round(quizStatsData?.average_score || 0);
   
-  // Get best quiz category
-  const categoryScores = quizStats.attempts.reduce((acc, attempt) => {
-    if (!acc[attempt.categoryId]) {
-      acc[attempt.categoryId] = { total: 0, correct: 0, count: 0 };
-    }
-    acc[attempt.categoryId].total += attempt.total;
-    acc[attempt.categoryId].correct += attempt.score;
-    acc[attempt.categoryId].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; correct: number; count: number }>);
-  
-  const bestCategory = Object.entries(categoryScores)
-    .map(([id, stats]) => ({
-      id,
-      percentage: Math.round((stats.correct / stats.total) * 100),
-      count: stats.count
-    }))
-    .sort((a, b) => b.percentage - a.percentage)[0];
+  // Best category from API
+  const bestCategory = quizStatsData?.best_category ? {
+    id: quizStatsData.best_category,
+    percentage: Math.round(quizStatsData.best_category_percentage || 0),
+    count: 1
+  } : null;
   
   const bestCategoryInfo = bestCategory 
     ? QUIZ_CATEGORIES.find(c => c.id === bestCategory.id)
