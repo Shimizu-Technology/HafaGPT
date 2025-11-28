@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useUser } from '@clerk/clerk-react';
-import { useSaveDeck } from '../hooks/useFlashcardsQuery';
+import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 
 interface FlashcardData {
   front: string;
@@ -24,8 +24,11 @@ const topicTitles: Record<string, string> = {
   greetings: 'Greetings & Basics',
   family: 'Family Members',
   food: 'Food & Cooking',
-  numbers: 'Numbers 1-20',
+  numbers: 'Numbers 1-10',
+  colors: 'Colors',
+  body: 'Body Parts',
   verbs: 'Common Verbs',
+  phrases: 'Common Phrases',
   'common-phrases': 'Everyday Phrases'
 };
 
@@ -34,8 +37,12 @@ export function FlashcardViewer() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [searchParams] = useSearchParams();
-  const cardTypeParam = searchParams.get('type') as 'default' | 'custom' | null;
-  const [cardType] = useState<'default' | 'custom'>(cardTypeParam || 'default'); // Read from URL
+  const cardTypeParam = searchParams.get('type') as 'curated' | 'dictionary' | 'default' | 'custom' | null;
+  // Map old values to new ones for backwards compatibility
+  const cardType = cardTypeParam === 'default' || cardTypeParam === 'curated' ? 'curated' 
+                 : cardTypeParam === 'custom' || cardTypeParam === 'dictionary' ? 'dictionary' 
+                 : 'curated';
+  
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,13 +55,27 @@ export function FlashcardViewer() {
   const batchCountRef = useRef(0); // Track how many batches generated
   const [isCardFlipped, setIsCardFlipped] = useState(false); // Track if current card is flipped
   const [isDeckSaved, setIsDeckSaved] = useState(false); // Track if custom deck has been saved
+  const [cardsStudied, setCardsStudied] = useState(0); // Track total cards studied this session
 
   // Use React Query mutation for saving decks
   const saveDeckMutation = useSaveDeck();
+  
+  // Use dictionary flashcards API for "dictionary" mode (instant loading from 10,350+ words)
+  const {
+    data: dictionaryData,
+    isLoading: isDictionaryLoading,
+    error: dictionaryError,
+    refetch: refetchDictionary
+  } = useDictionaryFlashcards(
+    topic,
+    10, // Get 10 cards per fetch
+    true, // Shuffle for variety
+    cardType === 'dictionary' && !!topic // Only fetch when in dictionary mode
+  );
 
-  // Helper function to save cards to localStorage
+  // Helper function to save cards to localStorage (legacy - kept for backwards compatibility)
   const saveToLocalStorage = (cards: FlashcardData[]) => {
-    if (cardType === 'custom' && topic) {
+    if (cardTypeParam === 'custom' && topic) {
       const tempCardsKey = `flashcards_temp_${topic}`;
       localStorage.setItem(tempCardsKey, JSON.stringify({
         cards: cards,
@@ -75,115 +96,98 @@ export function FlashcardViewer() {
   useEffect(() => {
     if (!topic) return;
     
-    if (cardType === 'default') {
-      loadDefaultCards();
-    } else {
-      // Check if there are temporary cards in localStorage
-      const tempCardsKey = `flashcards_temp_${topic}`;
-      const tempCardsData = localStorage.getItem(tempCardsKey);
-      
-      if (tempCardsData) {
-        try {
-          const parsedCards = JSON.parse(tempCardsData);
-          const timestamp = parsedCards.timestamp;
-          const oneHourAgo = Date.now() - (60 * 60 * 1000); // 1 hour
-          
-          // Only use temp cards if they're less than 1 hour old
-          if (timestamp && timestamp > oneHourAgo) {
-            setFlashcards(parsedCards.cards);
-            setCurrentIndex(0);
-            console.log(`✅ Loaded ${parsedCards.cards.length} cards from localStorage`);
-            return;
-          } else {
-            // Clear stale data
-            localStorage.removeItem(tempCardsKey);
-          }
-        } catch (err) {
-          console.error('Failed to parse temp cards:', err);
-          localStorage.removeItem(tempCardsKey);
-        }
+    if (cardType === 'curated') {
+      // Load hardcoded curated cards immediately
+      loadCuratedCards();
+    } else if (cardType === 'dictionary') {
+      // Dictionary cards are loaded via React Query hook (useDictionaryFlashcards)
+      // If dictionary fails, fallback to hardcoded cards
+      if (dictionaryError) {
+        console.warn('Dictionary API failed, falling back to curated cards');
+        loadCuratedCards();
       }
-      
-      // No temp cards or they're stale, generate new ones
-      loadCustomCards();
+      // Otherwise, dictionary data will be handled by the separate useEffect
     }
-  }, [topic, cardType]);
+  }, [topic, cardType, dictionaryError]);
 
-  // Load default cards instantly
-  const loadDefaultCards = () => {
+  // Load curated (hardcoded) cards
+  const loadCuratedCards = () => {
     if (!topic) return;
     
-    const deckData = DEFAULT_FLASHCARD_DECKS[topic];
-    if (!deckData) {
-      // If no default cards, fallback to custom
-      loadCustomCards();
-      return;
+    const deck = DEFAULT_FLASHCARD_DECKS[topic];
+    if (deck) {
+      const formattedCards: FlashcardData[] = deck.cards.map(card => ({
+        front: card.front,
+        back: card.back,
+        pronunciation: card.pronunciation,
+        example: card.example,
+        category: deck.displayName
+      }));
+      setFlashcards(formattedCards);
+      setCurrentIndex(0);
+      setError(null);
+    } else {
+      setError(`No curated cards found for topic: ${topic}`);
     }
-
-    // Map default cards to FlashcardData format
-    const mappedCards: FlashcardData[] = deckData.cards.map(card => ({
-      front: card.front,
-      back: card.back,
-      pronunciation: card.pronunciation,
-      category: topic
-    }));
-
-    setFlashcards(mappedCards);
-    setCurrentIndex(0);
-    // Reset custom card state
-    hasFetchedRef.current = false;
-    hasGeneratedMoreRef.current = false;
-    batchCountRef.current = 0;
   };
 
-  // Load custom AI-generated cards (progressive: 3 cards initially)
-  const loadCustomCards = async () => {
+  // Legacy: Clean up any old localStorage temp cards
+  useEffect(() => {
     if (!topic) return;
-
-    // Reset state for new custom generation
-    hasFetchedRef.current = true;
-    hasGeneratedMoreRef.current = false;
-    batchCountRef.current = 0;
-    setFlashcards([]);
-    setNewCards([]);
-    setCurrentIndex(0);
-    setLoading(true);
-    setError(null);
-
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const formData = new FormData();
-      formData.append('topic', topic);
-      formData.append('count', '3'); // Generate 3 cards initially for fast load
-      formData.append('variety', 'basic'); // Batch 1: Basic everyday usage
-      
-      const response = await fetch(`${API_URL}/api/generate-flashcards`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate flashcards');
+    
+    // Clean up any stale localStorage data from old "custom" mode
+    const tempCardsKey = `flashcards_temp_${topic}`;
+    const tempCardsData = localStorage.getItem(tempCardsKey);
+    
+    if (tempCardsData) {
+      try {
+        const parsedCards = JSON.parse(tempCardsData);
+        const timestamp = parsedCards.timestamp;
+        const oneHourAgo = Date.now() - (60 * 60 * 1000); // 1 hour
+        
+        // Clear if older than 1 hour
+        if (!timestamp || timestamp < oneHourAgo) {
+          localStorage.removeItem(tempCardsKey);
+        }
+      } catch (err) {
+        console.error('Failed to parse temp cards:', err);
+        localStorage.removeItem(tempCardsKey);
       }
+    }
+  }, [topic]);
 
-      const data: FlashcardsResponse = await response.json();
-      const newCards = data.flashcards;
-      setFlashcards(newCards);
-      saveToLocalStorage(newCards); // Save to localStorage
-      setLoading(false);
-      batchCountRef.current = 1;
-      
-      // Immediately start generating 3 more in the background
-      setTimeout(() => generateMoreCards('conversational'), 500);
-    } catch (err) {
-      console.error('❌ [FLASHCARDS] Error fetching flashcards:', err);
-      setError('Failed to load flashcards. Please try again.');
+  // Load dictionary cards from API (instant loading from 10,350+ words)
+  // This effect runs when dictionary data is fetched
+  useEffect(() => {
+    if (cardType === 'dictionary' && dictionaryData?.cards && dictionaryData.cards.length > 0) {
+      // Map dictionary cards to FlashcardData format
+      const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
+        front: card.front,
+        back: card.back,
+        pronunciation: undefined, // Dictionary doesn't have pronunciation
+        example: card.example || undefined,
+        category: dictionaryData.category?.title || topic || ''
+      }));
+
+      setFlashcards(mappedCards);
+      setCurrentIndex(0);
+      setError(null);
+      // Reset custom card state
       hasFetchedRef.current = false;
-      setLoading(false);
+      hasGeneratedMoreRef.current = false;
+      batchCountRef.current = 0;
+    }
+  }, [dictionaryData, cardType, topic]);
+
+  // Load more dictionary cards (for "Load More" button)
+  const loadMoreDictionaryCards = () => {
+    if (cardType === 'dictionary') {
+      setCardsStudied(prev => prev + flashcards.length);
+      refetchDictionary();
     }
   };
 
-  // Background generation of additional cards (3 at a time, up to 9 total)
+  // Background generation of additional cards (legacy - kept for backwards compatibility with ?type=custom)
   const generateMoreCards = async (variety: 'conversational' | 'advanced', previousCardsList?: FlashcardData[]) => {
     if (!topic || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
     
@@ -412,7 +416,20 @@ export function FlashcardViewer() {
     );
   }
 
-  if (flashcards.length === 0 && !loading) {
+  // Show loading state for dictionary flashcards
+  if (cardType === 'dictionary' && isDictionaryLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-2" />
+          <p className="text-brown-600 dark:text-gray-300">Loading dictionary flashcards...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state when no cards yet
+  if (flashcards.length === 0 || !flashcards[currentIndex]) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
@@ -437,12 +454,21 @@ export function FlashcardViewer() {
             <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
           </button>
           
-          <h1 className="text-lg font-semibold text-brown-800 dark:text-white flex-1 text-center">
-            {topicTitles[topic || ''] || topic}
-          </h1>
+          <div className="flex-1 text-center">
+            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+              {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
+            </h1>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              cardType === 'curated'
+                ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-300'
+                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+            }`}>
+              {cardType === 'curated' ? 'Curated' : 'Dictionary'}
+            </span>
+          </div>
           
-          {/* Save Deck Button (for custom cards only) */}
-          {cardType === 'custom' && flashcards.length > 0 && (
+          {/* Save Deck Button (legacy - for custom AI cards only) */}
+          {cardTypeParam === 'custom' && flashcards.length > 0 && (
             <button
               onClick={handleSaveDeck}
               disabled={saveDeckMutation.isPending || isGeneratingMore || isDeckSaved}
@@ -470,12 +496,28 @@ export function FlashcardViewer() {
             </button>
           )}
 
-          {/* Card Counter */}
-          {cardType === 'default' && (
-            <div className="text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
-              {currentIndex + 1} / {flashcards.length}
-            </div>
+          {/* Shuffle Button (for dictionary cards) */}
+          {cardType === 'dictionary' && (
+            <button
+              onClick={() => {
+                setCardsStudied(prev => prev + flashcards.length);
+                setCurrentIndex(0);
+                setIsCardFlipped(false);
+                refetchDictionary();
+              }}
+              disabled={isDictionaryLoading}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors font-medium text-sm disabled:opacity-50 flex-shrink-0"
+              title="Get new cards"
+            >
+              <RefreshCw className={`w-4 h-4 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">New Cards</span>
+            </button>
           )}
+
+          {/* Card Counter */}
+          <div className="text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+            {currentIndex + 1} / {flashcards.length}
+          </div>
         </div>
       </div>
 
@@ -497,8 +539,8 @@ export function FlashcardViewer() {
         </div>
 
         {/* Rating Buttons (show after flip) */}
-        {/* Rating Buttons - Only show if card is flipped AND (deck is default OR saved) */}
-        {isCardFlipped && (cardType === 'default' || isDeckSaved) && (
+        {/* Rating Buttons - Only show if card is flipped AND (deck is curated/dictionary OR saved) */}
+        {isCardFlipped && (cardType === 'curated' || cardType === 'dictionary' || isDeckSaved) && (
           <div className="flex items-center justify-center gap-3 mt-6">
             <button
               onClick={() => handleRating(1)}
@@ -521,8 +563,8 @@ export function FlashcardViewer() {
           </div>
         )}
         
-        {/* Help text for unsaved custom cards */}
-        {cardType === 'custom' && !isDeckSaved && isCardFlipped && (
+        {/* Help text for unsaved custom cards (legacy) */}
+        {cardTypeParam === 'custom' && !isDeckSaved && isCardFlipped && (
           <div className="mt-6 text-center text-sm text-brown-600 dark:text-gray-400 italic">
             💡 Save this deck to track your progress with ratings
           </div>
@@ -559,6 +601,48 @@ export function FlashcardViewer() {
             <ChevronRight className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
           </button>
         </div>
+
+        {/* Deck Complete - Load More Section */}
+        {currentIndex === flashcards.length - 1 && flashcards.length > 0 && (
+          <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-700/50">
+            <div className="text-center">
+              <p className="text-emerald-700 dark:text-emerald-300 font-semibold mb-3">
+                🎉 Great job! You've finished this deck!
+                {cardsStudied > 0 && (
+                  <span className="block text-sm font-normal mt-1">
+                    Cards studied this session: {cardsStudied + flashcards.length}
+                  </span>
+                )}
+              </p>
+              
+              {cardType === 'dictionary' && (
+                <button
+                  onClick={loadMoreDictionaryCards}
+                  disabled={isDictionaryLoading}
+                  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                >
+                  {isDictionaryLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-5 h-5" />
+                      Load 10 More Cards
+                    </>
+                  )}
+                </button>
+              )}
+              
+              {cardType === 'curated' && (
+                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                  Try <span className="font-semibold">Dictionary mode</span> for unlimited practice!
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Desktop hint */}
         <p className="hidden sm:block text-sm text-brown-600 dark:text-gray-400 mt-6 font-medium">

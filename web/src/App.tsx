@@ -7,7 +7,10 @@ import { MyDecks } from './components/MyDecks';
 import { SavedDeckViewer } from './components/SavedDeckViewer';
 import { QuizList } from './components/QuizList';
 import { QuizViewer } from './components/QuizViewer';
+import { QuizReview } from './components/QuizReview';
 import { Dashboard } from './components/Dashboard';
+import { VocabularyList } from './components/VocabularyList';
+import { VocabularyCategory } from './components/VocabularyCategory';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -29,6 +32,11 @@ function App() {
         {/* Quiz routes */}
         <Route path="/quiz" element={<ProtectedRoute><QuizList /></ProtectedRoute>} />
         <Route path="/quiz/:categoryId" element={<ProtectedRoute><QuizViewer /></ProtectedRoute>} />
+        <Route path="/quiz/review/:resultId" element={<ProtectedRoute><QuizReview /></ProtectedRoute>} />
+        
+        {/* Vocabulary routes - public (no auth required) */}
+        <Route path="/vocabulary" element={<VocabularyList />} />
+        <Route path="/vocabulary/:categoryId" element={<VocabularyCategory />} />
         
         {/* Dashboard route - detailed progress */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

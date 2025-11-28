@@ -4,6 +4,17 @@ import { useAuth } from '@clerk/clerk-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Types
+export interface QuizAnswer {
+  id: string;
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  user_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+  explanation: string | null;
+}
+
 export interface QuizResult {
   id: string;
   category_id: string;
@@ -15,6 +26,10 @@ export interface QuizResult {
   created_at: string;
 }
 
+export interface QuizResultDetail extends QuizResult {
+  answers: QuizAnswer[];
+}
+
 export interface QuizStats {
   total_quizzes: number;
   average_score: number;
@@ -24,12 +39,23 @@ export interface QuizStats {
   recent_results: QuizResult[];
 }
 
+export interface QuizAnswerInput {
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  user_answer: string;
+  correct_answer: string;
+  is_correct: boolean;
+  explanation?: string;
+}
+
 export interface SaveQuizResultParams {
   category_id: string;
   category_title: string;
   score: number;
   total: number;
   time_spent_seconds?: number;
+  answers?: QuizAnswerInput[];
 }
 
 // Hook to get quiz stats
@@ -55,6 +81,31 @@ export function useQuizStats() {
     },
     enabled: !!isSignedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+// Hook to get quiz result detail with answers
+export function useQuizResultDetail(resultId: string | undefined) {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery({
+    queryKey: ['quizResult', resultId],
+    queryFn: async (): Promise<QuizResultDetail> => {
+      const token = await getToken();
+      
+      const response = await fetch(`${API_URL}/api/quiz/results/${resultId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch quiz result');
+      }
+
+      return response.json();
+    },
+    enabled: !!isSignedIn && !!resultId,
   });
 }
 

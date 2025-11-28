@@ -181,7 +181,7 @@ export function Dashboard() {
         </div>
 
         {/* Best Category Card */}
-        {bestCategoryInfo && (
+        {bestCategory && bestCategoryInfo && (
           <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-cream-200 dark:border-slate-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -272,33 +272,48 @@ export function Dashboard() {
             </h3>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
               {quizStatsData.recent_results.slice(0, 5).map((result, idx) => {
-                const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id);
+                const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id.replace('dict-', ''));
                 const percentage = Math.round(result.percentage);
                 const date = new Date(result.created_at);
+                const isDictionary = result.category_id.startsWith('dict-');
                 
                 return (
-                  <div key={idx} className="flex items-center justify-between p-4">
+                  <Link 
+                    key={idx} 
+                    to={`/quiz/review/${result.id}`}
+                    className="flex items-center justify-between p-4 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{category?.icon || '📝'}</span>
                       <div>
-                        <p className="font-medium text-brown-800 dark:text-white text-sm">
-                          {category?.title || 'Quiz'}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-brown-800 dark:text-white text-sm">
+                            {result.category_title || category?.title || 'Quiz'}
+                          </p>
+                          {isDictionary && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                              Dict
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs text-brown-500 dark:text-gray-400">
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </p>
                       </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      percentage >= 80 
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                        : percentage >= 60
-                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    }`}>
-                      {percentage}%
+                    <div className="flex items-center gap-2">
+                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        percentage >= 80 
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : percentage >= 60
+                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      }`}>
+                        {percentage}%
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-brown-400 dark:text-gray-500" />
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

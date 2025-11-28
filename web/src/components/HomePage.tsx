@@ -4,6 +4,7 @@ import {
   MessageSquare, 
   Brain, 
   BookOpen, 
+  Book,
   Send,
   ChevronRight,
   Sparkles,
@@ -291,6 +292,20 @@ export function HomePage() {
               </div>
             </Link>
 
+            {/* Vocabulary */}
+            <Link
+              to="/vocabulary"
+              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 active:scale-95 transition-all"
+            >
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
+                <Book className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-brown-800 dark:text-white text-sm">Vocabulary</p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Browse words</p>
+              </div>
+            </Link>
+
             {/* Progress - Only show when signed in */}
             {isSignedIn && (
               <Link
@@ -309,7 +324,7 @@ export function HomePage() {
           </div>
           
           {/* Desktop: Grid layout */}
-          <div className="hidden sm:grid sm:grid-cols-3 gap-3">
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Chat */}
             <Link
               to="/chat"
@@ -353,6 +368,21 @@ export function HomePage() {
                 <p className="text-xs text-brown-500 dark:text-gray-400 truncate">Study vocab</p>
               </div>
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-teal-500 dark:group-hover:text-teal-400 transition-colors" />
+            </Link>
+
+            {/* Vocabulary */}
+            <Link
+              to="/vocabulary"
+              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
+                <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-brown-800 dark:text-white">Vocabulary</p>
+                <p className="text-xs text-brown-500 dark:text-gray-400 truncate">Browse words</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
             </Link>
           </div>
         </div>

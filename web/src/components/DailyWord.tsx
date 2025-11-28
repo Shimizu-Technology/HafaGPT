@@ -1,19 +1,33 @@
 import { useState } from 'react';
-import { Volume2, Plus, Sparkles, ChevronRight } from 'lucide-react';
-import { getTodaysWord, DailyWord as DailyWordType } from '../data/dailyWords';
+import { Volume2, Plus, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
+import { useWordOfTheDay, WordOfTheDay } from '../hooks/useVocabularyQuery';
 import { useSpeech } from '../hooks/useSpeech';
 
 interface DailyWordProps {
-  onAddToFlashcards?: (word: DailyWordType) => void;
+  onAddToFlashcards?: (word: WordOfTheDay) => void;
   compactOnMobile?: boolean;
 }
 
 export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyWordProps) {
-  const word = getTodaysWord();
+  const { data: word, isLoading, error } = useWordOfTheDay();
   const { speak, isSpeaking, isSupported } = useSpeech();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const [added, setAdded] = useState(false);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-2xl border-2 border-coral-200/50 dark:border-ocean-500/40 p-6 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-coral-500 dark:text-ocean-400" />
+      </div>
+    );
+  }
+
+  // Error or no data
+  if (error || !word) {
+    return null; // Silently fail - don't show broken widget
+  }
 
   const handleSpeak = () => {
     if (!isSpeaking) {
@@ -22,24 +36,29 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
   };
 
   const handleAddToFlashcards = () => {
-    if (onAddToFlashcards) {
+    if (onAddToFlashcards && word) {
       onAddToFlashcards(word);
     }
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case 'beginner':
-        return 'bg-green-100 dark:bg-green-800/60 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700';
-      case 'intermediate':
-        return 'bg-amber-100 dark:bg-amber-800/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700';
-      case 'advanced':
-        return 'bg-red-100 dark:bg-red-800/60 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700';
-      default:
-        return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600';
+  // Get category badge color based on category name
+  const getCategoryColor = (category: string) => {
+    const categoryLower = category.toLowerCase();
+    if (categoryLower.includes('greeting') || categoryLower.includes('basic')) {
+      return 'bg-green-100 dark:bg-green-800/60 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700';
     }
+    if (categoryLower.includes('family')) {
+      return 'bg-pink-100 dark:bg-pink-800/60 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-pink-700';
+    }
+    if (categoryLower.includes('food') || categoryLower.includes('drink')) {
+      return 'bg-amber-100 dark:bg-amber-800/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700';
+    }
+    if (categoryLower.includes('nature') || categoryLower.includes('weather')) {
+      return 'bg-emerald-100 dark:bg-emerald-800/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700';
+    }
+    return 'bg-coral-100 dark:bg-ocean-800/60 text-coral-700 dark:text-ocean-300 border border-coral-200 dark:border-ocean-700';
   };
 
   // Compact mobile view (collapsed by default)
@@ -70,7 +89,9 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
             <div className="mt-2 bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-xl border border-coral-200/50 dark:border-ocean-500/40 p-4">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-sm text-brown-500 dark:text-gray-400 italic mb-1">{word.pronunciation}</p>
+                  {word.part_of_speech && (
+                    <p className="text-sm text-brown-500 dark:text-gray-400 italic mb-1">{word.part_of_speech}</p>
+                  )}
                   <p className="text-xs text-brown-500 dark:text-gray-400">{word.category}</p>
                 </div>
                 {isSupported && (
@@ -105,8 +126,8 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 <Sparkles className="w-4 h-4 text-coral-500 dark:text-ocean-400" />
                 <span className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Word of the Day</span>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getDifficultyColor(word.difficulty)}`}>
-                {word.difficulty}
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getCategoryColor(word.category)}`}>
+                {word.category}
               </span>
             </div>
           </div>
@@ -114,7 +135,9 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex-1 min-w-0">
                 <h3 className="text-3xl font-bold text-brown-800 dark:text-white mb-1 break-words">{word.chamorro}</h3>
-                <p className="text-sm text-brown-500 dark:text-gray-400 italic">{word.pronunciation}</p>
+                {word.part_of_speech && (
+                  <p className="text-sm text-brown-500 dark:text-gray-400 italic">{word.part_of_speech}</p>
+                )}
               </div>
               {isSupported && (
                 <button
@@ -131,7 +154,6 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
             </div>
             <div className="mb-3">
               <p className="text-lg text-brown-700 dark:text-white font-medium">{word.english}</p>
-              <p className="text-xs text-brown-500 dark:text-gray-400 mt-1">{word.category}</p>
             </div>
             {word.example && (
               <div className="mb-4">
@@ -181,8 +203,8 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
               Word of the Day
             </span>
           </div>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getDifficultyColor(word.difficulty)}`}>
-            {word.difficulty}
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getCategoryColor(word.category)}`}>
+            {word.category}
           </span>
         </div>
       </div>
@@ -195,9 +217,11 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
             <h3 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1 break-words">
               {word.chamorro}
             </h3>
-            <p className="text-sm text-brown-500 dark:text-gray-400 italic">
-              {word.pronunciation}
-            </p>
+            {word.part_of_speech && (
+              <p className="text-sm text-brown-500 dark:text-gray-400 italic">
+                {word.part_of_speech}
+              </p>
+            )}
           </div>
           
           {/* Listen Button */}
@@ -220,9 +244,6 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
         <div className="mb-3">
           <p className="text-lg text-brown-700 dark:text-white font-medium">
             {word.english}
-          </p>
-          <p className="text-xs text-brown-500 dark:text-gray-400 mt-1">
-            {word.category}
           </p>
         </div>
 

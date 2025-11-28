@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb } from 'lucide-react';
+import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from './Dashboard';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
+import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabularyQuery';
 import { useUser } from '@clerk/clerk-react';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
@@ -14,13 +15,51 @@ interface QuestionResult {
   isCorrect: boolean;
 }
 
+// Convert dictionary quiz question to standard format
+function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
+  if (dq.type === 'multiple_choice') {
+    return {
+      id: dq.id,
+      type: 'multiple_choice',
+      question: dq.question,
+      options: dq.options || [],
+      correctAnswer: dq.options?.[dq.correct_answer as number] || '',
+      explanation: dq.explanation,
+    };
+  } else {
+    return {
+      id: dq.id,
+      type: 'type_answer',
+      question: dq.question,
+      correctAnswer: dq.correct_answer as string,
+      acceptableAnswers: dq.acceptable_answers,
+      hint: dq.hint,
+      explanation: dq.explanation,
+    };
+  }
+}
+
 export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useUser();
   const saveQuizResultMutation = useSaveQuizResult();
   const startTimeRef = useRef<number>(Date.now());
+  
+  // Check if this is a dictionary quiz (category starts with "dict-")
+  const isDictionaryQuiz = categoryId?.startsWith('dict-');
+  const actualCategoryId = isDictionaryQuiz ? categoryId?.replace('dict-', '') : categoryId;
+  const questionCount = parseInt(searchParams.get('count') || '10');
+  
+  // Fetch dictionary quiz if needed
+  const { data: dictQuizData, isLoading: isDictLoading, refetch: refetchDictQuiz } = useDictionaryQuiz(
+    actualCategoryId,
+    questionCount,
+    'multiple_choice,type_answer',
+    isDictionaryQuiz
+  );
   
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,14 +69,39 @@ export function QuizViewer() {
   const [showResults, setShowResults] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const category = categoryId ? getQuizCategory(categoryId) : undefined;
+  const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
 
-  // Initialize questions
+  // Browser warning when leaving mid-quiz
+  const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
+  
   useEffect(() => {
-    if (category) {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isQuizInProgress) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isQuizInProgress]);
+  const categoryTitle = isDictionaryQuiz ? dictQuizData?.category : category?.title;
+
+  // Initialize questions for curated quiz
+  useEffect(() => {
+    if (category && !isDictionaryQuiz) {
       setQuestions(shuffleQuestions(category.questions));
     }
-  }, [category]);
+  }, [category, isDictionaryQuiz]);
+
+  // Initialize questions for dictionary quiz
+  useEffect(() => {
+    if (isDictionaryQuiz && dictQuizData?.questions) {
+      const converted = dictQuizData.questions.map(convertDictionaryQuestion);
+      setQuestions(converted);
+    }
+  }, [isDictionaryQuiz, dictQuizData]);
 
   // Focus input for type_answer questions
   useEffect(() => {
@@ -46,7 +110,20 @@ export function QuizViewer() {
     }
   }, [currentIndex, answerState]);
 
-  if (!category) {
+  // Loading state for dictionary quiz
+  if (isDictionaryQuiz && isDictLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
+          <p className="text-brown-600 dark:text-gray-400">Generating quiz questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!isDictionaryQuiz && !category) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
@@ -54,6 +131,18 @@ export function QuizViewer() {
           <Link to="/quiz" className="text-coral-600 dark:text-ocean-400 hover:underline">
             Back to Quiz List
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // No questions yet
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
+          <p className="text-brown-600 dark:text-gray-400">Loading questions...</p>
         </div>
       </div>
     );
@@ -71,6 +160,15 @@ export function QuizViewer() {
     setResults([...results, { question: currentQuestion, userAnswer: answer, isCorrect }]);
   };
 
+  // "I don't know" - marks as incorrect and shows the answer
+  const handleDontKnow = () => {
+    if (answerState !== 'unanswered') return;
+    
+    setUserAnswer("I don't know");
+    setAnswerState('incorrect');
+    setResults([...results, { question: currentQuestion, userAnswer: "I don't know", isCorrect: false }]);
+  };
+
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -79,21 +177,33 @@ export function QuizViewer() {
       setShowHint(false);
     } else {
       // Quiz finished - save results
-      if (categoryId && category) {
+      if (categoryId && categoryTitle) {
         const finalScore = results.filter(r => r.isCorrect).length;
         const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
         
         // Always save to localStorage (works offline)
         saveQuizAttempt(categoryId, finalScore, questions.length);
         
-        // If signed in, also save to database
+        // If signed in, also save to database with individual answers
         if (isSignedIn) {
+          // Convert results to answer format for API
+          const answers = results.map(r => ({
+            question_id: r.question.id,
+            question_text: r.question.question,
+            question_type: r.question.type,
+            user_answer: r.userAnswer,
+            correct_answer: r.question.correctAnswer,
+            is_correct: r.isCorrect,
+            explanation: r.question.explanation,
+          }));
+          
           saveQuizResultMutation.mutate({
             category_id: categoryId,
-            category_title: category.title,
+            category_title: categoryTitle,
             score: finalScore,
             total: questions.length,
             time_spent_seconds: timeSpent,
+            answers,
           });
         }
       }
@@ -102,7 +212,12 @@ export function QuizViewer() {
   };
 
   const handleRestart = () => {
-    setQuestions(shuffleQuestions(category.questions));
+    if (isDictionaryQuiz) {
+      // Refetch new random questions for dictionary quiz
+      refetchDictQuiz();
+    } else if (category) {
+      setQuestions(shuffleQuestions(category.questions));
+    }
     setCurrentIndex(0);
     setUserAnswer('');
     setAnswerState('unanswered');
@@ -110,6 +225,20 @@ export function QuizViewer() {
     setShowResults(false);
     setShowHint(false);
     startTimeRef.current = Date.now(); // Reset timer
+  };
+
+  // Handle back navigation with confirmation if quiz is in progress
+  const handleBack = () => {
+    if (results.length > 0) {
+      const confirmed = window.confirm(
+        'Are you sure you want to leave? Your quiz progress will be lost.'
+      );
+      if (confirmed) {
+        navigate('/quiz');
+      }
+    } else {
+      navigate('/quiz');
+    }
   };
 
   const correctCount = results.filter(r => r.isCorrect).length;
@@ -212,7 +341,7 @@ export function QuizViewer() {
               className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95"
             >
               <RotateCcw className="w-5 h-5" />
-              Try Again
+              {isDictionaryQuiz ? 'New Questions' : 'Try Again'}
             </button>
             <Link
               to="/quiz"
@@ -221,6 +350,32 @@ export function QuizViewer() {
               Other Quizzes
             </Link>
           </div>
+          
+          {/* Dictionary mode hint OR Try Dictionary Mode button */}
+          {isDictionaryQuiz ? (
+            <p className="text-center text-sm text-brown-600 dark:text-gray-400 mt-4">
+              💡 Dictionary quizzes generate new random questions each time!
+            </p>
+          ) : (
+            <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                  <BookOpen className="w-5 h-5" />
+                  <span className="text-sm font-medium">Want more practice?</span>
+                </div>
+                <Link
+                  to={`/quiz/dict-${actualCategoryId}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                >
+                  Try Dictionary Mode
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 text-center sm:text-left">
+                10,350+ words • Unlimited new questions • More variety
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -234,17 +389,22 @@ export function QuizViewer() {
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Link
-                to="/quiz"
+              <button
+                onClick={handleBack}
                 className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-              </Link>
+              </button>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">{category.icon}</span>
+                <span className="text-2xl">{category?.icon || '📚'}</span>
                 <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
-                  {category.title}
+                  {categoryTitle || 'Quiz'}
                 </h1>
+                {isDictionaryQuiz && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
+                    Dictionary
+                  </span>
+                )}
               </div>
             </div>
             <div className="text-sm font-medium text-brown-600 dark:text-gray-400">
@@ -391,13 +551,22 @@ export function QuizViewer() {
                   </div>
                   
                   {answerState === 'unanswered' && (
-                    <button
-                      onClick={() => handleAnswer(userAnswer)}
-                      disabled={!userAnswer.trim()}
-                      className="w-full py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all active:scale-98"
-                    >
-                      Submit Answer
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => handleAnswer(userAnswer)}
+                        disabled={!userAnswer.trim()}
+                        className="flex-1 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all active:scale-98"
+                      >
+                        Submit Answer
+                      </button>
+                      <button
+                        onClick={handleDontKnow}
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-all active:scale-98"
+                      >
+                        <HelpCircle className="w-5 h-5" />
+                        I don't know
+                      </button>
+                    </div>
                   )}
 
                   {answerState === 'incorrect' && (

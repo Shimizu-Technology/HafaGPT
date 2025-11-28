@@ -6,11 +6,34 @@
  * - Fetching cards in a deck with progress
  * - Saving decks
  * - Reviewing cards (spaced repetition)
+ * - Dictionary-based flashcards (instant loading from 10,350+ words)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// ===========================
+// Dictionary Flashcard Types
+// ===========================
+
+export interface DictionaryFlashcard {
+  front: string;
+  back: string;
+  part_of_speech: string;
+  example: string | null;
+}
+
+interface DictionaryFlashcardsResponse {
+  cards: DictionaryFlashcard[];
+  total: number;
+  category: {
+    id: string;
+    title: string;
+    icon: string;
+    description: string;
+  } | null;
+}
 
 // ===========================
 // Types
@@ -212,6 +235,47 @@ export function useReviewCard(deckId: string) {
         queryKey: flashcardKeys.decks(variables.user_id),
       });
     },
+  });
+}
+
+// ===========================
+// Dictionary Flashcard API
+// ===========================
+
+async function fetchDictionaryFlashcards(
+  categoryId: string, 
+  count: number = 10, 
+  shuffle: boolean = true
+): Promise<DictionaryFlashcardsResponse> {
+  const response = await fetch(
+    `${API_URL}/api/vocabulary/flashcards/${categoryId}?count=${count}&shuffle=${shuffle}`
+  );
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch dictionary flashcards');
+  }
+  
+  return response.json();
+}
+
+/**
+ * Fetch dictionary-based flashcards for a category
+ * 
+ * Uses the 10,350+ word dictionary for instant flashcard loading.
+ * Much faster than AI-generated cards.
+ */
+export function useDictionaryFlashcards(
+  categoryId: string | undefined,
+  count: number = 10,
+  shuffle: boolean = true,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: ['dictionary-flashcards', categoryId, count, shuffle],
+    queryFn: () => fetchDictionaryFlashcards(categoryId!, count, shuffle),
+    enabled: enabled && !!categoryId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
