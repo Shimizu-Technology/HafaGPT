@@ -180,3 +180,72 @@ export function useDictionaryQuiz(
   });
 }
 
+// Single word lookup types and hook (enhanced with morphology)
+export interface EnhancedWordResponse {
+  found: boolean;
+  word: string;
+  definition: {
+    chamorro: string;
+    definition: string;
+    part_of_speech: string;
+    examples: { chamorro: string; english: string }[];
+  } | null;
+  root_word: string | null;
+  morphology_note: string | null;
+  suggestions: string[];
+}
+
+export interface SingleWordResponse {
+  chamorro: string;
+  definition: string;
+  partOfSpeech?: string;
+  pronunciation?: string;
+  examples?: string[];
+  rootWord?: string;
+  morphologyNote?: string;
+  suggestions?: string[];
+  found: boolean;
+}
+
+async function fetchWord(word: string): Promise<SingleWordResponse> {
+  try {
+    // Use enhanced API with morphology
+    const response = await fetch(`${API_URL}/api/vocabulary/word/${encodeURIComponent(word)}?enhanced=true`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch word');
+    }
+    const data: EnhancedWordResponse = await response.json();
+    
+    return {
+      found: data.found,
+      chamorro: data.definition?.chamorro || data.root_word || word,
+      definition: data.definition?.definition || '',
+      partOfSpeech: data.definition?.part_of_speech,
+      examples: data.definition?.examples?.map((e) => 
+        e.chamorro || e.english || ''
+      ).filter(Boolean),
+      rootWord: data.root_word || undefined,
+      morphologyNote: data.morphology_note || undefined,
+      suggestions: data.suggestions,
+    };
+  } catch {
+    return {
+      found: false,
+      chamorro: word,
+      definition: '',
+      suggestions: [],
+    };
+  }
+}
+
+export function useVocabularyWord(word: string | undefined) {
+  return useQuery({
+    queryKey: ['vocabulary', 'word', word],
+    queryFn: () => fetchWord(word!),
+    enabled: !!word && word.length > 0,
+    staleTime: 1000 * 60 * 60, // 1 hour - word definitions don't change
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    retry: false, // Don't retry if word not found
+  });
+}
+

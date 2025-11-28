@@ -9,6 +9,9 @@ import { QuizList } from './components/QuizList';
 import { QuizViewer } from './components/QuizViewer';
 import { QuizReview } from './components/QuizReview';
 import { QuizHistory } from './components/QuizHistory';
+import { StoryList } from './components/StoryList';
+import { StoryViewer } from './components/StoryViewer';
+import { LengguahitaStoryViewer } from './components/LengguahitaStoryViewer';
 import { Dashboard } from './components/Dashboard';
 import { VocabularyList } from './components/VocabularyList';
 import { VocabularyCategory } from './components/VocabularyCategory';
@@ -38,6 +41,11 @@ function App() {
         {/* Vocabulary routes - public (no auth required) */}
         <Route path="/vocabulary" element={<VocabularyList />} />
         <Route path="/vocabulary/:categoryId" element={<VocabularyCategory />} />
+        
+        {/* Story routes - public (no auth required) */}
+        <Route path="/stories" element={<StoryList />} />
+        <Route path="/stories/:storyId" element={<StoryViewer />} />
+        <Route path="/stories/lengguahita/:storyId" element={<LengguahitaStoryViewer />} />
         
         {/* Dashboard routes - detailed progress */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
