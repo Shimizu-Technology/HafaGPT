@@ -1,19 +1,24 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Chat } from './components/Chat';
+import { HomePage } from './components/HomePage';
 import { FlashcardDeckList } from './components/FlashcardDeckList';
 import { FlashcardViewer } from './components/FlashcardViewer';
 import { MyDecks } from './components/MyDecks';
 import { SavedDeckViewer } from './components/SavedDeckViewer';
 import { QuizList } from './components/QuizList';
 import { QuizViewer } from './components/QuizViewer';
+import { Dashboard } from './components/Dashboard';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public route - anyone can see the chat UI */}
-        <Route path="/" element={<Chat />} />
+        {/* Homepage - Learning dashboard */}
+        <Route path="/" element={<HomePage />} />
+        
+        {/* Chat route - AI tutor */}
+        <Route path="/chat" element={<Chat />} />
         
         {/* Protected routes - require authentication */}
         <Route path="/flashcards" element={<ProtectedRoute><FlashcardDeckList /></ProtectedRoute>} />
@@ -24,6 +29,9 @@ function App() {
         {/* Quiz routes */}
         <Route path="/quiz" element={<ProtectedRoute><QuizList /></ProtectedRoute>} />
         <Route path="/quiz/:categoryId" element={<ProtectedRoute><QuizViewer /></ProtectedRoute>} />
+        
+        {/* Dashboard route - detailed progress */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

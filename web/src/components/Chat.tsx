@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, BookOpen, Brain } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home } from 'lucide-react';
 import { useChatbot, ChatMessage } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -55,6 +55,8 @@ export function Chat() {
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
   // React Query hooks - replaces old useConversations hook
   // Only enable when Clerk is fully loaded AND user is signed in
@@ -208,6 +210,38 @@ export function Chat() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]); // Only depend on isSignedIn
+
+  // Handle message from URL params (from homepage quick chat)
+  // This should start a NEW chat and send the message
+  useEffect(() => {
+    const messageFromUrl = searchParams.get('message');
+    
+    // Only process if we have a message AND user is ready AND we haven't already processed it
+    if (!messageFromUrl || !isSignedIn || loading || conversationsLoading || hasProcessedUrlMessage.current) {
+      return;
+    }
+    
+    // Mark as processed FIRST to prevent any race conditions
+    hasProcessedUrlMessage.current = true;
+    
+    // Clear URL params immediately to prevent re-processing on navigation
+    setSearchParams({}, { replace: true });
+    
+    // Start a new chat by clearing the active conversation
+    setActiveConversationId(null);
+    setMessages([]);
+    localStorage.removeItem('active_conversation_id');
+    
+    // Send the message after a brief delay to ensure state is updated
+    const messageToSend = messageFromUrl;
+    setTimeout(() => {
+      handleSend(messageToSend);
+      // Reset the flag after sending so future URL messages work
+      hasProcessedUrlMessage.current = false;
+    }, 50);
+    
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isSignedIn, loading, conversationsLoading, setSearchParams]); // handleSend is stable
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -542,37 +576,26 @@ End of Export
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Home Button - Go back to learning dashboard */}
+              <Link
+                to="/"
+                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
+                aria-label="Go to home"
+                title="Home"
+              >
+                <Home className="w-5 h-5" />
+                <span className="hidden sm:inline text-sm font-medium">Home</span>
+              </Link>
+              
               {/* Auth Button - Always visible */}
               <AuthButton />
               
-              {/* Study Button - Link to Flashcards - Compact on mobile */}
-              <Link
-                to="/flashcards"
-                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
-                aria-label="Study flashcards"
-                title="Study flashcards"
-              >
-                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden lg:inline text-sm font-medium">Study</span>
-              </Link>
-              
-              {/* Quiz Button - Link to Quiz Mode */}
-              <Link
-                to="/quiz"
-                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
-                aria-label="Take a quiz"
-                title="Take a quiz"
-              >
-                <Brain className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden lg:inline text-sm font-medium">Quiz</span>
-              </Link>
-              
               <button
                 onClick={toggleTheme}
-                className="p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center"
+                className="p-1 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center"
                 aria-label="Toggle theme"
               >
-                {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
+                {theme === 'light' ? <Moon className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <Sun className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
               </button>
               {messages.length > 0 && (
                 <button

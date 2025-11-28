@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageSquare, Plus, Trash2, Pencil } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MessageSquare, Plus, Trash2, Pencil, BookOpen, Brain, BarChart3, Home } from 'lucide-react';
 import { Conversation } from '../hooks/useConversationsQuery';
 
 interface ConversationSidebarProps {
@@ -230,6 +231,45 @@ export function ConversationSidebar({
                 </div>
               )}
             </div>
+          
+          {/* Quick Links - Mobile only (sm:hidden) */}
+          <div className="sm:hidden border-t border-cream-300 dark:border-gray-800 p-3 space-y-2">
+            <Link
+              to="/"
+              onClick={onToggle}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              <Home className="w-5 h-5 text-coral-600 dark:text-coral-400" />
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Home</span>
+            </Link>
+            <p className="text-xs font-medium text-brown-500 dark:text-gray-500 uppercase tracking-wide px-2 mb-2 mt-3">
+              Learn
+            </p>
+            <Link
+              to="/flashcards"
+              onClick={onToggle}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              <BookOpen className="w-5 h-5 text-teal-600 dark:text-ocean-400" />
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Flashcards</span>
+            </Link>
+            <Link
+              to="/quiz"
+              onClick={onToggle}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Quizzes</span>
+            </Link>
+            <Link
+              to="/dashboard"
+              onClick={onToggle}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
+            >
+              <BarChart3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Progress</span>
+            </Link>
+          </div>
         </div>
       </div>
 

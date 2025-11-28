@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
+import { saveQuizAttempt } from './Dashboard';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -72,6 +73,12 @@ export function QuizViewer() {
       setAnswerState('unanswered');
       setShowHint(false);
     } else {
+      // Save quiz results to localStorage before showing results
+      if (categoryId) {
+        const finalCorrectCount = results.filter(r => r.isCorrect).length + (answerState === 'correct' ? 0 : 0);
+        // Note: results already includes current answer from handleAnswer
+        saveQuizAttempt(categoryId, results.filter(r => r.isCorrect).length, questions.length);
+      }
       setShowResults(true);
     }
   };
