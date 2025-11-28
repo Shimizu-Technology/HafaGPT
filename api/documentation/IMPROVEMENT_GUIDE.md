@@ -722,6 +722,97 @@ CREATE TABLE quiz_results (
 
 ---
 
+### **Phase 2E.1: Expand Story Content** 📚 **NEXT PRIORITY**
+
+**Status:** 📋 Planned  
+**Complexity:** Low-Medium  
+**Effort:** 1-2 days per source  
+**Cost:** None
+
+**Goal:** Grow from 17 stories to 50+ stories for more learning variety.
+
+**Current Story Count:**
+- 6 Curated Stories (hand-crafted with quizzes)
+- 11 Lengguahi-ta Stories (pre-extracted)
+- **Total: 17 stories**
+
+**Potential Sources to Add:**
+
+#### **1. More Lengguahi-ta Content** 🎯 **HIGH PRIORITY**
+- **URL:** https://lengguahita.com
+- **Content Type:** Bilingual stories, lessons, songs
+- **Why:** Already have extraction script, high-quality bilingual format
+- **How:** 
+  1. Re-crawl Lengguahi-ta for new content (they post regularly)
+  2. Run `scripts/extract_stories.py` to extract new stories
+  3. Script auto-validates quality and rejects bad content
+- **Estimated New Stories:** 10-20+
+
+#### **2. Guampedia Legends & Folktales** 🎯 **HIGH PRIORITY**
+- **URL:** https://guampedia.com/category/chamorro-legends/
+- **Content Type:** Traditional Chamorro legends, cultural stories
+- **Why:** Rich cultural content, authoritative source
+- **Challenge:** Most content is English-only (no Chamorro text)
+- **Options:**
+  - A) Use as English-only cultural reading
+  - B) Use AI to generate Chamorro translations (with disclaimer)
+  - C) Partner with Guampedia for bilingual versions
+- **Estimated Stories:** 20-30 legends
+
+#### **3. Chamorro Language Blogs** 🔄 **MEDIUM PRIORITY**
+- **URLs:** 
+  - https://finochamoru.blogspot.com/
+  - https://chamorrolanguage.blogspot.com/
+- **Content Type:** Word of the day, short lessons, cultural posts
+- **Why:** Already in RAG database, good for short readings
+- **Challenge:** Format varies, may need custom extraction
+- **Estimated Stories:** 10-15 short readings
+
+#### **4. Academic/Educational Sources** 📖 **LOWER PRIORITY**
+- **Content:** University of Guam materials, textbook excerpts
+- **Why:** Structured learning content
+- **Challenge:** Copyright considerations, need permission
+- **Estimated Stories:** 5-10 readings
+
+#### **5. Community-Contributed Stories** 👥 **FUTURE**
+- **Concept:** Allow users to submit stories
+- **Why:** Grows content organically, community engagement
+- **Challenge:** Moderation, quality control, translation verification
+- **Implementation:** Phase 3+ feature
+
+**Implementation Plan:**
+
+**Phase 1: Lengguahi-ta Expansion (1 day)**
+1. Re-crawl Lengguahi-ta website
+2. Run extraction script
+3. Manually review new stories
+4. Update `extracted_stories.json`
+
+**Phase 2: Guampedia Legends (2-3 days)**
+1. Create new extraction script for Guampedia format
+2. Extract legend content (English)
+3. Decide on bilingual approach
+4. Add to story library with "English-only" tag
+
+**Phase 3: Blog Content (1-2 days)**
+1. Create extraction script for blog format
+2. Extract short readings
+3. Add as "Quick Reads" category
+
+**Success Metrics:**
+- [ ] 30+ total stories
+- [ ] Mix of difficulties (beginner, intermediate, advanced)
+- [ ] Multiple categories (legends, daily life, culture, history)
+- [ ] All stories pass quality validation
+
+**Technical Notes:**
+- Extraction script location: `scripts/extract_stories.py`
+- Story data location: `data/extracted_stories.json`
+- Quality validation: `english_field_is_chamorro()` function
+- API endpoint: `GET /api/stories/available`
+
+---
+
 ### **Phase 2F: Conversation Practice (Text)** 💬 **IMMERSIVE**
 
 **Status:** 📋 Planned  
