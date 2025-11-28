@@ -257,6 +257,156 @@ def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> O
         logger.error(f"Unexpected error uploading to S3: {e}")
         return None
 
+
+# --- File Upload Support (PDF, Word, Text) ---
+
+import io
+from pypdf import PdfReader
+from docx import Document
+
+# Supported file types and their MIME types
+SUPPORTED_FILE_TYPES = {
+    # Documents
+    'application/pdf': 'pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/msword': 'doc',  # Old .doc format (limited support)
+    'text/plain': 'txt',
+    # Images (existing support)
+    'image/jpeg': 'image',
+    'image/png': 'image',
+    'image/webp': 'image',
+    'image/gif': 'image',
+}
+
+def extract_text_from_pdf(file_data: bytes) -> str:
+    """Extract text from PDF file."""
+    try:
+        pdf = PdfReader(io.BytesIO(file_data))
+        text_parts = []
+        for page_num, page in enumerate(pdf.pages, 1):
+            page_text = page.extract_text()
+            if page_text:
+                text_parts.append(f"--- Page {page_num} ---\n{page_text}")
+        
+        full_text = "\n\n".join(text_parts)
+        logger.info(f"📄 PDF extracted: {len(pdf.pages)} pages, {len(full_text)} chars")
+        return full_text
+    except Exception as e:
+        logger.error(f"❌ Failed to extract PDF text: {e}")
+        raise ValueError(f"Failed to read PDF: {str(e)}")
+
+
+def extract_text_from_docx(file_data: bytes) -> str:
+    """Extract text from Word document (.docx)."""
+    try:
+        doc = Document(io.BytesIO(file_data))
+        text_parts = []
+        
+        for para in doc.paragraphs:
+            if para.text.strip():
+                text_parts.append(para.text)
+        
+        # Also extract from tables
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = ' | '.join(cell.text.strip() for cell in row.cells if cell.text.strip())
+                if row_text:
+                    text_parts.append(row_text)
+        
+        full_text = "\n\n".join(text_parts)
+        logger.info(f"📝 Word doc extracted: {len(doc.paragraphs)} paragraphs, {len(full_text)} chars")
+        return full_text
+    except Exception as e:
+        logger.error(f"❌ Failed to extract Word doc text: {e}")
+        raise ValueError(f"Failed to read Word document: {str(e)}")
+
+
+def extract_text_from_txt(file_data: bytes) -> str:
+    """Extract text from plain text file."""
+    try:
+        # Try UTF-8 first, then fall back to latin-1
+        try:
+            text = file_data.decode('utf-8')
+        except UnicodeDecodeError:
+            text = file_data.decode('latin-1')
+        
+        logger.info(f"📋 Text file extracted: {len(text)} chars")
+        return text
+    except Exception as e:
+        logger.error(f"❌ Failed to read text file: {e}")
+        raise ValueError(f"Failed to read text file: {str(e)}")
+
+
+def upload_file_to_s3(file_data: bytes, filename: str, content_type: str) -> Optional[str]:
+    """
+    Upload file to S3 and return public URL.
+    Works for both images and documents.
+    """
+    if not S3_AVAILABLE:
+        logger.warning("S3 not available, skipping file upload")
+        return None
+    
+    try:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
+        s3_key = f"chamorro_uploads/{timestamp}_{filename}"
+        
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=s3_key,
+            Body=file_data,
+            ContentType=content_type
+        )
+        
+        file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+        logger.info(f"✅ File uploaded to S3: {file_url}")
+        return file_url
+        
+    except ClientError as e:
+        logger.error(f"Failed to upload file to S3: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error uploading to S3: {e}")
+        return None
+
+
+def process_uploaded_file(file_data: bytes, content_type: str, filename: str) -> dict:
+    """
+    Process an uploaded file and return extracted content.
+    
+    Returns:
+        dict with keys:
+        - file_type: 'pdf', 'docx', 'txt', or 'image'
+        - text_content: Extracted text (for documents) or None (for images)
+        - image_base64: Base64 encoded image (for images) or None (for documents)
+    """
+    file_type = SUPPORTED_FILE_TYPES.get(content_type)
+    
+    if not file_type:
+        raise ValueError(f"Unsupported file type: {content_type}. Supported: PDF, Word (.docx), Text (.txt), Images")
+    
+    result = {
+        'file_type': file_type,
+        'text_content': None,
+        'image_base64': None,
+        'filename': filename
+    }
+    
+    if file_type == 'pdf':
+        result['text_content'] = extract_text_from_pdf(file_data)
+    elif file_type == 'docx':
+        result['text_content'] = extract_text_from_docx(file_data)
+    elif file_type == 'doc':
+        # Old .doc format - limited support, suggest converting
+        raise ValueError("Old .doc format not supported. Please save as .docx (Word 2007+)")
+    elif file_type == 'txt':
+        result['text_content'] = extract_text_from_txt(file_data)
+    elif file_type == 'image':
+        result['image_base64'] = base64.b64encode(file_data).decode('utf-8')
+    
+    return result
+
+
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
 rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))  # requests
@@ -410,43 +560,44 @@ async def health_check():
 async def chat(
     request: Request,
     authorization: Optional[str] = Header(None),
-    # Form parameters (for multipart/form-data with images)
+    # Form parameters (for multipart/form-data with files)
     message: Optional[str] = Form(None),
     mode: Optional[str] = Form(None),
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None)  # Renamed from 'image' to support all file types
 ):
     """
-    Send a message to the chatbot (supports text and images)
+    Send a message to the chatbot (supports text, images, and documents)
     
     **Accepts:**
     - `application/json` for text-only messages
-    - `multipart/form-data` for messages with images
+    - `multipart/form-data` for messages with files
     
     **Modes:**
     - `english`: General conversation (default)
     - `chamorro`: Chamorro-only immersion mode
     - `learn`: Learning mode with explanations
     
-    **Image Upload (Optional):**
-    - Upload an image of Chamorro text, documents, or signs
-    - Supported formats: JPEG, PNG, WebP, GIF
-    - The chatbot will read and translate the text in the image
+    **File Upload (Optional):**
+    - **Images**: JPEG, PNG, WebP, GIF - Read and translate text in images
+    - **PDF**: Extract and analyze text from PDF documents
+    - **Word (.docx)**: Extract and analyze text from Word documents
+    - **Text (.txt)**: Analyze plain text files
     
     **Authentication:**
     - Send `Authorization: Bearer <token>` header with Clerk JWT
     - Authentication is REQUIRED for all users
     
-    **Example request (with image):**
+    **Example request (with file):**
     - Content-Type: multipart/form-data
-    - message: "What does this say?"
+    - message: "Translate this document"
     - mode: "english"
-    - image: [file upload]
+    - file: [file upload - PDF, Word, image, or text]
     - session_id: "session_1234567890_abc"
     """
     try:
-        # Check if this is a JSON request (no image) or FormData request (with/without image)
+        # Check if this is a JSON request (no file) or FormData request (with/without file)
         content_type = request.headers.get('content-type', '')
         
         if 'application/json' in content_type:
@@ -456,7 +607,7 @@ async def chat(
             mode = body.get('mode', 'english')
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
-            image = None
+            file = None
         else:
             # FormData is already parsed by Form() parameters above
             mode = mode or 'english'
@@ -480,62 +631,87 @@ async def chat(
         # Verify user authentication (REQUIRED)
         user_id = await verify_user(authorization)
         
-        # Process image if present
+        # Process file if present (images, PDFs, Word docs, text files)
         image_base64 = None
-        image_url = None  # S3 URL
-        if image:
-            logger.info(f"📸 Image received: filename={image.filename}, content_type={image.content_type}")
+        file_url = None  # S3 URL
+        document_text = None  # Extracted text from documents
+        
+        if file:
+            logger.info(f"📁 File received: filename={file.filename}, content_type={file.content_type}")
             
-            # Validate file type
-            if not image.content_type or not image.content_type.startswith('image/'):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Invalid file type. Please upload an image file (JPEG, PNG, WebP, GIF)"
-                )
-            
-            # Read and process image
             try:
-                image_data = await image.read()
-                logger.info(f"📦 Image data read: {len(image_data)} bytes")
+                file_data = await file.read()
+                logger.info(f"📦 File data read: {len(file_data)} bytes")
                 
-                # Upload to S3 (for persistence)
-                image_url = upload_image_to_s3(
-                    image_data=image_data,
-                    filename=image.filename,
-                    content_type=image.content_type
+                # Process file based on type
+                file_result = process_uploaded_file(
+                    file_data=file_data,
+                    content_type=file.content_type,
+                    filename=file.filename
                 )
                 
-                if image_url:
-                    logger.info(f"✅ S3 upload successful: {image_url}")
-                else:
-                    logger.warning("⚠️  S3 upload failed, but continuing with base64")
+                file_type = file_result['file_type']
                 
-                # Base64 encode for GPT-4o-mini Vision
-                image_base64 = base64.b64encode(image_data).decode('utf-8')
-                logger.info(f"✅ Image base64 encoded: {len(image_base64)} chars")
+                if file_type == 'image':
+                    # Image: Use GPT-4o-mini Vision
+                    image_base64 = file_result['image_base64']
+                    logger.info(f"✅ Image processed: {len(image_base64)} chars base64")
+                else:
+                    # Document: Extract text and add to message
+                    document_text = file_result['text_content']
+                    if document_text:
+                        logger.info(f"✅ Document text extracted: {len(document_text)} chars")
+                    else:
+                        raise ValueError("No text could be extracted from the document")
+                
+                # Upload to S3 (for persistence) - works for all file types
+                file_url = upload_file_to_s3(
+                    file_data=file_data,
+                    filename=file.filename,
+                    content_type=file.content_type
+                )
+                
+                if file_url:
+                    logger.info(f"✅ S3 upload successful: {file_url}")
+                else:
+                    logger.warning("⚠️  S3 upload failed, but continuing with extracted content")
                     
+            except ValueError as e:
+                # Known file processing errors
+                raise HTTPException(status_code=400, detail=str(e))
             except Exception as e:
-                logger.error(f"❌ Failed to process image: {e}")
+                logger.error(f"❌ Failed to process file: {e}")
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Failed to process image: {str(e)}"
+                    detail=f"Failed to process file: {str(e)}"
                 )
         
-        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_image={image is not None}, image_base64_length={len(image_base64) if image_base64 else 0}")
+        # If document text was extracted, append it to the message
+        final_message = message
+        if document_text:
+            # Truncate very long documents (GPT-4o has 128k context, but let's be reasonable)
+            max_doc_chars = 50000  # ~12k tokens
+            if len(document_text) > max_doc_chars:
+                document_text = document_text[:max_doc_chars] + "\n\n[Document truncated - showing first 50,000 characters]"
+            
+            final_message = f"{message}\n\n--- Document Content ---\n{document_text}"
+            logger.info(f"📄 Message augmented with document text: {len(final_message)} total chars")
+        
+        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_file={file is not None}, has_image={image_base64 is not None}, has_doc_text={document_text is not None}")
         
         # Get response from chatbot service
         result = get_chatbot_response(
-            message=message,
+            message=final_message,
             mode=mode,
             conversation_length=0,  # For now, stateless (no session history)
             session_id=session_id,  # Pass session_id for logging
             user_id=user_id,  # Pass user_id for tracking
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
             image_base64=image_base64,  # Pass base64-encoded image for Vision
-            image_url=image_url  # NEW: Pass S3 URL for logging
+            image_url=file_url  # Pass S3 URL for logging (works for all file types)
         )
         
-        logger.info(f"Chatbot service called successfully with image_base64={'present' if image_base64 else 'None'}")
+        logger.info(f"Chatbot service called successfully with image_base64={'present' if image_base64 else 'None'}, doc_text={'present' if document_text else 'None'}")
         
         # Convert sources to SourceInfo models
         sources = [

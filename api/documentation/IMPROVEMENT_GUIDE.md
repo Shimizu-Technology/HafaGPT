@@ -146,91 +146,31 @@
 
 ## 🎯 **ACTIVE ROADMAP** - Next Features to Implement
 
-### **Phase 1: General File Upload** 🔴 **HIGH PRIORITY - UP NEXT**
+### **Phase 1: General File Upload** ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Complete  
 **Complexity:** Medium  
 **Effort:** 2-3 days  
 **Cost:** Same as image storage (~$0.02-0.10/month)
 
-**Why This Feature:**
-- 📄 Upload PDFs, Word docs, text files
-- 📚 Analyze multi-page Chamorro documents
-- 🎓 Process entire homework assignments at once
-- 📖 Extract text from scanned documents (OCR)
+**What's Implemented:**
+- 📄 **PDF Upload** - Extract and analyze text from PDF documents
+- 📝 **Word (.docx)** - Parse formatted Word documents  
+- 📋 **Text (.txt)** - Analyze plain text files
+- 🖼️ **Images** - (already supported) GPT-4o-mini Vision
 
-**Supported File Types:**
-- 📄 **PDF** - Extract text, analyze structure
-- 📝 **Word (.docx)** - Parse formatted documents
-- 📋 **Text (.txt)** - Plain text Chamorro files
-- 🖼️ **Images** (already supported)
+**Features:**
+- ✅ Backend: pypdf + python-docx for document parsing
+- ✅ Frontend: File type detection and icons (PDF, Word, Text)
+- ✅ Document preview: Shows file type icon + filename before sending
+- ✅ Chat history: Document links in messages (clickable to download)
+- ✅ S3 storage: All files persisted to AWS S3
+- ✅ Large document handling: Truncates at 50,000 chars (~12k tokens)
 
-**Implementation:**
-```python
-# Backend
-from PyPDF2 import PdfReader
-from docx import Document
-import pytesseract  # For OCR
-
-@app.post("/api/chat")
-async def chat(
-    message: str = Form(...),
-    file: Optional[UploadFile] = File(None),  # Renamed from 'image'
-    ...
-):
-    file_content = None
-    
-    if file:
-        if file.content_type == 'application/pdf':
-            # Extract PDF text
-            pdf = PdfReader(io.BytesIO(await file.read()))
-            file_content = "\n".join([page.extract_text() for page in pdf.pages])
-            
-        elif file.content_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-            # Extract Word document text
-            doc = Document(io.BytesIO(await file.read()))
-            file_content = "\n".join([para.text for para in doc.paragraphs])
-            
-        elif file.content_type.startswith('image/'):
-            # Use existing image handling (GPT-4o-mini Vision)
-            # OR use OCR for text extraction
-            image_data = await file.read()
-            file_content = pytesseract.image_to_string(Image.open(io.BytesIO(image_data)))
-        
-        # Add file content to prompt
-        messages.append({
-            "role": "user",
-            "content": f"{message}\n\nDocument content:\n{file_content}"
-        })
-```
-
-**Frontend Updates:**
-```typescript
-// Change accept attribute to allow more file types
-<input
-  type="file"
-  accept="image/*,.pdf,.docx,.txt"
-  onChange={handleFileSelect}
-/>
-
-// Display file type icon based on extension
-{selectedFile && (
-  <div className="flex items-center gap-2">
-    {selectedFile.type.startsWith('image/') && <Camera />}
-    {selectedFile.type === 'application/pdf' && <FileText />}
-    {selectedFile.type.includes('word') && <FileText />}
-    <span>{selectedFile.name}</span>
-  </div>
-)}
-```
-
-**Success Criteria:**
-- [ ] Upload PDF files
-- [ ] Upload Word documents
-- [ ] Extract text from multi-page PDFs
-- [ ] Display file name and type in chat
-- [ ] Store file URL in database (with S3)
-- [ ] Download/view uploaded files later
+**API Changes:**
+- `/api/chat` now accepts `file` parameter (was `image`)
+- Supports: `image/*`, `application/pdf`, `.docx`, `text/plain`
+- Document text automatically appended to user message
 
 ---
 
@@ -699,6 +639,82 @@ CREATE TABLE quiz_results (
 
 ---
 
+### **Future: Full Offline/Local Mode** 🔌 **DEFERRED**
+
+**Status:** ⏸️ Planned for future  
+**Reason:** Currently requires internet for OpenAI API calls  
+**Goal:** Run HåfaGPT 100% locally without internet
+
+**Current State:**
+- ❌ **LLM:** Requires OpenAI API (GPT-4o-mini) - needs internet
+- ❌ **Embeddings:** Using `EMBEDDING_MODE=openai` - needs internet
+- ❌ **TTS:** Using OpenAI TTS HD - needs internet
+- ✅ **Database:** Can run PostgreSQL locally
+- ✅ **Frontend:** Runs locally (Vite dev server)
+- ✅ **Backend:** Runs locally (FastAPI/uvicorn)
+
+**Why Local Embeddings Don't Work Currently:**
+```bash
+# These packages were REMOVED because they're too heavy for Render (512MB RAM):
+# - langchain_huggingface (~50MB but pulls in torch)
+# - torch (~900MB)
+# - transformers (~400MB)
+# - sentence-transformers (~500MB)
+
+# Total: ~1.8GB+ just for local embeddings!
+```
+
+**To Enable Full Offline Mode (Future):**
+
+1. **Local LLM** - Replace OpenAI with local model
+   - Options: Ollama (Llama 3, Mistral), LM Studio, llama.cpp
+   - Would need ~8GB RAM for decent quality
+   - Add `LLM_MODE=local` environment variable
+
+2. **Local Embeddings** - Re-enable HuggingFace embeddings
+   - Create separate `requirements-dev.txt` with heavy packages
+   - Use `EMBEDDING_MODE=local` for offline development
+   - Keep production lean with `EMBEDDING_MODE=openai`
+
+3. **Local TTS** - Replace OpenAI TTS
+   - Options: Coqui TTS, pyttsx3 (basic), espeak
+   - Quality won't be as good as OpenAI TTS HD
+   - Browser TTS fallback already exists
+
+4. **Local Database** - Already supported
+   - Just change `DATABASE_URL` to local PostgreSQL
+   - Run: `docker run -p 5432:5432 -e POSTGRES_PASSWORD=password postgres`
+
+**Implementation Plan:**
+
+```bash
+# .env for OFFLINE mode (future)
+LLM_MODE=local              # Use Ollama/local model
+EMBEDDING_MODE=local        # Use HuggingFace embeddings
+TTS_MODE=local              # Use local TTS (Coqui/pyttsx3)
+DATABASE_URL=postgresql://localhost:5432/hafagpt
+
+# .env for PRODUCTION (current)
+LLM_MODE=openai             # Use GPT-4o-mini
+EMBEDDING_MODE=openai       # Use OpenAI embeddings
+TTS_MODE=openai             # Use OpenAI TTS HD
+DATABASE_URL=postgresql://neon.tech/...
+```
+
+**Effort Estimate:**
+- Local LLM integration: 2-3 days
+- Local embeddings setup: 1 day (just dependency management)
+- Local TTS: 1 day
+- Testing & documentation: 1 day
+- **Total: ~5-6 days**
+
+**When to Implement:**
+- When offline usage becomes a priority
+- When local hardware can handle it (8GB+ RAM recommended)
+- After core learning features are complete
+
+---
+
 ## 💰 **Cost Estimate**
 
 **Current Production Costs:**
@@ -727,8 +743,8 @@ CREATE TABLE quiz_results (
 | **Phase 1** | ✅ Performance Optimizations (React Query) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Flashcards (Stateless MVP) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ User Feedback System (Thumbs Up/Down) | - | ✅ **COMPLETED** |
-| **Phase 2** | File Upload (PDF/Word) | 2-3 days | 🔴 **UP NEXT** |
-| **Phase 2A** | Quiz Mode | 2-3 days | 📋 Planned |
+| **Phase 1** | ✅ File Upload (PDF/Word/Text) | - | ✅ **COMPLETED** |
+| **Phase 2A** | Quiz Mode | 2-3 days | 🔴 **UP NEXT** |
 | **Phase 2B** | Daily Word/Phrase | 1 day | 📋 Planned |
 | **Phase 2C** | Progress Dashboard | 2-3 days | 📋 Planned |
 | **Phase 2D** | Vocabulary Browser | 1-2 days | 📋 Planned |
@@ -736,6 +752,7 @@ CREATE TABLE quiz_results (
 | **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
 | **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
+| **Future** | Full Offline/Local Mode | 5-6 days | ⏸️ Planned |
 | **Total** | Learning Features | **~15-20 days** | 📋 Ready! |
 
 ---
@@ -744,31 +761,27 @@ CREATE TABLE quiz_results (
 
 **Recommended implementation order:**
 
-1. **File Upload (PDF/Word)** - 2-3 days 🔴 **START HERE**
-   - Practical utility for homework/documents
-   - Builds on existing image upload
-
-2. **Quiz Mode** - 2-3 days
+1. **Quiz Mode** - 2-3 days 🔴 **START HERE**
    - High engagement, tests knowledge
    - Fun for kids (gamified)
 
-3. **Daily Word/Phrase** - 1 day
+2. **Daily Word/Phrase** - 1 day
    - Quick win, builds habit
    - Easy to implement
 
-4. **Progress Dashboard** - 2-3 days
+3. **Progress Dashboard** - 2-3 days
    - Motivation for continued learning
    - Visual progress tracking
 
-5. **Vocabulary Browser** - 1-2 days
+4. **Vocabulary Browser** - 1-2 days
    - Organized reference
    - Category-based learning
 
-6. **Story Mode** - 2-3 days
+5. **Story Mode** - 2-3 days
    - Reading practice
    - Great for parent-child time
 
-7. **Conversation Practice** - 2-3 days
+6. **Conversation Practice** - 2-3 days
    - Immersive scenarios
    - Practical application
 
