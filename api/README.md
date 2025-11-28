@@ -1,10 +1,10 @@
 # 🌺 HåfaGPT - Chamorro Language Learning Platform
 
-A **comprehensive Chamorro language learning application** combining AI tutoring, flashcards, quizzes, vocabulary browser, and progress tracking. Built with **Retrieval-Augmented Generation (RAG)** using 54,000+ chunks from authoritative dictionaries, grammar books, and cultural resources.
+A **comprehensive Chamorro language learning application** combining AI tutoring, flashcards, quizzes, vocabulary browser, and progress tracking. Built with **Retrieval-Augmented Generation (RAG)** using 45,000+ chunks from authoritative dictionaries, grammar books, and cultural resources.
 
 > **HåfaGPT has evolved from a simple chatbot into a complete learning platform for self-study and teaching children Chamorro!**
 
-**🆕 LATEST:** Story Mode with 17 bilingual stories + tap-to-translate! 📖 Plus Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
+**🆕 LATEST:** Story Mode with 24 bilingual stories + tap-to-translate! 📖 Plus Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
@@ -17,9 +17,9 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
   - **Immersion Mode** (`/chamorro`) - Chamorro-only responses
   - **Learning Mode** (`/learn`) - Chamorro with English breakdowns
 
-- 📖 **Story Mode** (17 stories):
+- 📖 **Story Mode** (24 stories):
   - **6 Curated Stories** - Hand-crafted with comprehension quizzes
-  - **11 Lengguahi-ta Stories** - Pre-extracted bilingual stories
+  - **18 Lengguahi-ta Stories** - Pre-extracted bilingual stories
   - **Tap-to-Translate** - Click any Chamorro word to see translation
   - **Chamorro Morphology** - Strips prefixes/suffixes to find root words
   - **TTS Pronunciation** - Listen to Chamorro text spoken aloud
@@ -64,7 +64,7 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
 - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
 - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
 
-- 📚 **RAG-Enhanced Knowledge (45,167 high-quality chunks - 83.6% increase!):**
+- 📚 **RAG-Enhanced Knowledge (45,183 high-quality chunks):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database
   - 📖 **Chamoru.info Dictionary** - 9,414 clean entries (JSON import, zero boilerplate) ✨
   - 📕 **TOD Dictionary** - 9,151 comprehensive dictionary entries (JSON import) ✨
@@ -912,7 +912,7 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 - **Tables:**
   - `conversations` - User-facing conversation management
   - `conversation_logs` - Complete message history
-  - `langchain_pg_embedding` - Vector embeddings (45,167 high-quality chunks)
+  - `langchain_pg_embedding` - Vector embeddings (45,183 high-quality chunks)
   - `langchain_pg_collection` - RAG collections
 
 #### **File Storage**
@@ -1191,7 +1191,7 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 
 ## 📚 Data Sources & Attribution
 
-**Knowledge Base: 45,167 high-quality chunks (83.6% increase from data quality upgrade)** ✨
+**Knowledge Base: 45,183 high-quality chunks** ✨
 
 All content is used for educational purposes to help preserve and teach the Chamorro language.
 
@@ -1250,7 +1250,7 @@ All content is used for educational purposes to help preserve and teach the Cham
 - ✅ **Lengguahi-ta:** Removed WordPress navigation and subscription widgets
 - ✅ **Chamoru.info:** Used clean JSON import instead of web crawl
 - ✅ **Guampedia:** Enhanced regex patterns to remove site navigation and preserve articles
-- ✅ **Result:** 45,167 clean chunks (vs 24,609 corrupted chunks before)
+- ✅ **Result:** 45,183 clean chunks (vs 24,609 corrupted chunks before)
 
 **Impact:**
 - 83.6% increase in database size (20,558 new chunks)

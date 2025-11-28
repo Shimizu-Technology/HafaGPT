@@ -1,7 +1,7 @@
 # 📚 Data Sources & Attribution - Detailed Reference
 
-**Last Updated:** November 17, 2025  
-**Database Version:** 74,605 chunks from 14,615+ unique sources
+**Last Updated:** November 28, 2025  
+**Database Version:** 45,183 chunks from high-quality sources
 
 This document provides comprehensive attribution for all data sources used in the HåfaGPT Chamorro Language Learning Chatbot.
 
@@ -15,18 +15,20 @@ All content in this knowledge base is used for **educational purposes only** to 
 
 ## 📊 Database Breakdown
 
-| Source Category | Chunks | Unique Sources | Percentage |
-|-----------------|--------|----------------|------------|
-| Dictionaries (Total) | 53,757 | ~20,000 | 72.1% |
-| - Chamoru.info (web) | 34,256 | 10,500 | 45.9% |
-| - TOD Dictionary (JSON) | 9,151 | 9,151 | 12.3% |
-| - Revised Dictionary (JSON) | 10,350 | 10,350 | 13.9% |
-| Guampedia Encyclopedia | 9,435 | 2,853 | 12.6% |
-| Academic Books & PDFs | 10,554 | 9 | 14.1% |
-| Chamorro Language Blogs | 551 | 507 | 0.7% |
-| Lengguahi-ta | 58 | 50 | 0.1% |
-| Other Online Resources | 250+ | 100+ | 0.3% |
-| **TOTAL** | **74,605** | **~33,500** | **100%** |
+| Source Category | Chunks | Percentage |
+|-----------------|--------|------------|
+| **Dictionaries (Total)** | 28,931 | 64.0% |
+| - TOD Dictionary (JSON) | 9,151 | 20.3% |
+| - Revised Dictionary (JSON) | 10,350 | 22.9% |
+| - Supplemental Dictionary | 13 | <0.1% |
+| - Other dictionary entries | 9,417 | 20.8% |
+| **Guampedia Encyclopedia** | 11,144 | 24.7% |
+| **Lengguahi-ta** | 248 | 0.5% |
+| **Other Web Sources** | 235 | 0.5% |
+| **Legacy/Unknown** | 4,625 | 10.2% |
+| **TOTAL** | **45,183** | **100%** |
+
+*Note: Database was cleaned in November 2025 to remove duplicate and low-quality content.*
 
 ---
 
@@ -801,53 +803,30 @@ If you are a content creator and:
 
 ## 📅 Version History
 
-### November 17, 2025 - Blog Integration Update
-- **Fino'Chamoru Blog:** 454 chunks (422 posts) ✨ **NEW**
-- **Chamorro Language & Culture Blog:** 97 chunks (85 posts) ✨ **NEW**
-- **Chamoru.info (web):** 34,256 chunks (10,500 entries)
-- **TOD Dictionary (JSON):** 9,151 chunks
-- **Revised Chamorro Dictionary (JSON):** 10,350 chunks
-- **Guampedia:** 9,435 chunks (2,853 pages)
-- **Lengguahi-ta:** 58 chunks (crawl in progress)
-- **Academic sources:** 10,554 chunks
-- **Total:** 74,605 chunks from ~33,500 sources (+0.74% growth)
+### November 28, 2025 - Data Quality Cleanup
+- **Total:** 45,183 chunks (cleaned and deduplicated)
+- **Dictionaries:** 28,931 chunks (64%)
+- **Guampedia:** 11,144 chunks (25%)
+- **Lengguahi-ta:** 248 chunks (0.5%)
+- **Other:** 4,860 chunks (10.5%)
 
 **Major Changes:**
-- ✅ Added 507 blog posts from 2 Chamorro language blogs
-- ✅ Smart year-based crawler with content-aware prioritization
-- ✅ New vocabulary source: 300+ "Word of the Day" posts (Priority 105)
-- ✅ New grammar lessons: 70+ educational posts (Priority 115)
-- ✅ Verified blog content working correctly in RAG retrieval
-- ✅ Author attribution: Aaron Matanane (Fino'Chamoru Blog)
+- ✅ Removed duplicate Chamoru.info web-crawled data (JSON import is cleaner)
+- ✅ Cleaned boilerplate/navigation from web-crawled content
+- ✅ Improved content quality over quantity
+- ✅ Database reduced from 74K to 45K chunks (higher quality)
 
-### November 16, 2025 - Dictionary Expansion Update
-- **Chamoru.info (web):** 34,256 chunks (10,500 entries complete)
-- **TOD Dictionary (JSON import):** 9,151 chunks ✨ **NEW**
-- **Revised Chamorro Dictionary (JSON import):** 10,350 chunks ✨ **NEW**
-- **Guampedia:** 9,435 chunks (2,853 pages)
-- **Lengguahi-ta:** 58 chunks (crawl in progress, ~200+ expected)
-- **Academic sources:** 10,554 chunks
-- **Total:** 74,054 chunks from ~33,000 sources (+35.7% growth)
+### November 17, 2025 - Blog Integration
+- Added Fino'Chamoru Blog and Chamorro Language Blog content
+- Smart year-based crawler with content-aware prioritization
 
-**Major Changes:**
-- ✅ Imported 19,501 new dictionary entries from JSON files
-- ✅ Identified and skipped `chamoru_info_dictionary.json` (confirmed duplicate)
-- ✅ Expanded dictionary coverage from 10,500 to ~30,000 unique entries
-- ✅ All tests passed: New dictionaries working correctly with RAG system
+### November 16, 2025 - Dictionary Expansion
+- Imported TOD Dictionary (9,151 entries) and Revised Dictionary (10,350 entries)
+- Skipped duplicate `chamoru_info_dictionary.json`
 
 ### October-November 2025 - Initial Build
-- **Chamoru.info:** 34,256 chunks (10,500 entries complete)
-- **Guampedia:** 9,435 chunks (2,853 pages)
-- **Lengguahi-ta:** 58 chunks
-- **Other sources:** 10,554 chunks
-- **Total:** 54,303 chunks from 14,108 sources
-
-### Future Plans
-- Complete Lengguahi-ta crawl (~200+ pages)
-- Add Pacific Daily News bilingual columns
-- Expand Guampedia coverage
-- Explore additional Chamorro language blogs and resources
-- Continue monitoring for new Chamorro language resources
+- Initial crawl of Chamoru.info, Guampedia, Lengguahi-ta
+- Academic grammar books imported
 
 ---
 
@@ -859,7 +838,6 @@ This project stands on the shoulders of countless educators, linguists, and comm
 
 ---
 
-**Last Updated:** November 16, 2025  
-**Maintained by:** HåfaGPT Development Team  
-**Contact:** [Your contact information]
+**Last Updated:** November 28, 2025  
+**Maintained by:** HåfaGPT Development Team
 

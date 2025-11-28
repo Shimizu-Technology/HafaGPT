@@ -30,7 +30,7 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - ✅ **Quiz Review** - Review past quiz attempts with detailed answers
 
 ### **AI & RAG System**
-- ✅ **54,303 chunks indexed** (dictionaries, Guampedia, Lengguahi-ta, academic books)
+- ✅ **45,183 chunks indexed** (dictionaries, Guampedia, Lengguahi-ta, academic books)
 - ✅ **Hybrid RAG** - Smart detection for when to use knowledge base
 - ✅ **Character normalization** - Handles accents, glottal stops, spelling variants
 - ✅ **Smart Query Boosting** - Educational content prioritized over dictionary
