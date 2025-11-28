@@ -213,26 +213,26 @@ export function HomePage() {
           </p>
         </div>
 
-        {/* Quick Stats - Only show when signed in and data is loaded */}
+        {/* Quick Stats - Only show on DESKTOP when signed in and data is loaded */}
         {isSignedIn && !isUserDataLoading && (totalConversations > 0 || totalQuizzes > 0) && (
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-xl sm:text-2xl font-bold text-coral-600 dark:text-ocean-400">
+          <div className="hidden sm:grid grid-cols-3 gap-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
+              <p className="text-2xl font-bold text-coral-600 dark:text-ocean-400">
                 {totalConversations}
               </p>
-              <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Chats</p>
+              <p className="text-xs text-brown-500 dark:text-gray-400">Chats</p>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                 {totalQuizzes}
               </p>
-              <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Quizzes</p>
+              <p className="text-xs text-brown-500 dark:text-gray-400">Quizzes</p>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
                 {totalQuizzes > 0 ? `${averageScore}%` : '-'}
               </p>
-              <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Avg Score</p>
+              <p className="text-xs text-brown-500 dark:text-gray-400">Avg Score</p>
             </div>
           </div>
         )}
@@ -397,12 +397,12 @@ export function HomePage() {
           </div>
         </div>
 
-        {/* Daily Word - Now below learning cards */}
-        <DailyWord />
+        {/* Daily Word - Compact on mobile, full on desktop */}
+        <DailyWord compactOnMobile />
 
-        {/* Best Category - Only show if user has quiz history */}
+        {/* Best Category - Only show on DESKTOP if user has quiz history */}
         {bestCategoryInfo && (
-          <div className="bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+          <div className="hidden sm:block bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{bestCategoryInfo.icon}</span>
