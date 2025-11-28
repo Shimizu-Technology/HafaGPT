@@ -393,56 +393,68 @@ export function LengguahitaStoryViewer() {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={goToPrevious}
-            disabled={currentParagraph === 0}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              currentParagraph === 0
-                ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
-                : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 shadow-sm border border-cream-200 dark:border-slate-700'
-            }`}
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Previous
-          </button>
+        <div className="space-y-4">
+          {/* Navigation buttons */}
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={goToPrevious}
+              disabled={currentParagraph === 0}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
+                currentParagraph === 0
+                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
+                  : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 shadow-sm border border-cream-200 dark:border-slate-700'
+              }`}
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
 
-          <div className="flex gap-1">
-            {story.paragraphs.slice(0, 10).map((_, i) => (
+            {/* Page indicator - text only on mobile */}
+            <div className="flex-1 text-center">
+              <span className="text-sm text-brown-600 dark:text-gray-400">
+                {currentParagraph + 1} / {story.paragraphs.length}
+              </span>
+            </div>
+
+            <button
+              onClick={goToNext}
+              disabled={currentParagraph === story.paragraphs.length - 1}
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
+                currentParagraph === story.paragraphs.length - 1
+                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600 shadow-md'
+              }`}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Pagination dots - hidden on mobile, shown on tablet+ */}
+          <div className="hidden sm:flex justify-center gap-1.5">
+            {story.paragraphs.slice(0, 15).map((_, i) => (
               <button
                 key={i}
                 onClick={() => {
                   setCurrentParagraph(i);
                   setShowEnglish(false);
                 }}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
                   i === currentParagraph
                     ? 'bg-teal-500 w-6'
                     : i < currentParagraph
                     ? 'bg-teal-300 dark:bg-teal-700'
                     : 'bg-cream-300 dark:bg-slate-600'
                 }`}
+                title={`Go to paragraph ${i + 1}`}
               />
             ))}
-            {story.paragraphs.length > 10 && (
-              <span className="text-xs text-brown-400 dark:text-gray-500 ml-1">
-                +{story.paragraphs.length - 10}
+            {story.paragraphs.length > 15 && (
+              <span className="text-xs text-brown-400 dark:text-gray-500 ml-1 self-center">
+                +{story.paragraphs.length - 15}
               </span>
             )}
           </div>
-
-          <button
-            onClick={goToNext}
-            disabled={currentParagraph === story.paragraphs.length - 1}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              currentParagraph === story.paragraphs.length - 1
-                ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
-                : 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600 shadow-md'
-            }`}
-          >
-            Next
-            <ChevronRight className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Attribution */}
