@@ -1,36 +1,60 @@
-# 🌺 Chamorro Language Learning Chatbot
+# 🌺 HåfaGPT - Chamorro Language Learning Platform
 
-An AI-powered chatbot for learning Chamorro (the native language of Guam) with **Retrieval-Augmented Generation (RAG)** using authoritative grammar books, dictionaries, and online resources.
+A **comprehensive Chamorro language learning application** combining AI tutoring, flashcards, quizzes, vocabulary browser, and progress tracking. Built with **Retrieval-Augmented Generation (RAG)** using 54,000+ chunks from authoritative dictionaries, grammar books, and cultural resources.
 
-**🆕 LATEST:** Speech-to-text input + Image upload with GPT-4o-mini Vision + S3 storage + Flashcards! 🎤📸🎴
+> **HåfaGPT has evolved from a simple chatbot into a complete learning platform for self-study and teaching children Chamorro!**
+
+**🆕 LATEST:** Vocabulary Browser with 10,350+ dictionary words, Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
 ## ✨ Features
 
-- 🤖 **3 Learning Modes:**
+### 🎓 **Complete Learning Platform**
+
+- 🤖 **AI Chat Tutor** - 3 learning modes:
   - **General Chat** - Ask anything about Chamorro in English
   - **Immersion Mode** (`/chamorro`) - Chamorro-only responses
   - **Learning Mode** (`/learn`) - Chamorro with English breakdowns
 
-- 🎤 **Multimodal Input:**
-  - **Speech-to-Text** - Speak your questions using browser microphone (Web Speech API)
-  - **Text-to-Speech** - Listen to Chamorro pronunciations using OpenAI TTS HD (automatic fallback to browser TTS offline)
-  - **Image Upload** - Take photos of Chamorro documents/text for translation and explanation
-  - **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
-  - **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
+- 📚 **Vocabulary Browser** (10,350+ words):
+  - **12 Categories** - Greetings, Family, Numbers, Colors, Food, Animals, Body, Nature, Places, Time, Verbs, Phrases
+  - **Smart Search** - Diacritic handling ("hanom" finds "hånum"), spelling variants (o↔u)
+  - **Pagination** - Load 50 words at a time with "Load More"
+  - **Word Details** - Definition, part of speech, examples, TTS pronunciation
+  - **API Endpoints** - Categories, search, word of the day, flashcards, quizzes
 
-- 🎴 **Flashcards & Learning:**
-  - **6 Default Decks** - Pre-made cards for Greetings, Family, Food, Numbers, Verbs, Phrases (60 cards total)
+- 🎴 **Flashcards** (Curated + Dictionary-based):
+  - **6 Curated Decks** - Pre-made cards for Greetings, Family, Food, Numbers, Verbs, Phrases
+  - **Dictionary Mode** - Generate flashcards from 10,350+ dictionary words
   - **Custom AI Generation** - RAG-powered flashcards tailored to each topic
-  - **Progressive Loading** - Generate 3 cards at a time (12-15s total) for better UX
-  - **Dual Mode Toggle** - Switch between instant default cards and custom AI cards
-  - **Save & Track Progress** - Save custom decks to "My Decks" and rate cards (Hard/Good/Easy)
-  - **Smart UX** - Can't rate until saved (prevents data loss), save button shows "✓ Saved"
+  - **Save & Track Progress** - Save decks and rate cards (Hard/Good/Easy)
   - **Beautiful UI** - 3D flip animation, swipe gestures, keyboard navigation
-  - **Mobile Optimized** - Touch-friendly, responsive design
-  - **Zero Duplicates** - 4-layer protection system ensures unique cards
-  - **Future:** Spaced repetition review system, learning analytics
+
+- 📝 **Quizzes** (Curated + Dictionary-based):
+  - **6 Curated Categories** - Greetings, Family, Numbers, Food, Phrases, Colors
+  - **Dictionary Mode** - Generate quizzes from 10,350+ words (unlimited variety)
+  - **3 Question Types** - Multiple choice, Type answer, Fill in blank
+  - **Quiz Review** - View past attempts with detailed question-by-question breakdown
+  - **Smart UX** - "I don't know" button, browser warning on exit, "Try Dictionary Mode" link
+
+- 📅 **Daily Word/Phrase**:
+  - **API-Powered** - Deterministic daily rotation from dictionary
+  - **TTS Pronunciation** - Hear the word spoken
+  - **Examples & Context** - Learn usage in sentences
+
+- 📊 **Progress Dashboard**:
+  - **Quiz Tracking** - Database-stored results with detailed answers
+  - **Clickable History** - Review any past quiz attempt
+  - **Stats** - Total quizzes, average score, best category
+
+### 🎤 **Multimodal Input**
+
+- **Speech-to-Text** - Speak your questions using browser microphone (Web Speech API)
+- **Text-to-Speech** - Listen to Chamorro pronunciations using OpenAI TTS HD (automatic fallback to browser TTS offline)
+- **Image Upload** - Take photos of Chamorro documents/text for translation and explanation
+- **Vision AI** - GPT-4o-mini analyzes images and reads Chamorro text
+- **S3 Storage** - Persistent image storage with AWS S3 (images survive page refreshes)
 
 - 📚 **RAG-Enhanced Knowledge (45,167 high-quality chunks - 83.6% increase!):**
   - 🗄️ **PostgreSQL + PGVector** - Production-grade vector database

@@ -1,22 +1,49 @@
-# 🚀 Chamorro Chatbot Improvement Guide
+# 🌺 HåfaGPT - Chamorro Language Learning Platform
 
-**Current Status:** 
-- ✅ Hybrid RAG implemented (30% faster responses)
-- ✅ Character normalization (handles accents/glottal stops)
-- ✅ Conversation context awareness (cloud mode)
-- ✅ **54,303 chunks indexed** (Chamoru.info, Guampedia, Lengguahi-ta, academic books)
-- ✅ FastAPI REST API with conversation memory
-- ✅ PostgreSQL conversation logging with session tracking
-- ✅ **Clerk Authentication** - JWT-based user authentication (COMPLETED!)
-- ✅ **Conversation Management** - Multiple conversations per user (COMPLETED!)
-- ✅ **Web Search Tool** - Real-time information from the internet (COMPLETED!)
-- ✅ **Speech-to-Text Input** - Browser-native voice input (COMPLETED!)
-- ✅ **Image Upload (Phase 1)** - GPT-4o-mini Vision for document analysis (COMPLETED!)
-- ✅ **Smart Query Boosting (Option A+B)** - Educational content prioritized (COMPLETED!)
+> **HåfaGPT has evolved from a chatbot into a comprehensive Chamorro language learning application!**
+
+## 🎯 **What is HåfaGPT?**
+
+HåfaGPT is a **complete Chamorro language learning platform** that combines:
+- 🤖 **AI Chat Tutor** - Ask questions, practice conversations, get translations
+- 🎴 **Flashcards** - Study vocabulary with curated decks or AI-generated cards
+- 📝 **Quizzes** - Test your knowledge with multiple question types
+- 📚 **Vocabulary Browser** - Explore 10,350+ dictionary words by category
+- 📅 **Daily Word** - Learn a new Chamorro word every day
+- 📊 **Progress Dashboard** - Track your learning journey
+
+**The app is designed for both self-study and teaching children Chamorro!**
+
+---
+
+## ✨ **Current Features**
+
+### **Core Learning Tools**
+- ✅ **AI Chat Tutor** - 3 modes: English, Chamorro immersion, Learning mode
+- ✅ **Flashcards** - 6 curated decks + dictionary-based cards (10,350+ words)
+- ✅ **Quizzes** - 6 categories with curated + dictionary-generated questions
+- ✅ **Vocabulary Browser** - Browse, search, and learn from full dictionary
+- ✅ **Daily Word/Phrase** - 76 curated words + API-powered daily rotation
+- ✅ **Progress Dashboard** - Track conversations, quizzes, and scores
+- ✅ **Quiz Review** - Review past quiz attempts with detailed answers
+
+### **AI & RAG System**
+- ✅ **54,303 chunks indexed** (dictionaries, Guampedia, Lengguahi-ta, academic books)
+- ✅ **Hybrid RAG** - Smart detection for when to use knowledge base
+- ✅ **Character normalization** - Handles accents, glottal stops, spelling variants
+- ✅ **Smart Query Boosting** - Educational content prioritized over dictionary
+
+### **User Experience**
+- ✅ **Clerk Authentication** - Secure sign-in with progress tracking
+- ✅ **Mobile-First Design** - Optimized for phones, tablets, and desktop
+- ✅ **Speech-to-Text** - Voice input for questions
+- ✅ **Text-to-Speech** - Hear Chamorro pronunciations (OpenAI TTS HD)
+- ✅ **Image Upload** - Translate Chamorro text in photos
+- ✅ **React Query** - Fast, cached data loading
 
 **Performance:**
 - Cloud (GPT-4o-mini): 2-8s responses, 99% accurate
-- Local (Qwen 32B): 37s responses, 95% accurate
+- Dictionary API: Instant loading (10,350+ words in memory)
 
 ---
 
@@ -599,36 +626,36 @@ CREATE TABLE quiz_results (
 
 ---
 
-### **Phase 2D: Vocabulary Browser** 📝 **ORGANIZED LEARNING**
+### **Phase 2D: Vocabulary Browser** 📝 ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
-**Complexity:** Low  
-**Effort:** 1-2 days  
+**Status:** ✅ Complete  
+**Complexity:** Medium  
+**Effort:** 2 days  
 **Cost:** None
 
-**Why This Feature:**
-- 📚 Browse words by category (not just search)
-- 🎯 Focused learning (e.g., "today I'll learn family words")
-- 📖 Reference/dictionary mode
-- 🔗 Quick add to flashcards
+**What's Implemented:**
+- ✅ **10,350+ Dictionary Words** - Full dictionary loaded via API
+- ✅ **12 Categories** - Greetings, Family, Numbers, Colors, Food, Animals, Body, Nature, Places, Time, Verbs, Phrases
+- ✅ **Search with Diacritic Handling** - "hanom" finds "hånum", spelling variants supported
+- ✅ **Pagination** - Load 50 words at a time with "Load More"
+- ✅ **Word Details** - Definition, part of speech, examples
+- ✅ **TTS Pronunciation** - Click to hear words spoken
+- ✅ **Mobile Optimized** - Responsive design for all devices
 
-**Categories:**
-- 👨‍👩‍👧 Family (nana, tata, che'lu, abuelo, abuela...)
-- 🎨 Colors (agaga', asut, betde, amariyu...)
-- 🔢 Numbers (unu, dos, tres, kuåttro...)
-- 🐕 Animals (ga'lågu, katu, guihan, påharu...)
-- 🍲 Food (kåddo, kelaguen, hineksa', fina'denne'...)
-- 👋 Greetings (Håfa Adai, Buenas dias, Si Yu'os Ma'åse'...)
-- 🏠 Home (guma', lamasa, siya, bentåna...)
-- 👤 Body parts (ulu, mata, pachot, kannai...)
+**API Endpoints:**
+- `GET /api/vocabulary/categories` - List all categories with word counts
+- `GET /api/vocabulary/categories/{id}` - Get words in a category (paginated)
+- `GET /api/vocabulary/search?q=` - Search across all words
+- `GET /api/vocabulary/word/{word}` - Get single word details
+- `GET /api/vocabulary/word-of-the-day` - Daily rotating word
+- `GET /api/vocabulary/flashcards/{category}` - Dictionary-based flashcards
+- `GET /api/vocabulary/quiz/{category}` - Dictionary-based quiz questions
 
-**Features:**
-- [ ] Category grid on vocabulary page
-- [ ] Word list per category
-- [ ] Click word → see definition, examples
-- [ ] "Add to Flashcards" button
-- [ ] Search within category
-- [ ] Mark as "learned"
+**Technical Details:**
+- Dictionary loaded into memory on server startup (~5MB)
+- Smart category classification with context-aware matching
+- Diacritic normalization (å→a, '→removed) + spelling variants (o↔u)
+- Fuzzy matching for common Chamorro spelling variations
 
 ---
 
@@ -820,42 +847,46 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 1** | ✅ Flashcards (Stateless MVP) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ User Feedback System (Thumbs Up/Down) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ File Upload (PDF/Word/Text) | - | ✅ **COMPLETED** |
-| **Phase 2A** | ✅ Quiz Mode (Stateless MVP) | - | ✅ **COMPLETED** |
-| **Phase 2B** | ✅ Daily Word/Phrase | - | ✅ **COMPLETED** |
-| **Phase 2C** | ✅ Progress Dashboard (Phase 1) | - | ✅ **COMPLETED** |
-| **Phase 2D** | Vocabulary Browser | 1-2 days | 📋 Planned |
+| **Phase 2A** | ✅ Quiz Mode (Curated + Dictionary) | - | ✅ **COMPLETED** |
+| **Phase 2B** | ✅ Daily Word/Phrase (API-powered) | - | ✅ **COMPLETED** |
+| **Phase 2C** | ✅ Progress Dashboard + Quiz Review | - | ✅ **COMPLETED** |
+| **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
 | **Phase 2E** | Story Mode (Text-Only) | 2-3 days | 📋 Planned |
 | **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
-| **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
+| **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 🚧 In Progress |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
 | **Future** | Full Offline/Local Mode | 5-6 days | ⏸️ Planned |
-| **Total** | Learning Features | **~15-20 days** | 📋 Ready! |
+| **Total** | Learning Features | **~10-15 days remaining** | 🎉 80% Complete! |
 
 ---
 
 ## 🎯 **Next Steps - Priority Order**
 
-**Recommended implementation order:**
+**✅ Recently Completed:**
 
 1. ~~**Quiz Mode**~~ ✅ **COMPLETED**
-   - 6 categories, 48 questions, 3 question types
-   - Hardcoded in frontend for instant loading
+   - 6 curated categories + dictionary-based quizzes (10,350+ words)
+   - Quiz review with detailed answers
+   - "I don't know" button, browser warning on exit
 
 2. ~~**Daily Word/Phrase**~~ ✅ **COMPLETED**
-   - 76 words across 7 categories
-   - Homepage widget with TTS, examples, difficulty badges
+   - API-powered from dictionary (deterministic daily rotation)
+   - TTS pronunciation, examples, category labels
 
-3. ~~**Progress Dashboard (Phase 1)**~~ ✅ **COMPLETED**
-   - Simple stats: conversations, messages, quiz scores
-   - localStorage quiz tracking (no database)
+3. ~~**Progress Dashboard**~~ ✅ **COMPLETED**
+   - Database-tracked quiz scores with detailed answers
+   - Clickable quiz history to review past attempts
    - Responsive design for mobile/desktop
 
-4. **Vocabulary Browser** - 1-2 days 🔴 **START HERE**
-   - Organized reference
-   - Category-based learning
+4. ~~**Vocabulary Browser**~~ ✅ **COMPLETED**
+   - 10,350+ words from dictionary API
+   - Search with diacritic handling and spelling variants
+   - Pagination, categories, TTS pronunciation
+
+**📋 Next Up:**
 
 5. **Story Mode** - 2-3 days
-   - Reading practice
+   - Reading practice with tap-to-translate
    - Great for parent-child time
 
 6. **Conversation Practice** - 2-3 days
