@@ -146,7 +146,7 @@
 
 ## 🎯 **ACTIVE ROADMAP** - Next Features to Implement
 
-### **Phase 1: General File Upload** 🟡 **MEDIUM PRIORITY**
+### **Phase 1: General File Upload** 🔴 **HIGH PRIORITY - UP NEXT**
 
 **Status:** 📋 Planned  
 **Complexity:** Medium  
@@ -445,6 +445,260 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 
 ---
 
+## 🎓 **Learning Features Roadmap** - Teaching Chamorro
+
+**Goal:** Make HåfaGPT a complete learning application for self-study and teaching children.
+
+**Note:** Audio/pronunciation features deferred until a quality Chamorro TTS model is available.
+
+---
+
+### **Phase 2A: Quiz Mode** 🎯 **HIGH PRIORITY**
+
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 2-3 days  
+**Cost:** Minimal (uses existing GPT-4o)
+
+**Why This Feature:**
+- 🎯 Test knowledge retention (not just passive learning)
+- 🎮 Gamified learning (fun for kids!)
+- 📊 Track progress and identify weak areas
+- 👨‍👩‍👧 Great for parent-child learning
+
+**Quiz Types (All Text-Based):**
+1. **Multiple Choice** - "What does 'hånom' mean?" → A) Water B) Fire C) Food
+2. **Type Answer** - "How do you say 'thank you'?" → User types answer
+3. **Matching** - Match Chamorro words to English meanings (drag & drop)
+4. **Fill in Blank** - "Håfa ___!" (Adai)
+5. **Picture Quiz** - Show image → Pick the Chamorro word (great for kids!)
+
+**Implementation:**
+```typescript
+// Quiz question structure
+interface QuizQuestion {
+  id: string;
+  type: 'multiple_choice' | 'type_answer' | 'matching' | 'fill_blank' | 'picture';
+  question: string;
+  options?: string[];        // For multiple choice
+  correctAnswer: string;
+  imageUrl?: string;         // For picture quiz
+  hint?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category: string;          // greetings, family, numbers, etc.
+}
+
+// Quiz result tracking
+interface QuizResult {
+  userId: string;
+  quizId: string;
+  score: number;
+  totalQuestions: number;
+  timeSpent: number;
+  wrongAnswers: string[];    // For review
+  completedAt: Date;
+}
+```
+
+**Features:**
+- [ ] Multiple quiz types (MC, type, matching, fill-blank, picture)
+- [ ] Difficulty levels (easy/medium/hard)
+- [ ] Category selection (family, food, greetings, etc.)
+- [ ] Score tracking and streaks
+- [ ] Review wrong answers
+- [ ] Kid-friendly mode (more pictures, simpler words)
+
+**Database:**
+```sql
+CREATE TABLE quiz_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    quiz_type TEXT NOT NULL,
+    category TEXT,
+    score INTEGER NOT NULL,
+    total_questions INTEGER NOT NULL,
+    time_spent_seconds INTEGER,
+    wrong_answers JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+---
+
+### **Phase 2B: Daily Word/Phrase** 📅 **QUICK WIN**
+
+**Status:** 📋 Planned  
+**Complexity:** Low  
+**Effort:** 1 day  
+**Cost:** None
+
+**Why This Feature:**
+- 📅 Builds daily learning habit
+- 🎯 Bite-sized learning (1 word/phrase per day)
+- 🔔 Engagement driver (reason to open app daily)
+- 👶 Simple enough for kids
+
+**Implementation:**
+- Homepage widget showing today's word
+- Word, pronunciation guide, meaning, example sentence
+- "Add to Flashcards" button
+- Calendar view of past words
+- Streak tracking (days in a row)
+
+**Features:**
+- [ ] Daily word selection (rotate through vocabulary)
+- [ ] Homepage widget
+- [ ] "Add to Flashcards" integration
+- [ ] Streak counter
+- [ ] Past words calendar/history
+
+---
+
+### **Phase 2C: Progress Dashboard** 📊 **MOTIVATING**
+
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 2-3 days  
+**Cost:** None
+
+**Why This Feature:**
+- 📈 Visualize learning progress
+- 🔥 Streaks motivate continued learning
+- 🏆 Achievements/badges (especially for kids!)
+- 📊 Identify areas needing more practice
+
+**Dashboard Components:**
+- **Words Learned** - Total vocabulary count
+- **Flashcards Mastered** - Cards with high confidence
+- **Quiz Scores** - Average score, improvement over time
+- **Learning Streak** 🔥 - Days in a row
+- **Time Spent** - Total learning time
+- **Achievements/Badges** - Milestones (10 words, 50 words, 7-day streak, etc.)
+
+**For Kids:**
+- Star chart (fill up stars!)
+- Fun badges with icons
+- Progress bar to next level
+- Celebratory animations
+
+---
+
+### **Phase 2D: Vocabulary Browser** 📝 **ORGANIZED LEARNING**
+
+**Status:** 📋 Planned  
+**Complexity:** Low  
+**Effort:** 1-2 days  
+**Cost:** None
+
+**Why This Feature:**
+- 📚 Browse words by category (not just search)
+- 🎯 Focused learning (e.g., "today I'll learn family words")
+- 📖 Reference/dictionary mode
+- 🔗 Quick add to flashcards
+
+**Categories:**
+- 👨‍👩‍👧 Family (nana, tata, che'lu, abuelo, abuela...)
+- 🎨 Colors (agaga', asut, betde, amariyu...)
+- 🔢 Numbers (unu, dos, tres, kuåttro...)
+- 🐕 Animals (ga'lågu, katu, guihan, påharu...)
+- 🍲 Food (kåddo, kelaguen, hineksa', fina'denne'...)
+- 👋 Greetings (Håfa Adai, Buenas dias, Si Yu'os Ma'åse'...)
+- 🏠 Home (guma', lamasa, siya, bentåna...)
+- 👤 Body parts (ulu, mata, pachot, kannai...)
+
+**Features:**
+- [ ] Category grid on vocabulary page
+- [ ] Word list per category
+- [ ] Click word → see definition, examples
+- [ ] "Add to Flashcards" button
+- [ ] Search within category
+- [ ] Mark as "learned"
+
+---
+
+### **Phase 2E: Story Mode (Text-Only)** 📖 **GREAT FOR KIDS**
+
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 2-3 days  
+**Cost:** None
+
+**Why This Feature:**
+- 📖 Reading practice in context
+- 🎭 Chamorro legends and stories (cultural learning!)
+- 👶 Perfect for parent-child reading time
+- 🔤 Tap-to-translate builds vocabulary naturally
+
+**Implementation:**
+- Curated Chamorro stories (from Lengguahi-ta, Guampedia legends)
+- **Tap any word** → Popup shows translation
+- Difficulty levels (simple → intermediate → advanced)
+- Comprehension questions after story
+- Track stories read
+
+**Story Sources:**
+- Lengguahi-ta beginner stories
+- Guampedia Chamorro legends
+- Simple original stories for beginners
+
+**Features:**
+- [ ] Story library with difficulty levels
+- [ ] Tap-to-translate on any word
+- [ ] Comprehension quiz after story
+- [ ] Progress tracking (stories read)
+- [ ] Bookmark/continue later
+
+---
+
+### **Phase 2F: Conversation Practice (Text)** 💬 **IMMERSIVE**
+
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 2-3 days  
+**Cost:** Uses existing GPT-4o
+
+**Why This Feature:**
+- 💬 Practice real conversations
+- 🎭 Scenario-based learning (practical situations)
+- 🤖 AI plays the other person
+- 💡 Hints available if stuck
+
+**Scenarios:**
+- 👋 Meeting someone new
+- 🍽️ Ordering food at a restaurant
+- 🛒 Shopping at the market
+- 👴 Talking to grandparents
+- 📞 Phone conversation
+- 🏠 At home with family
+
+**Implementation:**
+- Select scenario
+- Bot starts conversation in Chamorro
+- User responds (with hint button if stuck)
+- Bot continues naturally
+- Feedback on responses
+- Track scenarios completed
+
+---
+
+### **Future: Audio Features** 🔊 **DEFERRED**
+
+**Status:** ⏸️ Waiting for quality Chamorro TTS  
+**Reason:** No good Chamorro pronunciation model exists yet
+
+**When Available, Add:**
+- 🎤 Pronunciation practice (record & compare)
+- 👂 Listening quizzes (identify spoken word)
+- 🔊 Story narration
+- 🗣️ Conversation audio
+
+**Potential Solutions (Future):**
+- ElevenLabs voice cloning (clone a native speaker)
+- Community Chamorro TTS model
+- Partnership with Chamorro language organizations
+
+---
+
 ## 💰 **Cost Estimate**
 
 **Current Production Costs:**
@@ -472,22 +726,51 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 | **Phase 1** | ✅ Image Upload + S3 Storage | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Performance Optimizations (React Query) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ Flashcards (Stateless MVP) | - | ✅ **COMPLETED** |
-| **Phase 2** | File Upload (PDF/Word) | 2-3 days | 📋 Planned |
-| **Phase 2** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
-| **Total** | Remaining Features | **4-6 days** | 📋 Ready! |
+| **Phase 1** | ✅ User Feedback System (Thumbs Up/Down) | - | ✅ **COMPLETED** |
+| **Phase 2** | File Upload (PDF/Word) | 2-3 days | 🔴 **UP NEXT** |
+| **Phase 2A** | Quiz Mode | 2-3 days | 📋 Planned |
+| **Phase 2B** | Daily Word/Phrase | 1 day | 📋 Planned |
+| **Phase 2C** | Progress Dashboard | 2-3 days | 📋 Planned |
+| **Phase 2D** | Vocabulary Browser | 1-2 days | 📋 Planned |
+| **Phase 2E** | Story Mode (Text-Only) | 2-3 days | 📋 Planned |
+| **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
+| **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
+| **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
+| **Total** | Learning Features | **~15-20 days** | 📋 Ready! |
 
 ---
 
-## 🎯 **Next Steps**
+## 🎯 **Next Steps - Priority Order**
 
-**Ready to implement next:**
-1. **Flashcard User Progress** - Track mastery, spaced repetition, learning analytics
-2. **File Upload** - Support PDFs and Word documents
+**Recommended implementation order:**
 
-**Questions:**
-- Do you want to add flashcard progress tracking and spaced repetition?
-- Or would you prefer file upload support (PDFs, Word docs)?
-- Any other features you'd like to prioritize?
+1. **File Upload (PDF/Word)** - 2-3 days 🔴 **START HERE**
+   - Practical utility for homework/documents
+   - Builds on existing image upload
+
+2. **Quiz Mode** - 2-3 days
+   - High engagement, tests knowledge
+   - Fun for kids (gamified)
+
+3. **Daily Word/Phrase** - 1 day
+   - Quick win, builds habit
+   - Easy to implement
+
+4. **Progress Dashboard** - 2-3 days
+   - Motivation for continued learning
+   - Visual progress tracking
+
+5. **Vocabulary Browser** - 1-2 days
+   - Organized reference
+   - Category-based learning
+
+6. **Story Mode** - 2-3 days
+   - Reading practice
+   - Great for parent-child time
+
+7. **Conversation Practice** - 2-3 days
+   - Immersive scenarios
+   - Practical application
 
 ---
 
