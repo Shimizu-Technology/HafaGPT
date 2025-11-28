@@ -598,7 +598,74 @@ class DictionaryService:
             if normalize_chamorro(key) == word_normalized:
                 return self.get_word(key)
         
+        # Try spelling variants (o/u swaps, etc.)
+        for variant in get_spelling_variants(word):
+            for key in self._dictionary.keys():
+                if normalize_chamorro(key) == variant:
+                    return self.get_word(key)
+        
         return None
+    
+    def get_word_with_morphology(self, word: str) -> dict:
+        """
+        Enhanced word lookup that uses Chamorro morphology to find root words.
+        
+        Returns a dict with:
+        - found: bool - whether any definition was found
+        - word: str - the original word
+        - definition: dict or None - the dictionary entry if found
+        - root_word: str or None - the root word if different from original
+        - morphology_note: str or None - explanation of the word form
+        - suggestions: list - other possible lookups to try
+        """
+        from .chamorro_morphology import normalize_for_lookup, get_root_candidates
+        
+        result = {
+            "found": False,
+            "word": word,
+            "definition": None,
+            "root_word": None,
+            "morphology_note": None,
+            "suggestions": []
+        }
+        
+        # Try direct lookup first
+        direct_result = self.get_word(word)
+        if direct_result:
+            result["found"] = True
+            result["definition"] = direct_result
+            return result
+        
+        # Try morphological variants
+        lookup_variants = normalize_for_lookup(word)
+        for variant in lookup_variants:
+            if variant == word:
+                continue
+            variant_result = self.get_word(variant)
+            if variant_result:
+                result["found"] = True
+                result["definition"] = variant_result
+                result["root_word"] = variant
+                break
+        
+        # Get morphology explanation
+        candidates = get_root_candidates(word)
+        if candidates:
+            # Use the first candidate's explanation
+            root, explanation = candidates[0]
+            result["morphology_note"] = explanation
+            
+            # If we found a definition via variant, update the note
+            if result["found"] and result["root_word"]:
+                result["morphology_note"] = f"'{word}' is a form of '{result['root_word']}'"
+            
+            # Add suggestions for words we didn't find
+            if not result["found"]:
+                for root, _ in candidates[:3]:
+                    if root not in result["suggestions"]:
+                        result["suggestions"].append(root)
+        
+        return result
     
     def get_stats(self) -> dict:
         """Get dictionary statistics."""

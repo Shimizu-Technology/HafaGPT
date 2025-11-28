@@ -2301,21 +2301,35 @@ async def search_vocabulary(
 
 
 @app.get("/api/vocabulary/word/{word}", tags=["Vocabulary"])
-async def get_word_details(word: str):
+async def get_word_details(word: str, enhanced: bool = True):
     """
     Get detailed information for a specific word.
     
     Args:
         word: The Chamorro word to look up
+        enhanced: If True (default), use morphological analysis to find root words
+                  and provide helpful context even if exact word not found
+    
+    Returns (when enhanced=True):
+        - found: bool - whether any definition was found
+        - word: str - the original word
+        - definition: dict or None - the dictionary entry
+        - root_word: str or None - the root word if different from original
+        - morphology_note: str or None - explanation of the word form
+        - suggestions: list - other possible lookups to try
     """
     try:
         service = get_dictionary_service()
-        result = service.get_word(word)
         
-        if not result:
-            raise HTTPException(status_code=404, detail=f"Word '{word}' not found")
-        
-        return result
+        if enhanced:
+            result = service.get_word_with_morphology(word)
+            return result
+        else:
+            result = service.get_word(word)
+            if not result:
+                raise HTTPException(status_code=404, detail=f"Word '{word}' not found")
+            return result
+            
     except HTTPException:
         raise
     except Exception as e:
@@ -2428,6 +2442,113 @@ async def generate_quiz_from_dictionary(
         raise
     except Exception as e:
         logger.error(f"❌ [VOCAB] Failed to generate quiz: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==========================================
+# Story Mode Endpoints (Pre-extracted from Lengguahi-ta)
+# =====================================================
+
+from .story_service import get_available_stories as get_stories_list, get_story, get_story_categories
+
+@app.get("/api/stories/available", tags=["Stories"])
+async def list_available_stories(
+    limit: int = 50,
+    category: Optional[str] = None
+):
+    """
+    Get list of available pre-extracted Chamorro stories.
+    
+    Stories are pre-extracted from Lengguahi-ta for instant loading.
+    
+    Args:
+        limit: Maximum number of stories to return (default 50)
+        category: Filter by category (story, legend, lesson, etc.)
+    
+    Response includes:
+    - id: Story ID
+    - title: English title
+    - titleChamorro: Chamorro title
+    - author: Story author
+    - difficulty: beginner/intermediate/advanced
+    - category: Story category
+    - paragraphCount: Number of paragraphs
+    - sourceUrl: Original source URL
+    """
+    try:
+        stories = get_stories_list(category=category, limit=limit)
+        
+        # Group by category for better UX
+        categories = {}
+        for story in stories:
+            cat = story.get("category", "story")
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(story)
+        
+        return {
+            "stories": stories,
+            "total": len(stories),
+            "by_category": categories
+        }
+    except Exception as e:
+        logger.error(f"❌ [STORIES] Failed to list stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stories/{story_id}", tags=["Stories"])
+async def get_story_endpoint(story_id: str):
+    """
+    Get a pre-extracted story by ID.
+    
+    Returns the complete story with all paragraphs (Chamorro + English).
+    Word translations can be looked up via the /api/vocabulary/word/{word} endpoint.
+    
+    Args:
+        story_id: The story ID (URL slug)
+    
+    Response includes:
+    - id: Story ID
+    - title: Chamorro title
+    - titleEnglish: English title
+    - author: Story author
+    - description: Brief description
+    - difficulty: beginner/intermediate/advanced
+    - category: Story category
+    - paragraphs: Array of {id, chamorro, english}
+    - paragraphCount: Number of paragraphs
+    - wordCount: Total words in Chamorro text
+    - readingTime: Estimated reading time in minutes
+    - sourceUrl: Original URL
+    - attribution: Attribution text
+    
+    Note: This endpoint is instant - no AI generation required!
+    """
+    try:
+        logger.info(f"📖 [STORIES] Fetching story: {story_id}")
+        story = get_story(story_id)
+        
+        if not story:
+            raise HTTPException(status_code=404, detail=f"Story '{story_id}' not found")
+        
+        logger.info(f"✅ [STORIES] Returned story: {story_id} ({story.get('paragraphCount', 0)} paragraphs)")
+        return story
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [STORIES] Failed to get story: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stories/categories", tags=["Stories"])
+async def list_story_categories():
+    """Get list of story categories with counts."""
+    try:
+        categories = get_story_categories()
+        return {"categories": categories}
+    except Exception as e:
+        logger.error(f"❌ [STORIES] Failed to list categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
