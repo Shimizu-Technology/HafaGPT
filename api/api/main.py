@@ -2130,6 +2130,91 @@ async def get_quiz_stats(authorization: Optional[str] = Header(None)):
         )
 
 
+@app.get("/api/quiz/history", tags=["Quiz"])
+async def get_quiz_history(
+    page: int = 1,
+    per_page: int = 20,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get paginated quiz history for the authenticated user.
+    
+    Returns all quiz results with pagination metadata.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Validate pagination params
+        if page < 1:
+            page = 1
+        if per_page < 1 or per_page > 100:
+            per_page = 20
+        
+        offset = (page - 1) * per_page
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get total count
+        cursor.execute("""
+            SELECT COUNT(*) FROM quiz_results WHERE user_id = %s
+        """, (user_id,))
+        total_count = cursor.fetchone()[0]
+        
+        # Get paginated results
+        cursor.execute("""
+            SELECT id, category_id, category_title, score, total, percentage, time_spent_seconds, created_at
+            FROM quiz_results
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s OFFSET %s
+        """, (user_id, per_page, offset))
+        
+        rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        results = [
+            QuizResultResponse(
+                id=str(row[0]),
+                category_id=row[1],
+                category_title=row[2],
+                score=row[3],
+                total=row[4],
+                percentage=float(row[5]),
+                time_spent_seconds=row[6],
+                created_at=row[7]
+            )
+            for row in rows
+        ]
+        
+        total_pages = (total_count + per_page - 1) // per_page  # Ceiling division
+        
+        return {
+            "results": results,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total_count": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [QUIZ] Failed to get history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get quiz history: {str(e)}"
+        )
+
+
 # ==========================================
 # Vocabulary Browser Endpoints
 # ==========================================
