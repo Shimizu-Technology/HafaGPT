@@ -267,9 +267,17 @@ export function Dashboard() {
         {/* Recent Quiz History */}
         {quizStatsData && quizStatsData.recent_results.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
-              Recent Quizzes
-            </h3>
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide">
+                Recent Quizzes
+              </h3>
+              <Link
+                to="/dashboard/quiz-history"
+                className="text-sm text-coral-600 dark:text-ocean-400 hover:underline font-medium"
+              >
+                View All
+              </Link>
+            </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
               {quizStatsData.recent_results.slice(0, 5).map((result, idx) => {
                 const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id.replace('dict-', ''));

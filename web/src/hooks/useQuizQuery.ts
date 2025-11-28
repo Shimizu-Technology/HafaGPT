@@ -58,6 +58,20 @@ export interface SaveQuizResultParams {
   answers?: QuizAnswerInput[];
 }
 
+export interface QuizHistoryPagination {
+  page: number;
+  per_page: number;
+  total_count: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface QuizHistoryResponse {
+  results: QuizResult[];
+  pagination: QuizHistoryPagination;
+}
+
 // Hook to get quiz stats
 export function useQuizStats() {
   const { getToken, isSignedIn } = useAuth();
@@ -134,9 +148,39 @@ export function useSaveQuizResult() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate quiz stats to trigger refetch
+      // Invalidate quiz stats and history to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['quizStats'] });
+      queryClient.invalidateQueries({ queryKey: ['quizHistory'] });
     },
+  });
+}
+
+// Hook to get paginated quiz history
+export function useQuizHistory(page: number = 1, perPage: number = 20) {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery({
+    queryKey: ['quizHistory', page, perPage],
+    queryFn: async (): Promise<QuizHistoryResponse> => {
+      const token = await getToken();
+      
+      const response = await fetch(
+        `${API_URL}/api/quiz/history?page=${page}&per_page=${perPage}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch quiz history');
+      }
+
+      return response.json();
+    },
+    enabled: !!isSignedIn,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 

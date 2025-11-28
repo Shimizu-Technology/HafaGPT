@@ -8,6 +8,7 @@ import { SavedDeckViewer } from './components/SavedDeckViewer';
 import { QuizList } from './components/QuizList';
 import { QuizViewer } from './components/QuizViewer';
 import { QuizReview } from './components/QuizReview';
+import { QuizHistory } from './components/QuizHistory';
 import { Dashboard } from './components/Dashboard';
 import { VocabularyList } from './components/VocabularyList';
 import { VocabularyCategory } from './components/VocabularyCategory';
@@ -38,8 +39,9 @@ function App() {
         <Route path="/vocabulary" element={<VocabularyList />} />
         <Route path="/vocabulary/:categoryId" element={<VocabularyCategory />} />
         
-        {/* Dashboard route - detailed progress */}
+        {/* Dashboard routes - detailed progress */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/dashboard/quiz-history" element={<ProtectedRoute><QuizHistory /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
