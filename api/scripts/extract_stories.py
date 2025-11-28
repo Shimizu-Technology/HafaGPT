@@ -275,6 +275,39 @@ def determine_category(title, content):
         return 'story'
 
 
+def english_field_is_chamorro(text):
+    """
+    Check if the "English" field is actually Chamorro text.
+    More strict than just counting diacritics - looks for Chamorro sentence patterns.
+    """
+    if not text or len(text) < 20:
+        return False
+    
+    # Count Chamorro diacritics
+    chamorro_chars = set('åÅñÑ''')
+    diacritic_count = sum(1 for c in text if c in chamorro_chars)
+    
+    # If more than 8 diacritics per 100 chars, it's likely Chamorro
+    diacritic_density = diacritic_count / len(text) * 100
+    if diacritic_density > 2:  # 2% diacritics = definitely Chamorro
+        return True
+    
+    # Check for common Chamorro words that wouldn't appear in English
+    chamorro_words = [
+        'gof', 'siha', 'guaha', 'guini', 'guatu', 'ña', '-ña', 'lokkue',
+        'nai', 'pues', 'ya', 'gi', 'ni', 'ilek', 'annai', 'yanggen',
+        'esta', 'siña', 'mafa', 'mana', 'man', 'fan', 'todu'
+    ]
+    text_lower = text.lower()
+    chamorro_word_count = sum(1 for w in chamorro_words if f' {w} ' in f' {text_lower} ' or f' {w}' in f' {text_lower}' or text_lower.startswith(w + ' '))
+    
+    # If 3+ Chamorro words found, it's likely Chamorro
+    if chamorro_word_count >= 3:
+        return True
+    
+    return False
+
+
 def validate_story_quality(story):
     """
     Validate that a story has correct Chamorro/English pairing.
@@ -284,7 +317,7 @@ def validate_story_quality(story):
     
     Quality checks:
     1. Chamorro field should contain Chamorro text (has diacritics or doesn't look like English)
-    2. English field should contain English text (no diacritics, looks like English)
+    2. English field should contain English text (NOT Chamorro)
     3. Neither field should contain footnotes/vocabulary notes
     """
     paragraphs = story.get('paragraphs', [])
@@ -293,7 +326,7 @@ def validate_story_quality(story):
         return False, "No paragraphs"
     
     chamorro_is_english_count = 0
-    english_has_chamorro_count = 0
+    english_is_chamorro_count = 0
     footnote_count = 0
     
     for p in paragraphs:
@@ -304,11 +337,9 @@ def validate_story_quality(story):
         if looks_like_pure_english(chamorro):
             chamorro_is_english_count += 1
         
-        # Check if English field has Chamorro (place names are OK, but not full text)
-        # Only flag if it has many Chamorro diacritics
-        chamorro_char_count = sum(1 for c in english if c in 'åÅñÑ')
-        if chamorro_char_count > 5:  # More than 5 diacritics suggests wrong language
-            english_has_chamorro_count += 1
+        # Check if English field is actually Chamorro (stricter check)
+        if english_field_is_chamorro(english):
+            english_is_chamorro_count += 1
         
         # Check for footnotes
         if looks_like_footnotes(english):
@@ -319,6 +350,10 @@ def validate_story_quality(story):
     # Reject if more than 30% of Chamorro fields contain pure English
     if chamorro_is_english_count / total > 0.3:
         return False, f"Chamorro field contains English ({chamorro_is_english_count}/{total} paragraphs)"
+    
+    # Reject if more than 30% of English fields are actually Chamorro
+    if english_is_chamorro_count / total > 0.3:
+        return False, f"English field is Chamorro ({english_is_chamorro_count}/{total} paragraphs)"
     
     # Reject if more than 50% of English fields have footnotes
     if footnote_count / total > 0.5:
