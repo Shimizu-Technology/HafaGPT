@@ -49,6 +49,8 @@ from .models import (
     # Quiz Result Models
     QuizResultCreate,
     QuizResultResponse,
+    QuizResultDetailResponse,
+    QuizAnswerResponse,
     QuizStatsResponse
 )
 from .chatbot_service import get_chatbot_response
@@ -1864,7 +1866,7 @@ async def save_quiz_result(
     """
     Save a quiz result for the authenticated user.
     
-    Requires authentication.
+    Requires authentication. Optionally includes individual question answers.
     """
     try:
         # Verify user
@@ -1898,11 +1900,32 @@ async def save_quiz_result(
         result_id = result[0]
         created_at = result[1]
         
+        # Insert individual answers if provided
+        if request.answers:
+            for answer in request.answers:
+                cursor.execute("""
+                    INSERT INTO quiz_answers (
+                        quiz_result_id, question_id, question_text, question_type,
+                        user_answer, correct_answer, is_correct, explanation
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    result_id,
+                    answer.question_id,
+                    answer.question_text,
+                    answer.question_type,
+                    answer.user_answer,
+                    answer.correct_answer,
+                    answer.is_correct,
+                    answer.explanation
+                ))
+        
         conn.commit()
         cursor.close()
         conn.close()
         
-        logger.info(f"✅ [QUIZ] Saved result for user {user_id}: {request.score}/{request.total} ({percentage:.1f}%) in {request.category_id}")
+        answers_count = len(request.answers) if request.answers else 0
+        logger.info(f"✅ [QUIZ] Saved result for user {user_id}: {request.score}/{request.total} ({percentage:.1f}%) in {request.category_id} with {answers_count} answers")
         
         return QuizResultResponse(
             id=str(result_id),
@@ -1922,6 +1945,87 @@ async def save_quiz_result(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to save quiz result: {str(e)}"
+        )
+
+
+@app.get("/api/quiz/results/{result_id}", response_model=QuizResultDetailResponse, tags=["Quiz"])
+async def get_quiz_result_detail(
+    result_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get detailed quiz result with individual question answers.
+    
+    Requires authentication. User can only view their own quiz results.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get quiz result (verify ownership)
+        cursor.execute("""
+            SELECT id, category_id, category_title, score, total, percentage, time_spent_seconds, created_at
+            FROM quiz_results
+            WHERE id = %s AND user_id = %s
+        """, (result_id, user_id))
+        
+        result_row = cursor.fetchone()
+        if not result_row:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Quiz result not found")
+        
+        # Get individual answers
+        cursor.execute("""
+            SELECT id, question_id, question_text, question_type, user_answer, correct_answer, is_correct, explanation
+            FROM quiz_answers
+            WHERE quiz_result_id = %s
+            ORDER BY created_at ASC
+        """, (result_id,))
+        
+        answer_rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        # Build response
+        answers = [
+            QuizAnswerResponse(
+                id=str(row[0]),
+                question_id=row[1],
+                question_text=row[2],
+                question_type=row[3],
+                user_answer=row[4],
+                correct_answer=row[5],
+                is_correct=row[6],
+                explanation=row[7]
+            )
+            for row in answer_rows
+        ]
+        
+        return QuizResultDetailResponse(
+            id=str(result_row[0]),
+            category_id=result_row[1],
+            category_title=result_row[2],
+            score=result_row[3],
+            total=result_row[4],
+            percentage=float(result_row[5]),
+            time_spent_seconds=result_row[6],
+            created_at=result_row[7],
+            answers=answers
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [QUIZ] Failed to get result detail: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get quiz result: {str(e)}"
         )
 
 
@@ -2024,6 +2128,222 @@ async def get_quiz_stats(authorization: Optional[str] = Header(None)):
             status_code=500,
             detail=f"Failed to get quiz stats: {str(e)}"
         )
+
+
+# ==========================================
+# Vocabulary Browser Endpoints
+# ==========================================
+
+from .dictionary_service import get_dictionary_service
+
+@app.get("/api/vocabulary/categories", tags=["Vocabulary"])
+async def get_vocabulary_categories():
+    """
+    Get all vocabulary categories with word counts.
+    
+    Returns a list of categories like Greetings, Family, Numbers, etc.
+    """
+    try:
+        service = get_dictionary_service()
+        categories = service.get_categories()
+        stats = service.get_stats()
+        
+        return {
+            "categories": categories,
+            "total_words": stats["total_words"]
+        }
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get categories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/categories/{category_id}", tags=["Vocabulary"])
+async def get_category_words(
+    category_id: str,
+    limit: int = 100,
+    offset: int = 0
+):
+    """
+    Get all words in a specific category.
+    
+    Args:
+        category_id: The category ID (e.g., 'greetings', 'family', 'numbers')
+        limit: Maximum number of words to return (default 100)
+        offset: Number of words to skip (for pagination)
+    """
+    try:
+        service = get_dictionary_service()
+        result = service.get_category_words(category_id, limit=limit, offset=offset)
+        
+        if not result["category"]:
+            raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get category words: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/search", tags=["Vocabulary"])
+async def search_vocabulary(
+    q: str,
+    limit: int = 50
+):
+    """
+    Search for words in Chamorro or English.
+    
+    Args:
+        q: Search query (minimum 2 characters)
+        limit: Maximum number of results (default 50)
+    """
+    try:
+        if len(q) < 2:
+            return {"results": [], "query": q, "total": 0}
+        
+        service = get_dictionary_service()
+        results = service.search(q, limit=limit)
+        
+        return {
+            "results": results,
+            "query": q,
+            "total": len(results)
+        }
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Search failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/word/{word}", tags=["Vocabulary"])
+async def get_word_details(word: str):
+    """
+    Get detailed information for a specific word.
+    
+    Args:
+        word: The Chamorro word to look up
+    """
+    try:
+        service = get_dictionary_service()
+        result = service.get_word(word)
+        
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Word '{word}' not found")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get word: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/stats", tags=["Vocabulary"])
+async def get_vocabulary_stats():
+    """
+    Get dictionary statistics.
+    """
+    try:
+        service = get_dictionary_service()
+        return service.get_stats()
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/flashcards/{category_id}", tags=["Vocabulary"])
+async def get_vocabulary_flashcards(
+    category_id: str,
+    count: int = 10,
+    shuffle: bool = True
+):
+    """
+    Get flashcard-formatted words from a category.
+    
+    Returns words formatted for flashcard display with:
+    - front: Chamorro word
+    - back: English definition
+    - part_of_speech: Part of speech
+    - example: Example sentence (if available)
+    
+    Args:
+        category_id: The category to get words from (e.g., 'greetings', 'family')
+        count: Number of flashcards to return (default 10)
+        shuffle: Whether to shuffle cards for variety (default True)
+    """
+    try:
+        service = get_dictionary_service()
+        result = service.get_flashcards(category_id, count=count, shuffle=shuffle)
+        
+        if not result["category"]:
+            raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get flashcards: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/word-of-the-day", tags=["Vocabulary"])
+async def get_word_of_the_day():
+    """
+    Get the word of the day.
+    
+    Returns a deterministic word based on the current date,
+    so everyone sees the same word on the same day.
+    
+    Response includes:
+    - chamorro: The Chamorro word
+    - english: English definition
+    - part_of_speech: Part of speech (n., v., adj., etc.)
+    - example: Example sentence (if available)
+    - category: Word category
+    - date: Current date (ISO format)
+    """
+    try:
+        service = get_dictionary_service()
+        return service.get_word_of_the_day()
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to get word of the day: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/vocabulary/quiz/{category_id}", tags=["Vocabulary"])
+async def generate_quiz_from_dictionary(
+    category_id: str,
+    count: int = 10,
+    types: str = "multiple_choice,type_answer"
+):
+    """
+    Generate quiz questions from dictionary words.
+    
+    Args:
+        category_id: Category to generate questions from (e.g., 'greetings', 'family', 'all')
+        count: Number of questions to generate (default 10)
+        types: Comma-separated question types (multiple_choice, type_answer)
+    
+    Response includes:
+    - questions: Array of quiz questions
+    - total: Number of questions generated
+    - category: Category name
+    - available_words: Total words available in this category
+    """
+    try:
+        service = get_dictionary_service()
+        question_types = [t.strip() for t in types.split(",")]
+        result = service.generate_quiz_questions(category_id, count=count, question_types=question_types)
+        
+        if not result["questions"]:
+            raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found or has insufficient words")
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [VOCAB] Failed to generate quiz: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.exception_handler(HTTPException)

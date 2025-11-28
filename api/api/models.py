@@ -262,6 +262,17 @@ class MessageFeedbackResponse(BaseModel):
 
 # --- Quiz Result Models ---
 
+class QuizAnswerCreate(BaseModel):
+    """Individual question answer for a quiz"""
+    question_id: str = Field(..., description="Question ID (e.g., 'greet-1')")
+    question_text: str = Field(..., description="The question text")
+    question_type: str = Field(..., description="Question type: multiple_choice, type_answer, fill_blank")
+    user_answer: str = Field(..., description="User's answer")
+    correct_answer: str = Field(..., description="The correct answer")
+    is_correct: bool = Field(..., description="Whether the answer was correct")
+    explanation: Optional[str] = Field(None, description="Optional explanation")
+
+
 class QuizResultCreate(BaseModel):
     """Request to save a quiz result"""
     category_id: str = Field(..., description="Quiz category ID (e.g., 'greetings')")
@@ -269,6 +280,19 @@ class QuizResultCreate(BaseModel):
     score: int = Field(..., ge=0, description="Number of correct answers")
     total: int = Field(..., gt=0, description="Total number of questions")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz in seconds")
+    answers: Optional[list[QuizAnswerCreate]] = Field(None, description="Individual question answers")
+
+
+class QuizAnswerResponse(BaseModel):
+    """Response model for a single quiz answer"""
+    id: str = Field(..., description="Answer UUID")
+    question_id: str = Field(..., description="Question ID")
+    question_text: str = Field(..., description="The question text")
+    question_type: str = Field(..., description="Question type")
+    user_answer: str = Field(..., description="User's answer")
+    correct_answer: str = Field(..., description="The correct answer")
+    is_correct: bool = Field(..., description="Whether the answer was correct")
+    explanation: Optional[str] = Field(None, description="Optional explanation")
 
 
 class QuizResultResponse(BaseModel):
@@ -281,6 +305,19 @@ class QuizResultResponse(BaseModel):
     percentage: float = Field(..., description="Score percentage")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz")
     created_at: datetime = Field(..., description="When the quiz was taken")
+
+
+class QuizResultDetailResponse(BaseModel):
+    """Response model for a quiz result with answers"""
+    id: str = Field(..., description="Quiz result UUID")
+    category_id: str = Field(..., description="Quiz category ID")
+    category_title: Optional[str] = Field(None, description="Human-readable category title")
+    score: int = Field(..., description="Number of correct answers")
+    total: int = Field(..., description="Total number of questions")
+    percentage: float = Field(..., description="Score percentage")
+    time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz")
+    created_at: datetime = Field(..., description="When the quiz was taken")
+    answers: list[QuizAnswerResponse] = Field(default=[], description="Individual question answers")
 
 
 class QuizStatsResponse(BaseModel):
