@@ -393,12 +393,48 @@ GET /api/flashcards/stats?user_id=user-123&period=week
 
 ---
 
-### **Phase 2A: Quiz Mode** 🎯 **HIGH PRIORITY**
+### **Phase 2A: Quiz Mode** 🎯 ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Complete (Stateless MVP)  
 **Complexity:** Medium  
-**Effort:** 2-3 days  
-**Cost:** Minimal (uses existing GPT-4o)
+**Effort:** 1 day  
+**Cost:** None (hardcoded data)
+
+**What's Implemented:**
+- 🎯 **6 Quiz Categories** - Greetings, Family, Numbers, Food, Common Phrases, Colors
+- ❓ **48 Questions** - 8 questions per category
+- 📝 **3 Question Types** - Multiple choice, Type answer, Fill in blank
+- 💡 **Hints & Explanations** - Help users learn from mistakes
+- 📊 **Score Tracking** - Results screen with review
+- 📱 **Mobile Optimized** - Touch-friendly, responsive design
+- 🔀 **Shuffled Questions** - Different order each time
+
+**Architecture Decision: Frontend Hardcoded ✅**
+
+Quiz data is stored in `quizData.ts` (frontend), NOT fetched from backend API.
+
+*Why hardcoded?*
+- ⚡ **Instant loading** - No API call needed
+- 🔒 **Works offline** - No network dependency
+- 🛠️ **Simple** - No database schema, no backend changes
+- 💰 **Free** - No server costs for quiz data
+- 📦 **Small footprint** - ~5KB for 48 questions
+
+*When to move to backend?*
+- When adding **score tracking** (need user_id → quiz_results table)
+- When implementing **AI-generated quizzes** (use RAG to create questions)
+- When question count exceeds **100+** and you want category-based loading
+
+**Frontend Routes:**
+- `/quiz` - Category selection page
+- `/quiz/:categoryId` - Quiz viewer (questions, scoring, results)
+
+**Future Enhancements (Phase 2):**
+- [ ] Database score tracking (`quiz_results` table)
+- [ ] Leaderboards and achievements
+- [ ] AI-generated quizzes from RAG
+- [ ] Picture quiz (show image → pick word)
+- [ ] Matching quiz (drag & drop)
 
 **Why This Feature:**
 - 🎯 Test knowledge retention (not just passive learning)
@@ -744,8 +780,8 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 1** | ✅ Flashcards (Stateless MVP) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ User Feedback System (Thumbs Up/Down) | - | ✅ **COMPLETED** |
 | **Phase 1** | ✅ File Upload (PDF/Word/Text) | - | ✅ **COMPLETED** |
-| **Phase 2A** | Quiz Mode | 2-3 days | 🔴 **UP NEXT** |
-| **Phase 2B** | Daily Word/Phrase | 1 day | 📋 Planned |
+| **Phase 2A** | ✅ Quiz Mode (Stateless MVP) | - | ✅ **COMPLETED** |
+| **Phase 2B** | Daily Word/Phrase | 1 day | 🔴 **UP NEXT** |
 | **Phase 2C** | Progress Dashboard | 2-3 days | 📋 Planned |
 | **Phase 2D** | Vocabulary Browser | 1-2 days | 📋 Planned |
 | **Phase 2E** | Story Mode (Text-Only) | 2-3 days | 📋 Planned |
@@ -761,11 +797,11 @@ DATABASE_URL=postgresql://neon.tech/...
 
 **Recommended implementation order:**
 
-1. **Quiz Mode** - 2-3 days 🔴 **START HERE**
-   - High engagement, tests knowledge
-   - Fun for kids (gamified)
+1. ~~**Quiz Mode**~~ ✅ **COMPLETED**
+   - 6 categories, 48 questions, 3 question types
+   - Hardcoded in frontend for instant loading
 
-2. **Daily Word/Phrase** - 1 day
+2. **Daily Word/Phrase** - 1 day 🔴 **START HERE**
    - Quick win, builds habit
    - Easy to implement
 
@@ -890,12 +926,7 @@ When you have enough feedback data (50+ ratings), create a visual dashboard:
 - **Implementation:** Simple API swap, keep OpenAI TTS as fallback
 - **Decision Point:** Wait for user feedback - current TTS HD may be sufficient
 
-### **2. Quiz Mode** ❓
-- Multiple choice vocabulary quizzes
-- Fill-in-the-blank exercises
-- Track quiz scores over time
-
-### **3. Progress Dashboard** 📊
+### **2. Progress Dashboard** 📊
 - Learning streak tracking
 - Words mastered counter
 - Daily/weekly goals
