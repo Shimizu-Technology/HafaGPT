@@ -37,6 +37,7 @@ def get_story_candidates():
     conn = psycopg.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     
+    # Query for Lengguahi-ta content - check both url field and source_type
     cursor.execute('''
         SELECT 
             cmetadata->>'url' as url,
@@ -44,10 +45,11 @@ def get_story_candidates():
             document,
             length(document) as doc_length
         FROM langchain_pg_embedding
-        WHERE cmetadata->>'url' LIKE '%lengguahita.com%'
+        WHERE (cmetadata->>'url' LIKE '%lengguahita.com%'
+               OR cmetadata->>'source_type' = 'lengguahita')
         AND length(document) > 3000
         ORDER BY length(document) DESC
-        LIMIT 100
+        LIMIT 500
     ''')
     
     rows = cursor.fetchall()

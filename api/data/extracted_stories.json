@@ -1,6 +1,93 @@
 {
   "stories": [
     {
+      "id": "the-beautiful-mango",
+      "title_english": "The Beautiful Mango",
+      "title_chamorro": "I Buniton Mångga",
+      "author": "Schyuler Lujan",
+      "source_url": "https://lengguahita.com/2024/04/12/the-beautiful-mango",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "beginner",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Humånao si Benny måmfe’ pugua’ gi halom tåno’. Gi kinekiyong-ña, manli’e’ manamaríyuyu yan agágaga’ siha na mångga gi mås yahúlulo’ na råmas. Guaha mås ki singko gi un rasimu. Ha po’lo påpa’ i kinatgåga-ña ya ha tutuhon humotde i trongkon mångga. Ti apmam hulo’, esta gaige gi un råmas ni manggaige i manbunitu siha na mångga. Ha tife’ mås ki siette na mångga ya ha balutan gi me’nan i chininå-ña.",
+          "english": "Benny went to pick betel nut in the jungle. On his way out, he saw some very yellow and red mangoes on the highest branch. There were more than five on a single bunch. He put down what he was carrying, and he started to climb the mango tree. Not long after climbing up, he was already at a branch where there were beautiful mangoes. He picked more than seven mangoes, and he wrapped them in the front of his shirt."
+        },
+        {
+          "chamorro": "Ha tutuhon tumunok påpa’, lao kada ha atan påpa’, mås chågo lini’e’-ña. Sigi ta’lo påpa’, lao kada ha atan påpa’, lumá’chågo’ ha’ i tano’.",
+          "english": "He started to descend, but every time he looked down, what he saw was more distant. He kept going down again, but every time he looked down, the land still got farther away."
+        },
+        {
+          "chamorro": "Ha hasson maisa si Benny na kalan båba este i che’cho’-ña. “Fa’na’an ti debi na bai tife’ este na mångga.”",
+          "english": "Benny thought to himself that it seems as though what he did was bad. “Probably I should not pick this mango.”"
+        },
+        {
+          "chamorro": "Ha li’e’ otro na dångkolon råmas, lao åntes di u falak guatu ilek-ña, “Guella yan Guello, dispensa yu’ sa’ ti hu tungo’ na ti debi na bai tife’ este na mångga.”",
+          "english": "He saw another big branch, but before he went toward it he said, “Grandmother and Grandfather, forgive me, because I did not know that I should not pick this mango.”"
+        },
+        {
+          "chamorro": "Annai monhåyan ha sångan este, ha hago’ guatu i dangkulon råmas ya ayu na siña måtto påpa’ gi hilo’ tåno’. Annai tumunok påpa’, ha baba i balutån-ña mångga lao ti bunitu esta i kulot i tinife’-ña mångga.",
+          "english": "When he finished saying this, he reached toward the big branch, and that’s how he was able to arrive down to the earth. When he got down, he opened the mango he wrapped, but the color of the mangoes he picked was already not beautiful."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.984878"
+    },
+    {
+      "id": "the-old-man-and-his-grandson",
+      "title_english": "The Old Man and His Grandson",
+      "title_chamorro": "I Amko’ Yan I [Patgon-ña Toyong1](https://lengguahita.com/2024/11/30/the-old-man-and-his-grandson/#note-01)",
+      "author": "The Brothers Grimm\nTranslated by Schyuler Lujan\nEdited by Ray Barcinas and Jesus Lujan\nThere was once a very old man",
+      "source_url": "https://lengguahita.com/2024/11/30/the-old-man-and-his-grandson",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "beginner",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Nina’lágåsgas as Ray Barcinas yan as Jesus Lujan",
+          "english": "Edited by Ray Barcinas and Jesus Lujan"
+        },
+        {
+          "chamorro": "“Håfa bidåda-mu?” mámaisen i tata.",
+          "english": "There was once a very old man, whose eyes had become dim, his ears dull of hearing, his knees trembled, and when he sat at table he could hardly hold the spoon, and spilt the broth upon the table-cloth or let it run out of his mouth. His son and his son’s wife were disgusted at this, so the old grandfather at last had to sit in the corner behind the stove, and they gave him his food in an earthenware bowl, and not even enough of it. And he used to look towards the table with his eyes full of tears."
+        },
+        {
+          "chamorro": "“Mama’títinas yu’ dikike’ na sahguan nengkånno’,” manoppe i patgon, “para i na’-miyu yan si nåna yanggen dumångkulo yu’.”",
+          "english": "Once, too, his trembling hands could not hold the bowl, and it fell to the ground and broke. The young wife scolded him, but he said nothing and only sighed. Then they bought him a wooden bowl for a few half-pence, out of which he had to eat. They were once sitting thus when the little grandson of four years old began to gather together some bits of wood upon the ground."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.981261"
+    },
+    {
+      "id": "legend-why-the-kakkak-is-skinny",
+      "title_english": "Why the Yellow Bittern is Skinny",
+      "title_chamorro": "Håfa i Kakkak na Masoksok",
+      "author": "Schyuler Lujan",
+      "source_url": "https://lengguahita.com/2023/09/13/legend-why-the-kakkak-is-skinny",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "beginner",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Nina’danña yan trinanslådan as Carmen C. Blas",
+          "english": "Gathered and Translated by Carmen C. Blas"
+        },
+        {
+          "chamorro": "Apmam na tiempo tåtte, sigun i estoria, guaha dos na botkånu mapta’ gi halom tåsi ya ha fotma i islan Guåhån. Annai esta mafotma i tano’ mandokko’ meggai na trongkon håyu, ya gumuaha hålom tåno’. Guihi na hålom tåno’ guaha dos na påhåru na’an-ñiha si Sali yan si Kakkak na sumåsåga ha’.",
+          "english": "A long time ago, according to the story, there were two volcanoes that burst inside the ocean and formed the island of Guam. When the land was already formed, many trees sprouted, and there became a jungle. There were two birds living in that jungle, their names were Micronesian Starling and Yellow Bittern."
+        },
+        {
+          "chamorro": "Un diha madisidi ni dos na para u ayunat gi un Betnes Sånto. Tåya’ para u ha cho’gue guini na ha’åni sa’ må’gas na gupot. Matutuhon i dos i ayunat-ñiha, lao annai ti mali’li’e’ i kakkak, chumochu un guali’ek sa’ esta gof ñålang gue’. I Sali ha sungon ha’ todu et diha ti chumochu.",
+          "english": "One day the two decided to fast on Good Friday. There was nothing for the two of them to do on this day because of the great feast day.* The two began their fast, but when the Yellow Bittern was not seen, it ate a gecko because it was already very hungry. The Micronesian Starling just endured all day and did not eat."
+        },
+        {
+          "chamorro": "Put esti na rason na ilek-ñiha i manåmko’ na achokka’ kuanto kinanno’-ña i kakkak masosoksok ha’ ya ñåñålang ha’ todu i tiempu sa’ ti ha kumple i prinimiti-ña. På’go i Sali gof bråbu ya gof gepan sa’ ha kumple i prinimiti-ña.",
+          "english": "It is for this reason that the elders say that regardless of the amount the Yellow Bittern eats, it is still skinny and hungry all the time because it did not keep its promise. Today the Micronesian Starling is very healthy and very spry** because it kept its promise."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.984629"
+    },
+    {
       "id": "legend-how-the-young-women-of-guam-saved-the-island",
       "title_english": "The Women of Guam and Their Land",
       "title_chamorro": "I Famalao’an Guahan Yan i Tano’-ñiha",
@@ -119,7 +206,7 @@
           "english": "_The young women of Guam were the ones who freed their land through the magic of their hair and their beautiful and splendid songs. They did the important work which the strongest men could not do._"
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.644853"
+      "extracted_at": "2025-11-29T08:42:01.971809"
     },
     {
       "id": "learning-to-scuba-dive",
@@ -196,7 +283,7 @@
           "english": "Tom made good on his word. The next week that I followed him, he took me down to a depth of 100 (one hundred) feet. That day was when I experienced standing on the ocean floor. He took me through holes in rocks, a cave, and a garden. I was so amused by the beautiful places under the sea. Tom showed me the joy and danger of this sport. You need to be brave if you want to see these amazing and beautiful places under the sea. But it’s very pleasing, too, to be made half man, half fish."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.650834"
+      "extracted_at": "2025-11-29T08:42:01.978381"
     },
     {
       "id": "the-girl-who-turned-into-ash",
@@ -249,7 +336,120 @@
           "english": "The mother kept crying and she asked Rita for forgiveness, and she was wishing to see her daughter again."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.649929"
+      "extracted_at": "2025-11-29T08:42:01.977366"
+    },
+    {
+      "id": "tagas-youngest-son",
+      "title_english": "Taga’s Youngest Son",
+      "title_chamorro": "I Mås Påtgon na Låhen Taga",
+      "author": "Frances Baker\nTranslated by Sylvestre Iguel\nTaga",
+      "source_url": "https://lengguahita.com/2024/09/28/tagas-youngest-son",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "intermediate",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "I mås påtgon na låhen Taga sinko åños idåt-ña. Nina’gof banidosu si Taga nu este na patgon-ña. Gof metgot lokkue’ este na påtgon.",
+          "english": "Taga’s youngest son was five years old. Taga was made to be so proud by his child. This child was also very strong."
+        },
+        {
+          "chamorro": "Un diha, humånao i patgon umo’mak. Mangonne’ panglao. “Godde fan este i ga’-hu panglao, tata. Ya-hu na panglao.”",
+          "english": "One day, the child went to swim. He caught a crab. “Please tie my crab, father. I like the crab.”"
+        },
+        {
+          "chamorro": "Pues si Taga magåhet ha godde i panglao nu i hilu. Pues ha konne’ i patgon guatu i panglao gi gima’ para hugåndo-ña.",
+          "english": "Then Taga really tied the crab with the string**.** Then the child took the crab to the house for his plaything."
+        },
+        {
+          "chamorro": "Chumålek si Taga annai ha li’e’ i patgon-ña humugågåndo yan i panglao.",
+          "english": "Taga laughed when he saw his child playing with the crab."
+        },
+        {
+          "chamorro": "Humålom si Taga gi gimå’-ña. Ti apmam ha hungok i lahi-ña manå’å’gang.",
+          "english": "Taga went inside his house. Soon he heard his son calling."
+        },
+        {
+          "chamorro": "“Tåta, maila’ fan ya un ayuda yu’!”",
+          "english": "“Dad, please come and help me!”"
+        },
+        {
+          "chamorro": "“Atan ha’, maktos i hilu ya malågu i ga’-hu panglao hålom gi papa’ ayu na tronko. Maila’ fan ya un tomba i trongko ya bai hu konne’ i ga’-hu panglao,” ilek-ña i lahi-ña.",
+          "english": "“Just look, the string snapped and my pet crab ran in underneath that tree. Please come and topple over the tree and I will catch my crab,” his son said."
+        },
+        {
+          "chamorro": "“Ti siña,” manoppe si Taga. “Hu tånom enao na trongkon niyok, på’go ha tutuhon gumaitinekcha’. Ti ya-hu tumomba. Hånao ya un fanaligao otro panglao.”",
+          "english": "“I can’t,” Taga answered. “I planted that coconut tree, and now it’s starting to bear fruit. I don’t want to knock it down. Go and search for another crab.”"
+        },
+        {
+          "chamorro": "“Mungnga yu’!” manoppe i patgon. “Estague’ i malago’-hu!”",
+          "english": "“I don’t want that!” the child answered. “This is what I want!”"
+        },
+        {
+          "chamorro": "Pues ha go’te i trongko ya ha bokbok pues ha konne’ i ga’-ña panglao.",
+          "english": "Then he grasped the trunk and he uprooted it, then he caught his pet crab."
+        },
+        {
+          "chamorro": "Nina’sen manman si Taga put esti. Ha tungo’ ha’ na esti na påtgon siempre metgot-ña ha’ ki håyi na låhi.",
+          "english": "Taga was made to be very amazed by this. He knew that this child would definitely be stronger than any man."
+        },
+        {
+          "chamorro": "Nina’ma’å’ñao lokkue’ put esti.",
+          "english": "He was also made afraid because of this."
+        },
+        {
+          "chamorro": "Malågu huyong ginen i gima’, ya ha go’te i lahi-ña pues ha puno’.",
+          "english": "He ran out from the house, then he grasped his son, then he killed him."
+        },
+        {
+          "chamorro": "“Håfa på’go bai hu cho’gue?” kumåti si Taga. “Siña ha’, ha puno’ yu’ un diha.”",
+          "english": "“Now what will I do?” Taga cried. “He could have killed me one day.”"
+        },
+        {
+          "chamorro": "Todudu i taotao nina’fanma’å’ñao as Taga ya ma’ó’osge todu i tinago’-ña.",
+          "english": "All of the people were made afraid by Taga, and they were obeying all of his commands."
+        },
+        {
+          "chamorro": "Lao si Taga tåya’ esta minagof-ña.",
+          "english": "His wife was already very sad. The woman was made very ill by her sadness, and she soon died."
+        },
+        {
+          "chamorro": "I asagua-ña esta trítriste ha’ lokkue’. Nina’gof malångu i palao’an ni triste-ña ya ti apmam na tiempo, måtai.",
+          "english": "Taga’s beautiful daughter became afraid, and she was also made very angry."
+        },
+        {
+          "chamorro": "Muma’å’ñao i bunita na hagan Taga, ya nina’gof lalålo’ lokkue’.",
+          "english": "Her youngest sibling and her mother had already died."
+        },
+        {
+          "chamorro": "Esta måtai i mås påtgon na che’lu-ña yan si nanå-ña.",
+          "english": "There are two stories about what transpired."
+        },
+        {
+          "chamorro": "Guaha dos na estoria put håfa taimanu masusedi.",
+          "english": "Taga’s beautiful daughter ran to the mountain and hid. Then after a short time, she died. Her spirit turned back to her father’s house, and until current times, sometimes she is seen there."
+        },
+        {
+          "chamorro": "I bunita na hagan Taga, malågu para i sabåna ya umattok. Pues ti apmam na tiempo, måtai. I animås-ña ha bira gue’ tåtte gi gima’ tatå-ña, ya esta på’go na tiempo guaha na biahi nai mali’e’ guihi.",
+          "english": "The other story goes like this:"
+        },
+        {
+          "chamorro": "I hagan Taga esta muma’å’ñao ya esta ha disiden maisa gue’ na debi di u puno’ si tatå-ña.",
+          "english": "Taga’s daughter had become afraid and she had already decided to herself that she must kill her father."
+        },
+        {
+          "chamorro": "Ha sodda’ i lansa ya ha puno’ si tatå-ña gi maigo’-ña.",
+          "english": "She found a spear and she killed her father in his sleep."
+        },
+        {
+          "chamorro": "Pues ti apmam na tiempo måtai gue’. Lao i animås-ña ti siña dumeskåkånsa. Debi di u apåsi i ha puno’ tatå-ña. Ti siña lokkue’ ha dingu i gima’ tatå-ña asta ki poddong i uttimo na åcho’ latte’.",
+          "english": "Then a short time after, she died. But her spirit could not rest. She must pay for killing her father. She also cannot leave her father’s house until the last latte stone falls."
+        },
+        {
+          "chamorro": "I taotao Tinian ma líli’e’ ha’ i animås-ña. Ya guaha na biahi nai lumålahu ya kumåkåti gi sengsong an puengi.",
+          "english": "The people of Tinian still see her spirit. And sometimes when she is walking and crying in the village when it is night."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.980723"
     },
     {
       "id": "the-canary-and-the-chungi",
@@ -370,7 +570,7 @@
           "english": "“Oh sister, I am so happy because yes, I really do love you, my friend.”"
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.641296"
+      "extracted_at": "2025-11-29T08:42:01.968004"
     },
     {
       "id": "the-dolphin-and-the-two-children",
@@ -463,7 +663,7 @@
           "english": "From then, they were often visited by the dolphins to play. In the end, the dolphin and the children became friends."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.646559"
+      "extracted_at": "2025-11-29T08:42:01.973519"
     },
     {
       "id": "the-old-pirate",
@@ -544,7 +744,7 @@
           "english": "Time went on as well, and the pirate did not return to check his box. While Nan Em was still alive, she considered what she would tell the pirate in case he came back."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.647653"
+      "extracted_at": "2025-11-29T08:42:01.974671"
     },
     {
       "id": "the-overnight-vigil-in-past-times-on-guam",
@@ -565,7 +765,7 @@
           "english": "One by one, the children went over to the dying grandmother or grandfather, asking forgiveness or pardon if they had ever done something to hurt the elder. All of this time during the elder’s illness, he/she is just watched over by the family. The family conforms with the will of God."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.644083"
+      "extracted_at": "2025-11-29T08:42:01.970994"
     },
     {
       "id": "the-sandpiper-girl",
@@ -778,7 +978,7 @@
           "english": "Rita went out and walked to the park. The elderly man and elderly woman followed Rita. When they arrived there at the river, Rita turned and she kissed the two elders, then she turned into a sandpiper again and flew. When she was already high up, the sandpiper looked down then cried, “Koh, koh, koh,” as though she was saying, “Goodbye, goodbye, goodbye.”"
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.635813"
+      "extracted_at": "2025-11-29T08:42:01.962297"
     },
     {
       "id": "carolinian-story-the-good-child",
@@ -879,7 +1079,7 @@
           "english": "Soon the bird came to him and he stuck one of his feathers on the back of the child’s hand. Right before he was going to fly, the child also took a big taro leaf. The child flew up into the air. He continued to fly and in his hand, he was also holding the taro leaf. He arrived at a place where there was something like a river, and its water was very clean, clear and cold. He placed the water inside the taro leaf and he turned back to the land. When he arrived back at the house of the chief, the woman was immediately given the water."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.643145"
+      "extracted_at": "2025-11-29T08:42:01.970023"
     },
     {
       "id": "chamorro-concepts-and-sayings-part-1",
@@ -908,7 +1108,166 @@
           "english": "That’s why you shouldn’t depend upon tomorrow, because tomorrow is not yours. The hour is not yours. The day is not yours. Even you, yourself, are not your own. Everything has its time according to God’s time. All the yesterdays, todays, and tomorrows, and the coming times belong to God."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.651381"
+      "extracted_at": "2025-11-29T08:42:01.978961"
+    },
+    {
+      "id": "truly-beautiful",
+      "title_english": "Truly Beautiful",
+      "title_chamorro": "Magåhet Na Bunita",
+      "author": "Father Eric Forbes\nFrom the book",
+      "source_url": "https://lengguahita.com/2024/02/23/truly-beautiful",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "intermediate",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Umasagua si Kiko’ yan si Denang. Todu i tiempo ilélek-ña si Kiko’ as Denang, “Asaguå-hu, achokka’ ti bonita hao na palao’an, hu asagua hao sa’ pot magåhet na hu guaiya hao.”",
+          "english": "From the book, “Tell Me A Story”"
+        },
+        {
+          "chamorro": "Pues siempre ineppe’ gue’ as Denang, “Asaguå-hu, hunggan bunita yu’, lao put i bachet hao ti un líli’e’.”",
+          "english": "Kiko’ and Denang were married. Kiko’ would always tell Denang, “My wife, even though you aren’t a beautiful woman, I married you because I truly love you.”"
+        },
+        {
+          "chamorro": "Pues un Damenggo ilek-ña si Kiko, “Asaguå-hu, an måkpo’ i Misa ta falak i gayera ya ta li’e’ kao iná’atan hao ni taotao siha yanggen magåhet na bonita hao.”",
+          "english": "Denang always replied, “My husband, yes I am beautiful, but you don’t see it because you are blind.”"
+        },
+        {
+          "chamorro": "Pues annai eståba i dos gi gayera, ilek-ña si Kiko’, “Asaguå-hu, esta dies minutos hit guini ya ti ma á’atan hao.”",
+          "english": "So one Sunday Kiko said, “My wife, when mass is over let’s go to the cockfight and see if the people will look at you if you are really beautiful.”"
+        },
+        {
+          "chamorro": "Manoppe’ si Denang, “Hunggan ma á’atan yu’ lao put i mo’na hao mamokkat ti un líli’e’. Po’lo ya hu fonaigue hao mamokkat ya siempre un li’e’.”",
+          "english": "So when the two were at the cockfight, Kiko said, “My wife, we have already been here for ten minutes and they are not looking at you.”"
+        },
+        {
+          "chamorro": "Ya magåhet na annai mamokkat i dos ya si Denang gaige gi me’nan Kiko’, ha ripåra na todu i lalåhi ni ma upos ma sen atan si Denang. Lao ti ha tungo’ si Kiko’ na ha fanúnu’i siha ni hila’-ña si Denang.",
+          "english": "Denang answered, “Yes, they are looking at me, but because you are walking ahead of me, you can’t see it. Let me walk ahead of you and you will see.”"
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.984399"
+    },
+    {
+      "id": "lihenden-chamoru-hafa-munataya-atungo-niha-i-fanihi",
+      "title_english": "What Caused The Fruitbats To Have No Friends",
+      "title_chamorro": "Håfa Muna’Tåya’ Atungo’-ñiha i Fanihi",
+      "author": "Schyuler Lujan",
+      "source_url": "https://lengguahita.com/2023/07/28/lihenden-chamoru-hafa-munataya-atungo-niha-i-fanihi",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "intermediate",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Åntes na tiempo, annai tåya’ trabiha taotao mañåsaga gi hilo’ tano’-ta, mansen afa’maolek todu i ga’ga’ siha gi tano’, tånto ayu siha i mañåsaga gi tano’ yan kontodu i paluma siha ni manggugupu gi aire.",
+          "english": "In past times, when no humans yet lived on our land, all the animals on earth got along very well, those who stay on land and the birds as well who are flying in the air."
+        },
+        {
+          "chamorro": "Un diha, mampos maipe i ha’åne; i semnak mampos metgot. Pues manggupu i fanihi siha para u fanmanespia liheng-ñiha, yan para u eskapåyi i minaipen somnak. Ma sodda’ dångkulon liyang ya mañåga ha’ guihi, manmagof yan mangontentu. Ayu mismo na ha’åne, manásangani i paluma siha.",
+          "english": "One day, the day was too hot; the sunshine was too strong. So the fruit bats flew to find their shelter, and to escape the heat of the sunshine. They found a huge cave and they stayed there, happy and content."
+        },
+        {
+          "chamorro": "“Kao ti en repåra na mås mandichoso hit kini pumalu siha na gå’ga’?” mamaisen un paluma.",
+          "english": "That very same day, the birds said to each other, “Do you not realize that we are more fortunate than the other animals?” one bird asked. “They suffer when the day is too sunny, because they cannot fly, not like us.”"
+        },
+        {
+          "chamorro": "Manmasåså’pet siha an mampos somnak i ha’åne, sa’ ti siña siha manggupu, ti parehu yan hita. Pues ma tutuhon i paluma siha ma butlea i ga’ga’ siha gi tano’. “Manmetgot-ña ham ki hamyo na gå’ga’ tåno’! Manmalate’-ña ham ki hamyo!” Ya ennao mina’manmumu i paluma siha gi aire yan i ga’ga’ siha gi tano’.",
+          "english": "So the birds began to ridicule the animals on the land. “We are stronger than you, the animals on land! We are smarter than you!” And that is why the birds of the air and the animals on land fought."
+        },
+        {
+          "chamorro": "Gi mimun-ñiñiha, manggupu i paluma siha guato gi liyang nai manggaige i fanihi. “Hoi! Fanhuyung hamyo na fanihi ya en ayuda ham manmumu yan i ga’ga’ tåno’!”",
+          "english": "In their fighting, the birds flew to the cave where the fruit bats were. “Hey! Come out you fruit bats and help us fight with the animals of the land!”"
+        },
+        {
+          "chamorro": "Ilek-ñiha i fanihi, “Ai lokkue’! Haftaimano para in fanmumu yan i ga’ga’ tåno’? In na’gigimen i nenen-måme ni lechen-måme, parehu yan siha.”",
+          "english": "The fruit bats said, “Oh dear! How are we to fight the animals of the land? We make our babies drink our milk, the same as them.”"
+        },
+        {
+          "chamorro": "Pues, gi linalålo’-ñiha nu i fanihi siha, ilek-ñiha i paluma, “Hamyo la’mon,” ya manhånao.",
+          "english": "So, in their anger towards the fruit bats, the birds said, “Up to you,” and they went."
+        },
+        {
+          "chamorro": "Didide’ despues, manfinatoigue i fanihi siha nu i ga’ga’ tåno’ ya manfinaisen, “Kao manmagof hamyo ya ta fanhita manmumu yan i paluma siha?”",
+          "english": "A little later, the fruit bats were visited by the animals of the land and were asked, “Would you be willing for us be together and fight the birds?”"
+        },
+        {
+          "chamorro": "“Ai lokkue’!” ilek-ñiha i fanihi. “Haftaimano para in fanmumu yan i paluma siha, yanggen manggugupu ham gi aire parehu yan siha?”",
+          "english": "“Oh dear,” said the fruit bats. How are we going to fight the birds, if we fly in the air like they do?”"
+        },
+        {
+          "chamorro": "Mandisgustao i ga’ga’ tåno’ siha mina’ i ineppen-ñiha i fanihi ya ma sangåni i fanihi siha, “Hamyo la’mon, lao desde på’go para mo’na, tåya’ esta entre hamyo yan hami.”",
+          "english": "The land animals were displeased because of the fruit bats’ reply and they told the bats, “Up to you, but from now on, there is nothing between you and us.” And since that day, the fruit bats have no friends. They hide inside caves when it is day, and come out to look for their food only when it is night."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.983184"
+    },
+    {
+      "id": "when-taga-became-chief-of-tinian",
+      "title_english": "When Taga Became Chief of Tinian",
+      "title_chamorro": "Annai Humuyong Må’gas Tinian si Taga",
+      "author": "Schyuler Lujan",
+      "source_url": "https://lengguahita.com/2024/08/30/when-taga-became-chief-of-tinian",
+      "source_name": "Lengguahi-ta",
+      "difficulty": "intermediate",
+      "category": "story",
+      "paragraphs": [
+        {
+          "chamorro": "Pues si Taga ha hasso humånao para Tinian. Ha konne’ i patgon-ña yan i asagua-ña ya manma’udai gi galaide’. Mampos chaddek si Taga mamoksai sa’ ti chågugu’ kareran-ñiha manmåtto Tinian.",
+          "english": "And so Taga thought to go to Tinian. He took his child and his wife and they rode in a canoe. Taga paddled very fast because their journey to Tinian was not very far."
+        },
+        {
+          "chamorro": "I ma’gas Tinian esta gaige para u fantinaggam. Ha tungo’ ha’ na gof metgot si Taga na taotao ya ti malago’ na u mumu.",
+          "english": "The chief of Tinian was already there to meet them. He already knew that Taga was a very strong person and he didn’t want to fight him."
+        },
+        {
+          "chamorro": "“Taga,” ilek-ña i ma’gas Tinian, “Maila’ ya u ta a’champa.”",
+          "english": "“Taga,” the chief of Tinian said, “Come and we will compete with each other.”"
+        },
+        {
+          "chamorro": "Pues i dos na må’gas ma chule’ i talayan-ñiha. I ma’gas Tinian ha yotte i talayå-ña, ti gof chågo’ kontra i inai. Annai ha båtsala hålom i talayå-ña, meggai guihan ni mandikike’ kinenne’-ña.",
+          "english": "Then the two chiefs took their fishing nets. The chief of Tinian flung his net, not very far from the sand. When he dragged his net in, there were many small fish that he caught."
+        },
+        {
+          "chamorro": "Lumuhan si Taga. Ti ha tungo’ si Taga månu nai meggai guihan. Pues tumohge si Taga gi kanton unai ya ha yotte i talayå-ña huyong gi hiyong måma’te.",
+          "english": "Taga became afraid. Taga didn’t know where there were a lot of fish. So Taga stood on the beach and he flung his net out, beyond the shallow water."
+        },
+        {
+          "chamorro": "Despues muñangu huyong gi taddong ya ha båtsala hålom i talayå-ña. Motmot i talayå-ña ni mandångkulon guihan siha.",
+          "english": "Afterward, he swam out into the depths and he dragged in his net. His net was full of big fish."
+        },
+        {
+          "chamorro": "“Hågu manggånna på’go na biahi,” ilek-ña i ma’gas Tinian.",
+          "english": "“You are the one who won this time,” the chief of Tinian said."
+        },
+        {
+          "chamorro": "“Ñålang yu’,” ilek-ña si Taga. “Maila’ ya ta na’lågu i guihan.”",
+          "english": "“I’m hungry,” Taga said. “Come and we will cook the fish.”"
+        },
+        {
+          "chamorro": "“Ta nisisita niyok para ta lechi i guihan,” ilek-ña i ma’gas Tinian.",
+          "english": "“We need coconut to cook the fish in milk,” the chief of Tinian said."
+        },
+        {
+          "chamorro": "Despues ha feddos i trongkon niyok ya ha daggao påpa’ unos kuantos grånon niyok.",
+          "english": "Afterward he climbed the coconut tree and he shook the trunk. All of the coconuts in the tree fell down, including the young coconuts."
+        },
+        {
+          "chamorro": "Chumålek si Taga annai ha li’e’ este. “Ti taiguenao ombre!”",
+          "english": "The chief of Tinian was afraid and amazed. But all he said was, “Come and we will husk and grate the coconut.” Then he husked the coconut and he gave it to his wife to grate."
+        },
+        {
+          "chamorro": "Tumohge ha’ si Taga gi trongkon niyok ya ha yengyong i trongko. Todudu i niyok gi trongko mamoddong, kontodu i daddek siha.",
+          "english": "Taga laughed again and said, “Not like that, come on!”"
+        },
+        {
+          "chamorro": "Luhan yan manman i ma’gas Tinian. Lao ayu ha’ ilek-ña, “Maila ya ta kacha’ yan ta kåmyo i niyok.” Pues ha kacha’ i niyok ya ha nå’i i asagua-ña para u kåmyo.",
+          "english": "Then he took the coconut and he peeled it with just his hands. Then he broke the coconut with his two hands and he squeezed out its milk."
+        },
+        {
+          "chamorro": "Chumålek ta’lo si Taga ya ilek-ña, “Ti taiguenao ombre.”",
+          "english": "Taga had already beaten the chief of Tinian three times. The chief of Tinian was very ashamed and he left. And so he, Taga, became the new chief of Tinian."
+        }
+      ],
+      "extracted_at": "2025-11-29T08:42:01.982514"
     },
     {
       "id": "when-we-first-arrived-on-saipan",
@@ -965,11 +1324,11 @@
           "english": "There were all kinds of food. Truly, back then it wasn’t necessary for a person to endure a hard time searching, they would choose what they wanted to carry. From yams, sweet potatoes, taro, thorny yams, coconut crabs, to fruit bats. We would really just take what we could handle. I don’t really know who exactly planted all of this large quantity of food in Makpe’."
         }
       ],
-      "extracted_at": "2025-11-29T02:35:45.648878"
+      "extracted_at": "2025-11-29T08:42:01.976171"
     }
   ],
-  "extracted_at": "2025-11-29T02:35:45.652293",
+  "extracted_at": "2025-11-29T08:42:01.985812",
   "source": "Lengguahi-ta (https://lengguahita.com)",
   "attribution": "Stories sourced from Lengguahi-ta. Please visit their website to support Chamorro language learning.",
-  "total_stories": 11
+  "total_stories": 18
 }
