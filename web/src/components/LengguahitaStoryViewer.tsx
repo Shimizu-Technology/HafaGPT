@@ -17,14 +17,16 @@ const speakText = (text: string) => {
 // Word popup component with enhanced morphology support
 function WordPopup({ 
   word, 
+  chamorroContext,
   englishContext,
   onClose,
   onAskChatbot
 }: { 
   word: string; 
+  chamorroContext?: string;
   englishContext?: string;
   onClose: () => void;
-  onAskChatbot?: (word: string) => void;
+  onAskChatbot?: (word: string, context?: string) => void;
 }) {
   const { data: wordData, isLoading } = useVocabularyWord(word);
 
@@ -150,7 +152,7 @@ function WordPopup({
             {/* Ask chatbot button */}
             {onAskChatbot && (
               <button
-                onClick={() => onAskChatbot(word)}
+                onClick={() => onAskChatbot(word, chamorroContext)}
                 className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium hover:from-teal-600 hover:to-cyan-600 transition-colors text-sm"
               >
                 Ask HåfaGPT about "{word}"
@@ -215,9 +217,21 @@ export function LengguahitaStoryViewer() {
     setSelectedWord(word);
   }, []);
   
-  const handleAskChatbot = useCallback((word: string) => {
-    // Navigate to chat with pre-filled message
-    navigate(`/chat?message=${encodeURIComponent(`What does "${word}" mean in Chamorro?`)}`);
+  const handleAskChatbot = useCallback((word: string, chamorroContext?: string) => {
+    // Navigate to chat with pre-filled message including context
+    let message: string;
+    
+    if (chamorroContext) {
+      // Truncate context if too long (keep first 150 chars)
+      const truncatedContext = chamorroContext.length > 150 
+        ? chamorroContext.substring(0, 150) + '...'
+        : chamorroContext;
+      message = `What does "${word}" mean in Chamorro? Here's the context it's used in: "${truncatedContext}"`;
+    } else {
+      message = `What does "${word}" mean in Chamorro?`;
+    }
+    
+    navigate(`/chat?message=${encodeURIComponent(message)}`);
   }, [navigate]);
 
   const goToPrevious = () => {
@@ -475,6 +489,7 @@ export function LengguahitaStoryViewer() {
       {selectedWord && (
         <WordPopup 
           word={selectedWord}
+          chamorroContext={paragraph?.chamorro}
           englishContext={paragraph?.english}
           onClose={() => setSelectedWord(null)}
           onAskChatbot={handleAskChatbot}
