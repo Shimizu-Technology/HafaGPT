@@ -15,6 +15,8 @@ import { LengguahitaStoryViewer } from './components/LengguahitaStoryViewer';
 import { Dashboard } from './components/Dashboard';
 import { VocabularyList } from './components/VocabularyList';
 import { VocabularyCategory } from './components/VocabularyCategory';
+import { ConversationList } from './components/ConversationList';
+import { ConversationPractice } from './components/ConversationPractice';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -50,6 +52,10 @@ function App() {
         {/* Dashboard routes - detailed progress */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/quiz-history" element={<ProtectedRoute><QuizHistory /></ProtectedRoute>} />
+        
+        {/* Conversation Practice routes */}
+        <Route path="/practice" element={<ProtectedRoute><ConversationList /></ProtectedRoute>} />
+        <Route path="/practice/:scenarioId" element={<ProtectedRoute><ConversationPractice /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
