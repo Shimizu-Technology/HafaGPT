@@ -2552,6 +2552,127 @@ async def list_story_categories():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# =====================================================
+# CONVERSATION PRACTICE ENDPOINTS
+# =====================================================
+
+from pydantic import BaseModel
+from typing import List, Dict, Any
+
+class ConversationPracticeRequest(BaseModel):
+    scenario_id: str
+    scenario_context: Dict[str, Any]
+    conversation_history: List[Dict[str, str]]
+    user_message: str
+    turn_count: int
+    user_id: Optional[str] = None
+
+class ConversationPracticeResponse(BaseModel):
+    chamorro_response: str
+    english_translation: str
+    feedback: Optional[Dict[str, Any]] = None
+    objectives_completed: List[str] = []
+    is_complete: bool = False
+    final_score: Optional[int] = None
+
+@app.post("/api/conversation-practice", response_model=ConversationPracticeResponse, tags=["Learning"])
+async def conversation_practice(request: ConversationPracticeRequest):
+    """
+    AI-powered conversation practice endpoint.
+    
+    The AI plays a character in a scenario and responds to user input in Chamorro,
+    providing gentle feedback on the user's Chamorro usage.
+    """
+    try:
+        import openai
+        
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # Build the system prompt for the character
+        context = request.scenario_context
+        system_prompt = f"""You are playing the role of {context.get('character_name', 'a Chamorro speaker')} in a Chamorro language learning conversation.
+
+SETTING: {context.get('setting', 'A conversation in Guam')}
+YOUR ROLE: {context.get('character_role', 'A friendly local')}
+
+IMPORTANT INSTRUCTIONS:
+1. ALWAYS respond in Chamorro first, then provide English translation
+2. Keep responses SHORT (1-3 sentences in Chamorro)
+3. Stay in character - you are {context.get('character_name', 'the character')}
+4. Be encouraging and patient - the user is learning
+5. If the user makes mistakes, gently continue the conversation (don't correct harshly)
+6. Use simple, common Chamorro phrases when possible
+7. The conversation should feel natural and flow like a real interaction
+
+OBJECTIVES the user should accomplish:
+{chr(10).join('- ' + obj for obj in context.get('objectives', []))}
+
+USEFUL PHRASES the user might use:
+{chr(10).join('- ' + p for p in context.get('useful_phrases', [])[:5])}
+
+Turn count: {request.turn_count}
+Expected turns: ~10-14
+
+If the conversation has naturally concluded (user has accomplished most objectives and said goodbye), 
+set is_complete to true in your response.
+
+RESPONSE FORMAT (JSON):
+{{
+    "chamorro_response": "Your response in Chamorro",
+    "english_translation": "English translation of your response",
+    "feedback": {{
+        "corrections": ["List of gentle spelling/grammar suggestions for the USER's message, if any"],
+        "encouragement": "Brief encouraging comment about their Chamorro"
+    }},
+    "objectives_completed": ["List of objectives the user has now completed"],
+    "is_complete": false,
+    "final_score": null
+}}
+
+When is_complete is true, set final_score to 1-5 based on:
+- 5: Excellent - completed all objectives, good Chamorro usage
+- 4: Good - completed most objectives, minor issues
+- 3: Satisfactory - completed some objectives
+- 2: Needs practice - struggled with objectives
+- 1: Keep trying - minimal completion"""
+
+        # Build conversation history for context
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        for msg in request.conversation_history:
+            role = "assistant" if msg["role"] == "character" else "user"
+            messages.append({"role": role, "content": msg["content"]})
+        
+        # Add the new user message
+        messages.append({"role": "user", "content": request.user_message})
+        
+        # Call OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=500,
+            response_format={"type": "json_object"}
+        )
+        
+        # Parse the response
+        response_text = response.choices[0].message.content
+        response_data = json.loads(response_text)
+        
+        return ConversationPracticeResponse(
+            chamorro_response=response_data.get("chamorro_response", ""),
+            english_translation=response_data.get("english_translation", ""),
+            feedback=response_data.get("feedback"),
+            objectives_completed=response_data.get("objectives_completed", []),
+            is_complete=response_data.get("is_complete", False),
+            final_score=response_data.get("final_score")
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ [CONVERSATION PRACTICE] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Custom HTTP exception handler"""
