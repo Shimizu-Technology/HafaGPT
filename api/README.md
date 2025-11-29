@@ -4,7 +4,7 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
 
 > **HåfaGPT has evolved from a simple chatbot into a complete learning platform for self-study and teaching children Chamorro!**
 
-**🆕 LATEST:** Story Mode with 24 bilingual stories + tap-to-translate! 📖 Plus Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
+**🆕 LATEST:** Conversation Practice with 7 immersive scenarios! 💬 Plus Story Mode (24 stories), Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
@@ -16,6 +16,14 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
   - **General Chat** - Ask anything about Chamorro in English
   - **Immersion Mode** (`/chamorro`) - Chamorro-only responses
   - **Learning Mode** (`/learn`) - Chamorro with English breakdowns
+
+- 💬 **Conversation Practice** (7 scenarios):
+  - **AI Character Role-Play** - Practice with Maria, Tåta, Waitress, and more
+  - **Beginner to Advanced** - Progressive difficulty levels
+  - **Objective Tracking** - Clear goals for each conversation
+  - **Hints & Translations** - Toggle help when stuck
+  - **TTS Pronunciation** - Listen to AI responses
+  - **Scenarios:** Meeting someone, Restaurant, Market, Grandparents, Directions, Fiesta, Phone call
 
 - 📖 **Story Mode** (24 stories):
   - **6 Curated Stories** - Hand-crafted with comprehension quizzes

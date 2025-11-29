@@ -6,6 +6,7 @@
 
 HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - 🤖 **AI Chat Tutor** - Ask questions, practice conversations, get translations
+- 💬 **Conversation Practice** - 7 immersive scenarios with AI characters
 - 📖 **Story Mode** - Read 24 Chamorro stories with tap-to-translate
 - 🎴 **Flashcards** - Study vocabulary with curated decks or AI-generated cards
 - 📝 **Quizzes** - Test your knowledge with multiple question types
@@ -21,6 +22,7 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 
 ### **Core Learning Tools**
 - ✅ **AI Chat Tutor** - 3 modes: English, Chamorro immersion, Learning mode
+- ✅ **Conversation Practice** - 7 immersive scenarios with AI character role-play
 - ✅ **Story Mode** - 24 stories (6 curated + 18 Lengguahi-ta) with tap-to-translate
 - ✅ **Flashcards** - 6 curated decks + dictionary-based cards (10,350+ words)
 - ✅ **Quizzes** - 6 categories with curated + dictionary-generated questions
@@ -826,34 +828,64 @@ CREATE TABLE quiz_results (
 
 ---
 
-### **Phase 2F: Conversation Practice (Text)** 💬 **IMMERSIVE**
+### **Phase 2F: Conversation Practice (Text)** 💬 ✅ **COMPLETED (Nov 2025)**
 
-**Status:** 📋 Planned  
+**Status:** ✅ Complete  
 **Complexity:** Medium  
-**Effort:** 2-3 days  
-**Cost:** Uses existing GPT-4o
+**Effort:** 2 days  
+**Cost:** Uses existing GPT-4o-mini
+
+**What's Implemented:**
+- 💬 **7 Interactive Scenarios** - Practice real Chamorro conversations
+- 🎭 **AI Character Role-Play** - Each scenario has a unique character
+- 💡 **Hints System** - Useful phrases available when stuck
+- 🔊 **TTS Pronunciation** - Listen to AI responses
+- 🎯 **Objective Tracking** - Track what you've achieved in each conversation
+- 📱 **Mobile Optimized** - Responsive design for all devices
+
+**Scenarios Available:**
+| Scenario | Difficulty | Character | Objectives |
+|----------|------------|-----------|------------|
+| 👋 Meeting Someone New | Beginner | Maria | Greet, introduce yourself, ask how they are |
+| 🍽️ At a Restaurant | Beginner | Waitress | Order food, order drink, ask for bill |
+| 🛒 Shopping at the Market | Beginner | Vendor | Ask price, buy items, thank vendor |
+| 👴 Visiting Grandparents | Intermediate | Tåta (Grandfather) | Greet respectfully, ask about day, share about your day |
+| 🗺️ Asking for Directions | Intermediate | Local Resident | Ask directions, understand them, thank person |
+| 🎉 At a Village Fiesta | Advanced | Auntie | Initiate conversation, discuss food/music, express enjoyment |
+| 📞 Phone Conversation | Advanced | Friend | Answer/greet, make plans, end politely |
+
+**Features:**
+- ✅ **Show/Hide Translations** - Toggle English translations for AI responses
+- ✅ **Useful Phrases** - Click to insert common phrases
+- ✅ **Completion Screen** - Shows objectives achieved/missed
+- ✅ **Try Again** - Restart conversation to practice more
+- ✅ **Natural Dialogue** - AI provides gentle corrections while keeping conversation flowing
+
+**API Endpoint:**
+```python
+POST /api/conversation-practice
+Body: {
+    "user_message": "Håfa Adai!",
+    "conversation_history": [...],
+    "scenario_id": "meeting-someone-new"
+}
+
+Response: {
+    "ai_response": "Håfa Adai! Maolek na ha'åni...",
+    "ai_response_translation": "Hello! Nice day...",
+    "feedback": "Great greeting!",
+    "is_conversation_complete": false,
+    "objectives_achieved": ["Greet Maria in Chamorro"],
+    "objectives_failed": []
+}
+```
 
 **Why This Feature:**
-- 💬 Practice real conversations
+- 💬 Practice real conversations in a safe environment
 - 🎭 Scenario-based learning (practical situations)
-- 🤖 AI plays the other person
+- 🤖 AI plays the other person naturally
 - 💡 Hints available if stuck
-
-**Scenarios:**
-- 👋 Meeting someone new
-- 🍽️ Ordering food at a restaurant
-- 🛒 Shopping at the market
-- 👴 Talking to grandparents
-- 📞 Phone conversation
-- 🏠 At home with family
-
-**Implementation:**
-- Select scenario
-- Bot starts conversation in Chamorro
-- User responds (with hint button if stuck)
-- Bot continues naturally
-- Feedback on responses
-- Track scenarios completed
+- 🎯 Clear objectives to guide learning
 
 ---
 
@@ -985,11 +1017,11 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2C** | ✅ Progress Dashboard + Quiz Review | - | ✅ **COMPLETED** |
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
 | **Phase 2E** | ✅ Story Mode (24 stories + tap-to-translate) | - | ✅ **COMPLETED** |
-| **Phase 2F** | Conversation Practice | 2-3 days | 📋 Planned |
+| **Phase 2F** | ✅ Conversation Practice (7 scenarios) | - | ✅ **COMPLETED** |
 | **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 🚧 In Progress |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
 | **Future** | Full Offline/Local Mode | 5-6 days | ⏸️ Planned |
-| **Total** | Learning Features | **~5-8 days remaining** | 🎉 90% Complete! |
+| **Total** | Learning Features | **~2-3 days remaining** | 🎉 95% Complete! |
 
 ---
 
@@ -1022,11 +1054,13 @@ DATABASE_URL=postgresql://neon.tech/...
    - Comprehension quizzes for curated stories
    - Enhanced word lookup (root word extraction)
 
-**📋 Next Up:**
+6. ~~**Conversation Practice**~~ ✅ **COMPLETED**
+   - 7 immersive scenarios (beginner to advanced)
+   - AI character role-play with natural dialogue
+   - Hints, translations, objective tracking
+   - Mobile-optimized responsive design
 
-6. **Conversation Practice** - 2-3 days
-   - Immersive scenarios
-   - Practical application
+**📋 Next Up:**
 
 7. **Flashcard User Progress** - 2-3 days
    - Database tracking for spaced repetition
