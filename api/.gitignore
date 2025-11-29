@@ -46,5 +46,5 @@ conversation_logs_*.jsonl
 *.swo
 *~
 
-# Dictionary data files (already imported to database)
-dictionary_data/
+# Note: dictionary_data/ is NOT ignored - needed for vocabulary API
+# The JSON files (~6MB total) are required for the dictionary service

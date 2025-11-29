@@ -795,6 +795,24 @@ class DictionaryService:
         if not good_words:
             good_words = self._word_list[:1000]  # Fallback
         
+        # Safety check - if dictionary failed to load, return a default
+        if not good_words:
+            logger.error("Dictionary not loaded - returning default word of the day")
+            return {
+                "chamorro": "Håfa Adai",
+                "definition": "Hello; a common Chamorro greeting",
+                "part_of_speech": "interjection",
+                "pronunciation": "HAH-fah ah-DYE",
+                "example": {
+                    "chamorro": "Håfa Adai! Kao maolek hao?",
+                    "english": "Hello! How are you?"
+                },
+                "category": "Greetings & Basics",
+                "difficulty": "beginner",
+                "day": day_of_year,
+                "date": today.isoformat()
+            }
+        
         # Use hash of year + day to get consistent but varied selection
         # This ensures the same word shows for everyone on the same day
         seed = hashlib.md5(f"{year}-{day_of_year}".encode()).hexdigest()
