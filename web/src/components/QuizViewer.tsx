@@ -385,19 +385,19 @@ export function QuizViewer() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm flex-shrink-0">
+        <div className="max-w-2xl mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleBack}
-                className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-2xl">{category?.icon || '📚'}</span>
-                <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+                <span className="text-xl sm:text-2xl">{category?.icon || '📚'}</span>
+                <h1 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white">
                   {categoryTitle || 'Quiz'}
                 </h1>
                 {isDictionaryQuiz && (
@@ -413,7 +413,7 @@ export function QuizViewer() {
           </div>
           
           {/* Progress Bar */}
-          <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-1.5 sm:h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -422,20 +422,21 @@ export function QuizViewer() {
         </div>
       </div>
 
-      {/* Question Content */}
-      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-6">
+      {/* Question Content - scrollable area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
         {currentQuestion && (
           <>
             {/* Question */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-6 shadow-lg">
-              <div className="flex items-center gap-2 mb-4">
-                <Brain className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
+              <div className="flex items-center gap-2 mb-2 sm:mb-4">
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-500 dark:text-ocean-400" />
                 <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide">
                   {currentQuestion.type === 'multiple_choice' ? 'Multiple Choice' : 
                    currentQuestion.type === 'type_answer' ? 'Type Your Answer' : 'Fill in the Blank'}
                 </span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-brown-800 dark:text-white leading-relaxed">
+              <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed">
                 {currentQuestion.question}
               </h2>
               
@@ -470,9 +471,9 @@ export function QuizViewer() {
             </div>
 
             {/* Answer Options */}
-            <div className="flex-1">
+            <div>
               {currentQuestion.type === 'multiple_choice' && currentQuestion.options && (
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-1 gap-2 sm:gap-3">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = userAnswer === option;
                     const isCorrectOption = option === currentQuestion.correctAnswer;
@@ -494,22 +495,22 @@ export function QuizViewer() {
                         key={idx}
                         onClick={() => handleAnswer(option)}
                         disabled={answerState !== 'unanswered'}
-                        className={`p-4 rounded-xl text-left transition-all ${buttonClass} ${
+                        className={`p-3 sm:p-4 rounded-xl text-left transition-all ${buttonClass} ${
                           answerState === 'unanswered' ? 'active:scale-98' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="w-8 h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
                             {String.fromCharCode(65 + idx)}
                           </span>
-                          <span className="font-medium text-brown-800 dark:text-white">
+                          <span className="font-medium text-brown-800 dark:text-white text-sm sm:text-base">
                             {option}
                           </span>
                           {answerState !== 'unanswered' && isCorrectOption && (
-                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 ml-auto" />
+                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 ml-auto flex-shrink-0" />
                           )}
                           {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
-                            <X className="w-5 h-5 text-red-600 dark:text-red-400 ml-auto" />
+                            <X className="w-5 h-5 text-red-600 dark:text-red-400 ml-auto flex-shrink-0" />
                           )}
                         </div>
                       </button>
@@ -580,9 +581,9 @@ export function QuizViewer() {
 
             {/* Explanation & Next Button */}
             {answerState !== 'unanswered' && (
-              <div className="mt-6 space-y-4">
+              <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
                 {currentQuestion.explanation && (
-                  <div className={`p-4 rounded-xl ${
+                  <div className={`p-3 sm:p-4 rounded-xl ${
                     answerState === 'correct'
                       ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
                       : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
@@ -595,7 +596,7 @@ export function QuizViewer() {
                 
                 <button
                   onClick={handleNext}
-                  className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all active:scale-98"
+                  className="w-full py-3 sm:py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all active:scale-98"
                 >
                   {currentIndex < questions.length - 1 ? (
                     <>
@@ -613,6 +614,7 @@ export function QuizViewer() {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   );
