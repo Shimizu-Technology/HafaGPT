@@ -176,7 +176,10 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Desktop: Ctrl/Cmd+Enter to send (Enter creates new line)
+    // Mobile: Enter creates new line, use Send button
+    // This allows multiline messages on all devices
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSend();
     } else if (e.key === 'Escape') {
@@ -278,7 +281,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             disabled={disabled || (!input.trim() && !selectedFile)}
             className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
             aria-label="Send message"
-            title="Send message (Enter)"
+            title="Send message (⌘/Ctrl+Enter)"
             style={{ minHeight: '40px' }}
           >
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
