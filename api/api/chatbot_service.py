@@ -187,12 +187,19 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         conn.close()
         
         # Build conversation history (already in chronological order)
-        # Include images if they exist
+        # Include images if they exist AND are valid image formats
         history = []
+        
+        # Valid image extensions for OpenAI Vision API
+        VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+        
         for user_msg, bot_msg, img_url, timestamp in rows:
-            # Build user message (with image if available)
-            if img_url:
-                # Reconstruct vision message with image URL
+            # Build user message (with image if available AND is a valid image format)
+            # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
+            is_valid_image = img_url and img_url.lower().endswith(VALID_IMAGE_EXTENSIONS)
+            
+            if is_valid_image:
+                # Reconstruct vision message with image URL (only for actual images)
                 history.append({
                     "role": "user",
                     "content": [
@@ -201,7 +208,7 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
                     ]
                 })
             else:
-                # Regular text-only message
+                # Regular text-only message (includes PDFs, Word docs, etc.)
                 history.append({"role": "user", "content": user_msg})
             
             # Add bot response
