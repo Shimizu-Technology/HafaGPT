@@ -1,0 +1,9 @@
+# HåfaGPT - Chamorro Language Learning Platform
+# https://hafagpt.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://hafagpt.com/sitemap.xml
+
