@@ -1018,10 +1018,13 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
 | **Phase 2E** | ✅ Story Mode (24 stories + tap-to-translate) | - | ✅ **COMPLETED** |
 | **Phase 2F** | ✅ Conversation Practice (7 scenarios) | - | ✅ **COMPLETED** |
-| **Phase 3** | Flashcards (User Progress Tracking) | 2-3 days | 🚧 In Progress |
+| **Phase 3A** | Chat UX Improvements | 1-2 days | 📋 **NEXT** |
+| **Phase 3B** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
+| **Phase 3C** | Onboarding Flow | 1-2 days | 📋 Planned |
+| **Phase 3D** | Learning Streaks & Gamification | 2-3 days | 📋 Planned |
 | **Future** | Audio Features (Chamorro TTS) | TBD | ⏸️ Waiting for TTS |
 | **Future** | Full Offline/Local Mode | 5-6 days | ⏸️ Planned |
-| **Total** | Learning Features | **~2-3 days remaining** | 🎉 95% Complete! |
+| **Total** | Core Platform | **~8-10 days remaining** | 🎉 90% Complete! |
 
 ---
 
@@ -1062,9 +1065,171 @@ DATABASE_URL=postgresql://neon.tech/...
 
 **📋 Next Up:**
 
-7. **Flashcard User Progress** - 2-3 days
+7. **Chat UX Improvements** - 1-2 days ⭐ **PRIORITY**
+   - **Cancel Message** (1-2 hours) - Add cancel button during generation
+   - **Multiple Files** (2-3 hours) - Upload up to 5 images/files at once
+   - **Background Processing** (1 hour) - Message completes even if user leaves
+   - **Edit & Regenerate** (4-6 hours) - Edit previous message, regenerate from there
+
+8. **Flashcard User Progress** - 2-3 days
    - Database tracking for spaced repetition
    - Rating system (Hard/Good/Easy)
+
+9. **Onboarding Flow** - 1-2 days
+   - Skill level selection (Beginner/Intermediate/Advanced)
+   - Daily goal setting (5/10/20 XP)
+   - Personalized content recommendations
+
+10. **Learning Streaks & Gamification** - 2-3 days
+    - Daily streak counter
+    - XP system for activities
+    - Achievements/badges
+    - Activity calendar
+
+---
+
+### **Phase 3A: Chat UX Improvements** 💬 📋 **PLANNED**
+
+**Status:** 📋 Planned  
+**Complexity:** Medium  
+**Effort:** 1-2 days total  
+**Cost:** None
+
+#### **1. Cancel Message** ⏱️ 1-2 hours
+
+**Current:** No way to stop a generating message  
+**Proposed:** Cancel button appears during generation
+
+**Implementation:**
+- Use `AbortController` to cancel fetch request
+- Show "Cancelled" indicator on message
+- Clean up partial state
+
+**UI Behavior:**
+```
+┌─────────────────────────────────────────────┐
+│  User: What does maolek mean?               │
+├─────────────────────────────────────────────┤
+│  🤖 HåfaGPT is typing...                    │
+│                          [Cancel ✕]         │
+└─────────────────────────────────────────────┘
+
+After cancel:
+┌─────────────────────────────────────────────┐
+│  User: What does maolek mean?               │
+├─────────────────────────────────────────────┤
+│  ⚠️ Message cancelled                       │
+└─────────────────────────────────────────────┘
+```
+
+#### **2. Multiple Files Upload** ⏱️ 2-3 hours
+
+**Current:** Single file replaces previous selection  
+**Proposed:** Upload up to 5 files (images, PDFs, docs)
+
+**Implementation:**
+- Frontend: Store array of files instead of single file
+- Frontend: Show multiple preview thumbnails
+- Backend: Accept array of files, upload each to S3
+- Backend: Include all file contents in prompt
+
+**UI Behavior:**
+```
+┌─────────────────────────────────────────────┐
+│  ┌─────┐ ┌─────┐ ┌─────┐                   │
+│  │ 📷  │ │ 📷  │ │ 📄  │  [+ Add More]     │
+│  │img1 │ │img2 │ │doc  │                   │
+│  └──✕──┘ └──✕──┘ └──✕──┘                   │
+│                                             │
+│  [Type message...]              [Send]      │
+└─────────────────────────────────────────────┘
+```
+
+**Limits:**
+- Max 5 files per message
+- Max 10MB per file (existing limit)
+- Supported: Images, PDF, Word, Text
+
+#### **3. Background Processing** ⏱️ 1 hour
+
+**Current:** If user leaves page, fetch aborts (but backend continues)  
+**Proposed:** Handle gracefully - user sees response when they return
+
+**Implementation:**
+- Backend already completes the response and saves to DB
+- Frontend: On mount, check if last message has no response
+- Frontend: If pending, show "Loading..." and fetch latest
+- No backend changes needed
+
+**UX Flow:**
+```
+1. User sends message
+2. User navigates away (accidentally or intentionally)
+3. Backend completes response, saves to conversation_logs
+4. User returns to chat
+5. Frontend detects missing response, fetches latest
+6. Response appears as if it just completed
+```
+
+#### **4. Edit & Regenerate** ⏱️ 4-6 hours
+
+**Current:** Messages are immutable  
+**Proposed:** Edit a previous message, delete everything after, regenerate
+
+**Implementation:**
+- Frontend: Add edit button on user messages (hover/long-press)
+- Frontend: Inline edit mode with save/cancel
+- Backend: New endpoint `DELETE /api/conversations/{id}/messages/after/{message_id}`
+- Backend: Delete all messages after the edited one
+- Frontend: Re-send edited message as new
+
+**UI Behavior:**
+```
+Before edit:
+┌─────────────────────────────────────────────┐
+│  User: What does maolek mean?        [✏️]  │
+├─────────────────────────────────────────────┤
+│  🤖 Maolek means "good"...                  │
+├─────────────────────────────────────────────┤
+│  User: And haffa adai?               [✏️]  │  ← typo!
+├─────────────────────────────────────────────┤
+│  🤖 Did you mean "Håfa Adai"?...            │
+└─────────────────────────────────────────────┘
+
+Editing "haffa adai":
+┌─────────────────────────────────────────────┐
+│  User: What does maolek mean?               │
+├─────────────────────────────────────────────┤
+│  🤖 Maolek means "good"...                  │
+├─────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────┐   │
+│  │ And håfa adai?                      │   │
+│  └─────────────────────────────────────┘   │
+│  [Save & Regenerate] [Cancel]               │
+└─────────────────────────────────────────────┘
+
+After save:
+┌─────────────────────────────────────────────┐
+│  User: What does maolek mean?               │
+├─────────────────────────────────────────────┤
+│  🤖 Maolek means "good"...                  │
+├─────────────────────────────────────────────┤
+│  User: And håfa adai? (edited)       [✏️]  │
+├─────────────────────────────────────────────┤
+│  🤖 Håfa Adai is the traditional...         │  ← New response!
+└─────────────────────────────────────────────┘
+```
+
+**Database Changes:**
+```sql
+-- Add edited_at column to track edits
+ALTER TABLE conversation_logs ADD COLUMN edited_at TIMESTAMPTZ;
+
+-- New endpoint deletes messages after a given ID
+DELETE FROM conversation_logs 
+WHERE conversation_id = $1 
+AND created_at > (SELECT created_at FROM conversation_logs WHERE id = $2);
+```
 
 ---
 
