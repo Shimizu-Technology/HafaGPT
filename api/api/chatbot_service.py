@@ -189,10 +189,6 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         # Build conversation history (already in chronological order)
         # Include images if they exist AND are valid image formats
         history = []
-        
-        # Valid image extensions for OpenAI Vision API
-        VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
-        
         for user_msg, bot_msg, img_url, timestamp in rows:
             # Build user message (with image if available AND is a valid image format)
             # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
