@@ -9,6 +9,7 @@ import time
 import os
 import json
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -16,6 +17,59 @@ from openai import OpenAI
 
 # Add parent directory to path for root-level imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Thread-safe tracking for pending/cancelled messages
+_pending_lock = threading.Lock()
+_cancelled_messages: set[str] = set()
+
+# Valid image extensions for conversation history (prevents sending PDFs as images)
+VALID_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+
+
+def cancel_pending_message(pending_id: str) -> bool:
+    """
+    Mark a pending message as cancelled.
+    
+    Args:
+        pending_id: The unique ID of the pending message
+        
+    Returns:
+        True if marked as cancelled, False if already cancelled
+    """
+    with _pending_lock:
+        if pending_id in _cancelled_messages:
+            return False  # Already cancelled
+        _cancelled_messages.add(pending_id)
+        return True
+
+
+def is_message_cancelled(pending_id: str) -> bool:
+    """
+    Check if a message has been cancelled.
+    
+    Args:
+        pending_id: The unique ID of the pending message
+        
+    Returns:
+        True if cancelled, False otherwise
+    """
+    if not pending_id:
+        return False
+    with _pending_lock:
+        return pending_id in _cancelled_messages
+
+
+def cleanup_cancelled_message(pending_id: str):
+    """
+    Remove a pending_id from the cancelled set after processing.
+    
+    Args:
+        pending_id: The unique ID to clean up
+    """
+    if not pending_id:
+        return
+    with _pending_lock:
+        _cancelled_messages.discard(pending_id)
 
 # Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
@@ -406,7 +460,8 @@ def get_chatbot_response(
     user_id: str = None,
     conversation_id: str = None,
     image_base64: str = None,  # Base64-encoded image
-    image_url: str = None  # NEW: S3 URL of uploaded image
+    image_url: str = None,  # S3 URL of uploaded image
+    pending_id: str = None  # Unique ID for cancel tracking
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -420,6 +475,7 @@ def get_chatbot_response(
         conversation_id: Optional conversation ID to attach message to
         image_base64: Optional base64-encoded image for vision analysis
         image_url: Optional S3 URL of uploaded image (for logging)
+        pending_id: Optional unique ID for tracking cancellation
     
     Returns:
         dict: {
@@ -427,10 +483,46 @@ def get_chatbot_response(
             "sources": list[dict],
             "used_rag": bool,
             "used_web_search": bool,
-            "response_time": float
+            "response_time": float,
+            "cancelled": bool
         }
     """
     start_time = time.time()
+    
+    # Helper to build early cancelled response and log the user message
+    def early_cancelled_response(log_user_message: bool = True):
+        response_time = time.time() - start_time
+        
+        # Still save the user's message with a "cancelled" response (Option B behavior)
+        if log_user_message:
+            log_conversation(
+                user_message=message,
+                bot_response="[Message was cancelled by user]",
+                mode=mode,
+                sources=[],
+                used_rag=False,
+                used_web_search=False,
+                response_time=response_time,
+                session_id=session_id,
+                user_id=user_id,
+                conversation_id=conversation_id,
+                image_url=image_url
+            )
+        
+        cleanup_cancelled_message(pending_id)
+        return {
+            "response": "[Message was cancelled by user]",
+            "sources": [],
+            "used_rag": False,
+            "used_web_search": False,
+            "response_time": response_time,
+            "cancelled": True
+        }
+    
+    # Check for early cancellation before starting any expensive operations
+    if is_message_cancelled(pending_id):
+        print(f"⚠️  Message {pending_id} cancelled before processing started")
+        return early_cancelled_response()
     
     # Get mode configuration
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
@@ -440,9 +532,18 @@ def get_chatbot_response(
     web_context = ""
     
     if use_web:
+        # Check for cancellation before web search
+        if is_message_cancelled(pending_id):
+            print(f"⚠️  Message {pending_id} cancelled before web search")
+            return early_cancelled_response()
         search_result = web_search(message, search_type=search_type, max_results=3)
         if search_result["success"] and search_result["results"]:
             web_context = format_search_results(search_result)
+    
+    # Check for cancellation before RAG search
+    if is_message_cancelled(pending_id):
+        print(f"⚠️  Message {pending_id} cancelled before RAG search")
+        return early_cancelled_response()
     
     # Get RAG context
     rag_context, sources = get_rag_context(message, conversation_length)
@@ -541,6 +642,11 @@ Provide the following in a well-organized format:
     # Add current user message
     history.append(user_message)
     
+    # Check for cancellation before the expensive GPT call
+    if is_message_cancelled(pending_id):
+        print(f"⚠️  Message {pending_id} cancelled before GPT call")
+        return early_cancelled_response()
+    
     # Get LLM response
     try:
         response = llm.chat.completions.create(
@@ -566,7 +672,36 @@ Provide the following in a well-organized format:
         for source in sources
     ]
     
-    # Log the conversation
+    # Check if this message was cancelled before saving
+    was_cancelled = is_message_cancelled(pending_id)
+    
+    if was_cancelled:
+        # Save user message with cancelled indicator (Option B behavior)
+        print(f"⚠️  Message {pending_id} was cancelled - saving user message with cancelled response")
+        log_conversation(
+            user_message=message,
+            bot_response="[Message was cancelled by user]",
+            mode=mode,
+            sources=[],
+            used_rag=used_rag,
+            used_web_search=use_web,
+            response_time=response_time,
+            session_id=session_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            image_url=image_url
+        )
+        cleanup_cancelled_message(pending_id)
+        return {
+            "response": "[Message was cancelled by user]",
+            "sources": [],
+            "used_rag": used_rag,
+            "used_web_search": use_web,
+            "response_time": response_time,
+            "cancelled": True
+        }
+    
+    # Log the conversation (only if not cancelled)
     log_conversation(
         user_message=message,
         bot_response=response_text,
@@ -578,14 +713,18 @@ Provide the following in a well-organized format:
         session_id=session_id,
         user_id=user_id,
         conversation_id=conversation_id,
-        image_url=image_url  # NEW: Log S3 URL
+        image_url=image_url
     )
+    
+    # Cleanup pending_id tracking
+    cleanup_cancelled_message(pending_id)
     
     return {
         "response": response_text,
         "sources": formatted_sources,
         "used_rag": used_rag,
         "used_web_search": use_web,
-        "response_time": response_time
+        "response_time": response_time,
+        "cancelled": False
     }
 

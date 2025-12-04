@@ -1018,7 +1018,7 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
 | **Phase 2E** | ✅ Story Mode (24 stories + tap-to-translate) | - | ✅ **COMPLETED** |
 | **Phase 2F** | ✅ Conversation Practice (7 scenarios) | - | ✅ **COMPLETED** |
-| **Phase 3A** | Chat UX Improvements | 1-2 days | 📋 **NEXT** |
+| **Phase 3A** | Chat UX Improvements (Cancel ✅) | 1-2 days | 🚧 **IN PROGRESS** |
 | **Phase 3B** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
 | **Phase 3C** | Onboarding Flow | 1-2 days | 📋 Planned |
 | **Phase 3D** | Learning Streaks & Gamification | 2-3 days | 📋 Planned |
@@ -1065,8 +1065,8 @@ DATABASE_URL=postgresql://neon.tech/...
 
 **📋 Next Up:**
 
-7. **Chat UX Improvements** - 1-2 days ⭐ **PRIORITY**
-   - **Cancel Message** (1-2 hours) - Add cancel button during generation
+7. **Chat UX Improvements** - 1-2 days ⭐ **IN PROGRESS**
+   - ✅ **Cancel Message** - Stop button, persists on refresh (ChatGPT-style)
    - **Multiple Files** (2-3 hours) - Upload up to 5 images/files at once
    - **Background Processing** (1 hour) - Message completes even if user leaves
    - **Edit & Regenerate** (4-6 hours) - Edit previous message, regenerate from there
@@ -1088,37 +1088,43 @@ DATABASE_URL=postgresql://neon.tech/...
 
 ---
 
-### **Phase 3A: Chat UX Improvements** 💬 📋 **PLANNED**
+### **Phase 3A: Chat UX Improvements** 💬 🚧 **IN PROGRESS**
 
-**Status:** 📋 Planned  
+**Status:** 🚧 In Progress (1 of 4 complete)  
 **Complexity:** Medium  
 **Effort:** 1-2 days total  
 **Cost:** None
 
-#### **1. Cancel Message** ⏱️ 1-2 hours
+#### **1. Cancel Message** ✅ **COMPLETED (Dec 2025)**
 
-**Current:** No way to stop a generating message  
-**Proposed:** Cancel button appears during generation
+**What's Implemented:**
+- ✅ **Stop Button** - Replaces Send button during generation (ChatGPT-style)
+- ✅ **Backend Cancel Endpoint** - `POST /api/chat/cancel/{pending_id}`
+- ✅ **Async Processing** - Cancel requests processed in parallel via `asyncio.to_thread()`
+- ✅ **Multiple Checkpoints** - Cancellation checked before web search, RAG, and GPT call
+- ✅ **User Message Preserved** - ChatGPT-style behavior (Option B)
+- ✅ **Persists on Refresh** - Cancelled messages saved to database with indicator
+- ✅ **Cost Savings** - GPT call skipped when cancelled early (no tokens used)
 
-**Implementation:**
-- Use `AbortController` to cancel fetch request
-- Show "Cancelled" indicator on message
-- Clean up partial state
+**Technical Implementation:**
+- Frontend: `AbortController` + cancel endpoint call
+- Backend: `pending_id` tracking in memory set
+- Database: User message saved with `[Message was cancelled by user]` response
+- UI: "Message cancelled" indicator with X icon
 
 **UI Behavior:**
 ```
+During generation:
 ┌─────────────────────────────────────────────┐
-│  User: What does maolek mean?               │
-├─────────────────────────────────────────────┤
-│  🤖 HåfaGPT is typing...                    │
-│                          [Cancel ✕]         │
+│  [🎤] [📷] [Type message...]   [■ Stop]     │  ← Stop replaces Send
 └─────────────────────────────────────────────┘
 
-After cancel:
+After cancel (persists on refresh):
 ┌─────────────────────────────────────────────┐
 │  User: What does maolek mean?               │
 ├─────────────────────────────────────────────┤
-│  ⚠️ Message cancelled                       │
+│  🤖 Assistant                               │
+│  ╳ Message cancelled                        │
 └─────────────────────────────────────────────┘
 ```
 

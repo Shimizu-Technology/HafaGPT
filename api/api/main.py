@@ -53,7 +53,7 @@ from .models import (
     QuizAnswerResponse,
     QuizStatsResponse
 )
-from .chatbot_service import get_chatbot_response
+from .chatbot_service import get_chatbot_response, cancel_pending_message
 from . import conversations
 
 # Clerk for authentication
@@ -571,6 +571,7 @@ async def chat(
     mode: Optional[str] = Form(None),
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
+    pending_id: Optional[str] = Form(None),  # Unique ID for cancel tracking
     file: Optional[UploadFile] = File(None)  # Renamed from 'image' to support all file types
 ):
     """
@@ -613,6 +614,7 @@ async def chat(
             mode = body.get('mode', 'english')
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
+            pending_id = body.get('pending_id')  # Parse pending_id from JSON
             file = None
         else:
             # FormData is already parsed by Form() parameters above
@@ -703,10 +705,13 @@ async def chat(
             final_message = f"{message}\n\n--- Document Content ---\n{document_text}"
             logger.info(f"📄 Message augmented with document text: {len(final_message)} total chars")
         
-        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, has_file={file is not None}, has_image={image_base64 is not None}, has_doc_text={document_text is not None}")
+        logger.info(f"Chat request: mode={mode}, user_id={user_id or 'anonymous'}, session_id={session_id}, pending_id={pending_id}, has_file={file is not None}, has_image={image_base64 is not None}, has_doc_text={document_text is not None}")
         
         # Get response from chatbot service
-        result = get_chatbot_response(
+        # Run in thread pool to allow cancel requests to be processed in parallel
+        import asyncio
+        result = await asyncio.to_thread(
+            get_chatbot_response,
             message=final_message,
             mode=mode,
             conversation_length=0,  # For now, stateless (no session history)
@@ -714,8 +719,21 @@ async def chat(
             user_id=user_id,  # Pass user_id for tracking
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
             image_base64=image_base64,  # Pass base64-encoded image for Vision
-            image_url=file_url  # Pass S3 URL for logging (works for all file types)
+            image_url=file_url,  # Pass S3 URL for logging (works for all file types)
+            pending_id=pending_id  # Pass pending_id for cancel tracking
         )
+        
+        # Check if the request was cancelled - if so, return a cancelled response
+        if result.get("cancelled"):
+            logger.info(f"⚠️  Message {pending_id} was cancelled, returning empty response")
+            return ChatResponse(
+                response="Message was cancelled.",
+                mode=mode,
+                sources=[],
+                used_rag=False,
+                used_web_search=False,
+                response_time=result["response_time"]
+            )
         
         logger.info(f"Chatbot service called successfully with image_base64={'present' if image_base64 else 'None'}, doc_text={'present' if document_text else 'None'}")
         
@@ -744,6 +762,40 @@ async def chat(
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
+        )
+
+
+# --- Cancel Message Endpoint ---
+
+@app.post("/api/chat/cancel/{pending_id}", tags=["Chat"])
+async def cancel_chat_message(pending_id: str):
+    """
+    Cancel a pending chat message.
+    
+    This prevents the response from being saved to the database.
+    Call this when the user clicks "Stop" to cancel a generating message.
+    
+    Args:
+        pending_id: The unique ID of the pending message to cancel
+        
+    Returns:
+        {"success": bool, "message": str}
+    """
+    try:
+        success = cancel_pending_message(pending_id)
+        
+        if success:
+            logger.info(f"✅ Message {pending_id} marked as cancelled")
+            return {"success": True, "message": f"Message {pending_id} cancelled"}
+        else:
+            logger.warning(f"⚠️  Message {pending_id} was already cancelled")
+            return {"success": True, "message": f"Message {pending_id} was already cancelled"}
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to cancel message {pending_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to cancel message: {str(e)}"
         )
 
 
