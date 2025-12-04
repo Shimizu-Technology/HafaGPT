@@ -435,16 +435,24 @@ export function Chat() {
             );
           },
           onDone: (response_time) => {
-            // Update with final response time
+            // Update the streaming message with final state in a single update
+            // We do this in one setMessages call to minimize re-renders
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
-                  ? { ...msg, response_time, id: undefined } // Remove streaming id
+                  ? { ...msg, response_time, id: undefined } // Remove streaming id, add response time
                   : msg
               )
             );
-            // Invalidate the messages query so it refetches with the persisted messages
-            queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
+            
+            // NOW allow message loading from server again
+            // This must happen AFTER streaming is complete, not in the finally block
+            isSendingMessageRef.current = false;
+            
+            // NOTE: We intentionally skip query invalidation here.
+            // The streamed data is already correct, and invalidating causes
+            // a flash as React re-fetches and re-renders all messages.
+            // The next conversation switch or page refresh will sync with server.
           },
           onError: (errorMsg) => {
             console.error('Streaming error:', errorMsg);
@@ -455,6 +463,7 @@ export function Chat() {
                   : msg
               )
             );
+            isSendingMessageRef.current = false;
           },
           onCancelled: () => {
             // Replace streaming message with cancelled indicator
@@ -465,6 +474,7 @@ export function Chat() {
                   : msg
               )
             );
+            isSendingMessageRef.current = false;
           },
         },
         image
@@ -475,10 +485,11 @@ export function Chat() {
       if (!(err instanceof CancelledError)) {
         console.error('Failed to send message:', err);
       }
-    } finally {
-      // Message sending complete - allow message loading again
+      // On error/cancel, allow message loading again
       isSendingMessageRef.current = false;
     }
+    // NOTE: We don't reset isSendingMessageRef in finally because streaming
+    // continues asynchronously. It's reset in onDone callback instead.
   };
 
   const handleNewConversation = async () => {

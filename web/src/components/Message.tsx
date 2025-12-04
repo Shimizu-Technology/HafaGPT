@@ -1,5 +1,5 @@
 import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
@@ -41,7 +41,7 @@ interface MessageProps {
   isStreaming?: boolean; // Whether this message is currently streaming
 }
 
-export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
+export const Message = memo(function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
@@ -280,11 +280,11 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
         
         {/* Message Bubble */}
         <div
-          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm transition-all duration-300 ease-out ${
+          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
             isUser
               ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-tr-md'
               : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
-          } ${isStreaming ? 'min-w-[120px] sm:min-w-[200px]' : ''}`}
+          }`}
         >
           {isUser ? (
             <div className="space-y-2">
@@ -421,9 +421,13 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                 {/* Only render content if it's not the thinking placeholder */}
                 {content !== '...' ? content : ''}
               </ReactMarkdown>
-              {/* Streaming cursor - only show when we have actual content */}
-              {isStreaming && content && content !== '...' && (
-                <span className="inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 animate-pulse rounded-sm" />
+              {/* Streaming cursor - always rendered, uses CSS to fade in/out */}
+              {content && content !== '...' && (
+                <span 
+                  className={`inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 rounded-sm transition-opacity duration-300 ${
+                    isStreaming ? 'opacity-100 animate-pulse' : 'opacity-0'
+                  }`}
+                />
               )}
               {/* Thinking indicator - show animated dots while waiting for first chunk */}
               {isStreaming && content === '...' && (
@@ -436,25 +440,34 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
             </div>
           )}
           
-          {/* Response Time */}
+          {/* Response Time - with subtle fade-in */}
           {!isUser && response_time && !isStreaming && (
-            <div className="flex items-center gap-1 text-xs text-brown-600 dark:text-gray-400 mt-3 pt-2 border-t border-cream-300 dark:border-gray-700">
+            <div 
+              className="flex items-center gap-1 text-xs text-brown-600 dark:text-gray-400 mt-3 pt-2 border-t border-cream-300 dark:border-gray-700 opacity-0 animate-fade-in"
+              style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}
+            >
               <Clock className="w-3 h-3" />
               <span className="font-medium">{response_time.toFixed(2)}s</span>
             </div>
           )}
         </div>
         
-        {/* Sources - Only show when streaming is complete */}
+        {/* Sources - Only show when streaming is complete (with staggered delay) */}
         {!isUser && sources && sources.length > 0 && !isStreaming && (
-          <div className="animate-fade-in">
+          <div 
+            className="opacity-0 animate-fade-in"
+            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
+          >
             <SourceCitation sources={sources} />
           </div>
         )}
         
-        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
+        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete (with staggered delay) */}
         {!isUser && !isSystem && !isStreaming && (
-          <div className="flex items-center gap-2 mt-2">
+          <div 
+            className="flex items-center gap-2 mt-2 opacity-0 animate-fade-in"
+            style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
+          >
             {/* Copy Button */}
             <button
               onClick={handleCopy}
@@ -591,4 +604,4 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
       </div>
     </div>
   );
-}
+});
