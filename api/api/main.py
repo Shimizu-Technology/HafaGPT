@@ -6,11 +6,14 @@ A simple API wrapper around the chatbot core logic.
 
 from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 import time
 import os
 import logging
 import base64
+import queue
+import threading
+import asyncio
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
@@ -53,7 +56,7 @@ from .models import (
     QuizAnswerResponse,
     QuizStatsResponse
 )
-from .chatbot_service import get_chatbot_response, cancel_pending_message
+from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
 from . import conversations
 
 # Clerk for authentication
@@ -709,7 +712,6 @@ async def chat(
         
         # Get response from chatbot service
         # Run in thread pool to allow cancel requests to be processed in parallel
-        import asyncio
         result = await asyncio.to_thread(
             get_chatbot_response,
             message=final_message,
@@ -797,6 +799,178 @@ async def cancel_chat_message(pending_id: str):
             status_code=500,
             detail=f"Failed to cancel message: {str(e)}"
         )
+
+
+# --- Streaming Chat Endpoint ---
+
+@app.post("/api/chat/stream", tags=["Chat"])
+async def chat_stream(
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    message: Optional[str] = Form(None),
+    mode: Optional[str] = Form(None),
+    session_id: Optional[str] = Form(None),
+    conversation_id: Optional[str] = Form(None),
+    pending_id: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None)
+):
+    """
+    Streaming chat endpoint - returns Server-Sent Events (SSE) for real-time response.
+    
+    **Event Types:**
+    - `metadata`: Sources, RAG status (sent first)
+    - `chunk`: Response text chunks (sent as generated)
+    - `done`: Completion signal with response_time
+    - `cancelled`: User cancelled the request
+    - `error`: Error occurred
+    
+    **Example SSE stream:**
+    ```
+    data: {"type": "metadata", "sources": [...], "used_rag": true}
+    
+    data: {"type": "chunk", "content": "Håfa "}
+    
+    data: {"type": "chunk", "content": "Adai "}
+    
+    data: {"type": "chunk", "content": "means..."}
+    
+    data: {"type": "done", "response_time": 2.5}
+    ```
+    """
+    try:
+        # Check if this is a JSON request or FormData request
+        content_type = request.headers.get('content-type', '')
+        
+        if 'application/json' in content_type:
+            body = await request.json()
+            message = body.get('message')
+            mode = body.get('mode', 'english')
+            session_id = body.get('session_id')
+            conversation_id = body.get('conversation_id')
+            pending_id = body.get('pending_id')
+            file = None
+        else:
+            mode = mode or 'english'
+        
+        # Validate required fields
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+        
+        # Validate mode
+        valid_modes = ["english", "chamorro", "learn"]
+        if mode not in valid_modes:
+            raise HTTPException(status_code=400, detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}")
+        
+        # Verify user authentication
+        user_id = await verify_user(authorization)
+        
+        # Process file if present
+        image_base64 = None
+        file_url = None
+        document_text = None
+        final_message = message
+        
+        if file:
+            logger.info(f"📁 Stream: File received: filename={file.filename}")
+            try:
+                file_data = await file.read()
+                file_result = process_uploaded_file(
+                    file_data=file_data,
+                    content_type=file.content_type,
+                    filename=file.filename
+                )
+                
+                if file_result.get("image_base64"):
+                    image_base64 = file_result["image_base64"]
+                if file_result.get("document_text"):
+                    document_text = file_result["document_text"]
+                    max_doc_chars = 50000
+                    if len(document_text) > max_doc_chars:
+                        document_text = document_text[:max_doc_chars] + "\n\n[Document truncated]"
+                    final_message = f"{message}\n\n--- Document Content ---\n{document_text}"
+                
+                # Upload to S3
+                if s3_client:
+                    await file.seek(0)
+                    file_data = await file.read()
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file.filename}"
+                    s3_client.put_object(
+                        Bucket=S3_BUCKET,
+                        Key=s3_key,
+                        Body=file_data,
+                        ContentType=file.content_type
+                    )
+                    file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+            except Exception as e:
+                logger.error(f"File processing error: {e}")
+        
+        logger.info(f"Stream request: mode={mode}, user_id={user_id or 'anonymous'}, pending_id={pending_id}")
+        
+        # Create SSE generator using queue to bridge sync/async
+        async def generate_sse():
+            # Use a thread-safe queue to pass events from sync thread to async generator
+            event_queue: queue.Queue = queue.Queue()
+            stream_done = threading.Event()
+            
+            def run_sync_generator():
+                """Run the sync generator in a thread and put events in queue"""
+                try:
+                    for event in get_chatbot_response_stream(
+                        message=final_message,
+                        mode=mode,
+                        conversation_length=0,
+                        session_id=session_id,
+                        user_id=user_id,
+                        conversation_id=conversation_id,
+                        image_base64=image_base64,
+                        image_url=file_url,
+                        pending_id=pending_id
+                    ):
+                        event_queue.put(event)
+                except Exception as e:
+                    event_queue.put({"type": "error", "content": str(e)})
+                finally:
+                    stream_done.set()
+            
+            # Start the sync generator in a background thread
+            thread = threading.Thread(target=run_sync_generator, daemon=True)
+            thread.start()
+            
+            # Yield events as they come from the queue
+            while True:
+                # Try to get from queue without blocking
+                try:
+                    event = event_queue.get_nowait()
+                    yield f"data: {json.dumps(event)}\n\n"
+                except queue.Empty:
+                    # No event available
+                    if stream_done.is_set() and event_queue.empty():
+                        # Stream is finished and queue is empty
+                        yield "data: [DONE]\n\n"
+                        break
+                    # Wait a bit before checking again
+                    await asyncio.sleep(0.01)
+                except Exception as e:
+                    logger.error(f"SSE error: {e}")
+                    yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+                    break
+        
+        return StreamingResponse(
+            generate_sse(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"  # Disable nginx buffering
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in stream endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 # --- Evaluation Endpoint (For Testing Only) ---
