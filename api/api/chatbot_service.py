@@ -346,36 +346,79 @@ def should_use_rag(user_input: str, conversation_length: int = 0) -> tuple[bool,
     
     Returns:
         tuple: (use_rag: bool, rag_mode: "full" | "light" | None)
+               - True, "full": Use RAG with 3 chunks (language questions)
+               - True, "light": Use RAG with 1 chunk (greetings needing context)
+               - False, None: Skip RAG entirely (casual chat, tests, simple messages)
     """
     import re
     
     user_lower = user_input.lower().strip()
     
-    # Always use RAG for Chamorro language/grammar questions
-    language_indicators = [
-        'chamorro', 'chamoru', 'how do i', 'how to', 'what is', 'what does',
-        'translate', 'say in', 'mean', 'definition', 'grammar', 'word', 'phrase'
+    # FIRST: Skip RAG for very short/simple messages (not language questions)
+    # These are casual messages that don't need knowledge base context
+    simple_patterns = [
+        r'^(test(ing)?|testing\s*(it\s*)?(out)?|still\s*testing)[\s\?\.!,]*$',  # Test messages
+        r'^(ok(ay)?|k|yes|no|sure|yep|nope|yeah|nah|yup)[\s\?\.!,]*$',  # Simple confirmations
+        r'^(thanks?|thank\s*you|ty|thx)[\s\?\.!,]*$',  # Thank yous
+        r'^(cool|nice|great|awesome|wow|lol|haha|interesting)[\s\?\.!,]*$',  # Reactions
+        r'^(got\s*it|i\s*see|makes\s*sense|understood)[\s\?\.!,]*$',  # Acknowledgments
+        r'^.{1,4}$',  # Very short messages (1-4 chars)
     ]
-    if any(indicator in user_lower for indicator in language_indicators):
-        return True, "full"
+    for pattern in simple_patterns:
+        if re.search(pattern, user_lower):
+            return False, None  # Skip RAG entirely for simple messages
     
-    # Skip RAG for simple greetings (first few messages)
-    if conversation_length < 3:
-        greeting_patterns = [
-            r'^(hi|hello|hey|hafa adai|good (morning|afternoon|evening))[\s\?\.!]*$',
-            r'^(thank(s| you)|ok|okay|cool|nice|great|got it)[\s\?\.!]*$'
-        ]
-        for pattern in greeting_patterns:
-            if re.search(pattern, user_lower):
-                return True, "light"
-    
-    # Skip RAG for meta-requests
+    # Skip RAG for meta-requests about the conversation itself
     meta_patterns = ['summarize', 'summary', 'recap', 'review']
     if any(pattern in user_lower for pattern in meta_patterns):
         return False, None
     
-    # Default: Use full RAG
-    return True, "full"
+    # SECOND: Always use FULL RAG for Chamorro language/grammar/culture questions
+    language_indicators = [
+        # Language-specific
+        'chamorro', 'chamoru', 'translate', 'say in', 'mean', 'means',
+        'definition', 'grammar', 'word for', 'phrase', 'pronounce',
+        'spell', 'written', 'speak', 'language',
+        # Question patterns that need context
+        'how do i', 'how to', 'how can i', 'how would',
+        'what is', 'what does', 'what are', "what's",
+        'tell me about', 'tell me more', 'explain',
+        'teach me', 'learn', 'example',
+        # Culture/history topics
+        'guam', 'culture', 'history', 'tradition', 'people',
+        'island', 'pacific', 'mariana', 'indigenous', 'native',
+        'food', 'fiesta', 'family', 'respect', 'inafa\'maolek',
+    ]
+    if any(indicator in user_lower for indicator in language_indicators):
+        return True, "full"
+    
+    # THIRD: Light RAG for Chamorro greetings (need context for proper response)
+    chamorro_greeting_patterns = [
+        r'hafa\s*adai', r'buenas', r'manana\s*si', r'mañana\s*si',
+        r'si\s*yu\'?os', r'adios', r'esta',
+    ]
+    for pattern in chamorro_greeting_patterns:
+        if re.search(pattern, user_lower):
+            return True, "light"
+    
+    # FOURTH: Skip RAG for simple English greetings (no context needed)
+    english_greeting_patterns = [
+        r'^(hi|hello|hey|yo|sup)[\s\?\.!,]*$',
+        r'^good\s*(morning|afternoon|evening|night)[\s\?\.!,]*$',
+    ]
+    for pattern in english_greeting_patterns:
+        if re.search(pattern, user_lower):
+            return False, None  # Simple greetings don't need RAG
+    
+    # FIFTH: For longer messages, check if they're questions (likely need context)
+    if len(user_lower) > 15:
+        question_indicators = ['?', 'what', 'how', 'why', 'where', 'when', 'who', 'which', 'can you', 'could you', 'would you', 'do you know']
+        if any(q in user_lower for q in question_indicators):
+            return True, "full"
+    
+    # DEFAULT: Skip RAG for casual conversation that doesn't need language context
+    # This prevents showing irrelevant sources for messages like "test", "hello", etc.
+    return False, None
 
 
 def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
@@ -672,6 +715,27 @@ Provide the following in a well-organized format:
         for source in sources
     ]
     
+    # OPTION B: Only show sources if they're actually relevant to the query
+    message_lower = message.lower().strip()
+    should_show_sources = (
+        used_rag and 
+        len(formatted_sources) > 0 and
+        len(message.strip()) > 8 and
+        any(word in message_lower for word in [
+            'chamorro', 'chamoru', 'translate', 'mean', 'word', 'say', 'phrase',
+            'definition', 'grammar', 'pronounce', 'spell', 'language',
+            'how', 'what', 'why', 'where', 'when', 'who', 'which',
+            'tell me', 'explain', 'teach', 'learn', 'example',
+            'culture', 'history', 'tradition', 'people', 'guam', 'island',
+            'food', 'fiesta', 'family', 'story', 'legend',
+        ])
+    )
+    
+    # Apply source filtering
+    if not should_show_sources:
+        formatted_sources = []
+        used_rag = False
+    
     # Check if this message was cancelled before saving
     was_cancelled = is_message_cancelled(pending_id)
     
@@ -846,11 +910,31 @@ Provide the following in a well-organized format:
         for source in sources
     ]
     
+    # OPTION B: Only show sources if they're actually relevant to the query
+    # This prevents showing irrelevant dictionary sources for casual messages
+    message_lower = message.lower().strip()
+    should_show_sources = (
+        used_rag and 
+        len(formatted_sources) > 0 and
+        len(message.strip()) > 8 and  # Message has some substance (not just "test", "hi")
+        any(word in message_lower for word in [
+            # Language/translation keywords
+            'chamorro', 'chamoru', 'translate', 'mean', 'word', 'say', 'phrase',
+            'definition', 'grammar', 'pronounce', 'spell', 'language',
+            # Question keywords
+            'how', 'what', 'why', 'where', 'when', 'who', 'which',
+            'tell me', 'explain', 'teach', 'learn', 'example',
+            # Culture/topic keywords  
+            'culture', 'history', 'tradition', 'people', 'guam', 'island',
+            'food', 'fiesta', 'family', 'story', 'legend',
+        ])
+    )
+    
     # Send metadata first (sources, rag status, etc.)
     yield {
         "type": "metadata",
-        "sources": formatted_sources,
-        "used_rag": used_rag,
+        "sources": formatted_sources if should_show_sources else [],
+        "used_rag": used_rag and should_show_sources,  # Only mark as used_rag if showing sources
         "used_web_search": use_web
     }
     

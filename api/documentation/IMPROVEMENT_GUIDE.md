@@ -1018,7 +1018,7 @@ DATABASE_URL=postgresql://neon.tech/...
 | **Phase 2D** | ✅ Vocabulary Browser (10,350+ words) | - | ✅ **COMPLETED** |
 | **Phase 2E** | ✅ Story Mode (24 stories + tap-to-translate) | - | ✅ **COMPLETED** |
 | **Phase 2F** | ✅ Conversation Practice (7 scenarios) | - | ✅ **COMPLETED** |
-| **Phase 3A** | Chat UX Improvements (Cancel ✅) | 1-2 days | 🚧 **IN PROGRESS** |
+| **Phase 3A** | Chat UX Improvements (Cancel ✅, Streaming ✅) | 1-2 days | 🚧 **IN PROGRESS** |
 | **Phase 3B** | Flashcards (User Progress Tracking) | 2-3 days | 📋 Planned |
 | **Phase 3C** | Onboarding Flow | 1-2 days | 📋 Planned |
 | **Phase 3D** | Learning Streaks & Gamification | 2-3 days | 📋 Planned |
@@ -1067,6 +1067,7 @@ DATABASE_URL=postgresql://neon.tech/...
 
 7. **Chat UX Improvements** - 1-2 days ⭐ **IN PROGRESS**
    - ✅ **Cancel Message** - Stop button, persists on refresh (ChatGPT-style)
+   - ✅ **Response Streaming** - Real-time token streaming with SSE
    - **Multiple Files** (2-3 hours) - Upload up to 5 images/files at once
    - **Background Processing** (1 hour) - Message completes even if user leaves
    - **Edit & Regenerate** (4-6 hours) - Edit previous message, regenerate from there
@@ -1111,6 +1112,31 @@ DATABASE_URL=postgresql://neon.tech/...
 - Backend: `pending_id` tracking in memory set
 - Database: User message saved with `[Message was cancelled by user]` response
 - UI: "Message cancelled" indicator with X icon
+
+#### **1.5. Response Streaming** ✅ **COMPLETED (Dec 2025)**
+
+**What's Implemented:**
+- ✅ **Server-Sent Events (SSE)** - Real-time token streaming from GPT
+- ✅ **Background Thread Processing** - Non-blocking async streaming via thread pool
+- ✅ **Thinking Indicator** - Animated dots while waiting for first token
+- ✅ **Blinking Cursor** - Visual indicator during active streaming
+- ✅ **React.memo Optimization** - Only streaming message re-renders (not entire list)
+- ✅ **Smart Scroll Tracking** - Auto-scroll during streaming, respects user scroll-up
+- ✅ **Hidden UI During Stream** - Copy/Listen/Thumbs buttons hidden until complete
+- ✅ **Delayed Sources** - Sources appear only after streaming finishes
+
+**Performance Optimizations:**
+- `React.memo()` on Message component prevents cascading re-renders
+- `isSendingMessageRef` prevents query invalidation during streaming
+- Cursor fades out (300ms transition) instead of instant removal
+- Simplified `fade-in` animation (opacity only, no translateY)
+
+**Known Issue - Minor Visual Flash:**
+There's still a subtle visual "flash" when streaming completes as the cursor fades out and action buttons fade in. This is acceptable for now but could be improved in the future with:
+- CSS `will-change` hints for smoother GPU compositing
+- React Transition Group for coordinated enter/exit animations
+- Delay cursor fade-out until buttons start fading in
+- Custom animation orchestration library (Framer Motion)
 
 **UI Behavior:**
 ```

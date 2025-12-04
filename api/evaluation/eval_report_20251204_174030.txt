@@ -1,0 +1,53 @@
+================================================================================
+HafaGPT EVALUATION REPORT
+================================================================================
+
+Timestamp: 2025-12-04T17:40:30.792238
+Mode: english
+API URL: http://localhost:8000
+
+--------------------------------------------------------------------------------
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+
+Total Tests: 15
+Passed: 11 (73.3%)
+Failed: 4 (26.7%)
+Average Score: 69.3%
+Average Response Time: 5.25s
+
+--------------------------------------------------------------------------------
+CATEGORY BREAKDOWN
+--------------------------------------------------------------------------------
+
+PHRASES: 0/1 (0.0%) - Avg Score: 0.0%
+TRANSLATION: 11/14 (78.6%) - Avg Score: 74.3%
+
+--------------------------------------------------------------------------------
+FAILED QUERIES (4 total)
+--------------------------------------------------------------------------------
+
+ID: 4
+Query: Translate 'apple' to Chamorro
+Category: translation | Difficulty: easy
+Expected Keywords: mansåna, mansana
+Response: I don't have that specific translation in my dictionary sources. If you're interested in learning more about Chamorro vocabulary related to fruits or any other topic, feel free to ask!...
+
+ID: 9
+Query: How do you say 'eat' in Chamorro?
+Category: translation | Difficulty: medium
+Expected Keywords: chumocho, chocho, kånno', kanno
+Response: In Chamorro, the word for "eat" is **chumålek**. [Source: revised_and_updated_chamorro_dictionary]...
+
+ID: 10
+Query: Translate 'I love you' to Chamorro
+Category: phrases | Difficulty: medium
+Expected Keywords: Hu guaiya hao
+Response: In Chamorro, "I love you" is translated as "Hu guiaya hao." This is a beautiful phrase you can use to express affection to someone special. If you have any more questions or need help with other trans...
+
+ID: 13
+Query: What is 'friend' in Chamorro?
+Category: translation | Difficulty: easy
+Expected Keywords: abok, gachong, amigo
+Response: In Chamorro, the word for "friend" is **amigu** for a male friend and **amiga** for a female friend. These terms are commonly used when referring to friends in Chamorro. If there's anything else you'd...
+

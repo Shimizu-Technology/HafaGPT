@@ -1,0 +1,2007 @@
+{
+  "metadata": {
+    "timestamp": "2025-12-04T18:46:09.018700",
+    "mode": "english",
+    "api_url": "http://localhost:8000",
+    "total_tests": 100,
+    "passed_tests": 83,
+    "failed_tests": 17,
+    "overall_accuracy": 83.0,
+    "avg_score": 72.8,
+    "avg_response_time": 5.882679710388183
+  },
+  "results": [
+    {
+      "id": 1,
+      "query": "How do I say hello in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "Håfa Adai",
+        "Hafa Adai"
+      ],
+      "actual": "In Chamorro, the common way to say hello is \"Håfa Adai.\" It's a versatile greeting used similarly to \"hello\" or \"how are you,\" and it's widely recognized and used in Guam and the Northern Mariana Islands. You might also see it abbreviated as \"HA\" in texts and informal communication. Keep practicing, and you'll get the hang of it!",
+      "passed": true,
+      "found_keywords": [
+        "Håfa Adai",
+        "Hafa Adai"
+      ],
+      "score": 100.0,
+      "response_time": 17.4007568359375
+    },
+    {
+      "id": 2,
+      "query": "What is 'listen' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "ekungok",
+        "ékungok"
+      ],
+      "actual": "In Chamorro, \"listen\" is **ekungok**. [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "ekungok",
+        "ékungok"
+      ],
+      "score": 100.0,
+      "response_time": 4.538370847702026
+    },
+    {
+      "id": 3,
+      "query": "How do you say thank you in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "Si Yu'os Må'åse'",
+        "Si Yu'os Ma'ase"
+      ],
+      "actual": "In Chamorro, \"thank you\" is said as \"Si Yu'os Ma'åse.\" This phrase is commonly abbreviated as \"SYM\" in texts and informal communication. It literally translates to \"God bless\" and is a way of expressing gratitude. Feel free to use this phrase to show appreciation in Chamorro-speaking communities!",
+      "passed": true,
+      "found_keywords": [
+        "Si Yu'os Må'åse'",
+        "Si Yu'os Ma'ase"
+      ],
+      "score": 100.0,
+      "response_time": 6.863539934158325
+    },
+    {
+      "id": 4,
+      "query": "Translate 'apple' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "mansåna",
+        "mansana",
+        "mångsana"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you need more detailed help with Chamorro vocabulary, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.251523733139038
+    },
+    {
+      "id": 5,
+      "query": "What does 'gofli'e'' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "love",
+        "adore",
+        "like",
+        "befriend"
+      ],
+      "actual": "In Chamorro, \"gofli'e'\" means to like, befriend, or love in a platonic sense. [Source: chamorro_english_dictionary_TOD]\n\nIf you're learning Chamorro, this word can be used to express affection or friendship towards someone in a non-romantic way. Do you have any other Chamorro words or phrases you're curious about?",
+      "passed": true,
+      "found_keywords": [
+        "love",
+        "like",
+        "befriend"
+      ],
+      "score": 80.0,
+      "response_time": 5.622154712677002
+    },
+    {
+      "id": 6,
+      "query": "What is 'ekungok' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "listen",
+        "hear"
+      ],
+      "actual": "In English, \"ekungok\" means \"to listen to\" or \"to hearken.\" It's used when you want to say that someone is giving heed or yielding to advice. For example, you might say \"Hu ekungok i rediu,\" which translates to \"I listened to the radio.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "listen",
+        "hear"
+      ],
+      "score": 100.0,
+      "response_time": 4.820353984832764
+    },
+    {
+      "id": 7,
+      "query": "How do I say 'house' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "guma'"
+      ],
+      "actual": "In Chamorro, \"house\" is **gima'**. [Source: chamoru_info_dictionary]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.2748308181762695
+    },
+    {
+      "id": 8,
+      "query": "What is the Chamorro word for 'water'?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "hånom",
+        "hanom"
+      ],
+      "actual": "In Chamorro, the word for \"water\" is **\"hånom.\"** If you have any more questions or need help with anything else, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "hånom",
+        "hanom"
+      ],
+      "score": 100.0,
+      "response_time": 4.42875599861145
+    },
+    {
+      "id": 9,
+      "query": "How do you say 'eat' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "chumocho",
+        "chocho",
+        "kånno'",
+        "kanno",
+        "kånnu'"
+      ],
+      "actual": "In Chamorro, \"eat\" is translated as **chumålek**. [Source: chamorro_english_dictionary_TOD]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.183283090591431
+    },
+    {
+      "id": 10,
+      "query": "Translate 'I love you' to Chamorro",
+      "category": "phrases",
+      "difficulty": "medium",
+      "expected": [
+        "Hu guaiya hao"
+      ],
+      "actual": "In Chamorro, \"I love you\" is translated as \"Hu guaiya hao.\" This phrase is commonly used to express affection and love towards someone. If you're practicing Chamorro, saying this to someone special is a wonderful way to share your feelings!",
+      "passed": true,
+      "found_keywords": [
+        "Hu guaiya hao"
+      ],
+      "score": 100.0,
+      "response_time": 4.92264986038208
+    },
+    {
+      "id": 11,
+      "query": "What does 'mamahlao' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "shame",
+        "embarrass",
+        "shy",
+        "ashamed",
+        "bashful"
+      ],
+      "actual": "In Chamorro, \"mamahlao\" means to be ashamed, shy, or embarrassed. It's used to describe someone who feels bashful or shamefaced. [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "shame",
+        "embarrass",
+        "shy",
+        "ashamed",
+        "bashful"
+      ],
+      "score": 100.0,
+      "response_time": 4.279930830001831
+    },
+    {
+      "id": 12,
+      "query": "How do I say 'beautiful' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "bunita",
+        "bonitu",
+        "bunitu"
+      ],
+      "actual": "In Chamorro, \"beautiful\" is translated as **\"guåfåo\"**. If you have any other questions about Chamorro or need help with more translations, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.684892177581787
+    },
+    {
+      "id": 13,
+      "query": "What is 'friend' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "abok",
+        "gachong",
+        "amigo",
+        "atungo'"
+      ],
+      "actual": "In Chamorro, the word for \"friend\" is **amigu** if you're referring to a male friend, and **amiga** for a female friend. These terms are borrowed from Spanish and are commonly used in everyday conversations. If you have more questions about Chamorro words or phrases, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.962255239486694
+    },
+    {
+      "id": 14,
+      "query": "Translate 'rice' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "hineksa'",
+        "hineksa",
+        "ågu"
+      ],
+      "actual": "In Chamorro, \"rice\" is **hineksa**. [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "hineksa'",
+        "hineksa"
+      ],
+      "score": 80.0,
+      "response_time": 4.043699026107788
+    },
+    {
+      "id": 15,
+      "query": "Translate 'child' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "patgon",
+        "påtgon"
+      ],
+      "actual": "In Chamorro, \"child\" is translated as \"patgon.\" If you have any more questions about Chamorro translations or need help with phrases, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "patgon",
+        "påtgon"
+      ],
+      "score": 100.0,
+      "response_time": 4.950294017791748
+    },
+    {
+      "id": 16,
+      "query": "What is 'mother' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "nana",
+        "nanå"
+      ],
+      "actual": "In Chamorro, the word for 'mother' is **nåna**. It's a term of endearment and respect used to refer to one's mother in Chamorro culture. If you have any more questions or need further assistance with Chamorro, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "nana",
+        "nanå"
+      ],
+      "score": 100.0,
+      "response_time": 4.847204685211182
+    },
+    {
+      "id": 17,
+      "query": "How do I say 'father' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "tata",
+        "tatå"
+      ],
+      "actual": "In Chamorro, \"father\" is **tåta**. [Source: chamoru_info_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "tata",
+        "tatå"
+      ],
+      "score": 100.0,
+      "response_time": 4.245471000671387
+    },
+    {
+      "id": 18,
+      "query": "What does 'håfa' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "what",
+        "why"
+      ],
+      "actual": "In Chamorro, \"håfa\" is an interrogative pronoun that means \"what.\" It's commonly used in questions to ask about something, like in \"Håfa bidåda-mu?\" which translates to \"What are you doing?\" It's also used in the standard Chamorro greeting \"Håfa Adai,\" which is similar to saying \"Hello\" or \"How are you?\" in English. If you have more questions about Chamorro, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "what"
+      ],
+      "score": 80.0,
+      "response_time": 5.792891263961792
+    },
+    {
+      "id": 19,
+      "query": "How do you say 'yes' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "hunggan",
+        "hao"
+      ],
+      "actual": "In Chamorro, the word for \"yes\" is **hunggan**. It's a straightforward and commonly used word in both casual and formal conversations. If you have any other questions or need further assistance with Chamorro, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "hunggan"
+      ],
+      "score": 80.0,
+      "response_time": 5.791296005249023
+    },
+    {
+      "id": 20,
+      "query": "What is 'no' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "åhe'",
+        "ahe"
+      ],
+      "actual": "In Chamorro, \"no\" is translated as \"åhe’\". It's a simple and useful word to remember! If you have more questions about Chamorro, feel free to ask.",
+      "passed": true,
+      "found_keywords": [
+        "åhe'",
+        "ahe"
+      ],
+      "score": 100.0,
+      "response_time": 5.275824308395386
+    },
+    {
+      "id": 21,
+      "query": "How do I say 'one' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "unu",
+        "uno",
+        "håcha"
+      ],
+      "actual": "In Chamorro, \"one\" is translated as \"håcha.\" [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "håcha"
+      ],
+      "score": 50.0,
+      "response_time": 4.357066869735718
+    },
+    {
+      "id": 22,
+      "query": "What is 'red' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "agaga'"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you have any other questions about the Chamorro language or need help with a different translation, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 5.1429221630096436
+    },
+    {
+      "id": 23,
+      "query": "How do you say 'dog' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "ga'lågu",
+        "galagu"
+      ],
+      "actual": "In Chamorro, 'dog' is **ga'lagu**. [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "ga'lågu",
+        "galagu"
+      ],
+      "score": 100.0,
+      "response_time": 3.9515230655670166
+    },
+    {
+      "id": 24,
+      "query": "Translate 'small' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "dikike'",
+        "díkiki'",
+        "hågui",
+        "dichicheng"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you have more context or another word you'd like to explore, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.60798716545105
+    },
+    {
+      "id": 25,
+      "query": "What is 'now' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "pågo",
+        "pago"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you're interested in learning how to express the concept of \"now\" or \"currently\" in a sentence or context, feel free to ask! Chamorro often uses context to convey time frames.",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.888175010681152
+    },
+    {
+      "id": 26,
+      "query": "How do I conjugate 'to eat' in Chamorro?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "chumocho",
+        "conjugat",
+        "verb",
+        "form"
+      ],
+      "actual": "In Chamorro, the verb \"to eat\" is \"chumålek.\" Conjugating verbs in Chamorro can vary depending on the tense and aspect you wish to express. Here are some basic forms:\n\n1. **Infinitive:** chumålek\n2. **Past Tense:** chumålik (I ate)\n3. **Present Tense:** chumumålek (I am eating)\n4. **Future Tense:** chumålek (I will eat)\n\nChamorro verbs often use prefixes and infixes to indicate tense, so you might see variations depending on the context. If you have specific sentences or contexts in mind, feel free to share them, and I can help you with the appropriate conjugation!",
+      "passed": true,
+      "found_keywords": [
+        "conjugat",
+        "verb",
+        "form"
+      ],
+      "score": 80.0,
+      "response_time": 10.12552285194397
+    },
+    {
+      "id": 27,
+      "query": "What is the difference between 'un' and 'ha'?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "you",
+        "he",
+        "she",
+        "pronoun",
+        "subject"
+      ],
+      "actual": "In Chamorro, the words \"un\" and \"ha\" are pronouns used as subject markers, but they refer to different subjects.\n\n- **Un**: This is the subject pronoun for \"you\" (singular). It's used when you are addressing one person directly. For example, \"Un tungo'?\" means \"Do you know?\"\n\n- **Ha**: This subject pronoun is used for \"he,\" \"she,\" or \"it.\" It's used when referring to a third person singular. For example, \"Ha ripresta i katta-ku\" means \"She answered my letter.\"\n\nBoth pronouns are essential for forming sentences correctly in Chamorro, as they indicate who is performing the action. If you're practicing Chamorro, try using these pronouns in simple sentences to get familiar with their usage!",
+      "passed": true,
+      "found_keywords": [
+        "you",
+        "he",
+        "she",
+        "pronoun",
+        "subject"
+      ],
+      "score": 100.0,
+      "response_time": 7.9837682247161865
+    },
+    {
+      "id": 28,
+      "query": "How do I say 'I am' in Chamorro?",
+      "category": "grammar",
+      "difficulty": "medium",
+      "expected": [
+        "guahu",
+        "yu'"
+      ],
+      "actual": "In Chamorro, \"I am\" is expressed as \"**Hu**\" when followed by a verb. For example, if you're saying \"I am happy,\" it would be \"Hu guaiya\" in Chamorro. However, if you're using it in a sentence where you need to say something like \"I am a teacher,\" you would use \"Yu'\" as in \"Yu'u ma'estra\" for \"I am a teacher\" (if you are female). \n\nChamorro sentence structure can vary, so the form might change depending on what's being expressed. If you have a specific sentence in mind, feel free to share it, and I can help you with a more specific translation.",
+      "passed": true,
+      "found_keywords": [
+        "yu'"
+      ],
+      "score": 80.0,
+      "response_time": 7.174481153488159
+    },
+    {
+      "id": 29,
+      "query": "How do I say 'my name' in Chamorro?",
+      "category": "grammar",
+      "difficulty": "medium",
+      "expected": [
+        "na'ån-hu",
+        "naan-hu",
+        "iyo-ku",
+        "nene"
+      ],
+      "actual": "In Chamorro, \"my name\" is expressed as \"i na'ån-hu.\" Here, \"na'ån\" means \"name,\" and \"-hu\" is a possessive suffix meaning \"my.\" So when you want to introduce yourself, you could say, \"I na'ån-hu si [Your Name],\" which means \"My name is [Your Name].\" If you have any more questions about Chamorro language or culture, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "na'ån-hu",
+        "naan-hu"
+      ],
+      "score": 80.0,
+      "response_time": 6.820087909698486
+    },
+    {
+      "id": 30,
+      "query": "What does the suffix '-hu' mean?",
+      "category": "grammar",
+      "difficulty": "medium",
+      "expected": [
+        "my",
+        "mine",
+        "possessive"
+      ],
+      "actual": "The suffix '-hu' in Chamorro means \"my\" or \"mine.\" It's a possessive suffix used to indicate ownership. For example, if you say \"i kareta-hu,\" it means \"my car.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "my",
+        "mine",
+        "possessive"
+      ],
+      "score": 100.0,
+      "response_time": 4.807559251785278
+    },
+    {
+      "id": 31,
+      "query": "How do you form questions in Chamorro?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "håfa",
+        "kao",
+        "question",
+        "word"
+      ],
+      "actual": "Forming questions in Chamorro is quite similar to English, but there are some unique markers and structures to be aware of. Here are some general tips:\n\n1. **Question Words**: Just like in English, Chamorro uses specific words to introduce questions. Here are some common question words:\n   - **Håfa** - What\n   - **Håyi** - Who\n   - **Ngai'an** - When\n   - **Amånu** - Where\n   - **Sa' håfa** - Why\n\n2. **Question Structure**: The structure of questions can vary, but typically the question word comes at the beginning of the sentence. For example:\n   - **Håfa tatatmanu hao?** - How are you? (Note: \"tatatmanu\" is a greeting word used in questions, as per Reference 3.)\n\n3. **Yes/No Questions**: These can be formed by changing the intonation of a statement, much like in English. There isn't a direct equivalent to adding \"do\" or \"does\" as in English questions; context and intonation play a significant role.\n\n4. **Question Markers**: In spoken Chamorro, the tone of voice typically indicates a question. In written Chamorro, a question mark is used at the end of the sentence.\n\nRemember, practice and listening to native speakers can help you get a feel for the natural flow of questions in Chamorro. If you have more specific examples or want to practice forming particular types of questions, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "håfa",
+        "question",
+        "word"
+      ],
+      "score": 80.0,
+      "response_time": 10.38742208480835
+    },
+    {
+      "id": 32,
+      "query": "What is 'siempre' in Chamorro and does it mean 'always'?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "surely",
+        "definitely",
+        "certainly",
+        "not always"
+      ],
+      "actual": "In Chamorro, \"siempre\" means \"surely,\" \"certainly,\" or \"definitely.\" It's used as a future marker indicating strong determination, not as \"always.\" This is a common misconception due to Spanish influence, where \"siempre\" does mean \"always.\" \n\nFor example, you might say, \"Siempre bai hu hånao,\" which means \"I will surely go\" or \"I will definitely go.\" If you want to say \"always\" in Chamorro, you would use \"taigue.\" \n\nLet me know if you have any other questions about Chamorro!",
+      "passed": true,
+      "found_keywords": [
+        "surely",
+        "definitely",
+        "certainly"
+      ],
+      "score": 80.0,
+      "response_time": 7.357650279998779
+    },
+    {
+      "id": 33,
+      "query": "What word means 'always' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "taigue"
+      ],
+      "actual": "In Chamorro, the word for \"always\" is **taigue**. If you ever come across \"siempre,\" remember that it means \"surely\" or \"definitely\" and is used to express certainty about future events, rather than meaning \"always.\" Feel free to ask if you have more questions about the Chamorro language!",
+      "passed": true,
+      "found_keywords": [
+        "taigue"
+      ],
+      "score": 100.0,
+      "response_time": 5.774810791015625
+    },
+    {
+      "id": 34,
+      "query": "What is the Chamorro creation story?",
+      "category": "cultural",
+      "difficulty": "hard",
+      "expected": [
+        "creation",
+        "Puntan",
+        "Fu'una",
+        "legend"
+      ],
+      "actual": "The Chamorro creation story is a fascinating part of the indigenous culture of the Mariana Islands. According to Chamorro legend, the world and people were created by a goddess named Fu'una and her brother Puntan. \n\nIn the story, Puntan, knowing his time was near, asked his sister Fu'una to use his body to create the world. After Puntan's passing, Fu'una transformed different parts of his body into various aspects of the natural world. His eyes became the sun and the moon, his eyebrows became rainbows, and his back became the earth. Fu'una then stood at Fouha Rock—also known as Creation Rock—in Umatac, Guam, and brought life to the world.\n\nThis creation myth highlights the important role of nature in Chamorro culture and exemplifies the deep spiritual connection the Chamorro people have with their environment. It's a beautiful example of how indigenous stories reflect the values and beliefs of a culture. If you ever visit Guam, you can actually see Fouha Rock, which is a significant cultural and historical site related to this story.",
+      "passed": true,
+      "found_keywords": [
+        "creation",
+        "Puntan",
+        "Fu'una",
+        "legend"
+      ],
+      "score": 100.0,
+      "response_time": 9.729840755462646
+    },
+    {
+      "id": 35,
+      "query": "Who is Fu'una in Chamorro culture?",
+      "category": "cultural",
+      "difficulty": "hard",
+      "expected": [
+        "sister",
+        "Puntan",
+        "creation",
+        "goddess"
+      ],
+      "actual": "Fu'una is a significant figure in Chamorro mythology and culture. She is considered one of the creation deities in Chamorro legends. According to the stories, Fu'una, along with her brother Puntan, played a crucial role in the creation of the world. After Puntan sacrificed himself, Fu'una used his body parts to create various elements of the earth. For example, his eyes became the sun and moon, and his body became the land. Fu'una is often revered as a powerful and creative force, symbolizing the origins and natural beauty of the islands.\n\nThese stories highlight the deep connection between the Chamorro people and their land, emphasizing themes of sacrifice, creation, and the nurturing aspects of nature. If you're interested in Chamorro culture, learning about Fu'una and Puntan is a great way to understand the cultural narratives that have shaped the Chamorro worldview.",
+      "passed": true,
+      "found_keywords": [
+        "Puntan",
+        "creation"
+      ],
+      "score": 80.0,
+      "response_time": 8.229912042617798
+    },
+    {
+      "id": 36,
+      "query": "What is a latte stone?",
+      "category": "cultural",
+      "difficulty": "medium",
+      "expected": [
+        "latte",
+        "stone",
+        "pillar",
+        "ancient",
+        "structure"
+      ],
+      "actual": "A latte stone is a significant cultural symbol in Chamorro culture, commonly found in the Mariana Islands. These stones are made up of two parts: the haligi, which is the column or pillar, and the tasa, which is the capstone that sits on top. Traditionally, latte stones were used as the foundations for ancient Chamorro buildings, elevating them off the ground. They are unique to the Marianas and are often seen as a symbol of Chamorro identity and heritage.\n\nToday, latte stones are iconic symbols, representing strength and resilience. You can find them in various settings such as parks, monuments, and even as decorative elements in homes and public spaces throughout Guam and the Northern Mariana Islands. If you're ever in these areas, seeing a latte stone is like taking a step back into the rich history of the Chamorro people!",
+      "passed": true,
+      "found_keywords": [
+        "latte",
+        "stone",
+        "pillar",
+        "ancient"
+      ],
+      "score": 80.0,
+      "response_time": 8.576460123062134
+    },
+    {
+      "id": 37,
+      "query": "What is fiestas in Chamorro culture?",
+      "category": "cultural",
+      "difficulty": "medium",
+      "expected": [
+        "fiesta",
+        "village",
+        "patron",
+        "saint",
+        "celebration"
+      ],
+      "actual": "In Chamorro culture, \"fiestas\" are vibrant, community-centered celebrations that hold significant cultural and social importance. These events are often held in honor of a patron saint or to celebrate significant occasions, blending religious, cultural, and social elements. Fiestas are marked by traditional Chamorro music, dance, and food, creating an atmosphere of joy and togetherness.\n\nDuring a fiesta, you can expect to see families and friends gathering to share in the festivities, which often include a variety of traditional Chamorro dishes like kelaguen, red rice, and barbecue. It's a time for people to come together, celebrate their heritage, and enjoy each other's company.\n\nFiestas are a wonderful way to experience Chamorro culture firsthand, as they reflect the community's values of hospitality, family, and cultural pride. If you ever have the chance to attend a Chamorro fiesta, you'll find it to be a memorable and enriching experience.",
+      "passed": true,
+      "found_keywords": [
+        "fiesta",
+        "patron",
+        "saint",
+        "celebration"
+      ],
+      "score": 80.0,
+      "response_time": 9.051146030426025
+    },
+    {
+      "id": 38,
+      "query": "What is a CHamoru?",
+      "category": "cultural",
+      "difficulty": "easy",
+      "expected": [
+        "people",
+        "indigenous",
+        "Guam",
+        "Mariana"
+      ],
+      "actual": "The term \"Chamorro\" refers to the indigenous people of the Mariana Islands, which include Guam and the Northern Mariana Islands. The Chamorro people have a rich cultural heritage and a unique language known as Chamorro, or Fino' Chamoru. This language, along with their traditions, cuisine, and customs, forms an integral part of their identity.\n\nChamorro culture is characterized by its emphasis on family, respect, and community. Traditional practices and celebrations, such as fiestas and dances, play a significant role in preserving Chamorro heritage. If you're interested in learning more about Chamorro culture or language, feel free to ask more specific questions!",
+      "passed": true,
+      "found_keywords": [
+        "people",
+        "indigenous",
+        "Guam",
+        "Mariana"
+      ],
+      "score": 100.0,
+      "response_time": 6.516570091247559
+    },
+    {
+      "id": 39,
+      "query": "What is inafa'maolek?",
+      "category": "cultural",
+      "difficulty": "medium",
+      "expected": [
+        "harmony",
+        "peace",
+        "restore",
+        "relationship"
+      ],
+      "actual": "Inafa'maolek is a central concept in Chamorro culture that represents the idea of cooperation, mutual respect, and communal harmony. It is about working together for the common good and maintaining balance within the community. The term itself comes from the Chamorro language and embodies values such as reciprocity, interdependence, and communal care. \n\nIn practice, inafa'maolek is about people helping each other and fostering positive relationships among family, friends, and the broader community. It's a guiding principle in social interactions and decision-making on the islands of Guam and the Northern Mariana Islands, where Chamorro culture is prevalent. This concept encourages individuals to act in ways that benefit others, promote social cohesion, and ensure the well-being of the community as a whole.",
+      "passed": true,
+      "found_keywords": [
+        "harmony",
+        "relationship"
+      ],
+      "score": 80.0,
+      "response_time": 7.167426109313965
+    },
+    {
+      "id": 40,
+      "query": "Who was Maga'låhi Gadao?",
+      "category": "cultural",
+      "difficulty": "hard",
+      "expected": [
+        "chief",
+        "Gadao",
+        "leader",
+        "legend"
+      ],
+      "actual": "Maga'låhi Gadao is a legendary figure in Chamorro culture and is often considered one of the greatest ancient chiefs of Guam. According to Chamorro folklore, he was known for his strength, wisdom, and leadership. One popular tale about Maga'låhi Gadao involves a canoe race against another strong chief, Maga'låhi Malaguana, where Gadao demonstrated his cleverness and strength. These stories are an important part of Chamorro cultural heritage, celebrating the values of intelligence and leadership. If you're interested in learning more about Chamorro legends, these stories are a wonderful way to connect with the cultural history of the Mariana Islands!",
+      "passed": true,
+      "found_keywords": [
+        "chief",
+        "Gadao",
+        "leader",
+        "legend"
+      ],
+      "score": 100.0,
+      "response_time": 6.9903669357299805
+    },
+    {
+      "id": 41,
+      "query": "What happened in Guam during World War 2?",
+      "category": "cultural",
+      "difficulty": "hard",
+      "expected": [
+        "World War",
+        "Japanese",
+        "occupation",
+        "liberation"
+      ],
+      "actual": "During World War II, Guam experienced significant and impactful events. The island, which was a U.S. territory, was invaded by Japanese forces on December 8, 1941, just hours after the attack on Pearl Harbor. The Japanese occupation of Guam lasted for about two and a half years. During this time, the Chamorro people faced harsh conditions, including forced labor, imprisonment, and restrictions on their cultural practices.\n\nIn July 1944, the United States launched a campaign to retake Guam, which became known as the Battle of Guam. This battle was part of the larger Pacific campaign and involved intense fighting. U.S. forces successfully liberated the island on July 21, 1944, which is now celebrated annually as Liberation Day in Guam. This day is important to many Guamanians as it marks the end of the occupation and the return of American administration.\n\nThe events of World War II left a lasting impact on the island and its people, and the war's history is an important part of Guam's cultural heritage today.",
+      "passed": true,
+      "found_keywords": [
+        "World War",
+        "Japanese",
+        "occupation",
+        "liberation"
+      ],
+      "score": 100.0,
+      "response_time": 8.969868898391724
+    },
+    {
+      "id": 42,
+      "query": "What is the Chamorro flag?",
+      "category": "cultural",
+      "difficulty": "medium",
+      "expected": [
+        "flag",
+        "Guam",
+        "seal",
+        "blue"
+      ],
+      "actual": "The Chamorro flag is actually part of the flag of Guam. The flag of Guam features a dark blue field with a red border, symbolizing the blood shed during World War II. In the center, there is an oval emblem that represents the island's cultural identity. This emblem includes a coconut tree, the Hagåtña River, and a proa (a type of traditional canoe), all set against a beach and the sea. The word \"GUAM\" is written in red within the oval.\n\nThe emblem itself is significant as it reflects the island's natural beauty and the Chamorro people's seafaring heritage. The coconut tree symbolizes self-sustenance, the river represents life, and the proa signifies navigation and the Chamorro's connection to the sea. The design is a proud representation of Guam's history and the Chamorro culture.",
+      "passed": true,
+      "found_keywords": [
+        "flag",
+        "Guam",
+        "blue"
+      ],
+      "score": 80.0,
+      "response_time": 11.50585412979126
+    },
+    {
+      "id": 43,
+      "query": "What is kelaguen?",
+      "category": "cultural",
+      "difficulty": "easy",
+      "expected": [
+        "kelaguen",
+        "food",
+        "lemon",
+        "coconut"
+      ],
+      "actual": "Based on current information, kelaguen is a traditional Chamorro dish from the Mariana Islands, similar to ceviche. It involves marinating cooked or raw ingredients like chicken, beef, deer, seafood, or even shrimp and fish in a pickling marinade. This marinade typically consists of lemon or lime juice, fresh coconut, green onions, salt, and spicy hot peppers, also known as donni'. The acidity of the citrus juice \"cooks\" the ingredients, making kelaguen a unique and flavorful dish. It can be served as a side dish or a main course. [Sources: Annie's Chamorro Kitchen, Wikipedia]",
+      "passed": true,
+      "found_keywords": [
+        "kelaguen",
+        "food",
+        "lemon",
+        "coconut"
+      ],
+      "score": 100.0,
+      "response_time": 6.65777587890625
+    },
+    {
+      "id": 44,
+      "query": "How do I say 'Good morning' in Chamorro?",
+      "category": "phrases",
+      "difficulty": "easy",
+      "expected": [
+        "Buenas",
+        "morning",
+        "Mañana"
+      ],
+      "actual": "In Chamorro, 'Good morning' is expressed as **\"Mañana si Yu'os.\"** This literally translates to \"God's morning.\" It's a common greeting used in Chamorro-speaking communities. If you have any more questions about Chamorro greetings or expressions, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "morning",
+        "Mañana"
+      ],
+      "score": 80.0,
+      "response_time": 6.39707088470459
+    },
+    {
+      "id": 45,
+      "query": "How do you say 'Good night'?",
+      "category": "phrases",
+      "difficulty": "easy",
+      "expected": [
+        "Buenas noches",
+        "night"
+      ],
+      "actual": "In Chamorro, you can say \"Buenas noches\" for \"Good night.\" This phrase is influenced by Spanish, which has had a significant impact on the Chamorro language. It's commonly used in everyday conversations in Guam and the Northern Mariana Islands. If you have any more questions about Chamorro greetings or phrases, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "Buenas noches",
+        "night"
+      ],
+      "score": 100.0,
+      "response_time": 4.601723909378052
+    },
+    {
+      "id": 46,
+      "query": "Translate 'Where is the bathroom?' to Chamorro",
+      "category": "phrases",
+      "difficulty": "medium",
+      "expected": [
+        "bathroom",
+        "mångge"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, if you're looking for a common way to ask for the bathroom in Chamorro, you might try something like \"Håfa na gaige i kommon?\" which essentially asks where the bathroom is located. Let me know if you have more questions or need further assistance with Chamorro!",
+      "passed": true,
+      "found_keywords": [
+        "bathroom"
+      ],
+      "score": 80.0,
+      "response_time": 4.762251615524292
+    },
+    {
+      "id": 47,
+      "query": "How do I introduce myself in Chamorro?",
+      "category": "phrases",
+      "difficulty": "medium",
+      "expected": [
+        "name",
+        "guahu"
+      ],
+      "actual": "Introducing yourself in Chamorro can be a simple and warm way to connect with others. You can start by saying \"Håfa Adai,\" which is the standard greeting, similar to \"Hello\" or \"How are you.\"\n\nHere's a basic way to introduce yourself:\n\n1. **Håfa Adai!** - Hello!\n2. **Guahu si [Your Name].** - I am [Your Name].\n\nFor example, if your name is Maria, you would say:\n\n\"Håfa Adai! Guahu si Maria.\"\n\nFeel free to add more information about yourself, like where you're from or what you do, if you're comfortable. For example:\n\n- **Guahu si Maria. Ginen Guåhan yu'.** - I am Maria. I am from Guam.\n\nPracticing these phrases will help you feel more confident when speaking Chamorro. Let me know if you want to learn more phrases!",
+      "passed": true,
+      "found_keywords": [
+        "name",
+        "guahu"
+      ],
+      "score": 100.0,
+      "response_time": 8.724391222000122
+    },
+    {
+      "id": 48,
+      "query": "What is 'You're welcome' in Chamorro?",
+      "category": "phrases",
+      "difficulty": "easy",
+      "expected": [
+        "buen probecho",
+        "buen prubetchu",
+        "welcome"
+      ],
+      "actual": "In Chamorro, a common way to say \"You're welcome\" is \"Ådai na si Yu'os.\" This phrase is often used in response to \"Si Yu'os Ma'åse,\" which means \"Thank you.\" It's a nice way to acknowledge and reciprocate gratitude. If you want to practice more Chamorro phrases or have any questions, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "welcome"
+      ],
+      "score": 50.0,
+      "response_time": 7.606584072113037
+    },
+    {
+      "id": 49,
+      "query": "How do you say 'Excuse me' in Chamorro?",
+      "category": "phrases",
+      "difficulty": "easy",
+      "expected": [
+        "Dispensa",
+        "excuse"
+      ],
+      "actual": "In Chamorro, \"Excuse me\" can be expressed as \"Dispensa yu'.\" It's a polite way to get someone's attention or to apologize for a minor inconvenience. If you're navigating through a crowd or need to interrupt someone, this phrase will be useful. Keep practicing, and you'll get more comfortable with these common expressions!",
+      "passed": true,
+      "found_keywords": [
+        "Dispensa",
+        "excuse"
+      ],
+      "score": 100.0,
+      "response_time": 4.563796043395996
+    },
+    {
+      "id": 50,
+      "query": "Translate 'How are you?' to Chamorro",
+      "category": "phrases",
+      "difficulty": "easy",
+      "expected": [
+        "Håfa tatatmanu hao",
+        "how are you"
+      ],
+      "actual": "In Chamorro, \"How are you?\" is translated as \"Håfa Adai?\" This is a common greeting in Chamorro, similar to saying \"Hello\" or \"Hi, how are you?\" in English. It's often used to start a friendly conversation. If you have any more questions about Chamorro greetings or language, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "how are you"
+      ],
+      "score": 80.0,
+      "response_time": 4.997648239135742
+    },
+    {
+      "id": 51,
+      "query": "How do you say 'computer' in Chamorro?",
+      "category": "edge_cases",
+      "difficulty": "medium",
+      "expected": [
+        "computer",
+        "modern",
+        "loanword"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, in many languages, modern technological terms like \"computer\" are often borrowed from English or adapted slightly. If you're interested in learning more about technology-related vocabulary in Chamorro, I can help with that!",
+      "passed": true,
+      "found_keywords": [
+        "computer",
+        "modern"
+      ],
+      "score": 80.0,
+      "response_time": 5.557854890823364
+    },
+    {
+      "id": 52,
+      "query": "What is 'internet' in Chamorro?",
+      "category": "edge_cases",
+      "difficulty": "medium",
+      "expected": [
+        "internet",
+        "modern"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources for the word \"internet.\" In many languages, especially for modern technology terms, the English word is often used as is. If you're interested in learning more about using Chamorro in a digital context or have other questions, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "internet",
+        "modern"
+      ],
+      "score": 100.0,
+      "response_time": 5.59955096244812
+    },
+    {
+      "id": 53,
+      "query": "How do I say 'I am listening to music'?",
+      "category": "phrases",
+      "difficulty": "hard",
+      "expected": [
+        "ekungok",
+        "music",
+        "sentence"
+      ],
+      "actual": "In Chamorro, you can say \"Hu ekungok i musikå.\" \n\nHere, \"hu\" means \"I,\" \"ekungok\" means \"listen,\" and \"i musikå\" means \"the music.\" So, the phrase directly translates to \"I am listening to the music.\" Keep practicing, and you'll get more comfortable with the language!",
+      "passed": true,
+      "found_keywords": [
+        "ekungok",
+        "music"
+      ],
+      "score": 80.0,
+      "response_time": 5.090715169906616
+    },
+    {
+      "id": 54,
+      "query": "Translate this paragraph to Chamorro: Hello, my name is Maria. I love learning Chamorro.",
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "expected": [
+        "Håfa Adai",
+        "na'ån-hu",
+        "Maria",
+        "paragraph"
+      ],
+      "actual": "Here's how you can translate that paragraph into Chamorro:\n\n\"Håfa Adai, si Maria yu'. Hu guaiya i chinathinasi Chamorro.\"\n\nThis translation captures the essence of your introduction and your love for learning the Chamorro language. Keep up the great work in your studies!",
+      "passed": true,
+      "found_keywords": [
+        "Håfa Adai",
+        "Maria",
+        "paragraph"
+      ],
+      "score": 80.0,
+      "response_time": 6.216691970825195
+    },
+    {
+      "id": 55,
+      "query": "What's the difference between 'ayom' and 'seddía'?",
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "expected": [
+        "ayom",
+        "seddía"
+      ],
+      "actual": "Great question! In Chamorro, both \"ayom\" and \"seddía\" relate to the concept of shade or protection from the sun, but they can be used in slightly different contexts.\n\n- **Ayom**: This term typically refers to shade, as in the shadow cast by something blocking the sun. If you're sitting under a tree to avoid direct sunlight, you would be in the \"ayom\" of the tree.\n\n- **Seddía**: This word can also mean shade, but it is often used more generally to refer to a sheltered or protected place. It can imply a sense of comfort or relief from harsh conditions, not just from sunlight.\n\nSo, while both words can be used to describe shade, \"ayom\" is more directly about the shadow itself, whereas \"seddía\" can convey a broader sense of being in a protected or comfortable area. If you're learning Chamorro, it's helpful to think about the context in which you would use each word.",
+      "passed": true,
+      "found_keywords": [
+        "ayom",
+        "seddía"
+      ],
+      "score": 100.0,
+      "response_time": 8.338727951049805
+    },
+    {
+      "id": 56,
+      "query": "How do you say 'smartphone' in Chamorro?",
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "expected": [
+        "telefon",
+        "smartphone",
+        "modern",
+        "loanword"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, in many languages, new technology terms like \"smartphone\" are often borrowed directly or adapted slightly. In Chamorro, it's possible that people might use \"smartphone\" as is, or describe it in a way that conveys its function. If you're interested in how technology terms are integrated into Chamorro, I can help with that!",
+      "passed": true,
+      "found_keywords": [
+        "smartphone"
+      ],
+      "score": 50.0,
+      "response_time": 6.265548944473267
+    },
+    {
+      "id": 57,
+      "query": "What does 'patgon' mean in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "child",
+        "kid"
+      ],
+      "actual": "In Chamorro, \"patgon\" means \"child,\" \"infant,\" \"kid,\" or \"baby.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "child",
+        "kid"
+      ],
+      "score": 100.0,
+      "response_time": 4.010732889175415
+    },
+    {
+      "id": 58,
+      "query": "Translate 'nana' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "mother",
+        "mom"
+      ],
+      "actual": "In Chamorro, \"nana\" means \"mother\" or \"mom.\" It's a common word for mother and can also be used with possessive suffixes like \"nana-hu\" (my mother), \"nana-mu\" (your mother), and \"nana-ña\" (his/her mother). [Source: supplemental_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "mother",
+        "mom"
+      ],
+      "score": 100.0,
+      "response_time": 4.428451061248779
+    },
+    {
+      "id": 59,
+      "query": "What is 'tåta' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "father",
+        "dad"
+      ],
+      "actual": "In Chamorro, \"tåta\" means \"father\" in English. [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "father"
+      ],
+      "score": 80.0,
+      "response_time": 5.016355752944946
+    },
+    {
+      "id": 60,
+      "query": "What does 'hånom' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "water"
+      ],
+      "actual": "In Chamorro, \"hånom\" means \"water\" or \"liquid.\" It's a commonly used noun in the language. If you have more questions or need help with other Chamorro words, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "water"
+      ],
+      "score": 100.0,
+      "response_time": 4.34296178817749
+    },
+    {
+      "id": 61,
+      "query": "Translate 'ga'lågu' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "dog"
+      ],
+      "actual": "In Chamorro, 'ga'lågu' means \"dog\" or \"hound.\" [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "dog"
+      ],
+      "score": 100.0,
+      "response_time": 3.9838061332702637
+    },
+    {
+      "id": 62,
+      "query": "What is 'guaiya' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "love",
+        "romantic"
+      ],
+      "actual": "In Chamorro, \"guaiya\" means \"love\" or \"to show an intense affection for someone or something.\" [Source: chamoru_info_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "love"
+      ],
+      "score": 80.0,
+      "response_time": 4.137200832366943
+    },
+    {
+      "id": 63,
+      "query": "What does 'chocho' mean in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "eat",
+        "eating"
+      ],
+      "actual": "In Chamorro, \"chocho\" means \"eat,\" \"devour,\" or \"consume.\" It doesn't take a specific object, so it can be used in a general sense. For example, \"Malago' yo' chumocho\" means \"I want to eat.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "eat"
+      ],
+      "score": 80.0,
+      "response_time": 3.9898221492767334
+    },
+    {
+      "id": 64,
+      "query": "Translate 'bunita' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "beautiful",
+        "pretty",
+        "pleasing",
+        "nice"
+      ],
+      "actual": "In Chamorro, \"bunita\" means \"pretty,\" \"pleasing,\" \"nice,\" \"gracious,\" or \"neat,\" often used to describe something or someone that is visually appealing or charming. [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "pretty",
+        "pleasing",
+        "nice"
+      ],
+      "score": 80.0,
+      "response_time": 3.8562822341918945
+    },
+    {
+      "id": 65,
+      "query": "What is 'dikike'' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "small",
+        "little"
+      ],
+      "actual": "In English, \"dikike'\" means small, little, diminutive, tiny, petite, or wee. [Source: chamoru_info_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "small",
+        "little"
+      ],
+      "score": 100.0,
+      "response_time": 4.067199945449829
+    },
+    {
+      "id": 66,
+      "query": "What does 'dankolo' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "big",
+        "large",
+        "huge"
+      ],
+      "actual": "In Chamorro, \"dankolo\" means \"big,\" \"large,\" \"great,\" or \"huge.\" It's a versatile word used to describe anything of considerable size or importance. If you have any more questions about Chamorro words or need examples, feel free to ask! [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "big",
+        "large",
+        "huge"
+      ],
+      "score": 100.0,
+      "response_time": 5.288876056671143
+    },
+    {
+      "id": 67,
+      "query": "Translate 'agaga'' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "red"
+      ],
+      "actual": "In Chamorro, 'agaga'' means \"red.\" [Sources: chamoru_info_dictionary, chamorro_english_dictionary_TOD, revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "red"
+      ],
+      "score": 100.0,
+      "response_time": 4.838381767272949
+    },
+    {
+      "id": 68,
+      "query": "What is 'asut' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "blue",
+        "azure"
+      ],
+      "actual": "In Chamorro, \"asut\" means \"blue\" or \"azure\" in English. [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "blue",
+        "azure"
+      ],
+      "score": 100.0,
+      "response_time": 3.773655891418457
+    },
+    {
+      "id": 69,
+      "query": "What does 'amigu' mean in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "friend"
+      ],
+      "actual": "In Chamorro, \"amigu\" means \"friend,\" \"buddy,\" \"pal,\" \"partner,\" \"companion,\" or \"comrade.\" It refers to a male friend, while \"amiga\" would be the female equivalent. [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "friend"
+      ],
+      "score": 100.0,
+      "response_time": 5.1674652099609375
+    },
+    {
+      "id": 70,
+      "query": "Translate 'halom' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "inside",
+        "enter",
+        "into"
+      ],
+      "actual": "In Chamorro, \"halom\" translates to \"in,\" \"into,\" \"inside,\" or \"enter\" in English. It can be used in various contexts, such as directing someone to go inside a place. For example, \"Chule' halom\" means \"Take it inside.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "inside",
+        "enter",
+        "into"
+      ],
+      "score": 100.0,
+      "response_time": 4.629544973373413
+    },
+    {
+      "id": 71,
+      "query": "What is 'måolek' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "good",
+        "well",
+        "fine"
+      ],
+      "actual": "In Chamorro, \"måolek\" translates to \"good\" in English. It's a very common word used in many contexts, such as expressing well-being or describing something positively. For example, you might say \"Måolek yu'\" which means \"I am good\" or \"I am well.\"",
+      "passed": true,
+      "found_keywords": [
+        "good",
+        "well"
+      ],
+      "score": 80.0,
+      "response_time": 9.41406774520874
+    },
+    {
+      "id": 72,
+      "query": "What does 'taibali' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "expected": [
+        "worthless",
+        "useless",
+        "waste",
+        "bad"
+      ],
+      "actual": "In Chamorro, \"taibali\" means \"worthless,\" \"useless,\" \"waste,\" or \"destitute of wealth.\" [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "worthless",
+        "useless",
+        "waste"
+      ],
+      "score": 80.0,
+      "response_time": 3.78336501121521
+    },
+    {
+      "id": 73,
+      "query": "Translate 'guaguan' to English",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "expensive",
+        "costly"
+      ],
+      "actual": "In Chamorro, \"guaguan\" means \"expensive\" or \"costly.\" [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "expensive",
+        "costly"
+      ],
+      "score": 100.0,
+      "response_time": 3.694413900375366
+    },
+    {
+      "id": 74,
+      "query": "What is 'baråtu' in English?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "cheap",
+        "inexpensive"
+      ],
+      "actual": "In English, \"baråtu\" means \"cheap,\" \"inexpensive,\" or \"low-priced.\" [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": true,
+      "found_keywords": [
+        "cheap",
+        "inexpensive"
+      ],
+      "score": 100.0,
+      "response_time": 3.9976730346679688
+    },
+    {
+      "id": 75,
+      "query": "What does 'metgot' mean?",
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "expected": [
+        "strong",
+        "powerful"
+      ],
+      "actual": "In Chamorro, \"metgot\" means strong, stout, sturdy, stalwart, tough, tenacious, powerful, or solid. It can also describe something as very intense or concentrated. [Sources: chamorro_english_dictionary_TOD, chamoru_info_dictionary]\n\nIf you have any more questions about Chamorro words or need further clarification, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "strong",
+        "powerful"
+      ],
+      "score": 100.0,
+      "response_time": 4.713397979736328
+    },
+    {
+      "id": 76,
+      "query": "How do I say 'my house' in Chamorro?",
+      "category": "grammar",
+      "difficulty": "easy",
+      "expected": [
+        "guma'-hu"
+      ],
+      "actual": "In Chamorro, \"my house\" is said as **\"gima'å-hu.\"** The word \"gima'\" means \"house,\" and \"-hu\" is a possessive suffix meaning \"my.\" [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 5.483842611312866
+    },
+    {
+      "id": 77,
+      "query": "What is the possessive form of 'patgon' for 'your child'?",
+      "category": "grammar",
+      "difficulty": "medium",
+      "expected": [
+        "patgon-mu"
+      ],
+      "actual": "In Chamorro, to indicate possession, you often add a possessive suffix to the noun. For the word \"patgon,\" which means \"child,\" the possessive form for \"your child\" would be \"patgon-mu,\" where \"-mu\" is the suffix indicating \"your.\" \n\nIf you have any more questions about Chamorro possessive forms or anything else, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "patgon-mu"
+      ],
+      "score": 100.0,
+      "response_time": 4.856023788452148
+    },
+    {
+      "id": 78,
+      "query": "How do I make 'patgon' plural?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "famagu'on",
+        "plural",
+        "children"
+      ],
+      "actual": "Based on current information from the web sources, the word \"patgon\" in Chamorro can be made plural by simply adding \"siha\" after it. So, \"patgon\" (child) becomes \"patgon siha\" (children) to indicate the plural form. This structure is typical in Chamorro when pluralizing nouns. \n\nFor example, if you want to say \"the children,\" you would say \"i patgon siha.\" This pattern is consistent with how Chamorro often handles pluralization by appending \"siha\" to the noun.",
+      "passed": true,
+      "found_keywords": [
+        "plural",
+        "children"
+      ],
+      "score": 80.0,
+      "response_time": 7.136911869049072
+    },
+    {
+      "id": 79,
+      "query": "What is the plural of 'ga'lågu'?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "ga'lågo",
+        "dogs",
+        "plural"
+      ],
+      "actual": "In Chamorro, the word \"ga'lågu\" means \"dog,\" and to make it plural, you would say \"ga'lagu siha.\" The word \"siha\" is commonly used to indicate a plural form for nouns in Chamorro. So \"ga'lagu siha\" translates to \"dogs.\" Keep practicing, and you'll get the hang of these patterns!",
+      "passed": true,
+      "found_keywords": [
+        "dogs",
+        "plural"
+      ],
+      "score": 80.0,
+      "response_time": 5.454816102981567
+    },
+    {
+      "id": 80,
+      "query": "How do you say 'his mother' in Chamorro?",
+      "category": "grammar",
+      "difficulty": "medium",
+      "expected": [
+        "nana-ña"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, I can tell you that in Chamorro, possessive pronouns are often combined with the noun. If you have any other questions about Chamorro language or culture, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.316325902938843
+    },
+    {
+      "id": 81,
+      "query": "What is the difference between 'chocho' and 'kånno''?",
+      "category": "confusables",
+      "difficulty": "hard",
+      "expected": [
+        "intransitive",
+        "transitive",
+        "object",
+        "eat"
+      ],
+      "actual": "In Chamorro, both \"chocho\" and \"kånno'\" relate to eating, but they are used in slightly different contexts.\n\n- **Chocho** is a general term for \"to eat\" or refers to the act of eating in general contexts. You might use it when talking about eating in a casual or everyday sense.\n\n- **Kånno'** is also used for \"to eat,\" but it's often used in more specific contexts or to emphasize the action of eating. It might be used in phrases that highlight the importance or enjoyment of the meal.\n\nIn practice, both words are interchangeable in many situations, but \"chocho\" might be the more commonly used term in everyday conversation. If you're just starting to learn Chamorro, using \"chocho\" when talking about eating is a good choice. As you become more comfortable with the language, you'll get a sense of when \"kånno'\" might be more appropriate based on context.",
+      "passed": true,
+      "found_keywords": [
+        "eat"
+      ],
+      "score": 50.0,
+      "response_time": 7.302955865859985
+    },
+    {
+      "id": 82,
+      "query": "What's the difference between 'mamahlao' and 'mahngang'?",
+      "category": "confusables",
+      "difficulty": "hard",
+      "expected": [
+        "ashamed",
+        "startled",
+        "different",
+        "shy",
+        "surprised"
+      ],
+      "actual": "The words \"mamahlao\" and \"mahngang\" have different meanings in Chamorro, and they relate to different feelings or states of being.\n\n**Mamahlao** means \"ashamed\" or \"embarrassed.\" It describes the feeling you might have when you feel shy, embarrassed, or are conscious of doing something that might be socially frowned upon. It's an important concept in Chamorro culture, where social harmony and respect are highly valued.\n\n**Mahngang**, on the other hand, means \"surprised\" or \"astonished.\" It refers to the feeling of being caught off guard or surprised by something unexpected.\n\nBoth terms describe emotional states, but \"mamahlao\" is about feeling embarrassment or shame, while \"mahngang\" is about feeling surprise or astonishment. If you have more questions about how these words are used or need examples, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "ashamed",
+        "different",
+        "shy",
+        "surprised"
+      ],
+      "score": 80.0,
+      "response_time": 7.502519845962524
+    },
+    {
+      "id": 83,
+      "query": "When do I use 'guaiya' vs 'gofli'e''?",
+      "category": "confusables",
+      "difficulty": "hard",
+      "expected": [
+        "romantic",
+        "platonic",
+        "love",
+        "different"
+      ],
+      "actual": "Great question! Both \"guaiya\" and \"gofli'e'\" are important verbs in Chamorro, but they have different meanings and uses.\n\n- **Guaiya** means \"to love\" or \"to like.\" You would use \"guaiya\" when expressing affection or love for someone or something. For example, \"Guaiya yu' hao\" means \"I love you.\"\n\n- **Gofli'e'** means \"to see\" or \"to meet.\" You use \"gofli'e'\" when you're talking about seeing someone or meeting up with them. For instance, \"Bai hu gofli'e' hao agupa'\" means \"I will see you tomorrow.\"\n\nSo, remember:\n- Use **guaiya** for expressions of love or liking.\n- Use **gofli'e'** when you're talking about seeing or meeting someone.\n\nI hope this helps! Keep practicing, and you'll get the hang of it. If you have more questions, feel free to ask.",
+      "passed": true,
+      "found_keywords": [
+        "love",
+        "different"
+      ],
+      "score": 80.0,
+      "response_time": 8.530984878540039
+    },
+    {
+      "id": 84,
+      "query": "What's the difference between 'siempre' and 'taigue'?",
+      "category": "confusables",
+      "difficulty": "hard",
+      "expected": [
+        "surely",
+        "always",
+        "absent",
+        "not present",
+        "different",
+        "siempre",
+        "taigue"
+      ],
+      "actual": "Great question! In Chamorro, \"siempre\" and \"taigue\" have distinct meanings and uses, often confused due to Spanish influence.\n\n- **Siempre** means \"surely,\" \"certainly,\" or \"definitely.\" It's used to express a strong determination or certainty about future intentions or events. For example, if you say \"Siempre bai hu hånao,\" it translates to \"I will surely go\" or \"I will definitely go.\"\n\n- **Taigue**, on the other hand, means \"always\" or \"all the time.\" For instance, \"Taigue ha cho'gue\" means \"She/he always does it.\"\n\nIt's important to use these words correctly to convey the intended meaning accurately. If you have any more questions about Chamorro expressions or need more examples, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "surely",
+        "always",
+        "siempre",
+        "taigue"
+      ],
+      "score": 80.0,
+      "response_time": 6.5115439891815186
+    },
+    {
+      "id": 85,
+      "query": "When should I use 'guma'' vs 'håsienda'?",
+      "category": "confusables",
+      "difficulty": "medium",
+      "expected": [
+        "house",
+        "native",
+        "Spanish",
+        "loanword",
+        "prefer"
+      ],
+      "actual": "Great question! In Chamorro, both \"guma'\" and \"håsienda\" can refer to types of buildings or homes, but they have different connotations.\n\n**Guma'** is the more general term for a house, home, or building. It's commonly used to refer to any type of dwelling or residence. For example, \"guma'-hu\" means \"my house\" in Chamorro. [Source: chamoru_info_dictionary]\n\nOn the other hand, **håsienda** is a term borrowed from Spanish, often used to describe a large estate or plantation. It's not as commonly used in everyday conversation when referring to a regular house.\n\nSo, if you're talking about a typical home or building, \"guma'\" is the appropriate word to use. If you're referring to something more like a large estate or farm, \"håsienda\" would be more suitable. \n\nFeel free to ask if you have any more questions about Chamorro language or culture!",
+      "passed": true,
+      "found_keywords": [
+        "house",
+        "Spanish"
+      ],
+      "score": 50.0,
+      "response_time": 6.40750789642334
+    },
+    {
+      "id": 86,
+      "query": "How do you pronounce 'Håfa Adai'?",
+      "category": "pronunciation",
+      "difficulty": "easy",
+      "expected": [
+        "HAH-fah",
+        "ah-DYE",
+        "pronunciation"
+      ],
+      "actual": "\"Håfa Adai\" is pronounced as \"Hah-fah Ah-die.\" It's the standard Chamorro greeting, similar to saying \"Hello\" or \"How are you?\" in English. It's a friendly and welcoming phrase you'll often hear in Guam and among Chamorro speakers. If you have any more questions about Chamorro greetings or language, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "HAH-fah"
+      ],
+      "score": 50.0,
+      "response_time": 7.141466856002808
+    },
+    {
+      "id": 87,
+      "query": "What does the glottal stop sound like in Chamorro?",
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "expected": [
+        "apostrophe",
+        "stop",
+        "catch",
+        "uh-oh"
+      ],
+      "actual": "The glottal stop in Chamorro sounds similar to the catch in your throat you hear in the middle of the English expression \"uh-oh.\" It's a brief pause or break in the flow of air, almost like a very soft, quick \"uh\" sound. Chamorro, like many other languages, uses the glottal stop as an important phonetic component, and it can change the meaning of words depending on its placement. \n\nFor example, in the Chamorro word \"måta\" (eye), the glottal stop is not present, but in \"må'gas\" (boss or leader), you can hear the glottal stop right after the \"a.\" Practicing with words that contain the glottal stop can help you get a feel for its sound and how it's used in Chamorro.",
+      "passed": true,
+      "found_keywords": [
+        "stop",
+        "catch",
+        "uh-oh"
+      ],
+      "score": 80.0,
+      "response_time": 6.632225036621094
+    },
+    {
+      "id": 88,
+      "query": "How do I pronounce the 'å' in Chamorro?",
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "expected": [
+        "ah",
+        "vowel",
+        "open"
+      ],
+      "actual": "In Chamorro, the letter 'å' is pronounced similarly to the \"a\" in the English word \"father\" or the \"o\" in \"pot.\" It's a back, open vowel sound. If you're familiar with Spanish, it's like the sound of \"a\" in \"casa.\" \n\nIf you're practicing pronunciation, try saying \"father\" and pay attention to how your mouth feels when you say the \"a\" sound—that's the same position you'd use for 'å' in Chamorro. Keep practicing, and you'll get the hang of it!",
+      "passed": true,
+      "found_keywords": [
+        "vowel",
+        "open"
+      ],
+      "score": 80.0,
+      "response_time": 7.373918771743774
+    },
+    {
+      "id": 89,
+      "query": "How do you say 'ñ' in Chamorro words?",
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "expected": [
+        "ny",
+        "ñ",
+        "Spanish"
+      ],
+      "actual": "In Chamorro, the letter \"ñ\" is the sixteenth letter of the alphabet. It is pronounced similar to the \"ny\" sound in the English word \"canyon.\" This letter is used in Chamorro words like \"mañåhak\" (to laugh) and \"mañaina\" (parents or elders). It’s an important part of the Chamorro language and helps convey specific sounds that are distinct to Chamorro pronunciation. If you have any specific words in mind or need more examples, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "ny",
+        "ñ"
+      ],
+      "score": 80.0,
+      "response_time": 5.2829811573028564
+    },
+    {
+      "id": 90,
+      "query": "What is the correct pronunciation of 'guma''?",
+      "category": "pronunciation",
+      "difficulty": "easy",
+      "expected": [
+        "GOO-mah",
+        "glottal"
+      ],
+      "actual": "The word \"guma'\" in Chamorro is pronounced as \"goo-mah.\" The apostrophe at the end indicates a glottal stop, which is a brief pause or break in the sound. So when you say it, you should hear a slight stop between the \"ma\" and the next word if there is one. It's similar to the pause you might hear in the English expression \"uh-oh.\" \n\nIf you're practicing, try saying \"goo-mah\" and add a slight pause at the end to get the feel of the glottal stop. Keep practicing, and you'll get more comfortable with it!",
+      "passed": true,
+      "found_keywords": [
+        "GOO-mah",
+        "glottal"
+      ],
+      "score": 100.0,
+      "response_time": 7.509453058242798
+    },
+    {
+      "id": 91,
+      "query": "How do I say 'two' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "hugua",
+        "dos"
+      ],
+      "actual": "In Chamorro, 'two' is **håcha**. [Source: chamorro_english_dictionary_TOD]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.271704912185669
+    },
+    {
+      "id": 92,
+      "query": "What is 'three' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "tulu",
+        "tres"
+      ],
+      "actual": "In Chamorro, the word for \"three\" is \"tres.\" If you have any more questions or need help with numbers in Chamorro, feel free to ask!",
+      "passed": true,
+      "found_keywords": [
+        "tres"
+      ],
+      "score": 80.0,
+      "response_time": 5.959842920303345
+    },
+    {
+      "id": 93,
+      "query": "How do you say 'ten' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "månot",
+        "manot",
+        "diez"
+      ],
+      "actual": "In Chamorro, 'ten' is **fulu**. [Source: revised_and_updated_chamorro_dictionary]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 3.8978829383850098
+    },
+    {
+      "id": 94,
+      "query": "Translate 'today' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "pågo",
+        "pago",
+        "på'gu",
+        "ånai"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, if you're interested in learning more about Chamorro or need help with other words or phrases, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 5.688050270080566
+    },
+    {
+      "id": 95,
+      "query": "What is 'tomorrow' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "agupa'",
+        "agupa"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. However, if you have any other questions about Chamorro words or need help with phrases, feel free to ask!",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.362334966659546
+    },
+    {
+      "id": 96,
+      "query": "How do I say 'yesterday' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "expected": [
+        "nigap"
+      ],
+      "actual": "In Chamorro, 'yesterday' is **nåkato**. [Source: chamorro_english_dictionary_TOD]",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 3.9069557189941406
+    },
+    {
+      "id": 97,
+      "query": "Translate 'go' to Chamorro",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "hanao",
+        "mamolek"
+      ],
+      "actual": "In Chamorro, 'go' is translated as **\"hånao\"**. [Source: chamorro_english_dictionary_TOD]",
+      "passed": true,
+      "found_keywords": [
+        "hanao"
+      ],
+      "score": 80.0,
+      "response_time": 3.5540618896484375
+    },
+    {
+      "id": 98,
+      "query": "What is 'come' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "måtto",
+        "matto"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you have a sentence or context in which \"come\" is used, I might be able to help with a related phrase or expression.",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 3.999528169631958
+    },
+    {
+      "id": 99,
+      "query": "How do you say 'want' in Chamorro?",
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "expected": [
+        "malago'"
+      ],
+      "actual": "I don't have that specific translation in my dictionary sources. If you have a particular sentence or context in mind, feel free to share it, and I can help explain or provide more information related to Chamorro expressions for desire or needs.",
+      "passed": false,
+      "found_keywords": [],
+      "score": 0.0,
+      "response_time": 4.2937750816345215
+    },
+    {
+      "id": 100,
+      "query": "What does 'man' prefix mean in Chamorro verbs?",
+      "category": "grammar",
+      "difficulty": "hard",
+      "expected": [
+        "plural",
+        "they",
+        "collective"
+      ],
+      "actual": "In Chamorro, the prefix \"man-\" is often used to indicate plurality, particularly in verbs and nouns. When added to a verb, it can signify that the action is being performed by multiple subjects. For example, \"baila\" means \"to dance,\" and \"manbaila\" means \"they dance\" or \"they are dancing,\" indicating more than one person is involved in the dancing. This prefix is a useful way to convey that an action is being carried out collectively. It's similar to adding \"they\" or \"we\" in English to show that the action involves multiple people. \n\nFeel free to ask if you have more questions about Chamorro grammar or usage!",
+      "passed": true,
+      "found_keywords": [
+        "plural",
+        "they",
+        "collective"
+      ],
+      "score": 100.0,
+      "response_time": 8.079970121383667
+    }
+  ],
+  "category_stats": {
+    "translation_eng_to_cham": {
+      "total": 30,
+      "passed": 15,
+      "scores": [
+        100.0,
+        100.0,
+        100.0,
+        0.0,
+        0.0,
+        100.0,
+        0.0,
+        0.0,
+        0.0,
+        80.0,
+        100.0,
+        100.0,
+        100.0,
+        80.0,
+        100.0,
+        50.0,
+        0.0,
+        100.0,
+        0.0,
+        0.0,
+        100.0,
+        0.0,
+        80.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        80.0,
+        0.0,
+        0.0
+      ]
+    },
+    "translation_cham_to_eng": {
+      "total": 23,
+      "passed": 23,
+      "scores": [
+        80.0,
+        100.0,
+        100.0,
+        80.0,
+        100.0,
+        100.0,
+        80.0,
+        100.0,
+        100.0,
+        80.0,
+        80.0,
+        80.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        100.0,
+        80.0,
+        80.0,
+        100.0,
+        100.0,
+        100.0
+      ]
+    },
+    "phrases": {
+      "total": 9,
+      "passed": 9,
+      "scores": [
+        100.0,
+        80.0,
+        100.0,
+        80.0,
+        100.0,
+        50.0,
+        100.0,
+        80.0,
+        80.0
+      ]
+    },
+    "grammar": {
+      "total": 13,
+      "passed": 11,
+      "scores": [
+        80.0,
+        100.0,
+        80.0,
+        80.0,
+        100.0,
+        80.0,
+        80.0,
+        0.0,
+        100.0,
+        80.0,
+        80.0,
+        0.0,
+        100.0
+      ]
+    },
+    "cultural": {
+      "total": 10,
+      "passed": 10,
+      "scores": [
+        100.0,
+        80.0,
+        80.0,
+        80.0,
+        100.0,
+        80.0,
+        100.0,
+        100.0,
+        80.0,
+        100.0
+      ]
+    },
+    "edge_cases": {
+      "total": 5,
+      "passed": 5,
+      "scores": [
+        80.0,
+        100.0,
+        80.0,
+        100.0,
+        50.0
+      ]
+    },
+    "confusables": {
+      "total": 5,
+      "passed": 5,
+      "scores": [
+        50.0,
+        80.0,
+        80.0,
+        80.0,
+        50.0
+      ]
+    },
+    "pronunciation": {
+      "total": 5,
+      "passed": 5,
+      "scores": [
+        50.0,
+        80.0,
+        80.0,
+        80.0,
+        100.0
+      ]
+    }
+  }
+}

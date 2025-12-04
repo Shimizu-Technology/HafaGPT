@@ -1,0 +1,119 @@
+================================================================================
+HafaGPT EVALUATION REPORT
+================================================================================
+
+Timestamp: 2025-12-04T18:03:05.595841
+Mode: english
+API URL: http://localhost:8000
+
+--------------------------------------------------------------------------------
+OVERALL SUMMARY
+--------------------------------------------------------------------------------
+
+Total Tests: 100
+Passed: 86 (86.0%)
+Failed: 14 (14.0%)
+Average Score: 75.2%
+Average Response Time: 5.59s
+
+--------------------------------------------------------------------------------
+CATEGORY BREAKDOWN
+--------------------------------------------------------------------------------
+
+CONFUSABLES: 5/5 (100.0%) - Avg Score: 72.0%
+CULTURAL: 10/10 (100.0%) - Avg Score: 90.0%
+EDGE_CASES: 5/5 (100.0%) - Avg Score: 92.0%
+GRAMMAR: 12/13 (92.3%) - Avg Score: 81.5%
+PHRASES: 8/9 (88.9%) - Avg Score: 71.1%
+PRONUNCIATION: 5/5 (100.0%) - Avg Score: 72.0%
+TRANSLATION_CHAM_TO_ENG: 23/23 (100.0%) - Avg Score: 93.0%
+TRANSLATION_ENG_TO_CHAM: 18/30 (60.0%) - Avg Score: 53.3%
+
+--------------------------------------------------------------------------------
+FAILED QUERIES (14 total)
+--------------------------------------------------------------------------------
+
+ID: 4
+Query: Translate 'apple' to Chamorro
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: mansåna, mansana, mångsana
+Response: I don't have that specific translation in my dictionary sources. If you have more context or a sentence, I might be able to help with that!...
+
+ID: 9
+Query: How do you say 'eat' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: chumocho, chocho, kånno', kanno, kånnu'
+Response: In Chamorro, 'eat' is **chumochu**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 12
+Query: How do I say 'beautiful' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: bunita, bonitu, bunitu
+Response: In Chamorro, the word for 'beautiful' is **"gef paopao"**. It's a lovely way to compliment someone or something. If you have any more questions about Chamorro or need help with phrases, feel free to a...
+
+ID: 22
+Query: What is 'red' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: agaga'
+Response: I don't have that specific translation in my dictionary sources. If you have more context or another word you need help with, feel free to ask!...
+
+ID: 24
+Query: Translate 'small' to Chamorro
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: dikike', díkiki', hågui, dichicheng
+Response: I don't have that specific translation in my dictionary sources. However, if you're interested in describing something small in a sentence or context, feel free to ask! I can help with that....
+
+ID: 25
+Query: What is 'now' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: pågo, pago
+Response: I don't have that specific translation in my dictionary sources. However, if you are looking for a phrase to express immediacy or something happening at the present moment, you might use "påt" which c...
+
+ID: 46
+Query: Translate 'Where is the bathroom?' to Chamorro
+Category: phrases | Difficulty: medium
+Expected Keywords: bathroom, mångge
+Response: I don't have that specific translation in my dictionary sources. However, I can help with some related phrases or concepts if you're interested! Let me know if there's anything else you'd like to lear...
+
+ID: 76
+Query: How do I say 'my house' in Chamorro?
+Category: grammar | Difficulty: easy
+Expected Keywords: guma'-hu
+Response: In Chamorro, "my house" is translated as "guåhu i gima'." If you have any more questions about Chamorro phrases or need further assistance, feel free to ask!...
+
+ID: 93
+Query: How do you say 'ten' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: månot, manot, diez
+Response: In Chamorro, "ten" is **fulu**. If you have any more questions or need further assistance with numbers in Chamorro, feel free to ask!...
+
+ID: 94
+Query: Translate 'today' to Chamorro
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: pågo, pago, på'gu, ånai
+Response: I don't have that specific translation in my dictionary sources. However, if you have any other Chamorro language questions or need help with phrases or context, feel free to ask!...
+
+ID: 95
+Query: What is 'tomorrow' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: agupa', agupa
+Response: In Chamorro, "tomorrow" is translated as "åpplacha'." If you have any more questions or need help with Chamorro phrases, feel free to ask!...
+
+ID: 96
+Query: How do I say 'yesterday' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: medium
+Expected Keywords: nigap
+Response: In Chamorro, 'yesterday' is **niyok**. [Source: chamorro_english_dictionary_TOD]...
+
+ID: 98
+Query: What is 'come' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: måtto, matto
+Response: I don’t have that specific translation in my dictionary sources. If you have more context or a sentence, I might be able to help further!...
+
+ID: 99
+Query: How do you say 'want' in Chamorro?
+Category: translation_eng_to_cham | Difficulty: easy
+Expected Keywords: malago'
+Response: I don't have that specific translation in my dictionary sources. If you're interested in learning more about expressing desires or needs in Chamorro, feel free to ask! There are often phrases or expre...
+
