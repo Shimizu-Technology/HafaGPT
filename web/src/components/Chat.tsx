@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home } from 'lucide-react';
-import { useChatbot, ChatMessage } from '../hooks/useChatbot';
+import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { 
@@ -50,7 +50,7 @@ export function Chat() {
     return null;
   });
   
-  const { sendMessage, resetSession, loading, error, setError } = useChatbot();
+  const { sendMessage, cancelMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
@@ -118,22 +118,28 @@ export function Chat() {
     
     // Load messages from the separate conversation messages query
     if (conversationMessages) {
-      const chatMessages: ChatMessage[] = conversationMessages.map((msg: ConversationMessage) => ({
+      const chatMessages: ChatMessage[] = conversationMessages.map((msg: ConversationMessage) => {
+        // Detect cancelled messages from the database
+        const isCancelled = msg.role === 'assistant' && msg.content === '[Message was cancelled by user]';
+        
+        return {
           role: msg.role,
           content: msg.content,
-        imageUrl: msg.image_url || undefined,
+          imageUrl: msg.image_url || undefined,
           timestamp: new Date(msg.timestamp).getTime(),
-        sources: msg.sources?.map((src) => ({
+          sources: msg.sources?.map((src) => ({
             name: src.name,
             page: src.page ?? null
           })) || [],
           used_rag: msg.used_rag || false,
           used_web_search: msg.used_web_search || false,
-        response_time: msg.response_time || undefined,
-        systemType: msg.role === 'system' ? 'mode_change' : undefined,
-        mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined
-        }));
-        setMessages(chatMessages);
+          response_time: msg.response_time || undefined,
+          systemType: msg.role === 'system' ? 'mode_change' : (isCancelled ? 'cancelled' : undefined),
+          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined,
+          cancelled: isCancelled
+        };
+      });
+      setMessages(chatMessages);
     }
   }, [conversationMessages, activeConversationId]);
 
@@ -350,7 +356,19 @@ export function Chat() {
       await queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
       
     } catch (err) {
-      console.error('Failed to send message:', err);
+      // Handle cancelled messages
+      if (err instanceof CancelledError) {
+        const cancelledMessage: ChatMessage = {
+          role: 'system',
+          content: 'Message cancelled',
+          timestamp: Date.now(),
+          systemType: 'cancelled',
+          cancelled: true,
+        };
+        setMessages((prev) => [...prev, cancelledMessage]);
+      } else {
+        console.error('Failed to send message:', err);
+      }
     } finally {
       // Message sending complete - allow message loading again
       isSendingMessageRef.current = false;
@@ -663,6 +681,7 @@ End of Export
                   onImageClick={setSelectedImage}
                   messageId={message.id}
                   conversationId={activeConversationId || undefined}
+                  cancelled={message.cancelled}
                 />
               ))}
               {loading && <LoadingIndicator />}
@@ -715,6 +734,8 @@ End of Export
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : undefined}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
+          loading={loading}
+          onCancel={cancelMessage}
         />
       </div>
 

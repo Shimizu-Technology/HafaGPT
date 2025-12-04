@@ -175,11 +175,20 @@ export function ConversationPractice() {
     }
   };
 
-  // Handle key press - Ctrl/Cmd+Enter to send (allows Enter for new lines on mobile)
+  // Handle key press - device-dependent Enter behavior
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      sendMessage();
+    // Detect if mobile device (small screen or touch device)
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    
+    if (e.key === 'Enter') {
+      if (isMobile) {
+        // Mobile: Don't send on Enter, use Send button instead
+        // (This is a single-line input, so Enter would just be ignored anyway)
+      } else {
+        // Desktop: Enter = send
+        e.preventDefault();
+        sendMessage();
+      }
     }
   };
 

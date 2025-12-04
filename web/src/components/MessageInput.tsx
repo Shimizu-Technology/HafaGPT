@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File, Square } from 'lucide-react';
 
 // Supported file types
 const SUPPORTED_FILE_TYPES = [
@@ -23,9 +23,11 @@ interface MessageInputProps {
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
   onDisabledClick?: () => void;
+  loading?: boolean;
+  onCancel?: () => void;
 }
 
-export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick }: MessageInputProps) {
+export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -176,12 +178,22 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Desktop: Ctrl/Cmd+Enter to send (Enter creates new line)
-    // Mobile: Enter creates new line, use Send button
-    // This allows multiline messages on all devices
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      handleSend();
+    // Detect if mobile device (small screen or touch device)
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    
+    if (e.key === 'Enter') {
+      if (isMobile) {
+        // Mobile: Enter = new line (default behavior, do nothing)
+        // User uses the Send button to send
+      } else {
+        // Desktop: Enter = send, Shift+Enter = new line
+        if (e.shiftKey) {
+          // Shift+Enter = new line (default behavior, do nothing)
+        } else {
+          e.preventDefault();
+          handleSend();
+        }
+      }
     } else if (e.key === 'Escape') {
       setInput('');
       if (textareaRef.current) {
@@ -276,17 +288,30 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
             style={{ maxHeight: '200px', minHeight: '40px' }}
           />
-          <button
-            onClick={handleSend}
-            disabled={disabled || (!input.trim() && !selectedFile)}
-            className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
-            aria-label="Send message"
-            title="Send message (⌘/Ctrl+Enter)"
-            style={{ minHeight: '40px' }}
-          >
-            <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline">Send</span>
-          </button>
+          {loading ? (
+            <button
+              onClick={onCancel}
+              className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-hibiscus-500 to-hibiscus-600 dark:from-red-600 dark:to-red-700 text-white rounded-2xl hover:from-hibiscus-600 hover:to-hibiscus-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 flex items-center gap-2 shadow-lg shadow-hibiscus-500/20 dark:shadow-red-500/20 hover:shadow-xl hover:shadow-hibiscus-500/30 dark:hover:shadow-red-500/30 active:scale-95 self-end font-medium"
+              aria-label="Stop generating"
+              title="Stop generating"
+              style={{ minHeight: '40px' }}
+            >
+              <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
+              <span className="hidden sm:inline">Stop</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={disabled || (!input.trim() && !selectedFile)}
+              className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
+              aria-label="Send message"
+              title="Send message (Enter)"
+              style={{ minHeight: '40px' }}
+            >
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Send</span>
+            </button>
+          )}
         </div>
         
         {/* Disclaimer */}

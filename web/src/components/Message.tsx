@@ -32,14 +32,15 @@ interface MessageProps {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
-  systemType?: 'mode_change';
+  systemType?: 'mode_change' | 'cancelled';
   mode?: 'english' | 'chamorro' | 'learn';
   onImageClick?: (imageUrl: string) => void; // Callback for image clicks
   messageId?: string; // Message UUID for feedback
   conversationId?: string; // Conversation UUID for feedback
+  cancelled?: boolean; // Whether this message was cancelled
 }
 
-export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId }: MessageProps) {
+export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
@@ -189,6 +190,30 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
           <p className="text-xs text-brown-600 dark:text-gray-400 text-center mt-1">
             {modeDetails.description}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Cancelled message indicator (works for both system and assistant messages)
+  if ((isSystem && systemType === 'cancelled') || cancelled) {
+    return (
+      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+        <div className="max-w-[85%] sm:max-w-[75%]">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center text-xs sm:text-sm shadow-sm">
+              🤖
+            </div>
+            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
+          </div>
+          <div className="bg-cream-100 dark:bg-gray-800/50 border border-cream-300 dark:border-gray-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2 text-brown-500 dark:text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-sm italic">Message cancelled</span>
+            </div>
+          </div>
         </div>
       </div>
     );
