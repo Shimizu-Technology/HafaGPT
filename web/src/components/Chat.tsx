@@ -50,7 +50,7 @@ export function Chat() {
     return null;
   });
   
-  const { sendMessage, cancelMessage, resetSession, loading, error, setError } = useChatbot();
+  const { sendMessage, sendMessageStream, cancelMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
@@ -267,13 +267,59 @@ export function Chat() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [messages.length]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
+  // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
+  const userScrolledUpRef = useRef(false);
+  
+  // Check if user is near bottom of scroll
+  const isNearBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    return scrollHeight - scrollTop - clientHeight < 150;
+  };
+
+  // Track user scroll behavior
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, loading]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const handleUserScroll = () => {
+      userScrolledUpRef.current = !isNearBottom();
+    };
+    
+    container.addEventListener('scroll', handleUserScroll);
+    return () => container.removeEventListener('scroll', handleUserScroll);
+  }, []);
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    // Small delay to ensure DOM has updated
+    const timer = setTimeout(() => {
+      // Always scroll when new message is added (unless user explicitly scrolled up)
+      if (!userScrolledUpRef.current) {
+        scrollToBottom();
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [messages.length]);
+
+  // Auto-scroll during streaming
+  const isCurrentlyStreaming = messages.some(m => m.id?.startsWith('streaming_'));
+  useEffect(() => {
+    if (isCurrentlyStreaming && !userScrolledUpRef.current) {
+      // Use instant scroll during streaming for smoother experience
+      scrollToBottom('instant');
+    }
+  }, [messages, isCurrentlyStreaming]);
+  
+  // Reset scroll tracking when user sends a new message (they want to see the response)
+  const resetScrollTracking = () => {
+    userScrolledUpRef.current = false;
+  }
 
   // Detect scroll position to show/hide scroll button
   useEffect(() => {
@@ -308,6 +354,9 @@ export function Chat() {
     // Mark that we're sending a message (prevents race condition with message loading)
     isSendingMessageRef.current = true;
     
+    // Reset scroll tracking - user wants to see the response
+    resetScrollTracking();
+    
     let currentConversationId = activeConversationId;
 
     // Create conversation if none exists
@@ -339,34 +388,91 @@ export function Chat() {
 
     setMessages((prev) => [...prev, userMessage]);
 
+    // Add placeholder assistant message for streaming with "thinking" indicator
+    const assistantMessageId = `streaming_${Date.now()}`;
+    const placeholderMessage: ChatMessage = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '...',  // Show ellipsis while waiting for first chunk
+      timestamp: Date.now(),
+      sources: [],
+      used_rag: false,
+      used_web_search: false,
+    };
+    setMessages((prev) => [...prev, placeholderMessage]);
+    
+    // Track if we've received first chunk
+    let receivedFirstChunk = false;
+
     try {
-      const response = await sendMessage(message, mode, currentConversationId, image);
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: response.response,
-        sources: response.sources,
-        used_rag: response.used_rag,
-        used_web_search: response.used_web_search,
-        response_time: response.response_time,
-        timestamp: Date.now(),
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-      
-      // Invalidate the messages query so it refetches with the persisted messages
-      await queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
+      await sendMessageStream(
+        message,
+        mode,
+        currentConversationId,
+        {
+          onChunk: (_chunk, fullContent) => {
+            // Clear the "..." placeholder on first chunk and start showing real content
+            if (!receivedFirstChunk) {
+              receivedFirstChunk = true;
+            }
+            // Update the assistant message with the accumulated content
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: fullContent }
+                  : msg
+              )
+            );
+          },
+          onMetadata: (metadata) => {
+            // Update with sources and RAG status
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, ...metadata }
+                  : msg
+              )
+            );
+          },
+          onDone: (response_time) => {
+            // Update with final response time
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, response_time, id: undefined } // Remove streaming id
+                  : msg
+              )
+            );
+            // Invalidate the messages query so it refetches with the persisted messages
+            queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
+          },
+          onError: (errorMsg) => {
+            console.error('Streaming error:', errorMsg);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: `Error: ${errorMsg}` }
+                  : msg
+              )
+            );
+          },
+          onCancelled: () => {
+            // Replace streaming message with cancelled indicator
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: 'Message cancelled', systemType: 'cancelled', cancelled: true, role: 'system' as const }
+                  : msg
+              )
+            );
+          },
+        },
+        image
+      );
       
     } catch (err) {
-      // Handle cancelled messages
-      if (err instanceof CancelledError) {
-        const cancelledMessage: ChatMessage = {
-          role: 'system',
-          content: 'Message cancelled',
-          timestamp: Date.now(),
-          systemType: 'cancelled',
-          cancelled: true,
-        };
-        setMessages((prev) => [...prev, cancelledMessage]);
-      } else {
+      // Handle cancelled messages (already handled in onCancelled callback)
+      if (!(err instanceof CancelledError)) {
         console.error('Failed to send message:', err);
       }
     } finally {
@@ -667,7 +773,7 @@ End of Export
             <>
               {messages.map((message, index) => (
                 <Message 
-                  key={index} 
+                  key={message.id || index} 
                   role={message.role}
                   content={message.content}
                   imageUrl={message.imageUrl}
@@ -682,9 +788,11 @@ End of Export
                   messageId={message.id}
                   conversationId={activeConversationId || undefined}
                   cancelled={message.cancelled}
+                  isStreaming={message.id?.startsWith('streaming_')}
                 />
               ))}
-              {loading && <LoadingIndicator />}
+              {/* Only show loading indicator when not streaming (fallback for non-streaming requests) */}
+              {loading && !messages.some(m => m.id?.startsWith('streaming_')) && <LoadingIndicator />}
               {error && (
                 <div className="flex justify-center mb-4 animate-fade-in">
                   <div className="bg-hibiscus-50 dark:bg-red-950/30 border border-hibiscus-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
@@ -717,10 +825,18 @@ End of Export
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 safe-area-bottom">
         {/* Scroll to Bottom Button */}
         {showScrollButton && (
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-10 animate-scale-in">
+          <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
             <button
-              onClick={scrollToBottom}
-              className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95"
+              onClick={() => {
+                resetScrollTracking();
+                scrollToBottom();
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                resetScrollTracking();
+                scrollToBottom();
+              }}
+              className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >

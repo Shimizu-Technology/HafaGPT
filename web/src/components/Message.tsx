@@ -38,9 +38,10 @@ interface MessageProps {
   messageId?: string; // Message UUID for feedback
   conversationId?: string; // Conversation UUID for feedback
   cancelled?: boolean; // Whether this message was cancelled
+  isStreaming?: boolean; // Whether this message is currently streaming
 }
 
-export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled }: MessageProps) {
+export function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
@@ -234,53 +235,56 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                 {getRelativeTime(timestamp)}
               </span>
             )}
-            {used_rag && (
-              <span className="text-[10px] sm:text-xs font-medium bg-teal-500 dark:bg-ocean-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+            {used_rag && !isStreaming && (
+              <span className="text-[10px] sm:text-xs font-medium bg-teal-500 dark:bg-ocean-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
                 <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span className="hidden sm:inline">Knowledge Base</span>
                 <span className="sm:hidden">KB</span>
               </span>
             )}
-            {used_web_search && (
-              <span className="text-[10px] sm:text-xs font-medium bg-hibiscus-500 dark:bg-purple-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm">
+            {used_web_search && !isStreaming && (
+              <span className="text-[10px] sm:text-xs font-medium bg-hibiscus-500 dark:bg-purple-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
                 <Search className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                 <span className="hidden sm:inline">Web Search</span>
                 <span className="sm:hidden">Web</span>
               </span>
             )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopy();
-              }}
-              className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation relative z-10 cursor-pointer"
-              title="Copy message"
-              aria-label="Copy message"
-              style={{ WebkitTapHighlightColor: 'rgba(20, 184, 166, 0.3)', userSelect: 'none' }}
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
-                  <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span className="hidden sm:inline">Copy</span>
-                </>
-              )}
-            </button>
+            {/* Copy button - only show when not streaming */}
+            {!isStreaming && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+                className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation relative z-10 cursor-pointer animate-fade-in"
+                title="Copy message"
+                aria-label="Copy message"
+                style={{ WebkitTapHighlightColor: 'rgba(20, 184, 166, 0.3)', userSelect: 'none' }}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
+                    <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span className="hidden sm:inline">Copy</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
         
         {/* Message Bubble */}
         <div
-          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
+          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm transition-all duration-300 ease-out ${
             isUser
               ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-tr-md'
               : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
-          }`}
+          } ${isStreaming ? 'min-w-[120px] sm:min-w-[200px]' : ''}`}
         >
           {isUser ? (
             <div className="space-y-2">
@@ -327,7 +331,9 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
               </div>
             </div>
           ) : (
-            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none">
+            <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-all duration-300 ${
+              isStreaming && content !== '...' ? 'animate-fade-in-fast' : ''
+            }`}>
               <ReactMarkdown
                 components={{
                   // Paragraphs
@@ -412,13 +418,26 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
                   ),
                 }}
               >
-                {content}
+                {/* Only render content if it's not the thinking placeholder */}
+                {content !== '...' ? content : ''}
               </ReactMarkdown>
+              {/* Streaming cursor - only show when we have actual content */}
+              {isStreaming && content && content !== '...' && (
+                <span className="inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 animate-pulse rounded-sm" />
+              )}
+              {/* Thinking indicator - show animated dots while waiting for first chunk */}
+              {isStreaming && content === '...' && (
+                <div className="flex items-center gap-1.5 py-0.5 min-h-[1.5rem]">
+                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
+                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
+                </div>
+              )}
             </div>
           )}
           
           {/* Response Time */}
-          {!isUser && response_time && (
+          {!isUser && response_time && !isStreaming && (
             <div className="flex items-center gap-1 text-xs text-brown-600 dark:text-gray-400 mt-3 pt-2 border-t border-cream-300 dark:border-gray-700">
               <Clock className="w-3 h-3" />
               <span className="font-medium">{response_time.toFixed(2)}s</span>
@@ -426,11 +445,15 @@ export function Message({ role, content, imageUrl, sources, used_rag, used_web_s
           )}
         </div>
         
-        {/* Sources */}
-        {!isUser && sources && sources.length > 0 && <SourceCitation sources={sources} />}
+        {/* Sources - Only show when streaming is complete */}
+        {!isUser && sources && sources.length > 0 && !isStreaming && (
+          <div className="animate-fade-in">
+            <SourceCitation sources={sources} />
+          </div>
+        )}
         
-        {/* Assistant Actions (Copy + Listen) */}
-        {!isUser && !isSystem && (
+        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
+        {!isUser && !isSystem && !isStreaming && (
           <div className="flex items-center gap-2 mt-2">
             {/* Copy Button */}
             <button
