@@ -46,7 +46,8 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - ✅ **React Query** - Fast, cached data loading
 
 **Performance:**
-- Cloud (GPT-4o-mini): 2-8s responses, 99% accurate
+- Cloud (DeepSeek V3): 3-8s responses, 98% accurate (with RAG)
+- Vision fallback (Gemini 2.5 Flash): For image uploads when using non-vision models
 - Dictionary API: Instant loading (10,350+ words in memory)
 
 ---
@@ -99,13 +100,14 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - **Cost-Effective** - ~$0.60 per 100 pronunciations (HD quality)
 
 ### **Image Upload (Phase 1)** ✅
-- **GPT-4o-mini Vision** - Read and translate Chamorro text in images
+- **Vision Model Fallback** - Automatically uses Gemini 2.5 Flash for image analysis
 - **Camera & Gallery** - Take photo or upload existing image
 - **S3 Storage** - Images persisted to AWS S3 for history
 - **Image Preview** - See image before and after sending
 - **Clickable Lightbox** - Click uploaded images to view full-screen
 - **Mobile Optimized** - Camera access on mobile devices
-- **Cost-Effective** - ~$0.0000127 per image with low detail
+- **Non-Vision Model Support** - Works even when main model (DeepSeek) doesn't support images
+- **Cost-Effective** - ~$0.0001 per image with Gemini 2.5 Flash
 
 ### **Performance Optimizations** ✅
 - **Backend Query Optimization** - Removed expensive COUNT + JOIN queries
@@ -988,12 +990,14 @@ DATABASE_URL=postgresql://neon.tech/...
 **Current Production Costs:**
 - Clerk Development: **FREE** (10,000 MAU)
 - PostgreSQL (Neon): **FREE** (500MB)
-- GPT-4o-mini text: **$2-5/month**
+- DeepSeek V3 (main chat): **$0.50-2/month** (98% cheaper than GPT-4o!)
+- Gemini 2.5 Flash (vision fallback): **$0.05-0.20/month**
+- GPT-4o/4o-mini (flashcards, practice): **$0.50-1/month**
 - OpenAI TTS HD: **~$0.50-2/month** (typical usage: 50-200 pronunciations)
 - Brave Search API: **FREE** (2,000 queries/month)
-- GPT-4o-mini images: **$0.10-0.50/month**
-- AWS S3 (image storage): **$0.02-0.10/month**
-- **Total: $2.62-8.60/month** 🎉
+- OpenAI Embeddings: **~$0.30/month**
+- AWS S3 (file storage): **$0.02-0.10/month**
+- **Total: $1.87-5.30/month** 🎉 (cheaper with DeepSeek!)
 
 ---
 
@@ -1396,6 +1400,32 @@ When you have enough feedback data (50+ ratings), create a visual dashboard:
   - Frontend: Netlify (auto-deploy on push)
   - Backend: Render (auto-deploy on push)
 
+### **LLM Model Configuration** ✅ **Updated Dec 2025**
+
+**Current Setup:**
+| Purpose | Model | Provider | Cost |
+|---------|-------|----------|------|
+| Main Chat | DeepSeek V3 | OpenRouter | $0.14/$0.28 per 1M |
+| Vision Fallback | Gemini 2.5 Flash | OpenRouter | $0.15/$0.60 per 1M |
+| Flashcards | GPT-4o | OpenAI | $2.50/$10.00 per 1M |
+| Conversation Practice | GPT-4o-mini | OpenAI | $0.15/$0.60 per 1M |
+| Embeddings | text-embedding-3-small | OpenAI | $0.02 per 1M |
+
+**Why This Setup:**
+- **DeepSeek V3**: 98% accuracy on Chamorro tests, 10-20x cheaper than GPT-4o
+- **Gemini 2.5 Flash**: Fast, cheap vision model for image uploads (16x cheaper than GPT-4o)
+- **GPT-4o/4o-mini**: Used for features requiring reliable JSON output (flashcards, practice)
+
+**Model Switching:**
+- Set `CHAT_MODEL` in `.env` to switch main chat model
+- Supported: `deepseek-v3`, `gpt-4o`, `gemini-2.5-flash`, `claude-sonnet-4`, etc.
+- Vision fallback is automatic when non-vision model encounters images
+
+**Vision Model Handling:**
+- `supports_vision` flag in `MODEL_CONFIG` tracks which models support images
+- If main model doesn't support vision, automatically falls back to Gemini 2.5 Flash
+- Image URLs stripped from conversation history for non-vision models
+
 ### **API Endpoints:**
 ```
 POST   /api/chat                    # Send message to chatbot
@@ -1432,18 +1462,20 @@ langchain_pg_collection # RAG collection metadata
 ## 🎉 **Success Metrics**
 
 ### **What's Working Well:**
-- ✅ Fast responses (2-8s on cloud mode)
-- ✅ High accuracy (99% with GPT-4o-mini)
+- ✅ Fast responses (3-8s with DeepSeek V3)
+- ✅ High accuracy (98% with RAG-enhanced DeepSeek V3)
 - ✅ Smooth conversation management
 - ✅ Great mobile experience
 - ✅ Reliable authentication
-- ✅ Cost-effective ($2-6/month)
+- ✅ Very cost-effective ($1.87-5.30/month with DeepSeek!)
+- ✅ Image upload with automatic vision model fallback
+- ✅ Comprehensive test suite (150 queries, 98% pass rate)
 
 ### **Areas for Improvement:**
-- 📸 Add image upload for homework help
-- 📚 Implement flashcards for structured learning
-- 🔊 Add audio pronunciation
-- 📊 Build progress tracking dashboard
+- 🔄 Flashcard spaced repetition (user progress tracking)
+- 🎮 Learning streaks & gamification
+- 📱 Onboarding flow for new users
+- 🔊 Better Chamorro TTS (when available)
 
 ---
 
