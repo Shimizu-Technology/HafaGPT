@@ -29,6 +29,15 @@ dependencies = [
     "requests>=2.32.3",
     # REMOVED: sentence-transformers (500MB+, only needed for local embeddings)
     "uvicorn>=0.34.0",
+    # Model comparison dependencies
+    "httpx>=0.27.0",  # For OpenRouter API client
+]
+
+# Optional dependencies for direct API access (instead of OpenRouter)
+[project.optional-dependencies]
+model-comparison = [
+    "anthropic>=0.39.0",  # Direct Claude API
+    "google-generativeai>=0.8.0",  # Direct Gemini API
 ]
 
 [build-system]

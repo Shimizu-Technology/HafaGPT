@@ -143,13 +143,28 @@ def extract_target_word(query: str) -> str:
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 5: "word for X" (English→Chamorro)
+    # Pattern 5: "what is X in Chamorro" (English→Chamorro, NO quotes)
+    match = re.search(r"what is ([^\s?,]+) in chamorro", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 6: "how do you say X in Chamorro" (English→Chamorro, NO quotes)
+    match = re.search(r"how do (?:you|i) say ([^\s?,]+) (?:in chamorro)?", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 7: "word for X" (English→Chamorro)
     match = re.search(r"word for ([^\s?,]+)", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 6: "translate X to" (handles both directions)
+    # Pattern 8: "translate X to" (handles both directions)
     match = re.search(r"translate ([^\s?,]+(?:'[^\s?,]+)*) to", query, re.IGNORECASE)
+    if match:
+        return match.group(1).strip().lower()
+    
+    # Pattern 9: "the chamorro word for X" (English→Chamorro)
+    match = re.search(r"chamorro word for ([^\s?,]+)", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
@@ -373,6 +388,117 @@ class ChamorroRAG:
             print(f"⚠️  Keyword search error: {e}")
             return []
     
+    def _english_to_chamorro_search(self, english_word, k=3):
+        """
+        Search for Chamorro translations of an English word.
+        
+        FIXES THE SEMANTIC SEARCH GAP:
+        Semantic search fails for simple word lookups like "What is 'red' in Chamorro?"
+        because embeddings of "red" don't match "agaga': red (color)".
+        
+        This method uses SQL to search dictionary DEFINITIONS for the English word,
+        then returns the Chamorro headword + definition.
+        
+        Args:
+            english_word: The English word to find Chamorro translation for (e.g., "red", "tomorrow", "want")
+            k: Number of results to return
+            
+        Returns:
+            List of documents with Chamorro translations
+        """
+        if not english_word or len(english_word) < 2:
+            return []
+        
+        try:
+            import psycopg
+            import os
+            from langchain_core.documents import Document
+            
+            target_lower = english_word.lower().strip()
+            
+            # SQL search for English words in dictionary definitions
+            try:
+                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                cur = conn.cursor()
+                
+                # Search for English words in definitions
+                # Priority: definition starts with word > word as standalone > word anywhere
+                # Use word boundary matching to avoid partial matches (e.g., "red" in "required")
+                cur.execute("""
+                    SELECT 
+                        document,
+                        cmetadata,
+                        CASE
+                            -- Priority 1: Definition is exactly the word (e.g., "red" or "red.")
+                            WHEN document ~* %s THEN 1
+                            -- Priority 2: Definition starts with the word
+                            WHEN document ~* %s THEN 2
+                            -- Priority 3: Word appears as standalone (word boundary)
+                            WHEN document ~* %s THEN 3
+                            ELSE 4
+                        END as priority
+                    FROM langchain_pg_embedding 
+                    WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
+                           OR cmetadata->>'source' LIKE '%%TOD%%'
+                           OR cmetadata->>'source' LIKE '%%chamoru_info%%'
+                           OR cmetadata->>'source' LIKE '%%supplemental%%')
+                    AND document ~* %s
+                    ORDER BY priority ASC, LENGTH(document) ASC
+                    LIMIT %s
+                """, (
+                    # Priority 1: Exact definition (after newline, just the word)
+                    f'\\n{target_lower}[.;,]?\\s*$',
+                    # Priority 2: Definition starts with word
+                    f'\\n{target_lower}[^a-z]',
+                    # Priority 3: Word with word boundaries (not part of another word)
+                    f'(^|[^a-z]){target_lower}([^a-z]|$)',
+                    # Search pattern (repeated for WHERE clause) - word boundary match
+                    f'(^|[^a-z]){target_lower}([^a-z]|$)',
+                    k * 3  # Get extra results for filtering
+                ))
+                
+                results = cur.fetchall()
+                conn.close()
+                
+                if results:
+                    docs = []
+                    seen_words = set()  # Deduplicate by Chamorro headword
+                    
+                    for content, metadata, priority in results:
+                        # Extract headword from content (format: **word**\ndefinition)
+                        headword_match = re.match(r'\*\*([^*]+)\*\*', content)
+                        if headword_match:
+                            chamorro_word = headword_match.group(1).lower()
+                            
+                            # Skip if we've already seen this Chamorro word
+                            if chamorro_word in seen_words:
+                                continue
+                            
+                            # Verify English word appears in definition area (not just examples)
+                            lines = content.split('\n')
+                            definition_area = '\n'.join(lines[:3]).lower()
+                            
+                            # Check for word boundary match in definition
+                            if re.search(rf'(^|[^a-z]){target_lower}([^a-z]|$)', definition_area):
+                                seen_words.add(chamorro_word)
+                                docs.append(Document(page_content=content, metadata=metadata))
+                                
+                                if len(docs) >= k:
+                                    break
+                    
+                    if docs:
+                        return docs
+                        
+            except Exception as e:
+                print(f"⚠️  English→Chamorro SQL search error: {e}")
+                # Fall through to return empty
+            
+            return []
+            
+        except Exception as e:
+            print(f"⚠️  English→Chamorro search error: {e}")
+            return []
+    
     def search(self, query, k=3, card_type=None):
         """
         Search for relevant information in the Chamorro grammar book.
@@ -434,7 +560,13 @@ class ChamorroRAG:
                     if keyword_dict_results:
                         # Found dictionary entries! Return them directly
                         return [(doc.page_content, doc.metadata) for doc in keyword_dict_results]
-                # For English→Chamorro, we fall through to semantic search below
+                else:
+                    # English→Chamorro: Search dictionary DEFINITIONS for the English word
+                    eng_to_cham_results = self._english_to_chamorro_search(target_word, k=k)
+                    
+                    if eng_to_cham_results:
+                        # Found Chamorro translations! Return them directly
+                        return [(doc.page_content, doc.metadata) for doc in eng_to_cham_results]
         
         # Stage 1: Keyword-based retrieval for specific content (greetings, etc.)
         keyword_results = []

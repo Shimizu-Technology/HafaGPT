@@ -214,6 +214,27 @@ Edit `.env` with your values:
 OPENAI_API_KEY=sk-your-key-here
 DATABASE_URL=postgresql://localhost/chamorro_rag
 
+# ============================================================
+# 🤖 Chat Model Configuration (NEW!)
+# ============================================================
+# Switch between LLM models easily. Supports OpenAI and OpenRouter models.
+# 
+# OpenAI Models (direct):
+#   CHAT_MODEL=gpt-4o           # Default, 80% accuracy
+#   CHAT_MODEL=gpt-4o-mini      # Faster, cheaper
+#
+# OpenRouter Models (requires OPENROUTER_API_KEY):
+#   CHAT_MODEL=deepseek-v3      # 87% accuracy, cheapest ($0.00008/query) ⭐
+#   CHAT_MODEL=gemini-2.5-flash # 85% accuracy, fastest (3s avg) ⭐
+#   CHAT_MODEL=claude-sonnet-4.5 # 93% accuracy, most verbose
+#
+CHAT_MODEL=deepseek-v3
+
+# OpenRouter API Key (required for non-OpenAI models)
+# Get from: https://openrouter.ai/keys
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+# ============================================================
+
 # Authentication (Optional - enables user tracking)
 CLERK_SECRET_KEY=sk_test_your-clerk-secret-key  # Get from https://clerk.com
 
@@ -230,15 +251,7 @@ EMBEDDING_MODE=openai  # or "local" for HuggingFace
 OPENAI_API_BASE=http://localhost:1234/v1
 
 # Optional - for web search
-TAVILY_API_KEY=your-tavily-key-here
-
-# API Configuration
-ALLOWED_ORIGINS=*
-RATE_LIMIT_REQUESTS=60
-RATE_LIMIT_WINDOW=60
-
-# Weather API (Optional)
-WEATHER_API_KEY=your-weather-api-key
+BRAVE_API_KEY=your-brave-api-key
 
 # API Configuration (for production deployment)
 ALLOWED_ORIGINS=*  # Development: "*" | Production: "https://your-frontend.com"
@@ -248,12 +261,13 @@ RATE_LIMIT_WINDOW=60    # Default: 60 seconds
 
 **Note:** You only need the keys for features you want to use:
 - **Required:** `DATABASE_URL`, `OPENAI_API_KEY`
+- **Chat Model:** `CHAT_MODEL` (default: gpt-4o, see model comparison below)
+- **OpenRouter Models:** `OPENROUTER_API_KEY` (for DeepSeek, Gemini, Claude via OpenRouter)
 - **Embeddings:** `EMBEDDING_MODE` (openai/local, see below)
 - **Authentication:** `CLERK_SECRET_KEY` (for user tracking)
 - **Image Upload:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET` (for persistent images)
 - **Local LLM mode:** `OPENAI_API_BASE` + `LOCAL_MODEL`
 - **Web search:** `BRAVE_API_KEY` (free tier: 2,000 queries/month)
-- **Weather:** `WEATHER_API_KEY` (free tier: 1M calls/month)
 - **Production API:** `ALLOWED_ORIGINS`, `RATE_LIMIT_REQUESTS` (optional, have defaults)
 
 ### 5. Run the Application
@@ -881,18 +895,48 @@ This project uses a combination of open-source tools, cloud services, and APIs t
 
 ### **🤖 AI & Language Models**
 
-#### **Large Language Models (LLMs)**
-- **OpenAI GPT-4o-mini** (Cloud, Default)
-  - **Cost:** ~$0.15/1M input tokens, ~$0.60/1M output tokens
-  - **Use Case:** Production API, fast responses (5-15s)
-  - **Context:** 128K tokens
-  - **Vision:** Supports image analysis for document translation
-  
-- **LM Studio + Qwen 2.5 Coder 32B** (Local, Optional)
-  - **Cost:** Free (runs locally)
-  - **Use Case:** Privacy-focused, offline use
-  - **Speed:** Slower (30-60s responses)
-  - **Models Tested:** Qwen 2.5 Coder 32B, Phi-4-mini
+#### **Model Comparison Results (December 2025)** 🆕
+
+We tested 10+ LLM models against our 100-query Chamorro language test suite:
+
+| Model | Accuracy | Cost/Query | Speed | Verdict |
+|-------|----------|------------|-------|---------|
+| 🥇 **DeepSeek V3** | **87%** | **$0.00008** | 5.0s | **Best Value** ⭐ |
+| 🥈 **Gemini 2.5 Flash** | 85% | $0.00023 | **3.0s** | **Fastest** |
+| 🥉 **Claude Sonnet 4.5** | 88% | $0.00459 | 7.8s | Most Verbose |
+| GPT-4o | 82% | $0.00188 | 5.2s | Solid Default |
+| DeepSeek R1 | 80% | $0.00135 | 15.6s | Reasoning Model |
+| GPT-4o-mini | 80% | $0.00015 | 3.5s | Budget OpenAI |
+
+**Recommendation:** Use **DeepSeek V3** for best accuracy + cost balance, or **Gemini 2.5 Flash** for fastest responses.
+
+**Run Your Own Comparison:**
+```bash
+# List available models
+uv run python -m evaluation.compare_models --list
+
+# Compare specific models
+uv run python -m evaluation.compare_models --models gpt-4o,deepseek-v3,gemini-2.5-flash --limit 20
+
+# Full 100-query evaluation
+uv run python -m evaluation.test_evaluation --test-file test_queries_v2.json
+```
+
+#### **Supported Chat Models**
+
+Set `CHAT_MODEL` in your `.env` to switch:
+
+**OpenAI (Direct):**
+- `gpt-4o` - Default, 82% accuracy, $0.002/query
+- `gpt-4o-mini` - Faster, cheaper
+- `gpt-4-turbo` - Previous generation
+
+**OpenRouter (requires `OPENROUTER_API_KEY`):**
+- `deepseek-v3` - **87% accuracy, cheapest** ⭐
+- `gemini-2.5-flash` - **85% accuracy, fastest** ⭐
+- `claude-sonnet-4.5` - Most verbose responses
+- `deepseek-r1` - Reasoning model (slower)
+- `llama-4-maverick` - Meta's latest
 
 #### **Embeddings (Vector Search)**
 - **OpenAI text-embedding-3-small** (Cloud, Default)

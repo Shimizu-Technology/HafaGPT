@@ -78,11 +78,75 @@ from src.rag.web_search_tool import web_search, format_search_results
 # Load environment
 load_dotenv()
 
-# Initialize OpenAI client
-llm = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-)
+# ============================================================================
+# MODEL CONFIGURATION - Change CHAT_MODEL in .env to switch models!
+# ============================================================================
+# Supported models:
+#   - gpt-4o           (OpenAI - current default, 80% accuracy, $0.002/query)
+#   - gpt-4o-mini      (OpenAI - faster, cheaper, slightly less accurate)
+#   - gemini-2.5-flash (OpenRouter - 93% accuracy, fastest, $0.0002/query) ⭐ RECOMMENDED
+#   - deepseek-v3      (OpenRouter - 93% accuracy, cheapest, $0.00008/query)
+#   - claude-sonnet-4.5 (OpenRouter - 93% accuracy, most verbose, $0.005/query)
+#
+# To switch models, set CHAT_MODEL in your .env file:
+#   CHAT_MODEL=gemini-2.5-flash
+# ============================================================================
+
+# Model to provider/ID mapping
+MODEL_CONFIG = {
+    # OpenAI models (direct)
+    "gpt-4o": {"provider": "openai", "model_id": "gpt-4o"},
+    "gpt-4o-mini": {"provider": "openai", "model_id": "gpt-4o-mini"},
+    "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo"},
+    
+    # OpenRouter models (via OpenRouter API)
+    "gemini-2.5-flash": {"provider": "openrouter", "model_id": "google/gemini-2.5-flash-preview-09-2025"},
+    "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview"},
+    "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat"},
+    "deepseek-r1": {"provider": "openrouter", "model_id": "deepseek/deepseek-r1"},
+    "claude-sonnet-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4.5"},
+    "claude-sonnet-4": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4"},
+    "claude-haiku-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-haiku-4.5"},
+    "llama-4-maverick": {"provider": "openrouter", "model_id": "meta-llama/llama-4-maverick"},
+}
+
+# Get configured model (default to gpt-4o for backwards compatibility)
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o")
+
+def get_llm_client():
+    """
+    Get the appropriate LLM client based on CHAT_MODEL configuration.
+    Returns tuple of (client, model_id)
+    """
+    config = MODEL_CONFIG.get(CHAT_MODEL)
+    
+    if not config:
+        print(f"⚠️  Unknown model '{CHAT_MODEL}', falling back to gpt-4o")
+        return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+    
+    if config["provider"] == "openai":
+        return OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+        ), config["model_id"]
+    
+    elif config["provider"] == "openrouter":
+        openrouter_key = os.getenv("OPENROUTER_API_KEY")
+        if not openrouter_key:
+            print(f"⚠️  OPENROUTER_API_KEY not set, falling back to gpt-4o")
+            return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+        
+        return OpenAI(
+            api_key=openrouter_key,
+            base_url="https://openrouter.ai/api/v1"
+        ), config["model_id"]
+    
+    # Fallback
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+
+# Initialize LLM client and model
+llm, LLM_MODEL_ID = get_llm_client()
+print(f"🤖 Chat model: {CHAT_MODEL} → {LLM_MODEL_ID}")
 
 # Mode configurations
 MODE_PROMPTS = {
@@ -693,7 +757,7 @@ Provide the following in a well-organized format:
     # Get LLM response
     try:
         response = llm.chat.completions.create(
-            model="gpt-4o",  # Premium model: 96% accuracy, perfect grammar, faster than 4o-mini
+            model=LLM_MODEL_ID,  # Configured via CHAT_MODEL env variable
             temperature=0.7,
             messages=history
         )
@@ -942,7 +1006,7 @@ Provide the following in a well-organized format:
     full_response = ""
     try:
         stream = llm.chat.completions.create(
-            model="gpt-4o",
+            model=LLM_MODEL_ID,  # Configured via CHAT_MODEL env variable
             temperature=0.7,
             messages=history,
             stream=True  # Enable streaming!
