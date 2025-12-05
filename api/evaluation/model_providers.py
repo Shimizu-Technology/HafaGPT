@@ -285,6 +285,8 @@ class OpenRouterProvider(ModelProvider):
         
         # DeepSeek - BEST VALUE!
         "deepseek/deepseek-chat": (0.14, 0.28),
+        "deepseek/deepseek-v3.1-terminus": (0.21, 0.79),  # Translation #9!
+        "deepseek/deepseek-v3.2": (0.27, 0.40),
         "deepseek/deepseek-r1": (0.55, 2.19),
         "deepseek/deepseek-r1-distill-llama-70b": (0.23, 0.69),
         
@@ -441,6 +443,8 @@ AVAILABLE_MODELS = {
     # DeepSeek (via OpenRouter) - EXCELLENT performance, very cheap!
     # =========================================================================
     "deepseek-v3": ("openrouter", "deepseek/deepseek-chat"),
+    "deepseek-v3.1-terminus": ("openrouter", "deepseek/deepseek-v3.1-terminus"),  # Translation #9!
+    "deepseek-v3.2": ("openrouter", "deepseek/deepseek-v3.2"),
     "deepseek-r1": ("openrouter", "deepseek/deepseek-r1"),
     "deepseek-r1-distill-llama-70b": ("openrouter", "deepseek/deepseek-r1-distill-llama-70b"),
     

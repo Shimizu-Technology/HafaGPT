@@ -104,11 +104,15 @@ MODEL_CONFIG = {
     "gemini-2.5-flash": {"provider": "openrouter", "model_id": "google/gemini-2.5-flash-preview-09-2025", "supports_vision": True},
     "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
     "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
+    "deepseek-v3.1-terminus": {"provider": "openrouter", "model_id": "deepseek/deepseek-v3.1-terminus", "supports_vision": False},  # Translation #9
+    "deepseek-v3.2": {"provider": "openrouter", "model_id": "deepseek/deepseek-v3.2", "supports_vision": False},
     "deepseek-r1": {"provider": "openrouter", "model_id": "deepseek/deepseek-r1", "supports_vision": False},  # No vision support
     "claude-sonnet-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4.5", "supports_vision": True},
     "claude-sonnet-4": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4", "supports_vision": True},
     "claude-haiku-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-haiku-4.5", "supports_vision": True},
     "llama-4-maverick": {"provider": "openrouter", "model_id": "meta-llama/llama-4-maverick", "supports_vision": False},
+    "qwen3-vl-8b": {"provider": "openrouter", "model_id": "qwen/qwen3-vl-8b-instruct", "supports_vision": True},  # Vision model, cheap
+    "qwen3-vl-30b": {"provider": "openrouter", "model_id": "qwen/qwen3-vl-30b-a3b-instruct", "supports_vision": True},  # Vision model, larger
 }
 
 def model_supports_vision() -> bool:
@@ -157,12 +161,20 @@ print(f"🤖 Chat model: {CHAT_MODEL} → {LLM_MODEL_ID}")
 def get_vision_client():
     """
     Get a vision-capable LLM client for processing images.
-    Falls back to GPT-4o which always supports vision.
+    Uses Gemini 2.5 Flash via OpenRouter - fast, cheap, and supports vision.
     
     Returns:
         tuple: (client, model_id)
     """
-    # Use GPT-4o for vision since it's reliable and widely available
+    # Use Gemini 2.5 Flash for vision - 16x cheaper than GPT-4o and very fast
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if openrouter_key:
+        return OpenAI(
+            api_key=openrouter_key,
+            base_url="https://openrouter.ai/api/v1"
+        ), "google/gemini-2.5-flash-preview-09-2025"
+    
+    # Fallback to GPT-4o if OpenRouter not configured
     return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
 
 # Cache the vision client for reuse
@@ -175,7 +187,7 @@ def get_client_for_request(has_image: bool):
     
     For image requests:
     - If current model supports vision, use it
-    - Otherwise, fall back to GPT-4o
+    - Otherwise, fall back to Gemini 2.5 Flash (fast & cheap vision model)
     
     For text-only requests:
     - Use the configured model
@@ -186,10 +198,10 @@ def get_client_for_request(has_image: bool):
     global _vision_client, _vision_model_id
     
     if has_image and not model_supports_vision():
-        # Current model doesn't support vision, use GPT-4o
+        # Current model doesn't support vision, use Gemini 2.5 Flash
         if _vision_client is None:
             _vision_client, _vision_model_id = get_vision_client()
-            print(f"🖼️  Vision fallback: {CHAT_MODEL} → gpt-4o (image detected)")
+            print(f"🖼️  Vision fallback: {CHAT_MODEL} → gemini-2.5-flash (image detected)")
         return _vision_client, _vision_model_id
     
     # Use the default configured model
