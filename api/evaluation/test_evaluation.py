@@ -360,6 +360,8 @@ def main():
                        help='Output directory for results')
     parser.add_argument('--test-file', default='test_queries.json',
                        help='Test file to use (default: test_queries.json, or use test_queries_v2.json for 100 tests)')
+    parser.add_argument('--category', type=str, 
+                       help='Filter by category (e.g., translation_eng_to_cham, grammar, cultural). Comma-separated for multiple.')
     
     args = parser.parse_args()
     
@@ -382,6 +384,12 @@ def main():
     test_data = load_test_queries(test_file)
     test_queries = test_data['test_queries']
     test_version = test_data.get('metadata', {}).get('version', '1.0')
+    
+    # Filter by category if specified
+    if args.category:
+        categories = [c.strip().lower() for c in args.category.split(',')]
+        test_queries = [q for q in test_queries if q['category'].lower() in categories]
+        print(f"{Colors.BOLD}🏷️  Filtering by categories: {', '.join(categories)}{Colors.END}")
     
     print(f"{Colors.BOLD}📊 Test Suite Version: {test_version}{Colors.END}")
     print(f"{Colors.BOLD}📊 Found {len(test_queries)} test queries{Colors.END}")

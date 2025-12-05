@@ -1,0 +1,1224 @@
+{
+  "metadata": {
+    "created": "2025-12-05",
+    "version": "3.0",
+    "total_queries": 150,
+    "description": "Comprehensive test suite for HafaGPT - expanded from v2 with real-world usage patterns",
+    "categories": {
+      "translation_eng_to_cham": 40,
+      "translation_cham_to_eng": 28,
+      "grammar": 18,
+      "cultural": 15,
+      "phrases": 20,
+      "pronunciation": 7,
+      "confusables": 7,
+      "edge_cases": 8,
+      "conversational": 7
+    },
+    "changes_from_v2": "Added 50 new tests: conversational phrases, more vocabulary (body parts, emotions, nature, food), harder grammar, error handling, and real user scenarios"
+  },
+  "test_queries": [
+    {
+      "id": 1,
+      "query": "How do I say hello in Chamorro?",
+      "expected_keywords": ["Håfa Adai", "Hafa Adai"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Most basic greeting, should explain literal meaning"
+    },
+    {
+      "id": 2,
+      "query": "What is 'listen' in Chamorro?",
+      "expected_keywords": ["ekungok", "ékungok"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "This was the failure case from research doc - CRITICAL TEST"
+    },
+    {
+      "id": 3,
+      "query": "How do you say thank you in Chamorro?",
+      "expected_keywords": ["Si Yu'os Må'åse'", "Si Yu'os Ma'ase", "Si Yu'us Ma'ase", "maase"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Should explain literal meaning (May God have mercy) - maase = mercy (root word)"
+    },
+    {
+      "id": 4,
+      "query": "Translate 'apple' to Chamorro",
+      "expected_keywords": ["mansåna", "mansana", "mångsana"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Simple noun translation - accept diacritic variants"
+    },
+    {
+      "id": 5,
+      "query": "What does 'gofli'e'' mean?",
+      "expected_keywords": ["love", "adore", "like", "befriend"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "Reverse translation (Chamorro to English) - platonic love"
+    },
+    {
+      "id": 6,
+      "query": "What is 'ekungok' in English?",
+      "expected_keywords": ["listen", "hear"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "Reverse of the critical test case"
+    },
+    {
+      "id": 7,
+      "query": "How do I say 'house' in Chamorro?",
+      "expected_keywords": ["guma'"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common noun - should prefer guma' over håsienda"
+    },
+    {
+      "id": 8,
+      "query": "What is the Chamorro word for 'water'?",
+      "expected_keywords": ["hånom", "hanom", "hånum", "hanum"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Essential vocabulary - hånom/hånum are dialectal variants"
+    },
+    {
+      "id": 9,
+      "query": "How do you say 'eat' in Chamorro?",
+      "expected_keywords": ["chumocho", "chocho", "kånno'", "kanno", "kånnu'"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Common verb - chocho (root), chumocho (conjugated), kånno'/kånnu' (transitive)"
+    },
+    {
+      "id": 10,
+      "query": "Translate 'I love you' to Chamorro",
+      "expected_keywords": ["Hu guaiya hao"],
+      "category": "phrases",
+      "difficulty": "medium",
+      "notes": "Common phrase, should include pronunciation"
+    },
+    {
+      "id": 11,
+      "query": "What does 'mamahlao' mean?",
+      "expected_keywords": ["shame", "embarrass", "shy", "ashamed", "bashful"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "Cultural emotion word - NOT drunk, NOT afraid, NOT lazy"
+    },
+    {
+      "id": 12,
+      "query": "How do I say 'beautiful' in Chamorro?",
+      "expected_keywords": ["bunita", "bonitu", "bunitu", "gatbo", "masåma", "masåmai", "géfpa'gu", "gefpagu", "buenaplanta"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common adjective - multiple valid words: bunita (pretty), gatbo (splendid), masåma (beautiful), géfpa'gu (pretty/beautiful)"
+    },
+    {
+      "id": 13,
+      "query": "What is 'friend' in Chamorro?",
+      "expected_keywords": ["abok", "gachong", "amigo", "atungo'"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common noun - abok (modern), gachong (traditional), amigo (Spanish), atungo' (friend/acquaintance)"
+    },
+    {
+      "id": 14,
+      "query": "Translate 'rice' to Chamorro",
+      "expected_keywords": ["hineksa'", "hineksa", "ågu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Food word, cultural significance"
+    },
+    {
+      "id": 15,
+      "query": "Translate 'child' to Chamorro",
+      "expected_keywords": ["patgon", "påtgon"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common noun - accept diacritic variants"
+    },
+    {
+      "id": 16,
+      "query": "What is 'mother' in Chamorro?",
+      "expected_keywords": ["nana", "nanå"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Family term"
+    },
+    {
+      "id": 17,
+      "query": "How do I say 'father' in Chamorro?",
+      "expected_keywords": ["tata", "tatå"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Family term"
+    },
+    {
+      "id": 18,
+      "query": "What does 'håfa' mean?",
+      "expected_keywords": ["what", "why"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "Question word"
+    },
+    {
+      "id": 19,
+      "query": "How do you say 'yes' in Chamorro?",
+      "expected_keywords": ["hunggan", "hu'u"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Basic response - hunggan (formal), hu'u (informal yes/okay)"
+    },
+    {
+      "id": 20,
+      "query": "What is 'no' in Chamorro?",
+      "expected_keywords": ["åhe'", "ahe", "diahlo", "dialu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Direct reply to yes/no: åhe'. Polite refusal: diahlo/dialu (no thanks)"
+    },
+    {
+      "id": 21,
+      "query": "How do I say 'one' in Chamorro?",
+      "expected_keywords": ["unu", "uno", "håcha"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Numbers - Accept both native (unu) and Spanish (uno)"
+    },
+    {
+      "id": 22,
+      "query": "What is 'red' in Chamorro?",
+      "expected_keywords": ["agaga'", "agaga'", "agaga"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Color word - includes straight (') and curly (') apostrophe variants"
+    },
+    {
+      "id": 23,
+      "query": "How do you say 'dog' in Chamorro?",
+      "expected_keywords": ["ga'lågu", "galagu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common animal"
+    },
+    {
+      "id": 24,
+      "query": "Translate 'small' to Chamorro",
+      "expected_keywords": ["dikike'", "díkiki'", "hågui", "dichicheng"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Size adjective - dikike'/díkiki' (most common), hågui/dichicheng (alternatives)"
+    },
+    {
+      "id": 25,
+      "query": "What is 'now' in Chamorro?",
+      "expected_keywords": ["pågo", "pago"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Time word"
+    },
+    {
+      "id": 26,
+      "query": "How do I conjugate 'to eat' in Chamorro?",
+      "expected_keywords": ["chumocho", "conjugat", "verb", "form"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "Should explain verb affixes if possible"
+    },
+    {
+      "id": 27,
+      "query": "What is the difference between 'un' and 'ha'?",
+      "expected_keywords": ["you", "he", "she", "pronoun", "subject"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "Pronoun agreement - un (you), ha (he/she)"
+    },
+    {
+      "id": 28,
+      "query": "How do I say 'I am' in Chamorro?",
+      "expected_keywords": ["guahu", "yu'"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "Basic sentence structure"
+    },
+    {
+      "id": 29,
+      "query": "How do I say 'my name' in Chamorro?",
+      "expected_keywords": ["na'ån-hu", "naan-hu", "iyo-ku", "nene"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "Possessive - Accept both na'ån-hu (suffix) and iyo-ku nene' (pronoun)"
+    },
+    {
+      "id": 30,
+      "query": "What does the suffix '-hu' mean?",
+      "expected_keywords": ["my", "mine", "possessive"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "Possessive suffix"
+    },
+    {
+      "id": 31,
+      "query": "How do you form questions in Chamorro?",
+      "expected_keywords": ["håfa", "kao", "question", "word"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "Question formation"
+    },
+    {
+      "id": 32,
+      "query": "What is 'siempre' in Chamorro and does it mean 'always'?",
+      "expected_keywords": ["surely", "definitely", "certainly", "not always"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "Common misconception - means 'surely', not 'always'"
+    },
+    {
+      "id": 33,
+      "query": "What word means 'always' in Chamorro?",
+      "expected_keywords": ["taigue"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Often confused with siempre"
+    },
+    {
+      "id": 34,
+      "query": "What is the Chamorro creation story?",
+      "expected_keywords": ["creation", "Puntan", "Fu'una", "legend"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "Mythology"
+    },
+    {
+      "id": 35,
+      "query": "Who is Fu'una in Chamorro culture?",
+      "expected_keywords": ["sister", "Puntan", "creation", "goddess"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "Creation mythology"
+    },
+    {
+      "id": 36,
+      "query": "What is a latte stone?",
+      "expected_keywords": ["latte", "stone", "pillar", "ancient", "structure"],
+      "category": "cultural",
+      "difficulty": "medium",
+      "notes": "Cultural artifact"
+    },
+    {
+      "id": 37,
+      "query": "What is fiestas in Chamorro culture?",
+      "expected_keywords": ["fiesta", "village", "patron", "saint", "celebration"],
+      "category": "cultural",
+      "difficulty": "medium",
+      "notes": "Cultural celebration"
+    },
+    {
+      "id": 38,
+      "query": "What is a CHamoru?",
+      "expected_keywords": ["people", "indigenous", "Guam", "Mariana"],
+      "category": "cultural",
+      "difficulty": "easy",
+      "notes": "Identity and people"
+    },
+    {
+      "id": 39,
+      "query": "What is inafa'maolek?",
+      "expected_keywords": ["harmony", "peace", "restore", "relationship"],
+      "category": "cultural",
+      "difficulty": "medium",
+      "notes": "Core cultural value"
+    },
+    {
+      "id": 40,
+      "query": "Who was Maga'låhi Gadao?",
+      "expected_keywords": ["chief", "Gadao", "leader", "legend"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "Historical/legendary figure"
+    },
+    {
+      "id": 41,
+      "query": "What happened in Guam during World War 2?",
+      "expected_keywords": ["World War", "Japanese", "occupation", "liberation"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "Historical event"
+    },
+    {
+      "id": 42,
+      "query": "What is the Chamorro flag?",
+      "expected_keywords": ["flag", "Guam", "seal", "blue"],
+      "category": "cultural",
+      "difficulty": "medium",
+      "notes": "Symbols"
+    },
+    {
+      "id": 43,
+      "query": "What is kelaguen?",
+      "expected_keywords": ["kelaguen", "food", "lemon", "coconut"],
+      "category": "cultural",
+      "difficulty": "easy",
+      "notes": "Traditional food"
+    },
+    {
+      "id": 44,
+      "query": "How do I say 'Good morning' in Chamorro?",
+      "expected_keywords": ["Buenas", "morning", "Mañana"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "Common greeting"
+    },
+    {
+      "id": 45,
+      "query": "How do you say 'Good night'?",
+      "expected_keywords": ["Buenas noches", "night"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "Common phrase"
+    },
+    {
+      "id": 46,
+      "query": "Translate 'Where is the bathroom?' to Chamorro",
+      "expected_keywords": ["bathroom", "mångge"],
+      "category": "phrases",
+      "difficulty": "medium",
+      "notes": "Practical phrase"
+    },
+    {
+      "id": 47,
+      "query": "How do I introduce myself in Chamorro?",
+      "expected_keywords": ["name", "guahu"],
+      "category": "phrases",
+      "difficulty": "medium",
+      "notes": "Self-introduction"
+    },
+    {
+      "id": 48,
+      "query": "What is 'You're welcome' in Chamorro?",
+      "expected_keywords": ["buen probecho", "buen prubetchu", "welcome"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "Dictionary translation: buen probecho/prubetchu"
+    },
+    {
+      "id": 49,
+      "query": "How do you say 'Excuse me' in Chamorro?",
+      "expected_keywords": ["Dispensa", "excuse"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "Polite phrase"
+    },
+    {
+      "id": 50,
+      "query": "Translate 'How are you?' to Chamorro",
+      "expected_keywords": ["Håfa tatatmanu hao", "how are you"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "Common question"
+    },
+    {
+      "id": 51,
+      "query": "How do you say 'computer' in Chamorro?",
+      "expected_keywords": ["computer", "modern", "loanword"],
+      "category": "edge_cases",
+      "difficulty": "medium",
+      "notes": "Modern technology"
+    },
+    {
+      "id": 52,
+      "query": "What is 'internet' in Chamorro?",
+      "expected_keywords": ["internet", "modern"],
+      "category": "edge_cases",
+      "difficulty": "medium",
+      "notes": "Modern technology"
+    },
+    {
+      "id": 53,
+      "query": "How do I say 'I am listening to music'?",
+      "expected_keywords": ["ekungok", "music", "sentence"],
+      "category": "phrases",
+      "difficulty": "hard",
+      "notes": "Complete sentence"
+    },
+    {
+      "id": 54,
+      "query": "Translate this paragraph to Chamorro: Hello, my name is Maria. I love learning Chamorro.",
+      "expected_keywords": ["Håfa Adai", "na'ån-hu", "Maria", "paragraph"],
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "notes": "Multi-sentence translation"
+    },
+    {
+      "id": 55,
+      "query": "What's the difference between 'ayom' and 'seddía'?",
+      "expected_keywords": ["ayom", "seddía"],
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "notes": "Subtle difference explanation"
+    },
+    {
+      "id": 56,
+      "query": "How do you say 'smartphone' in Chamorro?",
+      "expected_keywords": ["telefon", "smartphone", "modern", "loanword"],
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "notes": "Very modern technology"
+    },
+    {
+      "id": 57,
+      "query": "What does 'patgon' mean in English?",
+      "expected_keywords": ["child", "kid"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - common word"
+    },
+    {
+      "id": 58,
+      "query": "Translate 'nana' to English",
+      "expected_keywords": ["mother", "mom"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - family term (note: nana without diacritic)"
+    },
+    {
+      "id": 59,
+      "query": "What is 'tåta' in English?",
+      "expected_keywords": ["father", "dad"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - family term"
+    },
+    {
+      "id": 60,
+      "query": "What does 'hånom' mean?",
+      "expected_keywords": ["water"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - essential vocabulary"
+    },
+    {
+      "id": 61,
+      "query": "Translate 'ga'lågu' to English",
+      "expected_keywords": ["dog"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - common animal"
+    },
+    {
+      "id": 62,
+      "query": "What is 'guaiya' in English?",
+      "expected_keywords": ["love", "romantic"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - romantic love (vs gofli'e' platonic)"
+    },
+    {
+      "id": 63,
+      "query": "What does 'chocho' mean in English?",
+      "expected_keywords": ["eat", "eating"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - root verb form (note: chocho is the root, chumocho is conjugated)"
+    },
+    {
+      "id": 64,
+      "query": "Translate 'bunita' to English",
+      "expected_keywords": ["beautiful", "pretty", "pleasing", "nice"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - common adjective (note: bunita with 'a' ending, not bunitu with 'u')"
+    },
+    {
+      "id": 65,
+      "query": "What is 'dikike'' in English?",
+      "expected_keywords": ["small", "little"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - size adjective"
+    },
+    {
+      "id": 66,
+      "query": "What does 'dankolo' mean?",
+      "expected_keywords": ["big", "large", "huge"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - size adjective (note: dankolo = big, not dåkkolo)"
+    },
+    {
+      "id": 67,
+      "query": "Translate 'agaga'' to English",
+      "expected_keywords": ["red"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - color"
+    },
+    {
+      "id": 68,
+      "query": "What is 'asut' in English?",
+      "expected_keywords": ["blue", "azure"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - color (note: asut = blue, not a'gang which means 'loud')"
+    },
+    {
+      "id": 69,
+      "query": "What does 'amigu' mean in English?",
+      "expected_keywords": ["friend"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - Spanish loanword"
+    },
+    {
+      "id": 70,
+      "query": "Translate 'halom' to English",
+      "expected_keywords": ["inside", "enter", "into"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - direction/movement (note: halom = inside, not manhålom)"
+    },
+    {
+      "id": 71,
+      "query": "What is 'måolek' in English?",
+      "expected_keywords": ["good", "well", "fine"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - very common word"
+    },
+    {
+      "id": 72,
+      "query": "What does 'taibali' mean?",
+      "expected_keywords": ["worthless", "useless", "waste", "bad"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "NEW: Reverse lookup - negative term (taibali = worthless/useless, close to 'bad')"
+    },
+    {
+      "id": 73,
+      "query": "Translate 'guaguan' to English",
+      "expected_keywords": ["expensive", "costly"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - practical vocabulary (note: guaguan = expensive, not mahalang which means 'yearn')"
+    },
+    {
+      "id": 74,
+      "query": "What is 'baråtu' in English?",
+      "expected_keywords": ["cheap", "inexpensive"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - opposite of mahalang"
+    },
+    {
+      "id": 75,
+      "query": "What does 'metgot' mean?",
+      "expected_keywords": ["strong", "powerful"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "NEW: Reverse lookup - descriptor"
+    },
+    {
+      "id": 76,
+      "query": "How do I say 'my house' in Chamorro?",
+      "expected_keywords": ["guma'-hu"],
+      "category": "grammar",
+      "difficulty": "easy",
+      "notes": "NEW: Possessive construction - suffix form"
+    },
+    {
+      "id": 77,
+      "query": "What is the possessive form of 'patgon' for 'your child'?",
+      "expected_keywords": ["patgon-mu"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "NEW: Possessive suffix -mu (your)"
+    },
+    {
+      "id": 78,
+      "query": "How do I make 'patgon' plural?",
+      "expected_keywords": ["famagu'on", "plural", "children"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "NEW: Plural formation"
+    },
+    {
+      "id": 79,
+      "query": "What is the plural of 'ga'lågu'?",
+      "expected_keywords": ["ga'lågo", "dogs", "plural"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "NEW: Plural formation - animal"
+    },
+    {
+      "id": 80,
+      "query": "How do you say 'his mother' in Chamorro?",
+      "expected_keywords": ["nana-ña"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "NEW: Possessive suffix -ña (his/her)"
+    },
+    {
+      "id": 81,
+      "query": "What is the difference between 'chocho' and 'kånno''?",
+      "expected_keywords": ["intransitive", "transitive", "object", "eat"],
+      "category": "confusables",
+      "difficulty": "hard",
+      "notes": "NEW: Confusable verbs - chocho (no object), kånno' (with object)"
+    },
+    {
+      "id": 82,
+      "query": "What's the difference between 'mamahlao' and 'mahngang'?",
+      "expected_keywords": ["ashamed", "startled", "different", "shy", "surprised"],
+      "category": "confusables",
+      "difficulty": "hard",
+      "notes": "NEW: Confusable words - sound similar but different meanings"
+    },
+    {
+      "id": 83,
+      "query": "When do I use 'guaiya' vs 'gofli'e''?",
+      "expected_keywords": ["romantic", "platonic", "love", "different"],
+      "category": "confusables",
+      "difficulty": "hard",
+      "notes": "NEW: Confusable words - guaiya (romantic), gofli'e' (platonic/friendship)"
+    },
+    {
+      "id": 84,
+      "query": "What's the difference between 'siempre' and 'taigue'?",
+      "expected_keywords": ["surely", "always", "absent", "not present", "different", "siempre", "taigue"],
+      "category": "confusables",
+      "difficulty": "hard",
+      "notes": "Both words: siempre (surely/always), taigue (absent/not present)"
+    },
+    {
+      "id": 85,
+      "query": "When should I use 'guma'' vs 'håsienda'?",
+      "expected_keywords": ["house", "native", "Spanish", "loanword", "prefer"],
+      "category": "confusables",
+      "difficulty": "medium",
+      "notes": "NEW: Confusable words - guma' (native, preferred), håsienda (Spanish)"
+    },
+    {
+      "id": 86,
+      "query": "How do you pronounce 'Håfa Adai'?",
+      "expected_keywords": ["HAH-fah", "HAH-fuh", "ah-DYE", "day", "pronunciation"],
+      "category": "pronunciation",
+      "difficulty": "easy",
+      "notes": "Various phonetic spellings accepted: HAH-fah/HAH-fuh, ah-DYE/day"
+    },
+    {
+      "id": 87,
+      "query": "What does the glottal stop sound like in Chamorro?",
+      "expected_keywords": ["apostrophe", "stop", "catch", "uh-oh"],
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "notes": "NEW: Glottal stop explanation"
+    },
+    {
+      "id": 88,
+      "query": "How do I pronounce the 'å' in Chamorro?",
+      "expected_keywords": ["aw", "saw", "law", "ah", "vowel"],
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "notes": "å pronounced like 'aw' in 'saw' or 'law', or like 'ah'"
+    },
+    {
+      "id": 89,
+      "query": "How do you say 'ñ' in Chamorro words?",
+      "expected_keywords": ["ny", "ñ", "Spanish"],
+      "category": "pronunciation",
+      "difficulty": "medium",
+      "notes": "NEW: Spanish-influenced pronunciation"
+    },
+    {
+      "id": 90,
+      "query": "What is the correct pronunciation of 'guma''?",
+      "expected_keywords": ["GOO-mah", "glottal"],
+      "category": "pronunciation",
+      "difficulty": "easy",
+      "notes": "NEW: Common word pronunciation"
+    },
+    {
+      "id": 91,
+      "query": "How do I say 'two' in Chamorro?",
+      "expected_keywords": ["hugua", "dos"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "NEW: Numbers - native and Spanish"
+    },
+    {
+      "id": 92,
+      "query": "What is 'three' in Chamorro?",
+      "expected_keywords": ["tulu", "tres"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "NEW: Numbers"
+    },
+    {
+      "id": 93,
+      "query": "How do you say 'ten' in Chamorro?",
+      "expected_keywords": ["månot", "manot", "diez", "dies"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Native word månot/manot; Spanish loanwords diez/dies also accepted"
+    },
+    {
+      "id": 94,
+      "query": "Translate 'today' to Chamorro",
+      "expected_keywords": ["pågo", "pago", "på'gu", "ånai"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "Time expression - pågo/pago (now/today), på'gu (now/today), ånai (today)"
+    },
+    {
+      "id": 95,
+      "query": "What is 'tomorrow' in Chamorro?",
+      "expected_keywords": ["agupa'", "agupa"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "NEW: Time expression"
+    },
+    {
+      "id": 96,
+      "query": "How do I say 'yesterday' in Chamorro?",
+      "expected_keywords": ["nigap"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "NEW: Time expression"
+    },
+    {
+      "id": 97,
+      "query": "Translate 'go' to Chamorro",
+      "expected_keywords": ["hanao", "mamolek", "låhu", "lahu", "få'pos"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "NEW: Common verb - hanao (go/leave), låhu (go/walk), få'pos (go/leave imperative)"
+    },
+    {
+      "id": 98,
+      "query": "What is 'come' in Chamorro?",
+      "expected_keywords": ["måtto", "matto", "maila'", "fatto"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "Common verb - maila' (come here), fatto (arrive/come to), måtto (arrive)"
+    },
+    {
+      "id": 99,
+      "query": "How do you say 'want' in Chamorro?",
+      "expected_keywords": ["malago'"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "NEW: Common verb - desire"
+    },
+    {
+      "id": 100,
+      "query": "What does 'man' prefix mean in Chamorro verbs?",
+      "expected_keywords": ["plural", "they", "collective"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "NEW: Verb prefix for plural/collective action"
+    },
+    {
+      "id": 101,
+      "query": "How do I say 'I'm sorry' in Chamorro?",
+      "expected_keywords": ["dispensa", "siento", "sorry"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "V3: Common apology phrase"
+    },
+    {
+      "id": 102,
+      "query": "What is 'goodbye' in Chamorro?",
+      "expected_keywords": ["Adios", "asta", "goodbye"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "V3: Common farewell"
+    },
+    {
+      "id": 103,
+      "query": "How do I say 'I don't understand' in Chamorro?",
+      "expected_keywords": ["ti", "komprende", "understand"],
+      "category": "phrases",
+      "difficulty": "medium",
+      "notes": "V3: Essential learner phrase - komprende (not kumprende)"
+    },
+    {
+      "id": 104,
+      "query": "What does 'adahi' mean?",
+      "expected_keywords": ["careful", "watch", "beware"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "easy",
+      "notes": "V3: Common warning word"
+    },
+    {
+      "id": 105,
+      "query": "How do I ask someone their name in Chamorro?",
+      "expected_keywords": ["håfa", "na'ån", "name"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Basic conversation skill"
+    },
+    {
+      "id": 106,
+      "query": "How do I say 'nice to meet you' in Chamorro?",
+      "expected_keywords": ["magof", "hu", "meet"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Polite greeting response"
+    },
+    {
+      "id": 107,
+      "query": "What is 'happy birthday' in Chamorro?",
+      "expected_keywords": ["felis", "kumple", "birthday"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "V3: Common celebration phrase"
+    },
+    {
+      "id": 108,
+      "query": "How do I say 'eye' in Chamorro?",
+      "expected_keywords": ["atadok"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Body part - atadok (eye/eyeball)"
+    },
+    {
+      "id": 109,
+      "query": "What is 'hand' in Chamorro?",
+      "expected_keywords": ["kannai", "kanai"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Body part"
+    },
+    {
+      "id": 110,
+      "query": "How do you say 'heart' in Chamorro?",
+      "expected_keywords": ["korason"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Body part - korason (Spanish loanword)"
+    },
+    {
+      "id": 111,
+      "query": "What is 'head' in Chamorro?",
+      "expected_keywords": ["ulu", "kabesa", "kåbesa"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Body part - ulu (native), kabesa/kåbesa (Spanish loan, also common)"
+    },
+    {
+      "id": 112,
+      "query": "How do I say 'happy' in Chamorro?",
+      "expected_keywords": ["magof", "alegre", "kontento"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Emotion - magof (happy), alegre/kontento (Spanish)"
+    },
+    {
+      "id": 113,
+      "query": "What is 'sad' in Chamorro?",
+      "expected_keywords": ["triste", "bubu", "piniti"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "V3: Emotion - triste (Spanish), piniti (sad/grief)"
+    },
+    {
+      "id": 114,
+      "query": "How do you say 'angry' in Chamorro?",
+      "expected_keywords": ["bubu", "lalalo", "konkuråhi", "konkurahi"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "V3: Emotion - bubu/lalalo (mad/angry), konkuråhi (becoming angry)"
+    },
+    {
+      "id": 115,
+      "query": "What is 'ocean' in Chamorro?",
+      "expected_keywords": ["tasi"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Nature word - very important for island culture"
+    },
+    {
+      "id": 116,
+      "query": "How do I say 'sun' in Chamorro?",
+      "expected_keywords": ["atdao"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Nature word"
+    },
+    {
+      "id": 117,
+      "query": "What is 'moon' in Chamorro?",
+      "expected_keywords": ["pulan", "gualafon"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Nature word - pulan (moon-related), gualafon (full moon)"
+    },
+    {
+      "id": 118,
+      "query": "How do you say 'tree' in Chamorro?",
+      "expected_keywords": ["trongko", "hayu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Nature word - trongko (tree), hayu (wood/tree)"
+    },
+    {
+      "id": 119,
+      "query": "What is 'fish' in Chamorro?",
+      "expected_keywords": ["guihan"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Food/nature - very culturally significant"
+    },
+    {
+      "id": 120,
+      "query": "How do I say 'chicken' in Chamorro?",
+      "expected_keywords": ["mannok", "påtgon mannok"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Food/animal"
+    },
+    {
+      "id": 121,
+      "query": "What is 'coconut' in Chamorro?",
+      "expected_keywords": ["niyok"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Food - culturally significant"
+    },
+    {
+      "id": 122,
+      "query": "How do you say 'run' in Chamorro?",
+      "expected_keywords": ["fålagu", "falagu", "malagu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "V3: Action verb"
+    },
+    {
+      "id": 123,
+      "query": "What is 'walk' in Chamorro?",
+      "expected_keywords": ["mamokkat", "famokkat", "mokkat"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "medium",
+      "notes": "V3: Action verb - mamokkat/famokkat (walk specifically, not hanao which means 'go')"
+    },
+    {
+      "id": 124,
+      "query": "How do I say 'sleep' in Chamorro?",
+      "expected_keywords": ["maigo'", "maigo"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Action verb"
+    },
+    {
+      "id": 125,
+      "query": "What is 'work' in Chamorro?",
+      "expected_keywords": ["cho'cho'", "chocho"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Action verb - cho'cho' (work/job)"
+    },
+    {
+      "id": 126,
+      "query": "How do you say 'I went to the store yesterday' in Chamorro?",
+      "expected_keywords": ["humanao", "nigap", "tenda", "store"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "V3: Sentence construction with past tense"
+    },
+    {
+      "id": 127,
+      "query": "How do I form the past tense in Chamorro?",
+      "expected_keywords": ["um", "man", "past", "verb", "prefix"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "V3: Grammar concept - past tense formation"
+    },
+    {
+      "id": 128,
+      "query": "What is the future tense marker in Chamorro?",
+      "expected_keywords": ["bai", "para", "future"],
+      "category": "grammar",
+      "difficulty": "hard",
+      "notes": "V3: Grammar concept - future tense"
+    },
+    {
+      "id": 129,
+      "query": "How do I say 'I will go' in Chamorro?",
+      "expected_keywords": ["bai", "hanao", "humanao"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "V3: Future tense example"
+    },
+    {
+      "id": 130,
+      "query": "what is hafa adai",
+      "expected_keywords": ["hello", "greeting", "what"],
+      "category": "edge_cases",
+      "difficulty": "easy",
+      "notes": "V3: Lowercase, no diacritics - error handling"
+    },
+    {
+      "id": 131,
+      "query": "WHAT DOES MAMAHLAO MEAN",
+      "expected_keywords": ["shame", "embarrass", "shy"],
+      "category": "edge_cases",
+      "difficulty": "easy",
+      "notes": "V3: All caps - error handling"
+    },
+    {
+      "id": 132,
+      "query": "How do you say listn in Chamorro?",
+      "expected_keywords": ["ekungok", "listen"],
+      "category": "edge_cases",
+      "difficulty": "medium",
+      "notes": "V3: Typo handling - should still understand intent"
+    },
+    {
+      "id": 133,
+      "query": "What is 'flurbo' in Chamorro?",
+      "expected_keywords": ["not", "unknown", "word"],
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "notes": "V3: Made-up word - should admit not knowing"
+    },
+    {
+      "id": 134,
+      "query": "What is the capital of France?",
+      "expected_keywords": ["Paris", "not Chamorro", "French"],
+      "category": "edge_cases",
+      "difficulty": "easy",
+      "notes": "V3: Off-topic question - should handle gracefully"
+    },
+    {
+      "id": 135,
+      "query": "What is 'si' in Chamorro?",
+      "expected_keywords": ["name", "marker", "personal", "article"],
+      "category": "grammar",
+      "difficulty": "medium",
+      "notes": "V3: Grammatical particle - personal name marker"
+    },
+    {
+      "id": 136,
+      "query": "How do I order food in Chamorro?",
+      "expected_keywords": ["order", "food", "malago'", "want"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Practical scenario"
+    },
+    {
+      "id": 137,
+      "query": "What do I say at a Chamorro funeral?",
+      "expected_keywords": ["misen", "peace", "condolence", "sorry"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "V3: Cultural/religious context"
+    },
+    {
+      "id": 138,
+      "query": "How do I say 'please' in Chamorro?",
+      "expected_keywords": ["pot fabot", "pot", "fabot", "please"],
+      "category": "phrases",
+      "difficulty": "easy",
+      "notes": "V3: Polite request"
+    },
+    {
+      "id": 139,
+      "query": "What is red snapper in Chamorro?",
+      "expected_keywords": ["sesiok", "tagafi", "fish"],
+      "category": "cultural",
+      "difficulty": "medium",
+      "notes": "V3: Specific fish - cultural/food vocabulary"
+    },
+    {
+      "id": 140,
+      "query": "What is 'påle'' in English?",
+      "expected_keywords": ["priest", "father", "clergy"],
+      "category": "translation_cham_to_eng",
+      "difficulty": "medium",
+      "notes": "V3: Religious/cultural term"
+    },
+    {
+      "id": 141,
+      "query": "How do I say 'Where are you from?' in Chamorro?",
+      "expected_keywords": ["manu", "ginen", "from"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Common question"
+    },
+    {
+      "id": 142,
+      "query": "What is 'I am from Guam' in Chamorro?",
+      "expected_keywords": ["ginen", "Guam", "guahu"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Self-identification"
+    },
+    {
+      "id": 143,
+      "query": "How do you say 'family' in Chamorro?",
+      "expected_keywords": ["familia", "parientes"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Family vocabulary - Spanish loanword"
+    },
+    {
+      "id": 144,
+      "query": "What is 'brother' in Chamorro?",
+      "expected_keywords": ["Che'lu", "che'lu", "chelu", "lahi", "Lahi"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Family term - che'lu (sibling), lahi (male). Case-insensitive matching should work."
+    },
+    {
+      "id": 145,
+      "query": "How do I say 'sister' in Chamorro?",
+      "expected_keywords": ["che'lu", "che'lu", "chelu", "palao'an", "palaoan"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Family term - che'lu (sibling), palao'an (female). Includes apostrophe variants."
+    },
+    {
+      "id": 146,
+      "query": "What is 'grandfather' in Chamorro?",
+      "expected_keywords": ["bihu", "tåta bihu"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Family term"
+    },
+    {
+      "id": 147,
+      "query": "How do you say 'grandmother' in Chamorro?",
+      "expected_keywords": ["biha", "nana biha"],
+      "category": "translation_eng_to_cham",
+      "difficulty": "easy",
+      "notes": "V3: Family term"
+    },
+    {
+      "id": 148,
+      "query": "What is traditional Chamorro medicine?",
+      "expected_keywords": ["amot", "na'homlo'", "medicine", "healer"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "V3: Cultural practice - amot (medicine), na'homlo' (healer)"
+    },
+    {
+      "id": 149,
+      "query": "What does 'taotao mona' mean?",
+      "expected_keywords": ["ancestor", "spirit", "ancient", "people"],
+      "category": "cultural",
+      "difficulty": "hard",
+      "notes": "V3: Spiritual/cultural concept"
+    },
+    {
+      "id": 150,
+      "query": "How do I say 'I speak a little Chamorro' in Chamorro?",
+      "expected_keywords": ["kumekuentos", "dikike'", "Chamorro", "speak"],
+      "category": "conversational",
+      "difficulty": "medium",
+      "notes": "V3: Useful learner phrase"
+    }
+  ]
+}
+
+  

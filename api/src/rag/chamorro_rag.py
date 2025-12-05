@@ -70,9 +70,27 @@ def detect_query_type(query: str) -> str:
     """
     query_lower = query.lower()
     
-    # Educational keywords - user wants to learn, not just look up
+    # PRIORITY 1: Translation/lookup patterns take precedence
+    # These are lookups even if they contain "how do i"
+    lookup_patterns = [
+        'in chamorro',          # "What is X in Chamorro?"
+        'to chamorro',          # "Translate X to Chamorro"
+        'in english',           # "What is X in English?"
+        'to english',           # "Translate X to English"
+        'chamorro word for',    # "What is the Chamorro word for X?"
+        'mean',                 # "What does X mean?"
+        'translate',            # "Translate X"
+        'how do you say',       # "How do you say X?" - this is a lookup!
+        'how do i say',         # "How do I say X?" - this is a lookup!
+    ]
+    
+    for pattern in lookup_patterns:
+        if pattern in query_lower:
+            return 'lookup'
+    
+    # PRIORITY 2: Educational keywords (for grammar lessons, etc.)
     educational_keywords = [
-        'how do i', 'how to', 'how can i', 'how would i',
+        'how do i', 'how to', 'how can i', 'how would i',  # Now only triggers if no lookup pattern
         'teach me', 'show me', 'explain', 'learn',
         'lesson', 'grammar', 'conjugate', 'conjugation',
         'story', 'stories', 'tell me a', 'tell me about',
@@ -82,7 +100,6 @@ def detect_query_type(query: str) -> str:
         'speak', 'conversation', 'talk about'
     ]
     
-    # Check for educational intent
     for keyword in educational_keywords:
         if keyword in query_lower:
             return 'educational'
@@ -149,7 +166,8 @@ def extract_target_word(query: str) -> str:
         return match.group(1).strip().lower()
     
     # Pattern 6: "how do you say X in Chamorro" (English→Chamorro, NO quotes)
-    match = re.search(r"how do (?:you|i) say ([^\s?,]+) (?:in chamorro)?", query, re.IGNORECASE)
+    # Handle multi-word phrases like "thank you", "good morning"
+    match = re.search(r"how do (?:you|i) say ([^?]+?)(?:\s+in\s+chamorro|\?|$)", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
@@ -422,19 +440,26 @@ class ChamorroRAG:
                 cur = conn.cursor()
                 
                 # Search for English words in definitions
-                # Priority: definition starts with word > word as standalone > word anywhere
-                # Use word boundary matching to avoid partial matches (e.g., "red" in "required")
+                # KEY FIX: Prioritize DIRECT translations over compound phrases
+                # Direct translation: "hand, arm" (word + comma/semicolon/dash)
+                # Compound phrase: "hand over" (word + space + another word)
                 cur.execute("""
                     SELECT 
                         document,
                         cmetadata,
                         CASE
-                            -- Priority 1: Definition is exactly the word (e.g., "red" or "red.")
+                            -- Priority 1: DIRECT TRANSLATION - word followed by comma, semicolon, dash, or period
+                            -- e.g., "hand, arm" or "fish--generic" or "angry."
                             WHEN document ~* %s THEN 1
-                            -- Priority 2: Definition starts with the word
+                            -- Priority 2: Word as alternative meaning (after comma/semicolon)
+                            -- e.g., ", angry" or "; mad"
                             WHEN document ~* %s THEN 2
-                            -- Priority 3: Word appears as standalone (word boundary)
+                            -- Priority 3: Word in parenthetical - e.g., "(hand)" or "(fish)"
                             WHEN document ~* %s THEN 3
+                            -- Priority 4 (LOWER): COMPOUND PHRASE - word followed by space + another word
+                            -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
+                            WHEN document ~* %s THEN 5
+                            -- Priority 5: Word appears anywhere else
                             ELSE 4
                         END as priority
                     FROM langchain_pg_embedding 
@@ -446,13 +471,19 @@ class ChamorroRAG:
                     ORDER BY priority ASC, LENGTH(document) ASC
                     LIMIT %s
                 """, (
-                    # Priority 1: Exact definition (after newline, just the word)
-                    f'\\n{target_lower}[.;,]?\\s*$',
-                    # Priority 2: Definition starts with word
-                    f'\\n{target_lower}[^a-z]',
-                    # Priority 3: Word with word boundaries (not part of another word)
-                    f'(^|[^a-z]){target_lower}([^a-z]|$)',
-                    # Search pattern (repeated for WHERE clause) - word boundary match
+                    # Priority 1: Direct translation - word followed by punctuation (not space+word)
+                    # Matches: "hand, arm" or "fish--generic" or "angry." or "No---"
+                    f'\\n{target_lower}[,;.\\-\\(]|\\|{target_lower}[,;.\\-]',
+                    # Priority 2: Alternative meaning after comma/semicolon
+                    # Matches: ", hand" or "; fish"
+                    f'[,;]\\s*{target_lower}[,;.\\s]',
+                    # Priority 3: Parenthetical
+                    # Matches: "(hand)" or "(fish)"
+                    f'\\({target_lower}\\)',
+                    # Priority 4 (DEPRIORITIZED): Compound phrase - word + space + another word
+                    # Matches: "hand over" or "fish by" - verbs/phrases, not direct translations
+                    f'\\n{target_lower}\\s+[a-z]',
+                    # Search pattern (WHERE clause) - any word boundary match
                     f'(^|[^a-z]){target_lower}([^a-z]|$)',
                     k * 3  # Get extra results for filtering
                 ))
