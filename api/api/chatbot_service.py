@@ -93,22 +93,28 @@ load_dotenv()
 # ============================================================================
 
 # Model to provider/ID mapping
+# supports_vision: whether the model can process image inputs
 MODEL_CONFIG = {
-    # OpenAI models (direct)
-    "gpt-4o": {"provider": "openai", "model_id": "gpt-4o"},
-    "gpt-4o-mini": {"provider": "openai", "model_id": "gpt-4o-mini"},
-    "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo"},
+    # OpenAI models (direct) - GPT-4o series supports vision
+    "gpt-4o": {"provider": "openai", "model_id": "gpt-4o", "supports_vision": True},
+    "gpt-4o-mini": {"provider": "openai", "model_id": "gpt-4o-mini", "supports_vision": True},
+    "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo", "supports_vision": True},
     
     # OpenRouter models (via OpenRouter API)
-    "gemini-2.5-flash": {"provider": "openrouter", "model_id": "google/gemini-2.5-flash-preview-09-2025"},
-    "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview"},
-    "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat"},
-    "deepseek-r1": {"provider": "openrouter", "model_id": "deepseek/deepseek-r1"},
-    "claude-sonnet-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4.5"},
-    "claude-sonnet-4": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4"},
-    "claude-haiku-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-haiku-4.5"},
-    "llama-4-maverick": {"provider": "openrouter", "model_id": "meta-llama/llama-4-maverick"},
+    "gemini-2.5-flash": {"provider": "openrouter", "model_id": "google/gemini-2.5-flash-preview-09-2025", "supports_vision": True},
+    "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
+    "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
+    "deepseek-r1": {"provider": "openrouter", "model_id": "deepseek/deepseek-r1", "supports_vision": False},  # No vision support
+    "claude-sonnet-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4.5", "supports_vision": True},
+    "claude-sonnet-4": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4", "supports_vision": True},
+    "claude-haiku-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-haiku-4.5", "supports_vision": True},
+    "llama-4-maverick": {"provider": "openrouter", "model_id": "meta-llama/llama-4-maverick", "supports_vision": False},
 }
+
+def model_supports_vision() -> bool:
+    """Check if the currently configured model supports vision/image input."""
+    config = MODEL_CONFIG.get(CHAT_MODEL, {})
+    return config.get("supports_vision", False)
 
 # Get configured model (default to gpt-4o for backwards compatibility)
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o")
@@ -147,6 +153,47 @@ def get_llm_client():
 # Initialize LLM client and model
 llm, LLM_MODEL_ID = get_llm_client()
 print(f"🤖 Chat model: {CHAT_MODEL} → {LLM_MODEL_ID}")
+
+def get_vision_client():
+    """
+    Get a vision-capable LLM client for processing images.
+    Falls back to GPT-4o which always supports vision.
+    
+    Returns:
+        tuple: (client, model_id)
+    """
+    # Use GPT-4o for vision since it's reliable and widely available
+    return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+
+# Cache the vision client for reuse
+_vision_client = None
+_vision_model_id = None
+
+def get_client_for_request(has_image: bool):
+    """
+    Get the appropriate LLM client based on whether the request has an image.
+    
+    For image requests:
+    - If current model supports vision, use it
+    - Otherwise, fall back to GPT-4o
+    
+    For text-only requests:
+    - Use the configured model
+    
+    Returns:
+        tuple: (client, model_id)
+    """
+    global _vision_client, _vision_model_id
+    
+    if has_image and not model_supports_vision():
+        # Current model doesn't support vision, use GPT-4o
+        if _vision_client is None:
+            _vision_client, _vision_model_id = get_vision_client()
+            print(f"🖼️  Vision fallback: {CHAT_MODEL} → gpt-4o (image detected)")
+        return _vision_client, _vision_model_id
+    
+    # Use the default configured model
+    return llm, LLM_MODEL_ID
 
 # Mode configurations
 MODE_PROMPTS = {
@@ -304,16 +351,20 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         cursor.close()
         conn.close()
         
+        # Check if current model supports vision
+        # If not, we'll strip image content from history (can't process past images anyway)
+        supports_vision = model_supports_vision()
+        
         # Build conversation history (already in chronological order)
-        # Include images if they exist AND are valid image formats
+        # Include images if they exist AND are valid image formats AND model supports vision
         history = []
         for user_msg, bot_msg, img_url, timestamp in rows:
             # Build user message (with image if available AND is a valid image format)
             # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
             is_valid_image = img_url and img_url.lower().endswith(VALID_IMAGE_EXTENSIONS)
             
-            if is_valid_image:
-                # Reconstruct vision message with image URL (only for actual images)
+            if is_valid_image and supports_vision:
+                # Reconstruct vision message with image URL (only for actual images and vision models)
                 history.append({
                     "role": "user",
                     "content": [
@@ -322,8 +373,9 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
                     ]
                 })
             else:
-                # Regular text-only message (includes PDFs, Word docs, etc.)
-                history.append({"role": "user", "content": user_msg})
+                # Regular text-only message (includes PDFs, Word docs, non-vision models, etc.)
+                # For non-vision models with past images, just use the text portion
+                history.append({"role": "user", "content": user_msg or "What does this say?"})
             
             # Add bot response
             history.append({"role": "assistant", "content": bot_msg})
@@ -755,9 +807,12 @@ Provide the following in a well-organized format:
         return early_cancelled_response()
     
     # Get LLM response
+    # Use vision-capable model if image is present and current model doesn't support vision
+    request_client, request_model = get_client_for_request(has_image=bool(image_base64))
+    
     try:
-        response = llm.chat.completions.create(
-            model=LLM_MODEL_ID,  # Configured via CHAT_MODEL env variable
+        response = request_client.chat.completions.create(
+            model=request_model,
             temperature=0.7,
             messages=history
         )
@@ -1003,10 +1058,13 @@ Provide the following in a well-organized format:
     }
     
     # Stream LLM response
+    # Use vision-capable model if image is present and current model doesn't support vision
+    request_client, request_model = get_client_for_request(has_image=bool(image_base64))
+    
     full_response = ""
     try:
-        stream = llm.chat.completions.create(
-            model=LLM_MODEL_ID,  # Configured via CHAT_MODEL env variable
+        stream = request_client.chat.completions.create(
+            model=request_model,
             temperature=0.7,
             messages=history,
             stream=True  # Enable streaming!
