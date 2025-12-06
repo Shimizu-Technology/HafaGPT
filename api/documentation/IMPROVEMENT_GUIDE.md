@@ -99,11 +99,14 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - **Mobile Optimized** - Works great on mobile devices
 - **Cost-Effective** - ~$0.60 per 100 pronunciations (HD quality)
 
-### **Image Upload (Phase 1)** ✅
+### **Image & File Upload (Phase 1)** ✅
+- **Multi-file Upload** - Up to 5 files per message (images + documents)
 - **Vision Model Fallback** - Automatically uses Gemini 2.5 Flash for image analysis
 - **Camera & Gallery** - Take photo or upload existing image
-- **S3 Storage** - Images persisted to AWS S3 for history
-- **Image Preview** - See image before and after sending
+- **Background S3 Uploads** - Non-blocking uploads for faster user experience
+- **file_urls JSONB Storage** - All file metadata stored as array in database
+- **All Files Displayed** - Chat history shows all uploaded files (thumbnails + icons)
+- **Image Preview** - See images before and after sending
 - **Clickable Lightbox** - Click uploaded images to view full-screen
 - **Mobile Optimized** - Camera access on mobile devices
 - **Non-Vision Model Support** - Works even when main model (DeepSeek) doesn't support images
@@ -179,7 +182,7 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 
 ## 🎯 **ACTIVE ROADMAP** - Next Features to Implement
 
-### **Phase 1: General File Upload** ✅ **COMPLETED (Nov 2025)**
+### **Phase 1: General File Upload** ✅ **COMPLETED (Dec 2025)**
 
 **Status:** ✅ Complete  
 **Complexity:** Medium  
@@ -190,13 +193,19 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 - 📄 **PDF Upload** - Extract and analyze text from PDF documents
 - 📝 **Word (.docx)** - Parse formatted Word documents  
 - 📋 **Text (.txt)** - Analyze plain text files
-- 🖼️ **Images** - (already supported) GPT-4o-mini Vision
+- 🖼️ **Images** - Vision model (Gemini 2.5 Flash fallback for non-vision models)
 
 **Features:**
 - ✅ Backend: pypdf + python-docx for document parsing
 - ✅ Frontend: File type detection and icons (PDF, Word, Text)
 - ✅ Document preview: Shows file type icon + filename before sending
 - ✅ Chat history: Document links in messages (clickable to download)
+- ✅ **Multi-file upload**: Up to 5 files per message (images + documents combined)
+- ✅ **Background S3 uploads**: Non-blocking for faster UX (~15s response vs ~90s before)
+- ✅ **file_urls JSONB**: Database stores array of file metadata (url, filename, type)
+- ✅ **All files displayed**: Chat history shows all uploaded files, not just first
+- ✅ **Clean message display**: User message shows original text only (no PDF content)
+- ✅ **Consistent document analysis**: Structured prompt ensures uniform response format
 - ✅ S3 storage: All files persisted to AWS S3
 - ✅ Large document handling: Truncates at 50,000 chars (~12k tokens)
 
