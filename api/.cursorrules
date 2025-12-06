@@ -118,10 +118,26 @@
 - State clears on sign-out (`isSignedIn === false`, not `!isSignedIn`)
 - Wait for Clerk load (`user !== undefined`) before fetching conversations
 
+## File Upload System
+
+### Multi-file Upload (Dec 2025)
+- **Up to 5 files** per message (images + documents combined)
+- **Supported Types**: JPEG, PNG, WebP, GIF, PDF, DOCX, TXT
+- **Background S3 uploads**: Non-blocking for faster UX
+- **file_urls JSONB**: Database stores array of `{url, filename, type, content_type}`
+- **Vision fallback**: Gemini 2.5 Flash for images when main model lacks vision
+- **Document analysis prompt**: Consistent structured output format
+
+### Key Files
+- `api/main.py`: Multi-file processing, background uploads
+- `api/chatbot_service.py`: Document analysis prompt, original_message logging
+- `api/conversations.py`: file_urls retrieval
+- `api/models.py`: FileInfo Pydantic model
+
 ## Important Notes
 
 - Keep solutions simple, don't overcomplicate
 - Modal sizes should be fixed, not content-dependent
-- Use `rails runner` for ad-hoc backend tests (if Rails present)
 - Frontend auto-deploys on GitHub push to Netlify
+- Backend auto-deploys on GitHub push to Render
 
