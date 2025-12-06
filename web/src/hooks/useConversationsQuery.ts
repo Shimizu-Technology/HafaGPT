@@ -17,6 +17,13 @@ export interface Conversation {
   message_count: number;
 }
 
+export interface FileInfo {
+  url: string;
+  filename: string;
+  type: 'image' | 'document';
+  content_type?: string;
+}
+
 export interface ConversationMessage {
   id: number;
   role: 'user' | 'assistant' | 'system';
@@ -25,7 +32,8 @@ export interface ConversationMessage {
   sources?: Array<{ name: string; page?: number }>;
   used_rag?: boolean;
   used_web_search?: boolean;
-  image_url?: string;
+  image_url?: string; // Legacy field
+  file_urls?: FileInfo[]; // New: All uploaded files
   mode?: string;
   response_time?: number;
 }

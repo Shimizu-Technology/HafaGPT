@@ -23,10 +23,18 @@ function getFilenameFromUrl(url: string): string {
   return cleanName || 'document';
 }
 
+interface FileInfo {
+  url: string;
+  filename: string;
+  type: 'image' | 'document';
+  content_type?: string;
+}
+
 interface MessageProps {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  imageUrl?: string; // For displaying uploaded files (images and documents)
+  imageUrl?: string; // Legacy: For displaying uploaded files
+  file_urls?: FileInfo[]; // New: All uploaded files
   sources?: Array<{ name: string; page: number | null }>;
   used_rag?: boolean;
   used_web_search?: boolean;
@@ -41,7 +49,7 @@ interface MessageProps {
   isStreaming?: boolean; // Whether this message is currently streaming
 }
 
-export const Message = memo(function Message({ role, content, imageUrl, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
@@ -288,8 +296,51 @@ export const Message = memo(function Message({ role, content, imageUrl, sources,
         >
           {isUser ? (
             <div className="space-y-2">
-              {/* File/Image Preview */}
-              {imageUrl && (
+              {/* Multiple Files Display */}
+              {file_urls && file_urls.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {file_urls.map((file, index) => (
+                    <div key={index}>
+                      {file.type === 'image' ? (
+                        // Image preview
+                        <img 
+                          src={file.url} 
+                          alt={file.filename}
+                          className="max-h-32 max-w-[150px] rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200 object-cover"
+                          onClick={() => onImageClick?.(file.url)}
+                          title={`Click to enlarge: ${file.filename}`}
+                        />
+                      ) : (
+                        // Document preview (PDF, Word, Text)
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 bg-white/20 dark:bg-black/20 rounded-lg hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+                        >
+                          {file.content_type?.includes('pdf') && <FileText className="w-4 h-4" />}
+                          {file.content_type?.includes('word') && <FileText className="w-4 h-4" />}
+                          {file.content_type?.includes('text') && <File className="w-4 h-4" />}
+                          {!file.content_type?.match(/pdf|word|text/) && <File className="w-4 h-4" />}
+                          <div className="flex flex-col">
+                            <span className="text-[10px] opacity-80 uppercase">
+                              {file.content_type?.includes('pdf') ? 'PDF' : 
+                               file.content_type?.includes('word') ? 'DOC' :
+                               file.content_type?.includes('text') ? 'TXT' : 'FILE'}
+                            </span>
+                            <span className="text-xs font-medium max-w-[120px] truncate">
+                              {file.filename}
+                            </span>
+                          </div>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Legacy: Single file display (fallback for old messages) */}
+              {!file_urls && imageUrl && (
                 <div className="mb-2">
                   {getFileTypeFromUrl(imageUrl) === 'image' ? (
                     // Image preview

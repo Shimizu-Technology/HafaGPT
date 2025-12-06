@@ -126,6 +126,7 @@ export function Chat() {
           role: msg.role,
           content: msg.content,
           imageUrl: msg.image_url || undefined,
+          file_urls: msg.file_urls || undefined, // Multi-file support
           timestamp: new Date(msg.timestamp).getTime(),
           sources: msg.sources?.map((src) => ({
             name: src.name,
@@ -350,7 +351,7 @@ export function Chat() {
     clerk.openSignIn();
   };
 
-  const handleSend = async (message: string, image?: File) => {
+  const handleSend = async (message: string, files?: File[]) => {
     // Mark that we're sending a message (prevents race condition with message loading)
     isSendingMessageRef.current = true;
     
@@ -376,13 +377,19 @@ export function Chat() {
       }
     }
 
-    // Create image preview URL if image exists
-    const imageUrl = image ? URL.createObjectURL(image) : undefined;
+    // Create local preview URLs for ALL files (for immediate display)
+    // These will be replaced with S3 URLs after refresh once uploads complete
+    const localFileUrls = files?.map(file => ({
+      url: URL.createObjectURL(file),
+      filename: file.name,
+      type: (file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
+      content_type: file.type
+    }));
 
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
-      imageUrl, // Add image preview URL
+      file_urls: localFileUrls, // Local blob URLs for immediate preview
       timestamp: Date.now(),
     };
 
@@ -477,7 +484,7 @@ export function Chat() {
             isSendingMessageRef.current = false;
           },
         },
-        image
+        files
       );
       
     } catch (err) {
@@ -788,6 +795,7 @@ End of Export
                   role={message.role}
                   content={message.content}
                   imageUrl={message.imageUrl}
+                  file_urls={message.file_urls}
                   sources={message.sources}
                   used_rag={message.used_rag}
                   used_web_search={message.used_web_search}

@@ -19,11 +19,20 @@ export class CancelledError extends Error {
   }
 }
 
+export interface FileInfo {
+  url: string;
+  filename: string;
+  type: 'image' | 'document';
+  content_type?: string;
+}
+
 export interface ChatMessage {
   id?: string; // Message UUID from database
   role: 'user' | 'assistant' | 'system';
   content: string;
-  imageUrl?: string; // For displaying uploaded images in chat history
+  imageUrl?: string; // Legacy: For displaying uploaded images in chat history
+  file_urls?: FileInfo[]; // New: All uploaded files
+  fileCount?: number; // Number of files attached to message (for pending uploads)
   sources?: Array<{ name: string; page: number | null }>;
   used_rag?: boolean;
   used_web_search?: boolean;
@@ -243,13 +252,14 @@ export function useChatbot() {
   /**
    * Send a message with streaming response.
    * The response is delivered via callbacks as it's generated.
+   * Supports multiple file uploads (up to 5 files).
    */
   const sendMessageStream = async (
     message: string,
     mode: 'english' | 'chamorro' | 'learn' = 'english',
     conversationId: string | null,
     callbacks: StreamCallbacks,
-    image?: File
+    files?: File[]
   ): Promise<void> => {
     // Cancel any existing request before starting a new one
     if (abortControllerRef.current) {
@@ -278,13 +288,13 @@ export function useChatbot() {
         }
       }
       
-      // Use FormData if file is present, otherwise JSON
+      // Use FormData if files are present, otherwise JSON
       let body: FormData | string;
       let headers: Record<string, string> = {
         ...(token && { 'Authorization': `Bearer ${token}` })
       };
 
-      if (image) {
+      if (files && files.length > 0) {
         const formData = new FormData();
         formData.append('message', message);
         formData.append('mode', mode);
@@ -293,7 +303,10 @@ export function useChatbot() {
         if (conversationId) {
           formData.append('conversation_id', conversationId);
         }
-        formData.append('file', image);
+        // Append all files - backend expects 'files' field with multiple values
+        files.forEach((file) => {
+          formData.append('files', file);
+        });
         body = formData;
       } else {
         headers['Content-Type'] = 'application/json';

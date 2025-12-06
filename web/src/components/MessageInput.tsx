@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File, Square } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File, Square, Plus } from 'lucide-react';
 
 // Supported file types
 const SUPPORTED_FILE_TYPES = [
@@ -17,8 +17,11 @@ const SUPPORTED_FILE_TYPES = [
 // Accept string for file input
 const FILE_ACCEPT = 'image/*,.pdf,.docx,.txt';
 
+// Maximum number of files allowed
+const MAX_FILES = 5;
+
 interface MessageInputProps {
-  onSend: (message: string, file?: File) => void;
+  onSend: (message: string, files?: File[]) => void;
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
@@ -27,11 +30,16 @@ interface MessageInputProps {
   onCancel?: () => void;
 }
 
+interface FileWithPreview {
+  file: File;
+  preview: string | null; // URL for images, null for documents
+  id: string; // Unique ID for React keys
+}
+
 export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -45,44 +53,72 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
     }
   }, [input, textareaRef]);
 
-  // Cleanup speech recognition and file preview on unmount
+  // Cleanup speech recognition and file previews on unmount
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
-      if (filePreview) {
-        URL.revokeObjectURL(filePreview);
-      }
+      // Cleanup all preview URLs
+      selectedFiles.forEach(f => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
     };
-  }, [filePreview]);
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     
-    // Check if file type is supported
-    if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
-      alert('Unsupported file type. Please upload an image, PDF, Word document (.docx), or text file.');
-      return;
+    const newFiles: FileWithPreview[] = [];
+    const currentCount = selectedFiles.length;
+    
+    for (let i = 0; i < files.length && currentCount + newFiles.length < MAX_FILES; i++) {
+      const file = files[i];
+      
+      // Check if file type is supported
+      if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
+        alert(`Unsupported file type: ${file.name}. Please upload images, PDFs, Word documents (.docx), or text files.`);
+        continue;
+      }
+      
+      // Create preview for images only
+      const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+      
+      newFiles.push({
+        file,
+        preview,
+        id: `${Date.now()}-${i}-${file.name}`,
+      });
     }
     
-    setSelectedFile(file);
+    if (currentCount + files.length > MAX_FILES) {
+      alert(`Maximum ${MAX_FILES} files allowed. Some files were not added.`);
+    }
     
-    // Create preview for images only
-    if (file.type.startsWith('image/')) {
-      setFilePreview(URL.createObjectURL(file));
-    } else {
-      setFilePreview(null); // No preview for documents
+    setSelectedFiles(prev => [...prev, ...newFiles]);
+    
+    // Reset file input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const removeFile = () => {
-    if (filePreview) {
-      URL.revokeObjectURL(filePreview);
-    }
-    setSelectedFile(null);
-    setFilePreview(null);
+  const removeFile = (id: string) => {
+    setSelectedFiles(prev => {
+      const fileToRemove = prev.find(f => f.id === id);
+      if (fileToRemove?.preview) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter(f => f.id !== id);
+    });
+  };
+
+  const clearAllFiles = () => {
+    selectedFiles.forEach(f => {
+      if (f.preview) URL.revokeObjectURL(f.preview);
+    });
+    setSelectedFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -154,22 +190,32 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   };
 
   const handleSend = () => {
-    if ((input.trim() || selectedFile) && !disabled) {
-      // Default message based on file type
+    if ((input.trim() || selectedFiles.length > 0) && !disabled) {
+      // Default message based on file types
       let defaultMessage = 'What does this say?';
-      if (selectedFile) {
-        if (selectedFile.type === 'application/pdf') {
+      if (selectedFiles.length > 0) {
+        const hasImages = selectedFiles.some(f => f.file.type.startsWith('image/'));
+        const hasPDFs = selectedFiles.some(f => f.file.type === 'application/pdf');
+        const hasWord = selectedFiles.some(f => f.file.type.includes('wordprocessingml'));
+        const hasText = selectedFiles.some(f => f.file.type === 'text/plain');
+        
+        if (selectedFiles.length > 1) {
+          defaultMessage = `Please analyze these ${selectedFiles.length} files`;
+        } else if (hasPDFs) {
           defaultMessage = 'Please analyze this PDF document';
-        } else if (selectedFile.type.includes('wordprocessingml')) {
+        } else if (hasWord) {
           defaultMessage = 'Please analyze this Word document';
-        } else if (selectedFile.type === 'text/plain') {
+        } else if (hasText) {
           defaultMessage = 'Please analyze this text file';
+        } else if (hasImages) {
+          defaultMessage = 'What does this say?';
         }
       }
       
-      onSend(input.trim() || defaultMessage, selectedFile || undefined);
+      const files = selectedFiles.length > 0 ? selectedFiles.map(f => f.file) : undefined;
+      onSend(input.trim() || defaultMessage, files);
       setInput('');
-      removeFile();
+      clearAllFiles();
       // Reset height after sending
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -202,40 +248,60 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
     }
   };
 
+  const canAddMoreFiles = selectedFiles.length < MAX_FILES;
+
   return (
     <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
       <div className="w-full max-w-3xl mx-auto">
-        {/* File Preview */}
-        {selectedFile && (
-          <div className="mb-2 relative inline-block">
-            {filePreview ? (
-              // Image preview
-              <img 
-                src={filePreview} 
-                alt="Upload preview" 
-                className="max-h-32 rounded-lg shadow-md"
-              />
-            ) : (
-              // Document preview (non-image)
-              <div className="flex items-center gap-2 px-3 py-2 bg-cream-100 dark:bg-gray-700 rounded-lg shadow-md">
-                {getFileTypeInfo(selectedFile).icon}
-                <div className="flex flex-col">
-                  <span className="text-xs font-medium text-brown-600 dark:text-gray-300">
-                    {getFileTypeInfo(selectedFile).label}
-                  </span>
-                  <span className="text-sm text-brown-800 dark:text-gray-100 max-w-[200px] truncate">
-                    {selectedFile.name}
-                  </span>
-                </div>
+        {/* File Previews */}
+        {selectedFiles.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2 items-end">
+            {selectedFiles.map((fileItem) => (
+              <div key={fileItem.id} className="relative group">
+                {fileItem.preview ? (
+                  // Image preview
+                  <img 
+                    src={fileItem.preview} 
+                    alt={fileItem.file.name}
+                    className="h-20 w-20 object-cover rounded-lg shadow-md"
+                  />
+                ) : (
+                  // Document preview (non-image)
+                  <div className="flex items-center gap-2 px-3 py-2 bg-cream-100 dark:bg-gray-700 rounded-lg shadow-md h-20">
+                    {getFileTypeInfo(fileItem.file).icon}
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium text-brown-600 dark:text-gray-300">
+                        {getFileTypeInfo(fileItem.file).label}
+                      </span>
+                      <span className="text-xs text-brown-800 dark:text-gray-100 max-w-[80px] truncate">
+                        {fileItem.file.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={() => removeFile(fileItem.id)}
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+                  aria-label={`Remove ${fileItem.file.name}`}
+                >
+                  <X className="w-3 h-3" />
+                </button>
               </div>
+            ))}
+            
+            {/* Add more files button */}
+            {canAddMoreFiles && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={disabled}
+                className="h-20 w-20 rounded-lg border-2 border-dashed border-cream-300 dark:border-gray-600 flex flex-col items-center justify-center text-brown-500 dark:text-gray-400 hover:border-coral-400 dark:hover:border-ocean-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Add more files"
+                title={`Add more files (${MAX_FILES - selectedFiles.length} remaining)`}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="text-xs mt-1">{MAX_FILES - selectedFiles.length} left</span>
+              </button>
             )}
-            <button
-              onClick={removeFile}
-              className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg transition-colors"
-              aria-label="Remove file"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
           </div>
         )}
 
@@ -259,19 +325,25 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           {/* Camera/File Upload Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
-            className="px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end"
-            aria-label="Upload file"
-            title="Upload image, PDF, Word doc, or text file"
+            disabled={disabled || !canAddMoreFiles}
+            className={`px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+              selectedFiles.length > 0 ? 'ring-2 ring-coral-400 dark:ring-ocean-400' : ''
+            }`}
+            aria-label="Upload files"
+            title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
             style={{ minHeight: '40px', minWidth: '40px' }}
           >
             <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+            {selectedFiles.length > 0 && (
+              <span className="ml-1 text-xs font-bold">{selectedFiles.length}</span>
+            )}
           </button>
           <input
             ref={fileInputRef}
             type="file"
             accept={FILE_ACCEPT}
             onChange={handleFileSelect}
+            multiple
             className="hidden"
           />
 
@@ -302,7 +374,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           ) : (
             <button
               onClick={handleSend}
-              disabled={disabled || (!input.trim() && !selectedFile)}
+              disabled={disabled || (!input.trim() && selectedFiles.length === 0)}
               className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
               aria-label="Send message"
               title="Send message (Enter)"
