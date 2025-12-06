@@ -1,0 +1,13 @@
+# Test output files (generated, not source code)
+eval_report_*.txt
+eval_results_*.json
+full_test_output.txt
+model_comparison_*.json
+model_comparison_*.txt
+model_comparison_output.txt
+*_rag_test.txt
+
+# Keep test queries and baseline metrics
+!test_queries_*.json
+!BASELINE_METRICS.md
+

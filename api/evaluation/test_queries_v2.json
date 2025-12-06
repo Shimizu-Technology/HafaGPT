@@ -35,10 +35,10 @@
     {
       "id": 3,
       "query": "How do you say thank you in Chamorro?",
-      "expected_keywords": ["Si Yu'os Må'åse'", "Si Yu'os Ma'ase"],
+      "expected_keywords": ["Si Yu'os Må'åse'", "Si Yu'os Ma'ase", "Si Yu'us Ma'ase", "maase"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Should explain literal meaning (May God have mercy)"
+      "notes": "Should explain literal meaning (May God have mercy) - maase = mercy (root word)"
     },
     {
       "id": 4,
@@ -107,10 +107,10 @@
     {
       "id": 12,
       "query": "How do I say 'beautiful' in Chamorro?",
-      "expected_keywords": ["bunita", "bonitu", "bunitu"],
+      "expected_keywords": ["bunita", "bonitu", "bunitu", "gatbo"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Common adjective - bunitu (general), bunita (feminine)"
+      "notes": "Common adjective - bunitu/bunita (beautiful), gatbo (pretty/splendid)"
     },
     {
       "id": 13,
@@ -163,10 +163,10 @@
     {
       "id": 19,
       "query": "How do you say 'yes' in Chamorro?",
-      "expected_keywords": ["hunggan", "hao"],
+      "expected_keywords": ["hunggan", "hu'u"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "Basic response"
+      "notes": "Basic response - hunggan (formal), hu'u (informal yes/okay)"
     },
     {
       "id": 20,
@@ -795,10 +795,10 @@
     {
       "id": 98,
       "query": "What is 'come' in Chamorro?",
-      "expected_keywords": ["måtto", "matto"],
+      "expected_keywords": ["måtto", "matto", "maila'", "fatto"],
       "category": "translation_eng_to_cham",
       "difficulty": "easy",
-      "notes": "NEW: Common verb - movement"
+      "notes": "Common verb - maila' (come here), fatto (arrive/come to), måtto (arrive)"
     },
     {
       "id": 99,
