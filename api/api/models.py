@@ -109,6 +109,14 @@ class ConversationListResponse(BaseModel):
     conversations: list[ConversationResponse] = Field(default=[], description="List of conversations")
 
 
+class FileInfo(BaseModel):
+    """Information about an uploaded file"""
+    url: str = Field(..., description="S3 URL of the file")
+    filename: str = Field(..., description="Original filename")
+    type: str = Field(..., description="File type: 'image' or 'document'")
+    content_type: Optional[str] = Field(default=None, description="MIME type")
+
+
 class MessageResponse(BaseModel):
     """Response model for a single message"""
     id: int = Field(..., description="Message ID")
@@ -118,7 +126,8 @@ class MessageResponse(BaseModel):
     sources: list[SourceInfo] = Field(default=[], description="Sources used (for assistant messages)")
     used_rag: bool = Field(default=False, description="Whether RAG was used")
     used_web_search: bool = Field(default=False, description="Whether web search was used")
-    image_url: Optional[str] = Field(default=None, description="S3 URL of uploaded image (for user messages)")
+    image_url: Optional[str] = Field(default=None, description="S3 URL of uploaded image (legacy, for backwards compatibility)")
+    file_urls: Optional[list[FileInfo]] = Field(default=None, description="List of uploaded files (for user messages)")
     mode: Optional[str] = Field(default=None, description="Mode for system messages (english/chamorro/learn)")
     response_time: Optional[float] = Field(default=None, description="Response time in seconds (for assistant messages)")
 

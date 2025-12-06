@@ -632,13 +632,14 @@ def get_chatbot_response(
     conversation_id: str = None,
     image_base64: str = None,  # Base64-encoded image
     image_url: str = None,  # S3 URL of uploaded image
-    pending_id: str = None  # Unique ID for cancel tracking
+    pending_id: str = None,  # Unique ID for cancel tracking
+    original_message: str = None  # NEW: Original user message (without appended doc text)
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
     
     Args:
-        message: User's message
+        message: User's message (may include appended document content for LLM)
         mode: Chat mode ("english", "chamorro", or "learn")
         conversation_length: Number of messages so far
         session_id: Session identifier for tracking conversations
@@ -647,6 +648,7 @@ def get_chatbot_response(
         image_base64: Optional base64-encoded image for vision analysis
         image_url: Optional S3 URL of uploaded image (for logging)
         pending_id: Optional unique ID for tracking cancellation
+        original_message: Original user message for logging/display (if None, uses message)
     
     Returns:
         dict: {
@@ -660,6 +662,9 @@ def get_chatbot_response(
     """
     start_time = time.time()
     
+    # Use original_message for logging if provided, otherwise use message
+    message_for_logging = original_message if original_message else message
+    
     # Helper to build early cancelled response and log the user message
     def early_cancelled_response(log_user_message: bool = True):
         response_time = time.time() - start_time
@@ -667,7 +672,7 @@ def get_chatbot_response(
         # Still save the user's message with a "cancelled" response (Option B behavior)
         if log_user_message:
             log_conversation(
-                user_message=message,
+                user_message=message_for_logging,  # Use original message for logging
                 bot_response="[Message was cancelled by user]",
                 mode=mode,
                 sources=[],
@@ -723,47 +728,55 @@ def get_chatbot_response(
     # Build system prompt
     system_prompt = mode_config["prompt"]
     
-    # Add document analysis instructions if image is present
-    if image_base64:
-        system_prompt += """
+    # Detect if document content is present (PDF/document text appended to message)
+    has_document_text = "--- Document Content" in message
+    
+    # Add document analysis instructions for images OR uploaded documents
+    if image_base64 or has_document_text:
+        # Customize based on what type of content
+        if image_base64 and has_document_text:
+            doc_type = "uploaded image(s) and document(s)"
+        elif image_base64:
+            doc_type = "uploaded image"
+        else:
+            doc_type = "uploaded document(s)"
+        
+        system_prompt += f"""
 
-DOCUMENT ANALYSIS MODE:
-You are analyzing a Chamorro language document/text via an uploaded image.
+📄 DOCUMENT ANALYSIS MODE
+You are analyzing Chamorro language content from {doc_type}.
 Be thorough and proactive - provide a COMPLETE analysis in ONE response!
 
-Provide the following in a well-organized format:
+REQUIRED OUTPUT FORMAT (use these exact headers):
 
-1. **FULL TRANSCRIPTION**
-   - Type out all visible Chamorro text exactly as shown
-   - Maintain the original structure and formatting
+## Document Overview
+- Briefly identify each document (type, title, source if visible)
 
-2. **ENGLISH TRANSLATION**
-   - Translate the complete text to English
-   - Keep the same structure and organization
+## Full Transcription
+- List all Chamorro text exactly as shown (for images) or key sections (for long documents)
+- Use bullet points or numbered lists for clarity
 
-3. **KEY INFORMATION EXTRACTION** (Be proactive!)
-   - 📅 **Dates and Times**: List ALL dates, deadlines, or time-related information
-   - 🎯 **Events/Activities**: What events, meetings, or activities are mentioned?
-   - 📞 **Contact Info**: Phone numbers, emails, websites, addresses
-   - ⚠️ **Important Notices**: Warnings, requirements, or critical information
-   - 📍 **Locations**: Places, addresses, or venues mentioned
-   - 👥 **Names**: People, organizations, or entities referenced
+## English Translation
+- Provide complete translations of all Chamorro content
+- Format: **Chamorro phrase** → English meaning
 
-4. **GRAMMAR & CULTURAL NOTES**
-   - Explain interesting Chamorro grammar structures
-   - Provide cultural context if relevant
-   - Clarify any idiomatic expressions or cultural references
+## Key Information
+| Category | Details |
+|----------|---------|
+| Dates | List any dates mentioned |
+| Events | List any events, activities |
+| People/Organizations | Names, contacts |
+| Locations | Places mentioned |
 
-5. **SUMMARY**
-   - Brief overview of the document's purpose
-   - Who it's for and what action (if any) is needed
-   - Key takeaways
+## Grammar & Cultural Notes
+- Highlight interesting Chamorro language features
+- Explain cultural context where relevant
 
-**Important Guidelines:**
-- If text is unclear or partially visible, mention which parts you're uncertain about and why
-- If it appears to be homework, help explain the concepts and guide learning (don't just give direct answers)
-- Be thorough but friendly and conversational in your explanation
-- Don't make users ask follow-up questions for information that's visible in the image!
+## Summary
+- 2-3 sentence overview of the document's purpose and key takeaways
+
+---
+IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
 """
     
     # Add RAG context if available
@@ -874,7 +887,7 @@ Provide the following in a well-organized format:
         # Save user message with cancelled indicator (Option B behavior)
         print(f"⚠️  Message {pending_id} was cancelled - saving user message with cancelled response")
         log_conversation(
-            user_message=message,
+            user_message=message_for_logging,  # Use original message for logging
             bot_response="[Message was cancelled by user]",
             mode=mode,
             sources=[],
@@ -896,9 +909,9 @@ Provide the following in a well-organized format:
             "cancelled": True
         }
     
-    # Log the conversation (only if not cancelled)
+    # Log the conversation (only if not cancelled) - use original message for display
     log_conversation(
-        user_message=message,
+        user_message=message_for_logging,  # Use original message for logging
         bot_response=response_text,
         mode=mode,
         sources=formatted_sources,
@@ -933,17 +946,24 @@ def get_chatbot_response_stream(
     conversation_id: str = None,
     image_base64: str = None,
     image_url: str = None,
-    pending_id: str = None
+    pending_id: str = None,
+    original_message: str = None  # NEW: Original user message (without appended doc text)
 ):
     """
     Streaming version of get_chatbot_response.
     
     Yields chunks of the response as they are generated by the LLM.
     
+    Args:
+        message: Full message to send to LLM (may include document content)
+        original_message: User's original message (for logging/display). If None, uses message.
+    
     Yields:
         dict: Either a chunk {"type": "chunk", "content": "..."} 
               or metadata {"type": "metadata", "sources": [...], "used_rag": bool, ...}
     """
+    # Use original_message for logging if provided, otherwise use message
+    message_for_logging = original_message if original_message else message
     start_time = time.time()
     
     # Check for early cancellation
@@ -981,21 +1001,55 @@ def get_chatbot_response_stream(
     # Build system prompt
     system_prompt = mode_config["prompt"]
     
-    # Add document analysis instructions if image is present
-    if image_base64:
-        system_prompt += """
+    # Detect if document content is present (PDF/document text appended to message)
+    has_document_text = "--- Document Content" in message
+    
+    # Add document analysis instructions for images OR uploaded documents
+    if image_base64 or has_document_text:
+        # Customize based on what type of content
+        if image_base64 and has_document_text:
+            doc_type = "uploaded image(s) and document(s)"
+        elif image_base64:
+            doc_type = "uploaded image"
+        else:
+            doc_type = "uploaded document(s)"
+        
+        system_prompt += f"""
 
-DOCUMENT ANALYSIS MODE:
-You are analyzing a Chamorro language document/text via an uploaded image.
+📄 DOCUMENT ANALYSIS MODE
+You are analyzing Chamorro language content from {doc_type}.
 Be thorough and proactive - provide a COMPLETE analysis in ONE response!
 
-Provide the following in a well-organized format:
+REQUIRED OUTPUT FORMAT (use these exact headers):
 
-1. **FULL TRANSCRIPTION** - Type out all visible Chamorro text exactly as shown
-2. **ENGLISH TRANSLATION** - Translate the complete text to English
-3. **KEY INFORMATION EXTRACTION** - Dates, events, contacts, locations, names
-4. **GRAMMAR & CULTURAL NOTES** - Explain interesting structures
-5. **SUMMARY** - Brief overview of the document's purpose
+## Document Overview
+- Briefly identify each document (type, title, source if visible)
+
+## Full Transcription
+- List all Chamorro text exactly as shown (for images) or key sections (for long documents)
+- Use bullet points or numbered lists for clarity
+
+## English Translation
+- Provide complete translations of all Chamorro content
+- Format: **Chamorro phrase** → English meaning
+
+## Key Information
+| Category | Details |
+|----------|---------|
+| Dates | List any dates mentioned |
+| Events | List any events, activities |
+| People/Organizations | Names, contacts |
+| Locations | Places mentioned |
+
+## Grammar & Cultural Notes
+- Highlight interesting Chamorro language features
+- Explain cultural context where relevant
+
+## Summary
+- 2-3 sentence overview of the document's purpose and key takeaways
+
+---
+IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
 """
     
     # Add RAG context if available
@@ -1088,7 +1142,7 @@ Provide the following in a well-organized format:
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 # Log partial response as cancelled
                 log_conversation(
-                    user_message=message,
+                    user_message=message_for_logging,  # Use original message for logging
                     bot_response="[Message was cancelled by user]",
                     mode=mode,
                     sources=formatted_sources,
@@ -1116,9 +1170,9 @@ Provide the following in a well-organized format:
     # Calculate response time
     response_time = time.time() - start_time
     
-    # Log the complete conversation
+    # Log the complete conversation (use original message for display, not doc-augmented)
     log_conversation(
-        user_message=message,
+        user_message=message_for_logging,  # Use original message for logging
         bot_response=full_response,
         mode=mode,
         sources=formatted_sources,

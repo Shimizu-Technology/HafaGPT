@@ -161,7 +161,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 used_web_search,
                 image_url,
                 mode,
-                response_time_seconds
+                response_time_seconds,
+                file_urls
             FROM conversation_logs
             WHERE conversation_id = %s
             ORDER BY timestamp ASC
@@ -173,6 +174,21 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         # Convert to messages based on role
         for row in rows:
             role = row[1]
+            file_urls_data = row[11]  # file_urls JSONB column
+            
+            # Parse file_urls if present
+            file_urls = None
+            if file_urls_data:
+                from .models import FileInfo
+                file_urls = [
+                    FileInfo(
+                        url=f.get('url', ''),
+                        filename=f.get('filename', 'file'),
+                        type=f.get('type', 'document'),
+                        content_type=f.get('content_type')
+                    )
+                    for f in file_urls_data
+                ]
             
             if role == 'system':
                 # System message (mode change, etc.)
@@ -185,6 +201,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     used_rag=False,
                     used_web_search=False,
                     image_url=None,
+                    file_urls=None,
                     mode=row[9],  # Mode from database
                     response_time=None  # System messages don't have response time
                 ))
@@ -198,7 +215,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     sources=[],
                     used_rag=False,
                     used_web_search=False,
-                    image_url=row[8],  # S3 image URL
+                    image_url=row[8],  # Legacy S3 image URL
+                    file_urls=file_urls,  # New: all file URLs
                     response_time=None  # User messages don't have response time
                 ))
             
@@ -214,12 +232,13 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
             messages.append(MessageResponse(
                 id=row[0],
                 role="assistant",
-                    content=row[3],
-                    timestamp=row[4],
+                content=row[3],
+                timestamp=row[4],
                 sources=sources,
-                    used_rag=row[6],
-                    used_web_search=row[7],
+                used_rag=row[6],
+                used_web_search=row[7],
                 image_url=None,  # Assistant messages don't have images
+                file_urls=None,
                 response_time=row[10]  # Response time from database
             ))
         

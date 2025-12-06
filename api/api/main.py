@@ -4,7 +4,7 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
-from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 import time
@@ -19,7 +19,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 import json
 
 from .models import (
@@ -416,6 +416,108 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
     return result
 
 
+# ============================================================================
+# Background S3 Upload Functions
+# ============================================================================
+
+def append_file_url_to_conversation_log(conversation_id: str, file_info: dict):
+    """
+    Append a file URL to the conversation log's file_urls array.
+    Called from background task after each S3 upload completes.
+    
+    Args:
+        conversation_id: The conversation ID
+        file_info: Dict with {url, filename, type} - type is 'image' or 'document'
+    """
+    try:
+        import psycopg
+        import json
+        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        cursor = conn.cursor()
+        
+        # Append to file_urls JSON array (create array if null)
+        # Also update legacy image_url field for backwards compatibility
+        cursor.execute("""
+            UPDATE conversation_logs 
+            SET 
+                file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
+                image_url = COALESCE(image_url, %s)
+            WHERE id = (
+                SELECT id FROM conversation_logs 
+                WHERE conversation_id = %s
+                ORDER BY timestamp DESC
+                LIMIT 1
+            )
+        """, (json.dumps([file_info]), file_info['url'], conversation_id))
+        
+        rows_updated = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        if rows_updated > 0:
+            logger.info(f"✅ Background: Added {file_info['filename']} to file_urls")
+        else:
+            logger.debug(f"No conversation_log to update for {conversation_id}")
+    except Exception as e:
+        logger.error(f"Failed to append file_url: {e}")
+
+
+def upload_file_to_s3_background(
+    file_data: bytes,
+    filename: str,
+    content_type: str,
+    user_id: str,
+    conversation_id: str,
+    file_index: int
+):
+    """
+    Background task to upload file to S3 and update conversation_logs.
+    
+    Args:
+        file_data: Raw file bytes
+        filename: Original filename
+        content_type: MIME type
+        user_id: User ID for S3 path
+        conversation_id: Conversation ID for DB update
+        file_index: Index for unique filename
+    """
+    try:
+        if not s3_client:
+            logger.warning("⚠️ S3 client not configured, skipping background upload")
+            return
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
+        
+        # Upload to S3
+        logger.info(f"📤 Background: Uploading {filename} to S3...")
+        s3_client.put_object(
+            Bucket=S3_BUCKET,
+            Key=s3_key,
+            Body=file_data,
+            ContentType=content_type
+        )
+        
+        file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+        logger.info(f"✅ Background: Uploaded {filename} → {file_url}")
+        
+        # Determine file type for display
+        file_type = 'image' if content_type.startswith('image/') else 'document'
+        
+        # Append to conversation_logs file_urls array
+        if conversation_id:
+            append_file_url_to_conversation_log(conversation_id, {
+                'url': file_url,
+                'filename': filename,
+                'type': file_type,
+                'content_type': content_type
+            })
+            
+    except Exception as e:
+        logger.error(f"❌ Background S3 upload error for {filename}: {e}")
+
+
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
 rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))  # requests
@@ -714,7 +816,7 @@ async def chat(
         # Run in thread pool to allow cancel requests to be processed in parallel
         result = await asyncio.to_thread(
             get_chatbot_response,
-            message=final_message,
+            message=final_message,  # Full message with doc content for LLM
             mode=mode,
             conversation_length=0,  # For now, stateless (no session history)
             session_id=session_id,  # Pass session_id for logging
@@ -722,7 +824,8 @@ async def chat(
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
             image_base64=image_base64,  # Pass base64-encoded image for Vision
             image_url=file_url,  # Pass S3 URL for logging (works for all file types)
-            pending_id=pending_id  # Pass pending_id for cancel tracking
+            pending_id=pending_id,  # Pass pending_id for cancel tracking
+            original_message=message  # Original user message for logging/display
         )
         
         # Check if the request was cancelled - if so, return a cancelled response
@@ -806,16 +909,20 @@ async def cancel_chat_message(pending_id: str):
 @app.post("/api/chat/stream", tags=["Chat"])
 async def chat_stream(
     request: Request,
+    background_tasks: BackgroundTasks,
     authorization: Optional[str] = Header(None),
     message: Optional[str] = Form(None),
     mode: Optional[str] = Form(None),
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
     pending_id: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None),  # Legacy single file support
+    files: List[UploadFile] = File(default=[])  # New: multiple files support
 ):
     """
     Streaming chat endpoint - returns Server-Sent Events (SSE) for real-time response.
+    
+    **Supports up to 5 files** (images, PDFs, Word docs, text files).
     
     **Event Types:**
     - `metadata`: Sources, RAG status (sent first)
@@ -848,9 +955,13 @@ async def chat_stream(
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
             pending_id = body.get('pending_id')
+            files = []
             file = None
         else:
             mode = mode or 'english'
+            # Combine legacy single file with new multiple files support
+            if file and file.filename:
+                files = [file] + list(files)
         
         # Validate required fields
         if not message:
@@ -861,49 +972,89 @@ async def chat_stream(
         if mode not in valid_modes:
             raise HTTPException(status_code=400, detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}")
         
+        # Limit number of files
+        MAX_FILES = 5
+        if len(files) > MAX_FILES:
+            raise HTTPException(status_code=400, detail=f"Maximum {MAX_FILES} files allowed")
+        
         # Verify user authentication
         user_id = await verify_user(authorization)
         
-        # Process file if present
-        image_base64 = None
-        file_url = None
-        document_text = None
+        # Process files if present
+        image_base64 = None  # First image for vision model
+        all_images_base64 = []  # All images for multi-image support
+        document_texts = []  # Text content from documents
         final_message = message
+        files_to_upload = []  # Store file data for background upload
         
-        if file:
-            logger.info(f"📁 Stream: File received: filename={file.filename}")
+        for idx, uploaded_file in enumerate(files):
+            if not uploaded_file.filename:
+                continue
+                
+            logger.info(f"📁 Stream: Processing file {idx+1}/{len(files)}: {uploaded_file.filename}")
             try:
-                file_data = await file.read()
+                # Read file data once (we'll need it for both processing and S3 upload)
+                file_data = await uploaded_file.read()
+                
+                # Store for background S3 upload
+                files_to_upload.append({
+                    'data': file_data,
+                    'filename': uploaded_file.filename,
+                    'content_type': uploaded_file.content_type,
+                    'index': idx
+                })
+                
+                # Extract content (fast - this is what the LLM needs)
                 file_result = process_uploaded_file(
                     file_data=file_data,
-                    content_type=file.content_type,
-                    filename=file.filename
+                    content_type=uploaded_file.content_type,
+                    filename=uploaded_file.filename
                 )
                 
+                # Handle images
                 if file_result.get("image_base64"):
-                    image_base64 = file_result["image_base64"]
-                if file_result.get("document_text"):
-                    document_text = file_result["document_text"]
-                    max_doc_chars = 50000
-                    if len(document_text) > max_doc_chars:
-                        document_text = document_text[:max_doc_chars] + "\n\n[Document truncated]"
-                    final_message = f"{message}\n\n--- Document Content ---\n{document_text}"
+                    all_images_base64.append(file_result["image_base64"])
+                    # Use first image for the vision model
+                    if image_base64 is None:
+                        image_base64 = file_result["image_base64"]
                 
-                # Upload to S3
-                if s3_client:
-                    await file.seek(0)
-                    file_data = await file.read()
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file.filename}"
-                    s3_client.put_object(
-                        Bucket=S3_BUCKET,
-                        Key=s3_key,
-                        Body=file_data,
-                        ContentType=file.content_type
-                    )
-                    file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+                # Handle documents (text_content is returned by process_uploaded_file)
+                if file_result.get("text_content"):
+                    doc_text = file_result["text_content"]
+                    document_texts.append(f"[{uploaded_file.filename}]\n{doc_text}")
+                    
             except Exception as e:
-                logger.error(f"File processing error: {e}")
+                logger.error(f"File processing error for {uploaded_file.filename}: {e}")
+        
+        # Schedule S3 uploads as background tasks (user doesn't wait!)
+        for file_info in files_to_upload:
+            background_tasks.add_task(
+                upload_file_to_s3_background,
+                file_data=file_info['data'],
+                filename=file_info['filename'],
+                content_type=file_info['content_type'],
+                user_id=user_id,
+                conversation_id=conversation_id,
+                file_index=file_info['index']
+            )
+        
+        if files_to_upload:
+            logger.info(f"📤 Scheduled {len(files_to_upload)} background S3 uploads")
+        
+        # Combine all document texts into the message
+        if document_texts:
+            max_doc_chars = 50000  # Total limit for all documents
+            combined_docs = "\n\n".join(document_texts)
+            if len(combined_docs) > max_doc_chars:
+                combined_docs = combined_docs[:max_doc_chars] + "\n\n[Documents truncated]"
+            final_message = f"{message}\n\n--- Document Content ({len(document_texts)} file{'s' if len(document_texts) > 1 else ''}) ---\n{combined_docs}"
+        
+        # Log file summary
+        if files:
+            logger.info(f"📁 Processed {len(files)} files: {len(all_images_base64)} images, {len(document_texts)} documents")
+        
+        # Note: image_url will be updated by background task after S3 upload completes
+        file_url = None  # S3 upload happens in background
         
         logger.info(f"Stream request: mode={mode}, user_id={user_id or 'anonymous'}, pending_id={pending_id}")
         
@@ -917,7 +1068,7 @@ async def chat_stream(
                 """Run the sync generator in a thread and put events in queue"""
                 try:
                     for event in get_chatbot_response_stream(
-                        message=final_message,
+                        message=final_message,  # Full message with doc content for LLM
                         mode=mode,
                         conversation_length=0,
                         session_id=session_id,
@@ -925,7 +1076,8 @@ async def chat_stream(
                         conversation_id=conversation_id,
                         image_base64=image_base64,
                         image_url=file_url,
-                        pending_id=pending_id
+                        pending_id=pending_id,
+                        original_message=message  # Original user message for logging/display
                     ):
                         event_queue.put(event)
                 except Exception as e:
