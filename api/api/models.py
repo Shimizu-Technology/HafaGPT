@@ -382,3 +382,32 @@ class GameStatsResponse(BaseModel):
     recent_results: list[GameResultResponse] = Field(default=[], description="Recent game results")
 
 
+# --- Usage Tracking Models (for Freemium Limits) ---
+
+class UsageResponse(BaseModel):
+    """Response model for user's daily usage"""
+    chat_count: int = Field(..., description="Chat messages sent today")
+    game_count: int = Field(..., description="Games played today")
+    quiz_count: int = Field(..., description="Quizzes taken today")
+    chat_limit: int = Field(..., description="Daily chat limit")
+    game_limit: int = Field(..., description="Daily game limit")
+    quiz_limit: int = Field(..., description="Daily quiz limit")
+    is_premium: bool = Field(..., description="Whether user has premium subscription")
+
+
+class UsageIncrementResponse(BaseModel):
+    """Response after incrementing usage"""
+    success: bool = Field(..., description="Whether the action was allowed")
+    new_count: int = Field(..., description="New usage count after increment")
+    limit: int = Field(..., description="Daily limit for this feature")
+    remaining: int = Field(..., description="Remaining uses today")
+    is_premium: bool = Field(..., description="Whether user has premium subscription")
+
+
+class SubscriptionStatusResponse(BaseModel):
+    """Response model for user's subscription status"""
+    is_premium: bool = Field(..., description="Whether user has an active premium subscription")
+    plan_name: Optional[str] = Field(None, description="Name of the subscription plan")
+    features: list[str] = Field(default=[], description="List of enabled feature keys")
+
+

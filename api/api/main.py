@@ -2888,6 +2888,446 @@ async def get_game_history(
 
 
 # ==========================================
+# Usage Tracking Endpoints (Freemium Limits)
+# ==========================================
+
+from .models import UsageResponse, UsageIncrementResponse, SubscriptionStatusResponse
+from datetime import date, timezone, timedelta
+
+# Guam timezone (ChST = UTC+10)
+GUAM_TIMEZONE = timezone(timedelta(hours=10))
+
+def get_guam_date() -> date:
+    """Get the current date in Guam timezone (ChST, UTC+10)."""
+    return datetime.now(GUAM_TIMEZONE).date()
+
+# Default daily limits for free users
+FREE_TIER_LIMITS = {
+    "chat": 5,
+    "game": 5,
+    "quiz": 3
+}
+
+
+@app.get("/api/usage/today", response_model=UsageResponse, tags=["Usage"])
+async def get_today_usage(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the current user's usage for today.
+    
+    Returns current counts and limits for chat, games, and quizzes.
+    Premium users have unlimited access (limits set to -1).
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Check if user is premium (for now, default to False until Clerk Billing is set up)
+        is_premium = False  # TODO: Check Clerk subscription status
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        today = get_guam_date()  # Use Guam timezone for daily reset
+        
+        # Get or create usage record for today
+        cursor.execute("""
+            SELECT chat_count, game_count, quiz_count
+            FROM user_daily_usage
+            WHERE user_id = %s AND usage_date = %s
+        """, (user_id, today))
+        
+        row = cursor.fetchone()
+        
+        if row:
+            chat_count, game_count, quiz_count = row
+        else:
+            chat_count, game_count, quiz_count = 0, 0, 0
+        
+        cursor.close()
+        conn.close()
+        
+        # Premium users have unlimited (-1 means no limit)
+        if is_premium:
+            return UsageResponse(
+                chat_count=chat_count,
+                game_count=game_count,
+                quiz_count=quiz_count,
+                chat_limit=-1,
+                game_limit=-1,
+                quiz_limit=-1,
+                is_premium=True
+            )
+        
+        return UsageResponse(
+            chat_count=chat_count,
+            game_count=game_count,
+            quiz_count=quiz_count,
+            chat_limit=FREE_TIER_LIMITS["chat"],
+            game_limit=FREE_TIER_LIMITS["game"],
+            quiz_limit=FREE_TIER_LIMITS["quiz"],
+            is_premium=False
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [USAGE] Failed to get usage: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get usage: {str(e)}"
+        )
+
+
+@app.post("/api/usage/increment/{usage_type}", response_model=UsageIncrementResponse, tags=["Usage"])
+async def increment_usage(
+    usage_type: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Increment usage counter for a specific feature type.
+    
+    Args:
+        usage_type: One of 'chat', 'game', or 'quiz'
+    
+    Returns:
+        - success: True if the action was allowed (under limit or premium)
+        - new_count: The new usage count after increment
+        - remaining: How many uses left today (-1 for unlimited)
+    
+    For free users, this will fail if they've hit their daily limit.
+    """
+    if usage_type not in ["chat", "game", "quiz"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid usage type: {usage_type}. Must be 'chat', 'game', or 'quiz'"
+        )
+    
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Check if user is premium (for now, default to False until Clerk Billing is set up)
+        is_premium = False  # TODO: Check Clerk subscription status
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        today = get_guam_date()  # Use Guam timezone for daily reset
+        column_name = f"{usage_type}_count"
+        limit = FREE_TIER_LIMITS[usage_type]
+        
+        # Get current usage
+        cursor.execute("""
+            SELECT chat_count, game_count, quiz_count
+            FROM user_daily_usage
+            WHERE user_id = %s AND usage_date = %s
+        """, (user_id, today))
+        
+        row = cursor.fetchone()
+        
+        if row:
+            current_counts = {"chat": row[0], "game": row[1], "quiz": row[2]}
+            current_count = current_counts[usage_type]
+        else:
+            current_count = 0
+        
+        # Check if under limit (premium users always pass)
+        if not is_premium and current_count >= limit:
+            cursor.close()
+            conn.close()
+            return UsageIncrementResponse(
+                success=False,
+                new_count=current_count,
+                limit=limit,
+                remaining=0,
+                is_premium=False
+            )
+        
+        # Increment the counter using UPSERT
+        cursor.execute(f"""
+            INSERT INTO user_daily_usage (user_id, usage_date, {column_name})
+            VALUES (%s, %s, 1)
+            ON CONFLICT (user_id, usage_date)
+            DO UPDATE SET 
+                {column_name} = user_daily_usage.{column_name} + 1,
+                updated_at = now()
+            RETURNING {column_name}
+        """, (user_id, today))
+        
+        new_count = cursor.fetchone()[0]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Calculate remaining (-1 for unlimited)
+        if is_premium:
+            remaining = -1
+        else:
+            remaining = max(0, limit - new_count)
+        
+        return UsageIncrementResponse(
+            success=True,
+            new_count=new_count,
+            limit=limit if not is_premium else -1,
+            remaining=remaining,
+            is_premium=is_premium
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [USAGE] Failed to increment usage: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to increment usage: {str(e)}"
+        )
+
+
+@app.get("/api/subscription/status", response_model=SubscriptionStatusResponse, tags=["Usage"])
+async def get_subscription_status(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the current user's subscription status.
+    
+    Returns whether the user has a premium subscription and which features are enabled.
+    Checks Clerk Billing for active subscriptions.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        is_premium = False
+        plan_name = None
+        features = []
+        
+        # Check Clerk for subscription status
+        if clerk:
+            try:
+                import httpx
+                
+                # Method 1: Call Clerk's billing REST API directly
+                clerk_secret_key = os.getenv("CLERK_SECRET_KEY")
+                if clerk_secret_key:
+                    try:
+                        # Call the subscriptions endpoint directly
+                        headers = {
+                            "Authorization": f"Bearer {clerk_secret_key}",
+                            "Content-Type": "application/json"
+                        }
+                        
+                        # Get user's subscriptions from Clerk's billing API
+                        response = httpx.get(
+                            f"https://api.clerk.com/v1/users/{user_id}/subscriptions",
+                            headers=headers,
+                            timeout=10.0
+                        )
+                        
+                        logger.info(f"🔍 [SUBSCRIPTION] Clerk API response status: {response.status_code}")
+                        
+                        if response.status_code == 200:
+                            subscriptions = response.json()
+                            logger.info(f"🔍 [SUBSCRIPTION] Subscriptions data: {subscriptions}")
+                            
+                            # Check if user has any active subscriptions
+                            if isinstance(subscriptions, list) and len(subscriptions) > 0:
+                                for sub in subscriptions:
+                                    status = sub.get('status', '')
+                                    if status in ['active', 'trialing']:
+                                        is_premium = True
+                                        plan_name = sub.get('plan', {}).get('name', 'Premium') if isinstance(sub.get('plan'), dict) else 'Premium'
+                                        features = ['unlimited_chat', 'unlimited_games', 'unlimited_quizzes']
+                                        logger.info(f"✅ [SUBSCRIPTION] Found active subscription! Status: {status}, Plan: {plan_name}")
+                                        break
+                            elif isinstance(subscriptions, dict):
+                                # Single subscription object
+                                status = subscriptions.get('status', '')
+                                if status in ['active', 'trialing']:
+                                    is_premium = True
+                                    plan_name = subscriptions.get('plan', {}).get('name', 'Premium')
+                                    features = ['unlimited_chat', 'unlimited_games', 'unlimited_quizzes']
+                        else:
+                            logger.info(f"ℹ️ [SUBSCRIPTION] Clerk API returned {response.status_code}: {response.text[:200]}")
+                            
+                    except Exception as api_err:
+                        logger.info(f"ℹ️ [SUBSCRIPTION] Direct API call failed: {api_err}")
+                
+                # Method 2: Fall back to user metadata check (in case Clerk stores it there in future)
+                if not is_premium:
+                    user = clerk.users.get(user_id=user_id)
+                    public_metadata = getattr(user, 'public_metadata', {}) or {}
+                    
+                    # Check for subscription in metadata
+                    subscription = public_metadata.get('subscription')
+                    plan = public_metadata.get('plan')
+                    
+                    if subscription and isinstance(subscription, dict):
+                        status = subscription.get('status', '')
+                        if status in ['active', 'trialing']:
+                            is_premium = True
+                            plan_name = subscription.get('plan_name', 'Premium')
+                            features = ['unlimited_chat', 'unlimited_games', 'unlimited_quizzes']
+                
+                logger.info(f"✅ [SUBSCRIPTION] User {user_id[:8]}... - Premium: {is_premium}, Plan: {plan_name}")
+                
+            except Exception as clerk_error:
+                logger.error(f"⚠️ [SUBSCRIPTION] Failed to check Clerk: {clerk_error}")
+                # Don't fail the request, just return free status
+        
+        return SubscriptionStatusResponse(
+            is_premium=is_premium,
+            plan_name=plan_name,
+            features=features
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [SUBSCRIPTION] Failed to get status: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get subscription status: {str(e)}"
+        )
+
+
+# ==========================================
+# Clerk Webhook Endpoint
+# ==========================================
+
+# Get webhook secret from environment
+CLERK_WEBHOOK_SECRET = os.getenv("CLERK_WEBHOOK_SECRET", "")
+
+@app.post("/api/webhooks/clerk", tags=["Webhooks"])
+async def clerk_webhook(request: Request):
+    """
+    Handle Clerk webhook events for subscription changes.
+    
+    This endpoint is called by Clerk when subscription events occur:
+    - subscription.created: User subscribes to a plan
+    - subscription.updated: Subscription is modified
+    - subscription.deleted: Subscription is cancelled
+    
+    The webhook updates user's publicMetadata with is_premium status.
+    """
+    try:
+        # Get the raw body and headers
+        body = await request.body()
+        headers = dict(request.headers)
+        
+        logger.info(f"📨 [WEBHOOK] Received Clerk webhook")
+        
+        # Verify webhook signature if secret is configured
+        if CLERK_WEBHOOK_SECRET:
+            try:
+                from svix.webhooks import Webhook
+                
+                svix_id = headers.get("svix-id")
+                svix_timestamp = headers.get("svix-timestamp")
+                svix_signature = headers.get("svix-signature")
+                
+                if not all([svix_id, svix_timestamp, svix_signature]):
+                    logger.warning("⚠️ [WEBHOOK] Missing Svix headers")
+                    raise HTTPException(status_code=400, detail="Missing webhook headers")
+                
+                wh = Webhook(CLERK_WEBHOOK_SECRET)
+                payload = wh.verify(body, {
+                    "svix-id": svix_id,
+                    "svix-timestamp": svix_timestamp,
+                    "svix-signature": svix_signature,
+                })
+                logger.info("✅ [WEBHOOK] Signature verified")
+            except Exception as e:
+                logger.error(f"❌ [WEBHOOK] Signature verification failed: {e}")
+                raise HTTPException(status_code=401, detail="Invalid webhook signature")
+        else:
+            # No secret configured - parse body directly (for testing)
+            payload = json.loads(body)
+            logger.warning("⚠️ [WEBHOOK] No CLERK_WEBHOOK_SECRET configured - skipping signature verification")
+        
+        # Extract event type and data
+        event_type = payload.get("type", "")
+        data = payload.get("data", {})
+        
+        logger.info(f"📋 [WEBHOOK] Event type: {event_type}")
+        logger.info(f"📋 [WEBHOOK] Data keys: {list(data.keys())}")
+        
+        # Handle subscription events
+        if event_type.startswith("subscription."):
+            user_id = data.get("user_id")
+            plan = data.get("plan", {})
+            status = data.get("status", "")
+            
+            logger.info(f"🔔 [WEBHOOK] Subscription event for user {user_id}")
+            logger.info(f"   Plan: {plan.get('name', 'Unknown')}, Status: {status}")
+            
+            if not user_id:
+                logger.warning("⚠️ [WEBHOOK] No user_id in subscription event")
+                return {"received": True, "processed": False, "reason": "no_user_id"}
+            
+            if not clerk:
+                logger.error("❌ [WEBHOOK] Clerk not initialized")
+                return {"received": True, "processed": False, "reason": "clerk_not_initialized"}
+            
+            try:
+                # Determine if user should be premium
+                is_premium = event_type in ["subscription.created", "subscription.updated"] and status in ["active", "trialing"]
+                plan_name = plan.get("name", "Premium") if is_premium else None
+                
+                # Update user's public metadata
+                if is_premium:
+                    new_metadata = {
+                        "is_premium": True,
+                        "plan_name": plan_name,
+                        "subscription_status": status,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                    logger.info(f"✅ [WEBHOOK] Setting premium status for user {user_id}")
+                else:
+                    new_metadata = {
+                        "is_premium": False,
+                        "plan_name": None,
+                        "subscription_status": status,
+                        "updated_at": datetime.utcnow().isoformat()
+                    }
+                    logger.info(f"🔄 [WEBHOOK] Removing premium status for user {user_id}")
+                
+                # Update via Clerk API
+                clerk.users.update(
+                    user_id=user_id,
+                    public_metadata=new_metadata
+                )
+                
+                logger.info(f"✅ [WEBHOOK] Updated user {user_id} metadata: is_premium={is_premium}")
+                
+                return {
+                    "received": True,
+                    "processed": True,
+                    "event_type": event_type,
+                    "user_id": user_id,
+                    "is_premium": is_premium
+                }
+                
+            except Exception as e:
+                logger.error(f"❌ [WEBHOOK] Failed to update user metadata: {e}")
+                return {"received": True, "processed": False, "reason": str(e)}
+        
+        # Handle other event types (log but don't process)
+        logger.info(f"ℹ️ [WEBHOOK] Unhandled event type: {event_type}")
+        return {"received": True, "processed": False, "reason": "unhandled_event_type"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [WEBHOOK] Error processing webhook: {e}")
+        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {str(e)}")
+
+
+# ==========================================
 # Vocabulary Browser Endpoints
 # ==========================================
 

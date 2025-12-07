@@ -31,6 +31,8 @@ dependencies = [
     "uvicorn>=0.34.0",
     # Model comparison dependencies
     "httpx>=0.27.0",  # For OpenRouter API client
+    # Webhook verification
+    "svix>=1.17.0",  # Clerk uses Svix for webhooks
 ]
 
 # Optional dependencies for direct API access (instead of OpenRouter)

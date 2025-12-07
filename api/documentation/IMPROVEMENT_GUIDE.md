@@ -52,6 +52,28 @@ HåfaGPT is a **complete Chamorro language learning platform** that combines:
 
 ---
 
+## ✅ **RECENTLY COMPLETED** - December 2025
+
+### **Freemium Model & Subscriptions** ✅ **NEW**
+- **Clerk Billing + Stripe Integration** - Seamless subscription management
+- **Daily Usage Limits** - Free tier: 5 chats, 5 games, 3 quizzes per day
+- **Guam Timezone Reset** - Daily limits reset at midnight Guam time (ChST, UTC+10)
+- **Usage Tracking API** - Backend endpoints for tracking and incrementing usage
+- **Upgrade Prompts** - Beautiful modal when users hit limits
+- **Pricing Page** - Clear comparison of Free vs Premium plans
+- **Premium Plans** - Monthly ($4.99) and Annual ($39.99, save 33%)
+
+### **Learning Games** ✅ **NEW**
+- **5 Interactive Games** - Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle
+- **Beginner & Challenge Modes** - Curated flashcards vs dictionary API
+- **Difficulty Levels** - Easy, Medium, Hard options
+- **Win Conditions** - Falling Words: Catch 30 words to win!
+- **Progress Tracking** - Game results saved to database
+- **Daily Wordle** - Homepage card shows daily play status
+- **Mobile Optimized** - Touch-friendly, responsive design
+
+---
+
 ## ✅ **RECENTLY COMPLETED** - November 2025
 
 ### **Authentication & User Management** ✅
@@ -1338,6 +1360,46 @@ When you have enough feedback data (50+ ratings), create a visual dashboard:
 ---
 
 ## 📚 **Additional Feature Ideas** (Lower Priority)
+
+### **0. Admin Dashboard** 🔧 **FUTURE ENHANCEMENT**
+**Status:** 📋 Planned  
+**Complexity:** Medium-High  
+**Effort:** 3-5 days  
+**Cost:** None
+
+**Goal:** Create an admin panel for managing users, subscriptions, and app settings.
+
+**Features:**
+- 👥 **User Management**
+  - View all users (search, filter by plan)
+  - Grant/revoke premium access (whitelist)
+  - View user activity and usage stats
+- 💳 **Subscription Management**
+  - View active subscriptions
+  - Create/cancel subscriptions manually
+  - Generate promo codes
+- 📊 **Analytics Dashboard**
+  - Daily/weekly/monthly active users
+  - Revenue metrics (MRR, churn)
+  - Feature usage stats
+- ⚙️ **App Settings**
+  - Toggle maintenance mode
+  - Adjust rate limits
+  - Feature flags
+
+**Technical Implementation:**
+- Protected route: `/admin` (requires admin role in Clerk)
+- Backend: Admin-only API endpoints with role verification
+- Database: Add `is_admin` flag or use Clerk roles
+- Consider: Retool/AdminJS for quick MVP, custom React for full control
+
+**Why This Feature:**
+- Manage family/friend premium access without code changes
+- Monitor app health and usage
+- Quick response to user issues
+- Revenue tracking and analytics
+
+---
 
 ### **1. PostHog + Stripe Analytics Integration** 📊 **FUTURE ENHANCEMENT**
 **Status:** Frontend analytics already integrated (Nov 2025)  
