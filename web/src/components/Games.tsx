@@ -98,7 +98,6 @@ export function Games() {
             description="Catch correct word pairs as they fly by! Avoid the wrong ones for combo points."
             icon={<Sword className="w-7 h-7 sm:w-8 sm:h-8" />}
             difficulty="Medium"
-            comingSoon
           />
           
           <GameCard
