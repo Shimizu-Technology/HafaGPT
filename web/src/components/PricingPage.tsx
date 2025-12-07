@@ -21,8 +21,8 @@ import { useSubscription } from '../hooks/useSubscription';
 const features = {
   free: [
     { text: "5 AI chat messages per day", icon: MessageSquare },
-    { text: "5 learning games per day", icon: Gamepad2 },
-    { text: "3 quizzes per day", icon: GraduationCap },
+    { text: "10 learning games per day", icon: Gamepad2 },
+    { text: "5 quizzes per day", icon: GraduationCap },
     { text: "Unlimited vocabulary browsing", icon: BookOpen },
     { text: "Daily word & stories", icon: BookOpen },
   ],

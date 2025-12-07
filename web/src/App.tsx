@@ -25,6 +25,10 @@ import { WordCatch } from './components/WordCatch';
 import { ChamorroWordle } from './components/ChamorroWordle';
 import { PricingPage } from './components/PricingPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/admin/AdminRoute';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminUsers } from './components/admin/AdminUsers';
+import { AdminUserDetail } from './components/admin/AdminUserDetail';
 
 function App() {
   return (
@@ -74,6 +78,11 @@ function App() {
         
         {/* Pricing page - public */}
         <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Admin routes - require admin role */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+        <Route path="/admin/users/:userId" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   );

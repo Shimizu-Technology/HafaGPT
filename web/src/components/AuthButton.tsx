@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
-import { Sparkles, Settings } from 'lucide-react';
+import { Sparkles, Settings, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '../hooks/useSubscription';
 
 export function AuthButton() {
   const navigate = useNavigate();
   const { isPremium } = useSubscription();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
   
   // Check dark mode from DOM directly (syncs with global theme toggle)
   const [isDark, setIsDark] = useState(() => 
@@ -62,8 +64,17 @@ export function AuthButton() {
             }
           }}
         >
-          {/* Custom menu item - show different options based on subscription status */}
+          {/* Custom menu items */}
           <UserButton.MenuItems>
+            {/* Admin Dashboard link - only for admins */}
+            {isAdmin && (
+              <UserButton.Action
+                label="Admin Dashboard"
+                labelIcon={<Shield className="w-4 h-4" style={{ color: '#ef4444' }} />}
+                onClick={() => navigate('/admin')}
+              />
+            )}
+            {/* Subscription management */}
             {isPremium ? (
               <UserButton.Action
                 label="Manage Subscription"
