@@ -4,7 +4,7 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
-from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 import time
@@ -54,7 +54,11 @@ from .models import (
     QuizResultResponse,
     QuizResultDetailResponse,
     QuizAnswerResponse,
-    QuizStatsResponse
+    QuizStatsResponse,
+    # Game Result Models
+    GameResultCreate,
+    GameResultResponse,
+    GameStatsResponse
 )
 from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
 from . import conversations
@@ -2590,6 +2594,296 @@ async def get_quiz_history(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get quiz history: {str(e)}"
+        )
+
+
+# ==========================================
+# Game Results Endpoints
+# ==========================================
+
+@app.post("/api/games/results", response_model=GameResultResponse, tags=["Games"])
+async def save_game_result(
+    request: GameResultCreate,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Save a game result for the authenticated user.
+    
+    Requires authentication.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Insert game result
+        cursor.execute("""
+            INSERT INTO game_results (
+                user_id, game_type, mode, category_id, category_title,
+                difficulty, score, moves, pairs, time_seconds, stars
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, created_at
+        """, (
+            user_id,
+            request.game_type,
+            request.mode,
+            request.category_id,
+            request.category_title,
+            request.difficulty,
+            request.score,
+            request.moves,
+            request.pairs,
+            request.time_seconds,
+            request.stars
+        ))
+        
+        result = cursor.fetchone()
+        result_id = result[0]
+        created_at = result[1]
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [GAME] Saved {request.game_type} result for user {user_id}: {request.score} pts, {request.stars} stars")
+        
+        return GameResultResponse(
+            id=str(result_id),
+            game_type=request.game_type,
+            mode=request.mode,
+            category_id=request.category_id,
+            category_title=request.category_title,
+            difficulty=request.difficulty,
+            score=request.score,
+            moves=request.moves,
+            pairs=request.pairs,
+            time_seconds=request.time_seconds,
+            stars=request.stars,
+            created_at=created_at
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GAME] Failed to save result: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save game result: {str(e)}"
+        )
+
+
+@app.get("/api/games/stats", response_model=GameStatsResponse, tags=["Games"])
+async def get_game_stats(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get game statistics for the authenticated user.
+    
+    Returns total games, average score, best category, and recent results.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get total games and averages
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_games,
+                COALESCE(AVG(score), 0) as average_score,
+                COALESCE(AVG(stars), 0) as average_stars
+            FROM game_results
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        stats = cursor.fetchone()
+        total_games = stats[0]
+        average_score = float(stats[1])
+        average_stars = float(stats[2])
+        
+        # Get best category (highest average score, min 1 attempt)
+        cursor.execute("""
+            SELECT 
+                category_id,
+                category_title,
+                AVG(score) as avg_score
+            FROM game_results
+            WHERE user_id = %s
+            GROUP BY category_id, category_title
+            HAVING COUNT(*) >= 1
+            ORDER BY avg_score DESC
+            LIMIT 1
+        """, (user_id,))
+        
+        best_category_row = cursor.fetchone()
+        best_category = None
+        best_category_title = None
+        best_category_score = None
+        
+        if best_category_row:
+            best_category = best_category_row[0]
+            best_category_title = best_category_row[1]
+            best_category_score = float(best_category_row[2])
+        
+        # Get recent results (last 10)
+        cursor.execute("""
+            SELECT id, game_type, mode, category_id, category_title, difficulty,
+                   score, moves, pairs, time_seconds, stars, created_at
+            FROM game_results
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10
+        """, (user_id,))
+        
+        recent_rows = cursor.fetchall()
+        recent_results = [
+            GameResultResponse(
+                id=str(row[0]),
+                game_type=row[1],
+                mode=row[2],
+                category_id=row[3],
+                category_title=row[4],
+                difficulty=row[5],
+                score=row[6],
+                moves=row[7],
+                pairs=row[8],
+                time_seconds=row[9],
+                stars=row[10],
+                created_at=row[11]
+            )
+            for row in recent_rows
+        ]
+        
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [GAME] Retrieved stats for user {user_id}: {total_games} games, {average_score:.0f} avg score")
+        
+        return GameStatsResponse(
+            total_games=total_games,
+            average_score=average_score,
+            average_stars=average_stars,
+            best_category=best_category,
+            best_category_title=best_category_title,
+            best_category_score=best_category_score,
+            recent_results=recent_results
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GAME] Failed to get stats: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get game stats: {str(e)}"
+        )
+
+
+@app.get("/api/games/history", tags=["Games"])
+async def get_game_history(
+    authorization: Optional[str] = Header(None),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(10, ge=1, le=50, description="Results per page"),
+    game_type: Optional[str] = Query(None, description="Filter by game type")
+):
+    """
+    Get paginated game history for the authenticated user.
+    
+    Optionally filter by game type.
+    """
+    try:
+        # Verify user
+        user_id = await verify_user(authorization)
+        
+        # Get database connection
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        offset = (page - 1) * per_page
+        
+        # Build query with optional game_type filter
+        if game_type:
+            cursor.execute("""
+                SELECT COUNT(*) FROM game_results WHERE user_id = %s AND game_type = %s
+            """, (user_id, game_type))
+        else:
+            cursor.execute("""
+                SELECT COUNT(*) FROM game_results WHERE user_id = %s
+            """, (user_id,))
+        
+        total_count = cursor.fetchone()[0]
+        
+        # Get paginated results
+        if game_type:
+            cursor.execute("""
+                SELECT id, game_type, mode, category_id, category_title, difficulty,
+                       score, moves, pairs, time_seconds, stars, created_at
+                FROM game_results
+                WHERE user_id = %s AND game_type = %s
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """, (user_id, game_type, per_page, offset))
+        else:
+            cursor.execute("""
+                SELECT id, game_type, mode, category_id, category_title, difficulty,
+                       score, moves, pairs, time_seconds, stars, created_at
+                FROM game_results
+                WHERE user_id = %s
+                ORDER BY created_at DESC
+                LIMIT %s OFFSET %s
+            """, (user_id, per_page, offset))
+        
+        rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        results = [
+            GameResultResponse(
+                id=str(row[0]),
+                game_type=row[1],
+                mode=row[2],
+                category_id=row[3],
+                category_title=row[4],
+                difficulty=row[5],
+                score=row[6],
+                moves=row[7],
+                pairs=row[8],
+                time_seconds=row[9],
+                stars=row[10],
+                created_at=row[11]
+            )
+            for row in rows
+        ]
+        
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        return {
+            "results": results,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total_count": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GAME] Failed to get history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get game history: {str(e)}"
         )
 
 

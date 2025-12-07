@@ -339,3 +339,46 @@ class QuizStatsResponse(BaseModel):
     recent_results: list[QuizResultResponse] = Field(default=[], description="Recent quiz results")
 
 
+# --- Game Result Models ---
+
+class GameResultCreate(BaseModel):
+    """Request to save a game result"""
+    game_type: str = Field(..., description="Game type (e.g., 'memory_match')")
+    mode: Optional[str] = Field(None, description="Game mode ('beginner' or 'challenge')")
+    category_id: str = Field(..., description="Category ID (e.g., 'greetings')")
+    category_title: Optional[str] = Field(None, description="Human-readable category title")
+    difficulty: Optional[str] = Field(None, description="Difficulty level ('easy', 'medium', 'hard')")
+    score: int = Field(..., ge=0, description="Calculated score")
+    moves: Optional[int] = Field(None, description="Number of moves (for memory match)")
+    pairs: Optional[int] = Field(None, description="Number of pairs matched")
+    time_seconds: Optional[int] = Field(None, description="Time to complete in seconds")
+    stars: Optional[int] = Field(None, ge=1, le=3, description="Star rating (1-3)")
+
+
+class GameResultResponse(BaseModel):
+    """Response model for a single game result"""
+    id: str = Field(..., description="Game result UUID")
+    game_type: str = Field(..., description="Game type")
+    mode: Optional[str] = Field(None, description="Game mode")
+    category_id: str = Field(..., description="Category ID")
+    category_title: Optional[str] = Field(None, description="Human-readable category title")
+    difficulty: Optional[str] = Field(None, description="Difficulty level")
+    score: int = Field(..., description="Calculated score")
+    moves: Optional[int] = Field(None, description="Number of moves")
+    pairs: Optional[int] = Field(None, description="Number of pairs")
+    time_seconds: Optional[int] = Field(None, description="Time to complete")
+    stars: Optional[int] = Field(None, description="Star rating")
+    created_at: datetime = Field(..., description="When the game was played")
+
+
+class GameStatsResponse(BaseModel):
+    """Response model for user's game statistics"""
+    total_games: int = Field(..., description="Total games played")
+    average_score: float = Field(..., description="Average score")
+    average_stars: float = Field(..., description="Average star rating")
+    best_category: Optional[str] = Field(None, description="Best performing category ID")
+    best_category_title: Optional[str] = Field(None, description="Best performing category title")
+    best_category_score: Optional[float] = Field(None, description="Best category average score")
+    recent_results: list[GameResultResponse] = Field(default=[], description="Recent game results")
+
+

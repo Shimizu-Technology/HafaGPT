@@ -6,7 +6,7 @@
 
 | Phase | Status | Games |
 |-------|--------|-------|
-| Phase 1 | 🚧 In Progress | Memory Match |
+| Phase 1 | ✅ Completed | Memory Match |
 | Phase 2 | 📋 Planned | Word Scramble, Speed Round |
 | Phase 3 | 📋 Future | Daily Challenges, Leaderboards, More Games |
 
@@ -14,57 +14,80 @@
 
 ## 🎯 Phase 1: Memory Match (MVP)
 
-**Status:** 🚧 In Progress  
-**Estimated Effort:** 3-5 days  
+**Status:** ✅ Completed (Dec 7, 2025)  
+**Effort:** 2 sessions  
 **Target:** Kids-friendly, all ages can enjoy
 
 ### Game Description
-- Grid of face-down cards
+- Grid of face-down cards with hibiscus flower pattern
 - Flip 2 cards to find matching pairs (Chamorro ↔ English)
 - Win by matching all pairs
+- Star rating based on efficiency (1-3 stars)
 
 ### Features Checklist
 
 **Core Game:**
-- [ ] Game hub page (`/games`)
-- [ ] Memory Match page (`/games/memory`)
-- [ ] Card grid layout (responsive)
-- [ ] Card flip animation
-- [ ] Match detection logic
-- [ ] Win condition & celebration
+- [x] Game hub page (`/games`)
+- [x] Memory Match page (`/games/memory`)
+- [x] Card grid layout (responsive, 4 columns)
+- [x] Card flip animation (CSS 3D transform)
+- [x] Match detection logic
+- [x] Win condition & celebration (with stars!)
+
+**Game Modes:**
+- [x] Beginner Mode: Curated flashcard data (common phrases)
+- [x] Challenge Mode: Full dictionary API (advanced vocabulary)
+- [x] Mode selector on setup screen
 
 **Category Selection:**
-- [ ] Category picker (Family, Food, Colors, Numbers, Animals, etc.)
-- [ ] Pull words from existing dictionary API
-- [ ] Random word selection per game
+- [x] Category picker (varies by mode)
+- [x] Beginner: 9 curated categories from `defaultFlashcards.ts`
+- [x] Challenge: All dictionary categories from API
+- [x] Display names for all categories (no truncation)
+- [x] Random word selection per game
 
 **Difficulty Levels:**
-- [ ] Easy: 4 pairs (8 cards) - 2x4 grid
-- [ ] Medium: 6 pairs (12 cards) - 3x4 grid
-- [ ] Hard: 8 pairs (16 cards) - 4x4 grid
+- [x] Easy: 4 pairs (8 cards) - 2x4 grid
+- [x] Medium: 6 pairs (12 cards) - 3x4 grid
+- [x] Hard: 8 pairs (16 cards) - 4x4 grid
+- [x] Disable difficulty options if not enough cards in category
 
 **Scoring:**
-- [ ] Move counter
-- [ ] Timer (optional display)
-- [ ] Score calculation (fewer moves = better)
-- [ ] "Play Again" button
+- [x] Move counter
+- [x] Timer display
+- [x] Score calculation (fewer moves = better)
+- [x] Star rating (1-3 stars based on efficiency)
+- [x] "Play Again" button
 
 **Polish:**
-- [ ] Mobile-responsive (works on phones)
-- [ ] Touch-friendly (big cards)
-- [ ] Visual feedback (correct match = green, wrong = red shake)
-- [ ] Encouraging messages ("Great job!", "Keep going!")
+- [x] Mobile-responsive (square cards on mobile, taller on desktop)
+- [x] Touch-friendly (big cards)
+- [x] Visual feedback (correct match = green)
+- [x] Encouraging messages & star ratings
+- [x] `beforeunload` warning when game in progress
 
-**Auth (Match App Pattern):**
-- [ ] Works without sign-in (anonymous play)
-- [ ] High scores saved to localStorage (MVP)
-- [ ] Future: Save to database when signed in
+**Auth & Progress Tracking:**
+- [x] Requires sign-in to play (ProtectedRoute)
+- [x] Full database tracking for game results
+- [x] Save score, moves, time, stars, category, difficulty
+- [x] Game stats on Dashboard (total games, avg stars)
+- [x] Recent games shown on Dashboard
+
+**App Integration:**
+- [x] Games link on Homepage (both mobile & desktop)
+- [x] "Account Required" badge for non-signed-in users
+- [x] Games stats in Homepage quick stats (desktop)
+- [x] "Play Games" link in Dashboard "Continue Learning"
+- [x] Games count & avg stars in Dashboard stats grid
 
 ### Technical Notes
 
-**No Backend Changes Needed!**
-- Uses existing `/api/vocabulary/category/{id}` endpoint
-- Words already have: `chamorro`, `english`, `category`
+**Backend Changes:**
+- New `game_results` table (Alembic migration)
+- API endpoints:
+  - `POST /api/games/results` - Save game result
+  - `GET /api/games/stats` - Get user's game stats
+  - `GET /api/games/history` - Get recent game history
 
 **Frontend Routes:**
 ```
@@ -74,14 +97,15 @@
 
 **Key Components:**
 ```
-src/pages/Games.tsx           # Game hub
-src/pages/MemoryMatch.tsx     # Memory game page
-src/components/games/
-  MemoryCard.tsx              # Flip card component
-  CategorySelect.tsx          # Category dropdown
-  DifficultySelect.tsx        # Easy/Medium/Hard
-  GameScore.tsx               # Score display
+src/components/Games.tsx              # Game hub
+src/components/MemoryMatch.tsx        # Memory game page
+src/components/games/MemoryCard.tsx   # Flip card component
+src/hooks/useGamesQuery.ts            # Game API hooks
 ```
+
+**Data Sources:**
+- **Beginner Mode:** `src/data/defaultFlashcards.ts`
+- **Challenge Mode:** `/api/vocabulary/flashcards/{id}` endpoint
 
 ---
 
@@ -107,7 +131,6 @@ src/components/games/
 - [ ] Word Scramble game
 - [ ] Speed Round game
 - [ ] Sound effects (correct/wrong dings)
-- [ ] High score tracking per game
 - [ ] Share score feature
 
 ---
@@ -121,8 +144,7 @@ src/components/games/
 - [ ] Daily Challenge (one game per day)
 - [ ] Leaderboards (global/friends)
 - [ ] Achievements & Badges
-- [ ] Learning streaks
-- [ ] Database score persistence (requires auth)
+- [ ] Learning streaks integration
 
 ---
 
@@ -131,31 +153,31 @@ src/components/games/
 1. **Mobile-First** - Most users play on phones
 2. **Big Touch Targets** - Easy for kids to tap
 3. **Encouraging** - "Great job!" not "Wrong!"
-4. **No Friction** - Play immediately, no sign-up required
+4. **Consistent Auth** - Requires sign-in (like quizzes/flashcards)
 5. **Chamorro Immersion** - Include Chamorro UI text where appropriate
 
 ---
 
-## 📁 File Structure (Planned)
+## 📁 File Structure
 
 ```
 HafaGPT-frontend/src/
-├── pages/
-│   ├── Games.tsx                 # Game hub
-│   ├── MemoryMatch.tsx           # Memory game
-│   ├── WordScramble.tsx          # Scramble game (Phase 2)
-│   └── SpeedRound.tsx            # Speed game (Phase 2)
-├── components/games/
-│   ├── MemoryCard.tsx            # Flip card
-│   ├── CategorySelect.tsx        # Category picker
-│   ├── DifficultySelect.tsx      # Difficulty picker
-│   ├── GameScore.tsx             # Score display
-│   ├── GameTimer.tsx             # Timer component
-│   └── GameComplete.tsx          # Win/complete modal
+├── components/
+│   ├── Games.tsx                     # Game hub
+│   ├── MemoryMatch.tsx               # Memory game page
+│   └── games/
+│       └── MemoryCard.tsx            # Flip card component
 ├── hooks/
-│   └── useGameScore.ts           # Score management hook
+│   └── useGamesQuery.ts              # Game API hooks (save, stats, history)
 └── data/
-    └── gameCategories.ts         # Category definitions
+    └── defaultFlashcards.ts          # Curated flashcard data (beginner mode)
+
+HafaGPT-API/
+├── api/
+│   ├── main.py                       # Game result endpoints
+│   └── models.py                     # GameResultCreate, GameStatsResponse
+└── alembic/versions/
+    └── a1b2c3d4e5f6_add_game_results_table.py
 ```
 
 ---
@@ -165,7 +187,27 @@ HafaGPT-frontend/src/
 ### Dec 6, 2025
 - Created GAMES_FEATURE.md planning document
 - Defined Phase 1 scope (Memory Match)
-- Identified existing APIs to use (no backend changes needed)
+- ✅ Implemented Memory Match game with full gameplay mechanics
+- ✅ Added dual modes (Beginner/Challenge)
+- ✅ Added Games link to homepage
+
+### Dec 7, 2025
+- ✅ Fixed card rendering issues (overflow, sizing)
+- ✅ Added proper category display names (no truncation)
+- ✅ Implemented full database tracking for game results:
+  - Created `game_results` table with Alembic migration
+  - Added API endpoints: POST results, GET stats, GET history
+  - Frontend hooks: useSaveGameResult, useGameStats, useGameHistory
+- ✅ Integrated with Dashboard:
+  - Games count & avg stars in stats grid
+  - Recent games section with star display
+  - "Play Games" link in Continue Learning
+- ✅ Integrated with Homepage:
+  - Games stat in quick stats (desktop)
+  - Progress card in desktop grid (when signed in)
+- ✅ Added ProtectedRoute for games (requires sign-in)
+- ✅ Added "Account Required" badges on homepage for non-signed-in users
+- ✅ Added "Explore Free / Free Account" welcome section for visitors
 
 ---
 
@@ -173,5 +215,4 @@ HafaGPT-frontend/src/
 
 - **Dictionary API:** `/api/vocabulary/category/{id}` - Source for game words
 - **Existing Categories:** greetings, family, numbers, colors, food, animals, body, nature, places, time, verbs, phrases
-- **Auth Pattern:** Clerk (same as rest of app)
-
+- **Auth Pattern:** Clerk (same as rest of app, requires sign-in)
