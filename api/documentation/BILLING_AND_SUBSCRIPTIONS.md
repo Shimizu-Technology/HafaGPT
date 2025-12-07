@@ -8,8 +8,8 @@
 | Feature | Free Tier | Premium |
 |---------|-----------|---------|
 | AI Chat | 5 messages/day | Unlimited |
-| Learning Games | 5 games/day | Unlimited |
-| Quizzes | 3 quizzes/day | Unlimited |
+| Learning Games | 10 games/day | Unlimited |
+| Quizzes | 5 quizzes/day | Unlimited |
 | Vocabulary Browser | ✅ Unlimited | ✅ Unlimited |
 | Stories | ✅ Unlimited | ✅ Unlimited |
 | Daily Word | ✅ Unlimited | ✅ Unlimited |

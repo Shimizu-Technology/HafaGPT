@@ -58,7 +58,13 @@ from .models import (
     # Game Result Models
     GameResultCreate,
     GameResultResponse,
-    GameStatsResponse
+    GameStatsResponse,
+    # Admin Dashboard Models
+    AdminStatsResponse,
+    AdminUserInfo,
+    AdminUsersResponse,
+    AdminUserUpdateRequest,
+    AdminUserUpdateResponse
 )
 from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
 from . import conversations
@@ -2904,8 +2910,8 @@ def get_guam_date() -> date:
 # Default daily limits for free users
 FREE_TIER_LIMITS = {
     "chat": 5,
-    "game": 5,
-    "quiz": 3
+    "game": 10,
+    "quiz": 5
 }
 
 
@@ -3794,6 +3800,447 @@ When is_complete is true, set final_score to 1-5 based on:
         
     except Exception as e:
         logger.error(f"❌ [CONVERSATION PRACTICE] Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# ADMIN DASHBOARD ENDPOINTS
+# =============================================================================
+
+async def verify_admin(authorization: Optional[str] = Header(None)) -> str:
+    """
+    Verify that the request is from an admin user.
+    Returns the user_id if valid, raises HTTPException if not.
+    """
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
+    
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization format")
+    
+    token = authorization.replace("Bearer ", "")
+    
+    if not clerk:
+        raise HTTPException(status_code=500, detail="Clerk not initialized")
+    
+    try:
+        # Decode and verify the JWT
+        jwks_client = clerk.jwks.get_jwks()
+        keys = jwks_client.keys if hasattr(jwks_client, 'keys') else []
+        
+        if not keys:
+            raise HTTPException(status_code=500, detail="Unable to fetch JWKS keys")
+        
+        from jose import jwt
+        
+        # Get the signing key
+        unverified_header = jwt.get_unverified_header(token)
+        signing_key = None
+        for key in keys:
+            if key.kid == unverified_header.get("kid"):
+                signing_key = key
+                break
+        
+        if not signing_key:
+            raise HTTPException(status_code=401, detail="Unable to find signing key")
+        
+        # Verify and decode the token
+        payload = jwt.decode(
+            token,
+            signing_key.model_dump() if hasattr(signing_key, 'model_dump') else dict(signing_key),
+            algorithms=["RS256"],
+            options={"verify_aud": False}
+        )
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token: no user ID")
+        
+        # Check if user is admin
+        user = clerk.users.get(user_id=user_id)
+        public_metadata = getattr(user, 'public_metadata', {}) or {}
+        role = public_metadata.get('role')
+        
+        if role != 'admin':
+            logger.warning(f"🚫 [ADMIN] Non-admin user {user_id} attempted admin access")
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        logger.info(f"✅ [ADMIN] Admin user {user_id} authenticated")
+        return user_id
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Auth error: {e}")
+        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+
+
+@app.get("/api/admin/stats", response_model=AdminStatsResponse, tags=["Admin"])
+async def get_admin_stats(authorization: Optional[str] = Header(None)):
+    """
+    Get dashboard statistics for admin panel.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        if not clerk:
+            raise HTTPException(status_code=500, detail="Clerk not initialized")
+        
+        # Get all users from Clerk
+        users_response = clerk.users.list()
+        users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        
+        total_users = len(users)
+        premium_users = 0
+        whitelisted_users = 0
+        
+        for user in users:
+            metadata = getattr(user, 'public_metadata', {}) or {}
+            if metadata.get('is_premium'):
+                premium_users += 1
+            if metadata.get('whitelisted') or metadata.get('is_whitelisted'):
+                whitelisted_users += 1
+        
+        free_users = total_users - premium_users
+        
+        # Get database stats
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Total conversations
+        cursor.execute("SELECT COUNT(*) FROM conversations WHERE deleted_at IS NULL")
+        total_conversations = cursor.fetchone()[0]
+        
+        # Total messages
+        cursor.execute("SELECT COUNT(*) FROM conversation_logs")
+        total_messages = cursor.fetchone()[0]
+        
+        # Total quiz attempts
+        cursor.execute("SELECT COUNT(*) FROM quiz_results")
+        total_quiz_attempts = cursor.fetchone()[0]
+        
+        # Total game plays
+        cursor.execute("SELECT COUNT(*) FROM game_results")
+        total_game_plays = cursor.fetchone()[0]
+        
+        # Active today (users with activity in user_daily_usage)
+        today = get_guam_date()
+        cursor.execute(
+            "SELECT COUNT(DISTINCT user_id) FROM user_daily_usage WHERE usage_date = %s",
+            (today,)
+        )
+        active_today = cursor.fetchone()[0]
+        
+        conn.close()
+        
+        return AdminStatsResponse(
+            total_users=total_users,
+            premium_users=premium_users,
+            free_users=free_users,
+            whitelisted_users=whitelisted_users,
+            active_today=active_today,
+            total_conversations=total_conversations,
+            total_messages=total_messages,
+            total_quiz_attempts=total_quiz_attempts,
+            total_game_plays=total_game_plays
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Stats error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/users", response_model=AdminUsersResponse, tags=["Admin"])
+async def get_admin_users(
+    authorization: Optional[str] = Header(None),
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(20, ge=1, le=100, description="Items per page"),
+    search: Optional[str] = Query(None, description="Search by email or name")
+):
+    """
+    Get paginated list of users for admin panel.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        if not clerk:
+            raise HTTPException(status_code=500, detail="Clerk not initialized")
+        
+        # Get users from Clerk (with pagination)
+        # Note: Clerk's list has its own pagination, we'll handle it here
+        offset = (page - 1) * per_page
+        
+        if search:
+            # Search by email or name - Clerk SDK uses email_address or query param
+            users_response = clerk.users.list(query=search)
+        else:
+            users_response = clerk.users.list()
+        
+        all_users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        total = len(all_users)
+        
+        # Apply pagination
+        paginated_users = all_users[offset:offset + per_page]
+        
+        # Get database stats for each user
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        admin_users = []
+        for user in paginated_users:
+            user_id = user.id
+            metadata = getattr(user, 'public_metadata', {}) or {}
+            
+            # Get user's email
+            email = None
+            if hasattr(user, 'email_addresses') and user.email_addresses:
+                email = user.email_addresses[0].email_address
+            
+            # Get stats from database
+            cursor.execute(
+                "SELECT COUNT(*) FROM conversations WHERE user_id = %s AND deleted_at IS NULL",
+                (user_id,)
+            )
+            total_conversations = cursor.fetchone()[0]
+            
+            cursor.execute(
+                "SELECT COUNT(*) FROM conversation_logs WHERE user_id = %s",
+                (user_id,)
+            )
+            total_messages = cursor.fetchone()[0]
+            
+            cursor.execute(
+                "SELECT COUNT(*) FROM quiz_results WHERE user_id = %s",
+                (user_id,)
+            )
+            total_quizzes = cursor.fetchone()[0]
+            
+            cursor.execute(
+                "SELECT COUNT(*) FROM game_results WHERE user_id = %s",
+                (user_id,)
+            )
+            total_games = cursor.fetchone()[0]
+            
+            admin_users.append(AdminUserInfo(
+                user_id=user_id,
+                email=email,
+                first_name=getattr(user, 'first_name', None),
+                last_name=getattr(user, 'last_name', None),
+                image_url=getattr(user, 'image_url', None),
+                is_premium=metadata.get('is_premium', False),
+                is_whitelisted=metadata.get('whitelisted', False) or metadata.get('is_whitelisted', False),
+                is_banned=metadata.get('is_banned', False),
+                role=metadata.get('role'),
+                plan_name=metadata.get('plan_name'),
+                subscription_status=metadata.get('subscription_status'),
+                created_at=str(user.created_at) if hasattr(user, 'created_at') else None,
+                last_sign_in=str(user.last_sign_in_at) if hasattr(user, 'last_sign_in_at') else None,
+                total_conversations=total_conversations,
+                total_messages=total_messages,
+                total_quizzes=total_quizzes,
+                total_games=total_games
+            ))
+        
+        conn.close()
+        
+        total_pages = (total + per_page - 1) // per_page
+        
+        return AdminUsersResponse(
+            users=admin_users,
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Users list error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/users/{user_id}", response_model=AdminUserInfo, tags=["Admin"])
+async def get_admin_user(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get detailed info for a specific user.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        if not clerk:
+            raise HTTPException(status_code=500, detail="Clerk not initialized")
+        
+        # Get user from Clerk
+        user = clerk.users.get(user_id=user_id)
+        metadata = getattr(user, 'public_metadata', {}) or {}
+        
+        # Get user's email
+        email = None
+        if hasattr(user, 'email_addresses') and user.email_addresses:
+            email = user.email_addresses[0].email_address
+        
+        # Get stats from database
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Total stats
+        cursor.execute(
+            "SELECT COUNT(*) FROM conversations WHERE user_id = %s AND deleted_at IS NULL",
+            (user_id,)
+        )
+        total_conversations = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "SELECT COUNT(*) FROM conversation_logs WHERE user_id = %s",
+            (user_id,)
+        )
+        total_messages = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "SELECT COUNT(*) FROM quiz_results WHERE user_id = %s",
+            (user_id,)
+        )
+        total_quizzes = cursor.fetchone()[0]
+        
+        cursor.execute(
+            "SELECT COUNT(*) FROM game_results WHERE user_id = %s",
+            (user_id,)
+        )
+        total_games = cursor.fetchone()[0]
+        
+        # Today's usage
+        today = get_guam_date()
+        cursor.execute(
+            "SELECT chat_count, game_count, quiz_count FROM user_daily_usage WHERE user_id = %s AND usage_date = %s",
+            (user_id, today)
+        )
+        today_row = cursor.fetchone()
+        today_chat = today_row[0] if today_row else 0
+        today_games = today_row[1] if today_row else 0
+        today_quizzes = today_row[2] if today_row else 0
+        
+        conn.close()
+        
+        return AdminUserInfo(
+            user_id=user_id,
+            email=email,
+            first_name=getattr(user, 'first_name', None),
+            last_name=getattr(user, 'last_name', None),
+            image_url=getattr(user, 'image_url', None),
+            is_premium=metadata.get('is_premium', False),
+            is_whitelisted=metadata.get('whitelisted', False) or metadata.get('is_whitelisted', False),
+            is_banned=metadata.get('is_banned', False),
+            role=metadata.get('role'),
+            plan_name=metadata.get('plan_name'),
+            subscription_status=metadata.get('subscription_status'),
+            created_at=str(user.created_at) if hasattr(user, 'created_at') else None,
+            last_sign_in=str(user.last_sign_in_at) if hasattr(user, 'last_sign_in_at') else None,
+            total_conversations=total_conversations,
+            total_messages=total_messages,
+            total_quizzes=total_quizzes,
+            total_games=total_games,
+            today_chat=today_chat,
+            today_games=today_games,
+            today_quizzes=today_quizzes
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Get user error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/admin/users/{user_id}", response_model=AdminUserUpdateResponse, tags=["Admin"])
+async def update_admin_user(
+    user_id: str,
+    request: AdminUserUpdateRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a user's status (premium, whitelist, role).
+    Requires admin role.
+    """
+    admin_user_id = await verify_admin(authorization)
+    
+    try:
+        if not clerk:
+            raise HTTPException(status_code=500, detail="Clerk not initialized")
+        
+        # Get current user data
+        user = clerk.users.get(user_id=user_id)
+        current_metadata = getattr(user, 'public_metadata', {}) or {}
+        
+        # Build new metadata
+        new_metadata = dict(current_metadata)
+        
+        if request.is_premium is not None:
+            new_metadata['is_premium'] = request.is_premium
+        
+        if request.is_whitelisted is not None:
+            new_metadata['is_whitelisted'] = request.is_whitelisted
+            new_metadata['whitelisted'] = request.is_whitelisted  # Also set alias
+            if request.is_whitelisted and not new_metadata.get('is_premium'):
+                # Whitelisting automatically grants premium
+                new_metadata['is_premium'] = True
+        
+        if request.role is not None:
+            new_metadata['role'] = request.role
+        
+        if request.is_banned is not None:
+            new_metadata['is_banned'] = request.is_banned
+            if request.is_banned:
+                new_metadata['banned_at'] = datetime.utcnow().isoformat()
+                new_metadata['banned_by'] = admin_user_id
+        
+        if request.plan_name is not None:
+            new_metadata['plan_name'] = request.plan_name
+        elif request.is_whitelisted:
+            new_metadata['plan_name'] = 'Friends & Family'
+        
+        new_metadata['updated_at'] = datetime.utcnow().isoformat()
+        new_metadata['updated_by'] = admin_user_id
+        
+        # Update user in Clerk
+        clerk.users.update(
+            user_id=user_id,
+            public_metadata=new_metadata
+        )
+        
+        logger.info(f"✅ [ADMIN] User {user_id} updated by admin {admin_user_id}")
+        logger.info(f"   New metadata: {new_metadata}")
+        
+        # Get updated user info
+        updated_user = await get_admin_user(user_id, authorization)
+        
+        return AdminUserUpdateResponse(
+            success=True,
+            user=updated_user,
+            message=f"User {user_id} updated successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Update user error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -411,3 +411,69 @@ class SubscriptionStatusResponse(BaseModel):
     features: list[str] = Field(default=[], description="List of enabled feature keys")
 
 
+# --- Admin Dashboard Models ---
+
+class AdminStatsResponse(BaseModel):
+    """Response model for admin dashboard stats"""
+    total_users: int = Field(..., description="Total number of users")
+    premium_users: int = Field(..., description="Number of premium users")
+    free_users: int = Field(..., description="Number of free users")
+    whitelisted_users: int = Field(..., description="Number of whitelisted users")
+    active_today: int = Field(..., description="Users active today")
+    total_conversations: int = Field(..., description="Total conversations")
+    total_messages: int = Field(..., description="Total messages sent")
+    total_quiz_attempts: int = Field(..., description="Total quiz attempts")
+    total_game_plays: int = Field(..., description="Total game plays")
+
+
+class AdminUserInfo(BaseModel):
+    """User info for admin dashboard"""
+    user_id: str = Field(..., description="Clerk user ID")
+    email: Optional[str] = Field(None, description="User's email")
+    first_name: Optional[str] = Field(None, description="First name")
+    last_name: Optional[str] = Field(None, description="Last name")
+    image_url: Optional[str] = Field(None, description="Profile image URL")
+    is_premium: bool = Field(False, description="Has premium subscription")
+    is_whitelisted: bool = Field(False, description="Is whitelisted for free premium")
+    is_banned: bool = Field(False, description="Is user banned")
+    role: Optional[str] = Field(None, description="User role (admin, user)")
+    plan_name: Optional[str] = Field(None, description="Subscription plan name")
+    subscription_status: Optional[str] = Field(None, description="active, canceled, past_due, etc.")
+    created_at: Optional[str] = Field(None, description="Account creation date")
+    last_sign_in: Optional[str] = Field(None, description="Last sign-in date")
+    # Usage stats
+    total_conversations: int = Field(0, description="Total conversations")
+    total_messages: int = Field(0, description="Total messages sent")
+    total_quizzes: int = Field(0, description="Total quizzes taken")
+    total_games: int = Field(0, description="Total games played")
+    # Today's usage
+    today_chat: int = Field(0, description="Chat messages today")
+    today_games: int = Field(0, description="Games played today")
+    today_quizzes: int = Field(0, description="Quizzes taken today")
+
+
+class AdminUsersResponse(BaseModel):
+    """Response for admin users list"""
+    users: list[AdminUserInfo] = Field(..., description="List of users")
+    total: int = Field(..., description="Total number of users (for pagination)")
+    page: int = Field(..., description="Current page")
+    per_page: int = Field(..., description="Items per page")
+    total_pages: int = Field(..., description="Total number of pages")
+
+
+class AdminUserUpdateRequest(BaseModel):
+    """Request to update a user's status"""
+    is_premium: Optional[bool] = Field(None, description="Set premium status")
+    is_whitelisted: Optional[bool] = Field(None, description="Set whitelist status")
+    is_banned: Optional[bool] = Field(None, description="Ban or unban user")
+    role: Optional[str] = Field(None, description="Set user role")
+    plan_name: Optional[str] = Field(None, description="Set plan name (for display)")
+
+
+class AdminUserUpdateResponse(BaseModel):
+    """Response after updating a user"""
+    success: bool = Field(..., description="Whether update was successful")
+    user: AdminUserInfo = Field(..., description="Updated user info")
+    message: str = Field(..., description="Status message")
+
+
