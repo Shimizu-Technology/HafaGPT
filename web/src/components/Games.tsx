@@ -106,7 +106,6 @@ export function Games() {
             description="Guess the Chamorro word in 6 tries! Daily challenge or practice mode."
             icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
             difficulty="Hard"
-            comingSoon
           />
         </div>
 

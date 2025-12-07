@@ -22,6 +22,7 @@ import { MemoryMatch } from './components/MemoryMatch';
 import { WordScramble } from './components/WordScramble';
 import { FallingWords } from './components/FallingWords';
 import { WordCatch } from './components/WordCatch';
+import { ChamorroWordle } from './components/ChamorroWordle';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -68,6 +69,7 @@ function App() {
         <Route path="/games/scramble" element={<ProtectedRoute><WordScramble /></ProtectedRoute>} />
         <Route path="/games/falling" element={<ProtectedRoute><FallingWords /></ProtectedRoute>} />
         <Route path="/games/catch" element={<ProtectedRoute><WordCatch /></ProtectedRoute>} />
+        <Route path="/games/wordle" element={<ProtectedRoute><ChamorroWordle /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

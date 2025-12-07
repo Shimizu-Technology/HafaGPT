@@ -14,16 +14,36 @@ A beautiful, modern React web interface for learning Chamorro (the native langua
 
 - **Smart AI Responses:**
   - RAG-enhanced answers from authoritative grammar books and dictionaries
-  - 44,810+ knowledge chunks from grammar books, dictionaries, and bilingual articles
+  - 45,000+ knowledge chunks from grammar books, dictionaries, and bilingual articles
   - Source citations with page numbers
   - Response time tracking
 
-- **🎤 Speech-to-Text Input:**
+- **🎤 Speech-to-Text & 🔊 Text-to-Speech:**
   - Click microphone button to speak your question
-  - Automatic transcription to text (FREE - uses browser's Web Speech API)
-  - Edit transcribed text before sending
+  - Listen to Chamorro pronunciations with OpenAI TTS
   - Visual feedback with red pulse when recording
-  - Works on Chrome, Safari, and modern browsers
+
+### 🎮 Learning Games (5 Games!)
+- **Memory Match** - Flip cards to match Chamorro ↔ English pairs
+- **Word Scramble** - Unscramble letters to spell Chamorro words
+- **Falling Words** - Catch falling words by tapping correct translations
+- **Word Catch** - Fruit Ninja-style word pair catching game
+- **Chamorro Wordle** - Daily word puzzle with Chamorro keyboard
+  - Daily Challenge (same word for everyone)
+  - Practice Mode (Beginner/Challenge, Easy/Medium/Hard)
+
+### 📚 Learning Tools
+- **📝 Quizzes** - 6 categories, multiple question types, score tracking
+- **🎴 Flashcards** - Curated decks + AI-generated cards
+- **📖 Stories** - 24 bilingual stories with tap-to-translate
+- **💬 Conversation Practice** - 7 AI role-play scenarios
+- **📚 Vocabulary Browser** - 10,350+ dictionary words
+- **📅 Daily Word** - New word every day with pronunciation
+
+### 📊 Progress Tracking
+- **Dashboard** - Track quizzes, games, and conversations
+- **Stats** - Average scores, best categories, streaks
+- **Game History** - Recent games with star ratings
 
 ### 💬 Conversation Management
 - **Create & Organize** - Multiple conversations for different learning topics

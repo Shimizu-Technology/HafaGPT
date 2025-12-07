@@ -24,6 +24,7 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { useTheme } from '../hooks/useTheme';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { DailyWord } from './DailyWord';
+import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
 
 export function HomePage() {
@@ -617,6 +618,9 @@ export function HomePage() {
 
         {/* Daily Word - Compact on mobile, full on desktop */}
         <DailyWord compactOnMobile />
+
+        {/* Daily Wordle Card */}
+        <DailyWordleCard />
 
         {/* Best Category - Only show on DESKTOP if user has quiz history */}
         {bestCategoryInfo && (
