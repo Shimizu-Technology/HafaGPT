@@ -7,9 +7,9 @@
 
 | Phase | Status | Games |
 |-------|--------|-------|
-| Phase 1 | ✅ Completed | Memory Match, Word Scramble, Falling Words, Word Catch |
-| Phase 2 | 🚧 In Progress | Chamorro Wordle |
-| Phase 3 | 📋 Future | Daily Challenges, Leaderboards, Power-ups, Sound Effects |
+| Phase 1 | ✅ Completed | Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle |
+| Phase 2 | 📋 Planned | Power-ups, Sound Effects, More Games |
+| Phase 3 | 📋 Future | Daily Challenges, Leaderboards, Social Features |
 
 ---
 
@@ -97,6 +97,7 @@
 /games/scramble     → Word Scramble game
 /games/falling      → Falling Words game
 /games/catch        → Word Catch game
+/games/wordle       → Chamorro Wordle game
 ```
 
 **Key Components:**
@@ -192,24 +193,42 @@ These games prioritize **fun gameplay** - learning happens naturally through pla
 ---
 
 ### Chamorro Wordle 📝
-**Status:** 📋 Planned  
+**Status:** ✅ Completed (Dec 7, 2025)  
 **Inspired By:** Wordle  
 **Best For:** Daily engagement, spelling mastery
 
 **Concept:**
 - Guess the Chamorro word in 6 tries
 - Color hints: 🟩 correct position, 🟨 wrong position, ⬜ not in word
-- Daily challenge (same word for everyone)
-- Practice mode (unlimited plays)
+- Daily challenge (same word for everyone, resets at midnight)
+- Practice mode (choose difficulty + mode, unlimited plays)
 
 **Features:**
-- [ ] 6-row letter grid
-- [ ] On-screen Chamorro keyboard (with å, ñ, etc.)
-- [ ] Color-coded feedback
-- [ ] Daily word (synced globally)
-- [ ] Practice mode (random words)
-- [ ] Share results (emoji grid)
-- [ ] Streak tracking
+- [x] 6-row letter grid with smooth animations
+- [x] On-screen Chamorro keyboard (with Å, Ñ, glottal stop)
+- [x] Mobile-responsive keyboard (flex layout, fits all screens)
+- [x] Color-coded feedback (green/yellow/gray)
+- [x] Physical keyboard support (desktop)
+- [x] Daily word (synced globally via date, 5-letter)
+- [x] Practice mode with customization:
+  - Beginner Mode (curated common words)
+  - Challenge Mode (dictionary words)
+  - Difficulty: Easy (4 letters), Medium (5), Hard (6)
+  - Category selection for Challenge mode
+- [x] "Press Enter ↵ to submit" hint when word is complete
+- [x] Share results (emoji grid, clipboard + native share)
+- [x] Help modal with step-by-step examples
+- [x] How to Play instructions on setup screen
+- [x] Star rating (1-3 based on attempts)
+- [x] Database tracking for stats
+- [x] Daily challenge lockout (one play per day)
+- [x] Daily Wordle card on Homepage (shows if played today)
+
+**Future Enhancements:**
+- [ ] Streak tracking (days in a row)
+- [ ] Hard mode (hints must be used in next guess)
+- [ ] More words (expand from 30 to 100+)
+- [ ] Sound effects
 
 ---
 
@@ -246,12 +265,13 @@ HafaGPT-frontend/src/
 │   ├── Games.tsx                     # Game hub
 │   ├── MemoryMatch.tsx               # Memory Match game
 │   ├── WordScramble.tsx              # Word Scramble game
-│   ├── FallingWords.tsx              # Falling Words game (NEW)
-│   ├── WordCatch.tsx                 # Word Catch game (NEW)
-│   ├── ChamorroWordle.tsx            # Chamorro Wordle game (NEW)
+│   ├── FallingWords.tsx              # Falling Words game
+│   ├── WordCatch.tsx                 # Word Catch game
+│   ├── ChamorroWordle.tsx            # Chamorro Wordle game
+│   ├── DailyWordleCard.tsx           # Homepage daily wordle card
 │   └── games/
 │       ├── MemoryCard.tsx            # Flip card component
-│       └── WordleKeyboard.tsx        # Chamorro keyboard (NEW)
+│       └── WordleKeyboard.tsx        # Chamorro keyboard (responsive)
 ├── hooks/
 │   └── useGamesQuery.ts              # Game API hooks (save, stats, history)
 └── data/
@@ -316,7 +336,23 @@ HafaGPT-API/
   - Gradual speed increase over time
   - Tuned speed for playability (slower start)
 - 📋 Documented future enhancements (power-ups, effects, sounds)
-- 🚧 Starting Chamorro Wordle implementation
+- ✅ Implemented Chamorro Wordle game
+  - Wordle-style guessing with Chamorro words
+  - Custom keyboard with Å, Ñ, glottal stop (mobile-responsive)
+  - Daily challenge mode (same word for everyone, 5 letters)
+  - Practice mode with Beginner/Challenge modes
+  - Difficulty levels: Easy (4), Medium (5), Hard (6) letters
+  - Category selection for Challenge mode
+  - Share results with emoji grid
+  - Physical keyboard support for desktop
+  - 30+ curated Chamorro words per difficulty
+  - "Press Enter ↵" hint when word complete
+  - How to Play instructions on setup screen
+- ✅ Added Daily Wordle card to Homepage
+  - Shows "New" badge if not played today
+  - Shows "Done" badge if completed
+  - Compact indigo/purple design
+- 🎉 Phase 1 Games complete! 5 games total
 
 ---
 
