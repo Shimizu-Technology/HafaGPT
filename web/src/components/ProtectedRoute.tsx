@@ -61,7 +61,7 @@ const getFeatureInfo = (pathname: string) => {
       title: 'Learning Games',
       description: 'Learn Chamorro through fun games',
       color: 'emerald',
-      benefits: ['Memory match games', 'Track your high scores', 'Multiple difficulty levels']
+      benefits: ['Action games like Falling Words', 'Memory match & word puzzles', 'Track high scores & compete']
     };
   }
   if (pathname.startsWith('/dashboard')) {

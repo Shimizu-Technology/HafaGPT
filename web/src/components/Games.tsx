@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Gamepad2, Puzzle, Zap, Trophy } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Puzzle, Sword, Grid3X3 } from 'lucide-react';
 import { GameCard } from './games/GameCard';
 import { useTheme } from '../hooks/useTheme';
 import { Sun, Moon } from 'lucide-react';
@@ -66,6 +66,7 @@ export function Games() {
 
         {/* Games Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
+          {/* Foundation Games */}
           <GameCard
             to="/games/memory"
             title="Memory Match"
@@ -80,24 +81,32 @@ export function Games() {
             description="Unscramble the letters to form Chamorro words. Practice your spelling!"
             icon={<span className="text-2xl sm:text-3xl">🔤</span>}
             difficulty="Medium"
+          />
+          
+          {/* Action Games */}
+          <GameCard
+            to="/games/falling"
+            title="Falling Words"
+            description="Words fall from the sky! Tap the correct translation before they hit bottom. Gets faster!"
+            icon={<span className="text-2xl sm:text-3xl">⬇️</span>}
+            difficulty="Easy → Hard"
+          />
+          
+          <GameCard
+            to="/games/catch"
+            title="Word Catch"
+            description="Catch correct word pairs as they fly by! Avoid the wrong ones for combo points."
+            icon={<Sword className="w-7 h-7 sm:w-8 sm:h-8" />}
+            difficulty="Medium"
             comingSoon
           />
           
           <GameCard
-            to="/games/speed"
-            title="Speed Round"
-            description="How many words can you translate in 60 seconds? Test your quick thinking!"
-            icon={<Zap className="w-7 h-7 sm:w-8 sm:h-8" />}
+            to="/games/wordle"
+            title="Chamorro Wordle"
+            description="Guess the Chamorro word in 6 tries! Daily challenge or practice mode."
+            icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
             difficulty="Hard"
-            comingSoon
-          />
-          
-          <GameCard
-            to="/games/challenge"
-            title="Daily Challenge"
-            description="New challenge every day! Compete with friends and earn streaks."
-            icon={<Trophy className="w-7 h-7 sm:w-8 sm:h-8" />}
-            difficulty="Easy"
             comingSoon
           />
         </div>
@@ -114,11 +123,11 @@ export function Games() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Play daily to reinforce what you've learned</span>
+              <span>Try <strong>Falling Words</strong> for quick reflex training</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Try different categories to expand your vocabulary</span>
+              <span>Play daily to reinforce what you've learned</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
