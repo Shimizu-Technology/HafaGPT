@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 2025
+> **Last Updated:** December 8, 2025
 
 ---
 
@@ -22,27 +22,30 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📊 Progress Dashboard
 - 🔐 Authentication (Clerk)
 - 📱 Mobile-optimized responsive design
+- 🔧 **Admin Dashboard** (User management, whitelist, ban)
 
 ---
 
 ## 🎯 Active Roadmap
 
-### **Priority 1: Admin Dashboard** 🔧
+### **Priority 1: Admin Dashboard** 🔧 ✅ COMPLETE
 
 > **Goal:** Web interface to manage users, subscriptions, and content without touching code.
 
 | Phase | Features | Effort | Status |
 |-------|----------|--------|--------|
 | Phase 1 | User Management + Whitelist | 2-3 sessions | ✅ Complete |
+| Phase 1.5 | User Detail + Ban/Actions | 1 session | ✅ Complete |
 | Phase 2 | Analytics Dashboard | 1-2 sessions | 📋 Planned |
 | Phase 3 | Content Management | 2-3 sessions | 📋 Planned |
 
-#### **Phase 1: User Management (MVP)** ✅
+#### **Phase 1 + 1.5: User Management** ✅
 
 **Routes:**
 ```
-/admin                → Dashboard overview
+/admin                → Dashboard overview (stats, quick actions)
 /admin/users          → User list with search/filter
+/admin/users/:id      → User detail page with all actions
 ```
 
 **Completed Features:**
@@ -50,18 +53,21 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - [x] Dashboard stats cards (total users, premium, free, whitelisted, active today)
 - [x] Platform activity stats (conversations, messages, quizzes, games)
 - [x] User list table with pagination and search
-- [x] Mobile-responsive table (cards on mobile, table on desktop)
+- [x] Mobile-responsive (cards on mobile, table on desktop)
+- [x] Click user row to view details
+- [x] **User Detail Page** with full profile, stats, actions
 - [x] Grant/revoke premium access
-- [x] Whitelist users (Friends & Family with free premium)
-- [x] View user usage stats (messages, quizzes, games)
+- [x] Whitelist users (Friends & Family - permanent free premium)
+- [x] **Ban/unban users**
+- [x] View user usage stats (all-time + today)
 - [x] Admin link in UserButton dropdown (only visible to admins)
 
 **Backend Endpoints:**
 ```python
 GET  /api/admin/stats           # Dashboard overview stats
 GET  /api/admin/users           # List users (paginated, searchable)
-GET  /api/admin/users/:id       # Get user details
-PATCH /api/admin/users/:id      # Update user (premium status, role, whitelist)
+GET  /api/admin/users/:id       # Get user details + today's usage
+PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 ```
 
 **Access Control:**
@@ -73,11 +79,11 @@ PATCH /api/admin/users/:id      # Update user (premium status, role, whitelist)
 1. Go to Clerk Dashboard → Users → Your User
 2. Edit **Public metadata** to:
    ```json
-   {"role": "admin", "is_premium": true}
+   {"role": "admin", "is_premium": true, "is_whitelisted": true}
    ```
 3. Refresh your app - you'll see "Admin Dashboard" in the user menu
 
-#### **Phase 2: Analytics Dashboard**
+#### **Phase 2: Analytics Dashboard** 📋
 
 **Features:**
 - [ ] Usage trends chart (daily/weekly/monthly)
@@ -191,18 +197,25 @@ PATCH /api/admin/users/:id      # Update user (premium status, role, whitelist)
 
 ## 🎯 Next Steps
 
-1. **Set yourself as admin** in Clerk Dashboard:
-   ```json
-   {"role": "admin", "is_premium": true}
-   ```
-
-2. **Test the Admin Dashboard** at `/admin`
-
-3. **Whitelist family/friends** via Admin Dashboard → Users → "Add to Whitelist"
-
-4. **Phase 2: Analytics Dashboard** - charts and trends visualization
+1. ✅ ~~Set yourself as admin~~ - Done!
+2. ✅ ~~Test Admin Dashboard~~ - Done!
+3. **Whitelist family/friends** via Admin Dashboard → Users → Click user → "Add to Whitelist"
+4. **Deploy to production** - Both repos auto-deploy on push
+5. **Phase 2: Analytics Dashboard** - charts and trends (when needed)
 
 ---
 
-**Admin Dashboard is ready! 🌺**
+## 📊 Current Free Tier Limits
+
+| Feature | Free | Premium |
+|---------|------|---------|
+| Chat messages | 5/day | Unlimited |
+| Games | 10/day | Unlimited |
+| Quizzes | 5/day | Unlimited |
+| Vocabulary | Unlimited | Unlimited |
+| Stories | Unlimited | Unlimited |
+
+---
+
+**Admin Dashboard Phase 1 Complete! 🌺**
 
