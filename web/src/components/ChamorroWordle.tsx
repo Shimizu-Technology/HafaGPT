@@ -4,6 +4,8 @@ import { ArrowLeft, Play, RotateCcw, Calendar, Shuffle, Share2, HelpCircle, X, S
 import { useTheme } from '../hooks/useTheme';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 import { Sun, Moon } from 'lucide-react';
 import { WordleKeyboard } from './games/WordleKeyboard';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
@@ -101,6 +103,8 @@ export function ChamorroWordle() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Settings state
   const [wordMode, setWordMode] = useState<WordMode>('beginner');
@@ -148,7 +152,20 @@ export function ChamorroWordle() {
   }, [wordMode, difficulty, dictionaryWords]);
 
   // Start game
-  const startGame = useCallback((selectedGameMode: GameMode) => {
+  const startGame = useCallback(async (selectedGameMode: GameMode) => {
+    // Check usage limits before starting (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('game');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     setGameMode(selectedGameMode);
     
     let word: WordEntry;
@@ -171,7 +188,7 @@ export function ChamorroWordle() {
     setMessage('');
     hasSavedRef.current = false;
     setGameState('playing');
-  }, [getAvailableWords]);
+  }, [getAvailableWords, isSignedIn, canUse, tryUse]);
 
   // Handle key press
   const handleKeyPress = useCallback((key: string) => {
@@ -817,6 +834,16 @@ export function ChamorroWordle() {
           animation: shake 0.3s ease-in-out;
         }
       `}</style>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="game"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('game')}
+          usageLimit={getLimit('game')}
+        />
+      )}
     </div>
   );
 }

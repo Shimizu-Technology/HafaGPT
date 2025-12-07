@@ -7,6 +7,8 @@ import { useTheme } from '../hooks/useTheme';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 import { Sun, Moon } from 'lucide-react';
 
 interface GameSettings {
@@ -80,6 +82,8 @@ export function WordCatch() {
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'paused' | 'complete'>('setup');
@@ -355,7 +359,20 @@ export function WordCatch() {
   }, [gameState, isSignedIn, caught, score, maxCombo, timeLeft, settings, saveGameResultMutation]);
 
   // Start game
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    // Check usage limits before starting (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('game');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     if (wordPool.length < 4) {
       alert('Not enough words in this category. Please try another category.');
       return;
@@ -372,7 +389,7 @@ export function WordCatch() {
     setSpawnInterval(SPAWN_INTERVAL_START);
     setFlyingPairs([]);
     setGameState('playing');
-  }, [wordPool]);
+  }, [wordPool, isSignedIn, canUse, tryUse]);
 
   // Reset to setup
   const resetGame = () => {
@@ -797,6 +814,16 @@ export function WordCatch() {
           </div>
         )}
       </main>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="game"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('game')}
+          usageLimit={getLimit('game')}
+        />
+      )}
     </div>
   );
 }

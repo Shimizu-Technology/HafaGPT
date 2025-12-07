@@ -8,6 +8,8 @@ import { MemoryCard } from './games/MemoryCard';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 
 interface Card {
   id: number;
@@ -73,6 +75,8 @@ export function MemoryMatch() {
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
@@ -259,7 +263,20 @@ export function MemoryMatch() {
     return cardPairs.sort(() => Math.random() - 0.5);
   };
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    // Check usage limits before starting (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('game');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     const newCards = generateCards();
     if (newCards.length === 0) {
       alert('Not enough words in this category. Please try another category.');
@@ -276,7 +293,7 @@ export function MemoryMatch() {
     setStartTime(Date.now());
     setElapsedTime(0);
     setGameState('playing');
-  }, [generateCards]);
+  }, [generateCards, isSignedIn, canUse, tryUse]);
 
   const handleCardClick = useCallback((cardId: number) => {
     if (isChecking || flippedCards.length >= 2) return;
@@ -726,6 +743,16 @@ export function MemoryMatch() {
           </div>
         )}
       </main>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="game"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('game')}
+          usageLimit={getLimit('game')}
+        />
+      )}
     </div>
   );
 }

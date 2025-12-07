@@ -6,6 +6,8 @@ import { saveQuizAttempt } from './Dashboard';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
 import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabularyQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -47,6 +49,10 @@ export function QuizViewer() {
   const { isSignedIn } = useUser();
   const saveQuizResultMutation = useSaveQuizResult();
   const startTimeRef = useRef<number>(Date.now());
+  const { canUse, tryUse, getCount, getLimit, isLoading: subscriptionLoading } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [usageChecked, setUsageChecked] = useState(false);
+  const usageCheckRef = useRef(false); // Prevent double-checking
   
   // Check if this is a dictionary quiz (category starts with "dict-")
   const isDictionaryQuiz = categoryId?.startsWith('dict-');
@@ -88,20 +94,48 @@ export function QuizViewer() {
   }, [isQuizInProgress]);
   const categoryTitle = isDictionaryQuiz ? dictQuizData?.category : category?.title;
 
+  // Check usage limits on mount (wait for data to load first)
+  useEffect(() => {
+    const checkUsage = async () => {
+      // Wait for subscription data to load before checking
+      if (subscriptionLoading) return;
+      if (!isSignedIn || usageCheckRef.current) {
+        // Not signed in or already checked - just mark as checked
+        if (!isSignedIn) setUsageChecked(true);
+        return;
+      }
+      usageCheckRef.current = true;
+      
+      if (!canUse('quiz')) {
+        setShowUpgradePrompt(true);
+        setUsageChecked(true);
+        return;
+      }
+      
+      const allowed = await tryUse('quiz');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+      }
+      setUsageChecked(true);
+    };
+    
+    checkUsage();
+  }, [isSignedIn, canUse, tryUse, subscriptionLoading]);
+
   // Initialize questions for curated quiz
   useEffect(() => {
-    if (category && !isDictionaryQuiz) {
+    if (category && !isDictionaryQuiz && usageChecked && !showUpgradePrompt) {
       setQuestions(shuffleQuestions(category.questions));
     }
-  }, [category, isDictionaryQuiz]);
+  }, [category, isDictionaryQuiz, usageChecked, showUpgradePrompt]);
 
   // Initialize questions for dictionary quiz
   useEffect(() => {
-    if (isDictionaryQuiz && dictQuizData?.questions) {
+    if (isDictionaryQuiz && dictQuizData?.questions && usageChecked && !showUpgradePrompt) {
       const converted = dictQuizData.questions.map(convertDictionaryQuestion);
       setQuestions(converted);
     }
-  }, [isDictionaryQuiz, dictQuizData]);
+  }, [isDictionaryQuiz, dictQuizData, usageChecked, showUpgradePrompt]);
 
   // Focus input for type_answer questions
   useEffect(() => {
@@ -109,6 +143,23 @@ export function QuizViewer() {
       inputRef.current.focus();
     }
   }, [currentIndex, answerState]);
+
+  // Show upgrade prompt FIRST (before any early returns)
+  if (showUpgradePrompt) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <UpgradePrompt
+          feature="quiz"
+          onClose={() => {
+            setShowUpgradePrompt(false);
+            navigate('/quiz');
+          }}
+          usageCount={getCount('quiz')}
+          usageLimit={getLimit('quiz')}
+        />
+      </div>
+    );
+  }
 
   // Loading state for dictionary quiz
   if (isDictionaryQuiz && isDictLoading) {
@@ -136,7 +187,7 @@ export function QuizViewer() {
     );
   }
 
-  // No questions yet
+  // No questions yet (but not at limit - show loading)
   if (questions.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
@@ -211,7 +262,20 @@ export function QuizViewer() {
     }
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    // Check usage limits before restarting
+    if (isSignedIn) {
+      if (!canUse('quiz')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('quiz');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     if (isDictionaryQuiz) {
       // Refetch new random questions for dictionary quiz
       refetchDictQuiz();

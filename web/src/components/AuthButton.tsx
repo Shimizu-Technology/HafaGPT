@@ -1,6 +1,10 @@
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export function AuthButton() {
+  const navigate = useNavigate();
+
   return (
     <>
       {/* Show sign in button when logged out */}
@@ -32,7 +36,16 @@ export function AuthButton() {
               }
             }
           }}
-        />
+        >
+          {/* Custom menu item for upgrading */}
+          <UserButton.MenuItems>
+            <UserButton.Action
+              label="Upgrade to Premium"
+              labelIcon={<Sparkles className="w-4 h-4 text-amber-500" />}
+              onClick={() => navigate('/pricing')}
+            />
+          </UserButton.MenuItems>
+        </UserButton>
       </SignedIn>
     </>
   );

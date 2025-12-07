@@ -14,6 +14,7 @@ import {
 } from '../hooks/useConversationsQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSubscription } from '../hooks/useSubscription';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
@@ -25,6 +26,7 @@ import { ConversationSidebar } from './ConversationSidebar';
 import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
+import { UpgradePrompt } from './UpgradePrompt';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -34,6 +36,7 @@ export function Chat() {
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Sidebar closed by default for cleaner UX
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,6 +58,7 @@ export function Chat() {
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
   const queryClient = useQueryClient();
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -274,6 +278,8 @@ export function Chat() {
 
   // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
   const userScrolledUpRef = useRef(false);
+  // Track if we're doing programmatic scroll (to ignore scroll events from auto-scroll)
+  const isProgrammaticScrollRef = useRef(false);
   
   // Check if user is near bottom of scroll
   const isNearBottom = () => {
@@ -283,17 +289,49 @@ export function Chat() {
     return scrollHeight - scrollTop - clientHeight < 150;
   };
 
-  // Track user scroll behavior
+  // Track user scroll behavior - only respond to user-initiated scroll
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
     
-    const handleUserScroll = () => {
-      userScrolledUpRef.current = !isNearBottom();
+    // Use wheel event to detect user intent to scroll up
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) {
+        // User scrolling UP - they want to read history
+        userScrolledUpRef.current = true;
+      } else if (e.deltaY > 0 && isNearBottom()) {
+        // User scrolling DOWN and near bottom - resume auto-scroll
+        userScrolledUpRef.current = false;
+      }
     };
     
-    container.addEventListener('scroll', handleUserScroll);
-    return () => container.removeEventListener('scroll', handleUserScroll);
+    // Also handle touch scroll for mobile
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const deltaY = touchStartY - touchY;
+      
+      if (deltaY < -10) {
+        // User swiping DOWN (scrolling UP) - they want to read history
+        userScrolledUpRef.current = true;
+      } else if (deltaY > 10 && isNearBottom()) {
+        // User swiping UP (scrolling DOWN) and near bottom - resume auto-scroll
+        userScrolledUpRef.current = false;
+      }
+    };
+    
+    container.addEventListener('wheel', handleWheel, { passive: true });
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+    };
   }, []);
 
   // Auto-scroll on new messages
@@ -302,18 +340,22 @@ export function Chat() {
     const timer = setTimeout(() => {
       // Always scroll when new message is added (unless user explicitly scrolled up)
       if (!userScrolledUpRef.current) {
+        isProgrammaticScrollRef.current = true;
         scrollToBottom();
+        setTimeout(() => { isProgrammaticScrollRef.current = false; }, 100);
       }
     }, 50);
     return () => clearTimeout(timer);
   }, [messages.length]);
 
-  // Auto-scroll during streaming
+  // Auto-scroll during streaming - but respect user's choice to scroll up
   const isCurrentlyStreaming = messages.some(m => m.id?.startsWith('streaming_'));
   useEffect(() => {
     if (isCurrentlyStreaming && !userScrolledUpRef.current) {
       // Use instant scroll during streaming for smoother experience
+      isProgrammaticScrollRef.current = true;
       scrollToBottom('instant');
+      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 50);
     }
   }, [messages, isCurrentlyStreaming]);
   
@@ -352,6 +394,20 @@ export function Chat() {
   };
 
   const handleSend = async (message: string, files?: File[]) => {
+    // Check usage limits before sending (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('chat')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      // Try to increment usage - if it fails (limit reached), show upgrade prompt
+      const allowed = await tryUse('chat');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     // Mark that we're sending a message (prevents race condition with message loading)
     isSendingMessageRef.current = true;
     
@@ -956,6 +1012,16 @@ End of Export
         <ImageModal
           imageUrl={selectedImage}
           onClose={() => setSelectedImage(null)}
+        />
+      )}
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="chat"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('chat')}
+          usageLimit={getLimit('chat')}
         />
       )}
     </div>

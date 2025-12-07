@@ -23,6 +23,7 @@ import { WordScramble } from './components/WordScramble';
 import { FallingWords } from './components/FallingWords';
 import { WordCatch } from './components/WordCatch';
 import { ChamorroWordle } from './components/ChamorroWordle';
+import { PricingPage } from './components/PricingPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -70,6 +71,9 @@ function App() {
         <Route path="/games/falling" element={<ProtectedRoute><FallingWords /></ProtectedRoute>} />
         <Route path="/games/catch" element={<ProtectedRoute><WordCatch /></ProtectedRoute>} />
         <Route path="/games/wordle" element={<ProtectedRoute><ChamorroWordle /></ProtectedRoute>} />
+        
+        {/* Pricing page - public */}
+        <Route path="/pricing" element={<PricingPage />} />
       </Routes>
     </BrowserRouter>
   );

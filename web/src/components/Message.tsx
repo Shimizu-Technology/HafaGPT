@@ -1,6 +1,7 @@
 import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink } from 'lucide-react';
 import { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
 
@@ -386,6 +387,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               isStreaming && content !== '...' ? 'animate-fade-in-fast' : ''
             }`}>
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   // Paragraphs
                   p: ({ children }) => (
@@ -432,7 +434,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   ),
                   // Code blocks (multi-line)
                   pre: ({ children }) => (
-                    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 overflow-x-auto max-w-full">
+                    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
                       {children}
                     </pre>
                   ),
@@ -444,15 +446,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     if (isInline) {
                       // Inline code (single backticks)
                       return (
-                        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono">
+                        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
                           {children}
                         </code>
                       );
                     }
                     
-                    // Code block content (triple backticks)
+                    // Code block content (triple backticks) - use pre-wrap to wrap long lines
                     return (
-                      <code className="text-xs sm:text-sm font-mono block whitespace-pre text-brown-800 dark:text-gray-100">
+                      <code className="text-xs sm:text-sm font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-gray-100">
                         {children}
                       </code>
                     );
@@ -466,6 +468,39 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   // Horizontal rule
                   hr: () => (
                     <hr className="my-4 border-cream-300 dark:border-gray-600" />
+                  ),
+                  // Tables - responsive and styled
+                  table: ({ children }) => (
+                    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
+                      <table className="min-w-full text-sm">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead className="bg-cream-100 dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700">
+                      {children}
+                    </thead>
+                  ),
+                  tbody: ({ children }) => (
+                    <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
+                      {children}
+                    </tbody>
+                  ),
+                  tr: ({ children }) => (
+                    <tr className="hover:bg-cream-50 dark:hover:bg-gray-800/50 transition-colors">
+                      {children}
+                    </tr>
+                  ),
+                  th: ({ children }) => (
+                    <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-white text-xs sm:text-sm">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-3 py-2 text-brown-700 dark:text-gray-300 text-xs sm:text-sm">
+                      {children}
+                    </td>
                   ),
                 }}
               >

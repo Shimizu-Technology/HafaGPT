@@ -7,6 +7,8 @@ import { useTheme } from '../hooks/useTheme';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 import { Sun, Moon } from 'lucide-react';
 
 interface GameSettings {
@@ -62,6 +64,7 @@ const SPEED_INCREMENT = 0.03; // Speed increase per level (gentler progression)
 const WORDS_PER_LEVEL = 5; // Words to clear for speed increase
 const MAX_LIVES = 3;
 const ANSWER_OPTIONS = 4;
+const WIN_WORDS = 30; // Complete 30 words to win!
 
 export function FallingWords() {
   const { theme, toggleTheme } = useTheme();
@@ -69,6 +72,8 @@ export function FallingWords() {
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'paused' | 'complete'>('setup');
@@ -226,6 +231,13 @@ export function FallingWords() {
       setStreak(prev => prev + 1);
       setWordsCompleted(prev => {
         const newCount = prev + 1;
+        
+        // WIN CONDITION: Complete 30 words to win!
+        if (newCount >= WIN_WORDS) {
+          setTimeout(() => setGameState('complete'), 300);
+          return newCount;
+        }
+        
         // Level up every WORDS_PER_LEVEL words
         if (newCount % WORDS_PER_LEVEL === 0) {
           setLevel(l => l + 1);
@@ -234,9 +246,11 @@ export function FallingWords() {
         return newCount;
       });
 
-      // Quick transition to next word
+      // Quick transition to next word (only if not won)
       setTimeout(() => {
-        generateNewWord();
+        if (wordsCompleted + 1 < WIN_WORDS) {
+          generateNewWord();
+        }
       }, 300);
     } else {
       setFeedback('wrong');
@@ -334,7 +348,20 @@ export function FallingWords() {
   }, [gameState, isSignedIn, wordsCompleted, score, level, elapsedTime, settings, saveGameResultMutation]);
 
   // Start game
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    // Check usage limits before starting (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('game');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     if (wordPool.length < ANSWER_OPTIONS) {
       alert('Not enough words in this category. Please try another category.');
       return;
@@ -352,7 +379,7 @@ export function FallingWords() {
     setUsedWordIndices(new Set()); // Reset used words for new game
     setGameState('playing');
     generateNewWord();
-  }, [wordPool, generateNewWord]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse]);
 
   // Reset to setup
   const resetGame = () => {
@@ -393,8 +420,9 @@ export function FallingWords() {
   // Calculate stars for display
   // Star rating based on words caught (more reasonable thresholds)
   const getStars = () => {
-    if (wordsCompleted >= 10) return 3; // Great performance
-    if (wordsCompleted >= 5) return 2;  // Good performance
+    if (wordsCompleted >= WIN_WORDS) return 3; // Won the game!
+    if (wordsCompleted >= 15) return 3; // Great performance
+    if (wordsCompleted >= 8) return 2;  // Good performance
     return 1; // Keep trying!
   };
 
@@ -626,10 +654,23 @@ export function FallingWords() {
                   <p className="text-[10px] text-brown-500 dark:text-gray-400">Streak</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{formatTime(elapsedTime)}</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{wordsCompleted}/{WIN_WORDS}</p>
+                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Words</p>
                 </div>
               </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mb-3 sm:mb-4">
+              <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-coral-400 to-coral-500 dark:from-ocean-400 dark:to-ocean-500 transition-all duration-300"
+                  style={{ width: `${(wordsCompleted / WIN_WORDS) * 100}%` }}
+                />
+              </div>
+              <p className="text-center text-[10px] text-brown-500 dark:text-gray-400 mt-1">
+                Catch {WIN_WORDS} words to win!
+              </p>
             </div>
 
             {/* Game Area */}
@@ -704,17 +745,19 @@ export function FallingWords() {
             <div className="relative">
               <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center shadow-xl">
                 <span className="text-4xl sm:text-5xl">
-                  {wordsCompleted >= 10 ? '🏆' : wordsCompleted >= 5 ? '⭐' : '👍'}
+                  {wordsCompleted >= WIN_WORDS ? '🎉' : wordsCompleted >= 10 ? '🏆' : wordsCompleted >= 5 ? '⭐' : '👍'}
                 </span>
               </div>
             </div>
 
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">
-                {wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
+                {wordsCompleted >= WIN_WORDS ? 'You Won! 🎊' : wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
               </h2>
               <p className="text-brown-600 dark:text-gray-400">
-                You caught {wordsCompleted} words!
+                {wordsCompleted >= WIN_WORDS 
+                  ? `Perfect! You caught all ${WIN_WORDS} words!` 
+                  : `You caught ${wordsCompleted} words!`}
               </p>
             </div>
 
@@ -776,7 +819,18 @@ export function FallingWords() {
           </div>
         )}
       </main>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="game"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('game')}
+          usageLimit={getLimit('game')}
+        />
+      )}
     </div>
   );
 }
+
 

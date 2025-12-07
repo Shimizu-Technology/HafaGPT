@@ -162,6 +162,18 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Upgrade button for signed-in free users */}
+            {isSignedIn && (
+              <Link
+                to="/pricing"
+                className="flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-600 text-white text-[11px] sm:text-xs font-semibold rounded-full hover:shadow-lg hover:scale-105 transition-all"
+                title="Upgrade to Premium"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="sm:hidden">Pro</span>
+                <span className="hidden sm:inline">Upgrade</span>
+              </Link>
+            )}
             <AuthButton />
             <button
               onClick={toggleTheme}

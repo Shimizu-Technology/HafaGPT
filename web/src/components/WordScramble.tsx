@@ -7,6 +7,8 @@ import { useTheme } from '../hooks/useTheme';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
+import { UpgradePrompt } from './UpgradePrompt';
 
 interface GameSettings {
   category: string;
@@ -63,6 +65,8 @@ export function WordScramble() {
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
+  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
@@ -224,7 +228,20 @@ export function WordScramble() {
     }));
   }, [settings.mode, settings.wordsPerRound, curatedFlashcards, flashcardsData]);
 
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    // Check usage limits before starting (only for signed-in users)
+    if (isSignedIn) {
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+      const allowed = await tryUse('game');
+      if (!allowed) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+    }
+    
     const newWords = generateWords();
     if (newWords.length === 0) {
       alert('Not enough words in this category. Please try another.');
@@ -240,7 +257,7 @@ export function WordScramble() {
     setStartTime(Date.now());
     setElapsedTime(0);
     setGameState('playing');
-  }, [generateWords]);
+  }, [generateWords, isSignedIn, canUse, tryUse]);
 
   // Handle letter selection
   const handleLetterClick = (index: number) => {
@@ -818,6 +835,16 @@ export function WordScramble() {
           </div>
         )}
       </main>
+
+      {/* Upgrade Prompt Modal */}
+      {showUpgradePrompt && (
+        <UpgradePrompt
+          feature="game"
+          onClose={() => setShowUpgradePrompt(false)}
+          usageCount={getCount('game')}
+          usageLimit={getLimit('game')}
+        />
+      )}
     </div>
   );
 }
