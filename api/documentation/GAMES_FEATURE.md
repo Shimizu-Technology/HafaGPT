@@ -7,9 +7,9 @@
 
 | Phase | Status | Games |
 |-------|--------|-------|
-| Phase 1 | ✅ Completed | Memory Match, Word Scramble, Falling Words |
-| Phase 2 | 🚧 In Progress | Word Catch, Chamorro Wordle |
-| Phase 3 | 📋 Future | Daily Challenges, Leaderboards, More Games |
+| Phase 1 | ✅ Completed | Memory Match, Word Scramble, Falling Words, Word Catch |
+| Phase 2 | 🚧 In Progress | Chamorro Wordle |
+| Phase 3 | 📋 Future | Daily Challenges, Leaderboards, Power-ups, Sound Effects |
 
 ---
 
@@ -96,6 +96,7 @@
 /games/memory       → Memory Match game
 /games/scramble     → Word Scramble game
 /games/falling      → Falling Words game
+/games/catch        → Word Catch game
 ```
 
 **Key Components:**
@@ -156,24 +157,37 @@ These games prioritize **fun gameplay** - learning happens naturally through pla
 ---
 
 ### Word Catch 🗡️
-**Status:** 📋 Planned  
+**Status:** ✅ Completed (Dec 7, 2025)  
 **Inspired By:** Fruit Ninja  
 **Best For:** Fast-paced fun, pattern recognition
 
 **Concept:**
-- Word pairs fly across the screen
-- Tap to "catch" CORRECT pairs (Chamorro = English)
-- Avoid tapping WRONG pairs
+- Word pairs fly across the screen from various directions
+- Tap GREEN pairs (correct Chamorro = English match)
+- Avoid tapping RED pairs (wrong match - lose a life!)
+- 60-second timer - catch as many as you can
 - Combo multiplier for consecutive catches
-- Speed increases over time
 
 **Features:**
-- [ ] Words flying across screen (various angles)
-- [ ] Tap to catch
-- [ ] Visual catch effect (satisfying!)
-- [ ] Combo counter
-- [ ] Wrong pairs to avoid
-- [ ] Time limit or lives mode
+- [x] Words flying across screen (left, right, top, bottom)
+- [x] Tap to catch with visual feedback
+- [x] GREEN = correct pair, RED = wrong pair (clear color coding)
+- [x] Combo counter with bonus points
+- [x] 3 lives system (tap wrong = lose life)
+- [x] 60-second time limit
+- [x] Speed increases gradually over time
+- [x] Beginner/Challenge modes
+- [x] Instructions overlay at game start
+- [x] Database tracking (score, caught, max combo, stars)
+
+**Future Enhancements (Phase 3):**
+- [ ] Screen shake when losing a life
+- [ ] Particle effects on correct catch (confetti burst)
+- [ ] Sound effects (ding for correct, buzz for wrong)
+- [ ] Power-ups (shield, slow-mo, 2x points, extra life)
+- [ ] "Fever mode" after 10 combo (all pairs correct for 5 seconds)
+- [ ] Size variation (bigger = easier but fewer points)
+- [ ] "Perfect round" bonus (no wrong taps)
 
 ---
 
@@ -294,7 +308,15 @@ HafaGPT-API/
   - No duplicate words per session
   - Consistent light/dark mode theming
   - Adjusted star rating (10+=3★, 5+=2★)
-- 📋 Updated roadmap: Word Catch & Chamorro Wordle next
+- ✅ Implemented Word Catch game
+  - Fruit Ninja-style with flying word pairs
+  - GREEN pairs (correct) vs RED pairs (wrong)
+  - 60-second timer, 3 lives system
+  - Combo multiplier for consecutive catches
+  - Gradual speed increase over time
+  - Tuned speed for playability (slower start)
+- 📋 Documented future enhancements (power-ups, effects, sounds)
+- 🚧 Starting Chamorro Wordle implementation
 
 ---
 
