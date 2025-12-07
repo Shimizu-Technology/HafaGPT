@@ -22,13 +22,13 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📊 Progress Dashboard
 - 🔐 Authentication (Clerk)
 - 📱 Mobile-optimized responsive design
-- 🔧 **Admin Dashboard** (User management, whitelist, ban)
+- 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban)
 
 ---
 
 ## 🎯 Active Roadmap
 
-### **Priority 1: Admin Dashboard** 🔧 ✅ COMPLETE
+### **Priority 1: Admin Dashboard** 🔧 ✅ PHASE 1 & 2 COMPLETE
 
 > **Goal:** Web interface to manage users, subscriptions, and content without touching code.
 
@@ -36,7 +36,7 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 |-------|----------|--------|--------|
 | Phase 1 | User Management + Whitelist | 2-3 sessions | ✅ Complete |
 | Phase 1.5 | User Detail + Ban/Actions | 1 session | ✅ Complete |
-| Phase 2 | Analytics Dashboard | 1-2 sessions | 📋 Planned |
+| Phase 2 | Analytics Dashboard | 1-2 sessions | ✅ Complete |
 | Phase 3 | Content Management | 2-3 sessions | 📋 Planned |
 
 #### **Phase 1 + 1.5: User Management** ✅
@@ -83,14 +83,20 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
    ```
 3. Refresh your app - you'll see "Admin Dashboard" in the user menu
 
-#### **Phase 2: Analytics Dashboard** 📋
+#### **Phase 2: Analytics Dashboard** ✅
 
-**Features:**
-- [ ] Usage trends chart (daily/weekly/monthly)
-- [ ] Revenue tracking (MRR, subscriptions)
-- [ ] Feature popularity (games, quizzes, chat usage)
-- [ ] User growth over time
-- [ ] Churn tracking
+**Route:** `/admin/analytics`
+
+**Completed Features:**
+- [x] Usage trends chart (7d/30d/90d) - chat, games, quizzes per day
+- [x] User growth chart - new users per day
+- [x] Feature popularity - pie charts for games + quizzes
+- [x] Period selector (7 days, 30 days, 90 days)
+- [x] Responsive design (stacked on mobile, grid on desktop)
+
+**Not Implemented (future):**
+- [ ] Revenue tracking (MRR, subscriptions) - needs Stripe integration
+- [ ] Churn tracking - needs subscription history
 
 #### **Phase 3: Content Management**
 
@@ -199,9 +205,11 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 
 1. ✅ ~~Set yourself as admin~~ - Done!
 2. ✅ ~~Test Admin Dashboard~~ - Done!
-3. **Whitelist family/friends** via Admin Dashboard → Users → Click user → "Add to Whitelist"
-4. **Deploy to production** - Both repos auto-deploy on push
-5. **Phase 2: Analytics Dashboard** - charts and trends (when needed)
+3. ✅ ~~Phase 2: Analytics Dashboard~~ - Done!
+4. **Whitelist family/friends** via Admin Dashboard → Users → Click user → "Add to Whitelist"
+5. **Phase 3: Content Management** - add/edit quizzes, flashcards, stories (when needed)
+6. **Chat UX: Edit & Regenerate** - edit messages and regenerate from that point
+7. **Flashcard Spaced Repetition** - track card progress, schedule reviews
 
 ---
 
@@ -217,5 +225,7 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 
 ---
 
-**Admin Dashboard Phase 1 Complete! 🌺**
+**Admin Dashboard Phase 1 & 2 Complete! 🌺**
+
+User management + analytics all working!
 
