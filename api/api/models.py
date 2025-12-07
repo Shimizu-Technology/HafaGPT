@@ -477,3 +477,45 @@ class AdminUserUpdateResponse(BaseModel):
     message: str = Field(..., description="Status message")
 
 
+# --- Analytics Models ---
+
+class DailyUsagePoint(BaseModel):
+    """Single data point for daily usage"""
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    chat_count: int = Field(0, description="Chat messages sent")
+    game_count: int = Field(0, description="Games played")
+    quiz_count: int = Field(0, description="Quizzes taken")
+    active_users: int = Field(0, description="Unique active users")
+
+
+class UsageTrendsResponse(BaseModel):
+    """Response for usage trends over time"""
+    period: str = Field(..., description="Period: 7d, 30d, 90d")
+    data: list[DailyUsagePoint] = Field(..., description="Daily usage data points")
+    totals: dict = Field(..., description="Total counts for the period")
+
+
+class UserGrowthPoint(BaseModel):
+    """Single data point for user growth"""
+    date: str = Field(..., description="Date in YYYY-MM-DD format")
+    total_users: int = Field(0, description="Cumulative total users")
+    new_users: int = Field(0, description="New users that day")
+    premium_users: int = Field(0, description="Premium users at that point")
+
+
+class UserGrowthResponse(BaseModel):
+    """Response for user growth over time"""
+    period: str = Field(..., description="Period: 7d, 30d, 90d")
+    data: list[UserGrowthPoint] = Field(..., description="User growth data points")
+
+
+class FeatureUsageResponse(BaseModel):
+    """Response for feature popularity"""
+    chat_total: int = Field(0, description="Total chat messages")
+    games_total: int = Field(0, description="Total games played")
+    quizzes_total: int = Field(0, description="Total quizzes taken")
+    conversations_total: int = Field(0, description="Total conversations")
+    game_breakdown: dict = Field(..., description="Games by type")
+    quiz_breakdown: dict = Field(..., description="Quizzes by category")
+
+

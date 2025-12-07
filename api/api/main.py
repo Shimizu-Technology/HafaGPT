@@ -4244,6 +4244,212 @@ async def update_admin_user(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- Analytics Endpoints ---
+
+@app.get("/api/admin/analytics/usage", tags=["Admin"])
+async def get_usage_trends(
+    authorization: Optional[str] = Header(None),
+    period: str = Query("30d", description="Period: 7d, 30d, 90d")
+):
+    """
+    Get usage trends over time (chat, games, quizzes).
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        # Parse period
+        days = {"7d": 7, "30d": 30, "90d": 90}.get(period, 30)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Get daily usage from user_daily_usage table
+        cursor.execute("""
+            SELECT 
+                usage_date,
+                SUM(chat_count) as chat_total,
+                SUM(game_count) as game_total,
+                SUM(quiz_count) as quiz_total,
+                COUNT(DISTINCT user_id) as active_users
+            FROM user_daily_usage
+            WHERE usage_date >= CURRENT_DATE - INTERVAL '%s days'
+            GROUP BY usage_date
+            ORDER BY usage_date ASC
+        """, (days,))
+        
+        rows = cursor.fetchall()
+        
+        data = []
+        totals = {"chat": 0, "games": 0, "quizzes": 0, "active_users": set()}
+        
+        for row in rows:
+            data.append({
+                "date": row[0].isoformat(),
+                "chat_count": row[1] or 0,
+                "game_count": row[2] or 0,
+                "quiz_count": row[3] or 0,
+                "active_users": row[4] or 0
+            })
+            totals["chat"] += row[1] or 0
+            totals["games"] += row[2] or 0
+            totals["quizzes"] += row[3] or 0
+        
+        conn.close()
+        
+        return {
+            "period": period,
+            "data": data,
+            "totals": {
+                "chat": totals["chat"],
+                "games": totals["games"],
+                "quizzes": totals["quizzes"]
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Usage trends error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/analytics/growth", tags=["Admin"])
+async def get_user_growth(
+    authorization: Optional[str] = Header(None),
+    period: str = Query("30d", description="Period: 7d, 30d, 90d")
+):
+    """
+    Get user growth over time.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        days = {"7d": 7, "30d": 30, "90d": 90}.get(period, 30)
+        
+        if not clerk:
+            raise HTTPException(status_code=500, detail="Clerk not initialized")
+        
+        # Get all users from Clerk
+        users_response = clerk.users.list()
+        users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        
+        # Group users by signup date
+        from collections import defaultdict
+        daily_signups = defaultdict(int)
+        daily_premium = defaultdict(int)
+        
+        today = datetime.now().date()
+        cutoff = today - timedelta(days=days)
+        
+        for user in users:
+            if hasattr(user, 'created_at') and user.created_at:
+                # Clerk timestamps are in milliseconds
+                signup_date = datetime.fromtimestamp(user.created_at / 1000).date()
+                if signup_date >= cutoff:
+                    daily_signups[signup_date.isoformat()] += 1
+                    
+                metadata = getattr(user, 'public_metadata', {}) or {}
+                if metadata.get('is_premium'):
+                    daily_premium[signup_date.isoformat()] += 1
+        
+        # Build cumulative data
+        data = []
+        total_users = len(users)
+        
+        # Start from cutoff date
+        current_date = cutoff
+        cumulative = total_users - sum(daily_signups.values())  # Users before cutoff
+        
+        while current_date <= today:
+            date_str = current_date.isoformat()
+            new_users = daily_signups.get(date_str, 0)
+            cumulative += new_users
+            
+            data.append({
+                "date": date_str,
+                "total_users": cumulative,
+                "new_users": new_users,
+                "premium_users": daily_premium.get(date_str, 0)
+            })
+            current_date += timedelta(days=1)
+        
+        return {
+            "period": period,
+            "data": data
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] User growth error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/analytics/features", tags=["Admin"])
+async def get_feature_usage(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get feature popularity breakdown.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Total counts
+        cursor.execute("SELECT COUNT(*) FROM conversation_logs")
+        chat_total = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM game_results")
+        games_total = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM quiz_results")
+        quizzes_total = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM conversations WHERE deleted_at IS NULL")
+        conversations_total = cursor.fetchone()[0]
+        
+        # Game breakdown by type
+        cursor.execute("""
+            SELECT game_type, COUNT(*) as count
+            FROM game_results
+            GROUP BY game_type
+            ORDER BY count DESC
+        """)
+        game_breakdown = {row[0]: row[1] for row in cursor.fetchall()}
+        
+        # Quiz breakdown by category
+        cursor.execute("""
+            SELECT category_id, COUNT(*) as count
+            FROM quiz_results
+            GROUP BY category_id
+            ORDER BY count DESC
+        """)
+        quiz_breakdown = {row[0] or 'Unknown': row[1] for row in cursor.fetchall()}
+        
+        conn.close()
+        
+        return {
+            "chat_total": chat_total,
+            "games_total": games_total,
+            "quizzes_total": quizzes_total,
+            "conversations_total": conversations_total,
+            "game_breakdown": game_breakdown,
+            "quiz_breakdown": quiz_breakdown
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Feature usage error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Custom HTTP exception handler"""
