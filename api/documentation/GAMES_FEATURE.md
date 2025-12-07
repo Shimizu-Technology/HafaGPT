@@ -1,13 +1,14 @@
 # 🎮 Chamorro Learning Games
 
 > **Goal:** Fun, engaging games to learn Chamorro for kids, teens, and adults.
+> **Philosophy:** The GAME should be fun first. Learning happens almost by accident.
 
 ## 📊 Status Overview
 
 | Phase | Status | Games |
 |-------|--------|-------|
-| Phase 1 | ✅ Completed | Memory Match |
-| Phase 2 | 📋 Planned | Word Scramble, Speed Round |
+| Phase 1 | ✅ Completed | Memory Match, Word Scramble, Falling Words |
+| Phase 2 | 🚧 In Progress | Word Catch, Chamorro Wordle |
 | Phase 3 | 📋 Future | Daily Challenges, Leaderboards, More Games |
 
 ---
@@ -93,6 +94,8 @@
 ```
 /games              → Game hub (list all games)
 /games/memory       → Memory Match game
+/games/scramble     → Word Scramble game
+/games/falling      → Falling Words game
 ```
 
 **Key Components:**
@@ -109,29 +112,90 @@ src/hooks/useGamesQuery.ts            # Game API hooks
 
 ---
 
-## 📋 Phase 2: More Games
+## ✅ Word Scramble (Completed)
 
+**Status:** ✅ Completed (Dec 7, 2025)
+
+Unscramble letters to spell the Chamorro word.
+
+- See English meaning, arrange scrambled letters
+- Tap letters to build answer
+- Hint button (reveals first letter)
+- Streak bonuses for consecutive correct
+- Beginner Mode & Challenge Mode
+
+---
+
+## 🚧 Phase 2: Action Games (In Progress)
+
+These games prioritize **fun gameplay** - learning happens naturally through play.
+
+### Falling Words ⬇️
+**Status:** ✅ Completed (Dec 7, 2025)  
+**Inspired By:** Tetris  
+**Best For:** Quick reflexes, vocabulary recognition
+
+**Concept:**
+- Chamorro words fall from the sky
+- 4 answer buttons at the bottom (English translations)
+- Tap the correct translation before the word hits bottom
+- Speed increases as you progress (every 5 words)
+- Lives system (3 hearts)
+
+**Features:**
+- [x] Falling word animation (smooth CSS/JS)
+- [x] 4-option answer buttons
+- [x] Speed progression (gets faster every 5 words)
+- [x] Lives/hearts system
+- [x] Score multiplier for streaks
+- [x] Game over screen with stats & star rating
+- [x] Beginner/Challenge modes
+- [x] No duplicate words in single session
+- [x] Consistent app theming (light/dark mode)
+
+---
+
+### Word Catch 🗡️
 **Status:** 📋 Planned  
-**Target:** After Phase 1 is solid
+**Inspired By:** Fruit Ninja  
+**Best For:** Fast-paced fun, pattern recognition
 
-### Word Scramble 🔤
-- Unscramble letters to form Chamorro word
-- Example: "I A D A F Å H A" → "HÅFA ADAI"
-- Hint: Show English meaning or first letter
-- Best for: Spelling practice, teens/adults
+**Concept:**
+- Word pairs fly across the screen
+- Tap to "catch" CORRECT pairs (Chamorro = English)
+- Avoid tapping WRONG pairs
+- Combo multiplier for consecutive catches
+- Speed increases over time
 
-### Speed Round ⚡
-- 60-second timer
-- Translate as many words as possible
-- Multiple choice (4 options)
-- Streak bonus for consecutive correct
-- Best for: Quick practice, vocabulary drilling
+**Features:**
+- [ ] Words flying across screen (various angles)
+- [ ] Tap to catch
+- [ ] Visual catch effect (satisfying!)
+- [ ] Combo counter
+- [ ] Wrong pairs to avoid
+- [ ] Time limit or lives mode
 
-### Phase 2 Features
-- [ ] Word Scramble game
-- [ ] Speed Round game
-- [ ] Sound effects (correct/wrong dings)
-- [ ] Share score feature
+---
+
+### Chamorro Wordle 📝
+**Status:** 📋 Planned  
+**Inspired By:** Wordle  
+**Best For:** Daily engagement, spelling mastery
+
+**Concept:**
+- Guess the Chamorro word in 6 tries
+- Color hints: 🟩 correct position, 🟨 wrong position, ⬜ not in word
+- Daily challenge (same word for everyone)
+- Practice mode (unlimited plays)
+
+**Features:**
+- [ ] 6-row letter grid
+- [ ] On-screen Chamorro keyboard (with å, ñ, etc.)
+- [ ] Color-coded feedback
+- [ ] Daily word (synced globally)
+- [ ] Practice mode (random words)
+- [ ] Share results (emoji grid)
+- [ ] Streak tracking
 
 ---
 
@@ -150,11 +214,13 @@ src/hooks/useGamesQuery.ts            # Game API hooks
 
 ## 🎨 Design Principles
 
-1. **Mobile-First** - Most users play on phones
-2. **Big Touch Targets** - Easy for kids to tap
-3. **Encouraging** - "Great job!" not "Wrong!"
-4. **Consistent Auth** - Requires sign-in (like quizzes/flashcards)
-5. **Chamorro Immersion** - Include Chamorro UI text where appropriate
+1. **Fun First** - Games should be enjoyable even without the learning aspect
+2. **Mobile-First** - Most users play on phones
+3. **Big Touch Targets** - Easy for kids to tap
+4. **Encouraging** - "Great job!" not "Wrong!"
+5. **One More Try** - Easy restart, addictive gameplay loop
+6. **Visual Feedback** - Satisfying animations and effects
+7. **Consistent Auth** - Requires sign-in (like quizzes/flashcards)
 
 ---
 
@@ -164,9 +230,14 @@ src/hooks/useGamesQuery.ts            # Game API hooks
 HafaGPT-frontend/src/
 ├── components/
 │   ├── Games.tsx                     # Game hub
-│   ├── MemoryMatch.tsx               # Memory game page
+│   ├── MemoryMatch.tsx               # Memory Match game
+│   ├── WordScramble.tsx              # Word Scramble game
+│   ├── FallingWords.tsx              # Falling Words game (NEW)
+│   ├── WordCatch.tsx                 # Word Catch game (NEW)
+│   ├── ChamorroWordle.tsx            # Chamorro Wordle game (NEW)
 │   └── games/
-│       └── MemoryCard.tsx            # Flip card component
+│       ├── MemoryCard.tsx            # Flip card component
+│       └── WordleKeyboard.tsx        # Chamorro keyboard (NEW)
 ├── hooks/
 │   └── useGamesQuery.ts              # Game API hooks (save, stats, history)
 └── data/
@@ -191,7 +262,7 @@ HafaGPT-API/
 - ✅ Added dual modes (Beginner/Challenge)
 - ✅ Added Games link to homepage
 
-### Dec 7, 2025
+### Dec 7, 2025 (Session 1)
 - ✅ Fixed card rendering issues (overflow, sizing)
 - ✅ Added proper category display names (no truncation)
 - ✅ Implemented full database tracking for game results:
@@ -208,6 +279,22 @@ HafaGPT-API/
 - ✅ Added ProtectedRoute for games (requires sign-in)
 - ✅ Added "Account Required" badges on homepage for non-signed-in users
 - ✅ Added "Explore Free / Free Account" welcome section for visitors
+
+### Dec 7, 2025 (Session 2)
+- ✅ Implemented Word Scramble game
+  - Tap letters to build answer
+  - Hint, skip, reshuffle features
+  - Streak bonuses and scoring
+  - Beginner Mode & Challenge Mode
+- ✅ Implemented Falling Words game
+  - Tetris-style gameplay with words falling from top
+  - 4 answer buttons, tap correct translation
+  - Speed progression (faster every 5 words)
+  - 3 lives system, streak bonuses
+  - No duplicate words per session
+  - Consistent light/dark mode theming
+  - Adjusted star rating (10+=3★, 5+=2★)
+- 📋 Updated roadmap: Word Catch & Chamorro Wordle next
 
 ---
 
