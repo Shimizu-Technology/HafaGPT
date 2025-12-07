@@ -4,7 +4,7 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
 
 > **HåfaGPT has evolved from a simple chatbot into a complete learning platform for self-study and teaching children Chamorro!**
 
-**🆕 LATEST:** Conversation Practice with 7 immersive scenarios! 💬 Plus Story Mode (24 stories), Vocabulary Browser (10,350+ words), Quiz Review, Dictionary-based flashcards & quizzes! 📚🎴📝
+**🆕 LATEST:** 5 Learning Games (Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle)! 🎮 Plus Freemium Model with Premium subscriptions! 💳 Conversation Practice with 7 scenarios! 💬 Story Mode (24 stories), Vocabulary Browser (10,350+ words), Quiz Review! 📚🎴📝
 
 > **📁 See [docs/CODEBASE_STRUCTURE.md](docs/CODEBASE_STRUCTURE.md)** for the complete codebase organization.
 
@@ -63,6 +63,24 @@ A **comprehensive Chamorro language learning application** combining AI tutoring
   - **Quiz Tracking** - Database-stored results with detailed answers
   - **Clickable History** - Review any past quiz attempt
   - **Stats** - Total quizzes, average score, best category
+
+- 🎮 **Learning Games** (5 games):
+  - **Memory Match** - Flip cards to match Chamorro ↔ English pairs
+  - **Word Scramble** - Unscramble letters to spell Chamorro words
+  - **Falling Words** - Tetris-style, tap correct translation before word hits bottom
+  - **Word Catch** - Fruit Ninja-style, tap correct word pairs
+  - **Chamorro Wordle** - Daily word guessing with Chamorro keyboard (Å, Ñ, glottal stop)
+  - **Beginner/Challenge Modes** - Curated words vs. full dictionary
+  - **Difficulty Levels** - Easy, Medium, Hard
+  - **Daily Challenge** - Same Wordle word for everyone, resets at midnight
+  - **Database Tracking** - Scores, stars, time saved to `game_results` table
+
+- 💳 **Freemium Model**:
+  - **Free Tier** - 5 chat messages, 5 games, 3 quizzes per day
+  - **Premium** - $4.99/month or $39.99/year for unlimited access
+  - **Clerk Billing** - Stripe integration via Clerk (no custom webhooks for checkout)
+  - **Daily Reset** - Limits reset at midnight Guam time (ChST, UTC+10)
+  - **See** [documentation/BILLING_AND_SUBSCRIPTIONS.md](documentation/BILLING_AND_SUBSCRIPTIONS.md) for full details
 
 ### 🎤 **Multimodal Input**
 
