@@ -3258,8 +3258,10 @@ async def clerk_webhook(request: Request):
         
         # Handle subscription events
         if event_type.startswith("subscription."):
-            # Clerk Billing uses payer_id, not user_id
-            user_id = data.get("payer_id") or data.get("user_id")
+            # Clerk Billing: The actual Clerk user_id is in payer.user_id, NOT payer_id
+            # payer_id is the commerce payer ID (cpayer_xxx), not the Clerk user ID (user_xxx)
+            payer = data.get("payer", {}) or {}
+            user_id = payer.get("user_id") or data.get("user_id")
             status = data.get("status", "")
             
             # Get plan name from items array (Clerk Billing structure)
@@ -3269,11 +3271,6 @@ async def clerk_webhook(request: Request):
                 first_item = items[0]
                 plan_info = first_item.get("plan", {})
                 plan_name = plan_info.get("name", "Premium") if isinstance(plan_info, dict) else "Premium"
-            
-            # Also check for payer object which might contain user info
-            payer = data.get("payer", {})
-            if not user_id and payer:
-                user_id = payer.get("id") or payer.get("user_id")
             
             logger.info(f"🔔 [WEBHOOK] Subscription event for user {user_id}")
             logger.info(f"   Plan: {plan_name}, Status: {status}")
