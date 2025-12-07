@@ -174,3 +174,97 @@ export function useUpdateUser() {
   });
 }
 
+// --- Analytics Types ---
+
+export interface DailyUsagePoint {
+  date: string;
+  chat_count: number;
+  game_count: number;
+  quiz_count: number;
+  active_users: number;
+}
+
+export interface UsageTrendsResponse {
+  period: string;
+  data: DailyUsagePoint[];
+  totals: {
+    chat: number;
+    games: number;
+    quizzes: number;
+  };
+}
+
+export interface UserGrowthPoint {
+  date: string;
+  total_users: number;
+  new_users: number;
+  premium_users: number;
+}
+
+export interface UserGrowthResponse {
+  period: string;
+  data: UserGrowthPoint[];
+}
+
+export interface FeatureUsageResponse {
+  chat_total: number;
+  games_total: number;
+  quizzes_total: number;
+  conversations_total: number;
+  game_breakdown: Record<string, number>;
+  quiz_breakdown: Record<string, number>;
+}
+
+// --- Analytics Hooks ---
+
+export function useUsageTrends(period: '7d' | '30d' | '90d' = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<UsageTrendsResponse>({
+    queryKey: ['admin', 'analytics', 'usage', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/usage?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch usage trends');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+export function useUserGrowth(period: '7d' | '30d' | '90d' = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<UserGrowthResponse>({
+    queryKey: ['admin', 'analytics', 'growth', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/growth?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch user growth');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useFeatureUsage() {
+  const { getToken } = useAuth();
+  
+  return useQuery<FeatureUsageResponse>({
+    queryKey: ['admin', 'analytics', 'features'],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/features`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch feature usage');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+

@@ -225,7 +225,7 @@ export function HomePage() {
                   <span className="text-sm font-semibold text-coral-600 dark:text-ocean-400">Free Account</span>
                 </div>
                 <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400">
-                  AI Chat, Games, Quizzes, Flashcards & Progress Tracking
+                  5 AI chats, 10 games & 5 quizzes daily
                 </p>
               </div>
             </div>

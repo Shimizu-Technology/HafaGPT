@@ -4,6 +4,7 @@ import { useUser } from '@clerk/clerk-react';
 import { 
   LayoutDashboard, 
   Users, 
+  BarChart3,
   ArrowLeft,
   Menu,
   X,
@@ -20,6 +21,7 @@ interface AdminLayoutProps {
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Users', icon: Users },
+  { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
