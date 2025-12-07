@@ -37,7 +37,8 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 | Phase 1 | User Management + Whitelist | 2-3 sessions | ✅ Complete |
 | Phase 1.5 | User Detail + Ban/Actions | 1 session | ✅ Complete |
 | Phase 2 | Analytics Dashboard | 1-2 sessions | ✅ Complete |
-| Phase 3 | Content Management | 2-3 sessions | 📋 Planned |
+| Phase 3 | Knowledge Base Management (RAG Upload) | 2-3 sessions | 📋 Next |
+| Phase 4 | Content Management | 2-3 sessions | ⏸️ Deferred |
 
 #### **Phase 1 + 1.5: User Management** ✅
 
@@ -98,13 +99,56 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 - [ ] Revenue tracking (MRR, subscriptions) - needs Stripe integration
 - [ ] Churn tracking - needs subscription history
 
-#### **Phase 3: Content Management**
+#### **Phase 3: Knowledge Base Management** 📚 (NEW PRIORITY)
 
-**Features:**
+> **Goal:** Allow admins to upload documents (PDFs, DOCX, TXT) to expand the RAG knowledge base without touching code. Perfect for school partnerships (e.g., Hurao Chamorro school).
+
+**Route:** `/admin/knowledge-base`
+
+**Planned Features:**
+- [ ] Drag & drop file upload (PDF, DOCX, TXT)
+- [ ] Background processing with status updates (30s-2min per file)
+- [ ] Set source priority (educational, dictionary, archival)
+- [ ] List indexed documents with stats
+- [ ] View processing status/history
+- [ ] Delete documents from RAG (optional)
+
+**Backend Endpoints:**
+```python
+POST   /api/admin/knowledge-base/upload     # Upload + queue for processing
+GET    /api/admin/knowledge-base/status/:id # Check processing status
+GET    /api/admin/knowledge-base/documents  # List indexed documents
+GET    /api/admin/knowledge-base/stats      # RAG stats (chunks, docs, etc.)
+DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
+```
+
+**Technical Notes:**
+- Leverages existing `RAGDatabaseManager` class
+- Docling for PDF processing (handles tables!)
+- Token-aware chunking (~350 tokens/chunk)
+- OpenAI embeddings for vector storage
+- Background task queue for processing
+
+**School Use Case:**
+- Teachers upload curriculum PDFs → instantly searchable
+- Import vocabulary lists and lesson handouts
+- Preserve historical Chamorro documents
+
+**Effort:** ~10-14 hours (including background processing)
+
+---
+
+#### **Phase 4: Content Management** (Deferred)
+
+> **Note:** Deferred until there's a clear need. Current curated content is working well and can be edited via git.
+
+**Would require full database migration:**
 - [ ] Quiz question CRUD (add/edit/delete questions)
 - [ ] Flashcard deck management
 - [ ] Story management
 - [ ] Game word lists
+
+**Current state:** Content hardcoded in frontend TypeScript files. Works fine for now.
 
 ---
 
@@ -207,7 +251,7 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 2. ✅ ~~Test Admin Dashboard~~ - Done!
 3. ✅ ~~Phase 2: Analytics Dashboard~~ - Done!
 4. **Whitelist family/friends** via Admin Dashboard → Users → Click user → "Add to Whitelist"
-5. **Phase 3: Content Management** - add/edit quizzes, flashcards, stories (when needed)
+5. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
 6. **Chat UX: Edit & Regenerate** - edit messages and regenerate from that point
 7. **Flashcard Spaced Repetition** - track card progress, schedule reviews
 
