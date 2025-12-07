@@ -8,10 +8,13 @@ import {
   Trophy,
   TrendingUp,
   Flame,
-  ChevronRight
+  ChevronRight,
+  Gamepad2,
+  Star
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useQuizStats } from '../hooks/useQuizQuery';
+import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 
@@ -57,8 +60,9 @@ export function Dashboard() {
   const { user, isLoaded } = useUser();
   const { data: initData, isLoading: conversationsLoading } = useInitUserData(null, isLoaded && !!user?.id);
   const { data: quizStatsData, isLoading: quizLoading } = useQuizStats();
+  const { data: gameStatsData, isLoading: gamesLoading } = useGameStats();
   
-  const isLoading = conversationsLoading || quizLoading;
+  const isLoading = conversationsLoading || quizLoading || gamesLoading;
   
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
@@ -77,6 +81,10 @@ export function Dashboard() {
   const bestCategoryInfo = bestCategory 
     ? QUIZ_CATEGORIES.find(c => c.id === bestCategory.id)
     : null;
+  
+  // Use API game stats
+  const totalGames = gameStatsData?.total_games || 0;
+  const averageStars = gameStatsData?.average_stars || 0;
   
   // Calculate streak (days with activity)
   const today = new Date();
@@ -133,7 +141,7 @@ export function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {/* Conversations */}
           <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-2">
@@ -176,6 +184,37 @@ export function Dashboard() {
             </p>
             <p className="text-xs text-brown-500 dark:text-gray-400">
               Avg Score
+            </p>
+          </div>
+
+          {/* Games Played */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <Gamepad2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-brown-800 dark:text-white">
+              {totalGames}
+            </p>
+            <p className="text-xs text-brown-500 dark:text-gray-400">
+              Games
+            </p>
+          </div>
+
+          {/* Avg Stars */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <Star className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-brown-800 dark:text-white flex items-center gap-1">
+              {totalGames > 0 ? averageStars.toFixed(1) : '-'}
+              {totalGames > 0 && <span className="text-yellow-500 text-lg">⭐</span>}
+            </p>
+            <p className="text-xs text-brown-500 dark:text-gray-400">
+              Avg Stars
             </p>
           </div>
         </div>
@@ -262,6 +301,22 @@ export function Dashboard() {
             </div>
             <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
           </Link>
+
+          <Link
+            to="/games"
+            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                <Gamepad2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="font-semibold text-brown-800 dark:text-white">Play Games</p>
+                <p className="text-xs text-brown-500 dark:text-gray-400">Memory match & more</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
+          </Link>
         </div>
 
         {/* Recent Quiz History */}
@@ -328,8 +383,74 @@ export function Dashboard() {
           </div>
         )}
 
+        {/* Recent Game History */}
+        {gameStatsData && gameStatsData.recent_results.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide">
+                Recent Games
+              </h3>
+            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
+              {gameStatsData.recent_results.slice(0, 5).map((result, idx) => {
+                const date = new Date(result.created_at);
+                const gameIcons: Record<string, string> = {
+                  memory_match: '🧩',
+                  word_scramble: '🔤',
+                  speed_round: '⚡',
+                };
+                
+                return (
+                  <div 
+                    key={idx} 
+                    className="flex items-center justify-between p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{gameIcons[result.game_type] || '🎮'}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-brown-800 dark:text-white text-sm">
+                            {result.category_title || result.category_id}
+                          </p>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            result.mode === 'beginner' 
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                              : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                          }`}>
+                            {result.mode === 'beginner' ? '🌟' : '📚'} {result.difficulty}
+                          </span>
+                        </div>
+                        <p className="text-xs text-brown-500 dark:text-gray-400">
+                          {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {result.moves} moves
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3].map((star) => (
+                          <span
+                            key={star}
+                            className={`text-sm ${
+                              star <= (result.stars || 0) ? 'opacity-100' : 'opacity-30'
+                            }`}
+                          >
+                            ⭐
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-sm font-semibold text-brown-600 dark:text-gray-300">
+                        {result.score}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Empty State */}
-        {totalConversations === 0 && totalQuizzes === 0 && (
+        {totalConversations === 0 && totalQuizzes === 0 && totalGames === 0 && (
           <div className="text-center py-12">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-coral-100 dark:bg-ocean-900/30 flex items-center justify-center">
               <Flame className="w-10 h-10 text-coral-500 dark:text-ocean-400" />

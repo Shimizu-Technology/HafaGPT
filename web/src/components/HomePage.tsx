@@ -12,10 +12,14 @@ import {
   Moon,
   Sun,
   BarChart3,
-  MessagesSquare
+  MessagesSquare,
+  Gamepad2,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useQuizStats } from '../hooks/useQuizQuery';
+import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useTheme } from '../hooks/useTheme';
 import { QUIZ_CATEGORIES } from '../data/quizData';
@@ -29,6 +33,7 @@ export function HomePage() {
   const { theme, toggleTheme } = useTheme();
   const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
   const { data: quizStatsData } = useQuizStats();
+  const { data: gameStatsData } = useGameStats();
   
   const [quickMessage, setQuickMessage] = useState('');
   
@@ -38,6 +43,9 @@ export function HomePage() {
   // Use API quiz stats
   const totalQuizzes = quizStatsData?.total_quizzes || 0;
   const averageScore = Math.round(quizStatsData?.average_score || 0);
+  
+  // Use API game stats
+  const totalGames = gameStatsData?.total_games || 0;
   
   // Best category from API
   const bestCategory = quizStatsData?.best_category ? {
@@ -176,9 +184,42 @@ export function HomePage() {
           </p>
         </div>
 
+        {/* What's Available Section - Only show when NOT signed in */}
+        {!isSignedIn && (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {/* Free Features */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Unlock className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Explore Free</span>
+                </div>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400">
+                  Dictionary, Stories & Daily Word
+                </p>
+              </div>
+              
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-12 bg-cream-200 dark:bg-slate-600" />
+              <div className="sm:hidden h-px w-full bg-cream-200 dark:bg-slate-600" />
+              
+              {/* Sign-up Features */}
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lock className="w-4 h-4 text-coral-500 dark:text-ocean-400" />
+                  <span className="text-sm font-semibold text-coral-600 dark:text-ocean-400">Free Account</span>
+                </div>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400">
+                  AI Chat, Games, Quizzes, Flashcards & Progress Tracking
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Quick Stats - Only show on DESKTOP when signed in and data is loaded */}
-        {isSignedIn && !isUserDataLoading && (totalConversations > 0 || totalQuizzes > 0) && (
-          <div className="hidden sm:grid grid-cols-3 gap-3">
+        {isSignedIn && !isUserDataLoading && (totalConversations > 0 || totalQuizzes > 0 || totalGames > 0) && (
+          <div className="hidden sm:grid grid-cols-4 gap-3">
             <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
               <p className="text-2xl font-bold text-coral-600 dark:text-ocean-400">
                 {totalConversations}
@@ -190,6 +231,12 @@ export function HomePage() {
                 {totalQuizzes}
               </p>
               <p className="text-xs text-brown-500 dark:text-gray-400">Quizzes</p>
+            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
+              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                {totalGames}
+              </p>
+              <p className="text-xs text-brown-500 dark:text-gray-400">Games</p>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
               <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
@@ -252,11 +299,16 @@ export function HomePage() {
           
           {/* Mobile: Horizontal scrollable row */}
           <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            {/* Chat */}
+            {/* Chat - Account Required */}
             <Link
               to="/chat"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-coral-500 dark:bg-ocean-500 rounded-full flex items-center justify-center shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-coral-900/30 dark:to-coral-800/30 flex items-center justify-center">
                 <MessageSquare className="w-7 h-7 text-coral-600 dark:text-coral-400" />
               </div>
@@ -266,11 +318,16 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Quiz */}
+            {/* Quiz - Account Required */}
             <Link
               to="/quiz"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-coral-500 dark:bg-ocean-500 rounded-full flex items-center justify-center shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center">
                 <Brain className="w-7 h-7 text-purple-600 dark:text-purple-400" />
               </div>
@@ -280,11 +337,16 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Flashcards */}
+            {/* Flashcards - Account Required */}
             <Link
               to="/flashcards"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-coral-500 dark:bg-ocean-500 rounded-full flex items-center justify-center shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/30 dark:to-teal-800/30 flex items-center justify-center">
                 <BookOpen className="w-7 h-7 text-teal-600 dark:text-teal-400" />
               </div>
@@ -294,11 +356,16 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Vocabulary */}
+            {/* Vocabulary - FREE */}
             <Link
               to="/vocabulary"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-emerald-500 rounded-full shadow-sm">
+                  <span className="text-[8px] font-bold text-white">FREE</span>
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
                 <Book className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
               </div>
@@ -308,11 +375,16 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Stories */}
+            {/* Stories - FREE */}
             <Link
               to="/stories"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-emerald-500 rounded-full shadow-sm">
+                  <span className="text-[8px] font-bold text-white">FREE</span>
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-800/30 flex items-center justify-center">
                 <BookMarked className="w-7 h-7 text-amber-600 dark:text-amber-400" />
               </div>
@@ -322,17 +394,41 @@ export function HomePage() {
               </div>
             </Link>
 
-            {/* Practice */}
+            {/* Practice - Account Required */}
             <Link
               to="/practice"
-              className="flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500 active:scale-95 transition-all"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500 active:scale-95 transition-all"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-coral-500 dark:bg-ocean-500 rounded-full flex items-center justify-center shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 dark:from-rose-900/30 dark:to-rose-800/30 flex items-center justify-center">
                 <MessagesSquare className="w-7 h-7 text-rose-600 dark:text-rose-400" />
               </div>
               <div className="text-center">
                 <p className="font-semibold text-brown-800 dark:text-white text-sm">Practice</p>
                 <p className="text-[10px] text-brown-500 dark:text-gray-400">Conversations</p>
+              </div>
+            </Link>
+
+            {/* Games - Account Required */}
+            <Link
+              to="/games"
+              className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-500 active:scale-95 transition-all"
+            >
+              {!isSignedIn && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-coral-500 dark:bg-ocean-500 rounded-full flex items-center justify-center shadow-sm">
+                  <Lock className="w-2.5 h-2.5 text-white" />
+                </div>
+              )}
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/30 dark:to-emerald-800/30 flex items-center justify-center">
+                <Gamepad2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-brown-800 dark:text-white text-sm">Games</p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Play & learn</p>
               </div>
             </Link>
 
@@ -355,11 +451,17 @@ export function HomePage() {
           
           {/* Desktop: Grid layout */}
           <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Chat */}
+            {/* Chat - Account Required */}
             <Link
               to="/chat"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-coral-500 dark:bg-ocean-500 rounded-full shadow-sm">
+                  <Lock className="w-3 h-3 text-white" />
+                  <span className="text-[10px] font-semibold text-white">Account</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-coral-900/30 dark:to-coral-800/30 flex items-center justify-center">
                 <MessageSquare className="w-6 h-6 text-coral-600 dark:text-coral-400" />
               </div>
@@ -370,11 +472,17 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
             </Link>
 
-            {/* Quiz */}
+            {/* Quiz - Account Required */}
             <Link
               to="/quiz"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-coral-500 dark:bg-ocean-500 rounded-full shadow-sm">
+                  <Lock className="w-3 h-3 text-white" />
+                  <span className="text-[10px] font-semibold text-white">Account</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 flex items-center justify-center">
                 <Brain className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
@@ -385,11 +493,17 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
             </Link>
 
-            {/* Flashcards */}
+            {/* Flashcards - Account Required */}
             <Link
               to="/flashcards"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-coral-500 dark:bg-ocean-500 rounded-full shadow-sm">
+                  <Lock className="w-3 h-3 text-white" />
+                  <span className="text-[10px] font-semibold text-white">Account</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/30 dark:to-teal-800/30 flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
@@ -400,11 +514,16 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-teal-500 dark:group-hover:text-teal-400 transition-colors" />
             </Link>
 
-            {/* Vocabulary */}
+            {/* Vocabulary - FREE */}
             <Link
               to="/vocabulary"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm">
+                  <span className="text-[10px] font-bold text-white">FREE</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
                 <Book className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               </div>
@@ -415,11 +534,16 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
             </Link>
 
-            {/* Stories */}
+            {/* Stories - FREE */}
             <Link
               to="/stories"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm">
+                  <span className="text-[10px] font-bold text-white">FREE</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-800/30 flex items-center justify-center">
                 <BookMarked className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               </div>
@@ -430,11 +554,17 @@ export function HomePage() {
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors" />
             </Link>
 
-            {/* Practice */}
+            {/* Practice - Account Required */}
             <Link
               to="/practice"
-              className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500 hover:shadow-md transition-all group"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-500 hover:shadow-md transition-all group"
             >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-coral-500 dark:bg-ocean-500 rounded-full shadow-sm">
+                  <Lock className="w-3 h-3 text-white" />
+                  <span className="text-[10px] font-semibold text-white">Account</span>
+                </div>
+              )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 dark:from-rose-900/30 dark:to-rose-800/30 flex items-center justify-center">
                 <MessagesSquare className="w-6 h-6 text-rose-600 dark:text-rose-400" />
               </div>
@@ -444,6 +574,44 @@ export function HomePage() {
               </div>
               <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors" />
             </Link>
+
+            {/* Games - Account Required */}
+            <Link
+              to="/games"
+              className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-500 hover:shadow-md transition-all group"
+            >
+              {!isSignedIn && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-coral-500 dark:bg-ocean-500 rounded-full shadow-sm">
+                  <Lock className="w-3 h-3 text-white" />
+                  <span className="text-[10px] font-semibold text-white">Account</span>
+                </div>
+              )}
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/30 dark:to-emerald-800/30 flex items-center justify-center">
+                <Gamepad2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-brown-800 dark:text-white">Games</p>
+                <p className="text-xs text-brown-500 dark:text-gray-400 truncate">Play & learn</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors" />
+            </Link>
+
+            {/* Progress - Only show when signed in */}
+            {isSignedIn && (
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all group"
+              >
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-brown-800 dark:text-white">Progress</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400 truncate">Your stats</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-brown-300 dark:text-gray-600 group-hover:text-amber-500 dark:group-hover:text-amber-400 transition-colors" />
+              </Link>
+            )}
           </div>
         </div>
 

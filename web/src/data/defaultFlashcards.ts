@@ -67,6 +67,21 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Kao siña un ayuda yu\'?',
         back: 'Can you help me?',
         pronunciation: 'kah-oh SEEN-yah oon ah-YOO-dah yoo'
+      },
+      {
+        front: 'Mañana si Yu\'os',
+        back: 'Good morning',
+        pronunciation: 'mah-NYAH-nah see YOO-ohs'
+      },
+      {
+        front: 'Buenas tatdes',
+        back: 'Good afternoon',
+        pronunciation: 'BWAY-nahs TAHT-dehs'
+      },
+      {
+        front: 'Buenas noches',
+        back: 'Good evening/night',
+        pronunciation: 'BWAY-nahs NOH-chehs'
       }
     ]
   },

@@ -17,6 +17,8 @@ import { VocabularyList } from './components/VocabularyList';
 import { VocabularyCategory } from './components/VocabularyCategory';
 import { ConversationList } from './components/ConversationList';
 import { ConversationPractice } from './components/ConversationPractice';
+import { Games } from './components/Games';
+import { MemoryMatch } from './components/MemoryMatch';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
@@ -56,6 +58,10 @@ function App() {
         {/* Conversation Practice routes */}
         <Route path="/practice" element={<ProtectedRoute><ConversationList /></ProtectedRoute>} />
         <Route path="/practice/:scenarioId" element={<ProtectedRoute><ConversationPractice /></ProtectedRoute>} />
+        
+        {/* Games routes - require authentication */}
+        <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
+        <Route path="/games/memory" element={<ProtectedRoute><MemoryMatch /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );
