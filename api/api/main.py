@@ -3258,15 +3258,31 @@ async def clerk_webhook(request: Request):
         
         # Handle subscription events
         if event_type.startswith("subscription."):
-            user_id = data.get("user_id")
-            plan = data.get("plan", {})
+            # Clerk Billing uses payer_id, not user_id
+            user_id = data.get("payer_id") or data.get("user_id")
             status = data.get("status", "")
             
+            # Get plan name from items array (Clerk Billing structure)
+            items = data.get("items", [])
+            plan_name = "Premium"
+            if items and len(items) > 0:
+                first_item = items[0]
+                plan_info = first_item.get("plan", {})
+                plan_name = plan_info.get("name", "Premium") if isinstance(plan_info, dict) else "Premium"
+            
+            # Also check for payer object which might contain user info
+            payer = data.get("payer", {})
+            if not user_id and payer:
+                user_id = payer.get("id") or payer.get("user_id")
+            
             logger.info(f"🔔 [WEBHOOK] Subscription event for user {user_id}")
-            logger.info(f"   Plan: {plan.get('name', 'Unknown')}, Status: {status}")
+            logger.info(f"   Plan: {plan_name}, Status: {status}")
+            logger.info(f"   Items: {items}")
+            logger.info(f"   Payer: {payer}")
             
             if not user_id:
-                logger.warning("⚠️ [WEBHOOK] No user_id in subscription event")
+                logger.warning("⚠️ [WEBHOOK] No user_id/payer_id in subscription event")
+                logger.warning(f"   Full data: {json.dumps(data, default=str)[:500]}")
                 return {"received": True, "processed": False, "reason": "no_user_id"}
             
             if not clerk:
@@ -3275,8 +3291,7 @@ async def clerk_webhook(request: Request):
             
             try:
                 # Determine if user should be premium
-                is_premium = event_type in ["subscription.created", "subscription.updated"] and status in ["active", "trialing"]
-                plan_name = plan.get("name", "Premium") if is_premium else None
+                is_premium = event_type in ["subscription.created", "subscription.updated", "subscription.active"] and status in ["active", "trialing"]
                 
                 # Update user's public metadata
                 if is_premium:
