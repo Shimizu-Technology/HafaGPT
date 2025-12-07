@@ -21,6 +21,7 @@ import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useQuizStats } from '../hooks/useQuizQuery';
 import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
+import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { DailyWord } from './DailyWord';
@@ -35,6 +36,7 @@ export function HomePage() {
   const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
   const { data: quizStatsData } = useQuizStats();
   const { data: gameStatsData } = useGameStats();
+  const { isPremium } = useSubscription();
   
   const [quickMessage, setQuickMessage] = useState('');
   
@@ -162,8 +164,8 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Upgrade button for signed-in free users */}
-            {isSignedIn && (
+            {/* Upgrade button for signed-in free users only (hide for premium) */}
+            {isSignedIn && !isPremium && (
               <Link
                 to="/pricing"
                 className="flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-600 text-white text-[11px] sm:text-xs font-semibold rounded-full hover:shadow-lg hover:scale-105 transition-all"

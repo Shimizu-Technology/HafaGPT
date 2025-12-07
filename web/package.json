@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.55.0",
+    "@clerk/themes": "^2.4.42",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.90.9",
     "lucide-react": "^0.344.0",

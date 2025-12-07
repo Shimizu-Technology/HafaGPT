@@ -1,9 +1,32 @@
+import { useState, useEffect } from 'react';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
-import { Sparkles } from 'lucide-react';
+import { dark } from '@clerk/themes';
+import { Sparkles, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSubscription } from '../hooks/useSubscription';
 
 export function AuthButton() {
   const navigate = useNavigate();
+  const { isPremium } = useSubscription();
+  
+  // Check dark mode from DOM directly (syncs with global theme toggle)
+  const [isDark, setIsDark] = useState(() => 
+    document.documentElement.classList.contains('dark')
+  );
+  
+  // Listen for theme changes via MutationObserver
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -21,29 +44,39 @@ export function AuthButton() {
         <UserButton 
           afterSignOutUrl="/"
           appearance={{
+            baseTheme: isDark ? dark : undefined,
             elements: {
               avatarBox: "w-8 h-8 sm:w-9 sm:h-9",
               userButtonPopoverCard: "rounded-xl shadow-xl",
-              userButtonPopoverActionButton: "hover:bg-teal-50 dark:hover:bg-gray-800",
+              userButtonPopoverActionButton: isDark ? "hover:bg-gray-800" : "hover:bg-teal-50",
             }
           }}
           // Center the popover on mobile, default alignment on desktop
           userProfileMode="modal"
           userProfileProps={{
             appearance: {
+              baseTheme: isDark ? dark : undefined,
               elements: {
                 modalContent: "mx-auto"
               }
             }
           }}
         >
-          {/* Custom menu item for upgrading */}
+          {/* Custom menu item - show different options based on subscription status */}
           <UserButton.MenuItems>
-            <UserButton.Action
-              label="Upgrade to Premium"
-              labelIcon={<Sparkles className="w-4 h-4 text-amber-500" />}
-              onClick={() => navigate('/pricing')}
-            />
+            {isPremium ? (
+              <UserButton.Action
+                label="Manage Subscription"
+                labelIcon={<Settings className="w-4 h-4" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />}
+                onClick={() => navigate('/pricing')}
+              />
+            ) : (
+              <UserButton.Action
+                label="Upgrade to Premium"
+                labelIcon={<Sparkles className="w-4 h-4 text-amber-500" />}
+                onClick={() => navigate('/pricing')}
+              />
+            )}
           </UserButton.MenuItems>
         </UserButton>
       </SignedIn>

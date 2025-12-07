@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, SignInButton, PricingTable, useUser } from '@clerk/clerk-react';
+import { useAuth, SignInButton, PricingTable, useClerk } from '@clerk/clerk-react';
 import { 
   ArrowLeft, 
   Check, 
@@ -39,7 +39,7 @@ const features = {
 
 export function PricingPage() {
   const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { openUserProfile } = useClerk();
   const { isPremium, isLoading: subscriptionLoading } = useSubscription();
   const [showCheckout, setShowCheckout] = useState(false);
 
@@ -211,7 +211,7 @@ export function PricingPage() {
                     ✓ Current Plan
                   </div>
                   <button
-                    onClick={() => user?.openUserProfile()}
+                    onClick={() => openUserProfile()}
                     className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-white/50 dark:bg-slate-700/50 text-brown-700 dark:text-gray-300 font-medium rounded-lg hover:bg-white/70 dark:hover:bg-slate-700/70 transition-colors text-sm"
                   >
                     <Settings className="w-4 h-4" />
