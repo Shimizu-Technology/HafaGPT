@@ -276,6 +276,40 @@ class ChamorroRAG:
                 # If not a connection error or max retries reached, raise
                 raise
     
+    def _get_db_connection_with_retry(self, max_retries=2):
+        """
+        Get a database connection with retry logic for SSL/connection errors.
+        
+        Neon (serverless PostgreSQL) closes idle connections, which can cause
+        SSL connection errors. This method retries connection on failure.
+        
+        Returns:
+            A psycopg connection object
+        """
+        import psycopg
+        import os
+        
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                return conn
+            except Exception as e:
+                last_error = e
+                error_msg = str(e).lower()
+                # Check if it's a connection error worth retrying
+                if any(keyword in error_msg for keyword in ['ssl', 'connection', 'closed', 'timeout', 'refused']):
+                    if attempt < max_retries - 1:
+                        if attempt == 0:
+                            print(f"⚠️  Database connection failed, retrying...")
+                        time.sleep(0.5 * (attempt + 1))  # Exponential backoff
+                        continue
+                # Not a retryable error, raise immediately
+                raise
+        
+        # All retries exhausted
+        raise last_error
+    
     def _keyword_search_dictionaries(self, target_word, k=3):
         """
         Fast keyword search for dictionary entries.
@@ -297,7 +331,6 @@ class ChamorroRAG:
             return []
         
         try:
-            import psycopg
             import os
             from langchain_core.documents import Document
             
@@ -305,7 +338,7 @@ class ChamorroRAG:
             
             # SQL search for Chamorro headwords (fast and accurate)
             try:
-                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                conn = self._get_db_connection_with_retry()
                 cur = conn.cursor()
                 
                 # Search for Chamorro headword entries
@@ -428,7 +461,6 @@ class ChamorroRAG:
             return []
         
         try:
-            import psycopg
             import os
             from langchain_core.documents import Document
             
@@ -436,7 +468,7 @@ class ChamorroRAG:
             
             # SQL search for English words in dictionary definitions
             try:
-                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                conn = self._get_db_connection_with_retry()
                 cur = conn.cursor()
                 
                 # Search for English words in definitions
