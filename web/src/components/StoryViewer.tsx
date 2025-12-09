@@ -206,7 +206,7 @@ export function StoryViewer() {
                 </span>
                 <button
                   onClick={() => speak(selectedWord.chamorro)}
-                  className="p-1.5 rounded-lg bg-amber-200 dark:bg-amber-800 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors"
+                  className="p-1.5 rounded-lg bg-amber-200 dark:bg-amber-800 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors flex items-center justify-center"
                 >
                   <Volume2 className="w-4 h-4 text-amber-800 dark:text-amber-200" />
                 </button>

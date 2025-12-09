@@ -229,7 +229,7 @@ export function VocabularyCategory() {
                         speakWord(word, index);
                       }}
                       disabled={speakingIndex !== null}
-                      className={`p-2 rounded-lg transition-colors flex-shrink-0 mt-0.5 ${
+                      className={`p-2 rounded-lg transition-colors flex-shrink-0 mt-0.5 flex items-center justify-center ${
                         isSpeaking
                           ? 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400'
                           : 'bg-coral-50 dark:bg-ocean-900/30 text-coral-500 dark:text-ocean-400 hover:bg-coral-100 dark:hover:bg-ocean-900/50'

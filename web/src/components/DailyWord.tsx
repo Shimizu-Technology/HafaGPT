@@ -97,7 +97,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 {isSupported && (
                   <button
                     onClick={handleSpeak}
-                    className={`p-2 rounded-lg transition-all ${
+                    className={`p-2 rounded-lg transition-all flex items-center justify-center ${
                       isSpeaking
                         ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
                         : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 border border-coral-200 dark:border-ocean-500/50'
@@ -142,7 +142,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
               {isSupported && (
                 <button
                   onClick={handleSpeak}
-                  className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+                  className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                     isSpeaking
                       ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
                       : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 hover:bg-coral-50 dark:hover:bg-slate-600 border border-coral-200 dark:border-ocean-500/50'
@@ -228,7 +228,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
           {isSupported && (
             <button
               onClick={handleSpeak}
-              className={`p-3 rounded-xl transition-all flex-shrink-0 ${
+              className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                 isSpeaking
                   ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
                   : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 hover:bg-coral-50 dark:hover:bg-slate-600 border border-coral-200 dark:border-ocean-500/50'

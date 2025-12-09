@@ -120,7 +120,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-3 ml-auto">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-2 rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' 

@@ -179,7 +179,7 @@ export function HomePage() {
             <AuthButton />
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-colors"
+              className="p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-colors flex items-center justify-center"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? <Moon className="w-5 h-5 text-brown-600 dark:text-gray-400" /> : <Sun className="w-5 h-5 text-brown-600 dark:text-gray-400" />}

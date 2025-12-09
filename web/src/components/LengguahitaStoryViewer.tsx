@@ -52,7 +52,7 @@ function WordPopup({
           <div className="flex items-center gap-2">
             <button
               onClick={() => speakText(word)}
-              className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors"
+              className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors flex items-center justify-center"
             >
               <Volume2 className="w-5 h-5" />
             </button>
@@ -370,7 +370,7 @@ export function LengguahitaStoryViewer() {
               </span>
               <button
                 onClick={() => speakText(paragraph.chamorro)}
-                className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors"
+                className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors flex items-center justify-center"
                 title="Listen to pronunciation"
               >
                 <Volume2 className="w-4 h-4" />
