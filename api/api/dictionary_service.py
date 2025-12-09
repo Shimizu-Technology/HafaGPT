@@ -748,7 +748,8 @@ class DictionaryService:
         Get a word of the day based on the current date.
         
         Uses a deterministic selection based on day of year so everyone
-        sees the same word on the same day. Prioritizes common, useful words.
+        sees the same word on the same day. Prioritizes common, useful words
+        from family-friendly categories.
         """
         import datetime
         import hashlib
@@ -758,8 +759,30 @@ class DictionaryService:
         day_of_year = today.timetuple().tm_yday
         year = today.year
         
+        # SAFE CATEGORIES - Only pick from these family-friendly categories
+        safe_categories = {
+            'greetings', 'numbers', 'colors', 'food', 'family', 
+            'animals', 'nature', 'places', 'time', 'body'
+        }
+        
+        # BLOCKLIST - Words that shouldn't be word of the day
+        # (inappropriate, too obscure, or not useful for learners)
+        blocklist = {
+            # Bodily functions / inappropriate
+            "takmi'", "takme'", "mutot", "mumu", "ngånga'", "ñaknak",
+            "chi'ok", "podong", "mamokkat", "pokpok", "mamuti",
+            # Death / violence related
+            "matai", "puno'", "patgon matai",
+            # Rude words
+            "poksai", "dåkon", "båba",
+            # Too obscure or archaic
+            "magåhet", "umassagua",
+        }
+        
         # Create a list of "good" words for word of the day
         # Filter for words that are:
+        # - From safe categories only
+        # - Not in blocklist
         # - Not too long (< 20 chars)
         # - Have clear, simple definitions (< 100 chars)
         # - Not taxonomic ("type of...")
@@ -769,6 +792,15 @@ class DictionaryService:
         for entry in self._word_list:
             chamorro = entry["chamorro"]
             definition = entry["definition"]
+            category = entry.get("category", "").lower()
+            
+            # Skip if not from a safe category
+            if category not in safe_categories:
+                continue
+            
+            # Skip blocklisted words
+            if chamorro.lower() in blocklist:
+                continue
             
             # Skip long words
             if len(chamorro) > 20:
@@ -788,6 +820,11 @@ class DictionaryService:
             
             # Skip words with special characters in the middle (compounds)
             if " " in chamorro and len(chamorro) > 15:
+                continue
+            
+            # Skip definitions with inappropriate keywords
+            definition_lower = definition.lower()
+            if any(word in definition_lower for word in ['urinate', 'feces', 'excrement', 'buttocks', 'genitals', 'prostitute', 'drunk']):
                 continue
             
             good_words.append(entry)
