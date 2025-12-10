@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 8, 2025
+> **Last Updated:** December 10, 2025
 
 ---
 
@@ -272,4 +272,14 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 **Admin Dashboard Phase 1 & 2 Complete! 🌺**
 
 User management + analytics all working!
+
+---
+
+## 🐛 Recent Bug Fixes (Dec 10, 2025)
+
+| Fix | Description |
+|-----|-------------|
+| **Word of the Day filtering** | Added safe category filtering + blocklist to ensure family-friendly vocabulary (no inappropriate words) |
+| **RAG connection stability** | Added retry logic for database connections to handle Neon serverless cold starts and SSL drops |
+| **Icon centering** | Fixed off-centered icons for theme toggles and speak buttons across all pages |
 
