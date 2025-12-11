@@ -637,7 +637,7 @@ export function HomePage() {
         <DailyWordleCard />
 
         {/* Best Category - Only show on DESKTOP if user has quiz history */}
-        {bestCategoryInfo && (
+        {bestCategoryInfo && bestCategory && (
           <div className="hidden sm:block bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -671,8 +671,33 @@ export function HomePage() {
           </div>
         )}
 
-        {/* Footer spacer */}
-        <div className="h-4" />
+        {/* Footer */}
+        <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0">
+            <p className="text-xs text-brown-500 dark:text-gray-500">
+              Built with 🌺 by{' '}
+              <a 
+                href="https://shimizu-technology.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-coral-600 dark:text-ocean-400 hover:underline font-medium"
+              >
+                Shimizu Technology
+              </a>
+            </p>
+            <span className="hidden sm:inline text-brown-400 dark:text-gray-600 mx-2">•</span>
+            <p className="text-xs text-brown-500 dark:text-gray-500">
+              <a 
+                href="https://codeschoolofguam.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-coral-600 dark:text-ocean-400 hover:underline"
+              >
+                Learn to code at Code School of Guam
+              </a>
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
   );
