@@ -1,4 +1,4 @@
-import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink } from 'lucide-react';
+import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw } from 'lucide-react';
 import { useState, memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -48,15 +48,34 @@ interface MessageProps {
   conversationId?: string; // Conversation UUID for feedback
   cancelled?: boolean; // Whether this message was cancelled
   isStreaming?: boolean; // Whether this message is currently streaming
+  // Edit & Regenerate props
+  canEdit?: boolean; // Whether this message can be edited
+  onEdit?: (newContent: string) => void; // Callback when user saves edited message
 }
 
-export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming }: MessageProps) {
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(content);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
+
+  // Handle edit submission
+  const handleEditSubmit = () => {
+    if (editContent.trim() && editContent !== content && onEdit) {
+      onEdit(editContent.trim());
+      setIsEditing(false);
+    }
+  };
+
+  // Handle edit cancel
+  const handleEditCancel = () => {
+    setEditContent(content);
+    setIsEditing(false);
+  };
 
   const handleCopy = async () => {
     console.log('🔵 Copy button clicked!'); // Debug log
@@ -377,10 +396,46 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   )}
                 </div>
               )}
-              {/* Text Content */}
-              <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
-                {content}
-              </div>
+              {/* Text Content - Show edit mode or regular content */}
+              {isEditing ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full min-h-[60px] p-2 rounded-lg bg-white/20 dark:bg-black/20 border border-white/30 dark:border-white/20 text-white placeholder-white/60 text-sm sm:text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleEditSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleEditCancel();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={handleEditCancel}
+                      className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleEditSubmit}
+                      disabled={!editContent.trim() || editContent === content}
+                      className="px-3 py-1.5 text-xs font-medium text-coral-900 dark:text-ocean-900 bg-white hover:bg-white/90 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Save & Regenerate
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
+                  {content}
+                </div>
+              )}
             </div>
           ) : (
             <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-all duration-300 ${
@@ -655,14 +710,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           </div>
         )}
         
-        {/* User Avatar */}
-        {isUser && (
+        {/* User Avatar and Actions */}
+        {isUser && !isEditing && (
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 px-1 justify-end">
             {timestamp && (
               <span className="text-[10px] text-brown-600 dark:text-gray-400">
                 {getRelativeTime(timestamp)}
               </span>
             )}
+            {/* Copy Button */}
             <button
               onClick={handleCopy}
               onTouchEnd={(e) => {
@@ -684,6 +740,20 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 </>
               )}
             </button>
+            {/* Edit Button - Only show if editing is allowed */}
+            {canEdit && onEdit && (
+              <button
+                onClick={() => {
+                  setEditContent(content);
+                  setIsEditing(true);
+                }}
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+                title="Edit message"
+              >
+                <Pencil className="w-3 h-3" />
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
             <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">You</span>
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
               👤

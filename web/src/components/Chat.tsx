@@ -680,6 +680,35 @@ export function Chat() {
     }
   };
 
+  // Edit & Regenerate: Edit a user message and regenerate the response
+  const handleEditMessage = async (messageIndex: number, newContent: string) => {
+    // Get the timestamp of the message being edited (for backend deletion)
+    const editedMessage = messages[messageIndex];
+    if (!editedMessage || editedMessage.role !== 'user') return;
+
+    // INSTANT: Delete all messages after this one in state immediately
+    const messagesBeforeEdit = messages.slice(0, messageIndex);
+    setMessages(messagesBeforeEdit);
+
+    // Fire backend delete in background (don't wait for it)
+    if (activeConversationId && editedMessage.timestamp) {
+      clerk.session?.getToken().then(token => {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${activeConversationId}/messages/after/${editedMessage.timestamp}`, {
+          method: 'DELETE',
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          }
+        }).catch(err => {
+          console.error('Failed to delete messages after edit:', err);
+          // Continue anyway - orphaned messages in DB are fine
+        });
+      });
+    }
+
+    // INSTANT: Send the edited message (this will add user message + thinking indicator immediately)
+    handleSend(newContent);
+  };
+
   const handleExportChat = (format: 'txt' | 'json') => {
     if (messages.length === 0) return;
 
@@ -917,27 +946,37 @@ End of Export
             <WelcomeMessage />
           ) : (
             <>
-              {messages.map((message, index) => (
-                <Message 
-                  key={message.id || index} 
-                  role={message.role}
-                  content={message.content}
-                  imageUrl={message.imageUrl}
-                  file_urls={message.file_urls}
-                  sources={message.sources}
-                  used_rag={message.used_rag}
-                  used_web_search={message.used_web_search}
-                  response_time={message.response_time}
-                  timestamp={message.timestamp}
-                  systemType={message.systemType}
-                  mode={message.mode}
-                  onImageClick={setSelectedImage}
-                  messageId={message.id}
-                  conversationId={activeConversationId || undefined}
-                  cancelled={message.cancelled}
-                  isStreaming={message.id?.startsWith('streaming_')}
-                />
-              ))}
+              {messages.map((message, index) => {
+                // Determine if this user message can be edited
+                // Can edit if: it's a user message, not currently streaming, and not a cancelled message
+                const isUserMessage = message.role === 'user';
+                const isNotStreaming = !loading && !messages.some(m => m.id?.startsWith('streaming_'));
+                const canEditMessage = isUserMessage && isNotStreaming && !message.cancelled;
+
+                return (
+                  <Message 
+                    key={message.id || index} 
+                    role={message.role}
+                    content={message.content}
+                    imageUrl={message.imageUrl}
+                    file_urls={message.file_urls}
+                    sources={message.sources}
+                    used_rag={message.used_rag}
+                    used_web_search={message.used_web_search}
+                    response_time={message.response_time}
+                    timestamp={message.timestamp}
+                    systemType={message.systemType}
+                    mode={message.mode}
+                    onImageClick={setSelectedImage}
+                    messageId={message.id}
+                    conversationId={activeConversationId || undefined}
+                    cancelled={message.cancelled}
+                    isStreaming={message.id?.startsWith('streaming_')}
+                    canEdit={canEditMessage}
+                    onEdit={(newContent) => handleEditMessage(index, newContent)}
+                  />
+                );
+              })}
               {/* Only show loading indicator when not streaming (fallback for non-streaming requests) */}
               {loading && !messages.some(m => m.id?.startsWith('streaming_')) && <LoadingIndicator />}
               {error && (
