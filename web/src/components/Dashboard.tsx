@@ -18,6 +18,7 @@ import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
+import { StreakWidget } from './StreakWidget';
 
 // Types for localStorage quiz data (fallback)
 interface LocalQuizAttempt {
@@ -146,6 +147,9 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Learning Streak */}
+        <StreakWidget />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -492,7 +496,7 @@ export function Dashboard() {
             <h3 className="font-semibold text-brown-800 dark:text-white">Coming Soon</h3>
           </div>
           <p className="text-sm text-brown-600 dark:text-gray-400">
-            🔥 Learning streaks • 🏆 Achievements • 📊 Detailed analytics • 📚 Flashcard progress
+            🏆 Achievements • 📊 Detailed analytics • 📚 Flashcard progress
           </p>
         </div>
       </div>

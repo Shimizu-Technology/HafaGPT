@@ -18,26 +18,23 @@ import {
   Unlock
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
-import { useQuizStats } from '../hooks/useQuizQuery';
-import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
-import { QUIZ_CATEGORIES } from '../data/quizData';
 import { DailyWord } from './DailyWord';
 import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
+import { StreakWidget } from './StreakWidget';
 
 export function HomePage() {
   const navigate = useNavigate();
   const { user, isLoaded: isClerkLoaded } = useUser();
   const clerk = useClerk();
   const { theme, toggleTheme } = useTheme();
-  const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
-  const { data: quizStatsData } = useQuizStats();
-  const { data: gameStatsData } = useGameStats();
+  // Initialize user data (for conversations list, etc.)
+  useInitUserData(null, isClerkLoaded && !!user?.id);
   const { isPremium, isPromoActive, promoEndDate, isChristmasTheme, siteTheme } = useSubscription();
   const { needsOnboarding } = useUserPreferences();
   
@@ -52,36 +49,12 @@ export function HomePage() {
       return () => clearTimeout(timer);
     }
   }, [needsOnboarding]);
-  
-  const conversations = initData?.conversations || [];
-  const totalConversations = conversations.length;
-  
-  // Use API quiz stats
-  const totalQuizzes = quizStatsData?.total_quizzes || 0;
-  const averageScore = Math.round(quizStatsData?.average_score || 0);
-  
-  // Use API game stats
-  const totalGames = gameStatsData?.total_games || 0;
-  
-  // Best category from API
-  const bestCategory = quizStatsData?.best_category ? {
-    id: quizStatsData.best_category,
-    percentage: Math.round(quizStatsData.best_category_percentage || 0),
-    count: 1
-  } : null;
-  
-  const bestCategoryInfo = bestCategory 
-    ? QUIZ_CATEGORIES.find(c => c.id === bestCategory.id)
-    : null;
 
   // Derived states for cleaner logic
   const isSignedIn = !!user;
   
   // Check if we're still waiting for auth to load
   const isAuthLoading = !isClerkLoaded;
-  
-  // Check if we're waiting for user data (only relevant if signed in)
-  const isUserDataLoading = isSignedIn && isDataLoading && !isFetched;
   
   // Overall loading state - show skeleton while auth is loading
   const showLoadingSkeleton = isAuthLoading;
@@ -300,36 +273,6 @@ export function HomePage() {
                   5 AI chats, 10 games & 5 quizzes daily
                 </p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Stats - Only show on DESKTOP when signed in and data is loaded */}
-        {isSignedIn && !isUserDataLoading && (totalConversations > 0 || totalQuizzes > 0 || totalGames > 0) && (
-          <div className="hidden sm:grid grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-2xl font-bold text-coral-600 dark:text-ocean-400">
-                {totalConversations}
-              </p>
-              <p className="text-xs text-brown-500 dark:text-gray-400">Chats</p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {totalQuizzes}
-              </p>
-              <p className="text-xs text-brown-500 dark:text-gray-400">Quizzes</p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                {totalGames}
-              </p>
-              <p className="text-xs text-brown-500 dark:text-gray-400">Games</p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 text-center shadow-sm border border-cream-200 dark:border-slate-700">
-              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                {totalQuizzes > 0 ? `${averageScore}%` : '-'}
-              </p>
-              <p className="text-xs text-brown-500 dark:text-gray-400">Avg Score</p>
             </div>
           </div>
         )}
@@ -702,30 +645,14 @@ export function HomePage() {
           </div>
         </div>
 
+        {/* Learning Streak - Only show for signed in users */}
+        {user && <StreakWidget />}
+
         {/* Daily Word - Compact on mobile, full on desktop */}
         <DailyWord compactOnMobile />
 
         {/* Daily Wordle Card */}
         <DailyWordleCard />
-
-        {/* Best Category - Only show on DESKTOP if user has quiz history */}
-        {bestCategoryInfo && bestCategory && (
-          <div className="hidden sm:block bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{bestCategoryInfo.icon}</span>
-                <div>
-                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Your Best Category</p>
-                  <p className="font-semibold text-brown-800 dark:text-white">{bestCategoryInfo.title}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{bestCategory.percentage}%</p>
-                <p className="text-xs text-amber-700 dark:text-amber-400">{bestCategory.count} quiz{bestCategory.count !== 1 ? 'zes' : ''}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Sign in prompt for non-authenticated users */}
         {!isSignedIn && (
