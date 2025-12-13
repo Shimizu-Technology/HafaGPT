@@ -41,6 +41,9 @@ export function Chat() {
   // Sidebar closed by default for cleaner UX
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  // Track when switching conversations for smooth transition
+  const [isSwitchingConversation, setIsSwitchingConversation] = useState(false);
+  
   // On mount, check if user has an active conversation from a previous session (page refresh)
   // If first login, start with new chat. If page refresh, restore their conversation.
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
@@ -117,6 +120,7 @@ export function Chat() {
     // If no active conversation, clear messages (new chat)
     if (!activeConversationId) {
       setMessages([]);
+      setIsSwitchingConversation(false);
       return;
     }
     
@@ -145,6 +149,8 @@ export function Chat() {
         };
       });
       setMessages(chatMessages);
+      // Clear switching state once messages are loaded
+      setIsSwitchingConversation(false);
     }
   }, [conversationMessages, activeConversationId]);
 
@@ -394,18 +400,15 @@ export function Chat() {
   };
 
   const handleSend = async (message: string, files?: File[]) => {
-    // Check usage limits before sending (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('chat')) {
-        setShowUpgradePrompt(true);
-        return;
-      }
-      // Try to increment usage - if it fails (limit reached), show upgrade prompt
-      const allowed = await tryUse('chat');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
-      }
+    // ========================================================================
+    // OPTIMISTIC UI: Show messages IMMEDIATELY before any API calls
+    // This makes the UI feel instant even if backend operations take time
+    // ========================================================================
+    
+    // Quick sync check - if we already know they're over limit, block immediately
+    if (isSignedIn && !canUse('chat')) {
+      setShowUpgradePrompt(true);
+      return;
     }
     
     // Mark that we're sending a message (prevents race condition with message loading)
@@ -413,28 +416,8 @@ export function Chat() {
     
     // Reset scroll tracking - user wants to see the response
     resetScrollTracking();
-    
-    let currentConversationId = activeConversationId;
-
-    // Create conversation if none exists
-    if (!currentConversationId) {
-      try {
-        // Generate title from the message immediately (first 50 chars)
-        const generatedTitle = message.trim().slice(0, 50);
-        const newConv = await createConversationMutation.mutateAsync(generatedTitle);
-        currentConversationId = newConv.id;
-        setActiveConversationId(newConv.id);
-        localStorage.setItem('active_conversation_id', newConv.id);
-      } catch (err) {
-        console.error('Failed to create conversation:', err);
-        setError('Failed to create conversation');
-        isSendingMessageRef.current = false;
-        return;
-      }
-    }
 
     // Create local preview URLs for ALL files (for immediate display)
-    // These will be replaced with S3 URLs after refresh once uploads complete
     const localFileUrls = files?.map(file => ({
       url: URL.createObjectURL(file),
       filename: file.name,
@@ -442,43 +425,96 @@ export function Chat() {
       content_type: file.type
     }));
 
+    // Generate unique IDs for optimistic messages (so we can remove them if needed)
+    const userMessageId = `user_${Date.now()}`;
+    const assistantMessageId = `streaming_${Date.now()}`;
+
+    // INSTANT: Add user message immediately
     const userMessage: ChatMessage = {
+      id: userMessageId,
       role: 'user',
       content: message,
-      file_urls: localFileUrls, // Local blob URLs for immediate preview
+      file_urls: localFileUrls,
       timestamp: Date.now(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
 
-    // Add placeholder assistant message for streaming with "thinking" indicator
-    const assistantMessageId = `streaming_${Date.now()}`;
+    // INSTANT: Add thinking indicator immediately
     const placeholderMessage: ChatMessage = {
       id: assistantMessageId,
       role: 'assistant',
-      content: '...',  // Show ellipsis while waiting for first chunk
+      content: '',  // Empty - will show thinking animation
       timestamp: Date.now(),
       sources: [],
       used_rag: false,
       used_web_search: false,
     };
     setMessages((prev) => [...prev, placeholderMessage]);
-    
-    // Track if we've received first chunk
-    let receivedFirstChunk = false;
 
+    // Helper to remove optimistic messages on failure
+    const removeOptimisticMessages = () => {
+      setMessages((prev) => prev.filter(
+        (msg) => msg.id !== userMessageId && msg.id !== assistantMessageId
+      ));
+      isSendingMessageRef.current = false;
+    };
+
+    // ========================================================================
+    // PARALLEL OPERATIONS: Run usage check and conversation creation together
+    // ========================================================================
+    
     try {
+      // Start conversation creation in background if needed
+      let conversationPromise: Promise<string> | null = null;
+      let currentConversationId = activeConversationId;
+
+      if (!currentConversationId) {
+        const generatedTitle = message.trim().slice(0, 50);
+        conversationPromise = createConversationMutation.mutateAsync(generatedTitle)
+          .then((newConv) => {
+            setActiveConversationId(newConv.id);
+            localStorage.setItem('active_conversation_id', newConv.id);
+            return newConv.id;
+          });
+      }
+
+      // Run usage check in parallel (for signed-in users)
+      if (isSignedIn) {
+        const allowed = await tryUse('chat');
+        if (!allowed) {
+          removeOptimisticMessages();
+          setShowUpgradePrompt(true);
+          return;
+        }
+      }
+
+      // Wait for conversation to be created if needed
+      if (conversationPromise) {
+        try {
+          currentConversationId = await conversationPromise;
+        } catch (err) {
+          console.error('Failed to create conversation:', err);
+          removeOptimisticMessages();
+          setError('Failed to create conversation');
+          return;
+        }
+      }
+
+      // ========================================================================
+      // STREAMING: Now send the actual message
+      // ========================================================================
+      
+      let receivedFirstChunk = false;
+
       await sendMessageStream(
         message,
         mode,
         currentConversationId,
         {
           onChunk: (_chunk, fullContent) => {
-            // Clear the "..." placeholder on first chunk and start showing real content
             if (!receivedFirstChunk) {
               receivedFirstChunk = true;
             }
-            // Update the assistant message with the accumulated content
             setMessages((prev) => 
               prev.map((msg) => 
                 msg.id === assistantMessageId 
@@ -488,7 +524,6 @@ export function Chat() {
             );
           },
           onMetadata: (metadata) => {
-            // Update with sources and RAG status
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -498,24 +533,19 @@ export function Chat() {
             );
           },
           onDone: (response_time) => {
-            // Update the streaming message with final state in a single update
-            // We do this in one setMessages call to minimize re-renders
             setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, response_time, id: undefined } // Remove streaming id, add response time
-                  : msg
-              )
+              prev.map((msg) => {
+                if (msg.id === assistantMessageId) {
+                  return { ...msg, response_time, id: undefined };
+                }
+                // Also clear the user message ID (it's now persisted)
+                if (msg.id === userMessageId) {
+                  return { ...msg, id: undefined };
+                }
+                return msg;
+              })
             );
-            
-            // NOW allow message loading from server again
-            // This must happen AFTER streaming is complete, not in the finally block
             isSendingMessageRef.current = false;
-            
-            // NOTE: We intentionally skip query invalidation here.
-            // The streamed data is already correct, and invalidating causes
-            // a flash as React re-fetches and re-renders all messages.
-            // The next conversation switch or page refresh will sync with server.
           },
           onError: (errorMsg) => {
             console.error('Streaming error:', errorMsg);
@@ -529,7 +559,6 @@ export function Chat() {
             isSendingMessageRef.current = false;
           },
           onCancelled: () => {
-            // Replace streaming message with cancelled indicator
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -544,15 +573,11 @@ export function Chat() {
       );
       
     } catch (err) {
-      // Handle cancelled messages (already handled in onCancelled callback)
       if (!(err instanceof CancelledError)) {
         console.error('Failed to send message:', err);
       }
-      // On error/cancel, allow message loading again
       isSendingMessageRef.current = false;
     }
-    // NOTE: We don't reset isSendingMessageRef in finally because streaming
-    // continues asynchronously. It's reset in onDone callback instead.
   };
 
   const handleNewConversation = async () => {
@@ -562,26 +587,29 @@ export function Chat() {
       setActiveConversationId(null);
       localStorage.removeItem('active_conversation_id');
       setMessages([]);
-      // Close sidebar only on mobile
-      if (window.innerWidth < 768) {
-        setSidebarOpen(false);
-      }
+      // Always close sidebar for cleaner UX
+      setSidebarOpen(false);
     } catch (err) {
       console.error('Failed to create conversation:', err);
     }
   };
 
   const handleSelectConversation = async (conversationId: string) => {
+    // Skip if already on this conversation
+    if (conversationId === activeConversationId) {
+      setSidebarOpen(false);
+      return;
+    }
+    
+    // Clear current messages immediately and show loading state
+    setIsSwitchingConversation(true);
+    setMessages([]);
+    
     setActiveConversationId(conversationId);
     localStorage.setItem('active_conversation_id', conversationId);
     
-    // No need to invalidate - the useConversationMessages hook will automatically
-    // fetch messages for the new conversationId via its dependency
-    
-    // Close sidebar only on mobile
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false);
-    }
+    // Always close sidebar for cleaner UX
+    setSidebarOpen(false);
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -729,6 +757,7 @@ End of Export
           onRenameConversation={handleRenameConversation}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
+          isLoading={conversationsLoading}
         />
       )}
 
@@ -839,6 +868,18 @@ End of Export
               </p>
               <p className="mt-2 text-sm text-brown-500 dark:text-gray-500">
                 This will only take a moment
+              </p>
+            </div>
+          ) : isSwitchingConversation ? (
+            // Quick loading indicator when switching conversations
+            <div className="flex flex-col items-center justify-center py-8 animate-fade-in">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <p className="mt-3 text-sm text-brown-500 dark:text-gray-500">
+                Loading conversation...
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (

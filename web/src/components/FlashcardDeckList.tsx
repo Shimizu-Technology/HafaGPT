@@ -136,7 +136,7 @@ export function FlashcardDeckList() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 animate-page-enter">
         {/* Card Type Toggle */}
         <div className="mb-6">
           <p className="text-brown-700 dark:text-gray-200 mb-4 font-medium">

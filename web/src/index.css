@@ -197,4 +197,43 @@
   .rotate-y-180 {
     transform: rotateY(180deg);
   }
+
+  /* Page enter animation - smooth fade + slight slide up */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-page-enter {
+    animation: page-enter 0.25s ease-out forwards;
+  }
+
+  /* Button press feedback - subtle scale down on click */
+  .btn-press {
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  }
+
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Card hover lift effect */
+  .card-hover {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-hover:active {
+    transform: translateY(0);
+  }
 }

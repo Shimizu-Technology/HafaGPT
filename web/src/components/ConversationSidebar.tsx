@@ -12,6 +12,7 @@ interface ConversationSidebarProps {
   onRenameConversation: (id: string, title: string) => Promise<void>;
   isOpen: boolean;
   onToggle: () => void;
+  isLoading?: boolean;
 }
 
 export function ConversationSidebar({
@@ -22,7 +23,8 @@ export function ConversationSidebar({
   onDeleteConversation,
   onRenameConversation,
   isOpen,
-  onToggle
+  onToggle,
+  isLoading = false
 }: ConversationSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -150,7 +152,19 @@ export function ConversationSidebar({
 
           {/* Conversations list - scrollable */}
           <div className="flex-1 overflow-y-auto p-2">
-            {conversations.length === 0 ? (
+            {isLoading ? (
+              // Skeleton loading
+              <div className="space-y-2 animate-pulse">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="px-3 py-2 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 bg-cream-200 dark:bg-gray-700 rounded" />
+                      <div className="flex-1 h-4 bg-cream-200 dark:bg-gray-700 rounded" style={{ width: `${60 + i * 8}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : conversations.length === 0 ? (
               <div className="text-center text-brown-500 dark:text-gray-500 text-sm py-8 px-4">
                 No conversations yet
               </div>

@@ -69,7 +69,7 @@ export function StoryList() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 animate-page-enter">
         {/* Mode Toggle */}
         <div className="flex gap-2 p-1 bg-cream-100 dark:bg-slate-800 rounded-xl">
           <button

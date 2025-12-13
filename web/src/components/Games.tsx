@@ -50,7 +50,7 @@ export function Games() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8 animate-page-enter">
         {/* Welcome Section */}
         <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 mb-4 shadow-lg">

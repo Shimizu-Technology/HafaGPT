@@ -188,7 +188,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 animate-page-enter">
         {/* Welcome Section */}
         <div className="text-center py-2 sm:py-4">
           <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">

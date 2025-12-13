@@ -384,7 +384,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             </div>
           ) : (
             <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-all duration-300 ${
-              isStreaming && content !== '...' ? 'animate-fade-in-fast' : ''
+              isStreaming && content && content.length > 0 ? 'animate-fade-in-fast' : ''
             }`}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -508,7 +508,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 {content !== '...' ? content : ''}
               </ReactMarkdown>
               {/* Streaming cursor - always rendered, uses CSS to fade in/out */}
-              {content && content !== '...' && (
+              {content && content.length > 0 && (
                 <span 
                   className={`inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 rounded-sm transition-opacity duration-300 ${
                     isStreaming ? 'opacity-100 animate-pulse' : 'opacity-0'
@@ -516,11 +516,14 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 />
               )}
               {/* Thinking indicator - show animated dots while waiting for first chunk */}
-              {isStreaming && content === '...' && (
-                <div className="flex items-center gap-1.5 py-0.5 min-h-[1.5rem]">
-                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
-                  <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
+              {isStreaming && (!content || content.length === 0) && (
+                <div className="flex items-center gap-2 py-1 min-h-[1.5rem]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
+                  </div>
+                  <span className="text-sm text-brown-500 dark:text-gray-400 animate-pulse">Thinking...</span>
                 </div>
               )}
             </div>

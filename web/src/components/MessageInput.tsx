@@ -1,5 +1,6 @@
 import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
 import { Send, Mic, Camera, X, FileText, File, Square, Plus } from 'lucide-react';
+import { triggerHaptic } from '../hooks/useHaptic';
 
 // Supported file types
 const SUPPORTED_FILE_TYPES = [
@@ -40,18 +41,42 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-resize textarea as content grows
+  // Detect mobile for responsive placeholder
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Auto-resize textarea as content grows (respects CSS max-height)
   useEffect(() => {
     if (textareaRef.current) {
+      // Reset height to auto to get accurate scrollHeight
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+      // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [input, textareaRef]);
+
+  // Auto-focus input on mount (desktop only - don't show keyboard on mobile)
+  useEffect(() => {
+    // Check if device is likely desktop (has fine pointer like mouse)
+    const isDesktop = window.matchMedia('(pointer: fine)').matches;
+    if (isDesktop && textareaRef.current && !disabled) {
+      // Small delay to ensure component is fully rendered
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Cleanup speech recognition and file previews on unmount
   useEffect(() => {
@@ -213,6 +238,10 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       }
       
       const files = selectedFiles.length > 0 ? selectedFiles.map(f => f.file) : undefined;
+      
+      // Haptic feedback on send (mobile)
+      triggerHaptic('light');
+      
       onSend(input.trim() || defaultMessage, files);
       setInput('');
       clearAllFiles();
@@ -310,14 +339,13 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           <button
             onClick={isListening ? stopListening : startListening}
             disabled={disabled}
-            className={`px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+            className={`p-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
               isListening
                 ? 'bg-red-500 text-white animate-pulse hover:bg-red-600 shadow-red-500/30'
                 : 'bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50'
             }`}
             aria-label={isListening ? 'Stop recording' : 'Start voice input'}
             title={isListening ? 'Stop recording' : 'Start voice input'}
-            style={{ minHeight: '40px', minWidth: '40px' }}
           >
             {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
           </button>
@@ -326,12 +354,11 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || !canAddMoreFiles}
-            className={`px-2.5 sm:px-4 py-2 sm:py-3 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+            className={`p-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
               selectedFiles.length > 0 ? 'ring-2 ring-coral-400 dark:ring-ocean-400' : ''
             }`}
             aria-label="Upload files"
             title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
-            style={{ minHeight: '40px', minWidth: '40px' }}
           >
             <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
             {selectedFiles.length > 0 && (
@@ -352,21 +379,20 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder || "Type or speak your message..."}
+            placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}
             rows={1}
-            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-hidden shadow-sm disabled:cursor-pointer"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-[13px] sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-y-auto shadow-sm disabled:cursor-pointer max-h-[100px] sm:max-h-[200px]"
             aria-label="Message input"
             title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            style={{ maxHeight: '200px', minHeight: '40px' }}
+            style={{ minHeight: '38px' }}
           />
           {loading ? (
             <button
               onClick={onCancel}
-              className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-hibiscus-500 to-hibiscus-600 dark:from-red-600 dark:to-red-700 text-white rounded-2xl hover:from-hibiscus-600 hover:to-hibiscus-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 flex items-center gap-2 shadow-lg shadow-hibiscus-500/20 dark:shadow-red-500/20 hover:shadow-xl hover:shadow-hibiscus-500/30 dark:hover:shadow-red-500/30 active:scale-95 self-end font-medium"
+              className="p-2 sm:px-5 sm:py-3 bg-gradient-to-br from-hibiscus-500 to-hibiscus-600 dark:from-red-600 dark:to-red-700 text-white rounded-xl sm:rounded-2xl hover:from-hibiscus-600 hover:to-hibiscus-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-hibiscus-500/20 dark:shadow-red-500/20 hover:shadow-xl hover:shadow-hibiscus-500/30 dark:hover:shadow-red-500/30 active:scale-95 self-end font-medium"
               aria-label="Stop generating"
               title="Stop generating"
-              style={{ minHeight: '40px' }}
             >
               <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               <span className="hidden sm:inline">Stop</span>
@@ -375,12 +401,15 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             <button
               onClick={handleSend}
               disabled={disabled || (!input.trim() && selectedFiles.length === 0)}
-              className="px-3 sm:px-5 py-2 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium"
+              className={`p-2 sm:px-5 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl sm:rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium ${
+                (input.trim() || selectedFiles.length > 0) && !disabled ? 'animate-scale-in' : ''
+              }`}
               aria-label="Send message"
               title="Send message (Enter)"
-              style={{ minHeight: '40px' }}
             >
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Send className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 ${
+                (input.trim() || selectedFiles.length > 0) && !disabled ? 'translate-x-0.5' : ''
+              }`} />
               <span className="hidden sm:inline">Send</span>
             </button>
           )}
