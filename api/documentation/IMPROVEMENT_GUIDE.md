@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 10, 2025
+> **Last Updated:** December 13, 2025
 
 ---
 
@@ -22,13 +22,15 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📊 Progress Dashboard
 - 🔐 Authentication (Clerk)
 - 📱 Mobile-optimized responsive design
-- 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban)
+- 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban, settings)
+- 🎄 **Seasonal Themes** (Christmas, New Year, Chamorro, Default)
+- 🎉 **Promo Management** (Admin-controlled promo periods with theme-aware banners)
 
 ---
 
 ## 🎯 Active Roadmap
 
-### **Priority 1: Admin Dashboard** 🔧 ✅ PHASE 1 & 2 COMPLETE
+### **Priority 1: Admin Dashboard** 🔧 ✅ PHASE 1, 2 & 2.5 COMPLETE
 
 > **Goal:** Web interface to manage users, subscriptions, and content without touching code.
 
@@ -37,6 +39,7 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 | Phase 1 | User Management + Whitelist | 2-3 sessions | ✅ Complete |
 | Phase 1.5 | User Detail + Ban/Actions | 1 session | ✅ Complete |
 | Phase 2 | Analytics Dashboard | 1-2 sessions | ✅ Complete |
+| Phase 2.5 | Site Settings (Promo + Themes) | 1 session | ✅ Complete |
 | Phase 3 | Knowledge Base Management (RAG Upload) | 2-3 sessions | 📋 Next |
 | Phase 4 | Content Management | 2-3 sessions | ⏸️ Deferred |
 
@@ -99,6 +102,38 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 - [ ] Revenue tracking (MRR, subscriptions) - needs Stripe integration
 - [ ] Churn tracking - needs subscription history
 
+#### **Phase 2.5: Site Settings (Promo + Themes)** ✅
+
+**Route:** `/admin/settings`
+
+**Completed Features:**
+- [x] `site_settings` database table (key-value store)
+- [x] Holiday Promo Management
+  - [x] Enable/disable promo toggle
+  - [x] Set promo end date
+  - [x] Customize banner title
+  - [x] Live banner preview
+- [x] Theme Switching (Default, Christmas, New Year, Chamorro)
+- [x] Theme-aware promo banners (different colors/emojis per theme)
+- [x] Christmas snowfall effect (CSS animations)
+- [x] Theme-aware logos across app (🌺 ↔ 🎄)
+- [x] Settings caching (60s TTL for performance)
+
+**Backend Endpoints:**
+```python
+GET  /api/admin/settings       # Get all site settings
+PATCH /api/admin/settings      # Update settings (key-value pairs)
+GET  /api/promo/status         # Public: Check promo + theme
+```
+
+**Database Table:** `site_settings`
+```sql
+key: 'promo_enabled'     → 'true' | 'false'
+key: 'promo_end_date'    → '2026-01-06'
+key: 'promo_title'       → 'Felis Påsgua! ...'
+key: 'theme'             → 'default' | 'christmas' | 'newyear' | 'chamorro'
+```
+
 #### **Phase 3: Knowledge Base Management** 📚 (NEW PRIORITY)
 
 > **Goal:** Allow admins to upload documents (PDFs, DOCX, TXT) to expand the RAG knowledge base without touching code. Perfect for school partnerships (e.g., Hurao Chamorro school).
@@ -159,8 +194,21 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 | Cancel Message | ✅ | Done |
 | Response Streaming | ✅ | Done |
 | Multi-file Upload | ✅ | Done |
+| Optimistic UI | ✅ | Done |
+| Smooth Transitions | ✅ | Done |
+| Auto-focus Input | ✅ | Done |
+| Haptic Feedback | ✅ | Done |
+| Sidebar Auto-close | ✅ | Done |
 | Background Processing | 1 hour | 📋 Planned |
 | Edit & Regenerate | 4-6 hours | 📋 Planned |
+
+#### **Recently Completed (Dec 2025):**
+- **Optimistic UI**: Messages appear instantly, conversation created in background
+- **Smooth Transitions**: Loading states when switching conversations
+- **Auto-focus**: Input auto-focuses on desktop (not mobile to avoid keyboard)
+- **Haptic Feedback**: Vibration on send (mobile devices)
+- **Sidebar Auto-close**: Closes when selecting/creating conversations
+- **Mobile Input Polish**: Smaller placeholder, compact buttons on mobile
 
 #### **Background Processing**
 - Handle gracefully when user leaves page during generation
@@ -250,10 +298,12 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 1. ✅ ~~Set yourself as admin~~ - Done!
 2. ✅ ~~Test Admin Dashboard~~ - Done!
 3. ✅ ~~Phase 2: Analytics Dashboard~~ - Done!
-4. **Whitelist family/friends** via Admin Dashboard → Users → Click user → "Add to Whitelist"
-5. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
-6. **Chat UX: Edit & Regenerate** - edit messages and regenerate from that point
-7. **Flashcard Spaced Repetition** - track card progress, schedule reviews
+4. ✅ ~~Phase 2.5: Site Settings~~ - Done!
+5. ✅ ~~Chat UX Improvements~~ - Done!
+6. **Configure Holiday Promo** via Admin Dashboard → Settings (theme + promo)
+7. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
+8. **Chat UX: Edit & Regenerate** - edit messages and regenerate from that point
+9. **Flashcard Spaced Repetition** - track card progress, schedule reviews
 
 ---
 
@@ -269,14 +319,24 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 
 ---
 
-**Admin Dashboard Phase 1 & 2 Complete! 🌺**
+**Admin Dashboard Phase 1, 2 & 2.5 Complete! 🎄**
 
-User management + analytics all working!
+User management + analytics + site settings all working!
 
 ---
 
-## 🐛 Recent Bug Fixes (Dec 10, 2025)
+## 🐛 Recent Bug Fixes & Improvements
 
+### December 13, 2025
+| Change | Description |
+|--------|-------------|
+| **Admin Settings** | New page for promo and theme management (`/admin/settings`) |
+| **Christmas Theme** | Snowfall animation, festive logos, theme-aware banners |
+| **Promo Management** | Admin-controlled promo periods (no more env vars needed) |
+| **Chat UX Polish** | Optimistic UI, smooth transitions, haptic feedback |
+| **Mobile Input** | Compact placeholder, responsive buttons |
+
+### December 10, 2025
 | Fix | Description |
 |-----|-------------|
 | **Word of the Day filtering** | Added safe category filtering + blocklist to ensure family-friendly vocabulary (no inappropriate words) |
