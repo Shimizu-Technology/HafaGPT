@@ -362,11 +362,12 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 7. ✅ ~~Onboarding Flow~~ - Done!
 8. ✅ ~~User Preferences~~ - Done!
 9. ✅ ~~Learning Streaks~~ - Done!
-10. **Onboarding Feature Overview** - Show new users what the app can do
-11. **Chat Sidebar Cleanup** - Cleaner mobile navigation
+10. ✅ ~~Onboarding Feature Overview~~ - Done!
+11. ✅ ~~Chat Sidebar Cleanup~~ - Done!
 12. **Voice Input** - Web Speech API for voice-to-text
 13. **Share Conversations** - Copy/share chat transcripts
 14. **New Learning Games** - Cultural Trivia, Speed Translation, etc.
+15. **Admin Settings Polish** - Cleaner UI, better visual hierarchy
 
 ---
 
