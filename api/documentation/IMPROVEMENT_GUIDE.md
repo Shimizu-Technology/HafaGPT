@@ -226,21 +226,44 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 | Feature | Effort | Status |
 |---------|--------|--------|
 | Flashcard Spaced Repetition | 2-3 days | 📋 Planned |
-| Onboarding Flow | 1-2 days | 📋 Planned |
+| Onboarding Flow | 1-2 days | ✅ Done |
+| User Preferences | 1 day | ✅ Done |
 | Learning Streaks | 2-3 days | 📋 Planned |
 | Expand Story Content | 1-2 days | 📋 Planned |
+
+#### **Onboarding Flow** ✅
+- [x] Skill level selection (Beginner/Intermediate/Advanced)
+- [x] Learning goal selection (Conversation, Culture, Family, Travel, Everything)
+- [x] Modal appears on first sign-in
+- [x] Preferences saved to Clerk `unsafeMetadata`
+- [x] AI responses personalized based on skill level
+
+#### **User Preferences Page** ✅ (`/settings`)
+- [x] Update skill level and learning goal
+- [x] Dark/light mode toggle (syncs across devices)
+- [x] Theme preference saved to Clerk profile
+- [x] Accessible from user dropdown menu
+
+#### **Admin Preference Management** ✅
+- [x] View user's skill level, learning goal, onboarding status
+- [x] Edit user preferences directly
+- [x] Reset onboarding (user sees modal again on next login)
+- [x] New endpoints: `POST /api/admin/users/:id/reset-onboarding`, `PATCH /api/admin/users/:id/preferences`
+
+#### **Learning Goal Personalization** (Future)
+Currently we store learning goals but don't use them yet. Potential enhancements:
+- [ ] Add learning goal modifiers to AI prompts (like skill level)
+- [ ] Prioritize relevant vocabulary in responses (e.g., travel → airport, hotel words)
+- [ ] Suggest related stories/flashcards based on goal
+- [ ] Customize daily word categories
+- [ ] Adjust conversation practice scenario recommendations
+- [ ] Show goal-specific tips on homepage
 
 #### **Flashcard Spaced Repetition (Phase 2)**
 - Database tracking for card progress
 - Confidence ratings (Hard/Good/Easy)
 - "Due for review" scheduling
 - Progress indicators
-
-#### **Onboarding Flow**
-- Skill level selection (Beginner/Intermediate/Advanced)
-- Daily goal setting
-- Feature tour
-- Personalized recommendations
 
 #### **Learning Streaks & Gamification**
 - Daily streak counter
@@ -300,10 +323,12 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 3. ✅ ~~Phase 2: Analytics Dashboard~~ - Done!
 4. ✅ ~~Phase 2.5: Site Settings~~ - Done!
 5. ✅ ~~Chat UX Improvements~~ - Done!
-6. **Configure Holiday Promo** via Admin Dashboard → Settings (theme + promo)
-7. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
-8. **Chat UX: Edit & Regenerate** - edit messages and regenerate from that point
-9. **Flashcard Spaced Repetition** - track card progress, schedule reviews
+6. ✅ ~~Edit & Regenerate~~ - Done!
+7. ✅ ~~Onboarding Flow~~ - Done!
+8. ✅ ~~User Preferences~~ - Done!
+9. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
+10. **Flashcard Spaced Repetition** - track card progress, schedule reviews
+11. **Learning Streaks** - daily streak counter, XP system
 
 ---
 
@@ -330,6 +355,11 @@ User management + analytics + site settings all working!
 ### December 13, 2025
 | Change | Description |
 |--------|-------------|
+| **User Settings Page** | New `/settings` page to update skill level, learning goal, and theme |
+| **Onboarding Modal** | First-time users select skill level and learning goal |
+| **AI Personalization** | Responses adapt based on user's skill level (beginner/intermediate/advanced) |
+| **Theme Sync** | Dark/light mode preference syncs across devices via Clerk |
+| **Admin Preference Management** | View/edit user preferences, reset onboarding from admin panel |
 | **Admin Settings** | New page for promo and theme management (`/admin/settings`) |
 | **Christmas Theme** | Snowfall animation, festive logos, theme-aware banners |
 | **Promo Management** | Admin-controlled promo periods (no more env vars needed) |

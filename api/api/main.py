@@ -928,6 +928,7 @@ async def chat_stream(
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
     pending_id: Optional[str] = Form(None),
+    skill_level: Optional[str] = Form(None),  # User's skill level for personalized responses
     file: Optional[UploadFile] = File(None),  # Legacy single file support
     files: List[UploadFile] = File(default=[])  # New: multiple files support
 ):
@@ -967,6 +968,7 @@ async def chat_stream(
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
             pending_id = body.get('pending_id')
+            skill_level = body.get('skill_level')  # User's skill level
             files = []
             file = None
         else:
@@ -1089,7 +1091,8 @@ async def chat_stream(
                         image_base64=image_base64,
                         image_url=file_url,
                         pending_id=pending_id,
-                        original_message=message  # Original user message for logging/display
+                        original_message=message,  # Original user message for logging/display
+                        skill_level=skill_level  # User's skill level for personalization
                     ):
                         event_queue.put(event)
                 except Exception as e:
@@ -4167,6 +4170,7 @@ async def get_admin_user(
         # Get user from Clerk
         user = clerk.users.get(user_id=user_id)
         metadata = getattr(user, 'public_metadata', {}) or {}
+        unsafe_metadata = getattr(user, 'unsafe_metadata', {}) or {}
         
         # Get user's email
         email = None
@@ -4237,7 +4241,11 @@ async def get_admin_user(
             total_games=total_games,
             today_chat=today_chat,
             today_games=today_games,
-            today_quizzes=today_quizzes
+            today_quizzes=today_quizzes,
+            # Learning preferences from unsafeMetadata
+            skill_level=unsafe_metadata.get('skill_level'),
+            learning_goal=unsafe_metadata.get('learning_goal'),
+            onboarding_completed=unsafe_metadata.get('onboarding_completed', False)
         )
         
     except HTTPException:
@@ -4319,6 +4327,93 @@ async def update_admin_user(
         raise
     except Exception as e:
         logger.error(f"❌ [ADMIN] Update user error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/users/{user_id}/reset-onboarding", tags=["Admin"])
+async def reset_user_onboarding(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Reset a user's onboarding preferences (unsafeMetadata).
+    
+    This clears:
+    - skill_level
+    - learning_goal  
+    - onboarding_completed
+    
+    The user will see the onboarding modal on next login.
+    """
+    admin_user_id = await verify_admin(authorization)
+    
+    try:
+        # Clear unsafe metadata (user preferences)
+        clerk.users.update(
+            user_id=user_id,
+            unsafe_metadata={}
+        )
+        
+        logger.info(f"✅ [ADMIN] Reset onboarding for user {user_id} by admin {admin_user_id}")
+        
+        return {
+            "success": True,
+            "message": f"Onboarding reset for user {user_id}. They will see onboarding on next login."
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Reset onboarding error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/admin/users/{user_id}/preferences", tags=["Admin"])
+async def update_user_preferences(
+    user_id: str,
+    request: dict,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update a user's learning preferences (unsafeMetadata).
+    
+    Body:
+    {
+        "skill_level": "beginner" | "intermediate" | "advanced",
+        "learning_goal": "conversation" | "culture" | "family" | "travel" | "all",
+        "onboarding_completed": true | false
+    }
+    """
+    admin_user_id = await verify_admin(authorization)
+    
+    try:
+        # Get current unsafe metadata
+        user = clerk.users.get(user_id=user_id)
+        current_metadata = dict(user.unsafe_metadata) if user.unsafe_metadata else {}
+        
+        # Update with new values
+        if 'skill_level' in request:
+            current_metadata['skill_level'] = request['skill_level']
+        if 'learning_goal' in request:
+            current_metadata['learning_goal'] = request['learning_goal']
+        if 'onboarding_completed' in request:
+            current_metadata['onboarding_completed'] = request['onboarding_completed']
+        
+        # Update in Clerk
+        clerk.users.update(
+            user_id=user_id,
+            unsafe_metadata=current_metadata
+        )
+        
+        logger.info(f"✅ [ADMIN] Updated preferences for user {user_id} by admin {admin_user_id}")
+        logger.info(f"   New preferences: {current_metadata}")
+        
+        return {
+            "success": True,
+            "preferences": current_metadata,
+            "message": f"Preferences updated for user {user_id}"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Update preferences error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

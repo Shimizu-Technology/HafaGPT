@@ -316,6 +316,44 @@ COMMON ABBREVIATIONS:
     }
 }
 
+# Skill level modifiers - adjust response style based on user's experience
+SKILL_LEVEL_MODIFIERS = {
+    "beginner": """
+🌱 USER SKILL LEVEL: BEGINNER
+Adjust your responses for a new learner:
+- Use simple, clear explanations
+- Always provide English translations alongside Chamorro
+- Break down words into syllables when helpful (e.g., "Må-nu-la" = Tuesday)
+- Use lots of encouragement ("Great question!", "You're doing well!")
+- Focus on common, everyday vocabulary
+- Explain cultural context in simple terms
+- Avoid overwhelming with too many examples at once
+- Repeat key phrases for reinforcement
+""",
+    "intermediate": """
+🌿 USER SKILL LEVEL: INTERMEDIATE
+Adjust your responses for a learner with basic knowledge:
+- Balance Chamorro and English explanations
+- Introduce grammar patterns and variations
+- Suggest practice exercises when relevant
+- Connect new vocabulary to words they likely know
+- Include idiomatic expressions with explanations
+- Encourage trying to form their own sentences
+- Point out common mistakes to avoid
+""",
+    "advanced": """
+🌳 USER SKILL LEVEL: ADVANCED
+Adjust your responses for an experienced learner:
+- Use more Chamorro in your responses
+- Provide nuanced explanations (register, formality, regional variations)
+- Include etymology and historical context
+- Reference cultural practices and traditions in depth
+- Discuss subtle grammar distinctions
+- Less hand-holding, more conversation-style responses
+- Challenge them with complex constructions
+"""
+}
+
 
 def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
     """
@@ -633,7 +671,8 @@ def get_chatbot_response(
     image_base64: str = None,  # Base64-encoded image
     image_url: str = None,  # S3 URL of uploaded image
     pending_id: str = None,  # Unique ID for cancel tracking
-    original_message: str = None  # NEW: Original user message (without appended doc text)
+    original_message: str = None,  # Original user message (without appended doc text)
+    skill_level: str = None  # User's skill level for personalized responses
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -649,6 +688,7 @@ def get_chatbot_response(
         image_url: Optional S3 URL of uploaded image (for logging)
         pending_id: Optional unique ID for tracking cancellation
         original_message: Original user message for logging/display (if None, uses message)
+        skill_level: User's skill level ("beginner", "intermediate", "advanced") for personalized responses
     
     Returns:
         dict: {
@@ -727,6 +767,10 @@ def get_chatbot_response(
     
     # Build system prompt
     system_prompt = mode_config["prompt"]
+    
+    # Add skill level modifier if provided (personalization based on user experience)
+    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+        system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # Detect if document content is present (PDF/document text appended to message)
     has_document_text = "--- Document Content" in message
@@ -947,7 +991,8 @@ def get_chatbot_response_stream(
     image_base64: str = None,
     image_url: str = None,
     pending_id: str = None,
-    original_message: str = None  # NEW: Original user message (without appended doc text)
+    original_message: str = None,  # Original user message (without appended doc text)
+    skill_level: str = None  # User's skill level for personalized responses
 ):
     """
     Streaming version of get_chatbot_response.
@@ -957,6 +1002,7 @@ def get_chatbot_response_stream(
     Args:
         message: Full message to send to LLM (may include document content)
         original_message: User's original message (for logging/display). If None, uses message.
+        skill_level: User's skill level ("beginner", "intermediate", "advanced") for personalized responses
     
     Yields:
         dict: Either a chunk {"type": "chunk", "content": "..."} 
@@ -1000,6 +1046,10 @@ def get_chatbot_response_stream(
     
     # Build system prompt
     system_prompt = mode_config["prompt"]
+    
+    # Add skill level modifier if provided (personalization based on user experience)
+    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+        system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # Detect if document content is present (PDF/document text appended to message)
     has_document_text = "--- Document Content" in message

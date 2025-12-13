@@ -450,6 +450,10 @@ class AdminUserInfo(BaseModel):
     today_chat: int = Field(0, description="Chat messages today")
     today_games: int = Field(0, description="Games played today")
     today_quizzes: int = Field(0, description="Quizzes taken today")
+    # Learning preferences (from unsafeMetadata)
+    skill_level: Optional[str] = Field(None, description="User's skill level (beginner, intermediate, advanced)")
+    learning_goal: Optional[str] = Field(None, description="User's learning goal")
+    onboarding_completed: bool = Field(False, description="Whether user has completed onboarding")
 
 
 class AdminUsersResponse(BaseModel):
