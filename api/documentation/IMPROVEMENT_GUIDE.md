@@ -228,7 +228,7 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 | Flashcard Spaced Repetition | 2-3 days | 📋 Planned |
 | Onboarding Flow | 1-2 days | ✅ Done |
 | User Preferences | 1 day | ✅ Done |
-| Learning Streaks | 2-3 days | 📋 Planned |
+| Learning Streaks | 2-3 days | ✅ Done |
 | Expand Story Content | 1-2 days | 📋 Planned |
 
 #### **Onboarding Flow** ✅
@@ -271,11 +271,15 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 - "Due for review" scheduling
 - Progress indicators
 
-#### **Learning Streaks & Gamification**
-- Daily streak counter
-- XP system for activities
-- Achievements/badges
-- Activity calendar
+#### **Learning Streaks** ✅
+- [x] Daily streak counter (`/api/streaks/me` endpoint)
+- [x] Streak widget on HomePage and Dashboard
+- [x] Personal best tracking
+- [x] Today's activity breakdown (chat, games, quizzes)
+- [x] Guam timezone for day boundaries
+- [ ] XP system for activities (future)
+- [ ] Achievements/badges (future)
+- [ ] Activity calendar (future)
 
 #### **Expand Story Content**
 - Add more Lengguahi-ta stories
@@ -288,11 +292,36 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 
 | Feature | Status | Notes |
 |---------|--------|-------|
+| Voice Input | 📋 Next | Web Speech API for voice-to-text input |
+| Share Conversations | 📋 Next | Copy conversation to clipboard, shareable links |
+| New Learning Games | 📋 Planned | Cultural Trivia, Speed Translation, Hangman |
+| Admin Settings Polish | 📋 Planned | Cleaner UI, better visual hierarchy |
 | Audio Features (Chamorro TTS) | ⏸️ Deferred | Waiting for quality TTS |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
 | ElevenLabs Voice Cloning | 📋 Future | Better pronunciation |
-| Share Conversations | 📋 Future | Export/share Q&A |
 | PostHog + Stripe Analytics | 📋 Future | Revenue correlation |
+
+#### **Voice Input** (Next)
+- Add microphone button to chat input
+- Use Web Speech API for speech-to-text
+- Works on Chrome, Edge, Safari (iOS)
+- Fallback message for unsupported browsers
+- **Effort:** 2-3 hours
+
+#### **Share Conversations** (Next)
+- "Copy to clipboard" button on conversations
+- Format: Q&A text with Chamorro words
+- Future: Generate shareable public link
+- **Effort:** 2-4 hours
+
+#### **New Learning Games** (Planned)
+| Game | Concept | Learning Value |
+|------|---------|----------------|
+| Cultural Trivia | Multiple choice about Guam history, traditions | Culture learning |
+| Speed Translation | Translate words in 60 seconds | Quick recall |
+| Chamorro Hangman | Guess the word letter by letter | Spelling practice |
+| Story Builder | Arrange words into correct sentences | Grammar/word order |
+- **Effort:** 4-8 hours per game
 
 ---
 
@@ -332,9 +361,12 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 6. ✅ ~~Edit & Regenerate~~ - Done!
 7. ✅ ~~Onboarding Flow~~ - Done!
 8. ✅ ~~User Preferences~~ - Done!
-9. **Phase 3: Knowledge Base Management** - Upload PDFs to RAG via admin (for school partnership)
-10. **Flashcard Spaced Repetition** - track card progress, schedule reviews
-11. **Learning Streaks** - daily streak counter, XP system
+9. ✅ ~~Learning Streaks~~ - Done!
+10. **Onboarding Feature Overview** - Show new users what the app can do
+11. **Chat Sidebar Cleanup** - Cleaner mobile navigation
+12. **Voice Input** - Web Speech API for voice-to-text
+13. **Share Conversations** - Copy/share chat transcripts
+14. **New Learning Games** - Cultural Trivia, Speed Translation, etc.
 
 ---
 
