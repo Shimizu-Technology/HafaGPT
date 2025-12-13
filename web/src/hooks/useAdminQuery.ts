@@ -37,6 +37,10 @@ export interface AdminUser {
   today_chat: number;
   today_games: number;
   today_quizzes: number;
+  // Learning preferences
+  skill_level: string | null;
+  learning_goal: string | null;
+  onboarding_completed: boolean;
 }
 
 export interface AdminUsersResponse {
@@ -169,6 +173,64 @@ export function useUpdateUser() {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
+    },
+  });
+}
+
+export function useResetOnboarding() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (userId: string) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/reset-onboarding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to reset onboarding');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_data, userId) => {
+      // Invalidate user query to refresh preferences
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId] });
+    },
+  });
+}
+
+export function useUpdateUserPreferences() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation<{ success: boolean; preferences: Record<string, unknown> }, Error, { userId: string; data: { skill_level?: string; learning_goal?: string; onboarding_completed?: boolean } }>({
+    mutationFn: async ({ userId, data }) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update preferences');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate user query to refresh preferences
       queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
     },
   });

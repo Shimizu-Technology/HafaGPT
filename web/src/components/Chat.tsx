@@ -15,6 +15,7 @@ import {
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '../hooks/useSubscription';
+import { useUserPreferences } from '../hooks/useUserPreferences';
 import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
@@ -62,6 +63,7 @@ export function Chat() {
   const clerk = useClerk();
   const queryClient = useQueryClient();
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme } = useSubscription();
+  const { preferences } = useUserPreferences();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -578,7 +580,8 @@ export function Chat() {
             isSendingMessageRef.current = false;
           },
         },
-        files
+        files,
+        preferences.skill_level // Pass user's skill level for personalized responses
       );
       
     } catch (err) {

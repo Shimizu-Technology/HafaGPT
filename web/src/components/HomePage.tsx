@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   MessageSquare, 
@@ -23,10 +23,12 @@ import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
+import { useUserPreferences } from '../hooks/useUserPreferences';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { DailyWord } from './DailyWord';
 import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
+import { OnboardingModal } from './OnboardingModal';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -37,8 +39,19 @@ export function HomePage() {
   const { data: quizStatsData } = useQuizStats();
   const { data: gameStatsData } = useGameStats();
   const { isPremium, isPromoActive, promoEndDate, isChristmasTheme, siteTheme } = useSubscription();
+  const { needsOnboarding } = useUserPreferences();
   
   const [quickMessage, setQuickMessage] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  // Show onboarding modal for new users who haven't completed it
+  useEffect(() => {
+    if (needsOnboarding) {
+      // Small delay for smoother UX after sign-in
+      const timer = setTimeout(() => setShowOnboarding(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [needsOnboarding]);
   
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
@@ -766,6 +779,12 @@ export function HomePage() {
           </div>
         </footer>
       </div>
+      
+      {/* Onboarding Modal */}
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+      />
     </div>
   );
 }

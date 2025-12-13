@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from '@clerk/clerk-react';
 import { dark } from '@clerk/themes';
-import { Sparkles, Settings, Shield } from 'lucide-react';
+import { Sparkles, Settings, Shield, Sliders } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSubscription } from '../hooks/useSubscription';
 
@@ -74,6 +74,12 @@ export function AuthButton() {
                 onClick={() => navigate('/admin')}
               />
             )}
+            {/* Learning Preferences / Settings */}
+            <UserButton.Action
+              label="Learning Preferences"
+              labelIcon={<Sliders className="w-4 h-4" style={{ color: isDark ? '#60a5fa' : '#0891b2' }} />}
+              onClick={() => navigate('/settings')}
+            />
             {/* Subscription management */}
             {isPremium ? (
               <UserButton.Action

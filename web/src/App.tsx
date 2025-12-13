@@ -31,6 +31,7 @@ import { AdminUsers } from './components/admin/AdminUsers';
 import { AdminUserDetail } from './components/admin/AdminUserDetail';
 import { AdminAnalytics } from './components/admin/AdminAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
+import { SettingsPage } from './components/SettingsPage';
 
 function App() {
   return (
@@ -80,6 +81,9 @@ function App() {
         
         {/* Pricing page - public */}
         <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Settings page - requires authentication */}
+        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
         
         {/* Admin routes - require admin role */}
         <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />

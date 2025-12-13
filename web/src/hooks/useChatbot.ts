@@ -253,13 +253,16 @@ export function useChatbot() {
    * Send a message with streaming response.
    * The response is delivered via callbacks as it's generated.
    * Supports multiple file uploads (up to 5 files).
+   * 
+   * @param skillLevel - User's skill level for personalized responses (beginner/intermediate/advanced)
    */
   const sendMessageStream = async (
     message: string,
     mode: 'english' | 'chamorro' | 'learn' = 'english',
     conversationId: string | null,
     callbacks: StreamCallbacks,
-    files?: File[]
+    files?: File[],
+    skillLevel?: 'beginner' | 'intermediate' | 'advanced'
   ): Promise<void> => {
     // Cancel any existing request before starting a new one
     if (abortControllerRef.current) {
@@ -303,6 +306,9 @@ export function useChatbot() {
         if (conversationId) {
           formData.append('conversation_id', conversationId);
         }
+        if (skillLevel) {
+          formData.append('skill_level', skillLevel);
+        }
         // Append all files - backend expects 'files' field with multiple values
         files.forEach((file) => {
           formData.append('files', file);
@@ -317,6 +323,7 @@ export function useChatbot() {
           user_id: user?.id || null,
           conversation_id: conversationId,
           pending_id: pendingId,
+          skill_level: skillLevel,
         });
       }
       

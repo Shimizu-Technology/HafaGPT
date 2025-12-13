@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Crown, Star, Shield, Ban, Loader2, AlertCircle,
   MessageSquare, Gamepad2, GraduationCap, Calendar, Clock,
-  CheckCircle, XCircle, UserX, UserCheck
+  CheckCircle, XCircle, UserX, UserCheck, RotateCcw, Sliders
 } from 'lucide-react';
-import { useAdminUser, useUpdateUser } from '../../hooks/useAdminQuery';
+import { useAdminUser, useUpdateUser, useResetOnboarding, useUpdateUserPreferences } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
 
 export function AdminUserDetail() {
@@ -13,7 +13,12 @@ export function AdminUserDetail() {
   const navigate = useNavigate();
   const { data: user, isLoading, error } = useAdminUser(userId || '');
   const updateUser = useUpdateUser();
+  const resetOnboarding = useResetOnboarding();
+  const updatePreferences = useUpdateUserPreferences();
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
+  const [editingPreferences, setEditingPreferences] = useState(false);
+  const [selectedSkillLevel, setSelectedSkillLevel] = useState<string>('');
+  const [selectedLearningGoal, setSelectedLearningGoal] = useState<string>('');
   
   const handleAction = async (action: string) => {
     if (!userId) return;
@@ -39,6 +44,15 @@ export function AdminUserDetail() {
       case 'unban':
         data = { is_banned: false };
         break;
+      case 'reset_onboarding':
+        // Handle separately
+        try {
+          await resetOnboarding.mutateAsync(userId);
+          setShowConfirm(null);
+        } catch (error) {
+          console.error('Failed to reset onboarding:', error);
+        }
+        return;
     }
     
     try {
@@ -47,6 +61,29 @@ export function AdminUserDetail() {
     } catch (error) {
       console.error('Failed to update user:', error);
     }
+  };
+  
+  const handleSavePreferences = async () => {
+    if (!userId) return;
+    try {
+      await updatePreferences.mutateAsync({
+        userId,
+        data: {
+          skill_level: selectedSkillLevel,
+          learning_goal: selectedLearningGoal,
+          onboarding_completed: true,
+        }
+      });
+      setEditingPreferences(false);
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+    }
+  };
+  
+  const startEditingPreferences = () => {
+    setSelectedSkillLevel(user?.skill_level || 'beginner');
+    setSelectedLearningGoal(user?.learning_goal || 'all');
+    setEditingPreferences(true);
   };
   
   if (isLoading) {
@@ -224,6 +261,108 @@ export function AdminUserDetail() {
           </div>
         </div>
         
+        {/* Learning Preferences */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-brown-800 dark:text-white flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              Learning Preferences
+            </h2>
+            {!editingPreferences && (
+              <button
+                onClick={startEditingPreferences}
+                className="text-sm text-coral-500 dark:text-ocean-400 hover:underline"
+              >
+                Edit
+              </button>
+            )}
+          </div>
+          
+          {editingPreferences ? (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                  Skill Level
+                </label>
+                <select
+                  value={selectedSkillLevel}
+                  onChange={(e) => setSelectedSkillLevel(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"
+                >
+                  <option value="beginner">🌱 Beginner</option>
+                  <option value="intermediate">🌿 Intermediate</option>
+                  <option value="advanced">🌳 Advanced</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                  Learning Goal
+                </label>
+                <select
+                  value={selectedLearningGoal}
+                  onChange={(e) => setSelectedLearningGoal(e.target.value)}
+                  className="w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"
+                >
+                  <option value="conversation">💬 Daily Conversation</option>
+                  <option value="culture">🌴 Culture & Heritage</option>
+                  <option value="family">👨‍👩‍👧‍👦 Teach My Family</option>
+                  <option value="travel">✈️ Travel to Guam</option>
+                  <option value="all">✨ Everything!</option>
+                </select>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditingPreferences(false)}
+                  className="flex-1 px-4 py-2 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-lg hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSavePreferences}
+                  disabled={updatePreferences.isPending}
+                  className="flex-1 px-4 py-2 bg-coral-500 dark:bg-ocean-500 text-white rounded-lg hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+                >
+                  {updatePreferences.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-xs text-brown-500 dark:text-gray-400 mb-1">Skill Level</p>
+                <p className="font-medium text-brown-800 dark:text-white">
+                  {user?.skill_level === 'beginner' && '🌱 Beginner'}
+                  {user?.skill_level === 'intermediate' && '🌿 Intermediate'}
+                  {user?.skill_level === 'advanced' && '🌳 Advanced'}
+                  {!user?.skill_level && '—'}
+                </p>
+              </div>
+              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-xs text-brown-500 dark:text-gray-400 mb-1">Learning Goal</p>
+                <p className="font-medium text-brown-800 dark:text-white">
+                  {user?.learning_goal === 'conversation' && '💬 Conversation'}
+                  {user?.learning_goal === 'culture' && '🌴 Culture'}
+                  {user?.learning_goal === 'family' && '👨‍👩‍👧‍👦 Family'}
+                  {user?.learning_goal === 'travel' && '✈️ Travel'}
+                  {user?.learning_goal === 'all' && '✨ Everything'}
+                  {!user?.learning_goal && '—'}
+                </p>
+              </div>
+              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
+                <p className="text-xs text-brown-500 dark:text-gray-400 mb-1">Onboarding</p>
+                <p className="font-medium text-brown-800 dark:text-white">
+                  {user?.onboarding_completed ? (
+                    <span className="text-green-600 dark:text-green-400">✓ Completed</span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400">Not completed</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+        
         {/* Actions */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
           <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">Actions</h2>
@@ -290,6 +429,16 @@ export function AdminUserDetail() {
                 Ban User
               </button>
             )}
+            
+            {/* Reset Onboarding */}
+            <button
+              onClick={() => setShowConfirm('reset_onboarding')}
+              disabled={resetOnboarding.isPending}
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              <RotateCcw className="w-5 h-5" />
+              Reset Onboarding
+            </button>
           </div>
         </div>
         
@@ -307,6 +456,7 @@ export function AdminUserDetail() {
                 {showConfirm === 'unwhitelist' && 'Remove this user from the whitelist? They will lose premium access.'}
                 {showConfirm === 'ban' && 'Ban this user? They will not be able to use the app.'}
                 {showConfirm === 'unban' && 'Unban this user? They will be able to use the app again.'}
+                {showConfirm === 'reset_onboarding' && 'Reset this user\'s onboarding? They will see the skill level selection modal on their next login.'}
               </p>
               <div className="flex gap-3">
                 <button
@@ -333,7 +483,7 @@ export function AdminUserDetail() {
         )}
         
         {/* Update loading overlay */}
-        {updateUser.isPending && !showConfirm && (
+        {(updateUser.isPending || resetOnboarding.isPending || updatePreferences.isPending) && !showConfirm && (
           <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-coral-500 dark:text-ocean-400" />
