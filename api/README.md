@@ -35,11 +35,10 @@ cp .env.example .env
 # Edit .env with your API keys (see documentation/SETUP_GUIDE.md)
 
 # 3. Run the server
-source .venv/bin/activate
-uvicorn api.main:app --reload --port 8000
+uv run uvicorn api.main:app --reload --port 8000
 
 # 4. Test it
-open http://localhost:8000/health
+curl http://localhost:8000/api/health
 ```
 
 **Full setup guide:** [documentation/SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)

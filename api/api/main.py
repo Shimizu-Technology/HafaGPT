@@ -2919,7 +2919,7 @@ FREE_TIER_LIMITS = {
 # Holiday Promo Period Configuration
 # Set FREE_PROMO_PERIOD=true in environment to give everyone unlimited access
 FREE_PROMO_ACTIVE = os.getenv("FREE_PROMO_PERIOD", "false").lower() == "true"
-FREE_PROMO_END_DATE = os.getenv("FREE_PROMO_END_DATE", "2025-01-06")  # Three Kings Day
+FREE_PROMO_END_DATE = os.getenv("FREE_PROMO_END_DATE", "2026-01-06")  # Three Kings Day
 
 def is_promo_active() -> bool:
     """Check if the free promo period is currently active."""
@@ -2936,16 +2936,24 @@ def is_promo_active() -> bool:
 @app.get("/api/promo/status", tags=["Promo"])
 async def get_promo_status():
     """
-    Check if a promotional period is currently active.
+    Check if a promotional period is currently active and get current theme.
     
-    Returns promo status and end date for frontend display.
+    Returns promo status, end date, and theme for frontend display.
     No authentication required - public endpoint.
+    
+    Reads from database settings (admin-configurable) with fallback to env vars.
     """
-    promo_active = is_promo_active()
+    # Try database first, fall back to env var for backwards compatibility
+    promo_active = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
+    promo_end_date = get_site_setting("promo_end_date", FREE_PROMO_END_DATE)
+    promo_title = get_site_setting("promo_title", "🎄 Holiday Special: Unlimited access!")
+    current_theme = get_site_setting("theme", "default")
+    
     return {
         "active": promo_active,
-        "end_date": FREE_PROMO_END_DATE if promo_active else None,
-        "message": "🎄 Holiday Special: Unlimited access through January 6th!" if promo_active else None
+        "end_date": promo_end_date if promo_active else None,
+        "message": promo_title if promo_active else None,
+        "theme": current_theme
     }
 
 
@@ -2963,8 +2971,8 @@ async def get_today_usage(
         # Verify user
         user_id = await verify_user(authorization)
         
-        # Check if user is premium OR if promo period is active
-        is_premium = is_promo_active()  # During promo, everyone gets unlimited
+        # Check if user is premium OR if promo period is active (from DB or env)
+        is_premium = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
         
         # Get database connection
         conn = conversations.get_db_connection()
@@ -3049,8 +3057,8 @@ async def increment_usage(
         # Verify user
         user_id = await verify_user(authorization)
         
-        # Check if user is premium OR if promo period is active
-        is_premium = is_promo_active()  # During promo, everyone gets unlimited
+        # Check if user is premium OR if promo period is active (from DB or env)
+        is_premium = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
         
         # Get database connection
         conn = conversations.get_db_connection()
@@ -4482,6 +4490,172 @@ async def get_feature_usage(
     except Exception as e:
         logger.error(f"❌ [ADMIN] Feature usage error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Admin Settings Endpoints
+# ==============================================================================
+
+@app.get("/api/admin/settings", tags=["Admin"])
+async def get_admin_settings(authorization: Optional[str] = Header(None)):
+    """
+    Get all site settings for admin panel.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    try:
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT key, value, description, updated_at, updated_by
+            FROM site_settings
+            ORDER BY key
+        """)
+        
+        settings = {}
+        for row in cursor.fetchall():
+            settings[row[0]] = {
+                "value": row[1],
+                "description": row[2],
+                "updated_at": row[3].isoformat() if row[3] else None,
+                "updated_by": row[4]
+            }
+        
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [ADMIN] Retrieved {len(settings)} settings")
+        return {"settings": settings}
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Get settings error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/admin/settings", tags=["Admin"])
+async def update_admin_settings(
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update site settings.
+    Requires admin role.
+    
+    Body should be a dict of {key: value} pairs to update.
+    Example: {"promo_enabled": "true", "promo_end_date": "2026-01-15"}
+    """
+    user_id = await verify_admin(authorization)
+    
+    try:
+        body = await request.json()
+        
+        if not body or not isinstance(body, dict):
+            raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+        
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        updated_keys = []
+        for key, value in body.items():
+            cursor.execute("""
+                UPDATE site_settings 
+                SET value = %s, updated_at = NOW(), updated_by = %s
+                WHERE key = %s
+            """, (str(value), user_id, key))
+            
+            if cursor.rowcount > 0:
+                updated_keys.append(key)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Clear the settings cache so changes take effect immediately
+        _clear_settings_cache()
+        
+        logger.info(f"✅ [ADMIN] Updated settings: {updated_keys} by {user_id}")
+        return {"success": True, "updated": updated_keys}
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Update settings error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Site Settings Helper Functions
+# ==============================================================================
+
+# Cache for site settings (to avoid DB queries on every request)
+_settings_cache: dict = {}
+_settings_cache_time: float = 0
+_SETTINGS_CACHE_TTL = 60  # Cache for 60 seconds
+
+def _clear_settings_cache():
+    """Clear the settings cache (called when settings are updated)."""
+    global _settings_cache, _settings_cache_time
+    _settings_cache = {}
+    _settings_cache_time = 0
+
+def get_site_setting(key: str, default: str = None) -> str:
+    """
+    Get a site setting from the database (with caching).
+    Falls back to default if not found.
+    """
+    global _settings_cache, _settings_cache_time
+    
+    # Check if cache is still valid
+    if time.time() - _settings_cache_time < _SETTINGS_CACHE_TTL and _settings_cache:
+        return _settings_cache.get(key, default)
+    
+    try:
+        db_url = os.getenv("DATABASE_URL")
+        if not db_url:
+            return default
+        
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT key, value FROM site_settings")
+        
+        _settings_cache = {row[0]: row[1] for row in cursor.fetchall()}
+        _settings_cache_time = time.time()
+        
+        cursor.close()
+        conn.close()
+        
+        return _settings_cache.get(key, default)
+        
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to get site setting {key}: {e}")
+        return default
+
+
+def is_promo_active_from_db() -> bool:
+    """Check if promo is active based on database settings."""
+    promo_enabled = get_site_setting("promo_enabled", "false")
+    if promo_enabled.lower() != "true":
+        return False
+    
+    promo_end_date = get_site_setting("promo_end_date", "2026-01-06")
+    try:
+        end_date = datetime.strptime(promo_end_date, "%Y-%m-%d").date()
+        today = get_guam_date()
+        return today <= end_date
+    except ValueError:
+        return False
 
 
 @app.exception_handler(HTTPException)

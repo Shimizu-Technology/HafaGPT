@@ -93,10 +93,10 @@ EMBEDDING_MODE=openai
 ### Run the Backend
 
 ```bash
-# Option 1: Direct uvicorn
 cd HafaGPT-API
-source .venv/bin/activate  # or: . .venv/bin/activate
-python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Option 1: Using uv (recommended)
+uv run uvicorn api.main:app --reload --port 8000
 
 # Option 2: Use the dev script
 ./scripts/dev-network.sh
@@ -104,7 +104,7 @@ python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 
 Backend runs at: **http://localhost:8000**
 
-Test it: http://localhost:8000/health
+Test it: `curl http://localhost:8000/api/health`
 
 ---
 
@@ -210,8 +210,7 @@ Run migrations:
 
 ```bash
 cd HafaGPT-API
-source .venv/bin/activate
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ---
@@ -223,7 +222,7 @@ alembic upgrade head
 ```bash
 cd HafaGPT-API
 ./scripts/dev-network.sh
-# Or: source .venv/bin/activate && uvicorn api.main:app --reload --port 8000
+# Or: uv run uvicorn api.main:app --reload --port 8000
 ```
 
 ### Terminal 2 - Frontend
@@ -240,7 +239,7 @@ npm run dev
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8000 |
 | API Docs | http://localhost:8000/docs |
-| Health Check | http://localhost:8000/health |
+| Health Check | http://localhost:8000/api/health |
 | Admin Dashboard | http://localhost:5173/admin |
 
 ---
@@ -308,18 +307,18 @@ HafaGPT/
 
 ```bash
 # Run server
-uvicorn api.main:app --reload --port 8000
+uv run uvicorn api.main:app --reload --port 8000
 
 # Run tests
-pytest
+uv run pytest
 
 # Add a dependency
 uv add <package>
 uv pip compile pyproject.toml --universal -o requirements.txt
 
 # Database migration
-alembic upgrade head
-alembic revision --autogenerate -m "description"
+uv run alembic upgrade head
+uv run alembic revision --autogenerate -m "description"
 ```
 
 ### Frontend
