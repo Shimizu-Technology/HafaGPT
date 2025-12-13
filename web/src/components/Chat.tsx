@@ -110,6 +110,15 @@ export function Chat() {
     }
   }, [isLoaded, isSignedIn]);
 
+  // On mount: Invalidate messages for active conversation to catch any background completions
+  // This handles the case where user left during streaming and returned to the chat page
+  useEffect(() => {
+    if (activeConversationId && isSignedIn) {
+      queryClient.invalidateQueries({ queryKey: ['messages', activeConversationId] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount
+
   // Load messages from the separate messages query (for fast conversation switching)
   useEffect(() => {
     // Don't load messages if we're currently sending one (prevents race condition)
@@ -582,11 +591,19 @@ export function Chat() {
 
   const handleNewConversation = async () => {
     try {
+      // Cancel any in-progress streaming to prevent callbacks from affecting new chat
+      await cancelMessage();
+      
+      // Clear the sending flag so message loading works correctly
+      isSendingMessageRef.current = false;
+      
       // Don't create conversation yet - just clear messages
       // Conversation will be created when user sends first message
       setActiveConversationId(null);
       localStorage.removeItem('active_conversation_id');
       setMessages([]);
+      // Ensure switching state is cleared (prevents loading flash)
+      setIsSwitchingConversation(false);
       // Always close sidebar for cleaner UX
       setSidebarOpen(false);
     } catch (err) {
@@ -601,9 +618,19 @@ export function Chat() {
       return;
     }
     
+    // Cancel any in-progress streaming to prevent callbacks from affecting new conversation
+    await cancelMessage();
+    
+    // Clear the sending flag so message loading works correctly
+    isSendingMessageRef.current = false;
+    
     // Clear current messages immediately and show loading state
     setIsSwitchingConversation(true);
     setMessages([]);
+    
+    // Invalidate the messages cache to force a fresh fetch
+    // This ensures we get any responses that completed while user was away
+    queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     
     setActiveConversationId(conversationId);
     localStorage.setItem('active_conversation_id', conversationId);

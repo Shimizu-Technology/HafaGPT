@@ -81,6 +81,10 @@ export function useInitUserData(activeConversationId: string | null, enabled: bo
 
 /**
  * Hook to fetch messages for a specific conversation
+ * 
+ * Configured for background processing support:
+ * - refetchOnWindowFocus: true - catches responses that completed while user was away
+ * - staleTime: 10 seconds - shorter cache to ensure fresh data when switching conversations
  */
 export function useConversationMessages(conversationId: string | null) {
   const { getToken } = useAuth();
@@ -105,7 +109,8 @@ export function useConversationMessages(conversationId: string | null) {
       return data.messages || [];
     },
     enabled: !!conversationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 10 * 1000, // 10 seconds - short cache for fresh data
+    refetchOnWindowFocus: true, // Refetch when user returns to tab (catches background completions)
   });
 }
 
