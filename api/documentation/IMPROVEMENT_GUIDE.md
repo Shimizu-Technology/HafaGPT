@@ -251,13 +251,19 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 - [x] New endpoints: `POST /api/admin/users/:id/reset-onboarding`, `PATCH /api/admin/users/:id/preferences`
 
 #### **Learning Goal Personalization** (Future)
-Currently we store learning goals but don't use them yet. Potential enhancements:
-- [ ] Add learning goal modifiers to AI prompts (like skill level)
-- [ ] Prioritize relevant vocabulary in responses (e.g., travel → airport, hotel words)
-- [ ] Suggest related stories/flashcards based on goal
-- [ ] Customize daily word categories
+Users select a learning goal during onboarding (conversation, culture, family, travel, or "everything"). Currently this is stored in Clerk's `unsafeMetadata` but **intentionally NOT applied to chat prompts**. 
+
+**Why not use it in chat?** After testing, we found that filtering all responses through a learning goal lens (e.g., always mentioning travel vocabulary) made responses feel forced and could reduce quality when users ask about unrelated topics. The chat should respond naturally to what users actually ask.
+
+**Better uses for learning goals (future):**
+- [ ] Personalized homepage recommendations ("Based on your travel goal...")
+- [ ] Daily word filtering (show travel vocabulary for travel goal)
+- [ ] Suggest relevant flashcard categories
+- [ ] Prioritize stories that match the user's goal
 - [ ] Adjust conversation practice scenario recommendations
-- [ ] Show goal-specific tips on homepage
+- [ ] Show goal-specific tips and resources
+
+**Note:** The `LEARNING_GOAL_MODIFIERS` dict is defined in `chatbot_service.py` for future reference but is not currently applied.
 
 #### **Flashcard Spaced Repetition (Phase 2)**
 - Database tracking for card progress

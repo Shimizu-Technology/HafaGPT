@@ -3175,6 +3175,134 @@ async def increment_usage(
         )
 
 
+# ==========================================
+# Streak Tracking Endpoint
+# ==========================================
+
+@app.get("/api/streaks/me", tags=["Streaks"])
+async def get_user_streak(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the current user's learning streak.
+    
+    A streak is the number of consecutive days with at least one activity
+    (chat message, game, or quiz). Uses Guam timezone for day boundaries.
+    
+    Returns:
+    - current_streak: Number of consecutive days (including today if active)
+    - longest_streak: User's all-time best streak
+    - is_today_active: Whether the user has done any activity today
+    - today_activities: Breakdown of today's activities
+    - last_activity_date: The most recent day with activity
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        today = get_guam_date()
+        
+        # Get all activity days for this user (ordered newest first)
+        cursor.execute("""
+            SELECT usage_date, chat_count, game_count, quiz_count
+            FROM user_daily_usage
+            WHERE user_id = %s
+            AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
+            ORDER BY usage_date DESC
+        """, (user_id,))
+        
+        activity_days = cursor.fetchall()
+        
+        # Calculate current streak
+        current_streak = 0
+        last_activity_date = None
+        
+        if activity_days:
+            # Check if there's activity today or yesterday to have an active streak
+            check_date = today
+            
+            for row in activity_days:
+                activity_date = row[0]
+                
+                if activity_date == check_date:
+                    current_streak += 1
+                    check_date = check_date - timedelta(days=1)
+                    if last_activity_date is None:
+                        last_activity_date = activity_date
+                elif activity_date == check_date - timedelta(days=1):
+                    # Allow for yesterday to start a streak (if today not yet active)
+                    if current_streak == 0:
+                        check_date = activity_date
+                        current_streak = 1
+                        last_activity_date = activity_date
+                        check_date = check_date - timedelta(days=1)
+                    else:
+                        break
+                else:
+                    break
+        
+        # Calculate longest streak (scan through all activity days)
+        longest_streak = current_streak
+        if activity_days:
+            temp_streak = 1
+            prev_date = activity_days[0][0]
+            
+            for row in activity_days[1:]:
+                activity_date = row[0]
+                if prev_date - activity_date == timedelta(days=1):
+                    temp_streak += 1
+                    longest_streak = max(longest_streak, temp_streak)
+                else:
+                    temp_streak = 1
+                prev_date = activity_date
+        
+        # Get today's activity breakdown
+        today_chat = 0
+        today_games = 0
+        today_quizzes = 0
+        is_today_active = False
+        
+        cursor.execute("""
+            SELECT chat_count, game_count, quiz_count
+            FROM user_daily_usage
+            WHERE user_id = %s AND usage_date = %s
+        """, (user_id, today))
+        
+        today_row = cursor.fetchone()
+        if today_row:
+            today_chat = today_row[0] or 0
+            today_games = today_row[1] or 0
+            today_quizzes = today_row[2] or 0
+            is_today_active = (today_chat + today_games + today_quizzes) > 0
+        
+        conn.close()
+        
+        return {
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "is_today_active": is_today_active,
+            "today_activities": {
+                "chat": today_chat,
+                "games": today_games,
+                "quizzes": today_quizzes
+            },
+            "last_activity_date": str(last_activity_date) if last_activity_date else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [STREAKS] Failed to get streak: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get streak: {str(e)}"
+        )
+
+
 @app.get("/api/subscription/status", response_model=SubscriptionStatusResponse, tags=["Usage"])
 async def get_subscription_status(
     authorization: Optional[str] = Header(None)

@@ -354,6 +354,54 @@ Adjust your responses for an experienced learner:
 """
 }
 
+# Learning goal modifiers - tailor content based on user's motivation
+LEARNING_GOAL_MODIFIERS = {
+    "conversation": """
+💬 USER LEARNING GOAL: DAILY CONVERSATION
+Focus your responses on practical, everyday communication:
+- Prioritize common greetings, polite expressions, and small talk
+- Include phrases for ordering food, asking directions, introductions
+- Give conversational examples ("How would you say X in a restaurant?")
+- Focus on pronunciation tips for natural-sounding speech
+- Suggest phrases they can use immediately in daily life
+""",
+    "culture": """
+🌴 USER LEARNING GOAL: CULTURE & HERITAGE
+Emphasize cultural and historical context in your responses:
+- Connect vocabulary to Chamorro traditions and customs
+- Explain the cultural significance of words and phrases
+- Reference fiestas, respect customs (inafa'maolek), and traditions
+- Include historical context when relevant
+- Share cultural stories or practices related to the topic
+""",
+    "family": """
+👨‍👩‍👧‍👦 USER LEARNING GOAL: TEACH MY FAMILY
+Focus on content that can be shared with family members:
+- Suggest simple, fun phrases to teach children
+- Include vocabulary for family activities and home life
+- Recommend songs, games, or activities for practicing together
+- Keep explanations simple enough to re-teach to others
+- Focus on bonding through language (cooking, stories, traditions)
+""",
+    "travel": """
+✈️ USER LEARNING GOAL: TRAVEL TO GUAM
+Prioritize travel-related vocabulary and situations:
+- Include phrases for airports, hotels, restaurants, and shops
+- Cover tourist situations: asking directions, ordering food, thanking
+- Add emergency phrases and practical travel vocabulary
+- Mention cultural etiquette tourists should know
+- Include place names and Guam-specific vocabulary
+""",
+    "all": """
+✨ USER LEARNING GOAL: EVERYTHING
+The user wants comprehensive learning, so:
+- Provide well-rounded responses covering vocabulary, grammar, and culture
+- Balance practical phrases with deeper cultural context
+- Include variety in your examples and explanations
+- Connect topics to multiple aspects of Chamorro life
+"""
+}
+
 
 def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
     """
@@ -772,6 +820,12 @@ def get_chatbot_response(
     if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
+    # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
+    # We store the user's learning goal for future features (personalized recommendations,
+    # daily word filtering, flashcard suggestions) but don't want to filter all chat
+    # responses through a predetermined lens - let the AI respond naturally to what
+    # the user actually asks.
+    
     # Detect if document content is present (PDF/document text appended to message)
     has_document_text = "--- Document Content" in message
     
@@ -1050,6 +1104,12 @@ def get_chatbot_response_stream(
     # Add skill level modifier if provided (personalization based on user experience)
     if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
+    
+    # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
+    # We store the user's learning goal for future features (personalized recommendations,
+    # daily word filtering, flashcard suggestions) but don't want to filter all chat
+    # responses through a predetermined lens - let the AI respond naturally to what
+    # the user actually asks.
     
     # Detect if document content is present (PDF/document text appended to message)
     has_document_text = "--- Document Content" in message
