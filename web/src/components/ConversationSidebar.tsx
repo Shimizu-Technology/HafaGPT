@@ -274,22 +274,22 @@ export function ConversationSidebar({
           {/* Quick Links - Always visible */}
           <div className="border-t border-cream-300 dark:border-gray-800 p-3">
             <div className="flex gap-2">
-              <Link
-                to="/"
-                onClick={onToggle}
+            <Link
+              to="/"
+              onClick={onToggle}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-cream-100 dark:bg-gray-800 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
-              >
+            >
                 <Home className="w-4 h-4 text-coral-600 dark:text-ocean-400" />
-                <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Home</span>
-              </Link>
-              <Link
-                to="/dashboard"
-                onClick={onToggle}
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Home</span>
+            </Link>
+            <Link
+              to="/dashboard"
+              onClick={onToggle}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-cream-100 dark:bg-gray-800 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
-              >
+            >
                 <BarChart3 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Progress</span>
-              </Link>
+              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Progress</span>
+            </Link>
             </div>
           </div>
         </div>

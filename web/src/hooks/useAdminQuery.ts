@@ -30,6 +30,7 @@ export interface AdminUser {
   subscription_status: string | null;
   created_at: string | null;
   last_sign_in: string | null;
+  last_activity: string | null;
   total_conversations: number;
   total_messages: number;
   total_quizzes: number;

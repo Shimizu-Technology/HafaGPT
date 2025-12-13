@@ -10,7 +10,8 @@ import {
   Gamepad2,
   ArrowRight,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from 'lucide-react';
 import { useAdminStats } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
@@ -191,6 +192,19 @@ export function AdminDashboard() {
               <div>
                 <h3 className="font-semibold text-brown-800 dark:text-white">Premium Users</h3>
                 <p className="text-sm text-brown-500 dark:text-gray-400">{stats?.premium_users || 0} subscribers</p>
+              </div>
+            </Link>
+            
+            <Link
+              to="/admin/settings"
+              className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 transition-colors group"
+            >
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl group-hover:scale-105 transition-transform">
+                <Settings className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-brown-800 dark:text-white">Settings</h3>
+                <p className="text-sm text-brown-500 dark:text-gray-400">Promo & theme settings</p>
               </div>
             </Link>
             

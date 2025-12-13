@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Crown, Star, Shield, Ban, Loader2, AlertCircle,
   MessageSquare, Gamepad2, GraduationCap, Calendar, Clock,
-  CheckCircle, XCircle, UserX, UserCheck, RotateCcw, Sliders
+  CheckCircle, XCircle, UserX, UserCheck, RotateCcw, Sliders, Activity
 } from 'lucide-react';
 import { useAdminUser, useUpdateUser, useResetOnboarding, useUpdateUserPreferences } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
@@ -113,14 +113,35 @@ export function AdminUserDetail() {
     );
   }
   
-  const formatDate = (timestamp: string | null) => {
+  const formatDate = (timestamp: string | null, isISOString = false) => {
     if (!timestamp) return 'Never';
     try {
-      return new Date(parseInt(timestamp)).toLocaleDateString('en-US', {
+      const date = isISOString ? new Date(timestamp) : new Date(parseInt(timestamp));
+      return date.toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
     } catch {
       return timestamp;
+    }
+  };
+  
+  const getRelativeTime = (timestamp: string | null) => {
+    if (!timestamp) return null;
+    try {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return null; // Fall back to full date
+    } catch {
+      return null;
     }
   };
   
@@ -236,6 +257,26 @@ export function AdminUserDetail() {
               <div>
                 <p className="text-sm text-brown-500 dark:text-gray-400">Last Sign In</p>
                 <p className="font-medium text-brown-800 dark:text-white">{formatDate(user.last_sign_in)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Activity className="w-5 h-5 text-green-500" />
+              <div>
+                <p className="text-sm text-brown-500 dark:text-gray-400">Last Activity</p>
+                <p className="font-medium text-brown-800 dark:text-white">
+                  {user.last_activity ? (
+                    <>
+                      {getRelativeTime(user.last_activity) || formatDate(user.last_activity, true)}
+                      {getRelativeTime(user.last_activity) && (
+                        <span className="text-xs text-brown-400 dark:text-gray-500 ml-1">
+                          ({formatDate(user.last_activity, true)})
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    'Never'
+                  )}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">

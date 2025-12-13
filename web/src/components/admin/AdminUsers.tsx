@@ -138,9 +138,20 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails,
         </div>
       </td>
       <td className="px-4 py-4">
-        <p className="text-sm text-brown-600 dark:text-gray-400">
-          {user.created_at ? new Date(parseInt(user.created_at)).toLocaleDateString() : 'Unknown'}
-        </p>
+        <div className="text-sm">
+          {user.last_activity ? (
+            <>
+              <p className="text-brown-800 dark:text-gray-200">
+                {new Date(user.last_activity).toLocaleDateString()}
+              </p>
+              <p className="text-xs text-brown-500 dark:text-gray-500">
+                {new Date(user.last_activity).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </>
+          ) : (
+            <p className="text-brown-400 dark:text-gray-600">Never</p>
+          )}
+        </div>
       </td>
       <td className="px-4 py-4 text-right">
         <div className="relative inline-block">
@@ -232,6 +243,11 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewD
           <span className="font-semibold text-brown-700 dark:text-gray-300">{user.total_games}</span> games
         </div>
       </div>
+      <p className="text-xs text-brown-500 dark:text-gray-500 mt-2">
+        Last active: {user.last_activity 
+          ? new Date(user.last_activity).toLocaleDateString() + ' at ' + new Date(user.last_activity).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : 'Never'}
+      </p>
     </div>
   );
 }
@@ -302,7 +318,7 @@ export function AdminUsers() {
           />
         </div>
         
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700">
           {isLoading ? (
             <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" /></div>
           ) : (
@@ -314,7 +330,7 @@ export function AdminUsers() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">User</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Activity</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Joined</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Last Active</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>

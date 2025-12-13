@@ -7,8 +7,6 @@ import {
   Loader2, 
   AlertCircle,
   CheckCircle,
-  ToggleLeft,
-  ToggleRight,
   Palette
 } from 'lucide-react';
 import { useAdminSettings, useUpdateAdminSettings } from '../../hooks/useAdminQuery';
@@ -154,7 +152,7 @@ export function AdminSettings() {
           
           <div className="p-6 space-y-6">
             {/* Promo Enabled Toggle */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
               <div>
                 <label className="font-medium text-brown-800 dark:text-white">
                   Enable Promotional Period
@@ -165,15 +163,17 @@ export function AdminSettings() {
               </div>
               <button
                 onClick={() => setPromoEnabled(!promoEnabled)}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
                   promoEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
+                role="switch"
+                aria-checked={promoEnabled}
               >
-                {promoEnabled ? (
-                  <ToggleRight className="w-7 h-7 text-white absolute right-0.5" />
-                ) : (
-                  <ToggleLeft className="w-7 h-7 text-gray-500 dark:text-gray-400 absolute left-0.5" />
-                )}
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out ${
+                    promoEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
               </button>
             </div>
             

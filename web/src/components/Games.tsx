@@ -107,6 +107,22 @@ export function Games() {
             icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
             difficulty="Hard"
           />
+          
+          <GameCard
+            to="/games/hangman"
+            title="Hangman"
+            description="Classic word guessing! See the meaning, guess the Chamorro word letter by letter."
+            icon={<span className="text-2xl sm:text-3xl">🎯</span>}
+            difficulty="Medium"
+          />
+          
+          <GameCard
+            to="/games/trivia"
+            title="Cultural Trivia"
+            description="Test your knowledge of Guam history, Chamorro culture, language, and traditions!"
+            icon={<span className="text-2xl sm:text-3xl">🏝️</span>}
+            difficulty="All Levels"
+          />
         </div>
 
         {/* Tips Section */}
