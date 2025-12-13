@@ -441,6 +441,7 @@ class AdminUserInfo(BaseModel):
     subscription_status: Optional[str] = Field(None, description="active, canceled, past_due, etc.")
     created_at: Optional[str] = Field(None, description="Account creation date")
     last_sign_in: Optional[str] = Field(None, description="Last sign-in date")
+    last_activity: Optional[str] = Field(None, description="Last app activity (message, quiz, game)")
     # Usage stats
     total_conversations: int = Field(0, description="Total conversations")
     total_messages: int = Field(0, description="Total messages sent")

@@ -88,17 +88,23 @@ def check_keywords_present(response: str, expected_keywords: List[str]) -> tuple
     passed = len(found_keywords) > 0
     return passed, found_keywords
 
-def send_query(api_url: str, query: str, mode: str = 'english') -> Optional[Dict]:
+def send_query(api_url: str, query: str, mode: str = 'english', skill_level: str = None) -> Optional[Dict]:
     """Send a query to the chatbot API and return the response."""
     try:
         # Use the evaluation endpoint which doesn't require auth
+        payload = {
+            'message': query,
+            'mode': mode,
+            'session_id': f'eval_session_{int(time.time())}'
+        }
+        
+        # Add skill_level if provided
+        if skill_level:
+            payload['skill_level'] = skill_level
+        
         response = requests.post(
             f"{api_url}/api/eval/chat",
-            json={
-                'message': query,
-                'mode': mode,
-                'session_id': f'eval_session_{int(time.time())}'
-            },
+            json=payload,
             timeout=30
         )
         
@@ -143,7 +149,8 @@ def run_evaluation(
     api_url: str,
     test_queries: List[Dict],
     mode: str = 'english',
-    limit: Optional[int] = None
+    limit: Optional[int] = None,
+    skill_level: Optional[str] = None
 ) -> Dict:
     """Run the evaluation on all test queries."""
     
@@ -154,7 +161,8 @@ def run_evaluation(
     queries_to_test = test_queries[:limit] if limit else test_queries
     total = len(queries_to_test)
     
-    print(f"\n{Colors.BOLD}🧪 Running evaluation on {total} queries...{Colors.END}\n")
+    skill_label = f" (skill_level={skill_level})" if skill_level else ""
+    print(f"\n{Colors.BOLD}🧪 Running evaluation on {total} queries{skill_label}...{Colors.END}\n")
     
     for i, test in enumerate(queries_to_test, 1):
         query_id = test['id']
@@ -168,7 +176,7 @@ def run_evaluation(
         
         # Send query
         start_time = time.time()
-        api_response = send_query(api_url, query, mode)
+        api_response = send_query(api_url, query, mode, skill_level)
         response_time = time.time() - start_time
         
         if not api_response:
@@ -238,6 +246,7 @@ def run_evaluation(
         'metadata': {
             'timestamp': datetime.now().isoformat(),
             'mode': mode,
+            'skill_level': skill_level,
             'api_url': api_url,
             'total_tests': total_tests,
             'passed_tests': passed_tests,
@@ -259,14 +268,15 @@ def generate_report(evaluation_results: Dict, output_dir: Path):
     
     # Save full JSON results
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    json_file = output_dir / f'eval_results_{timestamp}.json'
+    skill_suffix = f"_{metadata.get('skill_level')}" if metadata.get('skill_level') else ""
+    json_file = output_dir / f'eval_results_{timestamp}{skill_suffix}.json'
     with open(json_file, 'w', encoding='utf-8') as f:
         json.dump(evaluation_results, f, indent=2, ensure_ascii=False)
     
     print(f"{Colors.GREEN}✅ Full results saved to: {json_file}{Colors.END}\n")
     
     # Generate human-readable report
-    report_file = output_dir / f'eval_report_{timestamp}.txt'
+    report_file = output_dir / f'eval_report_{timestamp}{skill_suffix}.txt'
     
     with open(report_file, 'w', encoding='utf-8') as f:
         # Header
@@ -276,6 +286,8 @@ def generate_report(evaluation_results: Dict, output_dir: Path):
         
         f.write(f"Timestamp: {metadata['timestamp']}\n")
         f.write(f"Mode: {metadata['mode']}\n")
+        if metadata.get('skill_level'):
+            f.write(f"Skill Level: {metadata['skill_level']}\n")
         f.write(f"API URL: {metadata['api_url']}\n\n")
         
         # Overall Summary
@@ -353,6 +365,8 @@ def main():
     parser = argparse.ArgumentParser(description='Evaluate HafaGPT chatbot performance')
     parser.add_argument('--mode', default='english', choices=['english', 'chamorro', 'learn'],
                        help='Chat mode to test')
+    parser.add_argument('--skill-level', choices=['beginner', 'intermediate', 'advanced'],
+                       help='User skill level to test (for personalization testing)')
     parser.add_argument('--limit', type=int, help='Limit number of queries to test')
     parser.add_argument('--api-url', default='http://localhost:8000',
                        help='API endpoint URL')
@@ -404,7 +418,8 @@ def main():
         api_url=args.api_url,
         test_queries=test_queries,
         mode=args.mode,
-        limit=args.limit
+        limit=args.limit,
+        skill_level=args.skill_level
     )
     
     # Generate report

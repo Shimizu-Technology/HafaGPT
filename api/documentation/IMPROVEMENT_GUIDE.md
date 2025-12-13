@@ -17,7 +17,7 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📝 Quizzes (curated + dictionary-based, database-tracked)
 - 📚 Vocabulary Browser (10,350+ words)
 - 📅 Daily Word
-- 🎮 Learning Games (Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle)
+- 🎮 Learning Games (Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle, Hangman, Cultural Trivia)
 - 💳 Freemium Model (Clerk Billing + Stripe)
 - 📊 Progress Dashboard
 - 🔐 Authentication (Clerk)
@@ -294,8 +294,9 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 |---------|--------|-------|
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
 | Share Conversations | 📋 Next | Copy conversation to clipboard, shareable links |
-| New Learning Games | 📋 Planned | Cultural Trivia, Speed Translation, Hangman |
-| Admin Settings Polish | 📋 Planned | Cleaner UI, better visual hierarchy |
+| New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
+| New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
+| Admin Settings Polish | ✅ Done | Last Active tracking, Settings quick action, toggle styling |
 | Audio Features (Chamorro TTS) | ⏸️ Deferred | Waiting for quality TTS |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
 | ElevenLabs Voice Cloning | 📋 Future | Better pronunciation |
@@ -314,14 +315,32 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 - Future: Generate shareable public link
 - **Effort:** 2-4 hours
 
-#### **New Learning Games** (Planned)
-| Game | Concept | Learning Value |
-|------|---------|----------------|
-| Cultural Trivia | Multiple choice about Guam history, traditions | Culture learning |
-| Speed Translation | Translate words in 60 seconds | Quick recall |
-| Chamorro Hangman | Guess the word letter by letter | Spelling practice |
-| Story Builder | Arrange words into correct sentences | Grammar/word order |
-- **Effort:** 4-8 hours per game
+#### **New Learning Games**
+
+**Phase 1 Complete (Dec 2025):**
+- ✅ **Hangman** - Classic word guessing with Chamorro alphabet (Å, Ñ, ') support
+- ✅ **Cultural Trivia** - 30+ questions about Guam culture, history, language, food, and geography
+
+**Phase 2 (Planned - Grammar & Speed):**
+| Game | Concept | Learning Value | Effort |
+|------|---------|----------------|--------|
+| Phrase Builder | Arrange jumbled Chamorro words into correct sentence order | Grammar/word order | 4-5 hrs |
+| Speed Challenge | Type translations as fast as possible (60-second race) | Quick recall, typing | 3-4 hrs |
+
+**Phase 3 (Planned - Visual & Relaxing):**
+| Game | Concept | Learning Value | Effort |
+|------|---------|----------------|--------|
+| Picture Match | Match Chamorro words to images | Visual learners, beginners | 6-8 hrs |
+| Word Search | Find hidden Chamorro words in a letter grid | Relaxing, word recognition | 6-8 hrs |
+| Crossword | Interactive crossword with Chamorro answers | Brain-teaser, spelling | 8-12 hrs |
+
+**Phase 4 (Future - Big Engagement Features):**
+| Game | Concept | Learning Value | Effort |
+|------|---------|----------------|--------|
+| Boss Battles | RPG-style - answer correctly to attack bosses, level up | Gamification, progression | 12-15 hrs |
+| Adventure Quest | Story-driven adventure exploring Guam, choose-your-own-path | Narrative, immersion | 15-20 hrs |
+| Island Builder | Earn resources by learning, build virtual Guam | Long-term retention | 20+ hrs |
+| Multiplayer Showdown | Real-time 1v1 translation battles | Competition, social | 15-20 hrs |
 
 ---
 
@@ -364,10 +383,12 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 9. ✅ ~~Learning Streaks~~ - Done!
 10. ✅ ~~Onboarding Feature Overview~~ - Done!
 11. ✅ ~~Chat Sidebar Cleanup~~ - Done!
-12. **Voice Input** - Web Speech API for voice-to-text
-13. **Share Conversations** - Copy/share chat transcripts
-14. **New Learning Games** - Cultural Trivia, Speed Translation, etc.
-15. **Admin Settings Polish** - Cleaner UI, better visual hierarchy
+12. ✅ ~~New Games: Hangman + Cultural Trivia~~ - Done!
+13. ✅ ~~Admin Settings Polish~~ - Done! (Last Active tracking, Settings quick action, toggle styling)
+14. **Voice Input** - Web Speech API for voice-to-text
+15. **Share Conversations** - Copy/share chat transcripts
+16. **New Games Phase 2** - Phrase Builder, Speed Challenge
+17. **New Games Phase 3** - Picture Match, Word Search, Crossword
 
 ---
 

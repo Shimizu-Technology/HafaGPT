@@ -1166,11 +1166,13 @@ async def eval_chat(
         # Check if this is a JSON request
         content_type = request.headers.get('content-type', '')
         
+        skill_level = None
         if 'application/json' in content_type:
             body = await request.json()
             message = body.get('message')
             mode = body.get('mode', 'english')
             session_id = body.get('session_id')
+            skill_level = body.get('skill_level')  # Optional: beginner, intermediate, advanced
         else:
             mode = mode or 'english'
         
@@ -1189,7 +1191,15 @@ async def eval_chat(
                 detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}"
             )
         
-        logger.info(f"Eval chat request: mode={mode}, session_id={session_id}")
+        # Validate skill level if provided
+        valid_skill_levels = ["beginner", "intermediate", "advanced"]
+        if skill_level and skill_level not in valid_skill_levels:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid skill_level. Must be one of: {', '.join(valid_skill_levels)}"
+            )
+        
+        logger.info(f"Eval chat request: mode={mode}, skill_level={skill_level}, session_id={session_id}")
         
         # Get response from chatbot service (no auth required for eval)
         result = get_chatbot_response(
@@ -1200,7 +1210,8 @@ async def eval_chat(
             user_id=None,  # No user tracking for eval
             conversation_id=None,
             image_base64=None,
-            image_url=None
+            image_url=None,
+            skill_level=skill_level  # Pass skill level for personalization testing
         )
         
         # Convert sources to SourceInfo models
@@ -4241,6 +4252,20 @@ async def get_admin_users(
             )
             total_games = cursor.fetchone()[0]
             
+            # Get last activity timestamp (most recent of messages, quizzes, games)
+            # Note: conversation_logs uses 'timestamp', others use 'created_at'
+            cursor.execute("""
+                SELECT MAX(last_activity) FROM (
+                    SELECT MAX(timestamp) as last_activity FROM conversation_logs WHERE user_id = %s
+                    UNION ALL
+                    SELECT MAX(created_at) as last_activity FROM quiz_results WHERE user_id = %s
+                    UNION ALL
+                    SELECT MAX(created_at) as last_activity FROM game_results WHERE user_id = %s
+                ) as activities
+            """, (user_id, user_id, user_id))
+            last_activity_row = cursor.fetchone()
+            last_activity = last_activity_row[0].isoformat() if last_activity_row and last_activity_row[0] else None
+            
             admin_users.append(AdminUserInfo(
                 user_id=user_id,
                 email=email,
@@ -4255,6 +4280,7 @@ async def get_admin_users(
                 subscription_status=metadata.get('subscription_status'),
                 created_at=str(user.created_at) if hasattr(user, 'created_at') else None,
                 last_sign_in=str(user.last_sign_in_at) if hasattr(user, 'last_sign_in_at') else None,
+                last_activity=last_activity,
                 total_conversations=total_conversations,
                 total_messages=total_messages,
                 total_quizzes=total_quizzes,
@@ -4347,6 +4373,19 @@ async def get_admin_user(
         today_games = today_row[1] if today_row else 0
         today_quizzes = today_row[2] if today_row else 0
         
+        # Get last activity timestamp (most recent of messages, quizzes, games)
+        cursor.execute("""
+            SELECT MAX(last_activity) FROM (
+                SELECT MAX(timestamp) as last_activity FROM conversation_logs WHERE user_id = %s
+                UNION ALL
+                SELECT MAX(created_at) as last_activity FROM quiz_results WHERE user_id = %s
+                UNION ALL
+                SELECT MAX(created_at) as last_activity FROM game_results WHERE user_id = %s
+            ) as activities
+        """, (user_id, user_id, user_id))
+        last_activity_row = cursor.fetchone()
+        last_activity = last_activity_row[0].isoformat() if last_activity_row and last_activity_row[0] else None
+        
         conn.close()
         
         return AdminUserInfo(
@@ -4363,6 +4402,7 @@ async def get_admin_user(
             subscription_status=metadata.get('subscription_status'),
             created_at=str(user.created_at) if hasattr(user, 'created_at') else None,
             last_sign_in=str(user.last_sign_in_at) if hasattr(user, 'last_sign_in_at') else None,
+            last_activity=last_activity,
             total_conversations=total_conversations,
             total_messages=total_messages,
             total_quizzes=total_quizzes,
