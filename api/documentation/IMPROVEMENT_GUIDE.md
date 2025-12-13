@@ -199,8 +199,9 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 | Auto-focus Input | ✅ | Done |
 | Haptic Feedback | ✅ | Done |
 | Sidebar Auto-close | ✅ | Done |
-| Background Processing | 1 hour | 📋 Planned |
+| Background Processing | ✅ | Done |
 | Edit & Regenerate | 4-6 hours | 📋 Planned |
+| Parallel Streams | 3-4 hours | 📋 Future |
 
 #### **Recently Completed (Dec 2025):**
 - **Optimistic UI**: Messages appear instantly, conversation created in background
@@ -209,15 +210,18 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 - **Haptic Feedback**: Vibration on send (mobile devices)
 - **Sidebar Auto-close**: Closes when selecting/creating conversations
 - **Mobile Input Polish**: Smaller placeholder, compact buttons on mobile
-
-#### **Background Processing**
-- Handle gracefully when user leaves page during generation
-- Check for pending response on return, fetch latest
+- **Background Processing**: Refetch messages on window focus and page load to catch responses that completed while user was away
 
 #### **Edit & Regenerate**
 - Edit button on user messages
 - Delete messages after edited one
 - Regenerate from edited message
+
+#### **Parallel Streams** (Future)
+- Allow multiple conversations to stream responses simultaneously
+- Currently: switching conversations cancels in-progress stream
+- Future: let streams continue in background, see completed response when returning
+- Requires: per-conversation stream tracking, conditional UI updates
 
 ---
 
@@ -335,6 +339,8 @@ User management + analytics + site settings all working!
 | **Promo Management** | Admin-controlled promo periods (no more env vars needed) |
 | **Chat UX Polish** | Optimistic UI, smooth transitions, haptic feedback |
 | **Mobile Input** | Compact placeholder, responsive buttons |
+| **Background Processing** | Messages refetch on window focus/page load to catch background completions |
+| **Stream Cancellation** | Switching conversations cleanly cancels in-progress streams |
 
 ### December 10, 2025
 | Fix | Description |
