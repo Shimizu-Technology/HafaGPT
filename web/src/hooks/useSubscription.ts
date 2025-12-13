@@ -4,6 +4,12 @@ import { useAuth, useSession, useUser } from '@clerk/clerk-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Types
+export interface PromoStatus {
+  active: boolean;
+  end_date: string | null;
+  message: string | null;
+}
+
 export interface UsageData {
   chat_count: number;
   game_count: number;
@@ -29,6 +35,27 @@ export interface SubscriptionStatus {
 }
 
 export type UsageType = 'chat' | 'game' | 'quiz';
+
+/**
+ * Hook to check if a promotional period is active.
+ * 
+ * Returns promo status and end date for display.
+ * This is a public endpoint - no auth required.
+ */
+export function usePromoStatus() {
+  return useQuery<PromoStatus>({
+    queryKey: ['promo-status'],
+    queryFn: async () => {
+      const response = await fetch(`${API_URL}/api/promo/status`);
+      if (!response.ok) {
+        return { active: false, end_date: null, message: null };
+      }
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+}
 
 /**
  * Hook to get the current user's subscription status.
@@ -157,10 +184,14 @@ export function useSubscription() {
   const { isSignedIn } = useAuth();
   const { data: usage, isLoading: usageLoading } = useUsage(isSignedIn);
   const { data: status, isLoading: statusLoading } = useSubscriptionStatus(isSignedIn);
+  const { data: promo } = usePromoStatus();
   const incrementMutation = useIncrementUsage();
 
   const isLoading = usageLoading || statusLoading;
+  
+  // User is premium if they have a subscription OR if promo is active
   const isPremium = status?.is_premium ?? false;
+  const isPromoActive = promo?.active ?? false;
 
   /**
    * Check if a feature can be used (under limit or premium).
@@ -243,6 +274,11 @@ export function useSubscription() {
     isSignedIn,
     usage,
     subscription: status,
+    
+    // Promo status
+    isPromoActive,
+    promoEndDate: promo?.end_date ?? null,
+    promoMessage: promo?.message ?? null,
     
     // Methods
     canUse,

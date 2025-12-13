@@ -36,7 +36,7 @@ export function HomePage() {
   const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
   const { data: quizStatsData } = useQuizStats();
   const { data: gameStatsData } = useGameStats();
-  const { isPremium } = useSubscription();
+  const { isPremium, isPromoActive, promoEndDate } = useSubscription();
   
   const [quickMessage, setQuickMessage] = useState('');
   
@@ -198,6 +198,31 @@ export function HomePage() {
             {isSignedIn ? 'Ready to learn Chamorro today?' : 'Start your Chamorro learning journey'}
           </p>
         </div>
+
+        {/* Holiday Promo Banner - Only show when promo is active */}
+        {isPromoActive && (
+          <div className="relative overflow-hidden bg-gradient-to-r from-red-600 to-green-600 rounded-2xl p-4 sm:p-5 text-white text-center shadow-lg">
+            {/* Decorative snowflakes */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-1 left-4 text-2xl">❄</div>
+              <div className="absolute top-2 right-8 text-lg">❄</div>
+              <div className="absolute bottom-1 left-1/4 text-xl">❄</div>
+              <div className="absolute bottom-2 right-1/3 text-lg">❄</div>
+            </div>
+            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+              <span className="text-2xl">🎄</span>
+              <div>
+                <p className="font-bold text-base sm:text-lg">
+                  Felis Påsgua! Holiday Gift: Unlimited Access!
+                </p>
+                <p className="text-white/90 text-xs sm:text-sm">
+                  Free unlimited learning through {promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'January 6th'} 🌺
+                </p>
+              </div>
+              <span className="text-2xl">🎁</span>
+            </div>
+          </div>
+        )}
 
         {/* What's Available Section - Only show when NOT signed in */}
         {!isSignedIn && (
