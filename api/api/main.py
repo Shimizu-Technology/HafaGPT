@@ -624,6 +624,8 @@ async def startup_event():
     logger.info(f"CORS Origins: {allowed_origins}")
     logger.info(f"Rate Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW} seconds")
     logger.info(f"Database: {os.getenv('DATABASE_URL', 'postgresql://localhost/chamorro_rag')}")
+    if FREE_PROMO_ACTIVE:
+        logger.info(f"🎄 FREE PROMO PERIOD ACTIVE until {FREE_PROMO_END_DATE}")
     logger.info("="*80)
 
 
@@ -2914,6 +2916,38 @@ FREE_TIER_LIMITS = {
     "quiz": 5
 }
 
+# Holiday Promo Period Configuration
+# Set FREE_PROMO_PERIOD=true in environment to give everyone unlimited access
+FREE_PROMO_ACTIVE = os.getenv("FREE_PROMO_PERIOD", "false").lower() == "true"
+FREE_PROMO_END_DATE = os.getenv("FREE_PROMO_END_DATE", "2025-01-06")  # Three Kings Day
+
+def is_promo_active() -> bool:
+    """Check if the free promo period is currently active."""
+    if not FREE_PROMO_ACTIVE:
+        return False
+    try:
+        end_date = datetime.strptime(FREE_PROMO_END_DATE, "%Y-%m-%d").date()
+        today = get_guam_date()
+        return today <= end_date
+    except ValueError:
+        return FREE_PROMO_ACTIVE  # Fall back to env var if date parsing fails
+
+
+@app.get("/api/promo/status", tags=["Promo"])
+async def get_promo_status():
+    """
+    Check if a promotional period is currently active.
+    
+    Returns promo status and end date for frontend display.
+    No authentication required - public endpoint.
+    """
+    promo_active = is_promo_active()
+    return {
+        "active": promo_active,
+        "end_date": FREE_PROMO_END_DATE if promo_active else None,
+        "message": "🎄 Holiday Special: Unlimited access through January 6th!" if promo_active else None
+    }
+
 
 @app.get("/api/usage/today", response_model=UsageResponse, tags=["Usage"])
 async def get_today_usage(
@@ -2929,8 +2963,8 @@ async def get_today_usage(
         # Verify user
         user_id = await verify_user(authorization)
         
-        # Check if user is premium (for now, default to False until Clerk Billing is set up)
-        is_premium = False  # TODO: Check Clerk subscription status
+        # Check if user is premium OR if promo period is active
+        is_premium = is_promo_active()  # During promo, everyone gets unlimited
         
         # Get database connection
         conn = conversations.get_db_connection()
@@ -3015,8 +3049,8 @@ async def increment_usage(
         # Verify user
         user_id = await verify_user(authorization)
         
-        # Check if user is premium (for now, default to False until Clerk Billing is set up)
-        is_premium = False  # TODO: Check Clerk subscription status
+        # Check if user is premium OR if promo period is active
+        is_premium = is_promo_active()  # During promo, everyone gets unlimited
         
         # Get database connection
         conn = conversations.get_db_connection()
