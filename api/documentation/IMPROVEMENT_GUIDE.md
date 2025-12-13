@@ -200,7 +200,7 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 | Haptic Feedback | ✅ | Done |
 | Sidebar Auto-close | ✅ | Done |
 | Background Processing | ✅ | Done |
-| Edit & Regenerate | 4-6 hours | 📋 Planned |
+| Edit & Regenerate | ✅ | Done |
 | Parallel Streams | 3-4 hours | 📋 Future |
 
 #### **Recently Completed (Dec 2025):**
@@ -211,11 +211,7 @@ DELETE /api/admin/knowledge-base/:id        # Remove document (optional)
 - **Sidebar Auto-close**: Closes when selecting/creating conversations
 - **Mobile Input Polish**: Smaller placeholder, compact buttons on mobile
 - **Background Processing**: Refetch messages on window focus and page load to catch responses that completed while user was away
-
-#### **Edit & Regenerate**
-- Edit button on user messages
-- Delete messages after edited one
-- Regenerate from edited message
+- **Edit & Regenerate**: Edit user messages with inline textarea, delete subsequent messages, regenerate AI response with full conversation context
 
 #### **Parallel Streams** (Future)
 - Allow multiple conversations to stream responses simultaneously
@@ -341,6 +337,7 @@ User management + analytics + site settings all working!
 | **Mobile Input** | Compact placeholder, responsive buttons |
 | **Background Processing** | Messages refetch on window focus/page load to catch background completions |
 | **Stream Cancellation** | Switching conversations cleanly cancels in-progress streams |
+| **Edit & Regenerate** | Edit user messages inline, regenerate AI response with full history context |
 
 ### December 10, 2025
 | Fix | Description |
