@@ -12,6 +12,7 @@ import {
   Sparkles,
   Check
 } from 'lucide-react';
+import { usePromoStatus } from '../hooks/useSubscription';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -91,6 +92,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
   const featureInfo = getFeatureInfo(location.pathname);
   const FeatureIcon = featureInfo.icon;
+  const { data: promo } = usePromoStatus();
+  const isChristmasTheme = promo?.theme === 'christmas';
 
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
@@ -171,7 +174,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
               <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200 dark:border-slate-700">
                 <div className="text-center mb-6">
                   <div className="inline-flex items-center gap-2 mb-2">
-                    <span className="text-2xl">🌺</span>
+                    <span className="text-2xl">{isChristmasTheme ? '🎄' : '🌺'}</span>
                     <h2 className="text-xl font-bold text-brown-800 dark:text-white">HåfaGPT</h2>
                   </div>
                   <p className="text-sm text-brown-600 dark:text-gray-400">

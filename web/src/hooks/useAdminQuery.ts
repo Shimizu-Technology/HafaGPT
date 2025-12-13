@@ -165,7 +165,7 @@ export function useUpdateUser() {
       
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
@@ -265,6 +265,72 @@ export function useFeatureUsage() {
       return response.json();
     },
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+// Site Settings Types
+export interface SiteSetting {
+  value: string;
+  description: string | null;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+export interface SiteSettings {
+  [key: string]: SiteSetting;
+}
+
+export interface SiteSettingsResponse {
+  settings: SiteSettings;
+}
+
+// Site Settings Hooks
+export function useAdminSettings() {
+  const { getToken } = useAuth();
+  
+  return useQuery<SiteSettingsResponse>({
+    queryKey: ['admin', 'settings'],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch settings');
+      }
+      return response.json();
+    },
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useUpdateAdminSettings() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (updates: Record<string, string>) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update settings');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate settings and promo status queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      queryClient.invalidateQueries({ queryKey: ['promo-status'] });
+    },
   });
 }
 

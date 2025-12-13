@@ -237,3 +237,142 @@
     transform: translateY(0);
   }
 }
+
+/* ==========================================================================
+   Christmas Theme - Snowfall Animation
+   ========================================================================== */
+
+/* Snowfall container - positioned fixed to cover viewport */
+.snowfall-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+/* Individual snowflake styling */
+.snowflake {
+  position: absolute;
+  top: -2rem;
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+  animation: snowfall linear infinite;
+  will-change: transform;
+}
+
+/* Dark mode snowflakes - slightly more visible */
+.dark .snowflake {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 8px rgba(200, 220, 255, 0.5);
+}
+
+/* Light mode snowflakes - subtle blue tint */
+:root:not(.dark) .snowflake {
+  color: rgba(180, 210, 255, 0.8);
+  text-shadow: 0 0 5px rgba(150, 190, 255, 0.4);
+}
+
+/* Snowfall animation - falls and sways */
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10px) rotate(0deg) translateX(0);
+  }
+  25% {
+    transform: translateY(25vh) rotate(90deg) translateX(15px);
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg) translateX(-10px);
+  }
+  75% {
+    transform: translateY(75vh) rotate(270deg) translateX(20px);
+  }
+  100% {
+    transform: translateY(105vh) rotate(360deg) translateX(0);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .snowfall-container {
+    display: none;
+  }
+}
+
+/* Hide snowfall on very small screens to avoid clutter */
+@media (max-width: 480px) {
+  .snowfall-container .snowflake:nth-child(n+15) {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Christmas Theme - Festive Color Overrides
+   ========================================================================== */
+
+/* Christmas accent colors - applied via data attribute on body */
+[data-theme="christmas"] {
+  /* Light mode Christmas colors */
+  --christmas-primary: #c41e3a; /* Christmas red */
+  --christmas-secondary: #228b22; /* Forest green */
+  --christmas-accent: #ffd700; /* Gold */
+  --christmas-bg-gradient-from: #fef9f3; /* Warm cream */
+  --christmas-bg-gradient-to: #f8f0e8;
+}
+
+.dark[data-theme="christmas"] {
+  /* Dark mode Christmas colors */
+  --christmas-primary: #ff6b6b; /* Lighter red for dark mode */
+  --christmas-secondary: #4ade80; /* Brighter green */
+  --christmas-accent: #fbbf24; /* Amber gold */
+  --christmas-bg-gradient-from: #1e1b18; /* Warm dark */
+  --christmas-bg-gradient-to: #151310;
+}
+
+/* Christmas gradient background for cards and buttons */
+.christmas-gradient {
+  background: linear-gradient(135deg, var(--christmas-primary), var(--christmas-secondary));
+}
+
+/* Festive glow effect */
+.christmas-glow {
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.2), 0 0 40px rgba(34, 139, 34, 0.1);
+}
+
+.dark .christmas-glow {
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.15), 0 0 40px rgba(74, 222, 128, 0.1);
+}
+
+/* Christmas border accent */
+.christmas-border {
+  border-image: linear-gradient(135deg, var(--christmas-primary), var(--christmas-secondary)) 1;
+}
+
+/* Subtle Christmas tint for backgrounds - uses pseudo-element to overlay without replacing bg */
+.christmas-tint {
+  position: relative;
+}
+
+.christmas-tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(196, 30, 58, 0.02),
+    rgba(34, 139, 34, 0.02)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .christmas-tint::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 107, 0.03),
+    rgba(74, 222, 128, 0.03)
+  );
+}

@@ -4,10 +4,13 @@ import { useAuth, useSession, useUser } from '@clerk/clerk-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Types
+export type SiteTheme = 'default' | 'christmas' | 'newyear' | 'chamorro';
+
 export interface PromoStatus {
   active: boolean;
   end_date: string | null;
   message: string | null;
+  theme: SiteTheme;
 }
 
 export interface UsageData {
@@ -48,9 +51,13 @@ export function usePromoStatus() {
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/promo/status`);
       if (!response.ok) {
-        return { active: false, end_date: null, message: null };
+        return { active: false, end_date: null, message: null, theme: 'default' as SiteTheme };
       }
-      return response.json();
+      const data = await response.json();
+      return {
+        ...data,
+        theme: data.theme || 'default',
+      };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
@@ -279,6 +286,10 @@ export function useSubscription() {
     isPromoActive,
     promoEndDate: promo?.end_date ?? null,
     promoMessage: promo?.message ?? null,
+    
+    // Theme
+    siteTheme: promo?.theme ?? 'default',
+    isChristmasTheme: promo?.theme === 'christmas',
     
     // Methods
     canUse,

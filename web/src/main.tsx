@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import posthog from 'posthog-js';
 import App from './App.tsx';
+import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -111,7 +112,9 @@ function ClerkWrapper() {
         },
       }}
     >
-      <App />
+      <ChristmasThemeWrapper>
+        <App />
+      </ChristmasThemeWrapper>
     </ClerkProvider>
     </QueryClientProvider>
   );

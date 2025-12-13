@@ -30,6 +30,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminUsers } from './components/admin/AdminUsers';
 import { AdminUserDetail } from './components/admin/AdminUserDetail';
 import { AdminAnalytics } from './components/admin/AdminAnalytics';
+import { AdminSettings } from './components/admin/AdminSettings';
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function App() {
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/users/:userId" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
         <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
       </Routes>
     </BrowserRouter>
   );

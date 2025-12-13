@@ -16,6 +16,7 @@ import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useQuizStats } from '../hooks/useQuizQuery';
 import { useGameStats } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
+import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 
 // Types for localStorage quiz data (fallback)
@@ -61,6 +62,8 @@ export function Dashboard() {
   const { data: initData, isLoading: conversationsLoading } = useInitUserData(null, isLoaded && !!user?.id);
   const { data: quizStatsData, isLoading: quizLoading } = useQuizStats();
   const { data: gameStatsData, isLoading: gamesLoading } = useGameStats();
+  const { data: promo } = usePromoStatus();
+  const isChristmasTheme = promo?.theme === 'christmas';
   
   const isLoading = conversationsLoading || quizLoading || gamesLoading;
   
@@ -124,10 +127,14 @@ export function Dashboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Welcome Card */}
-        <div className="bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 rounded-2xl p-6 text-white shadow-xl">
+        <div className={`rounded-2xl p-6 text-white shadow-xl ${
+          isChristmasTheme 
+            ? 'bg-gradient-to-br from-red-600 to-green-600' 
+            : 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600'
+        }`}>
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-3xl">
-              🌺
+              {isChristmasTheme ? '🎄' : '🌺'}
             </div>
             <div>
               <h2 className="text-xl font-bold">

@@ -61,7 +61,7 @@ export function Chat() {
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
   const queryClient = useQueryClient();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, isChristmasTheme } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -785,8 +785,12 @@ End of Export
                   </button>
                 )}
                 
-                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-base sm:text-2xl shadow-lg shadow-coral-500/20 flex-shrink-0">
-                  🌺
+                <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-2xl shadow-lg flex-shrink-0 ${
+                  isChristmasTheme 
+                    ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/20' 
+                    : 'bg-gradient-to-br from-coral-400 to-coral-600 shadow-coral-500/20'
+                }`}>
+                  {isChristmasTheme ? '🎄' : '🌺'}
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">

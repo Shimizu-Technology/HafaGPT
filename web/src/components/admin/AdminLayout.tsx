@@ -5,6 +5,7 @@ import {
   LayoutDashboard, 
   Users, 
   BarChart3,
+  Settings,
   ArrowLeft,
   Menu,
   X,
@@ -22,6 +23,7 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export function AdminLayout({ children }: AdminLayoutProps) {

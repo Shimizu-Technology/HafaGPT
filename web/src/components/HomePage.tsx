@@ -36,7 +36,7 @@ export function HomePage() {
   const { data: initData, isLoading: isDataLoading, isFetched } = useInitUserData(null, isClerkLoaded && !!user?.id);
   const { data: quizStatsData } = useQuizStats();
   const { data: gameStatsData } = useGameStats();
-  const { isPremium, isPromoActive, promoEndDate } = useSubscription();
+  const { isPremium, isPromoActive, promoEndDate, isChristmasTheme, siteTheme } = useSubscription();
   
   const [quickMessage, setQuickMessage] = useState('');
   
@@ -151,8 +151,12 @@ export function HomePage() {
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center text-xl shadow-lg">
-              🌺
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg ${
+              isChristmasTheme 
+                ? 'bg-gradient-to-br from-red-500 to-green-600 christmas-glow' 
+                : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600'
+            }`}>
+              {isChristmasTheme ? '🎄' : '🌺'}
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">
@@ -199,27 +203,57 @@ export function HomePage() {
           </p>
         </div>
 
-        {/* Holiday Promo Banner - Only show when promo is active */}
+        {/* Promo Banner - Theme-aware styling */}
         {isPromoActive && (
-          <div className="relative overflow-hidden bg-gradient-to-r from-red-600 to-green-600 rounded-2xl p-4 sm:p-5 text-white text-center shadow-lg">
-            {/* Decorative snowflakes */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-1 left-4 text-2xl">❄</div>
-              <div className="absolute top-2 right-8 text-lg">❄</div>
-              <div className="absolute bottom-1 left-1/4 text-xl">❄</div>
-              <div className="absolute bottom-2 right-1/3 text-lg">❄</div>
-            </div>
+          <div className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 text-white text-center shadow-lg ${
+            siteTheme === 'christmas' 
+              ? 'bg-gradient-to-r from-red-600 to-green-600' 
+              : siteTheme === 'newyear'
+              ? 'bg-gradient-to-r from-purple-600 to-pink-500'
+              : siteTheme === 'chamorro'
+              ? 'bg-gradient-to-r from-blue-600 to-red-500'
+              : 'bg-gradient-to-r from-coral-500 to-teal-500 dark:from-ocean-500 dark:to-teal-600'
+          }`}>
+            {/* Decorative elements based on theme */}
+            {siteTheme === 'christmas' && (
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-1 left-4 text-2xl">❄</div>
+                <div className="absolute top-2 right-8 text-lg">❄</div>
+                <div className="absolute bottom-1 left-1/4 text-xl">❄</div>
+                <div className="absolute bottom-2 right-1/3 text-lg">❄</div>
+              </div>
+            )}
+            {siteTheme === 'newyear' && (
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-1 left-4 text-2xl">✨</div>
+                <div className="absolute top-2 right-8 text-lg">🎊</div>
+                <div className="absolute bottom-1 left-1/4 text-xl">✨</div>
+                <div className="absolute bottom-2 right-1/3 text-lg">🎊</div>
+              </div>
+            )}
             <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-              <span className="text-2xl">🎄</span>
+              <span className="text-2xl">
+                {siteTheme === 'christmas' ? '🎄' : siteTheme === 'newyear' ? '🎆' : siteTheme === 'chamorro' ? '🇬🇺' : '🎉'}
+              </span>
               <div>
                 <p className="font-bold text-base sm:text-lg">
-                  Felis Påsgua! Holiday Gift: Unlimited Access!
+                  {siteTheme === 'christmas' 
+                    ? 'Felis Påsgua! Holiday Gift: Unlimited Access!'
+                    : siteTheme === 'newyear'
+                    ? 'Happy New Year! Celebrate with Unlimited Access!'
+                    : 'Special Promo: Unlimited Access!'
+                  }
                 </p>
                 <p className="text-white/90 text-xs sm:text-sm">
-                  Free unlimited learning through {promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'January 6th'} 🌺
+                  {isSignedIn 
+                    ? `Enjoy unlimited learning through ${promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'the promo period'}!`
+                    : `Create a free account for unlimited access through ${promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'the promo period'}!`
+                  }
                 </p>
               </div>
-              <span className="text-2xl">🎁</span>
+              <span className="text-2xl">
+                {siteTheme === 'christmas' ? '🎁' : siteTheme === 'newyear' ? '🥳' : siteTheme === 'chamorro' ? '🌺' : '🎊'}
+              </span>
             </div>
           </div>
         )}
@@ -682,14 +716,22 @@ export function HomePage() {
 
         {/* Sign in prompt for non-authenticated users */}
         {!isSignedIn && (
-          <div className="bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 rounded-2xl p-5 text-white text-center">
-            <h3 className="text-lg font-bold mb-2">Start Learning Today!</h3>
+          <div className={`rounded-2xl p-5 text-white text-center ${
+            isChristmasTheme 
+              ? 'bg-gradient-to-r from-red-600 to-green-600 christmas-glow' 
+              : 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600'
+          }`}>
+            <h3 className="text-lg font-bold mb-2">
+              {isChristmasTheme ? '🎁 Start Learning Today!' : 'Start Learning Today!'}
+            </h3>
             <p className="text-white/80 text-sm mb-4">
               Sign in to track your progress, save conversations, and unlock all features.
             </p>
             <button
               onClick={handleSignInClick}
-              className="px-6 py-2.5 bg-white text-coral-600 dark:text-ocean-600 rounded-xl font-semibold hover:bg-cream-50 transition-colors"
+              className={`px-6 py-2.5 bg-white rounded-xl font-semibold hover:bg-cream-50 transition-colors ${
+                isChristmasTheme ? 'text-red-600' : 'text-coral-600 dark:text-ocean-600'
+              }`}
             >
               Sign In Free
             </button>
@@ -700,7 +742,7 @@ export function HomePage() {
         <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0">
             <p className="text-xs text-brown-500 dark:text-gray-500">
-              Built with 🌺 by{' '}
+              Built with {isChristmasTheme ? '🎄' : '🌺'} by{' '}
               <a 
                 href="https://shimizu-technology.com" 
                 target="_blank" 

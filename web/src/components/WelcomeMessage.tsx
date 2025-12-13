@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DailyWord } from './DailyWord';
+import { usePromoStatus } from '../hooks/useSubscription';
 
 export function WelcomeMessage() {
   const [showModes, setShowModes] = useState(false);
+  const { data: promo } = usePromoStatus();
+  const isChristmasTheme = promo?.theme === 'christmas';
 
   return (
     <div className="flex items-start justify-center px-4 py-4 sm:py-6 w-full">
       <div className="w-full sm:max-w-2xl animate-fade-in">
         {/* Header */}
         <div className="text-center mb-4 sm:mb-6">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center text-2xl sm:text-4xl shadow-xl shadow-coral-500/30 dark:shadow-ocean-500/30">
-          🌺
+          <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-2xl flex items-center justify-center text-2xl sm:text-4xl shadow-xl ${
+            isChristmasTheme 
+              ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/30' 
+              : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 shadow-coral-500/30 dark:shadow-ocean-500/30'
+          }`}>
+            {isChristmasTheme ? '🎄' : '🌺'}
           </div>
           <h1 className="text-xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">Håfa Adai!</h1>
           <p className="text-sm sm:text-lg text-brown-600 dark:text-gray-400">I'm your Chamorro language tutor.</p>
