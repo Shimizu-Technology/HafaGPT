@@ -340,6 +340,55 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
         raise
 
 
+def delete_messages_after(conversation_id: str, timestamp: int, user_id: Optional[str] = None) -> int:
+    """
+    Delete all messages in a conversation after a given timestamp.
+    Used for Edit & Regenerate feature.
+    
+    Args:
+        conversation_id: Conversation ID
+        timestamp: Unix timestamp (milliseconds) - delete messages after this time
+        user_id: Optional user ID to verify ownership
+        
+    Returns:
+        Number of messages deleted
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Convert milliseconds to timestamp
+        from datetime import datetime
+        dt = datetime.fromtimestamp(timestamp / 1000.0)
+        
+        # Delete messages after the given timestamp
+        # Include user_id check for security if provided
+        if user_id:
+            cursor.execute("""
+                DELETE FROM conversation_logs
+                WHERE conversation_id = %s 
+                AND user_id = %s
+                AND timestamp > %s
+            """, (conversation_id, user_id, dt))
+        else:
+            cursor.execute("""
+                DELETE FROM conversation_logs
+                WHERE conversation_id = %s 
+                AND timestamp > %s
+            """, (conversation_id, dt))
+        
+        deleted_count = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"🗑️ Deleted {deleted_count} messages after {dt} in conversation {conversation_id} (Edit & Regenerate)")
+        return deleted_count
+    except Exception as e:
+        logger.error(f"Failed to delete messages after timestamp: {e}")
+        raise
+
+
 def create_system_message(
     conversation_id: str,
     content: str,

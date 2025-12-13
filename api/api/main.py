@@ -1429,6 +1429,42 @@ async def delete_conversation_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/api/conversations/{conversation_id}/messages/after/{timestamp}", tags=["Conversations"])
+async def delete_messages_after_endpoint(
+    conversation_id: str,
+    timestamp: int,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Delete all messages in a conversation after a given timestamp.
+    
+    Used for the Edit & Regenerate feature. When a user edits a previous message,
+    all subsequent messages are deleted and a new response is generated.
+    
+    Args:
+        conversation_id: The conversation ID
+        timestamp: Unix timestamp in milliseconds - delete messages after this time
+    """
+    try:
+        # Verify authentication
+        user_id = await verify_user(authorization)
+        
+        # Delete messages after the timestamp
+        deleted_count = conversations.delete_messages_after(
+            conversation_id, 
+            timestamp, 
+            user_id=user_id
+        )
+        
+        logger.info(f"Deleted {deleted_count} messages after {timestamp} in conversation {conversation_id} (Edit & Regenerate)")
+        return {"success": True, "deleted_count": deleted_count}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete messages after timestamp: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/conversations/system-message", tags=["Conversations"])
 async def create_system_message_endpoint(
     request: SystemMessageCreate,
