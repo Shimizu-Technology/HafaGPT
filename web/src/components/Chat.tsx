@@ -844,27 +844,29 @@ End of Export
                   </button>
                 )}
                 
-                <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-2xl shadow-lg flex-shrink-0 ${
-                  isChristmasTheme 
-                    ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/20' 
-                    : 'bg-gradient-to-br from-coral-400 to-coral-600 shadow-coral-500/20'
-                }`}>
-                  {isChristmasTheme ? '🎄' : '🌺'}
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
-                    HåfaGPT
-                  </h1>
-                  <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden sm:block">
-                    Expert in Chamorro language, culture & Guam
-                  </p>
-                  <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden lg:block">
-                    <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                    <span className="mx-1">•</span>
-                  <span>{greeting.english}</span>
-                </p>
+                <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
+                  <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-2xl shadow-lg flex-shrink-0 ${
+                    isChristmasTheme 
+                      ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/20' 
+                      : 'bg-gradient-to-br from-coral-400 to-coral-600 shadow-coral-500/20'
+                  }`}>
+                    {isChristmasTheme ? '🎄' : '🌺'}
+                  </div>
+                  <div className="min-w-0">
+                    <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
+                      HåfaGPT
+                    </h1>
+                    <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden sm:block">
+                      Expert in Chamorro language, culture & Guam
+                    </p>
+                    <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden lg:block">
+                      <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
+                      <span className="mx-1">•</span>
+                      <span>{greeting.english}</span>
+                    </p>
+                  </div>
+                </Link>
               </div>
-            </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {/* Home Button - Go back to learning dashboard */}
               <Link

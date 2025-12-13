@@ -51,10 +51,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       `}>
         {/* Sidebar Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-cream-200 dark:border-slate-700">
-          <div className="flex items-center gap-2">
+          <Link to="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Shield className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
             <span className="font-bold text-brown-800 dark:text-white">Admin</span>
-          </div>
+          </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg"

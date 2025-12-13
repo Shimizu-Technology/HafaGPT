@@ -1,7 +1,19 @@
 import { useState } from 'react';
-import { GraduationCap, Users, Palmtree, Globe, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { 
+  GraduationCap, Users, Palmtree, Globe, Sparkles, ArrowRight, Check,
+  MessageSquare, Brain, Gamepad2, BookOpen, BookMarked, Flame
+} from 'lucide-react';
 import { useUserPreferences, SkillLevel, LearningGoal } from '../hooks/useUserPreferences';
 import { useSubscription } from '../hooks/useSubscription';
+
+const FEATURES = [
+  { icon: MessageSquare, title: 'AI Chat', description: 'Ask anything about Chamorro', color: 'text-coral-500 dark:text-ocean-400', bg: 'bg-coral-100 dark:bg-ocean-900/30' },
+  { icon: Brain, title: 'Quizzes', description: 'Test your knowledge', color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  { icon: Gamepad2, title: 'Games', description: 'Learn while playing', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+  { icon: BookOpen, title: 'Stories', description: 'Read & translate', color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-900/30' },
+  { icon: BookMarked, title: 'Flashcards', description: 'Study vocabulary', color: 'text-teal-500', bg: 'bg-teal-100 dark:bg-teal-900/30' },
+  { icon: Flame, title: 'Streaks', description: 'Track your progress', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+];
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -63,7 +75,7 @@ const LEARNING_GOALS: { id: LearningGoal; icon: React.ReactNode; title: string; 
 ];
 
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selectedLevel, setSelectedLevel] = useState<SkillLevel>('beginner');
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal>('all');
   const { completeOnboarding, isUpdating } = useUserPreferences();
@@ -83,7 +95,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   };
 
   const handleNext = () => {
-    if (step === 1) {
+    if (step === 0) {
+      setStep(1);
+    } else if (step === 1) {
       setStep(2);
     } else {
       handleComplete();
@@ -93,6 +107,22 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const handleSkip = () => {
     // Skip with defaults
     completeOnboarding('beginner', 'all').then(() => onClose()).catch(() => onClose());
+  };
+
+  const getStepTitle = () => {
+    switch (step) {
+      case 0: return 'Welcome to HåfaGPT!';
+      case 1: return "What's your level?";
+      case 2: return 'What brings you here?';
+    }
+  };
+
+  const getStepSubtitle = () => {
+    switch (step) {
+      case 0: return 'Your AI-powered Chamorro language tutor';
+      case 1: return "Let's personalize your experience";
+      case 2: return 'This helps us tailor your journey';
+    }
   };
 
   return (
@@ -107,12 +137,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
-                {step === 1 ? 'Welcome to HåfaGPT!' : 'What brings you here?'}
+                {getStepTitle()}
               </h2>
               <p className="text-xs sm:text-sm text-white/80 mt-0.5 sm:mt-1">
-                {step === 1 
-                  ? "Let's personalize your learning experience" 
-                  : 'This helps us tailor your journey'}
+                {getStepSubtitle()}
               </p>
             </div>
             <div className="text-2xl sm:text-3xl flex-shrink-0">
@@ -120,8 +148,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             </div>
           </div>
           
-          {/* Progress indicator */}
+          {/* Progress indicator - 3 steps */}
           <div className="flex gap-2 mt-3 sm:mt-4">
+            <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 0 ? 'bg-white' : 'bg-white/30'}`} />
             <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-white' : 'bg-white/30'}`} />
             <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-white' : 'bg-white/30'}`} />
           </div>
@@ -129,7 +158,37 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
-          {step === 1 ? (
+          {step === 0 ? (
+            <div className="space-y-4">
+              <p className="text-sm text-brown-600 dark:text-gray-300 text-center">
+                Everything you need to learn Chamorro
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                {FEATURES.map((feature) => {
+                  const Icon = feature.icon;
+                  return (
+                    <div
+                      key={feature.title}
+                      className="p-3 sm:p-4 rounded-xl bg-cream-50 dark:bg-gray-700/50 border border-cream-200 dark:border-gray-600"
+                    >
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${feature.bg} flex items-center justify-center mb-2`}>
+                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${feature.color}`} />
+                      </div>
+                      <p className="font-semibold text-sm text-brown-800 dark:text-white">
+                        {feature.title}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400 leading-tight">
+                        {feature.description}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-center text-brown-500 dark:text-gray-400 pt-2">
+                Built specifically for learning the Chamorro language 🇬🇺
+              </p>
+            </div>
+          ) : step === 1 ? (
             <div className="space-y-2 sm:space-y-3">
               <p className="text-sm text-brown-600 dark:text-gray-300 mb-3 sm:mb-4">
                 What's your Chamorro experience level?
@@ -251,6 +310,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
           >
             {isUpdating ? (
               'Saving...'
+            ) : step === 0 ? (
+              <>
+                Get Started
+                <ArrowRight className="w-4 h-4" />
+              </>
             ) : step === 1 ? (
               <>
                 Next

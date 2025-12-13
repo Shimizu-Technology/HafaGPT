@@ -682,7 +682,7 @@ export function HomePage() {
         <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0">
             <p className="text-xs text-brown-500 dark:text-gray-500">
-              Built with {isChristmasTheme ? '🎄' : '🌺'} by{' '}
+              Built with ❤️ by{' '}
               <a 
                 href="https://shimizu-technology.com" 
                 target="_blank" 

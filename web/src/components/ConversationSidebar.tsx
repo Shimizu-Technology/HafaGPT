@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Plus, Trash2, Pencil, BookOpen, Brain, BarChart3, Home } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, Pencil, BarChart3, Home, X } from 'lucide-react';
 import { Conversation } from '../hooks/useConversationsQuery';
+import { useSubscription } from '../hooks/useSubscription';
 
 interface ConversationSidebarProps {
   conversations: Conversation[];
@@ -26,6 +27,7 @@ export function ConversationSidebar({
   onToggle,
   isLoading = false
 }: ConversationSidebarProps) {
+  const { isChristmasTheme } = useSubscription();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -139,11 +141,34 @@ export function ConversationSidebar({
           flex flex-col h-full w-64 transition-opacity duration-300
           ${isOpen ? 'opacity-100 delay-150' : 'opacity-0 pointer-events-none'}
         `}>
-          {/* Header with New Chat button */}
+          {/* Header with Logo and Close */}
           <div className="p-3 border-b border-cream-300 dark:border-gray-800">
+            <div className="flex items-center justify-between mb-3">
+              <Link 
+                to="/" 
+                onClick={onToggle}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-lg shadow-md ${
+                  isChristmasTheme 
+                    ? 'bg-gradient-to-br from-red-500 to-green-600' 
+                    : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600'
+                }`}>
+                  {isChristmasTheme ? '🎄' : '🌺'}
+                </div>
+                <span className="font-bold text-brown-800 dark:text-white">HåfaGPT</span>
+              </Link>
+              <button
+                onClick={onToggle}
+                className="p-1.5 hover:bg-cream-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                aria-label="Close sidebar"
+              >
+                <X className="w-5 h-5 text-brown-500 dark:text-gray-400" />
+              </button>
+            </div>
             <button
               onClick={onNewConversation}
-              className="w-full px-3 py-2 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-200 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium"
+              className="w-full px-3 py-2.5 bg-coral-500 dark:bg-ocean-500 hover:bg-coral-600 dark:hover:bg-ocean-600 text-white rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-sm font-medium shadow-sm"
             >
               <Plus className="w-4 h-4" />
               <span>New chat</span>
@@ -246,43 +271,26 @@ export function ConversationSidebar({
               )}
             </div>
           
-          {/* Quick Links - Mobile only (sm:hidden) */}
-          <div className="sm:hidden border-t border-cream-300 dark:border-gray-800 p-3 space-y-2">
-            <Link
-              to="/"
-              onClick={onToggle}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              <Home className="w-5 h-5 text-coral-600 dark:text-coral-400" />
-              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Home</span>
-            </Link>
-            <p className="text-xs font-medium text-brown-500 dark:text-gray-500 uppercase tracking-wide px-2 mb-2 mt-3">
-              Learn
-            </p>
-            <Link
-              to="/flashcards"
-              onClick={onToggle}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              <BookOpen className="w-5 h-5 text-teal-600 dark:text-ocean-400" />
-              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Flashcards</span>
-            </Link>
-            <Link
-              to="/quiz"
-              onClick={onToggle}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Quizzes</span>
-            </Link>
-            <Link
-              to="/dashboard"
-              onClick={onToggle}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              <BarChart3 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Progress</span>
-            </Link>
+          {/* Quick Links - Always visible */}
+          <div className="border-t border-cream-300 dark:border-gray-800 p-3">
+            <div className="flex gap-2">
+              <Link
+                to="/"
+                onClick={onToggle}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-cream-100 dark:bg-gray-800 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Home className="w-4 h-4 text-coral-600 dark:text-ocean-400" />
+                <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Home</span>
+              </Link>
+              <Link
+                to="/dashboard"
+                onClick={onToggle}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-cream-100 dark:bg-gray-800 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <BarChart3 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Progress</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
