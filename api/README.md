@@ -70,7 +70,7 @@ curl http://localhost:8000/api/health
 
 | Aspect | Uvicorn (default) | Gunicorn + Uvicorn Workers |
 |--------|-------------------|----------------------------|
-| **Processes** | 1 process | Multiple (we use 2) |
+| **Processes** | 1 process | Multiple (we use 3) |
 | **Parallelism** | Async I/O only | True parallelism across CPUs |
 | **Memory** | Shared | Each worker has own memory |
 | **Crash Recovery** | App crashes = downtime | One worker crashes, others continue |
@@ -80,10 +80,17 @@ curl http://localhost:8000/api/health
 gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
 ```
 
+| Flag | Purpose |
+|------|---------|
+| `-w 3` | 3 parallel worker processes |
+| `-k uvicorn.workers.UvicornWorker` | Use async uvicorn under the hood |
+| `--timeout 120` | Kill stuck workers after 2 min |
+| `--keep-alive 300` | Keep connections open for streaming (5 min) |
+
 **What works with multiple workers:**
 - ✅ Freemium limits (5 chats/day, etc.) - stored in database
 - ✅ All database queries - workers share the same DB
-- ⚠️ IP rate limiting - in-memory, so ~2x more lenient with 2 workers (minor)
+- ⚠️ IP rate limiting - in-memory, so ~3x more lenient with 3 workers (minor)
 
 > See [IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md) for full infrastructure documentation.
 

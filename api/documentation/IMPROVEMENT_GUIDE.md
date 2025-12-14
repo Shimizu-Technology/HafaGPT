@@ -306,10 +306,22 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
 ```
 
+**Command Breakdown:**
+
+| Flag | Value | Purpose |
+|------|-------|---------|
+| `api.main:app` | - | Path to FastAPI app (`api/main.py`, variable `app`) |
+| `-w` | `3` | Number of worker processes (3 parallel request handlers) |
+| `-k` | `uvicorn.workers.UvicornWorker` | Worker class - uses async uvicorn under the hood |
+| `--bind` | `0.0.0.0:$PORT` | Listen on all interfaces, Render provides `$PORT` |
+| `--timeout` | `120` | Kill worker if request takes >2 min (prevents freezes) |
+| `--keep-alive` | `300` | Keep idle connections open for 5 min (for streaming responses) |
+
 **Why 3 workers?**
 - Each worker uses ~300-400MB RAM
 - 3 workers on 2GB RAM = safe headroom (~1.2GB used)
 - More workers = more parallel requests, but diminishing returns
+- Rule of thumb: `2 * CPU cores + 1`, but RAM is our constraint
 
 **Neon Connection Pooling:**
 - Enabled via Neon dashboard (PgBouncer)
@@ -320,7 +332,7 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 
 | Aspect | Uvicorn (default) | Gunicorn + Uvicorn Workers |
 |--------|-------------------|----------------------------|
-| **Processes** | 1 process | Multiple processes (we use 2) |
+| **Processes** | 1 process | Multiple processes (we use 3) |
 | **Parallelism** | Async I/O only (one thread) | True parallelism (separate CPUs) |
 | **Memory** | Shared | Each worker has own memory |
 | **Crash Recovery** | App crashes = downtime | One worker crashes, others continue |
@@ -332,7 +344,7 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 
 **What's NOT shared (in-memory state):**
 - ⚠️ IP rate limiting (`rate_limit_storage`) - each worker counts separately
-  - Effect: 60 req/min limit becomes ~120 req/min with 2 workers
+  - Effect: 60 req/min limit becomes ~180 req/min with 3 workers
   - Impact: Minor - still prevents abuse, just less strict
 - ⚠️ Message cancellation (`_cancelled_messages` set) - may not cancel if different worker
   - Effect: Rare edge case where cancel doesn't work
