@@ -61,10 +61,10 @@ curl http://localhost:8000/api/health
 
 ### Infrastructure Details
 
-- **Gunicorn**: 2 workers for parallel request handling
+- **Gunicorn**: 3 workers for parallel request handling
 - **Neon Pooling**: PgBouncer via `-pooler` URL suffix (handles 100+ connections)
 - **Cloud Embeddings**: OpenAI instead of local models (saves 500MB RAM)
-- **Render Standard**: 1GB RAM, auto-deploy on push
+- **Render Standard**: 2GB RAM, auto-deploy on push
 
 ### Why Gunicorn Instead of Uvicorn?
 
@@ -77,7 +77,7 @@ curl http://localhost:8000/api/health
 
 **Start Command:**
 ```bash
-gunicorn api.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
 ```
 
 **What works with multiple workers:**

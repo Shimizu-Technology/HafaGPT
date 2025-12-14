@@ -296,19 +296,19 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 
 | Component | Configuration | Status |
 |-----------|--------------|--------|
-| **Render Plan** | Standard ($25/month) | ✅ 1GB RAM |
-| **Gunicorn Workers** | 2 workers | ✅ Parallel requests |
+| **Render Plan** | Standard ($25/month) | ✅ 2GB RAM |
+| **Gunicorn Workers** | 3 workers | ✅ Parallel requests |
 | **Neon Connection Pooling** | PgBouncer via `-pooler` endpoint | ✅ Handles 100+ connections |
 | **Cloud Embeddings** | OpenAI (not local) | ✅ Saves 500MB RAM |
 
 **Render Start Command:**
 ```bash
-gunicorn api.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
 ```
 
-**Why 2 workers?**
+**Why 3 workers?**
 - Each worker uses ~300-400MB RAM
-- 2 workers on 1GB RAM = safe headroom
+- 3 workers on 2GB RAM = safe headroom (~1.2GB used)
 - More workers = more parallel requests, but diminishing returns
 
 **Neon Connection Pooling:**
