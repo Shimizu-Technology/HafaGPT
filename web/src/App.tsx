@@ -34,6 +34,7 @@ import { AdminUserDetail } from './components/admin/AdminUserDetail';
 import { AdminAnalytics } from './components/admin/AdminAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { SettingsPage } from './components/SettingsPage';
+import { AboutPage } from './components/AboutPage';
 
 function App() {
   return (
@@ -85,6 +86,9 @@ function App() {
         
         {/* Pricing page - public */}
         <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* About page - public */}
+        <Route path="/about" element={<AboutPage />} />
         
         {/* Settings page - requires authentication */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />

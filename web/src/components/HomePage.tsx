@@ -15,7 +15,8 @@ import {
   MessagesSquare,
   Gamepad2,
   Lock,
-  Unlock
+  Unlock,
+  Heart
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
@@ -154,6 +155,15 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Our Story link - desktop shows text, mobile shows heart icon */}
+            <Link
+              to="/about"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-brown-600 dark:text-gray-300 hover:text-coral-600 dark:hover:text-ocean-400 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              title="Our Story"
+            >
+              <span className="hidden sm:inline">Our Story</span>
+              <Heart className="w-4 h-4 sm:hidden" />
+            </Link>
             {/* Upgrade button for signed-in free users only (hide for premium) */}
             {isSignedIn && !isPremium && (
               <Link
@@ -680,7 +690,7 @@ export function HomePage() {
 
         {/* Footer */}
         <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-0 mb-2">
             <p className="text-xs text-brown-500 dark:text-gray-500">
               Built with ❤️ by{' '}
               <a 
@@ -704,6 +714,12 @@ export function HomePage() {
               </a>
             </p>
           </div>
+          <Link 
+            to="/about" 
+            className="text-xs text-brown-500 dark:text-gray-500 hover:text-coral-600 dark:hover:text-ocean-400 transition-colors"
+          >
+            Why I built HåfaGPT →
+          </Link>
         </footer>
       </div>
       
