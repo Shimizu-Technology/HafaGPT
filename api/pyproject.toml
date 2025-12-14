@@ -33,6 +33,7 @@ dependencies = [
     "httpx>=0.27.0",  # For OpenRouter API client
     # Webhook verification
     "svix>=1.17.0",  # Clerk uses Svix for webhooks
+    "gunicorn>=23.0.0",
 ]
 
 # Optional dependencies for direct API access (instead of OpenRouter)

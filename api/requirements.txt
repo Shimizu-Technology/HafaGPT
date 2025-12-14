@@ -143,6 +143,8 @@ grpcio==1.76.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
+gunicorn==23.0.0
+    # via llm-project (pyproject.toml)
 h11==0.16.0
     # via
     #   httpcore
@@ -344,6 +346,7 @@ overrides==7.7.0
 packaging==25.0
     # via
     #   build
+    #   gunicorn
     #   huggingface-hub
     #   langchain-core
     #   langsmith
