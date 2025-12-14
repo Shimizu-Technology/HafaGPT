@@ -447,8 +447,8 @@ export function CulturalTrivia() {
               <span className="font-medium">Games</span>
             </Link>
             <h1 className="text-lg font-bold text-brown-800 dark:text-white">Cultural Trivia</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors">
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
             </button>
           </div>
         </header>
@@ -480,39 +480,45 @@ export function CulturalTrivia() {
             <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setDifficulty('easy')}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                className={`p-3 rounded-xl transition-all duration-200 text-center ${
                   difficulty === 'easy'
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <Sparkles className={`w-5 h-5 mx-auto mb-1 ${difficulty === 'easy' ? 'text-emerald-500' : 'text-brown-400 dark:text-gray-500'}`} />
-                <p className="text-sm font-medium text-brown-800 dark:text-white">Easy</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">30s</p>
+                <div className="flex items-center justify-center mb-1">
+                  <Sparkles className={`w-5 h-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-500'}`} />
+                </div>
+                <p className={`text-sm font-medium ${difficulty === 'easy' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Easy</p>
+                <p className={`text-xs ${difficulty === 'easy' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>30s</p>
               </button>
               <button
                 onClick={() => setDifficulty('medium')}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                className={`p-3 rounded-xl transition-all duration-200 text-center ${
                   difficulty === 'medium'
-                    ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                    : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                    ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <Zap className={`w-5 h-5 mx-auto mb-1 ${difficulty === 'medium' ? 'text-amber-500' : 'text-brown-400 dark:text-gray-500'}`} />
-                <p className="text-sm font-medium text-brown-800 dark:text-white">Medium</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">20s</p>
+                <div className="flex items-center justify-center mb-1">
+                  <Zap className={`w-5 h-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-500'}`} />
+                </div>
+                <p className={`text-sm font-medium ${difficulty === 'medium' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Medium</p>
+                <p className={`text-xs ${difficulty === 'medium' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>20s</p>
               </button>
               <button
                 onClick={() => setDifficulty('hard')}
-                className={`p-3 rounded-xl border-2 transition-all text-center ${
+                className={`p-3 rounded-xl transition-all duration-200 text-center ${
                   difficulty === 'hard'
-                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                    : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                    ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <Flame className={`w-5 h-5 mx-auto mb-1 ${difficulty === 'hard' ? 'text-red-500' : 'text-brown-400 dark:text-gray-500'}`} />
-                <p className="text-sm font-medium text-brown-800 dark:text-white">Hard</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">10s</p>
+                <div className="flex items-center justify-center mb-1">
+                  <Flame className={`w-5 h-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-500'}`} />
+                </div>
+                <p className={`text-sm font-medium ${difficulty === 'hard' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Hard</p>
+                <p className={`text-xs ${difficulty === 'hard' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>10s</p>
               </button>
             </div>
           </div>
@@ -532,17 +538,19 @@ export function CulturalTrivia() {
                     key={key}
                     onClick={() => !isDisabled && setSelectedCategory(key)}
                     disabled={isDisabled}
-                    className={`p-2 rounded-xl border-2 transition-all text-center ${
+                    className={`p-2 rounded-xl transition-all duration-200 text-center ${
                       isDisabled
-                        ? 'opacity-40 cursor-not-allowed border-cream-100 dark:border-slate-800'
+                        ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
-                          ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                          : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                          ? 'bg-emerald-500 dark:bg-teal-500 text-white shadow-lg scale-105'
+                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }`}
                   >
-                    <span className="text-lg">{icon}</span>
-                    <p className="text-[10px] font-medium text-brown-700 dark:text-gray-300 mt-0.5 truncate">{label}</p>
-                    <p className="text-[9px] text-brown-400 dark:text-gray-500">{count}q</p>
+                    <div className="flex items-center justify-center">
+                      <span className="text-lg">{icon}</span>
+                    </div>
+                    <p className={`text-[10px] font-medium mt-0.5 truncate ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{label}</p>
+                    <p className={`text-[9px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count}q</p>
                   </button>
                 );
               })}
@@ -596,8 +604,8 @@ export function CulturalTrivia() {
               <span className="font-medium">Games</span>
             </Link>
             <h1 className="text-lg font-bold text-brown-800 dark:text-white">Cultural Trivia</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors">
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
             </button>
           </div>
         </header>

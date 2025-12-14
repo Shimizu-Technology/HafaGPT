@@ -348,8 +348,8 @@ export function Hangman() {
               <span className="font-medium">Games</span>
             </Link>
             <h1 className="text-lg font-bold text-brown-800 dark:text-white">Hangman</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors">
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
             </button>
           </div>
         </header>
@@ -381,27 +381,31 @@ export function Hangman() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'beginner', category: 'greetings' }))}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'beginner'
-                    ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-900/20'
-                    : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                    ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <Sparkles className={`w-6 h-6 mx-auto mb-2 ${settings.mode === 'beginner' ? 'text-coral-500 dark:text-ocean-400' : 'text-brown-400 dark:text-gray-500'}`} />
-                <p className="font-medium text-brown-800 dark:text-white">Beginner</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Common words</p>
+                <div className="flex items-center justify-center mb-2">
+                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-500 dark:text-ocean-400'}`} />
+                </div>
+                <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Beginner</p>
+                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common words</p>
               </button>
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'challenge'
-                    ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-900/20'
-                    : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg scale-[1.02]'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <Trophy className={`w-6 h-6 mx-auto mb-2 ${settings.mode === 'challenge' ? 'text-coral-500 dark:text-ocean-400' : 'text-brown-400 dark:text-gray-500'}`} />
-                <p className="font-medium text-brown-800 dark:text-white">Challenge</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Full dictionary</p>
+                <div className="flex items-center justify-center mb-2">
+                  <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
+                </div>
+                <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Challenge</p>
+                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</p>
               </button>
             </div>
           </div>
@@ -427,17 +431,19 @@ export function Hangman() {
                       key={catId}
                       onClick={() => !isDisabled && setSettings(s => ({ ...s, category: catId }))}
                       disabled={isDisabled}
-                      className={`p-3 rounded-xl border-2 transition-all text-center ${
+                      className={`p-3 rounded-xl transition-all duration-200 text-center ${
                         isDisabled
-                          ? 'border-cream-100 dark:border-slate-800 bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
+                          ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
-                            ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-900/20'
-                            : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                            ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }`}
                     >
-                      <span className="text-xl">{icon}</span>
-                      <p className="text-xs font-medium text-brown-700 dark:text-gray-300 mt-1">{name}</p>
-                      <p className={`text-[10px] mt-0.5 ${isDisabled ? 'text-red-400' : 'text-brown-400 dark:text-gray-500'}`}>
+                      <div className="flex items-center justify-center">
+                        <span className="text-xl">{icon}</span>
+                      </div>
+                      <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
+                      <p className={`text-[10px] mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>
                         {wordCount} word{wordCount !== 1 ? 's' : ''}
                       </p>
                     </button>
@@ -490,8 +496,8 @@ export function Hangman() {
               <span className="font-medium">Games</span>
             </Link>
             <h1 className="text-lg font-bold text-brown-800 dark:text-white">Hangman</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors">
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
+              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
             </button>
           </div>
         </header>
