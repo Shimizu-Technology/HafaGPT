@@ -303,7 +303,7 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 
 **Render Start Command:**
 ```bash
-gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
 ```
 
 **Why 3 workers?**
