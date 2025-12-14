@@ -288,6 +288,118 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 
 ---
 
+### **Priority 4: Performance & Scalability** ⚡
+
+> **Goal:** Reduce response latency and prepare for 100+ concurrent users.
+
+#### **Current Infrastructure** ✅
+
+| Component | Configuration | Status |
+|-----------|--------------|--------|
+| **Render Plan** | Standard ($25/month) | ✅ 1GB RAM |
+| **Gunicorn Workers** | 2 workers | ✅ Parallel requests |
+| **Neon Connection Pooling** | PgBouncer via `-pooler` endpoint | ✅ Handles 100+ connections |
+| **Cloud Embeddings** | OpenAI (not local) | ✅ Saves 500MB RAM |
+
+**Render Start Command:**
+```bash
+gunicorn api.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+```
+
+**Why 2 workers?**
+- Each worker uses ~300-400MB RAM
+- 2 workers on 1GB RAM = safe headroom
+- More workers = more parallel requests, but diminishing returns
+
+**Neon Connection Pooling:**
+- Enabled via Neon dashboard (PgBouncer)
+- `DATABASE_URL` uses `-pooler` suffix: `ep-xxx-pooler.us-east-2.aws.neon.tech`
+- Handles connection reuse automatically - no app-side pooling needed
+
+**How Gunicorn Workers Differ from Uvicorn:**
+
+| Aspect | Uvicorn (default) | Gunicorn + Uvicorn Workers |
+|--------|-------------------|----------------------------|
+| **Processes** | 1 process | Multiple processes (we use 2) |
+| **Parallelism** | Async I/O only (one thread) | True parallelism (separate CPUs) |
+| **Memory** | Shared | Each worker has own memory |
+| **Crash Recovery** | App crashes = downtime | One worker crashes, others continue |
+
+**What's shared between workers:**
+- ✅ Database (PostgreSQL) - all workers query same DB
+- ✅ Freemium limits (`user_daily_usage` table) - stored in DB, works perfectly
+- ✅ External APIs (OpenAI, DeepSeek) - stateless calls
+
+**What's NOT shared (in-memory state):**
+- ⚠️ IP rate limiting (`rate_limit_storage`) - each worker counts separately
+  - Effect: 60 req/min limit becomes ~120 req/min with 2 workers
+  - Impact: Minor - still prevents abuse, just less strict
+- ⚠️ Message cancellation (`_cancelled_messages` set) - may not cancel if different worker
+  - Effect: Rare edge case where cancel doesn't work
+  - Impact: Minimal - response still completes, just not cancelled
+
+**Bottom line:** Freemium limits (5 chats/day, etc.) work perfectly. Only anti-abuse rate limiting is slightly relaxed.
+
+---
+
+#### **Remaining Scalability Work**
+
+| Strategy | Effort | Impact | Status |
+|----------|--------|--------|--------|
+| **Response Caching (Redis)** | 4-6 hrs | High | 📋 Priority |
+| **Shorter Prompts** | 1-2 hrs | Medium | 📋 Planned |
+| **Queue System** | 8-12 hrs | Medium | ⏸️ Future |
+| **Model Auto-Switching** | 2-3 hrs | Medium | ⏸️ Future |
+
+#### **Response Caching (Redis)** 📋 (HIGH PRIORITY)
+
+Cache responses for common translation queries. Same question = instant response.
+
+**How it works:**
+1. Hash the query + mode + skill_level to create a cache key
+2. Check Redis/database for cached response before calling LLM
+3. Store new responses with TTL (e.g., 24 hours)
+4. Cache invalidation when RAG knowledge base updates
+
+**Best candidates for caching:**
+- Simple translations: "How do you say 'hello'?" → always returns "Håfa Adai"
+- Common phrases: "What is 'thank you' in Chamorro?" → always returns "Si Yu'os Ma'åse'"
+- Word of the day queries (already cached separately)
+
+**Not cacheable:**
+- Conversations with history context
+- Document/image analysis
+- Personalized responses (different skill levels may need different caching)
+
+**Effort:** 4-6 hours
+**Impact:** 50-70% of translation queries could be instant
+
+#### **Shorter System Prompts** 📋
+
+Current system prompt is ~800 tokens. Trimming examples and redundant instructions could:
+- Reduce latency by 1-2 seconds
+- Lower API costs by 20-30%
+
+**Approach:**
+1. Audit current prompts for redundancy
+2. Move detailed examples to few-shot format
+3. A/B test shortened prompts against quality metrics
+
+#### **Queue System** ⏸️ (Future)
+
+For high traffic periods, queue requests instead of failing:
+- Redis-based job queue (Bull, Celery)
+- "Thinking..." status while queued
+- Priority queue for premium users
+
+#### **Model Auto-Switching** ⏸️ (Future)
+
+Automatically switch to faster model during high load:
+- DeepSeek V3 (default) → GPT-4o-mini (faster, slightly less accurate)
+- Based on queue depth or response time metrics
+
+---
+
 ### **Future Enhancements** 🔮
 
 | Feature | Status | Notes |
@@ -359,14 +471,17 @@ Users select a learning goal during onboarding (conversation, culture, family, t
 
 | Service | Cost/Month |
 |---------|------------|
+| **Render Standard** | $25 |
+| Neon PostgreSQL | FREE |
 | Clerk (Dev) | FREE |
-| PostgreSQL (Render) | $7 |
 | DeepSeek V3 | $0.50-2 |
 | Gemini 2.5 Flash | $0.05-0.20 |
 | OpenAI Embeddings | $0.30 |
 | OpenAI TTS HD | $0.50-2 |
 | AWS S3 | $0.02-0.10 |
-| **Total** | **~$8-12/month** |
+| **Total** | **~$26-30/month** |
+
+> **Note:** Upgraded from Render Starter ($7) to Standard ($25) for 1GB RAM and 2 Gunicorn workers. Database moved from Render PostgreSQL to Neon (free tier with connection pooling).
 
 ---
 

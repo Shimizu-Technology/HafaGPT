@@ -8,8 +8,30 @@
 |------|-----------|----------|-----------|----------|-------------|
 | Nov 22, 2025 | v1 (60 queries) | **76.7%** | 60.2% | 6.36s | Initial baseline |
 | Dec 5, 2025 | v3 (150 queries) | **98.0%** | 85.4% | 8.40s | DeepSeek V3 + RAG improvements |
+| Dec 14, 2025 | v3 (150 × 12 runs) | **98.7%** avg | - | ~7s | Skill level personalization verified |
 
-### 🚀 Improvement: +21.3% accuracy, +25.2% avg score!
+### 🚀 Total Improvement: +22.0% accuracy from initial baseline!
+
+---
+
+## 🎯 Skill Level Comparison (December 14, 2025)
+
+**Test:** 150 queries × 3 runs per skill level = 1,800 total API calls  
+**Duration:** ~3 hours  
+**API:** Production (hafagpt-api.onrender.com)
+
+| Skill Level | Run 1 | Run 2 | Run 3 | **Average** | Std Dev |
+|-------------|-------|-------|-------|-------------|---------|
+| Baseline | 97.3% | 98.0% | 98.0% | **97.8%** | ±0.3% |
+| Beginner | 98.0% | 98.0% | 100.0% | **98.7%** | ±0.9% |
+| Intermediate | 99.3% | 100.0% | 98.7% | **99.3%** | ±0.5% |
+| Advanced | 98.0% | 100.0% | 99.3% | **99.1%** | ±0.8% |
+
+### Key Insights:
+- 🏆 **Best:** Intermediate (99.3% avg)
+- 📈 **Personalization helps:** All skill levels outperform baseline by 0.9-1.5%
+- 🎯 **3 perfect scores:** Beginner Run 3, Intermediate Run 2, Advanced Run 2
+- ✅ **Very consistent:** Std dev only ±0.3% to ±0.9%
 
 ---
 
@@ -108,16 +130,69 @@
 
 ## 🚀 Running Tests
 
-```bash
-# Start server first
-cd HafaGPT-API && uvicorn api.main:app --host 0.0.0.0 --port 8000
+### Quick Single Run (~15-20 min)
 
-# Run tests in background (recommended for full suite)
-PYTHONUNBUFFERED=1 python -m evaluation.test_evaluation --test-file test_queries_v3.json > evaluation/full_test_output.txt 2>&1 &
+```bash
+# Against local server
+cd HafaGPT-API && source .venv/bin/activate
+uvicorn api.main:app --host 0.0.0.0 --port 8000  # Terminal 1
+
+# Run tests (Terminal 2)
+python -m evaluation.test_evaluation --test-file test_queries_v3.json
+
+# With specific skill level
+python -m evaluation.test_evaluation --test-file test_queries_v3.json --skill-level beginner
+```
+
+### Against Production (~15-20 min)
+
+```bash
+python -m evaluation.test_evaluation \
+  --test-file test_queries_v3.json \
+  --api-url https://hafagpt-api.onrender.com
+```
+
+### Full Comparison Suite (~3 hours)
+
+Runs all 4 skill levels × 3 runs each = 12 test runs (1,800 API calls):
+
+```bash
+cd HafaGPT-API && source .venv/bin/activate
+PYTHONUNBUFFERED=1 nohup python -m evaluation.run_comparison > evaluation/tmp/comparison_output.txt 2>&1 &
 
 # Monitor progress
-tail -f evaluation/full_test_output.txt
+tail -f evaluation/tmp/comparison_output.txt
+
+# Or check quick status
+grep -E "^✅.*Run.*:" evaluation/tmp/comparison_output.txt
 ```
+
+Results saved to `evaluation/tmp/YYYY-MM-DD/comparison/`:
+- `comparison_report.md` - Summary with averages
+- `all_results.json` - Raw data
+- `*_run*.txt` - Individual run logs
+
+### Test Output Location
+
+All test outputs go to `evaluation/tmp/` organized by date (gitignored):
+
+```
+evaluation/tmp/
+└── 2025-12-14/
+    ├── comparison/          ← Multi-run comparison results
+    │   ├── comparison_report.md
+    │   ├── all_results.json
+    │   └── *_run*.txt
+    └── single-runs/         ← Individual test runs (auto-generated)
+        ├── eval_results_*.json
+        └── eval_report_*.txt
+```
+
+**Tracked in git:**
+- `test_queries_v3.json` - Test suite
+- `test_evaluation.py` - Single-run test script
+- `run_comparison.py` - Multi-run comparison script
+- `BASELINE_METRICS.md` - Progress tracking (this file)
 
 ---
 

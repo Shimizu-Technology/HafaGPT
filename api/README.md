@@ -49,15 +49,43 @@ curl http://localhost:8000/api/health
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | FastAPI + Python 3.12 |
-| **Database** | PostgreSQL + PGVector |
+| **Backend** | FastAPI + Python 3.12 + Gunicorn |
+| **Database** | Neon PostgreSQL + PGVector (connection pooling enabled) |
 | **LLM** | DeepSeek V3 (via OpenRouter) |
-| **Embeddings** | OpenAI text-embedding-3-small |
+| **Embeddings** | OpenAI text-embedding-3-small (cloud, not local) |
 | **Auth** | Clerk |
 | **Billing** | Stripe (via Clerk) |
 | **Storage** | AWS S3 |
 | **Frontend** | React 18 + TypeScript + Vite |
-| **Deployment** | Render (API) + Netlify (Frontend) |
+| **Deployment** | Render Standard (API) + Netlify (Frontend) |
+
+### Infrastructure Details
+
+- **Gunicorn**: 2 workers for parallel request handling
+- **Neon Pooling**: PgBouncer via `-pooler` URL suffix (handles 100+ connections)
+- **Cloud Embeddings**: OpenAI instead of local models (saves 500MB RAM)
+- **Render Standard**: 1GB RAM, auto-deploy on push
+
+### Why Gunicorn Instead of Uvicorn?
+
+| Aspect | Uvicorn (default) | Gunicorn + Uvicorn Workers |
+|--------|-------------------|----------------------------|
+| **Processes** | 1 process | Multiple (we use 2) |
+| **Parallelism** | Async I/O only | True parallelism across CPUs |
+| **Memory** | Shared | Each worker has own memory |
+| **Crash Recovery** | App crashes = downtime | One worker crashes, others continue |
+
+**Start Command:**
+```bash
+gunicorn api.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+```
+
+**What works with multiple workers:**
+- ✅ Freemium limits (5 chats/day, etc.) - stored in database
+- ✅ All database queries - workers share the same DB
+- ⚠️ IP rate limiting - in-memory, so ~2x more lenient with 2 workers (minor)
+
+> See [IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md) for full infrastructure documentation.
 
 ---
 
@@ -139,12 +167,13 @@ CHAT_MODEL=deepseek-v3          # Model selection
 
 | Service | Cost |
 |---------|------|
-| PostgreSQL (Render) | $7 |
+| Render Standard (API) | $25 |
+| Neon PostgreSQL | $0 (free tier) |
 | DeepSeek V3 | $0.50-2 |
 | OpenAI Embeddings | $0.30 |
 | OpenAI TTS | $0.50-2 |
 | AWS S3 | $0.05 |
-| **Total** | **~$8-12** |
+| **Total** | **~$26-30** |
 
 ---
 

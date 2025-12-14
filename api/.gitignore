@@ -48,3 +48,14 @@ conversation_logs_*.jsonl
 
 # Note: dictionary_data/ is NOT ignored - needed for vocabulary API
 # The JSON files (~6MB total) are required for the dictionary service
+
+# Evaluation test outputs (generated, not tracked)
+evaluation/tmp/
+evaluation/comparison_results/
+evaluation/comparison_output.txt
+evaluation/prod_test_*.txt
+evaluation/skill_test_*.txt
+evaluation/eval_results_*.json
+evaluation/eval_report_*.txt
+evaluation/full_test_output.txt
+# Keep: test_queries_v3.json, test_evaluation.py, run_comparison.py, BASELINE_METRICS.md

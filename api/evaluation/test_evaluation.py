@@ -88,42 +88,60 @@ def check_keywords_present(response: str, expected_keywords: List[str]) -> tuple
     passed = len(found_keywords) > 0
     return passed, found_keywords
 
-def send_query(api_url: str, query: str, mode: str = 'english', skill_level: str = None) -> Optional[Dict]:
-    """Send a query to the chatbot API and return the response."""
-    try:
-        # Use the evaluation endpoint which doesn't require auth
-        payload = {
-            'message': query,
-            'mode': mode,
-            'session_id': f'eval_session_{int(time.time())}'
-        }
-        
-        # Add skill_level if provided
-        if skill_level:
-            payload['skill_level'] = skill_level
-        
-        response = requests.post(
-            f"{api_url}/api/eval/chat",
-            json=payload,
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"{Colors.RED}Error: API returned status {response.status_code}{Colors.END}")
-            return None
+def send_query(api_url: str, query: str, mode: str = 'english', skill_level: str = None, max_retries: int = 5) -> Optional[Dict]:
+    """Send a query to the chatbot API and return the response.
+    
+    Includes retry logic with exponential backoff for rate limits (429).
+    """
+    retry_count = 0
+    base_wait = 10  # Start with 10 seconds for rate limit backoff
+    
+    while retry_count <= max_retries:
+        try:
+            # Use the evaluation endpoint which doesn't require auth
+            payload = {
+                'message': query,
+                'mode': mode,
+                'session_id': f'eval_session_{int(time.time())}'
+            }
             
-    except requests.exceptions.ConnectionError:
-        print(f"{Colors.RED}Error: Could not connect to API at {api_url}{Colors.END}")
-        print(f"Make sure the backend server is running!")
-        sys.exit(1)
-    except requests.exceptions.Timeout:
-        print(f"{Colors.YELLOW}Warning: Query timed out{Colors.END}")
-        return None
-    except Exception as e:
-        print(f"{Colors.RED}Error: {str(e)}{Colors.END}")
-        return None
+            # Add skill_level if provided
+            if skill_level:
+                payload['skill_level'] = skill_level
+            
+            response = requests.post(
+                f"{api_url}/api/eval/chat",
+                json=payload,
+                timeout=90  # Increased for parallel testing against production
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 429:
+                # Rate limited - wait and retry
+                retry_count += 1
+                wait_time = base_wait * (2 ** (retry_count - 1))  # Exponential backoff
+                wait_time = min(wait_time, 120)  # Cap at 2 minutes
+                print(f"{Colors.YELLOW}⏳ Rate limited. Waiting {wait_time}s... (attempt {retry_count}/{max_retries}){Colors.END}")
+                time.sleep(wait_time)
+                continue
+            else:
+                print(f"{Colors.RED}Error: API returned status {response.status_code}{Colors.END}")
+                return None
+                
+        except requests.exceptions.ConnectionError:
+            print(f"{Colors.RED}Error: Could not connect to API at {api_url}{Colors.END}")
+            print(f"Make sure the backend server is running!")
+            sys.exit(1)
+        except requests.exceptions.Timeout:
+            print(f"{Colors.YELLOW}Warning: Query timed out{Colors.END}")
+            return None
+        except Exception as e:
+            print(f"{Colors.RED}Error: {str(e)}{Colors.END}")
+            return None
+    
+    print(f"{Colors.RED}Error: Max retries ({max_retries}) exceeded for rate limiting{Colors.END}")
+    return None
 
 def calculate_score(passed: bool, found_keywords: List[str], expected_keywords: List[str]) -> float:
     """
@@ -370,8 +388,8 @@ def main():
     parser.add_argument('--limit', type=int, help='Limit number of queries to test')
     parser.add_argument('--api-url', default='http://localhost:8000',
                        help='API endpoint URL')
-    parser.add_argument('--output', default='./evaluation',
-                       help='Output directory for results')
+    parser.add_argument('--output', default='./evaluation/tmp',
+                       help='Output directory for results (default: evaluation/tmp, gitignored)')
     parser.add_argument('--test-file', default='test_queries.json',
                        help='Test file to use (default: test_queries.json, or use test_queries_v2.json for 100 tests)')
     parser.add_argument('--category', type=str, 
@@ -382,8 +400,11 @@ def main():
     # Setup
     script_dir = Path(__file__).parent
     test_file = script_dir / args.test_file
-    output_dir = Path(args.output)
-    output_dir.mkdir(exist_ok=True)
+    
+    # Organize outputs by date
+    today = datetime.now().strftime('%Y-%m-%d')
+    output_dir = Path(args.output) / today
+    output_dir.mkdir(parents=True, exist_ok=True)
     
     # Check if test file exists
     if not test_file.exists():
