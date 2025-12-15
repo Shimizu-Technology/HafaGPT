@@ -1,5 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
-import { SignIn } from '@clerk/clerk-react';
+import { useUser, SignInButton, SignUpButton } from '@clerk/clerk-react';
 import { useLocation, Link } from 'react-router-dom';
 import { 
   MessageSquare, 
@@ -10,7 +9,9 @@ import {
   BarChart3,
   ArrowLeft,
   Sparkles,
-  Check
+  Check,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { usePromoStatus } from '../hooks/useSubscription';
 
@@ -124,92 +125,81 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-6 sm:py-10">
-          <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
-            {/* Feature Info - Left Side */}
-            <div className="w-full lg:w-1/2 lg:sticky lg:top-24">
-              {/* Feature Header */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200 dark:border-slate-700 mb-4">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${featureInfo.color}-100 to-${featureInfo.color}-200 dark:from-${featureInfo.color}-900/30 dark:to-${featureInfo.color}-800/30 flex items-center justify-center mb-4`}>
-                  <FeatureIcon className={`w-8 h-8 text-${featureInfo.color}-600 dark:text-${featureInfo.color}-400`} />
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
-                  {featureInfo.title}
-                </h1>
-                <p className="text-brown-600 dark:text-gray-400">
-                  {featureInfo.description}
-                </p>
-              </div>
-
-              {/* Benefits */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200 dark:border-slate-700">
-                <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide mb-4">
-                  What you'll get
-                </h3>
-                <ul className="space-y-3">
-                  {featureInfo.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <span className="text-brown-700 dark:text-gray-300">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-                
-                {/* Free Account Banner */}
-                <div className="mt-6 p-4 bg-gradient-to-r from-coral-50 to-coral-100 dark:from-ocean-900/20 dark:to-ocean-800/20 rounded-xl border border-coral-200 dark:border-ocean-700">
-                  <p className="text-sm font-medium text-coral-700 dark:text-ocean-300">
-                    ✨ Creating an account is <span className="font-bold">100% free</span>
-                  </p>
-                  <p className="text-xs text-coral-600 dark:text-ocean-400 mt-1">
-                    No credit card required. Start learning immediately.
-                  </p>
-                </div>
+        <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+          {/* Feature Card */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-cream-200 dark:border-slate-700">
+            {/* Logo & Title */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 mb-3">
+                <span className="text-3xl">{isChristmasTheme ? '🎄' : '🌺'}</span>
+                <span className="text-2xl font-bold text-brown-800 dark:text-white">HåfaGPT</span>
               </div>
             </div>
 
-            {/* Sign In Form - Right Side */}
-            <div className="w-full lg:w-1/2">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200 dark:border-slate-700">
-                <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-2 mb-2">
-                    <span className="text-2xl">{isChristmasTheme ? '🎄' : '🌺'}</span>
-                    <h2 className="text-xl font-bold text-brown-800 dark:text-white">HåfaGPT</h2>
-                  </div>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">
-                    Sign in or create a free account
-                  </p>
-                </div>
-                
-                <SignIn 
-                  routing="hash"
-                  signUpUrl="#/sign-up"
-                  appearance={{
-                    elements: {
-                      rootBox: 'mx-auto w-full',
-                      card: 'shadow-none border-0 p-0 bg-transparent',
-                      headerTitle: 'hidden',
-                      headerSubtitle: 'hidden',
-                      socialButtonsBlockButton: 'border border-cream-200 dark:border-slate-600',
-                      formFieldInput: 'border-cream-200 dark:border-slate-600 focus:ring-coral-500 dark:focus:ring-ocean-500',
-                      formButtonPrimary: 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700',
-                      footerActionLink: 'text-coral-600 dark:text-ocean-400 hover:text-coral-700 dark:hover:text-ocean-300',
-                    }
-                  }}
-                />
+            {/* Feature Info */}
+            <div className="text-center mb-6">
+              <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center mb-4`}>
+                <FeatureIcon className="w-8 h-8 text-coral-600 dark:text-ocean-400" />
               </div>
-
-              {/* Explore Free Content */}
-              <div className="mt-4 text-center">
-                <p className="text-sm text-brown-500 dark:text-gray-500">
-                  Just browsing?{' '}
-                  <Link to="/vocabulary" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
-                    Explore free content →
-                  </Link>
-                </p>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
+                {featureInfo.title}
+              </h1>
+              <p className="text-brown-600 dark:text-gray-400">
+                {featureInfo.description}
+              </p>
             </div>
+
+            {/* Benefits */}
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6">
+              <ul className="space-y-2">
+                {featureInfo.benefits.map((benefit, index) => (
+                  <li key={index} className="flex items-center gap-3">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span className="text-sm text-brown-700 dark:text-gray-300">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CTA Section */}
+            <div className="space-y-3">
+              <p className="text-center text-sm text-brown-600 dark:text-gray-400 mb-4">
+                Sign in to access <span className="font-semibold">{featureInfo.title}</span>
+              </p>
+
+              {/* Primary CTA - Sign Up */}
+              <SignUpButton mode="modal">
+                <button className="w-full py-3.5 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                  <UserPlus className="w-5 h-5" />
+                  Create Free Account
+                </button>
+              </SignUpButton>
+
+              {/* Secondary CTA - Sign In */}
+              <SignInButton mode="modal">
+                <button className="w-full py-3 border-2 border-coral-300 dark:border-ocean-500 text-coral-600 dark:text-ocean-400 hover:bg-coral-50 dark:hover:bg-ocean-900/30 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                  <LogIn className="w-5 h-5" />
+                  Already have an account? Sign In
+                </button>
+              </SignInButton>
+
+              {/* Free Account Note */}
+              <p className="text-center text-xs text-brown-500 dark:text-gray-500 pt-2">
+                ✨ 100% free • No credit card required
+              </p>
+            </div>
+          </div>
+
+          {/* Explore Free Content */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-brown-500 dark:text-gray-500">
+              Just browsing?{' '}
+              <Link to="/vocabulary" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
+                Explore free content →
+              </Link>
+            </p>
           </div>
         </div>
       </div>
@@ -219,4 +209,3 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // User is authenticated, render the protected content
   return <>{children}</>;
 }
-
