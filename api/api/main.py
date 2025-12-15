@@ -2961,7 +2961,7 @@ def get_guam_date() -> date:
 
 # Default daily limits for free users
 FREE_TIER_LIMITS = {
-    "chat": 5,
+    "chat": 8,
     "game": 10,
     "quiz": 5
 }

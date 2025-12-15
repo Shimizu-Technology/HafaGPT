@@ -433,11 +433,35 @@ Automatically switch to faster model during high load:
 - Fallback message for unsupported browsers
 - **Effort:** 2-3 hours
 
-#### **Share Conversations** (Next)
-- "Copy to clipboard" button on conversations
-- Format: Q&A text with Chamorro words
-- Future: Generate shareable public link
-- **Effort:** 2-4 hours
+#### **Share Conversations** (Planned)
+> **Goal:** Generate public shareable links so users can share conversations with friends/family.
+
+**What it does:**
+- Click "Share" → generates a public link (e.g., `hafagpt.com/share/abc123`)
+- Anyone with link can view the conversation (read-only, no auth required)
+- Beautiful read-only view with "Try HåfaGPT" CTA for new users
+
+**Backend:**
+```python
+# New table
+shared_conversations (
+  id, share_id (uuid), conversation_id, 
+  user_id, created_at, expires_at, view_count
+)
+
+# New endpoints
+POST /api/conversations/:id/share → creates share, returns share_id
+GET /api/share/:share_id → returns conversation (public, no auth)
+DELETE /api/share/:share_id → revoke share (owner only)
+```
+
+**Frontend:**
+- New public route: `/share/:shareId` (read-only conversation view)
+- Share button in chat header/sidebar
+- Copy link modal with success toast
+- Optional: expiration settings (24h, 7d, never)
+
+**Effort:** 6-8 hours
 
 #### **New Learning Games**
 
@@ -523,7 +547,7 @@ Automatically switch to faster model during high load:
 
 | Feature | Free | Premium |
 |---------|------|---------|
-| Chat messages | 5/day | Unlimited |
+| Chat messages | 8/day | Unlimited |
 | Games | 10/day | Unlimited |
 | Quizzes | 5/day | Unlimited |
 | Vocabulary | Unlimited | Unlimited |
