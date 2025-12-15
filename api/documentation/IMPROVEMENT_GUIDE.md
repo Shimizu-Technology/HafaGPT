@@ -416,12 +416,14 @@ Automatically switch to faster model during high load:
 
 | Feature | Status | Notes |
 |---------|--------|-------|
+| Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
-| Share Conversations | 📋 Next | Copy conversation to clipboard, shareable links |
+| Share Conversations | 📋 Next | Shareable public links for conversations |
+| Pre-Reader Games | 📋 Planned | Audio-first games for young children |
+| LearningChamoru Partnership | 📋 Explore | Potential collaboration for native speaker audio |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
 | New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
 | Admin Settings Polish | ✅ Done | Last Active tracking, Settings quick action, toggle styling |
-| Audio Features (Chamorro TTS) | ⏸️ Deferred | Waiting for quality TTS |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
 | ElevenLabs Voice Cloning | 📋 Future | Better pronunciation |
 | PostHog + Stripe Analytics | 📋 Future | Revenue correlation |
@@ -462,6 +464,90 @@ DELETE /api/share/:share_id → revoke share (owner only)
 - Optional: expiration settings (24h, 7d, never)
 
 **Effort:** 6-8 hours
+
+#### **Quiz TTS (Audio)** 🔨 IN PROGRESS
+
+> **Goal:** Add text-to-speech to quizzes for accessibility and young learners.
+
+**What it does:**
+- 🔊 Speaker button reads the question aloud
+- 🔊 Optional: read answer options (for multiple choice)
+- 🔊 Uses existing `useSpeech` hook (OpenAI TTS → browser fallback)
+- Great for kids who can't read yet, visual impairments, or audio learners
+
+**Implementation:**
+- Add `useSpeech` hook to `QuizViewer.tsx`
+- Speaker icon next to question text
+- Auto-play option in settings (optional future)
+
+**Effort:** 2-3 hours
+
+#### **Pre-Reader Learning Games** 📋 PLANNED
+
+> **Goal:** Games that don't require reading, perfect for young children at Hurao Academy.
+
+**Design Principles:**
+1. **Audio-first** — All instructions spoken, not written
+2. **Big touch targets** — Large, colorful buttons
+3. **Immediate feedback** — Sounds/animations for correct/wrong
+4. **No text required** — Pictures and audio only
+5. **Positive reinforcement** — Stars, celebrations, no harsh "wrong" sounds
+
+**Planned Games:**
+
+| Game | How It Works | Skills | Effort |
+|------|--------------|--------|--------|
+| **🎵 Sound Match** | Hear a Chamorro word, tap the matching picture | Listening, vocabulary | 4-6 hrs |
+| **🖼️ Picture Pairs** | Memory match with images only (no text) | Visual memory, vocabulary | 3-4 hrs |
+| **🎨 Color Touch** | "Tap the BLUE one" (Chamorro audio) | Colors, listening | 3-4 hrs |
+| **🔢 Number Tap** | "Tap 3 coconuts" (Chamorro audio) | Numbers, counting | 3-4 hrs |
+| **👆 Simon Says** | "Touch your nose" (Chamorro audio) | Body parts, commands | 4-5 hrs |
+
+**Priority:** Start with **Sound Match** and **Picture Pairs** — highest impact, moderate effort.
+
+#### **LearningChamoru.com — Learn & Build First (Option A)** 📋 IN PROGRESS
+
+> **Strategy:** Learn from their approach quietly, build traction, then explore collaboration later with more leverage.
+
+**About LearningChamoru:**
+- Free Chamorro learning platform, 36,000+ registered learners
+- Native speaker audio recordings (huge asset!)
+- Partnership with University of Guam and CHamoru Language Commission
+- 25 structured lessons based on Topping's textbook
+- Older web design — HåfaGPT's modern UX is a differentiator
+
+**Why We're Complements, Not Competitors:**
+| LearningChamoru | HåfaGPT |
+|-----------------|---------|
+| Structured lessons (25 progressive) | AI chat (ask anything) |
+| Native speaker audio | TTS approximation |
+| Self-paced modules | Interactive games, quizzes |
+| Established (36,000 users) | New, innovative |
+
+**Phase 1: Learn Quietly (Current)**
+- [x] Create account and explore their platform
+- [ ] Analyze their 25-lesson structure and progression
+- [ ] Note UX patterns worth adopting (skill levels, community features)
+- [ ] Check our RAG for Topping's Dictionary/textbook content
+- [x] Add LearningChamoru as a resource link in our app (goodwill gesture)
+
+**Phase 2: Build Traction**
+- [ ] Get more users (schools like Hurao Academy)
+- [ ] Collect testimonials and success stories
+- [ ] Establish HåfaGPT as a credible Chamorro learning tool
+
+**Phase 3: Explore Collaboration (Future)**
+- [ ] Reach out to Dr. Gerhard Schwab or team
+- [ ] Position as complementary (AI chat + their structured lessons)
+- [ ] Explore audio licensing, cross-promotion, or integration
+
+**Public Resources We Can Use (With Attribution):**
+- ✅ Topping's Dictionary (published reference work)
+- ✅ Lesson structure concepts (25-lesson progression is public knowledge)
+- ✅ Grammar rules and concepts (not copyrightable)
+- ❌ Their specific text/audio (need permission)
+
+**Note:** Do NOT scrape their content. Respect their intellectual property. Build relationship before asking for anything.
 
 #### **New Learning Games**
 
