@@ -256,8 +256,8 @@ export function HomePage() {
 
         {/* What's Available Section - Only show when NOT signed in */}
         {!isSignedIn && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg border border-cream-200 dark:border-slate-700">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-5 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
               {/* Free Features */}
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
@@ -275,13 +275,16 @@ export function HomePage() {
               
               {/* Sign-up Features */}
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-1">
                   <Lock className="w-4 h-4 text-coral-500 dark:text-ocean-400" />
                   <span className="text-sm font-semibold text-coral-600 dark:text-ocean-400">Free Account</span>
                 </div>
                 <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400">
-                  5 AI chats, 10 games & 5 quizzes daily
+                  8 AI chats, 10 games & 5 quizzes daily
                 </p>
+                <Link to="/pricing" className="text-xs text-coral-500 dark:text-ocean-400 hover:underline mt-1 inline-block">
+                  See Premium →
+                </Link>
               </div>
             </div>
           </div>
@@ -338,7 +341,7 @@ export function HomePage() {
           </h3>
           
           {/* Mobile: Horizontal scrollable row */}
-          <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          <div className="sm:hidden flex gap-3 overflow-x-auto pt-3 pb-2 -mx-4 px-4 scrollbar-hide">
             {/* Chat - Account Required */}
             <Link
               to="/chat"
@@ -402,8 +405,8 @@ export function HomePage() {
               className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 active:scale-95 transition-all"
             >
               {!isSignedIn && (
-                <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-emerald-500 rounded-full shadow-sm">
-                  <span className="text-[8px] font-bold text-white">FREE</span>
+                <div className="absolute -top-1.5 -right-1.5 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white leading-none">FREE</span>
                 </div>
               )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
@@ -421,8 +424,8 @@ export function HomePage() {
               className="relative flex-shrink-0 flex flex-col items-center gap-2 p-4 w-28 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 active:scale-95 transition-all"
             >
               {!isSignedIn && (
-                <div className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-emerald-500 rounded-full shadow-sm">
-                  <span className="text-[8px] font-bold text-white">FREE</span>
+                <div className="absolute -top-1.5 -right-1.5 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-white leading-none">FREE</span>
                 </div>
               )}
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-800/30 flex items-center justify-center">
@@ -560,8 +563,8 @@ export function HomePage() {
               className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md transition-all group"
             >
               {!isSignedIn && (
-                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm">
-                  <span className="text-[10px] font-bold text-white">FREE</span>
+                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white leading-none">FREE</span>
                 </div>
               )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 flex items-center justify-center">
@@ -580,8 +583,8 @@ export function HomePage() {
               className="relative flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500 hover:shadow-md transition-all group"
             >
               {!isSignedIn && (
-                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm">
-                  <span className="text-[10px] font-bold text-white">FREE</span>
+                <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-emerald-500 rounded-full shadow-sm flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white leading-none">FREE</span>
                 </div>
               )}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/30 dark:to-orange-800/30 flex items-center justify-center">

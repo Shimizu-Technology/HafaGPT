@@ -14,13 +14,14 @@ import {
   Zap,
   Crown,
   ChevronDown,
-  Settings
+  Settings,
+  Clock
 } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
 
 const features = {
   free: [
-    { text: "5 AI chat messages per day", icon: MessageSquare },
+    { text: "8 AI chat messages per day", icon: MessageSquare },
     { text: "10 learning games per day", icon: Gamepad2 },
     { text: "5 quizzes per day", icon: GraduationCap },
     { text: "Unlimited vocabulary browsing", icon: BookOpen },
@@ -136,11 +137,11 @@ export function PricingPage() {
 
           {/* Premium Plan */}
           <div className="relative flex flex-col bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 sm:p-8 border-2 border-coral-300 dark:border-ocean-400 shadow-xl dark:shadow-ocean-500/20">
-            {/* Popular badge */}
+            {/* Early Adopter badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white text-xs font-semibold rounded-full shadow-lg">
-                <Crown className="w-3 h-3" />
-                MOST POPULAR
+              <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full shadow-lg">
+                <Clock className="w-3 h-3" />
+                EARLY ADOPTER PRICING
               </div>
             </div>
 
@@ -155,16 +156,26 @@ export function PricingPage() {
             </div>
 
             <div className="mb-2">
-              <span className="text-4xl font-bold text-brown-800 dark:text-white">$4.99</span>
+              <span className="text-4xl font-bold text-brown-800 dark:text-white">$2.99</span>
               <span className="text-brown-600 dark:text-gray-400">/month</span>
             </div>
-            <div className="mb-6 flex items-center gap-2">
+            <div className="mb-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-brown-600 dark:text-gray-400">
-                or $39.99/year
+                or $23.88/year
               </span>
               <span className="text-xs px-2 py-0.5 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-full font-medium">
                 Save 33%
               </span>
+            </div>
+            
+            {/* Beta pricing note */}
+            <div className="mb-6 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl">
+              <p className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                <Crown className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Special beta pricing!</strong> Get unlimited access while we continue adding new features.
+                </span>
+              </p>
             </div>
 
             <ul className="space-y-3 flex-1">
@@ -265,6 +276,15 @@ export function PricingPage() {
           </h3>
           
           <div className="space-y-4">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-cream-200 dark:border-slate-700">
+              <h4 className="font-semibold text-brown-800 dark:text-white mb-2">
+                What is "Early Adopter Pricing"?
+              </h4>
+              <p className="text-sm text-brown-600 dark:text-gray-400">
+                We're still in beta and adding new features regularly! Early adopters get special discounted pricing while we continue to improve the platform.
+              </p>
+            </div>
+
             <div className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-cream-200 dark:border-slate-700">
               <h4 className="font-semibold text-brown-800 dark:text-white mb-2">
                 When do my free uses reset?
