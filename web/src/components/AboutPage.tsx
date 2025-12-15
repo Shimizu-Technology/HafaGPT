@@ -128,6 +128,7 @@ export function AboutPage() {
               <a href="https://lengguahita.com" target="_blank" rel="noopener noreferrer" className="text-coral-600 dark:text-ocean-400 hover:underline">Lengguahi-ta</a>,{' '}
               <a href="https://www.guampdn.com" target="_blank" rel="noopener noreferrer" className="text-coral-600 dark:text-ocean-400 hover:underline">Pacific Daily News</a>,{' '}
               <a href="http://www.chamoru.info" target="_blank" rel="noopener noreferrer" className="text-coral-600 dark:text-ocean-400 hover:underline">Chamoru.info</a>,{' '}
+              <a href="https://learningchamoru.com" target="_blank" rel="noopener noreferrer" className="text-coral-600 dark:text-ocean-400 hover:underline">LearningChamoru.com</a>,{' '}
               Dr. Sandra Chung's Grammar, and Topping's Dictionary for making this possible.
             </p>
             

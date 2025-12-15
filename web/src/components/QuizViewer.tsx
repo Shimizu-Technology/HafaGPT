@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen } from 'lucide-react';
+import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from './Dashboard';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
@@ -8,6 +8,7 @@ import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabular
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
+import { useSpeech } from '../hooks/useSpeech';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -50,6 +51,7 @@ export function QuizViewer() {
   const saveQuizResultMutation = useSaveQuizResult();
   const startTimeRef = useRef<number>(Date.now());
   const { canUse, tryUse, getCount, getLimit, isLoading: subscriptionLoading } = useSubscription();
+  const { speak, isSpeaking, stop } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [usageChecked, setUsageChecked] = useState(false);
   const usageCheckRef = useRef(false); // Prevent double-checking
@@ -76,6 +78,34 @@ export function QuizViewer() {
   const [showHint, setShowHint] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
+
+  // Format question for TTS based on question type
+  const formatQuestionForSpeech = (question: QuizQuestion): string => {
+    const questionType = question.type;
+    const questionText = question.question;
+    const hint = question.hint;
+    
+    if (questionType === 'fill_blank') {
+      // For fill-in-the-blank, make it more natural
+      // Replace underscores/blanks with "blank"
+      const spokenQuestion = questionText.replace(/_{2,}|_+/g, '... blank ...');
+      let speech = spokenQuestion;
+      if (hint) {
+        speech += `. Hint: ${hint}`;
+      }
+      return speech;
+    } else if (questionType === 'type_answer') {
+      // For type-answer, include the hint if available
+      let speech = questionText;
+      if (hint) {
+        speech += `. Hint: ${hint}`;
+      }
+      return speech;
+    } else {
+      // Multiple choice - just read the question
+      return questionText;
+    }
+  };
 
   // Browser warning when leaving mid-quiz
   const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
@@ -500,9 +530,24 @@ export function QuizViewer() {
                    currentQuestion.type === 'type_answer' ? 'Type Your Answer' : 'Fill in the Blank'}
                 </span>
               </div>
-              <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed">
-                {currentQuestion.question}
-              </h2>
+              <div className="flex items-start gap-3">
+                <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
+                  {currentQuestion.question}
+                </h2>
+                <button
+                  onClick={() => isSpeaking ? stop() : speak(formatQuestionForSpeech(currentQuestion))}
+                  className={`p-2 rounded-full transition-all flex-shrink-0 ${
+                    isSpeaking 
+                      ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse' 
+                      : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
+                  }`}
+                  title={isSpeaking ? 'Stop' : 'Read question aloud'}
+                >
+                  <div className="flex items-center justify-center">
+                    <Volume2 className="w-5 h-5" />
+                  </div>
+                </button>
+              </div>
               
               {/* Hint - Show automatically for type_answer and fill_blank, toggle for multiple_choice */}
               {currentQuestion.hint && answerState === 'unanswered' && (
@@ -563,20 +608,42 @@ export function QuizViewer() {
                           answerState === 'unanswered' ? 'active:scale-98' : ''
                         }`}
                       >
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
-                            {String.fromCharCode(65 + idx)}
-                          </span>
-                          <span className="font-medium text-brown-800 dark:text-white text-sm sm:text-base">
-                            {option}
-                          </span>
-                          {answerState !== 'unanswered' && isCorrectOption && (
-                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 ml-auto flex-shrink-0" />
-                          )}
-                          {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
-                            <X className="w-5 h-5 text-red-600 dark:text-red-400 ml-auto flex-shrink-0" />
-                          )}
-                        </div>
+<div className="flex items-center gap-2 sm:gap-3">
+                                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+                                            {String.fromCharCode(65 + idx)}
+                                          </span>
+                                          <span className="font-medium text-brown-800 dark:text-white text-sm sm:text-base flex-1">
+                                            {option}
+                                          </span>
+                                          {/* Speaker icon for option - use span to avoid button-in-button */}
+                                          {answerState === 'unanswered' && (
+                                            <span
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                speak(option);
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                  e.stopPropagation();
+                                                  e.preventDefault();
+                                                  speak(option);
+                                                }
+                                              }}
+                                              className="w-8 h-8 rounded-full bg-cream-100 dark:bg-slate-700 text-brown-500 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 flex items-center justify-center cursor-pointer"
+                                              title="Read option aloud"
+                                            >
+                                              <Volume2 className="w-4 h-4" />
+                                            </span>
+                                          )}
+                                          {answerState !== 'unanswered' && isCorrectOption && (
+                                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                          )}
+                                          {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
+                                            <X className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                          )}
+                                        </div>
                       </button>
                     );
                   })}
