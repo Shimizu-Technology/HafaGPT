@@ -9,6 +9,9 @@
 | Nov 22, 2025 | v1 (60 queries) | **76.7%** | 60.2% | 6.36s | Initial baseline |
 | Dec 5, 2025 | v3 (150 queries) | **98.0%** | 85.4% | 8.40s | DeepSeek V3 + RAG improvements |
 | Dec 14, 2025 | v3 (150 × 12 runs) | **98.7%** avg | - | ~7s | Skill level personalization verified |
+| Dec 14, 2025 | v4 (50 queries) | **100%** | 87.0% | 7.88s | IKNM/KAM, Orthographies PDF, Finder List |
+| Dec 14, 2025 | v5 (40 queries) | **97.5%** | 80.8% | 11.71s | Guampedia, PDN, Lengguahi-ta, Blog |
+| Dec 14, 2025 | **Comprehensive (240)** | - | - | - | Combined V3+V4+V5 for full coverage |
 
 ### 🚀 Total Improvement: +22.0% accuracy from initial baseline!
 
@@ -120,25 +123,47 @@
 
 ## 🗂️ Test Files
 
-| File | Description |
-|------|-------------|
-| `test_queries_v3.json` | Current test suite (150 queries) |
-| `eval_results_*.json` | Full results with actual responses |
-| `eval_report_*.txt` | Human-readable summary |
+| File | Queries | Description |
+|------|---------|-------------|
+| `test_queries_comprehensive.json` | **240** | Full test suite (V3+V4+V5 combined) |
+| `test_queries_v3.json` | 150 | Core tests (translations, grammar, cultural) |
+| `test_queries_v4.json` | 50 | New resources (IKNM, Orthographies, Finder List) |
+| `test_queries_v5.json` | 40 | Source coverage (Guampedia, PDN, Lengguahi-ta, Blog) |
+| `eval_results_*.json` | - | Full results with actual responses |
+| `eval_report_*.txt` | - | Human-readable summary |
+
+### 📚 RAG Sources Tested
+
+| Source | Chunks | Tested In |
+|--------|--------|-----------|
+| Dictionaries (Topping, Revised, Chamoru.info) | 29,089 | V3 (indirect) |
+| Chamorro Grammar (Chung) | 1,492 | V3 |
+| IKNM/KAM Dictionary (2025) | 35 | V4 |
+| Two Orthographies PDF | 10 | V4 |
+| English-Chamorro Finder List PDF | 173 | V4 |
+| Guampedia | 11,144 | V3/V5 |
+| Pacific Daily News | 188 | V5 |
+| Lengguahi-ta | 248 | V5 |
+| Fino'Chamoru Blog | 454 | V5 |
 
 ---
 
 ## 🚀 Running Tests
 
-### Quick Single Run (~15-20 min)
+### Quick Single Run
 
 ```bash
 # Against local server
 cd HafaGPT-API && source .venv/bin/activate
 uvicorn api.main:app --host 0.0.0.0 --port 8000  # Terminal 1
 
-# Run tests (Terminal 2)
-python -m evaluation.test_evaluation --test-file test_queries_v3.json
+# Run comprehensive tests (240 queries, ~30-40 min)
+python -m evaluation.test_evaluation --test-file test_queries_comprehensive.json
+
+# Or run individual test suites
+python -m evaluation.test_evaluation --test-file test_queries_v3.json  # Core (150)
+python -m evaluation.test_evaluation --test-file test_queries_v4.json  # New resources (50)
+python -m evaluation.test_evaluation --test-file test_queries_v5.json  # Source coverage (40)
 
 # With specific skill level
 python -m evaluation.test_evaluation --test-file test_queries_v3.json --skill-level beginner
@@ -189,12 +214,45 @@ evaluation/tmp/
 ```
 
 **Tracked in git:**
-- `test_queries_v3.json` - Test suite
+- `test_queries_comprehensive.json` - Full test suite (240 queries)
+- `test_queries_v3.json` - Core test suite (150 queries)
+- `test_queries_v4.json` - New resources (50 queries)
+- `test_queries_v5.json` - Source coverage (40 queries)
 - `test_evaluation.py` - Single-run test script
 - `run_comparison.py` - Multi-run comparison script
 - `BASELINE_METRICS.md` - Progress tracking (this file)
 
 ---
 
-**Bottom Line:** We went from 76.7% → 98.0% accuracy through model switching (DeepSeek V3) and RAG improvements. The chatbot now handles translations, grammar, cultural questions, and conversational scenarios with excellent accuracy. 🎯
+---
+
+## 🆕 V4 Results: New Resources (December 14, 2025)
+
+**Test Suite:** v4.0 (50 queries targeting IKNM/KAM, Two Orthographies, Finder List)
+
+| Category | Accuracy |
+|----------|----------|
+| Orthography (Two Orthographies PDF) | 100% (12/12) |
+| Finder List Vocabulary | 100% (18/18) |
+| IKNM Grammar | 100% (10/10) |
+| Less Common Words | 100% (10/10) |
+| **Overall** | **100% (50/50)** |
+
+---
+
+## 🆕 V5 Results: Source Coverage (December 14, 2025)
+
+**Test Suite:** v5.0 (40 queries testing previously untested sources)
+
+| Category | Accuracy |
+|----------|----------|
+| Guampedia Cultural | 100% (12/12) |
+| Lengguahi-ta Grammar | 100% (10/10) |
+| PDN Bilingual | 100% (8/8) |
+| Fino'Chamoru Blog Vocabulary | 90% (9/10) |
+| **Overall** | **97.5% (39/40)** |
+
+---
+
+**Bottom Line:** We went from 76.7% → 98.0%+ accuracy through model switching (DeepSeek V3) and RAG improvements. Added 45,000+ knowledge chunks from 9+ sources including IKNM/KAM Dictionary, orthography guides, and native speaker content. The chatbot now handles translations, grammar, cultural questions, orthography differences, and conversational scenarios with excellent accuracy across all major sources. 🎯
 

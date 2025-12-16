@@ -1,0 +1,417 @@
+{
+  "metadata": {
+    "created": "2025-12-14",
+    "version": "4.0",
+    "total_queries": 50,
+    "description": "Targeted test suite for new RAG resources: IKNM/KAM Dictionary, Two Orthographies PDF, English-Chamorro Finder List",
+    "categories": {
+      "orthography": 12,
+      "finder_list_vocabulary": 18,
+      "iknm_grammar": 10,
+      "less_common_words": 10
+    },
+    "purpose": "Ensure new resources (Dec 2024) are being used and cited correctly"
+  },
+  "test_queries": [
+    {
+      "id": 1,
+      "query": "What are the differences between Guam and CNMI Chamorro spelling?",
+      "expected_keywords": ["one sound", "one symbol", "one word", "one spelling", "CNMI", "Guam", "orthograph"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Should cite Two Orthographies PDF - explains the two principles"
+    },
+    {
+      "id": 2,
+      "query": "How is the glottal stop written in Chamorro?",
+      "expected_keywords": ["'", "glota", "apostrophe"],
+      "category": "orthography",
+      "difficulty": "easy",
+      "notes": "Should explain glottal stop symbol and usage"
+    },
+    {
+      "id": 3,
+      "query": "What's the difference between 'a' and 'å' in Chamorro?",
+      "expected_keywords": ["å", "vowel", "sound", "different", "letter", "alphabet", "writing"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "From Two Orthographies or IKNM - low vowels a vs å"
+    },
+    {
+      "id": 4,
+      "query": "How do CNMI and Guam spell geminate consonants differently?",
+      "expected_keywords": ["double", "consonant", "CNMI", "Guam", "mm", "nn"],
+      "category": "orthography",
+      "difficulty": "hard",
+      "notes": "Difference 2 in Two Orthographies - geminate spelling"
+    },
+    {
+      "id": 5,
+      "query": "What does 'one sound, one symbol' mean in Chamorro orthography?",
+      "expected_keywords": ["spell", "same", "everywhere", "sound", "symbol", "CNMI"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Key principle from Two Orthographies PDF"
+    },
+    {
+      "id": 6,
+      "query": "How do you spell the diphthong /aw/ in Guam vs CNMI Chamorro?",
+      "expected_keywords": ["diphthong", "ao", "åo", "Guam", "CNMI"],
+      "category": "orthography",
+      "difficulty": "hard",
+      "notes": "Difference 3 in Two Orthographies"
+    },
+    {
+      "id": 7,
+      "query": "What is the Marianas Orthography Committee?",
+      "expected_keywords": ["1971", "standard", "orthograph", "spelling"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Historical context from Two Orthographies"
+    },
+    {
+      "id": 8,
+      "query": "Why are there two different Chamorro spelling systems?",
+      "expected_keywords": ["Guam", "CNMI", "orthograph", "principle", "history"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Background from Two Orthographies PDF"
+    },
+    {
+      "id": 9,
+      "query": "How do you capitalize digraphs in Chamorro?",
+      "expected_keywords": ["ch", "ng", "capital", "CH", "NG"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Digraph capitalization rules"
+    },
+    {
+      "id": 10,
+      "query": "What is a digraph in Chamorro?",
+      "expected_keywords": ["ch", "ng", "two", "letter", "one sound"],
+      "category": "orthography",
+      "difficulty": "easy",
+      "notes": "Definition of digraph from orthography content"
+    },
+    {
+      "id": 11,
+      "query": "How do you spell possessive suffixes in CNMI Chamorro?",
+      "expected_keywords": ["-hu", "-mu", "-ña", "possessive", "double", "geminate"],
+      "category": "orthography",
+      "difficulty": "hard",
+      "notes": "Possessive suffix gemination from Two Orthographies"
+    },
+    {
+      "id": 12,
+      "query": "What does the letter 'y' represent in Chamorro?",
+      "expected_keywords": ["dz", "sound", "legacy", "older"],
+      "category": "orthography",
+      "difficulty": "medium",
+      "notes": "Y = /dz/ sound, legacy feature"
+    },
+    {
+      "id": 13,
+      "query": "What is the Chamorro word for 'boat'?",
+      "expected_keywords": ["båpot", "bapot", "moddong", "moddung", "boti", "sakman", "guleta"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List or dictionaries - multiple boat words"
+    },
+    {
+      "id": 14,
+      "query": "How do you say 'body' in Chamorro?",
+      "expected_keywords": ["kuetpu", "tåhtåotåo", "tátåotåo"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Finder List - body terms"
+    },
+    {
+      "id": 15,
+      "query": "What is 'salt' in Chamorro?",
+      "expected_keywords": ["asiga"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 16,
+      "query": "How do you say 'salty' in Chamorro?",
+      "expected_keywords": ["ma'asin", "fa'it"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List - adjective"
+    },
+    {
+      "id": 17,
+      "query": "What is 'Saturday' in Chamorro?",
+      "expected_keywords": ["Såbalu"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "Day of week from Finder List"
+    },
+    {
+      "id": 18,
+      "query": "How do you say 'sand' in Chamorro?",
+      "expected_keywords": ["unai"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 19,
+      "query": "What is 'bone' in Chamorro?",
+      "expected_keywords": ["to'lang"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "Body part from Finder List"
+    },
+    {
+      "id": 20,
+      "query": "How do you say 'bored' in Chamorro?",
+      "expected_keywords": ["fastidiu", "o'sun", "singåo"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Finder List - emotion"
+    },
+    {
+      "id": 21,
+      "query": "What is 'book' in Chamorro?",
+      "expected_keywords": ["lepblu"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 22,
+      "query": "How do you say 'boss' in Chamorro?",
+      "expected_keywords": ["må'gas", "bosung", "åmu", "åma"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Finder List - includes male/female forms"
+    },
+    {
+      "id": 23,
+      "query": "What is 'bottle' in Chamorro?",
+      "expected_keywords": ["buteya"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 24,
+      "query": "How do you say 'bowl' in Chamorro?",
+      "expected_keywords": ["tasón"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 25,
+      "query": "What is 'boyfriend' in Chamorro?",
+      "expected_keywords": ["nobiu"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 26,
+      "query": "How do you say 'conversation' in Chamorro?",
+      "expected_keywords": ["kunbetsasión"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 27,
+      "query": "What is 'cook' in Chamorro?",
+      "expected_keywords": ["fa'tinas", "na'lågu", "kusineru"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Finder List - verb and noun"
+    },
+    {
+      "id": 28,
+      "query": "How do you say 'cooked' in Chamorro?",
+      "expected_keywords": ["måsa"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "easy",
+      "notes": "From Finder List - past participle"
+    },
+    {
+      "id": 29,
+      "query": "What is 'salvation' in Chamorro?",
+      "expected_keywords": ["satbasión"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "Religious term from Finder List"
+    },
+    {
+      "id": 30,
+      "query": "How do you say 'satisfied' in Chamorro?",
+      "expected_keywords": ["kontento", "kuntentu", "satisfetchu", "satisfecho", "såtisfecho", "contented"],
+      "category": "finder_list_vocabulary",
+      "difficulty": "medium",
+      "notes": "From dictionaries - satisfied/contented"
+    },
+    {
+      "id": 31,
+      "query": "What is the 'ma-' prefix in Chamorro?",
+      "expected_keywords": ["passive", "transitive", "verb", "prefix"],
+      "category": "iknm_grammar",
+      "difficulty": "medium",
+      "notes": "From IKNM Dictionary - ma- prefix explanation"
+    },
+    {
+      "id": 32,
+      "query": "What does 'ma' mean as an agreement prefix in Chamorro?",
+      "expected_keywords": ["they", "third person", "plural", "agreement"],
+      "category": "iknm_grammar",
+      "difficulty": "hard",
+      "notes": "From IKNM - ma as agreement marker"
+    },
+    {
+      "id": 33,
+      "query": "What is the glottal stop letter called in Chamorro?",
+      "expected_keywords": ["glota", "first letter", "alphabet"],
+      "category": "iknm_grammar",
+      "difficulty": "easy",
+      "notes": "From IKNM - glota definition"
+    },
+    {
+      "id": 34,
+      "query": "What is the difference between 'ba'ba'' and 'baba' in Chamorro?",
+      "expected_keywords": ["glottal", "bad", "open", "different", "meaning"],
+      "category": "iknm_grammar",
+      "difficulty": "medium",
+      "notes": "From IKNM - glottal stop minimal pair"
+    },
+    {
+      "id": 35,
+      "query": "How many letters are in the Chamorro alphabet?",
+      "expected_keywords": ["letter", "alphabet"],
+      "category": "iknm_grammar",
+      "difficulty": "easy",
+      "notes": "Alphabet information from IKNM"
+    },
+    {
+      "id": 36,
+      "query": "What does 'u' mean as an agreement prefix in Chamorro?",
+      "expected_keywords": ["he", "she", "it", "third person", "singular", "irrealis"],
+      "category": "iknm_grammar",
+      "difficulty": "hard",
+      "notes": "From IKNM - u agreement prefix"
+    },
+    {
+      "id": 37,
+      "query": "What is an intransitive verb in Chamorro?",
+      "expected_keywords": ["vi", "verb", "intransitive"],
+      "category": "iknm_grammar",
+      "difficulty": "medium",
+      "notes": "Grammar terminology from IKNM"
+    },
+    {
+      "id": 38,
+      "query": "What does 'agr.' mean in Chamorro dictionaries?",
+      "expected_keywords": ["agreement", "prefix", "agr"],
+      "category": "iknm_grammar",
+      "difficulty": "medium",
+      "notes": "Dictionary abbreviation from IKNM"
+    },
+    {
+      "id": 39,
+      "query": "What is a transitive verb in Chamorro?",
+      "expected_keywords": ["vt", "verb", "transitive", "object"],
+      "category": "iknm_grammar",
+      "difficulty": "medium",
+      "notes": "Grammar terminology from IKNM"
+    },
+    {
+      "id": 40,
+      "query": "What does 'pref.' mean in Chamorro dictionaries?",
+      "expected_keywords": ["prefix", "pref"],
+      "category": "iknm_grammar",
+      "difficulty": "easy",
+      "notes": "Dictionary abbreviation from IKNM"
+    },
+    {
+      "id": 41,
+      "query": "What does 'ngå'nga'' mean in Chamorro?",
+      "expected_keywords": ["open", "mouth", "gape", "stare"],
+      "category": "less_common_words",
+      "difficulty": "hard",
+      "notes": "Less common word from IKNM - should test ng- words"
+    },
+    {
+      "id": 42,
+      "query": "What is 'sashimi' in Chamorro?",
+      "expected_keywords": ["sásimi'"],
+      "category": "less_common_words",
+      "difficulty": "easy",
+      "notes": "Japanese loanword from Finder List"
+    },
+    {
+      "id": 43,
+      "query": "How do you say 'saxophone' in Chamorro?",
+      "expected_keywords": ["saksofón"],
+      "category": "less_common_words",
+      "difficulty": "easy",
+      "notes": "Modern loanword from Finder List"
+    },
+    {
+      "id": 44,
+      "query": "What is 'sawdust' in Chamorro?",
+      "expected_keywords": ["aserín", "asirín"],
+      "category": "less_common_words",
+      "difficulty": "medium",
+      "notes": "Less common noun from Finder List"
+    },
+    {
+      "id": 45,
+      "query": "How do you say 'scaffold' in Chamorro?",
+      "expected_keywords": ["andåmi"],
+      "category": "less_common_words",
+      "difficulty": "medium",
+      "notes": "Construction term from Finder List"
+    },
+    {
+      "id": 46,
+      "query": "What is 'bonfire' in Chamorro?",
+      "expected_keywords": ["fugera"],
+      "category": "less_common_words",
+      "difficulty": "medium",
+      "notes": "From Finder List"
+    },
+    {
+      "id": 47,
+      "query": "How do you say 'bombardment' in Chamorro?",
+      "expected_keywords": ["bombatdeha", "bombatdea", "bombåtdes"],
+      "category": "less_common_words",
+      "difficulty": "hard",
+      "notes": "Historical/military term from dictionaries - variant spellings"
+    },
+    {
+      "id": 48,
+      "query": "What is 'botany' in Chamorro?",
+      "expected_keywords": ["botåna"],
+      "category": "less_common_words",
+      "difficulty": "medium",
+      "notes": "Scientific term from Finder List"
+    },
+    {
+      "id": 49,
+      "query": "How do you say 'bougainvillea' in Chamorro?",
+      "expected_keywords": ["puti táinobiu", "puti tainobiu"],
+      "category": "less_common_words",
+      "difficulty": "hard",
+      "notes": "Plant name from Finder List - literally 'flower of the fiancé'"
+    },
+    {
+      "id": 50,
+      "query": "What is 'bow-legged' in Chamorro?",
+      "expected_keywords": ["mångku", "patuleku"],
+      "category": "less_common_words",
+      "difficulty": "hard",
+      "notes": "Physical description from Finder List"
+    }
+  ]
+}

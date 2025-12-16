@@ -1,0 +1,337 @@
+{
+  "metadata": {
+    "created": "2025-12-14",
+    "version": "5.0",
+    "total_queries": 40,
+    "description": "Test coverage for previously untested RAG sources: Guampedia (cultural/historical), Lengguahi-ta (grammar lessons), Pacific Daily News (bilingual), Fino'Chamoru Blog (vocabulary)",
+    "categories": {
+      "guampedia_cultural": 12,
+      "lengguahita_grammar": 10,
+      "pdn_bilingual": 8,
+      "fino_blog_vocabulary": 10
+    },
+    "purpose": "Ensure comprehensive RAG source coverage and citation accuracy"
+  },
+  "test_queries": [
+    {
+      "id": 1,
+      "query": "What does inafa'maolek mean in Chamorro culture?",
+      "expected_keywords": ["harmony", "good", "community", "value", "each other", "together"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Core Chamorro cultural concept from Guampedia"
+    },
+    {
+      "id": 2,
+      "query": "What is emmok in Chamorro culture?",
+      "expected_keywords": ["revenge", "reciproc", "concept", "practice"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Revenge concept from Guampedia cultural content"
+    },
+    {
+      "id": 3,
+      "query": "Where does the name Barrigada come from?",
+      "expected_keywords": ["flank", "stomach", "Chamorro", "village", "tiyan"],
+      "category": "guampedia_cultural",
+      "difficulty": "hard",
+      "notes": "Village etymology from Guampedia"
+    },
+    {
+      "id": 4,
+      "query": "What is the capital of Guam?",
+      "expected_keywords": ["Hagåtña", "Hagatna", "capital"],
+      "category": "guampedia_cultural",
+      "difficulty": "easy",
+      "notes": "Basic Guam facts from Guampedia"
+    },
+    {
+      "id": 5,
+      "query": "When did CHamorus first settle Guam?",
+      "expected_keywords": ["3,500", "3500", "years ago", "first", "settled"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Historical timeline from Guampedia"
+    },
+    {
+      "id": 6,
+      "query": "What is a latte stone?",
+      "expected_keywords": ["pillar", "stone", "ancient", "CHamoru", "house", "foundation"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Ancient Chamorro architecture from Guampedia"
+    },
+    {
+      "id": 7,
+      "query": "Who is the indigenous people of Guam?",
+      "expected_keywords": ["CHamoru", "Chamorro", "indigenous", "people", "native"],
+      "category": "guampedia_cultural",
+      "difficulty": "easy",
+      "notes": "Basic cultural identity from Guampedia"
+    },
+    {
+      "id": 8,
+      "query": "What is chenchule' in Chamorro culture?",
+      "expected_keywords": ["gift", "reciproc", "obligation", "social", "tradition", "exchange"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Gift-giving tradition from Guampedia"
+    },
+    {
+      "id": 9,
+      "query": "What is a suruhåna or suruhånu?",
+      "expected_keywords": ["heal", "medicine", "traditional", "herbal", "spiritual"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Traditional healer from cultural content"
+    },
+    {
+      "id": 10,
+      "query": "What are the Mariana Islands?",
+      "expected_keywords": ["Guam", "Saipan", "CNMI", "island", "Pacific", "chain"],
+      "category": "guampedia_cultural",
+      "difficulty": "easy",
+      "notes": "Geographic context from Guampedia"
+    },
+    {
+      "id": 11,
+      "query": "What is a maga'låhi in ancient Chamorro society?",
+      "expected_keywords": ["chief", "leader", "village", "clan", "head", "male"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Social hierarchy from Guampedia"
+    },
+    {
+      "id": 12,
+      "query": "What is a maga'håga in Chamorro culture?",
+      "expected_keywords": ["female", "leader", "clan", "head", "woman", "high"],
+      "category": "guampedia_cultural",
+      "difficulty": "medium",
+      "notes": "Female leadership from Guampedia"
+    },
+    {
+      "id": 13,
+      "query": "What is basic Chamorro sentence word order?",
+      "expected_keywords": ["verb", "subject", "VSO", "predicate", "order", "first"],
+      "category": "lengguahita_grammar",
+      "difficulty": "medium",
+      "notes": "Word order from Lengguahi-ta grammar lessons"
+    },
+    {
+      "id": 14,
+      "query": "How do you form transitive sentences in Chamorro?",
+      "expected_keywords": ["transitive", "object", "verb", "hu", "pronoun"],
+      "category": "lengguahita_grammar",
+      "difficulty": "hard",
+      "notes": "Transitive constructions from Lengguahi-ta"
+    },
+    {
+      "id": 15,
+      "query": "What are hu-type pronouns in Chamorro?",
+      "expected_keywords": ["hu", "un", "ha", "ta", "in", "ma", "pronoun", "transitive"],
+      "category": "lengguahita_grammar",
+      "difficulty": "hard",
+      "notes": "Pronoun system from Fino'Chamoru Blog or Lengguahi-ta"
+    },
+    {
+      "id": 16,
+      "query": "What is the difference between ta and in in Chamorro?",
+      "expected_keywords": ["we", "inclusive", "exclusive", "ta", "in", "pronoun"],
+      "category": "lengguahita_grammar",
+      "difficulty": "hard",
+      "notes": "Inclusive vs exclusive we from grammar sources"
+    },
+    {
+      "id": 17,
+      "query": "How do descriptive sentences work in Chamorro?",
+      "expected_keywords": ["adjective", "noun", "descriptive", "sentence"],
+      "category": "lengguahita_grammar",
+      "difficulty": "medium",
+      "notes": "Descriptive sentence patterns from Lengguahi-ta"
+    },
+    {
+      "id": 18,
+      "query": "What resources are available to learn Chamorro online?",
+      "expected_keywords": ["lesson", "learn", "online", "beginner", "audio", "resource"],
+      "category": "lengguahita_grammar",
+      "difficulty": "easy",
+      "notes": "Learning resource awareness from Lengguahi-ta"
+    },
+    {
+      "id": 19,
+      "query": "How do I say 'I am eating' in Chamorro?",
+      "expected_keywords": ["chumocho", "kumekånno", "kånno", "eating", "yo'"],
+      "category": "lengguahita_grammar",
+      "difficulty": "medium",
+      "notes": "Basic verb conjugation"
+    },
+    {
+      "id": 20,
+      "query": "What is an intransitive verb in Chamorro?",
+      "expected_keywords": ["intransitive", "verb", "no object", "action"],
+      "category": "lengguahita_grammar",
+      "difficulty": "medium",
+      "notes": "Grammar terminology from lessons"
+    },
+    {
+      "id": 21,
+      "query": "How do beginners start learning Chamorro?",
+      "expected_keywords": ["beginner", "start", "basic", "learn", "lesson", "simple"],
+      "category": "lengguahita_grammar",
+      "difficulty": "easy",
+      "notes": "Learning path from Lengguahi-ta"
+    },
+    {
+      "id": 22,
+      "query": "What are possessive pronouns in Chamorro?",
+      "expected_keywords": ["-hu", "-mu", "-ña", "possessive", "my", "your", "his", "her"],
+      "category": "lengguahita_grammar",
+      "difficulty": "medium",
+      "notes": "Possessive system from grammar sources"
+    },
+    {
+      "id": 23,
+      "query": "Can you give an example of a Chamorro bilingual column?",
+      "expected_keywords": ["English", "Chamorro", "translate", "article", "column"],
+      "category": "pdn_bilingual",
+      "difficulty": "medium",
+      "notes": "From Pacific Daily News bilingual content"
+    },
+    {
+      "id": 24,
+      "query": "Who writes Chamorro language content in the Pacific Daily News?",
+      "expected_keywords": ["Onedera", "PDN", "column", "opinion", "writer"],
+      "category": "pdn_bilingual",
+      "difficulty": "hard",
+      "notes": "Peter Onedera writes bilingual columns"
+    },
+    {
+      "id": 25,
+      "query": "How do you say 'politics' in Chamorro?",
+      "expected_keywords": ["pulitika", "politika"],
+      "category": "pdn_bilingual",
+      "difficulty": "easy",
+      "notes": "From PDN political columns"
+    },
+    {
+      "id": 26,
+      "query": "What does 'prisedenten' mean in Chamorro?",
+      "expected_keywords": ["president"],
+      "category": "pdn_bilingual",
+      "difficulty": "easy",
+      "notes": "From PDN political content"
+    },
+    {
+      "id": 27,
+      "query": "How do you say 'candidate' in Chamorro?",
+      "expected_keywords": ["kandidåtu", "kandid", "candidate"],
+      "category": "pdn_bilingual",
+      "difficulty": "easy",
+      "notes": "Political vocabulary from PDN"
+    },
+    {
+      "id": 28,
+      "query": "What does 'i sengsong' mean in Chamorro?",
+      "expected_keywords": ["village", "community", "town"],
+      "category": "pdn_bilingual",
+      "difficulty": "medium",
+      "notes": "Common phrase from PDN articles"
+    },
+    {
+      "id": 29,
+      "query": "How do you say 'election' in Chamorro?",
+      "expected_keywords": ["elektsion", "ileksion", "vote", "botasion"],
+      "category": "pdn_bilingual",
+      "difficulty": "medium",
+      "notes": "Political term from PDN content"
+    },
+    {
+      "id": 30,
+      "query": "What is 'kombension' in Chamorro?",
+      "expected_keywords": ["convention", "meeting", "gathering"],
+      "category": "pdn_bilingual",
+      "difficulty": "easy",
+      "notes": "From PDN political coverage"
+    },
+    {
+      "id": 31,
+      "query": "What does 'dingu' mean in Chamorro?",
+      "expected_keywords": ["leave", "behind", "abandon", "depart", "forsake"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "medium",
+      "notes": "From Fino'Chamoru Blog daily word"
+    },
+    {
+      "id": 32,
+      "query": "What does 'madingu' mean in Chamorro?",
+      "expected_keywords": ["late", "tardy", "left behind", "abandoned"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "medium",
+      "notes": "Related to dingu - from Fino'Chamoru Blog"
+    },
+    {
+      "id": 33,
+      "query": "What is the Chamorro word for 'girlfriend'?",
+      "expected_keywords": ["nobia", "nobya"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "easy",
+      "notes": "From daily word examples"
+    },
+    {
+      "id": 34,
+      "query": "How do you say 'car' in Chamorro?",
+      "expected_keywords": ["kareta", "karetan"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "easy",
+      "notes": "Common vocabulary"
+    },
+    {
+      "id": 35,
+      "query": "What does 'famagu'on' mean in Chamorro?",
+      "expected_keywords": ["children", "kids", "child"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "easy",
+      "notes": "Family vocabulary from blog examples"
+    },
+    {
+      "id": 36,
+      "query": "What is 'nåna' in Chamorro?",
+      "expected_keywords": ["mother", "mom", "mama"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "easy",
+      "notes": "Basic family term"
+    },
+    {
+      "id": 37,
+      "query": "What does 'bibiha' mean in Chamorro?",
+      "expected_keywords": ["old", "elder", "older", "age", "ancient", "mature"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "medium",
+      "notes": "From dingu example sentence - 'Esta bibiha si nåna' = getting older"
+    },
+    {
+      "id": 38,
+      "query": "What does 'munga' mean in Chamorro?",
+      "expected_keywords": ["don't", "not", "negative", "command"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "medium",
+      "notes": "Negative command from blog examples"
+    },
+    {
+      "id": 39,
+      "query": "What is 'klå'an' in Chamorro?",
+      "expected_keywords": ["pronoun", "class", "category"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "hard",
+      "notes": "Grammar term from Fino'Chamoru lessons"
+    },
+    {
+      "id": 40,
+      "query": "What does 'esta' mean in Chamorro?",
+      "expected_keywords": ["already", "now", "already"],
+      "category": "fino_blog_vocabulary",
+      "difficulty": "easy",
+      "notes": "Common adverb from blog examples"
+    }
+  ]
+}
