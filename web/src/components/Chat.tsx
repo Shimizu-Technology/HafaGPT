@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home } from 'lucide-react';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home, Share2, Link2, Check, Copy, X } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
@@ -28,6 +28,7 @@ import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
+import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -38,6 +39,10 @@ export function Chat() {
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareInfo, setShareInfo] = useState<ShareInfo | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   
   // Sidebar closed by default for cleaner UX
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -64,6 +69,7 @@ export function Chat() {
   const queryClient = useQueryClient();
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme } = useSubscription();
   const { preferences } = useUserPreferences();
+  const { createShare, revokeShare } = useShareConversation();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -655,6 +661,52 @@ export function Chat() {
     }
   };
 
+  const handleShareConversation = async (conversationId: string) => {
+    setShareLoading(true);
+    setShowShareModal(true);
+    setShareInfo(null);
+    setShareCopied(false);
+    
+    try {
+      const result = await createShare(conversationId);
+      if (result) {
+        setShareInfo(result);
+      }
+    } catch (err) {
+      console.error('Failed to create share link:', err);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (shareInfo?.share_url) {
+      try {
+        await navigator.clipboard.writeText(shareInfo.share_url);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
+  const handleRevokeShare = async () => {
+    if (activeConversationId) {
+      const success = await revokeShare(activeConversationId);
+      if (success) {
+        setShareInfo(null);
+        setShowShareModal(false);
+        setToastData({
+          icon: '🗑️',
+          message: 'Share link revoked',
+          description: 'The link will no longer work'
+        });
+        setShowToast(true);
+      }
+    }
+  };
+
   const handleClearChat = async () => {
     if (activeConversationId) {
       // Delete the conversation from the database
@@ -814,6 +866,7 @@ End of Export
           onNewConversation={handleNewConversation}
           onDeleteConversation={handleDeleteConversation}
           onRenameConversation={handleRenameConversation}
+          onShareConversation={handleShareConversation}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           isLoading={conversationsLoading}
@@ -868,10 +921,10 @@ End of Export
                 </Link>
               </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {/* Home Button - Go back to learning dashboard */}
+              {/* Home Button - Hidden on mobile (users can tap logo or use menu) */}
               <Link
                 to="/"
-                className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center gap-1.5"
+                className="hidden sm:flex p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center gap-1.5"
                 aria-label="Go to home"
                 title="Home"
               >
@@ -889,6 +942,16 @@ End of Export
               >
                 {theme === 'light' ? <Moon className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <Sun className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
               </button>
+              {messages.length > 0 && isSignedIn && activeConversationId && (
+                <button
+                  onClick={() => handleShareConversation(activeConversationId)}
+                  className="flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center"
+                  aria-label="Share conversation"
+                  title="Share conversation"
+                >
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
               {messages.length > 0 && (
                 <button
                   onClick={() => setShowExportModal(true)}
@@ -1082,6 +1145,99 @@ End of Export
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowShareModal(false)}>
+          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+                Share Conversation
+              </h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="p-1.5 hover:bg-cream-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-brown-500 dark:text-gray-400" />
+              </button>
+            </div>
+            
+            {shareLoading ? (
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="w-8 h-8 border-3 border-coral-500 dark:border-ocean-400 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-sm text-brown-600 dark:text-gray-400">Creating share link...</p>
+              </div>
+            ) : shareInfo ? (
+              <div className="space-y-4">
+                <p className="text-sm text-brown-600 dark:text-gray-400">
+                  Anyone with this link can view your conversation (read-only).
+                </p>
+                
+                {/* Share URL - Stack on mobile, inline on desktop */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="flex-1 bg-cream-100 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 border border-cream-200 dark:border-gray-700 min-w-0">
+                    <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm text-brown-700 dark:text-gray-300 truncate">
+                      {shareInfo.share_url}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleCopyShareLink}
+                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-all flex-shrink-0 ${
+                      shareCopied
+                        ? 'bg-green-500 text-white'
+                        : 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600'
+                    }`}
+                  >
+                    {shareCopied ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        Copy Link
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {/* View count */}
+                {shareInfo.view_count !== undefined && shareInfo.view_count > 0 && (
+                  <p className="text-xs text-brown-500 dark:text-gray-500 flex items-center gap-1">
+                    <span>👁️</span>
+                    {shareInfo.view_count} view{shareInfo.view_count !== 1 ? 's' : ''}
+                  </p>
+                )}
+                
+                {/* Revoke button */}
+                <div className="pt-3 border-t border-cream-200 dark:border-gray-800">
+                  <button
+                    onClick={handleRevokeShare}
+                    className="w-full px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-600 dark:text-gray-400 rounded-xl hover:bg-hibiscus-100 dark:hover:bg-red-950/30 hover:text-hibiscus-600 dark:hover:text-red-400 transition-colors text-sm font-medium"
+                  >
+                    Revoke Share Link
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-brown-600 dark:text-gray-400 mb-4">
+                  Something went wrong. Please try again.
+                </p>
+                <button
+                  onClick={() => activeConversationId && handleShareConversation(activeConversationId)}
+                  className="px-4 py-2 bg-coral-500 dark:bg-ocean-500 text-white rounded-xl hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors font-medium"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

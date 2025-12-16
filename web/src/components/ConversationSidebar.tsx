@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Plus, Trash2, Pencil, BarChart3, Home, X } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, Pencil, BarChart3, Home, X, Share2 } from 'lucide-react';
 import { Conversation } from '../hooks/useConversationsQuery';
 import { useSubscription } from '../hooks/useSubscription';
 
@@ -11,6 +11,7 @@ interface ConversationSidebarProps {
   onNewConversation: () => void;
   onDeleteConversation: (id: string) => void;
   onRenameConversation: (id: string, title: string) => Promise<void>;
+  onShareConversation?: (id: string) => void;
   isOpen: boolean;
   onToggle: () => void;
   isLoading?: boolean;
@@ -23,6 +24,7 @@ export function ConversationSidebar({
   onNewConversation,
   onDeleteConversation,
   onRenameConversation,
+  onShareConversation,
   isOpen,
   onToggle,
   isLoading = false
@@ -239,7 +241,20 @@ export function ConversationSidebar({
                           </div>
                         )}
                         {editingId !== conversation.id && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-0.5">
+                            {/* Share button - visible on mobile, hidden on desktop unless hover */}
+                            {onShareConversation && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onShareConversation(conversation.id);
+                                }}
+                                className="md:opacity-0 md:group-hover:opacity-100 p-1.5 hover:bg-teal-100 dark:hover:bg-ocean-950/30 rounded transition-opacity flex items-center justify-center"
+                                title="Share conversation"
+                              >
+                                <Share2 className="w-3.5 h-3.5 text-teal-600 dark:text-ocean-400" />
+                              </button>
+                            )}
                             {/* Edit button - visible on mobile, hidden on desktop unless hover */}
                             <button
                               onClick={(e) => {
@@ -305,19 +320,33 @@ export function ConversationSidebar({
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {onShareConversation && (
+            <button
+              onClick={() => {
+                onShareConversation(contextMenu.conversationId);
+                setContextMenu(null);
+              }}
+              className="w-full px-4 py-2 text-left text-sm text-brown-800 dark:text-gray-200 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+          )}
           <button
             onClick={() => {
               const conversation = conversations.find(c => c.id === contextMenu.conversationId);
               if (conversation) handleRename(conversation);
             }}
-            className="w-full px-4 py-2 text-left text-sm text-brown-800 dark:text-gray-200 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+            className="w-full px-4 py-2 text-left text-sm text-brown-800 dark:text-gray-200 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
           >
+            <Pencil className="w-4 h-4" />
             Rename
           </button>
           <button
             onClick={() => handleDelete(contextMenu.conversationId)}
-            className="w-full px-4 py-2 text-left text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 transition-colors"
+            className="w-full px-4 py-2 text-left text-sm text-hibiscus-600 dark:text-red-400 hover:bg-hibiscus-50 dark:hover:bg-red-950/30 transition-colors flex items-center gap-2"
           >
+            <Trash2 className="w-4 h-4" />
             Delete
           </button>
         </div>

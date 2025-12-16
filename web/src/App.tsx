@@ -35,6 +35,7 @@ import { AdminAnalytics } from './components/admin/AdminAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
+import { SharedConversation } from './components/SharedConversation';
 
 function App() {
   return (
@@ -89,6 +90,9 @@ function App() {
         
         {/* About page - public */}
         <Route path="/about" element={<AboutPage />} />
+        
+        {/* Shared conversation - public, no auth required */}
+        <Route path="/share/:shareId" element={<SharedConversation />} />
         
         {/* Settings page - requires authentication */}
         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
