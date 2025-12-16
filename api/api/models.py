@@ -524,3 +524,42 @@ class FeatureUsageResponse(BaseModel):
     quiz_breakdown: dict = Field(..., description="Quizzes by category")
 
 
+# --- Shared Conversations Models ---
+
+class ShareConversationRequest(BaseModel):
+    """Request to create a shared conversation link"""
+    expires_in_days: Optional[int] = Field(
+        None, 
+        description="Optional: expire after N days (null = never expires)"
+    )
+
+
+class ShareConversationResponse(BaseModel):
+    """Response after creating a share link"""
+    share_id: str = Field(..., description="The public share ID for the URL")
+    share_url: str = Field(..., description="Full shareable URL")
+    expires_at: Optional[datetime] = Field(None, description="When the share expires (null = never)")
+    created_at: datetime = Field(..., description="When the share was created")
+
+
+class SharedConversationResponse(BaseModel):
+    """Response model for viewing a shared conversation (public, no auth)"""
+    share_id: str = Field(..., description="The share ID")
+    title: str = Field(..., description="Conversation title")
+    created_at: datetime = Field(..., description="When conversation was created")
+    messages: list[MessageResponse] = Field(..., description="Conversation messages")
+    view_count: int = Field(..., description="Number of times this share has been viewed")
+
+
+class ShareInfoResponse(BaseModel):
+    """Info about a share (for owner to manage)"""
+    id: str = Field(..., description="Internal share UUID")
+    share_id: str = Field(..., description="Public share ID")
+    share_url: str = Field(..., description="Full shareable URL")
+    conversation_id: str = Field(..., description="Conversation ID")
+    conversation_title: str = Field(..., description="Conversation title")
+    created_at: datetime = Field(..., description="When share was created")
+    expires_at: Optional[datetime] = Field(None, description="When share expires")
+    view_count: int = Field(..., description="Number of views")
+
+

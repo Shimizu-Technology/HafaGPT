@@ -64,7 +64,12 @@ from .models import (
     AdminUserInfo,
     AdminUsersResponse,
     AdminUserUpdateRequest,
-    AdminUserUpdateResponse
+    AdminUserUpdateResponse,
+    # Share Conversation Models
+    ShareConversationRequest,
+    ShareConversationResponse,
+    SharedConversationResponse,
+    ShareInfoResponse
 )
 from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
 from . import conversations
@@ -1557,6 +1562,282 @@ async def create_system_message_endpoint(
         raise
     except Exception as e:
         logger.error(f"Failed to create system message: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- Share Conversation Endpoints ---
+
+@app.post("/api/conversations/{conversation_id}/share", response_model=ShareConversationResponse, tags=["Share"])
+async def create_share_link(
+    conversation_id: str,
+    request: ShareConversationRequest = None,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Create a shareable public link for a conversation.
+    
+    The owner can share their conversation with anyone via a unique URL.
+    Optionally set an expiration date.
+    """
+    try:
+        # Verify user owns this conversation
+        user_id = await verify_user(authorization)
+        
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verify conversation exists and belongs to user
+        cursor.execute("""
+            SELECT id, user_id FROM conversations 
+            WHERE id = %s AND deleted_at IS NULL
+        """, (conversation_id,))
+        conv = cursor.fetchone()
+        
+        if not conv:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        if conv[1] != user_id:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=403, detail="You don't own this conversation")
+        
+        # Check if share already exists for this conversation
+        cursor.execute("""
+            SELECT share_id, expires_at, created_at FROM shared_conversations
+            WHERE conversation_id = %s AND user_id = %s
+        """, (conversation_id, user_id))
+        existing = cursor.fetchone()
+        
+        if existing:
+            # Return existing share
+            share_id = existing[0]
+            expires_at = existing[1]
+            created_at = existing[2]
+            cursor.close()
+            conn.close()
+            
+            # Build share URL (frontend URL)
+            frontend_url = os.getenv("FRONTEND_URL", "https://hafagpt.com")
+            share_url = f"{frontend_url}/share/{share_id}"
+            
+            return ShareConversationResponse(
+                share_id=share_id,
+                share_url=share_url,
+                expires_at=expires_at,
+                created_at=created_at
+            )
+        
+        # Create new share
+        import uuid
+        share_id = str(uuid.uuid4())[:8]  # Short ID for nicer URLs
+        internal_id = str(uuid.uuid4())
+        
+        # Calculate expiration if specified
+        expires_at = None
+        if request and request.expires_in_days:
+            from datetime import timedelta
+            expires_at = datetime.now() + timedelta(days=request.expires_in_days)
+        
+        cursor.execute("""
+            INSERT INTO shared_conversations (id, share_id, conversation_id, user_id, expires_at)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING created_at
+        """, (internal_id, share_id, conversation_id, user_id, expires_at))
+        
+        created_at = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Build share URL
+        frontend_url = os.getenv("FRONTEND_URL", "https://hafagpt.com")
+        share_url = f"{frontend_url}/share/{share_id}"
+        
+        logger.info(f"🔗 Created share link for conversation {conversation_id}: {share_url}")
+        
+        return ShareConversationResponse(
+            share_id=share_id,
+            share_url=share_url,
+            expires_at=expires_at,
+            created_at=created_at
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create share link: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/share/{share_id}", response_model=SharedConversationResponse, tags=["Share"])
+async def get_shared_conversation(share_id: str):
+    """
+    Get a shared conversation by its public share ID.
+    
+    This is a PUBLIC endpoint - no authentication required.
+    Anyone with the link can view the conversation.
+    """
+    try:
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get share info and conversation
+        cursor.execute("""
+            SELECT 
+                sc.share_id,
+                sc.conversation_id,
+                sc.expires_at,
+                sc.view_count,
+                c.title,
+                c.created_at
+            FROM shared_conversations sc
+            JOIN conversations c ON c.id = sc.conversation_id
+            WHERE sc.share_id = %s
+        """, (share_id,))
+        
+        share = cursor.fetchone()
+        
+        if not share:
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Share not found")
+        
+        # Check expiration
+        expires_at = share[2]
+        if expires_at and expires_at < datetime.now(expires_at.tzinfo):
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=410, detail="This share link has expired")
+        
+        conversation_id = share[1]
+        view_count = share[3]
+        title = share[4]
+        created_at = share[5]
+        
+        # Increment view count
+        cursor.execute("""
+            UPDATE shared_conversations 
+            SET view_count = view_count + 1 
+            WHERE share_id = %s
+        """, (share_id,))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        # Get messages using existing function
+        messages_response = conversations.get_conversation_messages(conversation_id)
+        
+        return SharedConversationResponse(
+            share_id=share_id,
+            title=title,
+            created_at=created_at,
+            messages=messages_response.messages,
+            view_count=view_count + 1  # Include the current view
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get shared conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/conversations/{conversation_id}/share", tags=["Share"])
+async def revoke_share_link(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Revoke (delete) a share link for a conversation.
+    
+    Only the owner can revoke their share.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Delete share if user owns it
+        cursor.execute("""
+            DELETE FROM shared_conversations
+            WHERE conversation_id = %s AND user_id = %s
+            RETURNING share_id
+        """, (conversation_id, user_id))
+        
+        deleted = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Share not found or you don't own it")
+        
+        logger.info(f"🗑️ Revoked share link {deleted[0]} for conversation {conversation_id}")
+        
+        return {"success": True, "message": "Share link revoked"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to revoke share link: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations/{conversation_id}/share", response_model=ShareInfoResponse, tags=["Share"])
+async def get_share_info(
+    conversation_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get share info for a conversation (if shared).
+    
+    Only the owner can see their share info.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT 
+                sc.id,
+                sc.share_id,
+                sc.conversation_id,
+                sc.created_at,
+                sc.expires_at,
+                sc.view_count,
+                c.title
+            FROM shared_conversations sc
+            JOIN conversations c ON c.id = sc.conversation_id
+            WHERE sc.conversation_id = %s AND sc.user_id = %s
+        """, (conversation_id, user_id))
+        
+        share = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not share:
+            raise HTTPException(status_code=404, detail="No share exists for this conversation")
+        
+        frontend_url = os.getenv("FRONTEND_URL", "https://hafagpt.com")
+        share_url = f"{frontend_url}/share/{share[1]}"
+        
+        return ShareInfoResponse(
+            id=share[0],
+            share_id=share[1],
+            share_url=share_url,
+            conversation_id=share[2],
+            conversation_title=share[6],
+            created_at=share[3],
+            expires_at=share[4],
+            view_count=share[5]
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get share info: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

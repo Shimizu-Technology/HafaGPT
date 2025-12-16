@@ -361,7 +361,7 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 | **Token Tracking (Logging)** | 2-3 hrs | Medium | 📋 Planned |
 | **Token Warnings** | 1-2 hrs | Low | 📋 Planned |
 | **Conversation Context Tests** | 3-4 hrs | High | 📋 Priority |
-| **Response Caching (Redis)** | 4-6 hrs | High | 📋 Priority |
+| **Response Caching (Redis)** | 4-6 hrs | High | ⏸️ Deferred |
 | **Shorter Prompts** | 1-2 hrs | Medium | 📋 Planned |
 | **Queue System** | 8-12 hrs | Medium | ⏸️ Future |
 | **Model Auto-Switching** | 2-3 hrs | Medium | ⏸️ Future |
@@ -456,15 +456,32 @@ conversation_flow = [
 
 **Effort:** 3-4 hours
 
-#### **Response Caching (Redis)** 📋 (HIGH PRIORITY)
+#### **Response Caching (Redis)** ⏸️ DEFERRED
 
 Cache responses for common translation queries. Same question = instant response.
 
-**How it works:**
+**⚠️ Why Deferred (Dec 2025):**
+Caching is best for **mature systems** with stable knowledge bases. We're still:
+- Adding new RAG sources (IKNM dictionary, PDFs, etc.)
+- Tuning retrieval and prompts
+- Improving response quality
+
+**Risks of caching now:**
+- ❌ Bad response gets cached → served to many users repeatedly
+- ❌ RAG improvements don't reflect in cached responses
+- ❌ Model upgrades → stale cached responses
+
+**When to revisit:**
+- Test suite consistently at 95%+ accuracy
+- RAG sources are mostly stable (no major additions planned)
+- User feedback system in place to catch bad responses
+
+**How it would work (when ready):**
 1. Hash the query + mode + skill_level to create a cache key
 2. Check Redis/database for cached response before calling LLM
-3. Store new responses with TTL (e.g., 24 hours)
+3. Store new responses with short TTL (4-24 hours)
 4. Cache invalidation when RAG knowledge base updates
+5. Admin cache viewer to manually clear bad responses
 
 **Best candidates for caching:**
 - Simple translations: "How do you say 'hello'?" → always returns "Håfa Adai"
@@ -477,7 +494,7 @@ Cache responses for common translation queries. Same question = instant response
 - Personalized responses (different skill levels may need different caching)
 
 **Effort:** 4-6 hours
-**Impact:** 50-70% of translation queries could be instant
+**Impact:** 50-70% of translation queries could be instant (when system is mature)
 
 #### **Shorter System Prompts** 📋
 
@@ -511,7 +528,7 @@ Automatically switch to faster model during high load:
 |---------|--------|-------|
 | Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
-| Share Conversations | 📋 Next | Shareable public links for conversations |
+| Share Conversations | ✅ Done | Shareable public links for conversations |
 | Pre-Reader Games | 📋 Planned | Audio-first games for young children |
 | LearningChamoru Partnership | ⏳ Phase 1 Done | Dictionary sources added, collaboration later |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
@@ -528,7 +545,7 @@ Automatically switch to faster model during high load:
 - Fallback message for unsupported browsers
 - **Effort:** 2-3 hours
 
-#### **Share Conversations** (Planned)
+#### **Share Conversations** ✅ COMPLETE
 > **Goal:** Generate public shareable links so users can share conversations with friends/family.
 
 **What it does:**
@@ -732,7 +749,7 @@ DELETE /api/share/:share_id → revoke share (owner only)
 12. ✅ ~~New Games: Hangman + Cultural Trivia~~ - Done!
 13. ✅ ~~Admin Settings Polish~~ - Done! (Last Active tracking, Settings quick action, toggle styling)
 14. **Voice Input** - Web Speech API for voice-to-text
-15. **Share Conversations** - Copy/share chat transcripts
+15. ✅ ~~**Share Conversations**~~ - Done! Public shareable links
 16. **New Games Phase 2** - Phrase Builder, Speed Challenge
 17. **New Games Phase 3** - Picture Match, Word Search, Crossword
 
