@@ -117,13 +117,33 @@ HafaGPT-API/
 
 ## 📚 Documentation
 
+### Getting Started
 | Document | Description |
 |----------|-------------|
-| **[SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** | 🆕 Employee onboarding & local setup |
+| **[SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** | 🆕 Local development setup |
 | **[IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md)** | Roadmap & feature status |
-| **[BILLING_AND_SUBSCRIPTIONS.md](documentation/BILLING_AND_SUBSCRIPTIONS.md)** | Freemium model & Clerk/Stripe |
-| **[GAMES_FEATURE.md](documentation/GAMES_FEATURE.md)** | Learning games documentation |
-| **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | RAG system explanation |
+
+### How Things Work
+| Document | Description |
+|----------|-------------|
+| **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | 🔍 RAG system, hybrid search, vector similarity |
+| **[HOW_EVALUATION_WORKS.md](documentation/HOW_EVALUATION_WORKS.md)** | 🧪 Test suites, running tests, accuracy tracking |
+| **[HOW_TTS_WORKS.md](documentation/HOW_TTS_WORKS.md)** | 🔊 Text-to-speech, pronunciation |
+| **[HOW_FILE_UPLOADS_WORK.md](documentation/HOW_FILE_UPLOADS_WORK.md)** | 📎 Image/document uploads, S3, vision AI |
+
+### Features
+| Document | Description |
+|----------|-------------|
+| **[BILLING_AND_SUBSCRIPTIONS.md](documentation/BILLING_AND_SUBSCRIPTIONS.md)** | 💳 Freemium model & Clerk/Stripe |
+| **[GAMES_FEATURE.md](documentation/GAMES_FEATURE.md)** | 🎮 Learning games |
+| **[MODEL_SWITCHING_GUIDE.md](documentation/MODEL_SWITCHING_GUIDE.md)** | 🤖 LLM configuration |
+
+### Data & Sources
+| Document | Description |
+|----------|-------------|
+| **[RAG_MANAGEMENT_GUIDE.md](documentation/RAG_MANAGEMENT_GUIDE.md)** | 📝 Adding documents to RAG |
+| **[crawlers/SOURCES.md](crawlers/SOURCES.md)** | 📚 Knowledge base sources |
+| **[evaluation/BASELINE_METRICS.md](evaluation/BASELINE_METRICS.md)** | 📊 Accuracy history
 
 ---
 
