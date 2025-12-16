@@ -403,12 +403,12 @@ The user wants comprehensive learning, so:
 }
 
 
-def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
+def get_conversation_history(conversation_id: str, max_messages: int = 10) -> list:
     """
-    Retrieve conversation history from database for a given session.
+    Retrieve conversation history from database for a given conversation.
     
     Args:
-        session_id: Session identifier to retrieve history for
+        conversation_id: Conversation ID to retrieve history for (NOT session_id!)
         max_messages: Maximum number of message pairs to retrieve (default: 10)
     
     Returns:
@@ -417,8 +417,12 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
                   {"role": "user", "content": "Hello"},
                   {"role": "assistant", "content": "Hafa adai!"}
               ]
+    
+    Note: We use conversation_id (not session_id) to ensure each conversation
+    has isolated context. session_id persists across browser sessions and would
+    cause context bleed between different conversations.
     """
-    if not session_id:
+    if not conversation_id:
         return []
     
     try:
@@ -431,19 +435,19 @@ def get_conversation_history(session_id: str, max_messages: int = 10) -> list:
         conn = psycopg.connect(database_url)
         cursor = conn.cursor()
         
-        # Get last N messages for this session
+        # Get last N messages for this CONVERSATION (not session!)
         # Use subquery to get last N messages DESC, then order them ASC (chronological)
         cursor.execute("""
             SELECT user_message, bot_response, image_url, timestamp
             FROM (
                 SELECT user_message, bot_response, image_url, timestamp
                 FROM conversation_logs
-                WHERE session_id = %s
+                WHERE conversation_id = %s
                 ORDER BY timestamp DESC
                 LIMIT %s
             ) AS recent_messages
             ORDER BY timestamp ASC
-        """, (session_id, max_messages))
+        """, (conversation_id, max_messages))
         
         rows = cursor.fetchall()
         cursor.close()
@@ -891,8 +895,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     ]
     
     # Retrieve and add past conversation history (last 10 message pairs)
-    if session_id:
-        past_messages = get_conversation_history(session_id, max_messages=10)
+    # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
+    if conversation_id:
+        past_messages = get_conversation_history(conversation_id, max_messages=10)
         history.extend(past_messages)
         
         # Update conversation_length for RAG decisions
@@ -1174,8 +1179,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     history = [{"role": "system", "content": system_prompt}]
     
     # Retrieve past conversation history
-    if session_id:
-        past_messages = get_conversation_history(session_id, max_messages=10)
+    # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
+    if conversation_id:
+        past_messages = get_conversation_history(conversation_id, max_messages=10)
         history.extend(past_messages)
         conversation_length = len(past_messages) // 2
     
