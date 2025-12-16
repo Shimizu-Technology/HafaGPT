@@ -127,6 +127,7 @@ HafaGPT-API/
 | Document | Description |
 |----------|-------------|
 | **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | 🔍 RAG system, hybrid search, vector similarity |
+| **[HOW_CRAWLING_AND_PROCESSING_WORKS.md](documentation/HOW_CRAWLING_AND_PROCESSING_WORKS.md)** | 🕷️ Crawl4AI, Docling, chunking |
 | **[HOW_EVALUATION_WORKS.md](documentation/HOW_EVALUATION_WORKS.md)** | 🧪 Test suites, running tests, accuracy tracking |
 | **[HOW_TTS_WORKS.md](documentation/HOW_TTS_WORKS.md)** | 🔊 Text-to-speech, pronunciation |
 | **[HOW_FILE_UPLOADS_WORK.md](documentation/HOW_FILE_UPLOADS_WORK.md)** | 📎 Image/document uploads, S3, vision AI |
