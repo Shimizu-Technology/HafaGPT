@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-12-16T20:25:32.101608",
+  "api_url": "http://localhost:8000",
+  "test_user_id": "test_user_be6e3be3",
+  "passed": 6,
+  "failed": 0,
+  "total": 6,
+  "success_rate": 100.0,
+  "results": [
+    {
+      "test": "context_retention_5",
+      "passed": true,
+      "message": "What was the first animal I asked about?",
+      "expected": [
+        "dog",
+        "ga'l\u00e5gu"
+      ],
+      "missing": [],
+      "response_preview": "            The first animal you asked about was the **dog**, which in Chamorro is **ga'l\u00e5gu** (or **ga'lagu**). \ud83d\udc15  \n\nRemember the example sentence?  \n\"Hu guaiya i ga'l\u00e5gu-hu.\" = \"I love my dog.\"  \n\nL"
+    },
+    {
+      "test": "reference_resolution",
+      "passed": true,
+      "message": "Can you use that word in a sentence?",
+      "expected": [
+        "bunita",
+        "bunitu",
+        "gefpa'gu",
+        "s\u00e5mai",
+        "beautiful"
+      ],
+      "missing": [
+        "bunita",
+        "bunitu",
+        "gefpa'gu",
+        "s\u00e5mai"
+      ],
+      "response_preview": "Absolutely! Here\u2019s an example using **g\u00e9fpa'gu** (beautiful):\n\n*\"G\u00e9fpa'gu i atdao gi ega'an.\"*  \nTranslation: \"The sun is beautiful in the morning.\"\n\nOr, if you\u2019re complimenting someone:  \n*\"G\u00e9fpa'gu "
+    },
+    {
+      "test": "no_hallucination",
+      "passed": true,
+      "response_preview": "No, we haven't discussed \"goodbye\" yet in this conversation! Let me share the Chamorro translations with you:\n\nCommon ways to say \"goodbye\" in Chamorro:\n\n1. **Adios** - The most universal (from Spanish, but fully adopted in Chamorro)  \n   *(Example: \"Adios, si Yu'os un binendise\" = \"Goodbye, may God",
+      "notes": "Bot should not claim we discussed 'goodbye' when we only discussed 'hello'. Note: Providing goodbye info while clarifying is OK."
+    },
+    {
+      "test": "cross_conversation_isolation",
+      "passed": true,
+      "leaked_keywords": [],
+      "response_preview": "Earlier in this conversation, we discussed some critical guidelines and capabilities for helping you learn Chamorro. Here\u2019s a quick recap:\n\n1. **My Role**: I\u2019m your Chamorro language tutor, here to help you learn Chamorro naturally and conversationally. I use Chamorro examples when relevant and enco",
+      "notes": "Conv B should NOT know about numbers discussed in Conv A"
+    },
+    {
+      "test": "multi_turn_coherence",
+      "passed": true,
+      "failed_checks": [],
+      "notes": "Conversation should flow logically with correct references"
+    },
+    {
+      "test": "context_retention_10",
+      "passed": true,
+      "message": "Earlier I asked about family words. What was the very first family member I asked about?",
+      "expected": [
+        "mother",
+        "n\u00e5na"
+      ],
+      "missing": [
+        "n\u00e5na"
+      ],
+      "response_preview": "            You first asked about the Chamorro word for **'mother'**, which is **nana**. \ud83c\udf3a  \n\nWould you like to revisit that or explore more family terms? Let me know! \ud83d\ude0a"
+    }
+  ],
+  "conversations_created": [
+    "71c12a8f-a00a-4680-b713-9e998696d861",
+    "7cea410b-eab0-471b-90e0-13333ac3731e",
+    "6769081e-0419-4d00-83ca-8083656a8950",
+    "5d9f7b68-cd8d-4d55-b4d3-cf3563a15b2b",
+    "c19eb7ec-8cf0-494a-bb38-51a9ead4ab54",
+    "62c0f4b6-171a-4905-89e3-d45b71d100d9",
+    "271965ca-59a6-49db-b333-3cbdc70926a6"
+  ]
+}

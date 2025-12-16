@@ -1147,7 +1147,8 @@ async def eval_chat(
     request: Request,
     message: Optional[str] = Form(None),
     mode: Optional[str] = Form(None),
-    session_id: Optional[str] = Form(None)
+    session_id: Optional[str] = Form(None),
+    conversation_id: Optional[str] = Form(None)  # NEW: For context testing
 ):
     """
     **EVALUATION ENDPOINT** - No authentication required.
@@ -1161,6 +1162,10 @@ async def eval_chat(
     - `english`: General conversation (default)
     - `chamorro`: Chamorro-only immersion mode
     - `learn`: Learning mode with explanations
+    
+    **New: Conversation Context Testing**
+    Pass `conversation_id` to test multi-turn conversations with context.
+    The endpoint will retrieve and use prior messages from that conversation.
     """
     try:
         # Check if this is a JSON request
@@ -1172,6 +1177,7 @@ async def eval_chat(
             message = body.get('message')
             mode = body.get('mode', 'english')
             session_id = body.get('session_id')
+            conversation_id = body.get('conversation_id')  # NEW: For context testing
             skill_level = body.get('skill_level')  # Optional: beginner, intermediate, advanced
         else:
             mode = mode or 'english'
@@ -1199,16 +1205,17 @@ async def eval_chat(
                 detail=f"Invalid skill_level. Must be one of: {', '.join(valid_skill_levels)}"
             )
         
-        logger.info(f"Eval chat request: mode={mode}, skill_level={skill_level}, session_id={session_id}")
+        logger.info(f"Eval chat request: mode={mode}, skill_level={skill_level}, session_id={session_id}, conversation_id={conversation_id}")
         
         # Get response from chatbot service (no auth required for eval)
+        # Now supports conversation_id for context testing!
         result = get_chatbot_response(
             message=message,
             mode=mode,
             conversation_length=0,
             session_id=session_id or f"eval_{int(time.time())}",
             user_id=None,  # No user tracking for eval
-            conversation_id=None,
+            conversation_id=conversation_id,  # NEW: Pass conversation_id for context
             image_base64=None,
             image_url=None,
             skill_level=skill_level  # Pass skill level for personalization testing
@@ -1233,6 +1240,36 @@ async def eval_chat(
         raise
     except Exception as e:
         logger.error(f"Error in eval chat endpoint: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
+
+
+@app.post("/api/eval/conversations", response_model=ConversationResponse, tags=["Evaluation"])
+async def eval_create_conversation(request: ConversationCreate):
+    """
+    **EVALUATION ENDPOINT** - Create conversation without authentication.
+    
+    Used by automated test suites to create conversations for context testing.
+    
+    **DO NOT USE THIS IN PRODUCTION CLIENT** - Use `/api/conversations` instead.
+    """
+    try:
+        # Create conversation with a test user ID (so we can identify test data)
+        # conversations.create_conversation returns a ConversationResponse directly
+        conversation = conversations.create_conversation(
+            user_id="eval_test_user",  # Special marker for test conversations
+            title=request.title or "Eval Test Chat"
+        )
+        
+        logger.info(f"Eval conversation created: {conversation.id}")
+        
+        # Return the ConversationResponse directly (it's already the right type)
+        return conversation
+        
+    except Exception as e:
+        logger.error(f"Error creating eval conversation: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"

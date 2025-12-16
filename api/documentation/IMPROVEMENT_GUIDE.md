@@ -358,10 +358,103 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 
 | Strategy | Effort | Impact | Status |
 |----------|--------|--------|--------|
+| **Token Tracking (Logging)** | 2-3 hrs | Medium | 📋 Planned |
+| **Token Warnings** | 1-2 hrs | Low | 📋 Planned |
+| **Conversation Context Tests** | 3-4 hrs | High | 📋 Priority |
 | **Response Caching (Redis)** | 4-6 hrs | High | 📋 Priority |
 | **Shorter Prompts** | 1-2 hrs | Medium | 📋 Planned |
 | **Queue System** | 8-12 hrs | Medium | ⏸️ Future |
 | **Model Auto-Switching** | 2-3 hrs | Medium | ⏸️ Future |
+
+#### **Token Tracking (Logging)** 📋 PLANNED
+
+> **Goal:** Log token usage per conversation for cost monitoring and debugging.
+
+**What it does:**
+- Track `prompt_tokens`, `completion_tokens`, `total_tokens` per message
+- Store in `conversation_logs` table (new columns)
+- Dashboard showing daily/weekly token usage
+- Cost estimation based on model pricing
+
+**Why it matters:**
+- DeepSeek V3: $0.14/M input, $0.28/M output tokens
+- GPT-4o: $2.50/M input, $10.00/M output tokens
+- Gemini 2.5 Flash: $0.15/M input, $0.60/M output tokens
+- Helps optimize prompts and identify expensive queries
+
+**Implementation:**
+```python
+# OpenAI/OpenRouter responses include usage
+response = client.chat.completions.create(...)
+usage = response.usage  # CompletionUsage object
+# usage.prompt_tokens, usage.completion_tokens, usage.total_tokens
+
+# Add to conversation_logs table
+ALTER TABLE conversation_logs ADD COLUMN prompt_tokens INTEGER;
+ALTER TABLE conversation_logs ADD COLUMN completion_tokens INTEGER;
+ALTER TABLE conversation_logs ADD COLUMN total_tokens INTEGER;
+```
+
+**Effort:** 2-3 hours
+
+#### **Token Warnings** 📋 PLANNED (Low Priority)
+
+> **Goal:** Warn when approaching context window limits (128K for DeepSeek V3).
+
+**What it does:**
+- Count tokens before sending to LLM
+- Warn if approaching 80% of context limit (~100K tokens)
+- Optionally truncate old messages to fit
+- Log warnings for monitoring
+
+**Why it's low priority:**
+- 128K tokens = ~300 pages of text
+- Average conversation uses ~5,000-20,000 tokens
+- Very few users will ever hit this limit
+- Current 10-message history limit keeps us well under
+
+**Implementation (if needed):**
+```python
+# Use tiktoken for accurate counting
+import tiktoken
+enc = tiktoken.encoding_for_model("gpt-4")  # Works for most models
+token_count = len(enc.encode(full_prompt))
+
+if token_count > 100_000:  # 80% of 128K
+    logger.warning(f"Approaching context limit: {token_count} tokens")
+    # Optionally truncate oldest messages
+```
+
+**Effort:** 1-2 hours
+
+#### **Conversation Context Tests** 📋 PRIORITY
+
+> **Goal:** Automated tests to verify the bot maintains context correctly across long conversations.
+
+**What it tests:**
+- ✅ Context retention at 5, 10, 20 message depths
+- ✅ Reference resolution ("What was that word you mentioned?")
+- ✅ No hallucination of past messages
+- ✅ Conversation coherence
+- ✅ Cross-conversation isolation (no context bleed)
+
+**Test approach:**
+```python
+# Example test case
+conversation_flow = [
+    {"user": "How do you say 'hello' in Chamorro?", "check": None},
+    {"user": "And how about 'thank you'?", "check": None},
+    {"user": "What was the first word I asked about?", "check": ["hello", "håfa"]},
+    {"user": "Use both words in a sentence", "check": ["håfa", "ma'åse"]},
+]
+```
+
+**What we caught with these tests:**
+- 🐛 **FIXED (Dec 2025):** Context was pulling from ALL conversations via `session_id` instead of just the current conversation via `conversation_id`. This caused responses to reference unrelated past conversations!
+
+**File:** `evaluation/test_conversation_context.py`
+
+**Effort:** 3-4 hours
 
 #### **Response Caching (Redis)** 📋 (HIGH PRIORITY)
 
@@ -664,6 +757,11 @@ User management + analytics + site settings all working!
 ---
 
 ## 🐛 Recent Bug Fixes & Improvements
+
+### December 16, 2025
+| Fix | Description |
+|-----|-------------|
+| **🚨 Conversation Context Bleed** | **CRITICAL FIX:** Chat history was using `session_id` (browser-based) instead of `conversation_id`, causing responses to reference unrelated past conversations. Now each conversation has isolated context. |
 
 ### December 13, 2025
 | Change | Description |
