@@ -420,7 +420,7 @@ Automatically switch to faster model during high load:
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
 | Share Conversations | 📋 Next | Shareable public links for conversations |
 | Pre-Reader Games | 📋 Planned | Audio-first games for young children |
-| LearningChamoru Partnership | 📋 Explore | Potential collaboration for native speaker audio |
+| LearningChamoru Partnership | ⏳ Phase 1 Done | Dictionary sources added, collaboration later |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
 | New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
 | Admin Settings Polish | ✅ Done | Last Active tracking, Settings quick action, toggle styling |
@@ -524,12 +524,22 @@ DELETE /api/share/:share_id → revoke share (owner only)
 | Self-paced modules | Interactive games, quizzes |
 | Established (36,000 users) | New, innovative |
 
-**Phase 1: Learn Quietly (Current)**
+**Phase 1: Learn Quietly (Current)** ✅ MOSTLY COMPLETE
 - [x] Create account and explore their platform
-- [ ] Analyze their 25-lesson structure and progression
+- [x] Analyze their 25-lesson structure and progression (see `LEARNING_PATH_RESEARCH.md`)
 - [ ] Note UX patterns worth adopting (skill levels, community features)
-- [ ] Check our RAG for Topping's Dictionary/textbook content
+- [x] Check our RAG for Topping's Dictionary/textbook content
 - [x] Add LearningChamoru as a resource link in our app (goodwill gesture)
+- [x] **Discovered IKNM/KAM Revised Dictionary (2025)** — same source they use!
+
+**Phase 1.5: Dictionary Exploration** ✅ COMPLETE (December 2024)
+- [x] Found CNMI Revised Dictionary at natibunmarianas.org
+- [x] Created custom crawler: `crawlers/iknm_kam_dictionary.py`
+- [x] Added 35 chunks (priority 105 - high authority)
+- [x] Added Two Chamorro Orthographies PDF (10 chunks)
+- [x] Added English-Chamorro Finder List PDF (173 chunks)
+- [x] Updated About page with IKNM/KAM credit
+- [x] Created `crawlers/SOURCES.md` for tracking
 
 **Phase 2: Build Traction**
 - [ ] Get more users (schools like Hurao Academy)
@@ -543,6 +553,9 @@ DELETE /api/share/:share_id → revoke share (owner only)
 
 **Public Resources We Can Use (With Attribution):**
 - ✅ Topping's Dictionary (published reference work)
+- ✅ IKNM/KAM Revised Dictionary 2025 (public website)
+- ✅ Two Chamorro Orthographies (Dr. Sandra Chung - public PDF)
+- ✅ English-Chamorro Finder List 2024 (public PDF)
 - ✅ Lesson structure concepts (25-lesson progression is public knowledge)
 - ✅ Grammar rules and concepts (not copyrightable)
 - ❌ Their specific text/audio (need permission)
@@ -585,6 +598,9 @@ DELETE /api/share/:share_id → revoke share (owner only)
 | [`BILLING_AND_SUBSCRIPTIONS.md`](./BILLING_AND_SUBSCRIPTIONS.md) | Freemium model, Clerk Billing, testing |
 | [`GAMES_FEATURE.md`](./GAMES_FEATURE.md) | Learning games documentation |
 | [`HOW_RAG_WORKS.md`](./HOW_RAG_WORKS.md) | RAG system explanation |
+| [`LEARNINGCHAMORU_ANALYSIS.md`](./LEARNINGCHAMORU_ANALYSIS.md) | LearningChamoru.com research & strategy |
+| [`LEARNING_PATH_RESEARCH.md`](./LEARNING_PATH_RESEARCH.md) | Topping's lesson structure analysis |
+| [`../crawlers/SOURCES.md`](../crawlers/SOURCES.md) | RAG knowledge base source tracking |
 | [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./IMPROVEMENT_GUIDE_V1_ARCHIVE.md) | Historical feature documentation |
 
 ---

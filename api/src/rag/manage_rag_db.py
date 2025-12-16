@@ -320,7 +320,7 @@ class RAGDatabaseManager:
         """
         source_lower = source.lower()
         
-        # Modern sources (2010s+)
+        # Modern sources (2010s+) - Highest priority
         if 'chamoru.info/language-lessons' in source_lower:
             return 'modern'
         elif 'visitguam.com' in source_lower:
@@ -329,6 +329,14 @@ class RAGDatabaseManager:
             return 'modern'
         elif 'swarthmore.edu' in source_lower:
             return 'modern'
+        
+        # NEW: Sandra Chung's orthography guide (2024) - Educational priority
+        elif 'two_chamorro_orthographies' in source_lower or 'orthog_differences' in source_lower:
+            return 'modern'  # 2024 educational content
+        
+        # NEW: English-Chamorro Finder List (2024) - Dictionary priority
+        elif 'english_chamorro_finder_list' in source_lower or 'finder_list' in source_lower:
+            return 'modern'  # 2024 dictionary resource
         
         # Contemporary sources (1990s-2010s)
         elif 'chamorro_grammar_dr._sandra_chung' in source_lower:

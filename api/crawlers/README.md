@@ -42,7 +42,20 @@ uv run python crawlers/pacific_daily_news.py "<URL>"
 | Crawler | Site | Content Type | Priority |
 |---------|------|--------------|----------|
 | `pacific_daily_news.py` | guampdn.com | Bilingual opinion columns | 110 (Highest) |
-| *(More to come)* | chamoru.info | Dictionary entries | 50 |
+| `iknm_kam_dictionary.py` | natibunmarianas.org | Revised Chamorro-English Dictionary (2025) | 105 |
+| *(Generic)* | Any site | `../src/crawlers/crawl_website.py` | Varies |
+
+### IKNM/KAM Dictionary Crawler
+
+Crawls the Revised Chamorro-English Dictionary from IKNM/KAM (10,500+ entries):
+
+```bash
+# Test a specific letter
+uv run python crawlers/iknm_kam_dictionary.py --letter M --test
+
+# Crawl all dictionary letters (A-Y, 23 pages)
+uv run python crawlers/iknm_kam_dictionary.py --all
+```
 
 See `SOURCES.md` for full list of crawled content.
 

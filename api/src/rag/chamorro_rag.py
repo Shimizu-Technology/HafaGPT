@@ -900,6 +900,15 @@ class ChamorroRAG:
                 source_name = "Revised Chamorro Dictionary"
             elif 'Dictionary_and_grammar_of_the_Chamorro_language' in source_file:
                 source_name = "Dictionary and Grammar of Chamorro (1865)"
+            # NEW: IKNM/KAM Revised Dictionary (2025)
+            elif 'natibunmarianas.org' in source_file:
+                source_name = "IKNM/KAM Revised Dictionary (2025)"
+            # NEW: Two Chamorro Orthographies (Sandra Chung)
+            elif 'two_chamorro_orthographies' in source_file or 'orthog_differences' in source_file:
+                source_name = "Two Chamorro Orthographies (Dr. Sandra Chung)"
+            # NEW: English-Chamorro Finder List (2024)
+            elif 'english_chamorro_finder_list' in source_file or 'finder_list' in source_file:
+                source_name = "English-Chamorro Finder List (2024)"
             else:
                 source_name = source_file.split('/')[-1].replace('.pdf', '')
             
