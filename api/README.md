@@ -144,7 +144,13 @@ HafaGPT-API/
 |----------|-------------|
 | **[RAG_MANAGEMENT_GUIDE.md](documentation/RAG_MANAGEMENT_GUIDE.md)** | 📝 Adding documents to RAG |
 | **[crawlers/SOURCES.md](crawlers/SOURCES.md)** | 📚 Knowledge base sources |
-| **[evaluation/BASELINE_METRICS.md](evaluation/BASELINE_METRICS.md)** | 📊 Accuracy history
+| **[evaluation/BASELINE_METRICS.md](evaluation/BASELINE_METRICS.md)** | 📊 Accuracy history |
+
+### Testing
+| File | Description |
+|------|-------------|
+| **[evaluation/test_evaluation.py](evaluation/test_evaluation.py)** | 🧪 RAG accuracy tests (240 queries) |
+| **[evaluation/test_conversation_context.py](evaluation/test_conversation_context.py)** | 🔄 Multi-turn context tests (6 tests) |
 
 ---
 

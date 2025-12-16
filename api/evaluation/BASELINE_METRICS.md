@@ -12,6 +12,7 @@
 | Dec 14, 2025 | v4 (50 queries) | **100%** | 87.0% | 7.88s | IKNM/KAM, Orthographies PDF, Finder List |
 | Dec 14, 2025 | v5 (40 queries) | **97.5%** | 80.8% | 11.71s | Guampedia, PDN, Lengguahi-ta, Blog |
 | Dec 14, 2025 | **Comprehensive (240)** | - | - | - | Combined V3+V4+V5 for full coverage |
+| Dec 16, 2025 | **Context Tests (6)** | **100%** | - | - | Conversation isolation bug fix |
 
 ### 🚀 Total Improvement: +22.0% accuracy from initial baseline!
 
@@ -223,6 +224,38 @@ evaluation/tmp/
 - `BASELINE_METRICS.md` - Progress tracking (this file)
 
 ---
+
+---
+
+## 🔄 Conversation Context Tests (December 16, 2025)
+
+**Test Suite:** `test_conversation_context.py` (6 tests)  
+**Result:** **100% pass rate (6/6)**
+
+| Test | Description | Result |
+|------|-------------|--------|
+| Context Retention (5 msg) | Remembers topic after 5 messages | ✅ Pass |
+| Context Retention (10 msg) | Remembers topic after 10 messages | ✅ Pass |
+| Reference Resolution | "That word you mentioned" works | ✅ Pass |
+| No Hallucination | Doesn't claim undiscussed topics | ✅ Pass |
+| Cross-Conversation Isolation | No context bleed between convos | ✅ Pass |
+| Multi-Turn Coherence | Logical conversation flow | ✅ Pass |
+
+### Bug Fixed
+**Issue:** Conversations were mixing context - the bot would reference topics from OTHER conversations.
+**Root Cause:** Chat history was retrieved by `session_id` (browser session) instead of `conversation_id`.
+**Fix:** Changed `get_conversation_history()` to use `conversation_id` for proper isolation.
+
+### Running Context Tests
+```bash
+cd HafaGPT-API && source .venv/bin/activate
+
+# Run all tests
+python -m evaluation.test_conversation_context
+
+# Run specific test
+python -m evaluation.test_conversation_context --test cross_conversation_isolation
+```
 
 ---
 

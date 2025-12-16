@@ -291,9 +291,66 @@ Historical accuracy is tracked in `evaluation/BASELINE_METRICS.md`:
 | File | Purpose |
 |------|---------|
 | `evaluation/test_evaluation.py` | Main test runner script |
+| `evaluation/test_conversation_context.py` | **NEW:** Conversation context tests |
 | `evaluation/run_comparison.py` | Multi-run comparison (skill levels) |
 | `evaluation/BASELINE_METRICS.md` | Historical accuracy tracking |
 | `evaluation/test_queries_*.json` | Test query definitions |
+
+---
+
+## 🔄 Conversation Context Tests (NEW)
+
+In addition to single-query tests, we also test multi-turn conversations.
+
+### What These Tests Check
+
+| Test | What It Verifies |
+|------|------------------|
+| **Context Retention (5 msg)** | Bot remembers topic after 5 messages |
+| **Context Retention (10 msg)** | Bot remembers topic after 10 messages |
+| **Reference Resolution** | "That word you mentioned" → correct reference |
+| **No Hallucination** | Doesn't claim to have discussed things it didn't |
+| **Cross-Conversation Isolation** | No context bleed between different conversations |
+| **Multi-Turn Coherence** | Conversation flows logically |
+
+### Running Context Tests
+
+```bash
+cd HafaGPT-API && source .venv/bin/activate
+
+# Run all context tests
+python -m evaluation.test_conversation_context
+
+# Run specific test
+python -m evaluation.test_conversation_context --test context_retention_5
+python -m evaluation.test_conversation_context --test cross_conversation_isolation
+
+# Against production
+python -m evaluation.test_conversation_context --api-url https://hafagpt-api.onrender.com
+
+# Save results to file
+python -m evaluation.test_conversation_context --output context_results.json
+```
+
+### Available Tests
+
+```
+context_retention_5          # 5-message context recall
+context_retention_10         # 10-message context recall
+reference_resolution         # "that word" references
+no_hallucination             # Doesn't invent past discussions
+cross_conversation_isolation # No leaking between conversations
+multi_turn_coherence         # Logical conversation flow
+```
+
+### Why These Matter
+
+We discovered a critical bug where conversations were mixing context:
+- **Bug:** Chat history was retrieved by `session_id` (browser session)
+- **Effect:** Messages from OTHER conversations leaked into current conversation
+- **Fix:** Now uses `conversation_id` to keep each conversation isolated
+
+These tests ensure the fix works and catches any future regressions.
 
 ---
 
