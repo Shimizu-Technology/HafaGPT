@@ -1876,25 +1876,16 @@ async def text_to_speech(
         # Limit text length (OpenAI TTS max is 4096 characters)
         text_to_speak = text[:4096]
         
-        # Improve Chamorro pronunciation by adding Spanish language hint
-        # OpenAI TTS is smart - it will pronounce Chamorro words with Spanish phonetics
-        # which is the closest approximation (Chamorro is related to Spanish)
-        if any(char in text_to_speak for char in ['å', 'ñ', 'Å', 'Ñ']):
-            # Text contains Chamorro characters - hint to use Spanish pronunciation
-            logger.info("🇬🇺 Detected Chamorro text, optimizing pronunciation")
-            # Prepend invisible Spanish hint (OpenAI will use Spanish phonetics)
-            # The dot at the start helps the model recognize this as Spanish-like
-            text_to_speak = f"[Español/Chamorro]: {text_to_speak}"
+        # Note: OpenAI TTS handles Chamorro reasonably well without hints
+        # The model auto-detects language from text content
         
         logger.info(f"🔊 TTS request: {len(text_to_speak)} characters, voice={voice}")
         
         # Call OpenAI TTS API
         response = client.audio.speech.create(
-            model="tts-1-hd",  # HD quality (slower, better quality, $0.030/1K chars)
+            model="tts-1",  # Standard quality (2x faster, $0.015/1K chars) - HD not needed for single words
             voice=voice,
             input=text_to_speak,
-            # Note: OpenAI auto-detects language from the text
-            # Adding Spanish context helps with Chamorro pronunciation
         )
         
         # Get audio bytes
