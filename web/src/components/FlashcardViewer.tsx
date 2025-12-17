@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus } from 'lucide-react';
 import { Flashcard } from './Flashcard';
+import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
@@ -455,9 +456,12 @@ export function FlashcardViewer() {
           </button>
           
           <div className="flex-1 text-center">
-            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
-              {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
-            </h1>
+            <div className="flex items-center justify-center gap-1">
+              <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+                {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
+              </h1>
+              <TTSDisclaimer variant="tooltip" />
+            </div>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
               cardType === 'curated'
                 ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-300'

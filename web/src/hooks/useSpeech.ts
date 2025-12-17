@@ -1,17 +1,23 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
+// Global audio cache - persists across component instances
+const audioCache = new Map<string, string>(); // text -> audioUrl
+const preloadingPromises = new Map<string, Promise<boolean>>(); // text -> preload promise
+
 /**
  * Hook for text-to-speech functionality with automatic fallback
  * 
  * Strategy:
- * 1. Try OpenAI TTS first (best quality)
- * 2. If fails (no internet, API error), fallback to Browser TTS
+ * 1. Check cache for preloaded audio (instant!)
+ * 2. Try OpenAI TTS if not cached (best quality)
+ * 3. If fails (no internet, API error), fallback to Browser TTS
  * 
  * Uses Spanish (es-ES) for browser TTS as closest approximation for Chamorro
  */
 export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
+  const [isPreloading, setIsPreloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Check if Speech Synthesis is supported (for fallback)
@@ -154,18 +160,125 @@ export function useSpeech() {
   }, [isSupported]);
 
   /**
-   * Main speak function - tries OpenAI first, falls back to browser
+   * Preload audio for text (fetches in background, stores in cache)
+   * Call this when you know you'll need the audio soon
+   * Returns a promise that resolves when preload is complete
+   */
+  const preload = useCallback((text: string, voice: string = 'shimmer'): Promise<boolean> => {
+    // Already cached
+    if (audioCache.has(text)) {
+      return Promise.resolve(true);
+    }
+    
+    // Already being preloaded - return existing promise so callers can wait
+    const existingPromise = preloadingPromises.get(text);
+    if (existingPromise) {
+      return existingPromise;
+    }
+    
+    // Start new preload
+    setIsPreloading(true);
+    
+    const preloadPromise = (async () => {
+      try {
+        console.log(`📦 Preloading TTS for: "${text}"...`);
+        
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        
+        const response = await fetch(`${API_URL}/api/tts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({ text, voice })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`TTS API failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Convert base64 to audio blob URL and cache it
+        const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        audioCache.set(text, audioUrl);
+        console.log(`✅ Preloaded: "${text}"`);
+        
+        return true;
+      } catch (error) {
+        console.warn(`⚠️ Preload failed for: "${text}"`, error);
+        return false;
+      } finally {
+        preloadingPromises.delete(text);
+        setIsPreloading(preloadingPromises.size > 0);
+      }
+    })();
+    
+    preloadingPromises.set(text, preloadPromise);
+    return preloadPromise;
+  }, []);
+
+  /**
+   * Play from cache if available (instant!)
+   */
+  const playFromCache = useCallback(async (text: string): Promise<boolean> => {
+    const cachedUrl = audioCache.get(text);
+    if (!cachedUrl) return false;
+    
+    try {
+      console.log(`⚡ Playing from cache: "${text}"`);
+      setIsSpeaking(true);
+      
+      const audio = new Audio(cachedUrl);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+      
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+        // Remove invalid cache entry
+        audioCache.delete(text);
+      };
+      
+      await audio.play();
+      return true;
+    } catch (error) {
+      console.warn('Cache playback failed:', error);
+      setIsSpeaking(false);
+      return false;
+    }
+  }, []);
+
+  /**
+   * Main speak function - waits for preload if in progress, checks cache, then tries OpenAI
    */
   const speak = useCallback(async (text: string) => {
-    // Try OpenAI TTS first
+    // 1. If preload is in progress, wait for it instead of making duplicate request
+    const pendingPreload = preloadingPromises.get(text);
+    if (pendingPreload) {
+      console.log(`⏳ Waiting for preload: "${text}"...`);
+      await pendingPreload;
+    }
+    
+    // 2. Try cache (should be populated now if preload succeeded)
+    const cachedSuccess = await playFromCache(text);
+    if (cachedSuccess) return;
+    
+    // 3. Try OpenAI TTS (preload failed or wasn't started)
     const success = await speakOpenAI(text);
     
-    // If failed, fallback to browser TTS
+    // 4. If failed, fallback to browser TTS
     if (!success) {
       console.log('⚠️ OpenAI TTS unavailable, using browser TTS fallback');
       speakBrowser(text);
     }
-  }, [speakOpenAI, speakBrowser]);
+  }, [playFromCache, speakOpenAI, speakBrowser]);
 
   /**
    * Stop any ongoing speech
@@ -196,9 +309,11 @@ export function useSpeech() {
 
   return {
     speak,
+    preload,
     stop,
     extractChamorroText,
     isSpeaking,
+    isPreloading,
     isSupported
   };
 }

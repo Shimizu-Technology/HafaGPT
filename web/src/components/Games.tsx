@@ -64,6 +64,24 @@ export function Games() {
           </p>
         </div>
 
+        {/* Pre-Reader Section */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">👶</span>
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white">For Young Learners</h3>
+            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">No Reading Required!</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <GameCard
+              to="/games/sound-match"
+              title="Sound Match"
+              description="Hear a Chamorro word, tap the matching emoji! Perfect for pre-readers and beginners."
+              icon={<span className="text-2xl sm:text-3xl">🎵</span>}
+              difficulty="Pre-Reader"
+            />
+          </div>
+        </div>
+
         {/* Games Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
           {/* Foundation Games */}

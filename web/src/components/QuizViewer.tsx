@@ -9,6 +9,7 @@ import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useSpeech } from '../hooks/useSpeech';
+import { TTSDisclaimer } from './TTSDisclaimer';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -534,19 +535,22 @@ export function QuizViewer() {
                 <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
                   {currentQuestion.question}
                 </h2>
-                <button
-                  onClick={() => isSpeaking ? stop() : speak(formatQuestionForSpeech(currentQuestion))}
-                  className={`p-2 rounded-full transition-all flex-shrink-0 ${
-                    isSpeaking 
-                      ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse' 
-                      : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
-                  }`}
-                  title={isSpeaking ? 'Stop' : 'Read question aloud'}
-                >
-                  <div className="flex items-center justify-center">
-                    <Volume2 className="w-5 h-5" />
-                  </div>
-                </button>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <TTSDisclaimer variant="tooltip" />
+                  <button
+                    onClick={() => isSpeaking ? stop() : speak(formatQuestionForSpeech(currentQuestion))}
+                    className={`p-2 rounded-full transition-all ${
+                      isSpeaking 
+                        ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse' 
+                        : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
+                    }`}
+                    title={isSpeaking ? 'Stop' : 'Read question aloud'}
+                  >
+                    <div className="flex items-center justify-center">
+                      <Volume2 className="w-5 h-5" />
+                    </div>
+                  </button>
+                </div>
               </div>
               
               {/* Hint - Show automatically for type_answer and fill_blank, toggle for multiple_choice */}
