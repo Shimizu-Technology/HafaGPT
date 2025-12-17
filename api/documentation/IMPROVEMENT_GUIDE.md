@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 13, 2025
+> **Last Updated:** December 18, 2025
 
 ---
 
@@ -529,7 +529,7 @@ Automatically switch to faster model during high load:
 | Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
 | Share Conversations | ✅ Done | Shareable public links for conversations |
-| Pre-Reader Games | 📋 Planned | Audio-first games for young children |
+| Pre-Reader Games | 🔨 In Progress | Sound Match done, more planned |
 | LearningChamoru Partnership | ⏳ Phase 1 Done | Dictionary sources added, collaboration later |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
 | New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
@@ -592,9 +592,12 @@ DELETE /api/share/:share_id → revoke share (owner only)
 
 **Effort:** 2-3 hours
 
-#### **Pre-Reader Learning Games** 📋 PLANNED
+#### **Pre-Reader Learning Games** 🔨 IN PROGRESS
 
 > **Goal:** Games that don't require reading, perfect for young children at Hurao Academy.
+
+**Completed:**
+- ✅ **Sound Match** — Hear word, tap matching emoji. Categories: Animals, Colors, Food, Nature, Numbers.
 
 **Design Principles:**
 1. **Audio-first** — All instructions spoken, not written
@@ -605,15 +608,15 @@ DELETE /api/share/:share_id → revoke share (owner only)
 
 **Planned Games:**
 
-| Game | How It Works | Skills | Effort |
+| Game | How It Works | Skills | Status |
 |------|--------------|--------|--------|
-| **🎵 Sound Match** | Hear a Chamorro word, tap the matching picture | Listening, vocabulary | 4-6 hrs |
-| **🖼️ Picture Pairs** | Memory match with images only (no text) | Visual memory, vocabulary | 3-4 hrs |
-| **🎨 Color Touch** | "Tap the BLUE one" (Chamorro audio) | Colors, listening | 3-4 hrs |
-| **🔢 Number Tap** | "Tap 3 coconuts" (Chamorro audio) | Numbers, counting | 3-4 hrs |
-| **👆 Simon Says** | "Touch your nose" (Chamorro audio) | Body parts, commands | 4-5 hrs |
+| **🎵 Sound Match** | Hear a Chamorro word, tap the matching emoji | Listening, vocabulary | ✅ Done |
+| **🖼️ Picture Pairs** | Memory match with images only (no text) | Visual memory, vocabulary | 📋 Next |
+| **🎨 Color Touch** | "Tap the BLUE one" (Chamorro audio) | Colors, listening | 📋 Planned |
+| **🔢 Number Tap** | "Tap 3 coconuts" (Chamorro audio) | Numbers, counting | 📋 Planned |
+| **👆 Simon Says** | "Touch your nose" (Chamorro audio) | Body parts, commands | 📋 Planned |
 
-**Priority:** Start with **Sound Match** and **Picture Pairs** — highest impact, moderate effort.
+**Next:** Picture Pairs — visual-only memory match.
 
 #### **LearningChamoru.com — Learn & Build First (Option A)** 📋 IN PROGRESS
 
