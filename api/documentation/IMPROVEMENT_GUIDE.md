@@ -522,7 +522,7 @@ Automatically switch to faster model during high load:
 
 ---
 
-### **Priority 5: Homepage & UX Professionalization** 🎨 📋 NEXT
+### **Priority 5: Homepage & UX Professionalization** 🎨 🔨 IN PROGRESS
 
 > **Goal:** Make HåfaGPT feel as polished and professional as Duolingo/Drops while maintaining our unique value.
 
@@ -531,14 +531,14 @@ Automatically switch to faster model during high load:
 - HåfaGPT has great features but homepage needs clearer hierarchy
 - Professional sites have: single clear CTA, minimal cognitive load, mobile-first
 
-#### **Quick Wins (1-2 hours each)**
+#### **Quick Wins (1-2 hours each)** ✅ COMPLETE
 
 | Task | Current | Improvement | Status |
 |------|---------|-------------|--------|
-| **Simplify Hero Section** | Dual "Explore Free / Free Account" panel | Single clear value prop + one CTA | 📋 Next |
-| **Reduce CTA Clutter** | Multiple "Sign In" buttons, "Account" badges | One primary action per section | 📋 Planned |
-| **Move "Our Story" to Footer** | Takes header real estate | Free up header for nav | 📋 Planned |
-| **Cleaner Feature Cards** | Many small cards with red badges | Fewer, larger cards with clearer hierarchy | 📋 Planned |
+| **Simplify Hero Section** | Dual "Explore Free / Free Account" panel | Removed - cleaner flow | ✅ Done |
+| **Reduce CTA Clutter** | Multiple "Sign In" buttons, "Account" badges | Removed all badges from cards | ✅ Done |
+| **Move "Our Story" to Footer** | Takes header real estate | Now in footer with ❤️ | ✅ Done |
+| **Cleaner Feature Cards** | Many small cards with red badges | Clean, uniform cards | ✅ Done |
 
 #### **Medium Effort (3-5 hours each)**
 
