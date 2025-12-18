@@ -522,6 +522,39 @@ Automatically switch to faster model during high load:
 
 ---
 
+### **Priority 5: Homepage & UX Professionalization** 🎨 📋 NEXT
+
+> **Goal:** Make HåfaGPT feel as polished and professional as Duolingo/Drops while maintaining our unique value.
+
+**Comparison Notes (Dec 2025):**
+- Analyzed Duolingo, LearningChamoru.com, and Drops for best practices
+- HåfaGPT has great features but homepage needs clearer hierarchy
+- Professional sites have: single clear CTA, minimal cognitive load, mobile-first
+
+#### **Quick Wins (1-2 hours each)**
+
+| Task | Current | Improvement | Status |
+|------|---------|-------------|--------|
+| **Simplify Hero Section** | Dual "Explore Free / Free Account" panel | Single clear value prop + one CTA | 📋 Next |
+| **Reduce CTA Clutter** | Multiple "Sign In" buttons, "Account" badges | One primary action per section | 📋 Planned |
+| **Move "Our Story" to Footer** | Takes header real estate | Free up header for nav | 📋 Planned |
+| **Cleaner Feature Cards** | Many small cards with red badges | Fewer, larger cards with clearer hierarchy | 📋 Planned |
+
+#### **Medium Effort (3-5 hours each)**
+
+| Task | Description | Status |
+|------|-------------|--------|
+| **Mobile Bottom Nav** | Tab bar (Home, Chat, Games, Learn, Menu) like Duolingo | 📋 Planned |
+| **Redesign Homepage Cards** | Fewer, larger feature cards with better visual hierarchy | 📋 Planned |
+| **Progressive Disclosure** | Don't show all features at once, guide users | 📋 Future |
+
+#### **Reference Sites:**
+- **Duolingo** — Gold standard for gamified learning (minimal CTAs, clear value prop)
+- **Drops** — Beautiful visual design, mobile-first, bold colors
+- **LearningChamoru.com** — Structured lessons, dictionary front-and-center
+
+---
+
 ### **Future Enhancements** 🔮
 
 | Feature | Status | Notes |
@@ -529,7 +562,8 @@ Automatically switch to faster model during high load:
 | Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
 | Share Conversations | ✅ Done | Shareable public links for conversations |
-| Pre-Reader Games | 🔨 In Progress | Sound Match done, more planned |
+| Pre-Reader Games | 🔨 In Progress | Sound Match + Picture Pairs done |
+| Homepage Polish | 📋 Next | Simplify hero, reduce CTAs, mobile nav |
 | LearningChamoru Partnership | ⏳ Phase 1 Done | Dictionary sources added, collaboration later |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
 | New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
@@ -611,12 +645,12 @@ DELETE /api/share/:share_id → revoke share (owner only)
 | Game | How It Works | Skills | Status |
 |------|--------------|--------|--------|
 | **🎵 Sound Match** | Hear a Chamorro word, tap the matching emoji | Listening, vocabulary | ✅ Done |
-| **🖼️ Picture Pairs** | Memory match with images only (no text) | Visual memory, vocabulary | 📋 Next |
+| **🖼️ Picture Pairs** | Memory match with emoji pairs (audio on match) | Visual memory, vocabulary | ✅ Done |
 | **🎨 Color Touch** | "Tap the BLUE one" (Chamorro audio) | Colors, listening | 📋 Planned |
 | **🔢 Number Tap** | "Tap 3 coconuts" (Chamorro audio) | Numbers, counting | 📋 Planned |
 | **👆 Simon Says** | "Touch your nose" (Chamorro audio) | Body parts, commands | 📋 Planned |
 
-**Next:** Picture Pairs — visual-only memory match.
+**Next:** Voice Input — add speech-to-text for chat.
 
 #### **LearningChamoru.com — Learn & Build First (Option A)** 📋 IN PROGRESS
 
