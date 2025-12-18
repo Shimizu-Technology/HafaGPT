@@ -20,6 +20,7 @@ import { ConversationPractice } from './components/ConversationPractice';
 import { Games } from './components/Games';
 import { MemoryMatch } from './components/MemoryMatch';
 import { SoundMatch } from './components/SoundMatch';
+import { PicturePairs } from './components/PicturePairs';
 import { WordScramble } from './components/WordScramble';
 import { FallingWords } from './components/FallingWords';
 import { WordCatch } from './components/WordCatch';
@@ -80,6 +81,7 @@ function App() {
         <Route path="/games" element={<ProtectedRoute><Games /></ProtectedRoute>} />
         <Route path="/games/memory" element={<ProtectedRoute><MemoryMatch /></ProtectedRoute>} />
         <Route path="/games/sound-match" element={<ProtectedRoute><SoundMatch /></ProtectedRoute>} />
+        <Route path="/games/picture-pairs" element={<ProtectedRoute><PicturePairs /></ProtectedRoute>} />
         <Route path="/games/scramble" element={<ProtectedRoute><WordScramble /></ProtectedRoute>} />
         <Route path="/games/falling" element={<ProtectedRoute><FallingWords /></ProtectedRoute>} />
         <Route path="/games/catch" element={<ProtectedRoute><WordCatch /></ProtectedRoute>} />

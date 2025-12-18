@@ -79,6 +79,13 @@ export function Games() {
               icon={<span className="text-2xl sm:text-3xl">🎵</span>}
               difficulty="Pre-Reader"
             />
+            <GameCard
+              to="/games/picture-pairs"
+              title="Picture Pairs"
+              description="Find matching pictures and learn Chamorro words! A memory game with audio."
+              icon={<span className="text-2xl sm:text-3xl">🖼️</span>}
+              difficulty="Pre-Reader"
+            />
           </div>
         </div>
 
