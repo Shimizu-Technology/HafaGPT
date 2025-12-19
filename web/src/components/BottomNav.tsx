@@ -131,8 +131,8 @@ export function BottomNav() {
       )}
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-cream-200 dark:border-slate-700 z-40 sm:hidden">
-        <div className="flex items-center justify-around h-16 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm border-t border-cream-200 dark:border-slate-700 z-40 sm:hidden safe-area-bottom">
+        <div className="flex items-center justify-around h-16">
           {mainNavItems.map((item) => (
             <Link
               key={item.to}
