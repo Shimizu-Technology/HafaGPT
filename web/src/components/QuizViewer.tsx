@@ -533,8 +533,8 @@ export function QuizViewer() {
               </div>
               <div className="flex items-start gap-3">
                 <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
-                  {currentQuestion.question}
-                </h2>
+                {currentQuestion.question}
+              </h2>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <TTSDisclaimer variant="tooltip" />
                   <button
@@ -612,13 +612,13 @@ export function QuizViewer() {
                           answerState === 'unanswered' ? 'active:scale-98' : ''
                         }`}
                       >
-<div className="flex items-center gap-2 sm:gap-3">
-                                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
-                                            {String.fromCharCode(65 + idx)}
-                                          </span>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+                            {String.fromCharCode(65 + idx)}
+                          </span>
                                           <span className="font-medium text-brown-800 dark:text-white text-sm sm:text-base flex-1">
-                                            {option}
-                                          </span>
+                            {option}
+                          </span>
                                           {/* Speaker icon for option - use span to avoid button-in-button */}
                                           {answerState === 'unanswered' && (
                                             <span
@@ -641,13 +641,13 @@ export function QuizViewer() {
                                               <Volume2 className="w-4 h-4" />
                                             </span>
                                           )}
-                                          {answerState !== 'unanswered' && isCorrectOption && (
+                          {answerState !== 'unanswered' && isCorrectOption && (
                                             <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                          )}
-                                          {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
+                          )}
+                          {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
                                             <X className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                                          )}
-                                        </div>
+                          )}
+                        </div>
                       </button>
                     );
                   })}

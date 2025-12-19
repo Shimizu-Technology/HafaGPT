@@ -58,10 +58,16 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   // Auto-resize textarea as content grows (respects CSS max-height)
   useEffect(() => {
     if (textareaRef.current) {
-      // Reset height to auto to get accurate scrollHeight
-      textareaRef.current.style.height = 'auto';
-      // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      // Only auto-resize if there's actual content
+      if (input.trim()) {
+        // Reset height to auto to get accurate scrollHeight
+        textareaRef.current.style.height = 'auto';
+        // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      } else {
+        // When empty, use the minimum height from CSS
+        textareaRef.current.style.height = '';
+      }
     }
   }, [input, textareaRef]);
 
@@ -280,7 +286,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   const canAddMoreFiles = selectedFiles.length < MAX_FILES;
 
   return (
-    <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4 safe-area-bottom">
+    <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4">
       <div className="w-full max-w-3xl mx-auto">
         {/* File Previews */}
         {selectedFiles.length > 0 && (
@@ -385,7 +391,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             aria-label="Message input"
             title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            style={{ minHeight: '38px' }}
+            style={{ height: input.trim() ? undefined : '42px', minHeight: '42px' }}
           />
           {loading ? (
             <button

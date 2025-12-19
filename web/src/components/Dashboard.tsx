@@ -126,7 +126,8 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Content - extra bottom padding on mobile for bottom nav */}
+      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6 space-y-6">
         {/* Welcome Card */}
         <div className={`rounded-2xl p-6 text-white shadow-xl ${
           isChristmasTheme 

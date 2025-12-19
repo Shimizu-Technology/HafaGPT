@@ -38,6 +38,7 @@ import { AdminSettings } from './components/admin/AdminSettings';
 import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
+import { BottomNav } from './components/BottomNav';
 
 function App() {
   return (
@@ -108,6 +109,9 @@ function App() {
         <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
       </Routes>
+      
+      {/* Mobile bottom navigation - shows on mobile only */}
+      <BottomNav />
     </BrowserRouter>
   );
 }

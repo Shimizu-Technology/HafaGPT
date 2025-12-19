@@ -140,27 +140,27 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             <div className="text-center mb-6">
               <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center mb-4`}>
                 <FeatureIcon className="w-8 h-8 text-coral-600 dark:text-ocean-400" />
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
+                  {featureInfo.title}
+                </h1>
+                <p className="text-brown-600 dark:text-gray-400">
+                  {featureInfo.description}
+                </p>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
-                {featureInfo.title}
-              </h1>
-              <p className="text-brown-600 dark:text-gray-400">
-                {featureInfo.description}
-              </p>
-            </div>
 
-            {/* Benefits */}
+              {/* Benefits */}
             <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6">
               <ul className="space-y-2">
-                {featureInfo.benefits.map((benefit, index) => (
+                  {featureInfo.benefits.map((benefit, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                    </div>
+                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      </div>
                     <span className="text-sm text-brown-700 dark:text-gray-300">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
+                    </li>
+                  ))}
+                </ul>
             </div>
 
             {/* CTA Section */}
@@ -188,18 +188,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
               {/* Free Account Note */}
               <p className="text-center text-xs text-brown-500 dark:text-gray-500 pt-2">
                 ✨ 100% free • No credit card required
-              </p>
-            </div>
-          </div>
+                  </p>
+                </div>
+              </div>
 
-          {/* Explore Free Content */}
+              {/* Explore Free Content */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-brown-500 dark:text-gray-500">
-              Just browsing?{' '}
-              <Link to="/vocabulary" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
-                Explore free content →
-              </Link>
-            </p>
+                <p className="text-sm text-brown-500 dark:text-gray-500">
+                  Just browsing?{' '}
+                  <Link to="/vocabulary" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
+                    Explore free content →
+                  </Link>
+                </p>
           </div>
         </div>
       </div>

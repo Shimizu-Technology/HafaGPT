@@ -569,8 +569,8 @@ export function HomePage() {
           </div>
         )}
 
-        {/* Footer */}
-        <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
+        {/* Footer - extra bottom padding on mobile for bottom nav */}
+        <footer className="text-center py-6 pb-20 sm:pb-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
           {/* Our Story link - moved from header for cleaner nav */}
           <Link 
             to="/about" 

@@ -109,6 +109,7 @@ export function Chat() {
     return modes[modeName];
   };
 
+
   // Clear active conversation and messages when user signs out (for fresh login next time)
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -981,10 +982,7 @@ End of Export
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 custom-scrollbar"
-        style={{ 
-          paddingBottom: '140px' // Space for fixed input + disclaimer
-        }}
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 pb-[200px] sm:pb-[140px] custom-scrollbar"
       >
         <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
@@ -1075,8 +1073,8 @@ End of Export
         </div>
       </div>
 
-      {/* Message Input - Fixed at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 safe-area-bottom">
+      {/* Message Input - Fixed at Bottom (raised on mobile for bottom nav) */}
+      <div className="fixed left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 bottom-16 sm:bottom-0">
         {/* Scroll to Bottom Button */}
         {showScrollButton && (
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">

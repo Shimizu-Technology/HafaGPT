@@ -457,9 +457,9 @@ export function FlashcardViewer() {
           
           <div className="flex-1 text-center">
             <div className="flex items-center justify-center gap-1">
-              <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
-                {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
-              </h1>
+            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+              {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
+            </h1>
               <TTSDisclaimer variant="tooltip" />
             </div>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${

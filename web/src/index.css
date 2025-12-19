@@ -74,6 +74,17 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /* Position element above bottom nav (64px) + safe area - for mobile only */
+  .above-bottom-nav {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  
+  @media (min-width: 640px) {
+    .above-bottom-nav {
+      bottom: 0;
+    }
+  }
+
   /* Improved touch targets for mobile */
   @media (hover: none) and (pointer: coarse) {
     button, a, input[type="button"], input[type="submit"] {

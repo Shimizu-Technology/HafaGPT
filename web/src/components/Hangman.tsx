@@ -440,7 +440,7 @@ export function Hangman() {
                       }`}
                     >
                       <div className="flex items-center justify-center">
-                        <span className="text-xl">{icon}</span>
+                      <span className="text-xl">{icon}</span>
                       </div>
                       <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
                       <p className={`text-[10px] mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>
