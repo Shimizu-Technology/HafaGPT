@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 18, 2025
+> **Last Updated:** December 14, 2025
 
 ---
 
@@ -21,7 +21,7 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 💳 Freemium Model (Clerk Billing + Stripe)
 - 📊 Progress Dashboard
 - 🔐 Authentication (Clerk)
-- 📱 Mobile-optimized responsive design
+- 📱 Mobile-optimized responsive design + bottom navigation
 - 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban, settings)
 - 🎄 **Seasonal Themes** (Christmas, New Year, Chamorro, Default)
 - 🎉 **Promo Management** (Admin-controlled promo periods with theme-aware banners)
@@ -544,7 +544,7 @@ Automatically switch to faster model during high load:
 
 | Task | Description | Status |
 |------|-------------|--------|
-| **Mobile Bottom Nav** | Tab bar (Home, Chat, Games, Learn, Menu) like Duolingo | 📋 Planned |
+| **Mobile Bottom Nav** | Tab bar (Home, Chat, Games, Learn, More) with slide-up menu | ✅ Done |
 | **Redesign Homepage Cards** | Fewer, larger feature cards with better visual hierarchy | 📋 Planned |
 | **Progressive Disclosure** | Don't show all features at once, guide users | 📋 Future |
 
