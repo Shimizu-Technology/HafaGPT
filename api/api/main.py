@@ -104,6 +104,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize Sentry for error tracking (if configured)
+try:
+    from src.utils.sentry_config import init_sentry, set_user_context, set_request_context
+    sentry_enabled = init_sentry()
+except ImportError as e:
+    logger.warning(f"⚠️  Sentry not available: {e}")
+    sentry_enabled = False
+    # Create dummy functions if Sentry not available
+    def set_user_context(*args, **kwargs): pass
+    def set_request_context(*args, **kwargs): pass
+
 # Initialize Clerk client (if available and configured)
 clerk = None
 if CLERK_AVAILABLE and os.getenv("CLERK_SECRET_KEY"):
@@ -998,6 +1009,14 @@ async def chat_stream(
         
         # Verify user authentication
         user_id = await verify_user(authorization)
+        
+        # Set Sentry context for this request
+        set_user_context(user_id=user_id)
+        set_request_context(
+            conversation_id=conversation_id,
+            mode=mode,
+            model=os.getenv("CHAT_MODEL", "deepseek-v3")
+        )
         
         # Process files if present
         image_base64 = None  # First image for vision model

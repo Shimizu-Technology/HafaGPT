@@ -75,6 +75,68 @@ def cleanup_cancelled_message(pending_id: str):
 from src.rag.chamorro_rag import rag
 from src.rag.web_search_tool import web_search, format_search_results
 
+# Import token management for budget control
+from src.utils.token_manager import (
+    TokenManager,
+    TokenBudget,
+    count_tokens,
+    count_message_tokens,
+    truncate_text,
+    truncate_conversation_history,
+    truncate_document_content,
+)
+
+# Configure logging
+import logging
+logger = logging.getLogger(__name__)
+
+
+def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
+    """
+    Get a database connection with retry logic for serverless PostgreSQL.
+    
+    Neon and other serverless databases can drop connections after idle periods.
+    This function retries connection on SSL/connection errors.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        retry_delay: Base delay between retries (doubles each attempt)
+    
+    Returns:
+        A psycopg connection object
+    
+    Raises:
+        Exception: If all retries fail
+    """
+    import psycopg
+    
+    database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg.connect(database_url)
+            return conn
+        except Exception as e:
+            last_error = e
+            error_msg = str(e).lower()
+            
+            # Check if it's a connection error worth retrying
+            is_connection_error = any(keyword in error_msg for keyword in [
+                'ssl', 'connection', 'closed', 'timeout', 'refused', 'reset'
+            ])
+            
+            if is_connection_error and attempt < max_retries - 1:
+                wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                logger.warning(f"⚠️  Database connection failed (attempt {attempt + 1}/{max_retries}), retrying in {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            else:
+                # Not a connection error or max retries reached
+                raise
+    
+    raise last_error
+
 # Load environment
 load_dotenv()
 
@@ -426,13 +488,8 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
         return []
     
     try:
-        import psycopg
-        
-        # Get database URL from environment
-        database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
-        
-        # Connect to database
-        conn = psycopg.connect(database_url)
+        # Use retry wrapper for serverless database connections
+        conn = _get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get last N messages for this CONVERSATION (not session!)
@@ -520,13 +577,8 @@ def log_conversation(
         image_url: Optional S3 URL of uploaded image
     """
     try:
-        import psycopg
-        
-        # Get database URL from environment
-        database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
-        
-        # Connect to database
-        conn = psycopg.connect(database_url)
+        # Use retry wrapper for serverless database connections
+        conn = _get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Insert conversation log (with user_id, conversation_id, and image_url)
@@ -555,7 +607,7 @@ def log_conversation(
         
     except Exception as e:
         # Don't break the app if logging fails
-        print(f"⚠️  Failed to log conversation to database: {e}")
+        logger.error(f"⚠️  Failed to log conversation to database: {e}")
 
 
 def should_use_rag(user_input: str, conversation_length: int = 0) -> tuple[bool, str | None]:
@@ -691,9 +743,14 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
     return False, None
 
 
-def get_rag_context(user_input: str, conversation_length: int = 0) -> tuple[str, list]:
+def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: int = 4000) -> tuple[str, list]:
     """
-    Get relevant RAG context.
+    Get relevant RAG context with token limit.
+    
+    Args:
+        user_input: User's message
+        conversation_length: Number of messages in conversation
+        max_tokens: Maximum tokens for RAG context
     
     Returns:
         tuple: (context_string, sources_list)
@@ -707,9 +764,16 @@ def get_rag_context(user_input: str, conversation_length: int = 0) -> tuple[str,
         # Adjust retrieval size based on mode
         k = 1 if rag_mode == "light" else 3
         context, sources = rag.create_context(user_input, k=k)
+        
+        # Apply token limit to RAG context
+        context_tokens = count_tokens(context)
+        if context_tokens > max_tokens:
+            logger.info(f"RAG context ({context_tokens} tokens) exceeds limit ({max_tokens}), truncating...")
+            context = truncate_text(context, max_tokens)
+        
         return context, sources
     except Exception as e:
-        print(f"RAG error: {e}")
+        logger.error(f"RAG error: {e}")
         return "", []
 
 
@@ -889,6 +953,15 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     if web_context:
         system_prompt += f"\n\n{web_context}"
     
+    # Initialize token manager for this request
+    token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
+    
+    # Apply token limit to system prompt
+    system_prompt_tokens = count_tokens(system_prompt)
+    if system_prompt_tokens > token_manager.budget.system_prompt:
+        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget, truncating...")
+        system_prompt = truncate_text(system_prompt, token_manager.budget.system_prompt)
+    
     # Build conversation history
     history = [
         {"role": "system", "content": system_prompt}
@@ -898,10 +971,27 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
     if conversation_id:
         past_messages = get_conversation_history(conversation_id, max_messages=10)
+        
+        # Apply token limit to conversation history
+        history_tokens = count_message_tokens(past_messages)
+        if history_tokens > token_manager.budget.conversation_history:
+            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget, truncating...")
+            past_messages = truncate_conversation_history(
+                past_messages, 
+                token_manager.budget.conversation_history,
+                model=LLM_MODEL_ID
+            )
+        
         history.extend(past_messages)
         
         # Update conversation_length for RAG decisions
         conversation_length = len(past_messages) // 2  # Divide by 2 to get message pairs
+    
+    # Apply token limit to current message
+    message_tokens = count_tokens(message)
+    if message_tokens > token_manager.budget.current_message:
+        logger.warning(f"Current message ({message_tokens} tokens) exceeds budget, truncating...")
+        message = truncate_text(message, token_manager.budget.current_message)
     
     # Build user message (text + optional image)
     if image_base64:
@@ -934,6 +1024,23 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         print(f"⚠️  Message {pending_id} cancelled before GPT call")
         return early_cancelled_response()
     
+    # Log token usage before LLM call
+    total_input_tokens = count_message_tokens(history)
+    logger.info(f"📊 Token usage (non-stream): {total_input_tokens} input tokens")
+    
+    # Check if we're within reasonable limits
+    if total_input_tokens > token_manager.budget.total:
+        logger.error(f"⚠️ Total tokens ({total_input_tokens}) exceeds budget ({token_manager.budget.total})!")
+        response_time = time.time() - start_time
+        return {
+            "response": "I apologize, but this conversation has become too long. Please start a new conversation to continue.",
+            "sources": [],
+            "used_rag": False,
+            "used_web_search": False,
+            "response_time": response_time,
+            "cancelled": False
+        }
+    
     # Get LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
     request_client, request_model = get_client_for_request(has_image=bool(image_base64))
@@ -948,7 +1055,21 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         response_text = response.choices[0].message.content
         
     except Exception as e:
-        response_text = f"Error: {str(e)}"
+        error_str = str(e).lower()
+        
+        # Check for token overflow errors
+        is_token_error = any(phrase in error_str for phrase in [
+            'token', 'context length', 'max_tokens', 'prompt length', 
+            'too long', 'exceeds', 'maximum', 'limit'
+        ])
+        
+        if is_token_error:
+            logger.error(f"Token overflow error: {e}")
+            response_text = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue. Si Yu'os Ma'åse! 🙏"
+        else:
+            logger.error(f"LLM error: {e}")
+            response_text = "Error: I encountered an issue processing your message. Please try again."
+        
         sources = []
         used_rag = False
         use_web = False
@@ -1071,6 +1192,9 @@ def get_chatbot_response_stream(
     message_for_logging = original_message if original_message else message
     start_time = time.time()
     
+    # Initialize token manager for this request
+    token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
+    
     # Check for early cancellation
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
@@ -1099,8 +1223,8 @@ def get_chatbot_response_stream(
         cleanup_cancelled_message(pending_id)
         return
     
-    # Get RAG context
-    rag_context, sources = get_rag_context(message, conversation_length)
+    # Get RAG context with token limit
+    rag_context, sources = get_rag_context(message, conversation_length, max_tokens=token_manager.budget.rag_context)
     used_rag = bool(rag_context)
     
     # Build system prompt
@@ -1175,15 +1299,38 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     if web_context:
         system_prompt += f"\n\n{web_context}"
     
+    # Track token usage and apply limits
+    system_prompt_tokens = count_tokens(system_prompt)
+    if system_prompt_tokens > token_manager.budget.system_prompt:
+        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget ({token_manager.budget.system_prompt}), truncating...")
+        system_prompt = truncate_text(system_prompt, token_manager.budget.system_prompt)
+    
     # Build conversation history
     history = [{"role": "system", "content": system_prompt}]
     
-    # Retrieve past conversation history
+    # Retrieve past conversation history with token limit
     # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
     if conversation_id:
         past_messages = get_conversation_history(conversation_id, max_messages=10)
+        
+        # Apply token limit to conversation history
+        history_tokens = count_message_tokens(past_messages)
+        if history_tokens > token_manager.budget.conversation_history:
+            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget ({token_manager.budget.conversation_history}), truncating...")
+            past_messages = truncate_conversation_history(
+                past_messages, 
+                token_manager.budget.conversation_history,
+                model=LLM_MODEL_ID
+            )
+        
         history.extend(past_messages)
         conversation_length = len(past_messages) // 2
+    
+    # Apply token limit to current message (includes document content)
+    message_tokens = count_tokens(message)
+    if message_tokens > token_manager.budget.current_message:
+        logger.warning(f"Current message ({message_tokens} tokens) exceeds budget ({token_manager.budget.current_message}), truncating...")
+        message = truncate_text(message, token_manager.budget.current_message)
     
     # Build user message
     if image_base64:
@@ -1243,6 +1390,34 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # Use vision-capable model if image is present and current model doesn't support vision
     request_client, request_model = get_client_for_request(has_image=bool(image_base64))
     
+    # Log token usage before LLM call
+    total_input_tokens = count_message_tokens(history)
+    logger.info(f"📊 Token usage: {total_input_tokens} input tokens, model={request_model}")
+    
+    # Check if we're within reasonable limits
+    if total_input_tokens > token_manager.budget.total:
+        logger.error(f"⚠️ Total tokens ({total_input_tokens}) exceeds budget ({token_manager.budget.total})!")
+        error_message = "I apologize, but this conversation has become too long. Please start a new conversation to continue."
+        
+        # IMPORTANT: Save the user message even when we hit token limit
+        # This ensures the message is never lost
+        log_conversation(
+            user_message=message_for_logging,
+            bot_response=f"[Token limit exceeded: {total_input_tokens} tokens]",
+            mode=mode,
+            sources=[],
+            used_rag=used_rag,
+            used_web_search=use_web,
+            response_time=time.time() - start_time,
+            session_id=session_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            image_url=image_url
+        )
+        
+        yield {"type": "error", "content": error_message}
+        return
+    
     full_response = ""
     try:
         stream = request_client.chat.completions.create(
@@ -1279,7 +1454,39 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                 yield {"type": "chunk", "content": content}
         
     except Exception as e:
-        yield {"type": "error", "content": f"Error: {str(e)}"}
+        error_str = str(e).lower()
+        
+        # Check for token overflow errors (different providers phrase it differently)
+        is_token_error = any(phrase in error_str for phrase in [
+            'token', 'context length', 'max_tokens', 'prompt length', 
+            'too long', 'exceeds', 'maximum', 'limit'
+        ])
+        
+        if is_token_error:
+            logger.error(f"Token overflow error: {e}")
+            error_message = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue chatting. Si Yu'os Ma'åse for your patience! 🙏"
+            logger.error(f"Full token error details: input_tokens={total_input_tokens}, model={request_model}, error={e}")
+        else:
+            logger.error(f"LLM error: {e}")
+            error_message = "Error: I encountered an issue processing your message. Please try again."
+        
+        # IMPORTANT: Save the user message even when LLM fails
+        # This ensures the message is never lost
+        log_conversation(
+            user_message=message_for_logging,
+            bot_response=f"[Error: {str(e)[:200]}]",  # Truncate error for DB
+            mode=mode,
+            sources=[],
+            used_rag=used_rag,
+            used_web_search=use_web,
+            response_time=time.time() - start_time,
+            session_id=session_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            image_url=image_url
+        )
+        
+        yield {"type": "error", "content": error_message}
         cleanup_cancelled_message(pending_id)
         return
     

@@ -1,7 +1,7 @@
 # 🌺 HåfaGPT - Development Roadmap
 
 > **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 14, 2025
+> **Last Updated:** December 20, 2025
 
 ---
 
@@ -811,6 +811,43 @@ User management + analytics + site settings all working!
 ---
 
 ## 🐛 Recent Bug Fixes & Improvements
+
+### December 20, 2025 - Stability & Reliability Overhaul
+
+> **Context:** Production usage revealed critical issues with token overflow, message persistence, and database connection stability. This release addresses all issues with proper fixes (not bandaids).
+
+| Category | Issue | Root Cause | Fix |
+|----------|-------|------------|-----|
+| **🚨 Token Overflow** | `prompt length (113440) exceeds max_num_tokens (32768)` errors | No token limits - conversations could grow unbounded, RAG could add unlimited context | Created `token_manager.py` with 24K token budget, truncation for system prompt, RAG context, conversation history, and current message |
+| **🚨 Messages Lost** | User messages disappeared after connection errors | `log_conversation` only called after successful LLM response | Now save messages even when errors occur (with error indicator) |
+| **🚨 Database Drops** | `SSL connection has been closed unexpectedly` errors | Neon serverless PostgreSQL drops idle connections | Added `_get_db_connection_with_retry()` with exponential backoff in both `chatbot_service.py` and `chamorro_rag.py` |
+| **🚨 RAG Retry Bug** | SSL errors in RAG weren't retried | Connection errors were caught and swallowed instead of bubbling up to retry wrapper | Modified error handlers to re-raise connection errors for retry |
+| **⚠️ PWA Stale Cache** | Some updates visible, others not (e.g., bottom nav but no edit button) | `skipWaiting()` called automatically, unpredictable update timing | PWA update notification banner with user-controlled updates |
+| **⚠️ Pre-promo Premium** | Users who signed up before promo didn't show as premium | Frontend only checked `is_premium` metadata, not promo status | `isPremium = status.is_premium \|\| isPromoActive` in `useSubscription.ts` |
+| **📊 Monitoring** | No visibility into production errors | No error tracking | Added Sentry SDK integration with FastAPI, request context, token overflow tracking |
+
+**New Files:**
+- `src/utils/token_manager.py` - Token counting, budget management, truncation, summarization
+- `src/utils/sentry_config.py` - Sentry error tracking configuration
+- `evaluation/test_stress.py` - Stress tests for token management (15K token messages, 25-turn conversations)
+- `src/hooks/usePWAUpdate.ts` - PWA update detection hook
+- `src/components/PWAUpdateBanner.tsx` - User notification for new versions
+
+**Token Budget (24K total):**
+| Component | Max Tokens |
+|-----------|------------|
+| System Prompt | 3,000 |
+| RAG Context | 4,000 |
+| Conversation History | 8,000 |
+| Current Message | 6,000 |
+| Response Buffer | 3,000 |
+
+**Stress Test Results (All Passed):**
+- ✅ Error Recovery - Empty/edge case messages handled gracefully
+- ✅ Rapid Fire (10/10) - Quick successive requests all succeeded
+- ✅ Long Message (15K tokens) - Truncated and processed in 39s
+- ✅ Many Turns (25 messages) - All turns succeeded, avg 21s response
+- ✅ Combined Stress (15 turns + 8K message) - Processed in 25s
 
 ### December 16, 2025
 | Fix | Description |

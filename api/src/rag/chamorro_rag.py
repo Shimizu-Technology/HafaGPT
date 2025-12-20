@@ -406,6 +406,11 @@ class ChamorroRAG:
                         return docs
                         
             except Exception as e:
+                error_msg = str(e).lower()
+                # Let connection errors bubble up for retry (don't try semantic search which will also fail)
+                if any(keyword in error_msg for keyword in ['ssl', 'connection', 'closed', 'timeout', 'reset', 'refused']):
+                    print(f"⚠️  SQL search connection error (will retry): {e}")
+                    raise  # Let retry wrapper handle this
                 print(f"⚠️  SQL search error: {e}")
                 # Fall through to semantic search
             
@@ -436,6 +441,11 @@ class ChamorroRAG:
             return dict_results
             
         except Exception as e:
+            error_msg = str(e).lower()
+            # Let connection errors bubble up for retry
+            if any(keyword in error_msg for keyword in ['ssl', 'connection', 'closed', 'timeout', 'reset', 'refused']):
+                print(f"⚠️  Keyword search connection error (will retry): {e}")
+                raise  # Let retry wrapper handle this
             print(f"⚠️  Keyword search error: {e}")
             return []
     
@@ -553,12 +563,22 @@ class ChamorroRAG:
                         return docs
                         
             except Exception as e:
+                error_msg = str(e).lower()
+                # Let connection errors bubble up for retry
+                if any(keyword in error_msg for keyword in ['ssl', 'connection', 'closed', 'timeout', 'reset', 'refused']):
+                    print(f"⚠️  English→Chamorro SQL connection error (will retry): {e}")
+                    raise  # Let retry wrapper handle this
                 print(f"⚠️  English→Chamorro SQL search error: {e}")
                 # Fall through to return empty
             
             return []
             
         except Exception as e:
+            error_msg = str(e).lower()
+            # Let connection errors bubble up for retry
+            if any(keyword in error_msg for keyword in ['ssl', 'connection', 'closed', 'timeout', 'reset', 'refused']):
+                print(f"⚠️  English→Chamorro connection error (will retry): {e}")
+                raise  # Let retry wrapper handle this
             print(f"⚠️  English→Chamorro search error: {e}")
             return []
     

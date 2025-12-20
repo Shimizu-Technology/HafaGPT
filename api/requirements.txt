@@ -60,6 +60,7 @@ certifi==2025.11.12
     #   httpx
     #   kubernetes
     #   requests
+    #   sentry-sdk
 cffi==2.0.0 ; platform_python_implementation != 'PyPy'
     # via cryptography
 chardet==5.2.0
@@ -427,6 +428,8 @@ pyopenssl==25.3.0
     # via crawl4ai
 pypdf==6.4.0
     # via llm-project (pyproject.toml)
+pypdf2==3.0.1
+    # via llm-project (pyproject.toml)
 pypika==0.48.9
     # via chromadb
 pyproject-hooks==1.2.0
@@ -508,6 +511,8 @@ s3transfer==0.14.0
     # via boto3
 scipy==1.16.3
     # via alphashape
+sentry-sdk==2.48.0
+    # via llm-project (pyproject.toml)
 shapely==2.1.2
     # via
     #   alphashape
@@ -549,6 +554,7 @@ tf-playwright-stealth==1.2.0
     # via crawl4ai
 tiktoken==0.12.0
     # via
+    #   llm-project (pyproject.toml)
     #   langchain-openai
     #   litellm
 tokenizers==0.22.1
@@ -612,6 +618,7 @@ urllib3==2.3.0
     #   botocore
     #   kubernetes
     #   requests
+    #   sentry-sdk
 uvicorn==0.38.0
     # via
     #   llm-project (pyproject.toml)
