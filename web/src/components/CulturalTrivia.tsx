@@ -547,7 +547,7 @@ export function CulturalTrivia() {
                     }`}
                   >
                     <div className="flex items-center justify-center">
-                      <span className="text-lg">{icon}</span>
+                    <span className="text-lg">{icon}</span>
                     </div>
                     <p className={`text-[10px] font-medium mt-0.5 truncate ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{label}</p>
                     <p className={`text-[9px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count}q</p>

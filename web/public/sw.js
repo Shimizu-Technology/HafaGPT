@@ -19,8 +19,16 @@ self.addEventListener('install', (event) => {
       return cache.addAll(PRECACHE_ASSETS);
     })
   );
-  // Activate immediately
-  self.skipWaiting();
+  // Note: We don't call skipWaiting() here anymore
+  // The app will notify users and they can choose when to update
+});
+
+// Listen for messages from the app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Received SKIP_WAITING message, activating new version...');
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches

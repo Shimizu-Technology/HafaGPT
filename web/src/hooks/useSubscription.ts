@@ -196,9 +196,12 @@ export function useSubscription() {
 
   const isLoading = usageLoading || statusLoading;
   
-  // User is premium if they have a subscription OR if promo is active
-  const isPremium = status?.is_premium ?? false;
+  // Promo status
   const isPromoActive = promo?.active ?? false;
+  
+  // User is premium if they have a subscription OR if promo is active
+  // This ensures all users get unlimited access during promo periods
+  const isPremium = (status?.is_premium ?? false) || isPromoActive;
 
   /**
    * Check if a feature can be used (under limit or premium).

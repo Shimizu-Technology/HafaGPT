@@ -39,6 +39,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
 import { BottomNav } from './components/BottomNav';
+import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 
 function App() {
   return (
@@ -112,6 +113,9 @@ function App() {
       
       {/* Mobile bottom navigation - shows on mobile only */}
       <BottomNav />
+      
+      {/* PWA update notification */}
+      <PWAUpdateBanner />
     </BrowserRouter>
   );
 }
