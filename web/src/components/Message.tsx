@@ -1,9 +1,72 @@
 import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw } from 'lucide-react';
-import { useState, memo } from 'react';
+import { useState, memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
+
+/**
+ * Clean markdown content to prevent unwanted code blocks.
+ * 
+ * The LLM sometimes starts responses with leading spaces/tabs which
+ * markdown interprets as code blocks (4+ spaces = pre/code).
+ * 
+ * This function:
+ * 1. Trims leading/trailing whitespace from the entire content
+ * 2. Removes leading spaces/tabs from the first line that would trigger code blocks
+ * 3. Preserves intentional code blocks (```)
+ */
+function cleanMarkdownContent(content: string): string {
+  if (!content) return content;
+  
+  // Trim overall content
+  let cleaned = content.trim();
+  
+  // If the content starts with actual code block markers, leave it alone
+  if (cleaned.startsWith('```')) return cleaned;
+  
+  // Split into lines
+  const lines = cleaned.split('\n');
+  
+  // Clean leading whitespace from lines that could trigger unintended code blocks
+  // (lines starting with 4+ spaces or tabs, but NOT inside intentional code blocks)
+  let inCodeBlock = false;
+  const cleanedLines = lines.map((line, index) => {
+    // Track code block state
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      return line;
+    }
+    
+    // Don't modify lines inside code blocks
+    if (inCodeBlock) return line;
+    
+    // For the first line, always trim leading whitespace
+    // For other lines, only trim if it would create an unwanted code block
+    if (index === 0) {
+      return line.trimStart();
+    }
+    
+    // Check if line starts with 4+ spaces or a tab (code block trigger)
+    // But only fix it if the previous line is empty or a paragraph
+    // (preserving intentional indentation in lists, etc.)
+    const leadingSpaces = line.match(/^(\s*)/)?.[1] || '';
+    if (leadingSpaces.length >= 4 || leadingSpaces.includes('\t')) {
+      // Check if this looks like an intentional code block (following blank line)
+      const prevLine = index > 0 ? lines[index - 1].trim() : '';
+      if (prevLine === '') {
+        // This might be intentional code, but if the next line is also indented
+        // and doesn't look like code, clean it
+        // For now, be conservative and just fix first-line issues
+        return line;
+      }
+    }
+    
+    return line;
+  });
+  
+  return cleanedLines.join('\n');
+}
 
 // Helper to determine file type from URL
 function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'unknown' {
@@ -62,6 +125,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
+  
+  // Clean content to prevent unwanted code blocks from leading whitespace
+  const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
 
   // Handle edit submission
   const handleEditSubmit = () => {
@@ -560,7 +626,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 }}
               >
                 {/* Only render content if it's not the thinking placeholder */}
-                {content !== '...' ? content : ''}
+                {content !== '...' ? cleanedContent : ''}
               </ReactMarkdown>
               {/* Streaming cursor - always rendered, uses CSS to fade in/out */}
               {content && content.length > 0 && (
