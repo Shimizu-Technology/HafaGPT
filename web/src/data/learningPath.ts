@@ -1,5 +1,7 @@
-// Beginner Learning Path - 7 Topics
-// Each topic maps to existing flashcards, quizzes, and games
+// Learning Paths - Beginner & Intermediate
+// Each topic maps to flashcards, quizzes, and games
+
+export type LearningLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface LearningTopic {
   id: string;
@@ -7,6 +9,7 @@ export interface LearningTopic {
   description: string;
   icon: string;
   estimatedMinutes: number;
+  level: LearningLevel;
   // Maps to existing content
   flashcardCategory: string;
   quizCategory: string;
@@ -20,6 +23,14 @@ export interface LearningTopic {
   suggestedGames?: string[];
 }
 
+export interface LearningPath {
+  level: LearningLevel;
+  title: string;
+  description: string;
+  icon: string;
+  topics: LearningTopic[];
+}
+
 export const BEGINNER_PATH: LearningTopic[] = [
   {
     id: 'greetings',
@@ -27,6 +38,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Learn "Håfa Adai" and how to introduce yourself',
     icon: '👋',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'greetings',
     quizCategory: 'greetings',
     intro: {
@@ -42,6 +54,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Learn to count in Chamorro',
     icon: '🔢',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'numbers',
     quizCategory: 'numbers',
     intro: {
@@ -57,6 +70,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Learn the colors of the rainbow',
     icon: '🎨',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'colors',
     quizCategory: 'colors',
     intro: {
@@ -72,6 +86,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Words for mother, father, siblings, and more',
     icon: '👨‍👩‍👧‍👦',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'family',
     quizCategory: 'family',
     intro: {
@@ -87,6 +102,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Common foods and island favorites',
     icon: '🍚',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'food',
     quizCategory: 'food',
     intro: {
@@ -102,6 +118,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Learn about island creatures and pets',
     icon: '🐠',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'animals',
     quizCategory: 'animals',
     intro: {
@@ -117,6 +134,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     description: 'Everyday expressions and useful phrases',
     icon: '💬',
     estimatedMinutes: 5,
+    level: 'beginner',
     flashcardCategory: 'phrases',
     quizCategory: 'common-phrases',
     intro: {
@@ -128,21 +146,186 @@ export const BEGINNER_PATH: LearningTopic[] = [
   },
 ];
 
-// Helper to get topic by ID
+// Intermediate Learning Path - 7 Topics
+// Builds on beginner knowledge with grammar patterns and more vocabulary
+export const INTERMEDIATE_PATH: LearningTopic[] = [
+  {
+    id: 'questions',
+    title: 'Question Words',
+    description: 'Learn to ask who, what, where, when, why, how',
+    icon: '❓',
+    estimatedMinutes: 6,
+    level: 'intermediate',
+    flashcardCategory: 'questions',
+    quizCategory: 'questions',
+    intro: {
+      culturalContext: 'Asking questions is essential for any conversation. In Chamorro, question words are placed at the beginning of sentences, similar to English. Mastering these opens up real dialogue!',
+      keyPhrases: ['Håfa — What', 'Hayi — Who', 'Manu — Where'],
+      tip: 'Notice how "Håfa" appears in "Håfa Adai" (Hello) — it literally means "What\'s up!" or "What\'s happening!"',
+    },
+    suggestedGames: ['scramble', 'hangman'],
+  },
+  {
+    id: 'body-parts',
+    title: 'Body Parts',
+    description: 'Learn words for parts of the body',
+    icon: '🫀',
+    estimatedMinutes: 6,
+    level: 'intermediate',
+    flashcardCategory: 'body',
+    quizCategory: 'body-parts',
+    intro: {
+      culturalContext: 'Knowing body part words is practical for health, descriptions, and everyday life. These words are also used in traditional Chamorro songs and dances that celebrate the human form.',
+      keyPhrases: ['Ulu — Head', 'Mata — Eyes', 'Kannai — Hand'],
+      tip: 'Many body parts double as action words: "Mata" (eye) relates to "li\'e\'" (to see), and "talanga" (ear) relates to "hungok" (to hear).',
+    },
+    suggestedGames: ['memory', 'sound-match'],
+  },
+  {
+    id: 'days',
+    title: 'Days of the Week',
+    description: 'Learn to say the days in Chamorro',
+    icon: '📅',
+    estimatedMinutes: 5,
+    level: 'intermediate',
+    flashcardCategory: 'days',
+    quizCategory: 'days',
+    intro: {
+      culturalContext: 'The Chamorro days of the week come from Spanish, reflecting centuries of colonial influence. Sunday (Dåmenggo) is especially important as the day for church and family gatherings.',
+      keyPhrases: ['Lunes — Monday', 'Betnes — Friday', 'Dåmenggo — Sunday'],
+      tip: 'The week starts with "Dåmenggo" (Sunday) in traditional Chamorro calendars, reflecting the importance of church and rest.',
+    },
+    suggestedGames: ['memory', 'falling'],
+  },
+  {
+    id: 'months',
+    title: 'Months & Seasons',
+    description: 'Learn the months of the year',
+    icon: '🗓️',
+    estimatedMinutes: 6,
+    level: 'intermediate',
+    flashcardCategory: 'months',
+    quizCategory: 'months',
+    intro: {
+      culturalContext: 'Guam has two seasons: the dry season (Fañomnåkan) from January to June, and the rainy season (Umåtto) from July to December. Month names come from Spanish but are adapted to Chamorro pronunciation.',
+      keyPhrases: ['Eneru — January', 'Huliu — July', 'Disiembre — December'],
+      tip: 'Guam\'s festive season peaks in December (Disiembre) with fiestas, Christmas celebrations, and community gatherings.',
+    },
+    suggestedGames: ['memory', 'scramble'],
+  },
+  {
+    id: 'verbs',
+    title: 'Common Verbs',
+    description: 'Action words for everyday activities',
+    icon: '🏃',
+    estimatedMinutes: 7,
+    level: 'intermediate',
+    flashcardCategory: 'verbs',
+    quizCategory: 'verbs',
+    intro: {
+      culturalContext: 'Chamorro verbs work differently from English. The pronoun "Hu" (I) comes before the verb: "Hu kånno\'" (I eat), "Hu maigo\'" (I sleep). This pattern is key to forming sentences!',
+      keyPhrases: ['Hu kånno\' — I eat', 'Hu maigo\' — I sleep', 'Hu hånao — I go'],
+      tip: 'Start with "Hu" + verb for "I do something." You\'ll learn other pronouns (Un = you, Ha = he/she) in the advanced level!',
+    },
+    suggestedGames: ['scramble', 'falling'],
+  },
+  {
+    id: 'adjectives',
+    title: 'Describing Things',
+    description: 'Adjectives for size, quality, and feelings',
+    icon: '✨',
+    estimatedMinutes: 6,
+    level: 'intermediate',
+    flashcardCategory: 'adjectives',
+    quizCategory: 'adjectives',
+    intro: {
+      culturalContext: 'Descriptive words in Chamorro help you express opinions, describe people and places, and share your feelings. Many adjectives can also function as verbs!',
+      keyPhrases: ['Maolek — Good', 'Bunitu — Beautiful', 'Dånkolo — Big'],
+      tip: '"Maolek" is one of the most useful words — it means "good," "fine," "okay," and is used constantly in conversation!',
+    },
+    suggestedGames: ['memory', 'hangman'],
+  },
+  {
+    id: 'sentences',
+    title: 'Simple Sentences',
+    description: 'Put words together to make sentences',
+    icon: '📝',
+    estimatedMinutes: 8,
+    level: 'intermediate',
+    flashcardCategory: 'sentences',
+    quizCategory: 'sentences',
+    intro: {
+      culturalContext: 'Now it\'s time to combine everything! Chamorro sentences follow patterns similar to English but with some unique features. Modal words like "siña" (can) and "malago\'" (want) are essential.',
+      keyPhrases: ['Guahu si... — I am...', 'Malago\' yu\' — I want', 'Ti siña — Cannot'],
+      tip: 'Practice saying "Malago\' yu\' + noun" for "I want (something)." It\'s one of the most practical patterns!',
+    },
+    suggestedGames: ['scramble', 'hangman'],
+  },
+];
+
+// Combined paths for easy access
+export const ALL_PATHS: LearningPath[] = [
+  {
+    level: 'beginner',
+    title: 'Beginner',
+    description: 'Build your foundation with essential vocabulary',
+    icon: '🌱',
+    topics: BEGINNER_PATH,
+  },
+  {
+    level: 'intermediate',
+    title: 'Intermediate',
+    description: 'Expand with grammar patterns and more vocabulary',
+    icon: '🌿',
+    topics: INTERMEDIATE_PATH,
+  },
+];
+
+// All topics from all paths (for lookups)
+export const ALL_TOPICS: LearningTopic[] = [...BEGINNER_PATH, ...INTERMEDIATE_PATH];
+
+// Helper to get topic by ID (searches all paths)
 export function getTopic(id: string): LearningTopic | undefined {
-  return BEGINNER_PATH.find(t => t.id === id);
+  return ALL_TOPICS.find(t => t.id === id);
 }
 
-// Helper to get next topic after a given ID
+// Helper to get next topic after a given ID (within same level)
 export function getNextTopic(currentId: string): LearningTopic | undefined {
-  const currentIndex = BEGINNER_PATH.findIndex(t => t.id === currentId);
-  if (currentIndex === -1 || currentIndex === BEGINNER_PATH.length - 1) {
+  const topic = getTopic(currentId);
+  if (!topic) return undefined;
+  
+  const path = topic.level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+  const currentIndex = path.findIndex(t => t.id === currentId);
+  
+  if (currentIndex === -1 || currentIndex === path.length - 1) {
     return undefined;
   }
-  return BEGINNER_PATH[currentIndex + 1];
+  return path[currentIndex + 1];
 }
 
-// Helper to get topic index (1-based for display)
+// Helper to get topic index within its level (1-based for display)
 export function getTopicIndex(id: string): number {
-  return BEGINNER_PATH.findIndex(t => t.id === id) + 1;
+  const topic = getTopic(id);
+  if (!topic) return -1;
+  
+  const path = topic.level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+  return path.findIndex(t => t.id === id) + 1;
+}
+
+// Helper to get path by level
+export function getPath(level: LearningLevel): LearningTopic[] {
+  return level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+}
+
+// Helper to check if user has completed a level (all topics done)
+export function isLevelComplete(level: LearningLevel, completedTopicIds: string[]): boolean {
+  const path = getPath(level);
+  return path.every(topic => completedTopicIds.includes(topic.id));
+}
+
+// Helper to get next level after completing current
+export function getNextLevel(currentLevel: LearningLevel): LearningLevel | undefined {
+  if (currentLevel === 'beginner') return 'intermediate';
+  if (currentLevel === 'intermediate') return 'advanced';
+  return undefined;
 }

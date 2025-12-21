@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   MessageSquare, 
-  BookOpen, 
+  Map as MapIcon,
   Gamepad2,
   Menu,
   X,
@@ -12,7 +12,7 @@ import {
   BookMarked,
   MessagesSquare,
   Settings,
-  Calendar
+  Layers
 } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 
@@ -29,7 +29,7 @@ export function BottomNav() {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   
   // Don't show on detail/session pages where full-screen experience is needed
-  const hiddenPaths = ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/'];
+  const hiddenPaths = ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/', '/learn/'];
   const shouldHide = hiddenPaths.some(path => location.pathname.startsWith(path));
   
   // Also hide on shared conversation page and admin pages
@@ -51,10 +51,10 @@ export function BottomNav() {
       matchPaths: ['/chat']
     },
     { 
-      icon: <BookOpen className="w-5 h-5" />, 
+      icon: <MapIcon className="w-5 h-5" />, 
       label: 'Learn', 
-      to: '/flashcards',
-      matchPaths: ['/flashcards', '/quiz', '/stories', '/vocabulary', '/practice']
+      to: '/learning',
+      matchPaths: ['/learning', '/learn']
     },
     { 
       icon: <Gamepad2 className="w-5 h-5" />, 
@@ -65,11 +65,11 @@ export function BottomNav() {
   ];
 
   const moreMenuItems = [
+    { icon: <Layers className="w-5 h-5" />, label: 'Flashcards', to: '/flashcards' },
     { icon: <Brain className="w-5 h-5" />, label: 'Quizzes', to: '/quiz' },
     { icon: <Book className="w-5 h-5" />, label: 'Vocabulary', to: '/vocabulary' },
     { icon: <BookMarked className="w-5 h-5" />, label: 'Stories', to: '/stories' },
     { icon: <MessagesSquare className="w-5 h-5" />, label: 'Practice', to: '/practice' },
-    { icon: <Calendar className="w-5 h-5" />, label: 'Daily Word', to: '/daily-word' },
     ...(user ? [
       { icon: <Settings className="w-5 h-5" />, label: 'Settings', to: '/settings' },
     ] : []),

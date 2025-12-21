@@ -31,17 +31,17 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Maolek ha\' yu\'',
         back: 'I\'m fine / I\'m good',
-        pronunciation: 'mah-oh-LEK hah yoo'
+        pronunciation: 'mah-oh-LEK hah dzoo'
       },
       {
         front: 'Si Yu\'os Ma\'åse\'',
         back: 'Thank you',
-        pronunciation: 'see YOO-os mah-AH-see'
+        pronunciation: 'see DZOO-ohs mah-AW-seh'
       },
       {
         front: 'Buenas yan hågu',
         back: 'Good (day) to you / Hello',
-        pronunciation: 'BWAY-nahs yahn HAH-goo'
+        pronunciation: 'BWAY-nahs dzahn HAH-goo'
       },
       {
         front: 'Adios',
@@ -56,7 +56,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Håyi na\'ån-mu?',
         back: 'What is your name?',
-        pronunciation: 'HIGH nah-AHN-moo'
+        pronunciation: 'HAW-dzee nah-AHN-moo'
       },
       {
         front: 'I na\'ån-hu si...',
@@ -66,12 +66,12 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Kao siña un ayuda yu\'?',
         back: 'Can you help me?',
-        pronunciation: 'kah-oh SEEN-yah oon ah-YOO-dah yoo'
+        pronunciation: 'kah-oh SEEN-yah oon ah-DZOO-dah dzoo'
       },
       {
         front: 'Mañana si Yu\'os',
         back: 'Good morning',
-        pronunciation: 'mah-NYAH-nah see YOO-ohs'
+        pronunciation: 'mah-NYAH-nah see DZOO-ohs'
       },
       {
         front: 'Buenas tatdes',
@@ -270,7 +270,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Ayuyu',
         back: 'Coconut Crab',
-        pronunciation: 'ah-YOO-yoo'
+        pronunciation: 'ah-DZOO-dzoo'
       },
       {
         front: 'Månnok',
@@ -303,7 +303,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Åmariyu',
         back: 'Yellow',
-        pronunciation: 'ah-mah-REE-yoo'
+        pronunciation: 'aw-mah-REE-dzoo'
       },
       {
         front: 'Asut',
@@ -356,12 +356,12 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Hu guaiya hao',
         back: 'I love you',
-        pronunciation: 'hoo gwah-EE-yah how'
+        pronunciation: 'hoo gwah-EE-dzah how'
       },
       {
         front: 'Dispensa yu\'',
         back: 'Excuse me / I\'m sorry',
-        pronunciation: 'dees-PEN-sah yoo'
+        pronunciation: 'dees-PEN-sah dzoo'
       },
       {
         front: 'Ti hu komprende',
@@ -376,7 +376,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Kao siña un ayuda yu\'?',
         back: 'Can you help me?',
-        pronunciation: 'kah-oh SEEN-yah oon ah-YOO-dah yoo'
+        pronunciation: 'kah-oh SEEN-yah oon ah-DZOO-dah dzoo'
       },
       {
         front: 'Mångge ginen hao?',
@@ -422,7 +422,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Dispensa yu\'',
         back: 'Excuse me / I\'m sorry',
-        pronunciation: 'dees-PEN-sah yoo',
+        pronunciation: 'dees-PEN-sah dzoo',
         example: 'Polite way to apologize or get attention'
       },
       {
@@ -485,9 +485,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'tah-LAHNG-gah'
       },
       {
-        front: 'Guihan',
+        front: 'Gui\'eng',
         back: 'Nose',
-        pronunciation: 'gwee-HAHN'
+        pronunciation: 'GWEE-eng'
       },
       {
         front: 'Pachot',
@@ -500,24 +500,29 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'kahn-NIGH'
       },
       {
-        front: 'Adeng',
+        front: 'Bråsu',
         back: 'Arm / Arms',
-        pronunciation: 'ah-DENG'
-      },
-      {
-        front: 'På\'å',
-        back: 'Leg / Legs',
-        pronunciation: 'PAH-ah'
+        pronunciation: 'BRAH-soo'
       },
       {
         front: 'Addeng',
-        back: 'Foot / Feet',
+        back: 'Foot / Feet / Leg',
         pronunciation: 'ahd-DENG'
       },
       {
-        front: 'Tian',
+        front: 'Kueyu',
+        back: 'Neck / Nape',
+        pronunciation: 'KWEH-dzoo'
+      },
+      {
+        front: 'Korason',
+        back: 'Heart',
+        pronunciation: 'koh-rah-SOHN'
+      },
+      {
+        front: 'Tuyan',
         back: 'Stomach / Belly',
-        pronunciation: 'tee-AHN'
+        pronunciation: 'TOO-yan'
       }
     ]
   },
@@ -638,12 +643,378 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Hu guaiya',
         back: 'I love',
-        pronunciation: 'hoo gwah-EE-yah'
+        pronunciation: 'hoo gwah-EE-dzah'
       },
       {
         front: 'Hu tungo\'',
         back: 'I know / I understand',
         pronunciation: 'hoo TOON-goh'
+      }
+    ]
+  },
+
+  // INTERMEDIATE LEVEL DECKS
+
+  questions: {
+    topic: 'questions',
+    displayName: 'Question Words',
+    description: 'Learn to ask who, what, where, when, why, how',
+    cards: [
+      {
+        front: 'Håfa',
+        back: 'What',
+        pronunciation: 'HAH-fah',
+        example: 'Håfa na\'ån-ña? — What is his/her name?'
+      },
+      {
+        front: 'Hayi',
+        back: 'Who',
+        pronunciation: 'HA-dzee',
+        example: 'Hayi ennao? — Who is that?'
+      },
+      {
+        front: 'Manu',
+        back: 'Where / Which',
+        pronunciation: 'MAH-noo',
+        example: 'Manu nai gaige hao? — Where are you?'
+      },
+      {
+        front: 'Ngai\'an',
+        back: 'When',
+        pronunciation: 'ngai-AHN',
+        example: 'Ngai\'an un fatto? — When did you come?'
+      },
+      {
+        front: 'Pot håfa',
+        back: 'Why / For what',
+        pronunciation: 'poht HAH-fah',
+        example: 'Pot håfa un hånao? — Why did you go?'
+      },
+      {
+        front: 'Taimanu / Håfa taimanu',
+        back: 'How',
+        pronunciation: 'tai-MAH-noo',
+        example: 'Håfa taimanu hao? — How are you?'
+      },
+      {
+        front: 'Kuåntu',
+        back: 'How many / How much',
+        pronunciation: 'KWAHN-too',
+        example: 'Kuåntu i presiu? — How much is the price?'
+      },
+      {
+        front: 'Håyi',
+        back: 'Whose',
+        pronunciation: 'HAW-dzee',
+        example: 'Håyi kareta ennao? — Whose car is that?'
+      },
+      {
+        front: 'Kao',
+        back: 'Is it? / Do you? (question marker)',
+        pronunciation: 'KAH-oh',
+        example: 'Kao malago\' hao? — Do you want?'
+      },
+      {
+        front: 'Hafa bidå-mu?',
+        back: 'What are you doing?',
+        pronunciation: 'HAH-fah bee-DAH-moo',
+        example: 'Common way to ask what someone is up to'
+      }
+    ]
+  },
+
+  days: {
+    topic: 'days',
+    displayName: 'Days of the Week',
+    description: 'Learn the days of the week in Chamorro',
+    cards: [
+      {
+        front: 'Dåmenggo',
+        back: 'Sunday',
+        pronunciation: 'dah-MENG-goh',
+        example: 'The traditional first day of the week'
+      },
+      {
+        front: 'Lunes',
+        back: 'Monday',
+        pronunciation: 'LOO-nehs',
+        example: 'From Spanish "Lunes"'
+      },
+      {
+        front: 'Måttes',
+        back: 'Tuesday',
+        pronunciation: 'MAHT-tehs',
+        example: 'From Spanish "Martes"'
+      },
+      {
+        front: 'Metkoles',
+        back: 'Wednesday',
+        pronunciation: 'meht-KOH-lehs',
+        example: 'From Spanish "Miércoles"'
+      },
+      {
+        front: 'Huebes',
+        back: 'Thursday',
+        pronunciation: 'HWEH-behs',
+        example: 'From Spanish "Jueves"'
+      },
+      {
+        front: 'Betnes',
+        back: 'Friday',
+        pronunciation: 'BEHT-nehs',
+        example: 'From Spanish "Viernes"'
+      },
+      {
+        front: 'Såbalu',
+        back: 'Saturday',
+        pronunciation: 'SAH-bah-loo',
+        example: 'From Spanish "Sábado"'
+      },
+      {
+        front: 'På\'go na ha\'åni',
+        back: 'Today',
+        pronunciation: 'PAH-goh nah hah-AH-nee',
+        example: 'Literally "this day"'
+      },
+      {
+        front: 'Nigap',
+        back: 'Yesterday',
+        pronunciation: 'NEE-gahp',
+        example: 'Håfa bidå-mu nigap? — What did you do yesterday?'
+      },
+      {
+        front: 'Agupa\'',
+        back: 'Tomorrow',
+        pronunciation: 'ah-GOO-pah',
+        example: 'Hu li\'e\' hao agupa\'. — I\'ll see you tomorrow.'
+      }
+    ]
+  },
+
+  months: {
+    topic: 'months',
+    displayName: 'Months of the Year',
+    description: 'Learn the months and seasons in Chamorro',
+    cards: [
+      {
+        front: 'Eneru',
+        back: 'January',
+        pronunciation: 'eh-NEH-roo',
+        example: 'Traditional name: Tumaiguini'
+      },
+      {
+        front: 'Febreru',
+        back: 'February',
+        pronunciation: 'feh-BREH-roo',
+        example: 'Also spelled Fibreru'
+      },
+      {
+        front: 'Mårso',
+        back: 'March',
+        pronunciation: 'MAHR-soh',
+        example: 'Beginning of dry season'
+      },
+      {
+        front: 'Abrit',
+        back: 'April',
+        pronunciation: 'AH-breet',
+        example: 'From Spanish "Abril"'
+      },
+      {
+        front: 'Måyu',
+        back: 'May',
+        pronunciation: 'MAW-dzoo',
+        example: 'Month of fiestas and celebrations'
+      },
+      {
+        front: 'Huniu',
+        back: 'June',
+        pronunciation: 'HOO-nee-oo',
+        example: 'Liberation Day is June 21'
+      },
+      {
+        front: 'Huliu',
+        back: 'July',
+        pronunciation: 'HOO-lee-oo',
+        example: 'Start of rainy season (Umåtto)'
+      },
+      {
+        front: 'Ågosto',
+        back: 'August',
+        pronunciation: 'ah-GOHS-toh',
+        example: 'From Spanish "Agosto"'
+      },
+      {
+        front: 'Septiembre',
+        back: 'September',
+        pronunciation: 'sehp-tee-EHM-breh',
+        example: 'Peak typhoon season'
+      },
+      {
+        front: 'Oktubre',
+        back: 'October',
+        pronunciation: 'ohk-TOO-breh',
+        example: 'Traditional name: Faguålo\''
+      },
+      {
+        front: 'Nobiembre',
+        back: 'November',
+        pronunciation: 'noh-bee-EHM-breh',
+        example: 'Traditional name: Sumongsong'
+      },
+      {
+        front: 'Disiembre',
+        back: 'December',
+        pronunciation: 'dee-see-EHM-breh',
+        example: 'Festive season, Christmas celebrations'
+      }
+    ]
+  },
+
+  adjectives: {
+    topic: 'adjectives',
+    displayName: 'Describing Things',
+    description: 'Adjectives for size, quality, and feelings',
+    cards: [
+      {
+        front: 'Maolek',
+        back: 'Good / Fine / Well',
+        pronunciation: 'mah-OH-lehk',
+        example: 'Maolek ha\' yu\'. — I\'m fine.'
+      },
+      {
+        front: 'Båba',
+        back: 'Bad / Wrong',
+        pronunciation: 'BAH-bah',
+        example: 'Båba ennao. — That\'s bad.'
+      },
+      {
+        front: 'Bunitu',
+        back: 'Beautiful / Handsome',
+        pronunciation: 'boo-NEE-too',
+        example: 'Bunitu i palao\'an. — The woman is beautiful.'
+      },
+      {
+        front: 'Dånkolo',
+        back: 'Big / Large',
+        pronunciation: 'DAHN-koh-loh',
+        example: 'Dånkolo i guma\'. — The house is big.'
+      },
+      {
+        front: 'Dikike\'',
+        back: 'Small / Little',
+        pronunciation: 'dee-KEE-keh',
+        example: 'Dikike\' i patgon. — The child is small.'
+      },
+      {
+        front: 'Metgot',
+        back: 'Strong',
+        pronunciation: 'MEHT-goht',
+        example: 'Metgot i taotao. — The person is strong.'
+      },
+      {
+        front: 'Maipe',
+        back: 'Hot (temperature)',
+        pronunciation: 'my-PEH',
+        example: 'Maipe i tiempo. — The weather is hot.'
+      },
+      {
+        front: 'Manengheng',
+        back: 'Cold',
+        pronunciation: 'mah-neng-HENG',
+        example: 'Manengheng i hånom. — The water is cold.'
+      },
+      {
+        front: 'Nuebu',
+        back: 'New',
+        pronunciation: 'NWEH-boo',
+        example: 'Nuebu i kareta. — The car is new.'
+      },
+      {
+        front: 'Bihu',
+        back: 'Old (things)',
+        pronunciation: 'BEE-hoo',
+        example: 'Bihu i sapatos. — The shoes are old.'
+      },
+      {
+        front: 'Nahong',
+        back: 'Enough / Sufficient',
+        pronunciation: 'nah-HONG',
+        example: 'Nahong i kånno\'. — The food is enough.'
+      },
+      {
+        front: 'Chaddek',
+        back: 'Fast / Quick',
+        pronunciation: 'CHAHD-dehk',
+        example: 'Chaddek i ga\'lågu. — The dog is fast.'
+      }
+    ]
+  },
+
+  sentences: {
+    topic: 'sentences',
+    displayName: 'Simple Sentences',
+    description: 'Put words together to make sentences',
+    cards: [
+      {
+        front: 'Guahu si...',
+        back: 'I am... (introducing yourself)',
+        pronunciation: 'GWAH-hoo see',
+        example: 'Guahu si Juan. — I am Juan.'
+      },
+      {
+        front: 'Malago\' yu\'',
+        back: 'I want',
+        pronunciation: 'mah-LAH-goh dzoo',
+        example: 'Malago\' yu\' kånno\'. — I want food.'
+      },
+      {
+        front: 'Ti malago\' yu\'',
+        back: 'I don\'t want',
+        pronunciation: 'tee mah-LAH-goh dzoo',
+        example: 'Ti malago\' yu\' gimen. — I don\'t want a drink.'
+      },
+      {
+        front: 'Siña yu\'',
+        back: 'I can / I\'m able',
+        pronunciation: 'SEEN-yah dzoo',
+        example: 'Siña yu\' kuentos Chamorro. — I can speak Chamorro.'
+      },
+      {
+        front: 'Ti siña',
+        back: 'Cannot / Not possible',
+        pronunciation: 'tee SEEN-yah',
+        example: 'Ti siña yu\'. — I cannot.'
+      },
+      {
+        front: 'Debi di',
+        back: 'Must / Should / Have to',
+        pronunciation: 'DEH-bee dee',
+        example: 'Debi di un hånao. — You should go.'
+      },
+      {
+        front: 'Gaige yu\' giya...',
+        back: 'I am at/in...',
+        pronunciation: 'GUY-geh dzoo GEE-dzah',
+        example: 'Gaige yu\' giya Hagåtña. — I\'m in Hagåtña.'
+      },
+      {
+        front: 'Guaha',
+        back: 'There is / There are / Have',
+        pronunciation: 'GWAH-hah',
+        example: 'Guaha salape\'-hu. — I have money.'
+      },
+      {
+        front: 'Taya\'',
+        back: 'There is no / None / Don\'t have',
+        pronunciation: 'TAH-dzah',
+        example: 'Taya\' salape\'-hu. — I have no money.'
+      },
+      {
+        front: 'Bai hu...',
+        back: 'I will... (future)',
+        pronunciation: 'buy hoo',
+        example: 'Bai hu hånao agupa\'. — I will go tomorrow.'
       }
     ]
   }

@@ -559,6 +559,470 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         explanation: '"Rosa" means pink, borrowed from Spanish.'
       }
     ]
+  },
+
+  // INTERMEDIATE LEVEL QUIZZES
+
+  {
+    id: 'questions',
+    title: 'Question Words',
+    description: 'Test your knowledge of Chamorro question words',
+    icon: '❓',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('quest', 1),
+        type: 'multiple_choice',
+        question: 'What does "Håfa" mean?',
+        options: ['Who', 'What', 'Where', 'When'],
+        correctAnswer: 'What',
+        explanation: '"Håfa" means "what" and is also part of the greeting "Håfa Adai".'
+      },
+      {
+        id: id('quest', 2),
+        type: 'multiple_choice',
+        question: 'How do you ask "Who is that?" in Chamorro?',
+        options: ['Håfa ennao?', 'Hayi ennao?', 'Manu ennao?', 'Ngai\'an ennao?'],
+        correctAnswer: 'Hayi ennao?',
+        explanation: '"Hayi" means "who" — so "Hayi ennao?" means "Who is that?"'
+      },
+      {
+        id: id('quest', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "Where"',
+        correctAnswer: 'Manu',
+        acceptableAnswers: ['Manu', 'manu', 'MANU'],
+        hint: 'Starts with "M"',
+        explanation: '"Manu" means "where" or "which".'
+      },
+      {
+        id: id('quest', 4),
+        type: 'multiple_choice',
+        question: 'What does "Ngai\'an" mean?',
+        options: ['Why', 'How', 'When', 'What'],
+        correctAnswer: 'When',
+        explanation: '"Ngai\'an" is the question word for "when".'
+      },
+      {
+        id: id('quest', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___ håfa un hånao?" (Why did you go?)',
+        correctAnswer: 'Pot',
+        acceptableAnswers: ['Pot', 'pot', 'POT'],
+        hint: 'It means "for" or "because of"',
+        explanation: '"Pot håfa" means "why" — literally "for what".'
+      },
+      {
+        id: id('quest', 6),
+        type: 'multiple_choice',
+        question: 'How do you ask "How are you?" in Chamorro?',
+        options: ['Håfa na\'ån-mu?', 'Håfa taimanu hao?', 'Manu nai gaige hao?', 'Hayi hao?'],
+        correctAnswer: 'Håfa taimanu hao?',
+        explanation: '"Håfa taimanu" means "how" — so "Håfa taimanu hao?" asks how someone is doing.'
+      },
+      {
+        id: id('quest', 7),
+        type: 'multiple_choice',
+        question: 'What does "Kao" do in a sentence?',
+        options: ['Makes it negative', 'Makes it a question', 'Makes it past tense', 'Makes it formal'],
+        correctAnswer: 'Makes it a question',
+        explanation: '"Kao" is a question marker — it turns statements into yes/no questions.'
+      }
+    ]
+  },
+  {
+    id: 'body-parts',
+    title: 'Body Parts',
+    description: 'Test your knowledge of body part vocabulary',
+    icon: '🫀',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('body', 1),
+        type: 'multiple_choice',
+        question: 'What is "head" in Chamorro?',
+        options: ['Mata', 'Ulu', 'Kannai', 'Addeng'],
+        correctAnswer: 'Ulu',
+        explanation: '"Ulu" means "head" in Chamorro.'
+      },
+      {
+        id: id('body', 2),
+        type: 'multiple_choice',
+        question: 'What does "Mata" mean?',
+        options: ['Mouth', 'Nose', 'Eye/Eyes', 'Ear'],
+        correctAnswer: 'Eye/Eyes',
+        explanation: '"Mata" means "eye" or "eyes".'
+      },
+      {
+        id: id('body', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "hand"',
+        correctAnswer: 'Kannai',
+        acceptableAnswers: ['Kannai', 'kannai', 'KANNAI'],
+        hint: 'Starts with "K"',
+        explanation: '"Kannai" means "hand" or "hands".'
+      },
+      {
+        id: id('body', 4),
+        type: 'fill_blank',
+        question: 'Complete: "___ " (Ear/Ears)',
+        correctAnswer: 'Talanga',
+        acceptableAnswers: ['Talanga', 'talanga', 'TALANGA'],
+        hint: 'Starts with "T"',
+        explanation: '"Talanga" means "ear" or "ears".'
+      },
+      {
+        id: id('body', 5),
+        type: 'multiple_choice',
+        question: 'What is "foot/feet" in Chamorro?',
+        options: ['Kannai', 'Tuyan', 'Addeng', 'Pachot'],
+        correctAnswer: 'Addeng',
+        explanation: '"Addeng" means "foot" or "feet".'
+      },
+      {
+        id: id('body', 6),
+        type: 'multiple_choice',
+        question: 'What does "Pachot" mean?',
+        options: ['Nose', 'Mouth', 'Neck', 'Stomach'],
+        correctAnswer: 'Mouth',
+        explanation: '"Pachot" means "mouth".'
+      },
+      {
+        id: id('body', 7),
+        type: 'multiple_choice',
+        question: 'What is "stomach" in Chamorro?',
+        options: ['Korason', 'Tuyan', 'Kueyu', 'Ulu'],
+        correctAnswer: 'Tuyan',
+        explanation: '"Tuyan" means "stomach" or "belly".'
+      }
+    ]
+  },
+  {
+    id: 'days',
+    title: 'Days of the Week',
+    description: 'Test your knowledge of days in Chamorro',
+    icon: '📅',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('days', 1),
+        type: 'multiple_choice',
+        question: 'What is "Sunday" in Chamorro?',
+        options: ['Lunes', 'Såbalu', 'Dåmenggo', 'Betnes'],
+        correctAnswer: 'Dåmenggo',
+        explanation: '"Dåmenggo" means Sunday — it\'s the traditional first day of the week.'
+      },
+      {
+        id: id('days', 2),
+        type: 'multiple_choice',
+        question: 'What does "Betnes" mean?',
+        options: ['Monday', 'Wednesday', 'Friday', 'Saturday'],
+        correctAnswer: 'Friday',
+        explanation: '"Betnes" means Friday, from Spanish "Viernes".'
+      },
+      {
+        id: id('days', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "Monday"',
+        correctAnswer: 'Lunes',
+        acceptableAnswers: ['Lunes', 'lunes', 'LUNES'],
+        hint: 'Same as Spanish',
+        explanation: '"Lunes" means Monday.'
+      },
+      {
+        id: id('days', 4),
+        type: 'fill_blank',
+        question: 'Complete: "___ " (Saturday)',
+        correctAnswer: 'Såbalu',
+        acceptableAnswers: ['Såbalu', 'Sabalu', 'såbalu', 'sabalu'],
+        hint: 'Similar to Spanish "Sábado"',
+        explanation: '"Såbalu" means Saturday.'
+      },
+      {
+        id: id('days', 5),
+        type: 'multiple_choice',
+        question: 'What is "yesterday" in Chamorro?',
+        options: ['Agupa\'', 'Nigap', 'På\'go', 'Nai'],
+        correctAnswer: 'Nigap',
+        explanation: '"Nigap" means "yesterday".'
+      },
+      {
+        id: id('days', 6),
+        type: 'multiple_choice',
+        question: 'What does "Agupa\'" mean?',
+        options: ['Today', 'Yesterday', 'Tomorrow', 'Last week'],
+        correctAnswer: 'Tomorrow',
+        explanation: '"Agupa\'" means "tomorrow".'
+      },
+      {
+        id: id('days', 7),
+        type: 'multiple_choice',
+        question: 'What is "Huebes" in English?',
+        options: ['Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        correctAnswer: 'Thursday',
+        explanation: '"Huebes" means Thursday, from Spanish "Jueves".'
+      }
+    ]
+  },
+  {
+    id: 'months',
+    title: 'Months of the Year',
+    description: 'Test your knowledge of months in Chamorro',
+    icon: '🗓️',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('month', 1),
+        type: 'multiple_choice',
+        question: 'What is "January" in Chamorro?',
+        options: ['Febreru', 'Eneru', 'Mårso', 'Abrit'],
+        correctAnswer: 'Eneru',
+        explanation: '"Eneru" means January.'
+      },
+      {
+        id: id('month', 2),
+        type: 'multiple_choice',
+        question: 'What does "Disiembre" mean?',
+        options: ['November', 'December', 'October', 'September'],
+        correctAnswer: 'December',
+        explanation: '"Disiembre" means December — the festive holiday season.'
+      },
+      {
+        id: id('month', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "July"',
+        correctAnswer: 'Huliu',
+        acceptableAnswers: ['Huliu', 'huliu', 'HULIU'],
+        hint: 'Similar to Spanish "Julio"',
+        explanation: '"Huliu" means July.'
+      },
+      {
+        id: id('month', 4),
+        type: 'fill_blank',
+        question: 'Complete: "___" (June)',
+        correctAnswer: 'Huniu',
+        acceptableAnswers: ['Huniu', 'huniu', 'HUNIU'],
+        hint: 'Liberation Day is in this month',
+        explanation: '"Huniu" means June — Liberation Day is June 21.'
+      },
+      {
+        id: id('month', 5),
+        type: 'multiple_choice',
+        question: 'Which month is "Oktubre"?',
+        options: ['August', 'September', 'October', 'November'],
+        correctAnswer: 'October',
+        explanation: '"Oktubre" means October.'
+      },
+      {
+        id: id('month', 6),
+        type: 'multiple_choice',
+        question: 'What is "Ågosto" in English?',
+        options: ['July', 'August', 'September', 'October'],
+        correctAnswer: 'August',
+        explanation: '"Ågosto" means August.'
+      }
+    ]
+  },
+  {
+    id: 'verbs',
+    title: 'Common Verbs',
+    description: 'Test your knowledge of Chamorro action words',
+    icon: '🏃',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('verb', 1),
+        type: 'multiple_choice',
+        question: 'What does "Hu kånno\'" mean?',
+        options: ['I sleep', 'I eat', 'I go', 'I see'],
+        correctAnswer: 'I eat',
+        explanation: '"Hu kånno\'" means "I eat" — "Hu" is the pronoun and "kånno\'" is the verb.'
+      },
+      {
+        id: id('verb', 2),
+        type: 'multiple_choice',
+        question: 'How do you say "I go" in Chamorro?',
+        options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],
+        correctAnswer: 'Hu hånao',
+        explanation: '"Hu hånao" means "I go" — "hånao" is the verb for going.'
+      },
+      {
+        id: id('verb', 3),
+        type: 'type_answer',
+        question: 'What does "Hu maigo\'" mean?',
+        correctAnswer: 'I sleep',
+        acceptableAnswers: ['I sleep', 'i sleep', 'sleep'],
+        hint: 'Something you do at night',
+        explanation: '"Hu maigo\'" means "I sleep".'
+      },
+      {
+        id: id('verb', 4),
+        type: 'fill_blank',
+        question: 'Complete: "Hu ___" (I drink)',
+        correctAnswer: 'gimen',
+        acceptableAnswers: ['gimen', 'Gimen', 'GIMEN'],
+        hint: 'What you do with water or coffee',
+        explanation: '"Hu gimen" means "I drink".'
+      },
+      {
+        id: id('verb', 5),
+        type: 'multiple_choice',
+        question: 'What does "Hu guaiya" mean?',
+        options: ['I want', 'I love', 'I see', 'I know'],
+        correctAnswer: 'I love',
+        explanation: '"Hu guaiya" means "I love" — used for people and things you care about.'
+      },
+      {
+        id: id('verb', 6),
+        type: 'multiple_choice',
+        question: 'How do you say "I know" in Chamorro?',
+        options: ['Hu hongge', 'Hu tungo\'', 'Hu hasso', 'Hu egga\''],
+        correctAnswer: 'Hu tungo\'',
+        explanation: '"Hu tungo\'" means "I know" or "I understand".'
+      },
+      {
+        id: id('verb', 7),
+        type: 'multiple_choice',
+        question: 'What does "Hu li\'e\'" mean?',
+        options: ['I hear', 'I see', 'I think', 'I believe'],
+        correctAnswer: 'I see',
+        explanation: '"Hu li\'e\'" means "I see" or "I saw".'
+      }
+    ]
+  },
+  {
+    id: 'adjectives',
+    title: 'Describing Things',
+    description: 'Test your knowledge of Chamorro adjectives',
+    icon: '✨',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('adj', 1),
+        type: 'multiple_choice',
+        question: 'What does "Maolek" mean?',
+        options: ['Bad', 'Good/Fine', 'Big', 'Small'],
+        correctAnswer: 'Good/Fine',
+        explanation: '"Maolek" means "good," "fine," or "well".'
+      },
+      {
+        id: id('adj', 2),
+        type: 'multiple_choice',
+        question: 'How do you say "big" in Chamorro?',
+        options: ['Dikike\'', 'Dånkolo', 'Bunitu', 'Båba'],
+        correctAnswer: 'Dånkolo',
+        explanation: '"Dånkolo" means "big" or "large".'
+      },
+      {
+        id: id('adj', 3),
+        type: 'type_answer',
+        question: 'What is "small" in Chamorro?',
+        correctAnswer: 'Dikike\'',
+        acceptableAnswers: ['Dikike\'', 'dikike\'', 'Dikike', 'dikike'],
+        hint: 'Starts with "D"',
+        explanation: '"Dikike\'" means "small" or "little".'
+      },
+      {
+        id: id('adj', 4),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Beautiful)',
+        correctAnswer: 'Bunitu',
+        acceptableAnswers: ['Bunitu', 'bunitu', 'BUNITU'],
+        hint: 'Similar to Spanish "bonito"',
+        explanation: '"Bunitu" means "beautiful" or "handsome".'
+      },
+      {
+        id: id('adj', 5),
+        type: 'multiple_choice',
+        question: 'What does "Båba" mean?',
+        options: ['Good', 'Bad', 'Hot', 'Cold'],
+        correctAnswer: 'Bad',
+        explanation: '"Båba" means "bad" or "wrong".'
+      },
+      {
+        id: id('adj', 6),
+        type: 'multiple_choice',
+        question: 'How do you say "hot" (temperature) in Chamorro?',
+        options: ['Manengheng', 'Maipe', 'Metgot', 'Chaddek'],
+        correctAnswer: 'Maipe',
+        explanation: '"Maipe" means "hot" when referring to temperature.'
+      },
+      {
+        id: id('adj', 7),
+        type: 'multiple_choice',
+        question: 'What is "cold" in Chamorro?',
+        options: ['Maipe', 'Metgot', 'Manengheng', 'Nuebu'],
+        correctAnswer: 'Manengheng',
+        explanation: '"Manengheng" means "cold".'
+      }
+    ]
+  },
+  {
+    id: 'sentences',
+    title: 'Simple Sentences',
+    description: 'Test your knowledge of Chamorro sentence patterns',
+    icon: '📝',
+    difficulty: 'Intermediate',
+    questions: [
+      {
+        id: id('sent', 1),
+        type: 'multiple_choice',
+        question: 'What does "Malago\' yu\'" mean?',
+        options: ['I can', 'I want', 'I am', 'I have'],
+        correctAnswer: 'I want',
+        explanation: '"Malago\' yu\'" means "I want".'
+      },
+      {
+        id: id('sent', 2),
+        type: 'multiple_choice',
+        question: 'How do you say "I can" in Chamorro?',
+        options: ['Malago\' yu\'', 'Siña yu\'', 'Gaige yu\'', 'Guaha yu\''],
+        correctAnswer: 'Siña yu\'',
+        explanation: '"Siña yu\'" means "I can" or "I\'m able".'
+      },
+      {
+        id: id('sent', 3),
+        type: 'type_answer',
+        question: 'What does "Ti siña" mean?',
+        correctAnswer: 'Cannot',
+        acceptableAnswers: ['Cannot', 'cannot', 'Can not', 'can not', 'Can\'t', 'can\'t'],
+        hint: '"Ti" makes it negative',
+        explanation: '"Ti siña" means "cannot" or "not possible".'
+      },
+      {
+        id: id('sent', 4),
+        type: 'fill_blank',
+        question: 'Complete: "___ " (There is / I have)',
+        correctAnswer: 'Guaha',
+        acceptableAnswers: ['Guaha', 'guaha', 'GUAHA'],
+        hint: 'Opposite of "Taya\'"',
+        explanation: '"Guaha" means "there is" or "I have".'
+      },
+      {
+        id: id('sent', 5),
+        type: 'multiple_choice',
+        question: 'What does "Taya\'" mean?',
+        options: ['There is', 'There is no / None', 'I want', 'I will'],
+        correctAnswer: 'There is no / None',
+        explanation: '"Taya\'" means "there is no" or "none".'
+      },
+      {
+        id: id('sent', 6),
+        type: 'multiple_choice',
+        question: 'How do you say "I will go tomorrow" in Chamorro?',
+        options: ['Hu hånao agupa\'', 'Bai hu hånao agupa\'', 'Malago\' yu\' hånao', 'Siña yu\' hånao'],
+        correctAnswer: 'Bai hu hånao agupa\'',
+        explanation: '"Bai hu" is the future marker — "Bai hu hånao agupa\'" means "I will go tomorrow".'
+      },
+      {
+        id: id('sent', 7),
+        type: 'multiple_choice',
+        question: 'What does "Gaige yu\' giya Hagåtña" mean?',
+        options: ['I\'m going to Hagåtña', 'I\'m from Hagåtña', 'I\'m in Hagåtña', 'I want to go to Hagåtña'],
+        correctAnswer: 'I\'m in Hagåtña',
+        explanation: '"Gaige yu\' giya..." means "I am at/in..." — expressing location.'
+      }
+    ]
   }
 ];
 

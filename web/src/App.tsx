@@ -39,6 +39,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
 import { LessonPage } from './components/LessonPage';
+import { LearningPathPage } from './components/LearningPathPage';
 import { BottomNav } from './components/BottomNav';
 import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 import { ScrollToTop } from './components/ScrollToTop';
@@ -53,6 +54,9 @@ function App() {
         
         {/* Chat route - AI tutor */}
         <Route path="/chat" element={<Chat />} />
+        
+        {/* Learning Path - Full map view */}
+        <Route path="/learning" element={<ProtectedRoute><LearningPathPage /></ProtectedRoute>} />
         
         {/* Learning Path - Mini-Lessons */}
         <Route path="/learn/:topicId" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
