@@ -732,29 +732,41 @@ Lesson: "Greetings & Introductions" (~5 min)
 
 ---
 
-#### **Phase 3: Visual Progress** 📋 NEXT — 6-8 hours
+#### **Phase 3: Visual Progress** ✅ COMPLETE
 > **Outcome:** Users have motivation — "I can see how far I've come"
 
 | Task | What It Does | Effort | Status |
 |------|--------------|--------|--------|
-| Learning path visualization | Visual map showing all 7 topics with status | 3-4 hrs | ⬜ |
-| Mastery levels (1-3 stars) | Earn stars by scoring well on quizzes | 2 hrs | ⬜ |
-| Progress stats card | "You've learned X words, completed Y lessons" | 1-2 hrs | ⬜ |
+| Learning path visualization | Visual map showing all 7 topics with status | 3-4 hrs | ✅ |
+| Mastery levels (1-3 stars) | Earn stars by scoring well on quizzes | 2 hrs | ✅ |
+| Progress stats card | "You've learned X words, completed Y lessons" | 1-2 hrs | ✅ |
+| `/learning` route | Dedicated page with path map + stats sidebar | 1 hr | ✅ |
+| Mobile optimization | Compact layout, stats first, responsive cards | 1 hr | ✅ |
+| Bottom nav update | "Learn" tab now links to `/learning` path view | 30 min | ✅ |
 
-**Progress Map Mockup:**
-```
-YOUR JOURNEY
-┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐
-│ ⭐⭐⭐ │ → │ ⭐⭐☆ │ → │ ⭐☆☆ │ → │ 🔒   │ → │ 🔒   │
-│Greet │   │Numbr │   │Color │   │ Fam  │   │ Food │
-└──────┘   └──────┘   └──────┘   └──────┘   └──────┘
-```
+**Route:** `/learning`
+
+**Components Created:**
+- `LearningPathMap.tsx` - Visual map of all 7 topics with status indicators
+- `LearningProgressStats.tsx` - Stats grid (topics, stars, avg score, streak)
+- `LearningPathPage.tsx` - Full page combining map, stats, and tips
+
+**Star System:**
+- ⭐ 1 star = Quiz completed (any score)
+- ⭐⭐ 2 stars = Quiz score 70%+
+- ⭐⭐⭐ 3 stars = Quiz score 90%+
+
+**Mobile Layout:**
+- Stats appear first (above path map) for immediate visibility
+- Compact 4-column stats grid
+- Topic cards hide descriptions, show title + stars + score only
+- Tips section hidden on mobile
 
 **After Phase 3:** Users can SEE their journey and feel motivated to continue.
 
 ---
 
-#### **Phase 4: Expanded Curriculum** 📋 FUTURE — 10-15 hours
+#### **Phase 4: Expanded Curriculum** 📋 NEXT — 10-15 hours
 > **Outcome:** Users have depth — "Beyond basics to fluency"
 
 | Task | What It Does | Effort | Status |
@@ -814,13 +826,13 @@ BEGINNER (Current)     INTERMEDIATE           ADVANCED
 |-------|-------|--------|---------|--------|
 | **1** | Smart Suggestions | 4-5 hrs | "Here's what to do next" | ✅ Complete |
 | **2** | Mini-Lessons | 8-12 hrs | "Structured 5-min sessions" | ✅ Complete |
-| **3** | Visual Progress | 6-8 hrs | "I can see my journey" | 📋 Next |
-| **4** | Expanded Curriculum | 10-15 hrs | "Beyond basics" | ⏸️ Planned |
+| **3** | Visual Progress | 6-8 hrs | "I can see my journey" | ✅ Complete |
+| **4** | Expanded Curriculum | 10-15 hrs | "Beyond basics" | 📋 Next |
 | **5** | Personalization & XP | 8-12 hrs | "Adapts to me" | ⏸️ Planned |
 | **6** | Social & Classroom | 15-20 hrs | "Learn together" | ⏸️ Future |
 
 **Total Estimated Effort:** 50-70 hours (spread over multiple months)
-**Completed So Far:** ~15-18 hours (Phase 1 + Phase 2)
+**Completed So Far:** ~22-26 hours (Phase 1 + Phase 2 + Phase 3)
 
 ---
 
@@ -1078,9 +1090,9 @@ DELETE /api/share/:share_id → revoke share (owner only)
 12. ✅ ~~**Streak includes learning activities**~~ - Done! Lessons now count toward streak
 13. ✅ ~~**Scroll to top on navigation**~~ - Done!
 14. ✅ ~~**Skeleton loaders**~~ - Done! Word of the Day, Stats widget
+15. ✅ ~~**Learning Platform Phase 3: Visual Progress**~~ - Done! `/learning` page with path map, stars, stats
 
 **🎯 Learning Platform Transformation (Priority 6):**
-15. **Phase 3: Visual Progress** (6-8 hrs) - Progress map, mastery stars, stats
 16. **Phase 4: Expanded Curriculum** (10-15 hrs) - Intermediate & advanced paths
 17. **Phase 5: Personalization** (8-12 hrs) - XP system, daily goals, spaced repetition
 18. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode

@@ -5324,16 +5324,29 @@ def is_promo_active_from_db() -> bool:
 # Learning Path Endpoints
 # ==============================================================================
 
-# Define beginner path (same as frontend, keep in sync)
+# Define learning paths (same as frontend, keep in sync)
 BEGINNER_PATH = [
-    {"id": "greetings", "title": "Greetings & Basics", "description": "Learn 'Håfa Adai' and how to introduce yourself", "icon": "👋", "estimated_minutes": 5, "flashcard_category": "greetings", "quiz_category": "greetings"},
-    {"id": "numbers", "title": "Numbers (1-10)", "description": "Learn to count in Chamorro", "icon": "🔢", "estimated_minutes": 5, "flashcard_category": "numbers", "quiz_category": "numbers"},
-    {"id": "colors", "title": "Colors", "description": "Learn the colors of the rainbow", "icon": "🎨", "estimated_minutes": 5, "flashcard_category": "colors", "quiz_category": "colors"},
-    {"id": "family", "title": "Family Members", "description": "Words for mother, father, siblings, and more", "icon": "👨‍👩‍👧‍👦", "estimated_minutes": 5, "flashcard_category": "family", "quiz_category": "family"},
-    {"id": "food", "title": "Food & Drinks", "description": "Common foods and island favorites", "icon": "🍚", "estimated_minutes": 5, "flashcard_category": "food", "quiz_category": "food"},
-    {"id": "animals", "title": "Animals", "description": "Learn about island creatures and pets", "icon": "🐠", "estimated_minutes": 5, "flashcard_category": "animals", "quiz_category": "animals"},
-    {"id": "phrases", "title": "Common Phrases", "description": "Everyday expressions and useful phrases", "icon": "💬", "estimated_minutes": 5, "flashcard_category": "phrases", "quiz_category": "common-phrases"},
+    {"id": "greetings", "title": "Greetings & Basics", "description": "Learn 'Håfa Adai' and how to introduce yourself", "icon": "👋", "estimated_minutes": 5, "flashcard_category": "greetings", "quiz_category": "greetings", "level": "beginner"},
+    {"id": "numbers", "title": "Numbers (1-10)", "description": "Learn to count in Chamorro", "icon": "🔢", "estimated_minutes": 5, "flashcard_category": "numbers", "quiz_category": "numbers", "level": "beginner"},
+    {"id": "colors", "title": "Colors", "description": "Learn the colors of the rainbow", "icon": "🎨", "estimated_minutes": 5, "flashcard_category": "colors", "quiz_category": "colors", "level": "beginner"},
+    {"id": "family", "title": "Family Members", "description": "Words for mother, father, siblings, and more", "icon": "👨‍👩‍👧‍👦", "estimated_minutes": 5, "flashcard_category": "family", "quiz_category": "family", "level": "beginner"},
+    {"id": "food", "title": "Food & Drinks", "description": "Common foods and island favorites", "icon": "🍚", "estimated_minutes": 5, "flashcard_category": "food", "quiz_category": "food", "level": "beginner"},
+    {"id": "animals", "title": "Animals", "description": "Learn about island creatures and pets", "icon": "🐠", "estimated_minutes": 5, "flashcard_category": "animals", "quiz_category": "animals", "level": "beginner"},
+    {"id": "phrases", "title": "Common Phrases", "description": "Everyday expressions and useful phrases", "icon": "💬", "estimated_minutes": 5, "flashcard_category": "phrases", "quiz_category": "common-phrases", "level": "beginner"},
 ]
+
+INTERMEDIATE_PATH = [
+    {"id": "questions", "title": "Question Words", "description": "Learn to ask who, what, where, when, why, how", "icon": "❓", "estimated_minutes": 6, "flashcard_category": "questions", "quiz_category": "questions", "level": "intermediate"},
+    {"id": "body-parts", "title": "Body Parts", "description": "Learn words for parts of the body", "icon": "🫀", "estimated_minutes": 6, "flashcard_category": "body", "quiz_category": "body-parts", "level": "intermediate"},
+    {"id": "days", "title": "Days of the Week", "description": "Learn to say the days in Chamorro", "icon": "📅", "estimated_minutes": 5, "flashcard_category": "days", "quiz_category": "days", "level": "intermediate"},
+    {"id": "months", "title": "Months & Seasons", "description": "Learn the months of the year", "icon": "🗓️", "estimated_minutes": 6, "flashcard_category": "months", "quiz_category": "months", "level": "intermediate"},
+    {"id": "verbs", "title": "Common Verbs", "description": "Action words for everyday activities", "icon": "🏃", "estimated_minutes": 7, "flashcard_category": "verbs", "quiz_category": "verbs", "level": "intermediate"},
+    {"id": "adjectives", "title": "Describing Things", "description": "Adjectives for size, quality, and feelings", "icon": "✨", "estimated_minutes": 6, "flashcard_category": "adjectives", "quiz_category": "adjectives", "level": "intermediate"},
+    {"id": "sentences", "title": "Simple Sentences", "description": "Put words together to make sentences", "icon": "📝", "estimated_minutes": 8, "flashcard_category": "sentences", "quiz_category": "sentences", "level": "intermediate"},
+]
+
+# Combined all topics for lookups
+ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH
 
 
 @app.get("/api/learning/recommended", tags=["Learning Path"])
@@ -5382,7 +5395,17 @@ async def get_recommended_topic(
                 "last_activity_at": row[5].isoformat() if row[5] else None,
             }
         
-        completed_count = sum(1 for p in progress_map.values() if p["completed_at"])
+        # Count completions per level
+        beginner_completed = sum(
+            1 for t in BEGINNER_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        intermediate_completed = sum(
+            1 for t in INTERMEDIATE_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        total_completed = beginner_completed + intermediate_completed
+        beginner_complete = beginner_completed == len(BEGINNER_PATH)
         
         # Find recommendation
         recommendation_type = "start"
@@ -5390,13 +5413,14 @@ async def get_recommended_topic(
         topic_progress = None
         message = ""
         
+        # First, check beginner path
         for topic in BEGINNER_PATH:
             topic_id = topic["id"]
             progress = progress_map.get(topic_id)
             
             if not progress:
                 # Never started this topic - recommend it
-                recommendation_type = "start" if completed_count == 0 else "next"
+                recommendation_type = "start" if total_completed == 0 else "next"
                 recommended_topic = topic
                 topic_progress = {
                     "topic_id": topic_id,
@@ -5406,7 +5430,7 @@ async def get_recommended_topic(
                     "flashcards_viewed": 0,
                     "last_activity_at": None,
                 }
-                if completed_count == 0:
+                if total_completed == 0:
                     message = f"Start your Chamorro journey with {topic['title']}!"
                 else:
                     message = f"Great progress! Ready for {topic['title']}?"
@@ -5420,13 +5444,42 @@ async def get_recommended_topic(
                 message = f"Continue learning {topic['title']}"
                 break
         
+        # If beginner complete, check intermediate path
+        if beginner_complete and not recommended_topic:
+            for topic in INTERMEDIATE_PATH:
+                topic_id = topic["id"]
+                progress = progress_map.get(topic_id)
+                
+                if not progress:
+                    # Never started this topic - recommend it
+                    recommendation_type = "next"
+                    recommended_topic = topic
+                    topic_progress = {
+                        "topic_id": topic_id,
+                        "started_at": None,
+                        "completed_at": None,
+                        "best_quiz_score": None,
+                        "flashcards_viewed": 0,
+                        "last_activity_at": None,
+                    }
+                    message = f"Level up! Start {topic['title']} in Intermediate."
+                    break
+                
+                elif not progress["completed_at"]:
+                    # Started but not completed - continue
+                    recommendation_type = "continue"
+                    recommended_topic = topic
+                    topic_progress = progress
+                    message = f"Continue learning {topic['title']}"
+                    break
+        
         # All completed
         if not recommended_topic:
             recommendation_type = "complete"
-            # Suggest reviewing the one with lowest score or oldest
+            # Suggest reviewing the one with lowest score across all topics
             worst_topic = None
             worst_score = 101
-            for topic in BEGINNER_PATH:
+            for topic in ALL_TOPICS:
                 progress = progress_map.get(topic["id"])
                 if progress and progress["best_quiz_score"] is not None:
                     if progress["best_quiz_score"] < worst_score:
@@ -5439,14 +5492,15 @@ async def get_recommended_topic(
                 recommended_topic = worst_topic
                 message = f"You've completed all topics! Review {worst_topic['title']} to improve your score."
             else:
-                message = "Congratulations! You've mastered all beginner topics! 🎉"
+                message = "Congratulations! You've mastered all available topics! 🎉"
         
         return {
             "recommendation_type": recommendation_type,
             "topic": recommended_topic,
             "progress": topic_progress,
-            "total_topics": len(BEGINNER_PATH),
-            "completed_topics": completed_count,
+            "total_topics": len(ALL_TOPICS),
+            "completed_topics": total_completed,
+            "beginner_complete": beginner_complete,
             "message": message,
         }
         
@@ -5476,8 +5530,8 @@ async def update_topic_progress(
     try:
         user_id = await verify_user(authorization)
         
-        # Validate topic exists
-        topic = next((t for t in BEGINNER_PATH if t["id"] == topic_id), None)
+        # Validate topic exists (search both paths)
+        topic = next((t for t in ALL_TOPICS if t["id"] == topic_id), None)
         if not topic:
             raise HTTPException(status_code=404, detail=f"Topic '{topic_id}' not found")
         
@@ -5564,12 +5618,23 @@ async def update_topic_progress(
         
         is_completed = progress["completed_at"] is not None
         
-        # Get next topic if completed
+        # Get next topic if completed (check within same level first, then next level)
         next_topic = None
         if is_completed:
-            current_index = next((i for i, t in enumerate(BEGINNER_PATH) if t["id"] == topic_id), -1)
-            if current_index >= 0 and current_index < len(BEGINNER_PATH) - 1:
-                next_topic = BEGINNER_PATH[current_index + 1]
+            # Check if in beginner path
+            beginner_index = next((i for i, t in enumerate(BEGINNER_PATH) if t["id"] == topic_id), -1)
+            if beginner_index >= 0:
+                if beginner_index < len(BEGINNER_PATH) - 1:
+                    # More beginner topics
+                    next_topic = BEGINNER_PATH[beginner_index + 1]
+                else:
+                    # Last beginner topic - suggest first intermediate
+                    next_topic = INTERMEDIATE_PATH[0] if INTERMEDIATE_PATH else None
+            else:
+                # Check if in intermediate path
+                intermediate_index = next((i for i, t in enumerate(INTERMEDIATE_PATH) if t["id"] == topic_id), -1)
+                if intermediate_index >= 0 and intermediate_index < len(INTERMEDIATE_PATH) - 1:
+                    next_topic = INTERMEDIATE_PATH[intermediate_index + 1]
         
         logger.info(f"✅ Updated progress: user={user_id}, topic={topic_id}, action={action}")
         
@@ -5592,7 +5657,7 @@ async def get_all_progress(
     authorization: Optional[str] = Header(None)
 ):
     """
-    Get user's progress on all topics in the beginner path.
+    Get user's progress on all topics in both learning paths.
     """
     try:
         user_id = await verify_user(authorization)
@@ -5625,9 +5690,9 @@ async def get_all_progress(
                 "last_activity_at": row[5].isoformat() if row[5] else None,
             }
         
-        # Build full response with all topics
+        # Build full response with all topics from both paths
         topics_with_progress = []
-        for topic in BEGINNER_PATH:
+        for topic in ALL_TOPICS:
             topic_id = topic["id"]
             progress = progress_map.get(topic_id, {
                 "topic_id": topic_id,
@@ -5642,12 +5707,25 @@ async def get_all_progress(
                 "progress": progress,
             })
         
-        completed_count = sum(1 for p in progress_map.values() if p["completed_at"])
+        # Count completions per level
+        beginner_completed = sum(
+            1 for t in BEGINNER_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        intermediate_completed = sum(
+            1 for t in INTERMEDIATE_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        total_completed = beginner_completed + intermediate_completed
         
         return {
             "topics": topics_with_progress,
-            "total_topics": len(BEGINNER_PATH),
-            "completed_topics": completed_count,
+            "total_topics": len(ALL_TOPICS),
+            "completed_topics": total_completed,
+            "beginner_completed": beginner_completed,
+            "intermediate_completed": intermediate_completed,
+            "beginner_total": len(BEGINNER_PATH),
+            "intermediate_total": len(INTERMEDIATE_PATH),
         }
         
     except HTTPException:
