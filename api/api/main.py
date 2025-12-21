@@ -2983,6 +2983,73 @@ async def get_quiz_history(
         )
 
 
+@app.get("/api/quiz/weak-areas", tags=["Quiz"])
+async def get_weak_areas(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Analyze the user's quiz history to identify weak areas (categories with low scores).
+    
+    Returns categories where the user is struggling, sorted by priority (lowest scores first).
+    Only considers categories with at least 1 quiz attempt in the last 30 days.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        conn = conversations.get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get average scores per category from recent quizzes (last 30 days)
+        cursor.execute("""
+            SELECT 
+                category_id,
+                category_title,
+                AVG(percentage) as avg_score,
+                COUNT(*) as attempt_count,
+                MAX(created_at) as last_attempt
+            FROM quiz_results
+            WHERE user_id = %s 
+            AND created_at >= NOW() - INTERVAL '30 days'
+            GROUP BY category_id, category_title
+            ORDER BY avg_score ASC
+        """, (user_id,))
+        
+        rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        weak_areas = []
+        for row in rows:
+            category_id, category_title, avg_score, attempt_count, last_attempt = row
+            
+            # Consider it a "weak area" if average score is below 70%
+            if avg_score < 70:
+                weak_areas.append({
+                    "category_id": category_id,
+                    "category_title": category_title,
+                    "avg_score": round(float(avg_score), 1),
+                    "attempt_count": attempt_count,
+                    "last_attempt": last_attempt.isoformat() if last_attempt else None,
+                    "priority": "high" if avg_score < 50 else "medium"
+                })
+        
+        return {
+            "weak_areas": weak_areas,
+            "has_weak_areas": len(weak_areas) > 0,
+            "recommendation": weak_areas[0] if weak_areas else None
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [QUIZ] Failed to get weak areas: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get weak areas: {str(e)}"
+        )
+
+
 # ==========================================
 # Game Results Endpoints
 # ==========================================
@@ -3551,9 +3618,9 @@ async def get_user_streak(
             SELECT DISTINCT activity_date FROM (
                 -- Chat, games, quizzes from daily usage
                 SELECT usage_date as activity_date
-                FROM user_daily_usage
-                WHERE user_id = %s
-                AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
+            FROM user_daily_usage
+            WHERE user_id = %s
+            AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
                 
                 UNION
                 
@@ -3674,6 +3741,700 @@ async def get_user_streak(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to get streak: {str(e)}"
+        )
+
+
+# ==========================================
+# XP & Leveling System
+# ==========================================
+
+# XP values for different activities
+XP_VALUES = {
+    "flashcard_complete": 10,      # Completing a flashcard deck
+    "quiz_complete": 25,           # Completing a quiz
+    "quiz_bonus_90": 10,           # Bonus for 90%+ on quiz
+    "game_complete": 5,            # Completing a game
+    "chat_message": 2,             # Sending a chat message
+    "topic_complete": 50,          # Completing a learning topic
+    "streak_bonus": 15,            # Daily streak maintained
+    "daily_goal_complete": 20,     # Completing daily goal
+}
+
+# Level thresholds (cumulative XP needed for each level)
+LEVEL_THRESHOLDS = [
+    0,      # Level 1: 0 XP
+    100,    # Level 2: 100 XP
+    250,    # Level 3: 250 XP
+    500,    # Level 4: 500 XP
+    850,    # Level 5: 850 XP
+    1300,   # Level 6: 1300 XP
+    1900,   # Level 7: 1900 XP
+    2600,   # Level 8: 2600 XP
+    3500,   # Level 9: 3500 XP
+    4600,   # Level 10: 4600 XP
+    6000,   # Level 11: 6000 XP
+    7700,   # Level 12: 7700 XP
+    9700,   # Level 13: 9700 XP
+    12000,  # Level 14: 12000 XP
+    15000,  # Level 15: 15000 XP (max for now)
+]
+
+def calculate_level(total_xp: int) -> int:
+    """Calculate the user's level based on total XP."""
+    for level, threshold in enumerate(LEVEL_THRESHOLDS):
+        if total_xp < threshold:
+            return level  # Return the previous level
+    return len(LEVEL_THRESHOLDS)  # Max level
+
+
+def get_xp_for_next_level(level: int) -> int:
+    """Get the XP threshold for the next level."""
+    if level >= len(LEVEL_THRESHOLDS):
+        return LEVEL_THRESHOLDS[-1]  # Already at max
+    return LEVEL_THRESHOLDS[level]
+
+
+@app.get("/api/xp/me", tags=["XP"])
+async def get_user_xp(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the current user's XP, level, and progress.
+    
+    Returns:
+    - total_xp: Total XP earned
+    - level: Current level (1-15)
+    - xp_for_current_level: XP threshold for current level
+    - xp_for_next_level: XP threshold for next level
+    - xp_progress: Progress towards next level (0-100%)
+    - daily_goal_minutes: User's daily goal setting
+    - today_minutes: Minutes spent today
+    - daily_goal_complete: Whether today's goal is met
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        today = get_guam_date()
+        
+        # Get or create user XP record
+        cursor.execute("""
+            SELECT total_xp, level, daily_goal_minutes, today_minutes, goal_date
+            FROM user_xp WHERE user_id = %s
+        """, (user_id,))
+        
+        row = cursor.fetchone()
+        
+        if row:
+            total_xp, level, daily_goal_minutes, today_minutes, goal_date = row
+            # Reset today_minutes if it's a new day
+            if goal_date != today:
+                today_minutes = 0
+        else:
+            # Create new XP record for user
+            cursor.execute("""
+                INSERT INTO user_xp (user_id, total_xp, level, daily_goal_minutes, today_minutes, goal_date)
+                VALUES (%s, 0, 1, 10, 0, %s)
+                RETURNING total_xp, level, daily_goal_minutes, today_minutes
+            """, (user_id, today))
+            total_xp, level, daily_goal_minutes, today_minutes = cursor.fetchone()
+            conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        # Calculate level and progress
+        level = calculate_level(total_xp)
+        xp_for_current = LEVEL_THRESHOLDS[level - 1] if level > 1 else 0
+        xp_for_next = get_xp_for_next_level(level)
+        
+        xp_in_level = total_xp - xp_for_current
+        xp_needed = xp_for_next - xp_for_current
+        xp_progress = min(100, int((xp_in_level / xp_needed) * 100)) if xp_needed > 0 else 100
+        
+        return {
+            "total_xp": total_xp,
+            "level": level,
+            "xp_for_current_level": xp_for_current,
+            "xp_for_next_level": xp_for_next,
+            "xp_progress": xp_progress,
+            "daily_goal_minutes": daily_goal_minutes,
+            "today_minutes": today_minutes,
+            "daily_goal_complete": today_minutes >= daily_goal_minutes if daily_goal_minutes > 0 else True
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [XP] Failed to get XP: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get XP: {str(e)}"
+        )
+
+
+@app.post("/api/xp/award", tags=["XP"])
+async def award_xp(
+    request: dict,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Award XP to a user for an activity.
+    
+    Request body:
+    - activity_type: One of 'flashcard_complete', 'quiz_complete', 'game_complete', 
+                     'chat_message', 'topic_complete', 'streak_bonus', 'daily_goal_complete'
+    - activity_id: Optional reference (topic_id, quiz_id, etc.)
+    - quiz_score: Optional score (0-100) for quiz bonus calculation
+    - minutes_spent: Optional time spent for daily goal tracking
+    
+    Returns:
+    - xp_earned: Amount of XP earned
+    - total_xp: New total XP
+    - level: Current level
+    - level_up: Whether user leveled up from this award
+    - new_level: New level if leveled up
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        activity_type = request.get("activity_type")
+        activity_id = request.get("activity_id")
+        quiz_score = request.get("quiz_score", 0)
+        minutes_spent = request.get("minutes_spent", 0)
+        
+        if not activity_type or activity_type not in XP_VALUES:
+            raise HTTPException(status_code=400, detail=f"Invalid activity_type: {activity_type}")
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        today = get_guam_date()
+        
+        # Calculate XP to award
+        xp_earned = XP_VALUES[activity_type]
+        description = activity_type.replace("_", " ").title()
+        
+        # Quiz bonus for 90%+ score
+        if activity_type == "quiz_complete" and quiz_score >= 90:
+            xp_earned += XP_VALUES["quiz_bonus_90"]
+            description += f" (90%+ bonus!)"
+        
+        # Get current XP and level
+        cursor.execute("""
+            SELECT total_xp, level, daily_goal_minutes, today_minutes, goal_date
+            FROM user_xp WHERE user_id = %s
+        """, (user_id,))
+        
+        row = cursor.fetchone()
+        
+        if row:
+            old_total_xp, old_level, daily_goal_minutes, today_minutes, goal_date = row
+            # Reset today_minutes if it's a new day
+            if goal_date != today:
+                today_minutes = 0
+        else:
+            old_total_xp, old_level = 0, 1
+            daily_goal_minutes, today_minutes = 10, 0
+        
+        new_total_xp = old_total_xp + xp_earned
+        new_level = calculate_level(new_total_xp)
+        level_up = new_level > old_level
+        
+        # Update today_minutes if minutes_spent provided
+        new_today_minutes = today_minutes + minutes_spent
+        
+        # Check if daily goal was just completed
+        daily_goal_just_completed = False
+        if daily_goal_minutes > 0:
+            was_complete = today_minutes >= daily_goal_minutes
+            is_complete = new_today_minutes >= daily_goal_minutes
+            if not was_complete and is_complete:
+                daily_goal_just_completed = True
+                # Award daily goal bonus
+                xp_earned += XP_VALUES["daily_goal_complete"]
+                new_total_xp += XP_VALUES["daily_goal_complete"]
+                new_level = calculate_level(new_total_xp)
+                level_up = new_level > old_level
+        
+        # Upsert user XP
+        cursor.execute("""
+            INSERT INTO user_xp (user_id, total_xp, level, daily_goal_minutes, today_minutes, goal_date)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET
+                total_xp = EXCLUDED.total_xp,
+                level = EXCLUDED.level,
+                today_minutes = EXCLUDED.today_minutes,
+                goal_date = EXCLUDED.goal_date,
+                updated_at = now()
+        """, (user_id, new_total_xp, new_level, daily_goal_minutes, new_today_minutes, today))
+        
+        # Record XP history
+        cursor.execute("""
+            INSERT INTO xp_history (user_id, xp_amount, activity_type, activity_id, description)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (user_id, xp_earned, activity_type, activity_id, description))
+        
+        # If daily goal was completed, add a separate history entry
+        if daily_goal_just_completed:
+            cursor.execute("""
+                INSERT INTO xp_history (user_id, xp_amount, activity_type, description)
+                VALUES (%s, %s, 'daily_goal_complete', 'Daily Goal Completed!')
+            """, (user_id, XP_VALUES["daily_goal_complete"]))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ [XP] Awarded {xp_earned} XP to user {user_id} for {activity_type}")
+        
+        return {
+            "xp_earned": xp_earned,
+            "total_xp": new_total_xp,
+            "level": new_level,
+            "level_up": level_up,
+            "new_level": new_level if level_up else None,
+            "daily_goal_just_completed": daily_goal_just_completed
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [XP] Failed to award XP: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to award XP: {str(e)}"
+        )
+
+
+@app.get("/api/xp/history", tags=["XP"])
+async def get_xp_history(
+    limit: int = 20,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the user's recent XP history.
+    
+    Query params:
+    - limit: Number of records to return (default 20, max 100)
+    
+    Returns list of XP events with type, amount, description, and timestamp.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        limit = min(limit, 100)  # Cap at 100
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT xp_amount, activity_type, activity_id, description, created_at
+            FROM xp_history
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (user_id, limit))
+        
+        rows = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        history = []
+        for row in rows:
+            history.append({
+                "xp_amount": row[0],
+                "activity_type": row[1],
+                "activity_id": row[2],
+                "description": row[3],
+                "created_at": row[4].isoformat() if row[4] else None
+            })
+        
+        return {"history": history}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [XP] Failed to get XP history: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get XP history: {str(e)}"
+        )
+
+
+@app.patch("/api/xp/daily-goal", tags=["XP"])
+async def update_daily_goal(
+    request: dict,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update the user's daily learning goal.
+    
+    Request body:
+    - daily_goal_minutes: 0 (disabled), 5, 10, 15, or 20
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        daily_goal_minutes = request.get("daily_goal_minutes")
+        
+        if daily_goal_minutes not in [0, 5, 10, 15, 20]:
+            raise HTTPException(status_code=400, detail="daily_goal_minutes must be 0, 5, 10, 15, or 20")
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO user_xp (user_id, daily_goal_minutes)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET
+                daily_goal_minutes = EXCLUDED.daily_goal_minutes,
+                updated_at = now()
+            RETURNING daily_goal_minutes
+        """, (user_id, daily_goal_minutes))
+        
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {"daily_goal_minutes": result[0]}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [XP] Failed to update daily goal: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update daily goal: {str(e)}"
+        )
+
+
+# ==========================================
+# Spaced Repetition (SM-2 Algorithm)
+# ==========================================
+
+def calculate_sm2(quality: int, easiness_factor: float, interval: int, repetition: int):
+    """
+    Implementation of the SM-2 spaced repetition algorithm.
+    
+    Args:
+        quality: User's rating 0-5 (0-2 = forgot, 3 = hard, 4 = good, 5 = easy)
+        easiness_factor: Current EF (starts at 2.5)
+        interval: Current interval in days
+        repetition: Number of successful repetitions
+    
+    Returns:
+        tuple: (new_ef, new_interval, new_repetition)
+    """
+    # Calculate new easiness factor
+    new_ef = easiness_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    new_ef = max(1.3, new_ef)  # EF should not go below 1.3
+    
+    if quality < 3:
+        # Incorrect response - reset repetitions, start over
+        new_repetition = 0
+        new_interval = 1
+    else:
+        # Correct response
+        new_repetition = repetition + 1
+        if new_repetition == 1:
+            new_interval = 1
+        elif new_repetition == 2:
+            new_interval = 6
+        else:
+            new_interval = int(interval * new_ef)
+    
+    return new_ef, new_interval, new_repetition
+
+
+@app.get("/api/flashcards/due", tags=["Spaced Repetition"])
+async def get_due_flashcards(
+    deck_id: Optional[str] = None,
+    limit: int = 20,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get flashcards that are due for review.
+    
+    Query params:
+    - deck_id: Optional filter by deck (e.g., "greetings", "numbers")
+    - limit: Max cards to return (default 20)
+    
+    Returns cards where next_review <= now, or cards not yet reviewed.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        if deck_id:
+            # Get due cards for specific deck
+            cursor.execute("""
+                SELECT card_id, deck_id, easiness_factor, interval, repetition, 
+                       last_review, next_review, total_reviews, correct_count, incorrect_count
+                FROM spaced_repetition
+                WHERE user_id = %s 
+                AND deck_id = %s
+                AND (next_review IS NULL OR next_review <= NOW())
+                ORDER BY next_review ASC NULLS FIRST
+                LIMIT %s
+            """, (user_id, deck_id, limit))
+        else:
+            # Get due cards across all decks
+            cursor.execute("""
+                SELECT card_id, deck_id, easiness_factor, interval, repetition,
+                       last_review, next_review, total_reviews, correct_count, incorrect_count
+                FROM spaced_repetition
+                WHERE user_id = %s 
+                AND (next_review IS NULL OR next_review <= NOW())
+                ORDER BY next_review ASC NULLS FIRST
+                LIMIT %s
+            """, (user_id, limit))
+        
+        rows = cursor.fetchall()
+        
+        # Also get count of total due cards
+        if deck_id:
+            cursor.execute("""
+                SELECT COUNT(*) FROM spaced_repetition
+                WHERE user_id = %s AND deck_id = %s
+                AND (next_review IS NULL OR next_review <= NOW())
+            """, (user_id, deck_id))
+        else:
+            cursor.execute("""
+                SELECT COUNT(*) FROM spaced_repetition
+                WHERE user_id = %s
+                AND (next_review IS NULL OR next_review <= NOW())
+            """, (user_id,))
+        
+        total_due = cursor.fetchone()[0]
+        
+        cursor.close()
+        conn.close()
+        
+        cards = []
+        for row in rows:
+            cards.append({
+                "card_id": row[0],
+                "deck_id": row[1],
+                "easiness_factor": round(float(row[2]), 2),
+                "interval": row[3],
+                "repetition": row[4],
+                "last_review": row[5].isoformat() if row[5] else None,
+                "next_review": row[6].isoformat() if row[6] else None,
+                "total_reviews": row[7],
+                "correct_count": row[8],
+                "incorrect_count": row[9],
+            })
+        
+        return {
+            "due_cards": cards,
+            "total_due": total_due,
+            "has_due_cards": len(cards) > 0
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [SR] Failed to get due cards: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get due cards: {str(e)}"
+        )
+
+
+@app.post("/api/flashcards/review", tags=["Spaced Repetition"])
+async def record_flashcard_review(
+    request: dict,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Record a flashcard review and update SM-2 scheduling.
+    
+    Request body:
+    - card_id: Unique card identifier (e.g., "greetings:3")
+    - deck_id: Deck identifier (e.g., "greetings")
+    - quality: User's rating 0-5 (0-2 = forgot, 3 = hard, 4 = good, 5 = easy)
+    
+    Returns updated card state with next review date.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        card_id = request.get("card_id")
+        deck_id = request.get("deck_id")
+        quality = request.get("quality", 3)  # Default to "hard"
+        
+        if not card_id or not deck_id:
+            raise HTTPException(status_code=400, detail="card_id and deck_id are required")
+        
+        if quality < 0 or quality > 5:
+            raise HTTPException(status_code=400, detail="quality must be 0-5")
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Get current card state (or defaults for new card)
+        cursor.execute("""
+            SELECT easiness_factor, interval, repetition
+            FROM spaced_repetition
+            WHERE user_id = %s AND card_id = %s
+        """, (user_id, card_id))
+        
+        row = cursor.fetchone()
+        
+        if row:
+            current_ef, current_interval, current_rep = row
+        else:
+            # New card - use defaults
+            current_ef, current_interval, current_rep = 2.5, 1, 0
+        
+        # Calculate new values using SM-2
+        new_ef, new_interval, new_rep = calculate_sm2(
+            quality, float(current_ef), current_interval, current_rep
+        )
+        
+        # Calculate next review date
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        next_review = now + timedelta(days=new_interval)
+        
+        # Track correct/incorrect
+        is_correct = quality >= 3
+        correct_increment = 1 if is_correct else 0
+        incorrect_increment = 0 if is_correct else 1
+        
+        # Upsert the card progress
+        cursor.execute("""
+            INSERT INTO spaced_repetition (
+                user_id, card_id, deck_id, easiness_factor, interval, repetition,
+                last_review, next_review, total_reviews, correct_count, incorrect_count
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, 1, %s, %s)
+            ON CONFLICT (user_id, card_id) DO UPDATE SET
+                easiness_factor = EXCLUDED.easiness_factor,
+                interval = EXCLUDED.interval,
+                repetition = EXCLUDED.repetition,
+                last_review = NOW(),
+                next_review = EXCLUDED.next_review,
+                total_reviews = spaced_repetition.total_reviews + 1,
+                correct_count = spaced_repetition.correct_count + %s,
+                incorrect_count = spaced_repetition.incorrect_count + %s,
+                updated_at = NOW()
+            RETURNING total_reviews, correct_count, incorrect_count
+        """, (
+            user_id, card_id, deck_id, new_ef, new_interval, new_rep,
+            next_review, correct_increment, incorrect_increment,
+            correct_increment, incorrect_increment
+        ))
+        
+        result = cursor.fetchone()
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return {
+            "card_id": card_id,
+            "deck_id": deck_id,
+            "quality": quality,
+            "is_correct": is_correct,
+            "easiness_factor": round(new_ef, 2),
+            "interval_days": new_interval,
+            "repetition": new_rep,
+            "next_review": next_review.isoformat(),
+            "total_reviews": result[0],
+            "correct_count": result[1],
+            "incorrect_count": result[2],
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [SR] Failed to record review: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to record review: {str(e)}"
+        )
+
+
+@app.get("/api/flashcards/stats/summary", tags=["Spaced Repetition"])
+async def get_spaced_repetition_summary(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get summary statistics for spaced repetition progress.
+    
+    Returns:
+    - total_cards: Total cards the user has reviewed at least once
+    - due_today: Cards due for review today
+    - mastered: Cards with high EF (>2.3) and long interval (>30 days)
+    - learning: Cards currently being learned (interval < 7 days)
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Get summary stats
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_cards,
+                COUNT(*) FILTER (WHERE next_review IS NULL OR next_review <= NOW()) as due_today,
+                COUNT(*) FILTER (WHERE easiness_factor > 2.3 AND interval > 30) as mastered,
+                COUNT(*) FILTER (WHERE interval < 7) as learning
+            FROM spaced_repetition
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        row = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if row:
+            return {
+                "total_cards": row[0],
+                "due_today": row[1],
+                "mastered": row[2],
+                "learning": row[3],
+                "has_cards": row[0] > 0
+            }
+        
+        return {
+            "total_cards": 0,
+            "due_today": 0,
+            "mastered": 0,
+            "learning": 0,
+            "has_cards": False
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [SR] Failed to get summary: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get summary: {str(e)}"
         )
 
 
@@ -5345,8 +6106,18 @@ INTERMEDIATE_PATH = [
     {"id": "sentences", "title": "Simple Sentences", "description": "Put words together to make sentences", "icon": "📝", "estimated_minutes": 8, "flashcard_category": "sentences", "quiz_category": "sentences", "level": "intermediate"},
 ]
 
+ADVANCED_PATH = [
+    {"id": "places", "title": "Places & Locations", "description": "Buildings, landmarks, and location phrases", "icon": "🏠", "estimated_minutes": 8, "flashcard_category": "places", "quiz_category": "places", "level": "advanced"},
+    {"id": "weather", "title": "Weather & Nature", "description": "Weather conditions and natural environment", "icon": "🌞", "estimated_minutes": 8, "flashcard_category": "weather", "quiz_category": "weather", "level": "advanced"},
+    {"id": "household", "title": "Home & Household", "description": "Rooms, furniture, and household items", "icon": "🛋️", "estimated_minutes": 8, "flashcard_category": "household", "quiz_category": "household", "level": "advanced"},
+    {"id": "directions", "title": "Directions & Travel", "description": "Directions, movement, and transportation", "icon": "🧭", "estimated_minutes": 8, "flashcard_category": "directions", "quiz_category": "directions", "level": "advanced"},
+    {"id": "shopping", "title": "Shopping & Money", "description": "Buying, selling, and money vocabulary", "icon": "💰", "estimated_minutes": 8, "flashcard_category": "shopping", "quiz_category": "shopping", "level": "advanced"},
+    {"id": "daily-life", "title": "Work & Daily Life", "description": "Jobs, school, and daily activities", "icon": "💼", "estimated_minutes": 8, "flashcard_category": "daily-life", "quiz_category": "daily-life", "level": "advanced"},
+    {"id": "culture", "title": "Culture & Celebrations", "description": "Traditions, fiestas, and respect language", "icon": "🎉", "estimated_minutes": 10, "flashcard_category": "culture", "quiz_category": "culture", "level": "advanced"},
+]
+
 # Combined all topics for lookups
-ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH
+ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH + ADVANCED_PATH
 
 
 @app.get("/api/learning/recommended", tags=["Learning Path"])
@@ -5404,8 +6175,13 @@ async def get_recommended_topic(
             1 for t in INTERMEDIATE_PATH 
             if progress_map.get(t["id"], {}).get("completed_at")
         )
-        total_completed = beginner_completed + intermediate_completed
+        advanced_completed = sum(
+            1 for t in ADVANCED_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        total_completed = beginner_completed + intermediate_completed + advanced_completed
         beginner_complete = beginner_completed == len(BEGINNER_PATH)
+        intermediate_complete = intermediate_completed == len(INTERMEDIATE_PATH)
         
         # Find recommendation
         recommendation_type = "start"
@@ -5463,6 +6239,35 @@ async def get_recommended_topic(
                         "last_activity_at": None,
                     }
                     message = f"Level up! Start {topic['title']} in Intermediate."
+                    break
+                
+                elif not progress["completed_at"]:
+                    # Started but not completed - continue
+                    recommendation_type = "continue"
+                    recommended_topic = topic
+                    topic_progress = progress
+                    message = f"Continue learning {topic['title']}"
+                    break
+        
+        # If intermediate complete, check advanced path
+        if beginner_complete and intermediate_complete and not recommended_topic:
+            for topic in ADVANCED_PATH:
+                topic_id = topic["id"]
+                progress = progress_map.get(topic_id)
+                
+                if not progress:
+                    # Never started this topic - recommend it
+                    recommendation_type = "next"
+                    recommended_topic = topic
+                    topic_progress = {
+                        "topic_id": topic_id,
+                        "started_at": None,
+                        "completed_at": None,
+                        "best_quiz_score": None,
+                        "flashcards_viewed": 0,
+                        "last_activity_at": None,
+                    }
+                    message = f"You're Advanced now! Start {topic['title']}."
                     break
                 
                 elif not progress["completed_at"]:
@@ -5633,8 +6438,17 @@ async def update_topic_progress(
             else:
                 # Check if in intermediate path
                 intermediate_index = next((i for i, t in enumerate(INTERMEDIATE_PATH) if t["id"] == topic_id), -1)
-                if intermediate_index >= 0 and intermediate_index < len(INTERMEDIATE_PATH) - 1:
-                    next_topic = INTERMEDIATE_PATH[intermediate_index + 1]
+                if intermediate_index >= 0:
+                    if intermediate_index < len(INTERMEDIATE_PATH) - 1:
+                        next_topic = INTERMEDIATE_PATH[intermediate_index + 1]
+                    else:
+                        # Last intermediate topic - suggest first advanced
+                        next_topic = ADVANCED_PATH[0] if ADVANCED_PATH else None
+                else:
+                    # Check if in advanced path
+                    advanced_index = next((i for i, t in enumerate(ADVANCED_PATH) if t["id"] == topic_id), -1)
+                    if advanced_index >= 0 and advanced_index < len(ADVANCED_PATH) - 1:
+                        next_topic = ADVANCED_PATH[advanced_index + 1]
         
         logger.info(f"✅ Updated progress: user={user_id}, topic={topic_id}, action={action}")
         
@@ -5716,7 +6530,11 @@ async def get_all_progress(
             1 for t in INTERMEDIATE_PATH 
             if progress_map.get(t["id"], {}).get("completed_at")
         )
-        total_completed = beginner_completed + intermediate_completed
+        advanced_completed = sum(
+            1 for t in ADVANCED_PATH 
+            if progress_map.get(t["id"], {}).get("completed_at")
+        )
+        total_completed = beginner_completed + intermediate_completed + advanced_completed
         
         return {
             "topics": topics_with_progress,
@@ -5724,8 +6542,10 @@ async def get_all_progress(
             "completed_topics": total_completed,
             "beginner_completed": beginner_completed,
             "intermediate_completed": intermediate_completed,
+            "advanced_completed": advanced_completed,
             "beginner_total": len(BEGINNER_PATH),
             "intermediate_total": len(INTERMEDIATE_PATH),
+            "advanced_total": len(ADVANCED_PATH),
         }
         
     except HTTPException:

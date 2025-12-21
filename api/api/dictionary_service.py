@@ -831,6 +831,17 @@ class DictionaryService:
             if any(word in definition_lower for word in ['urinate', 'feces', 'excrement', 'buttocks', 'genitals', 'prostitute', 'drunk']):
                 continue
             
+            # Skip proper names and nicknames (not useful for language learners)
+            part_of_speech = entry.get("part_of_speech", "").lower()
+            if 'name' in part_of_speech or part_of_speech in ['name.', 'n.pr.', 'proper noun']:
+                continue
+            if 'nickname' in definition_lower or 'proper name' in definition_lower:
+                continue
+            
+            # Skip words that are just abbreviations or initialisms
+            if chamorro.isupper() and len(chamorro) <= 4:
+                continue
+            
             good_words.append(entry)
         
         if not good_words:

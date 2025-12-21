@@ -52,7 +52,7 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📱 Mobile-optimized responsive design + bottom navigation
 - 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban, settings)
 - 🎄 **Seasonal Themes** (Christmas, New Year, Chamorro, Default)
-- 📚 **Learning Path** (7-topic beginner path with mini-lessons: Intro → Flashcards → Quiz → Complete)
+- 📚 **Learning Path** (21-topic curriculum: 7 Beginner + 7 Intermediate + 7 Advanced, with mini-lessons: Intro → Flashcards → Quiz → Complete)
 
 ---
 
@@ -766,41 +766,80 @@ Lesson: "Greetings & Introductions" (~5 min)
 
 ---
 
-#### **Phase 4: Expanded Curriculum** 📋 NEXT — 10-15 hours
+#### **Phase 4: Expanded Curriculum** ✅ COMPLETE
 > **Outcome:** Users have depth — "Beyond basics to fluency"
 
 | Task | What It Does | Effort | Status |
 |------|--------------|--------|--------|
-| Intermediate path (7-10 topics) | Grammar, sentences, time, places | 6-8 hrs | ⬜ |
-| Advanced path (5-7 topics) | Culture, history, conversation fluency | 4-6 hrs | ⬜ |
-| Topic prerequisites | "Complete Greetings before Family" | 2 hrs | ⬜ |
-| Skill level indicator | Beginner / Intermediate / Advanced badge | 1 hr | ⬜ |
+| Intermediate path (7 topics) | Questions, Body, Days, Months, Verbs, Adjectives, Sentences | 6-8 hrs | ✅ |
+| Advanced path (7 topics) | Places, Weather, Household, Directions, Shopping, Daily Life, Culture | 4-6 hrs | ✅ |
+| Level-based unlocking | Complete beginner → unlock intermediate → unlock advanced | 1 hr | ✅ |
+| Visual level separators | Collapsible sections for each learning level | 1 hr | ✅ |
 
-**Curriculum Structure:**
+**Curriculum Structure (21 total topics):**
 ```
-BEGINNER (Current)     INTERMEDIATE           ADVANCED
-├─ Greetings           ├─ Grammar Basics      ├─ Chamorro History
-├─ Numbers             ├─ Verb Conjugation    ├─ Cultural Practices
-├─ Colors              ├─ Sentence Building   ├─ Idiomatic Expressions
-├─ Family              ├─ Time & Dates        ├─ Conversation Fluency
-├─ Food                ├─ Directions          └─ Native Speaker Practice
-├─ Animals             └─ Daily Routines
-└─ Common Phrases
+BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
+├─ 👋 Greetings          ├─ ❓ Questions             ├─ 🏠 Places & Locations
+├─ 🔢 Numbers            ├─ 👤 Body Parts            ├─ 🌞 Weather & Nature
+├─ 🎨 Colors             ├─ ⏰ Time & Days           ├─ 🛋️ Home & Household
+├─ 👨‍👩‍👧‍👦 Family             ├─ 🗓️ Months & Seasons     ├─ 🧭 Directions & Travel
+├─ 🍚 Food & Drinks      ├─ 🏃 Common Verbs          ├─ 💰 Shopping & Money
+├─ 🐠 Animals            ├─ ✨ Describing Things     ├─ 💼 Work & Daily Life
+└─ 💬 Common Phrases     └─ 📝 Simple Sentences      └─ 🎉 Culture & Celebrations
 ```
 
-**After Phase 4:** Full curriculum from beginner to intermediate fluency.
+**Key Features:**
+- All flashcard pronunciations verified against Chamorro dictionaries
+- Quiz questions match flashcard vocabulary for consistency
+- Progressive unlocking: Beginner → Intermediate → Advanced
+- Each level has distinct color theme (green, amber, purple)
+
+**After Phase 4:** Full curriculum from beginner to advanced, with 21 topics covering vocabulary, grammar, and cultural knowledge.
 
 ---
 
-#### **Phase 5: Personalization & XP** 📋 FUTURE — 8-12 hours
+#### **Phase 5: Personalization & XP** ✅ COMPLETE — 8-12 hours
 > **Outcome:** Users have engagement — "Learning adapts to me"
 
 | Task | What It Does | Effort | Status |
 |------|--------------|--------|--------|
-| XP system | Earn points for flashcards, quizzes, chat, games | 4-5 hrs | ⬜ |
-| Daily goals | Set 5/10/15 min target, track completion | 2-3 hrs | ⬜ |
-| Weak area detection | "You struggle with numbers, let's practice" | 3-4 hrs | ⬜ |
-| Spaced repetition | Smart flashcard scheduling (SM-2 algorithm) | 4-5 hrs | ⬜ |
+| XP system | Earn points for flashcards, quizzes, games, lessons | 4-5 hrs | ✅ |
+| Daily goals | Set 5/10/15/20 min target, track completion | 2-3 hrs | ✅ |
+| Weak area detection | "You struggle with numbers, let's practice" | 3-4 hrs | ✅ |
+| Spaced repetition | Smart flashcard scheduling (SM-2 algorithm) | 4-5 hrs | ✅ |
+
+**Implemented Features:**
+
+**XP System:**
+- 15-level progression with themed titles (Seedling → Master)
+- XP earned for flashcards (+10), quizzes (+25, +10 bonus for 90%+), games (+5), topics (+50)
+- Daily goal completion bonus (+20 XP)
+- Level display in header and homepage
+- XP toast notifications on earning
+
+**Daily Goals:**
+- Users set goal: Off, 5, 10, 15, or 20 minutes per day
+- Progress tracked automatically based on lesson time estimates
+- Goal completion awards bonus XP
+- Progress ring displayed on homepage
+
+**Weak Area Detection:**
+- Backend analyzes quiz results by category
+- Identifies categories with <70% average score
+- Surfaces "Areas to Practice" widget on homepage
+- Direct link to practice weakest area
+
+**Spaced Repetition (SM-2):**
+- Full SM-2 algorithm implementation
+- Quality ratings: Again (0-2), Hard (3), Good (4), Easy (5)
+- Automatic interval scheduling (1 day → weeks → months)
+- "Cards Due for Review" widget on homepage
+- Summary stats: Learning, Due Today, Mastered
+
+**Database Tables Added:**
+- `user_xp` — Total XP, level, daily goal settings
+- `xp_history` — Log of all XP events
+- `spaced_repetition` — SM-2 card scheduling data
 
 **After Phase 5:** Platform adapts to each user's needs and pace.
 
@@ -827,12 +866,12 @@ BEGINNER (Current)     INTERMEDIATE           ADVANCED
 | **1** | Smart Suggestions | 4-5 hrs | "Here's what to do next" | ✅ Complete |
 | **2** | Mini-Lessons | 8-12 hrs | "Structured 5-min sessions" | ✅ Complete |
 | **3** | Visual Progress | 6-8 hrs | "I can see my journey" | ✅ Complete |
-| **4** | Expanded Curriculum | 10-15 hrs | "Beyond basics" | 📋 Next |
-| **5** | Personalization & XP | 8-12 hrs | "Adapts to me" | ⏸️ Planned |
-| **6** | Social & Classroom | 15-20 hrs | "Learn together" | ⏸️ Future |
+| **4** | Expanded Curriculum | 10-15 hrs | "21 topics across 3 levels" | ✅ Complete |
+| **5** | Personalization & XP | 8-12 hrs | "Adapts to me" | ✅ Complete |
+| **6** | Social & Classroom | 15-20 hrs | "Learn together" | 📋 Next |
 
 **Total Estimated Effort:** 50-70 hours (spread over multiple months)
-**Completed So Far:** ~22-26 hours (Phase 1 + Phase 2 + Phase 3)
+**Completed So Far:** ~45-55 hours (Phases 1-5 complete)
 
 ---
 
@@ -1091,11 +1130,13 @@ DELETE /api/share/:share_id → revoke share (owner only)
 13. ✅ ~~**Scroll to top on navigation**~~ - Done!
 14. ✅ ~~**Skeleton loaders**~~ - Done! Word of the Day, Stats widget
 15. ✅ ~~**Learning Platform Phase 3: Visual Progress**~~ - Done! `/learning` page with path map, stars, stats
+16. ✅ ~~**Learning Platform Phase 4: Expanded Curriculum**~~ - Done! 21 topics across 3 levels (Beginner, Intermediate, Advanced)
+17. ✅ ~~**Learning Platform Phase 5: Personalization & XP**~~ - Done! XP system, daily goals, weak areas, spaced repetition
+18. ✅ ~~**Homepage Signed-Out Improvements**~~ - Done! Learning path promotion, floating CTA, 2x2 explore grid
+19. ✅ ~~**Word of the Day Filtering**~~ - Done! Exclude names/nicknames from appearing
 
 **🎯 Learning Platform Transformation (Priority 6):**
-16. **Phase 4: Expanded Curriculum** (10-15 hrs) - Intermediate & advanced paths
-17. **Phase 5: Personalization** (8-12 hrs) - XP system, daily goals, spaced repetition
-18. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
+20. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
 
 **Other Features:**
 19. **Voice Input** - Web Speech API for voice-to-text
