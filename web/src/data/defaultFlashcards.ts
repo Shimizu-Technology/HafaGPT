@@ -82,6 +82,11 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Buenas noches',
         back: 'Good evening/night',
         pronunciation: 'BWAY-nahs NOH-chehs'
+      },
+      {
+        front: 'Buenas dias',
+        back: 'Good morning',
+        pronunciation: 'BWAY-nahs DEE-ahs'
       }
     ]
   },
@@ -180,14 +185,14 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'CHEH-loo'
       },
       {
-        front: 'Bihu',
+        front: 'Biha',
         back: 'Grandmother / Grandma',
-        pronunciation: 'BEE-hoo'
+        pronunciation: 'BEE-hah'
       },
       {
-        front: 'Biba',
+        front: 'Bihu',
         back: 'Grandfather / Grandpa',
-        pronunciation: 'BEE-bah'
+        pronunciation: 'BEE-hoo'
       },
       {
         front: 'Asagua',
@@ -198,6 +203,79 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Prima / Primu',
         back: 'Cousin (female/male)',
         pronunciation: 'PREE-mah / PREE-moo'
+      },
+      {
+        front: 'Påtgon',
+        back: 'Child',
+        pronunciation: 'PAHT-gohn'
+      },
+      {
+        front: 'Tiu',
+        back: 'Uncle',
+        pronunciation: 'TEE-oo'
+      },
+      {
+        front: 'Tia',
+        back: 'Aunt',
+        pronunciation: 'TEE-ah'
+      }
+    ]
+  },
+
+  animals: {
+    topic: 'animals',
+    displayName: 'Animals',
+    description: 'Common animals in Chamorro',
+    cards: [
+      {
+        front: 'Ga\'lågu',
+        back: 'Dog',
+        pronunciation: 'gah-LAH-goo'
+      },
+      {
+        front: 'Katu',
+        back: 'Cat',
+        pronunciation: 'KAH-too'
+      },
+      {
+        front: 'Guihan',
+        back: 'Fish',
+        pronunciation: 'gwee-HAHN'
+      },
+      {
+        front: 'Paluma',
+        back: 'Bird',
+        pronunciation: 'pah-LOO-mah'
+      },
+      {
+        front: 'Babui',
+        back: 'Pig',
+        pronunciation: 'bah-BOO-ee'
+      },
+      {
+        front: 'Karabao',
+        back: 'Carabao / Water Buffalo',
+        pronunciation: 'kah-rah-BAH-oh'
+      },
+      {
+        front: 'Haggan',
+        back: 'Turtle',
+        pronunciation: 'HAHG-gahn'
+      },
+      {
+        front: 'Ngånga\'',
+        back: 'Duck',
+        pronunciation: 'NGAHNG-ah'
+      },
+      {
+        front: 'Ayuyu',
+        back: 'Coconut Crab',
+        pronunciation: 'ah-YOO-yoo'
+      },
+      {
+        front: 'Månnok',
+        back: 'Chicken',
+        pronunciation: 'MAHN-nok'
       }
     ]
   },
@@ -266,41 +344,6 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Useful everyday expressions',
     cards: [
       {
-        front: 'Buen prubechu',
-        back: 'Enjoy your meal / Bon appetit',
-        pronunciation: 'BWEN proh-BEH-choo'
-      },
-      {
-        front: 'Kao siña un tulaika?',
-        back: 'Can you repeat that?',
-        pronunciation: 'kah-oh SEEN-yah oon too-lah-EE-kah'
-      },
-      {
-        front: 'Ti hu tungo\'',
-        back: 'I don\'t know',
-        pronunciation: 'tee hoo TOON-goh'
-      },
-      {
-        front: 'Hu tungo\'',
-        back: 'I know / I understand',
-        pronunciation: 'hoo TOON-goh'
-      },
-      {
-        front: 'Dispensa yu\'',
-        back: 'Excuse me / I\'m sorry',
-        pronunciation: 'dees-PEN-sah yoo'
-      },
-      {
-        front: 'Mångge si Yu\'os',
-        back: 'God bless (farewell)',
-        pronunciation: 'MAHNG-ghee see YOO-os'
-      },
-      {
-        front: 'Maila\'',
-        back: 'Come here',
-        pronunciation: 'my-LAH'
-      },
-      {
         front: 'Hunggan',
         back: 'Yes',
         pronunciation: 'HOONG-gahn'
@@ -311,9 +354,44 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'AH-heh'
       },
       {
-        front: 'Buenas dias',
-        back: 'Good morning',
-        pronunciation: 'BWAY-nahs DEE-ahs'
+        front: 'Hu guaiya hao',
+        back: 'I love you',
+        pronunciation: 'hoo gwah-EE-yah how'
+      },
+      {
+        front: 'Dispensa yu\'',
+        back: 'Excuse me / I\'m sorry',
+        pronunciation: 'dees-PEN-sah yoo'
+      },
+      {
+        front: 'Ti hu komprende',
+        back: 'I don\'t understand',
+        pronunciation: 'tee hoo kohm-PREN-deh'
+      },
+      {
+        front: 'Pot fabot',
+        back: 'Please',
+        pronunciation: 'poht fah-BOHT'
+      },
+      {
+        front: 'Kao siña un ayuda yu\'?',
+        back: 'Can you help me?',
+        pronunciation: 'kah-oh SEEN-yah oon ah-YOO-dah yoo'
+      },
+      {
+        front: 'Mångge ginen hao?',
+        back: 'Where are you from?',
+        pronunciation: 'MAHNG-gheh GEE-nen how'
+      },
+      {
+        front: 'Ti hu tungo\'',
+        back: 'I don\'t know',
+        pronunciation: 'tee hoo TOON-goh'
+      },
+      {
+        front: 'Maila\'',
+        back: 'Come here',
+        pronunciation: 'my-LAH'
       }
     ]
   },
@@ -455,9 +533,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'KAHN-noh'
       },
       {
-        front: 'Chålek',
-        back: 'Rice',
-        pronunciation: 'CHAH-lek'
+        front: 'Hineksa\'',
+        back: 'Rice (cooked)',
+        pronunciation: 'hee-NEHK-sah'
       },
       {
         front: 'Guihan',
@@ -485,9 +563,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'leh-CHOO-gah'
       },
       {
-        front: 'Hanom',
+        front: 'Hånom',
         back: 'Water',
-        pronunciation: 'hah-NOHM'
+        pronunciation: 'HAH-nohm'
       },
       {
         front: 'Kafé',
@@ -495,9 +573,19 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'kah-FEH'
       },
       {
-        front: 'Ñåmu',
-        back: 'Mosquito / To eat (slang)',
-        pronunciation: 'NYAH-moo'
+        front: 'Niyok',
+        back: 'Coconut',
+        pronunciation: 'nee-YOHK'
+      },
+      {
+        front: 'Kelaguen',
+        back: 'Grilled dish with lemon',
+        pronunciation: 'keh-lah-GWEN'
+      },
+      {
+        front: 'Fina\'denne\'',
+        back: 'Hot sauce / Condiment',
+        pronunciation: 'fee-nah-DEN-neh'
       }
     ]
   },

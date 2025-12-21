@@ -10,12 +10,12 @@ import {
   ArrowRight,
   Moon,
   Sun,
-  BarChart3,
   MessagesSquare,
   Gamepad2,
   Flame,
   Trophy,
-  Sparkles
+  Sparkles,
+  Star
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
@@ -23,10 +23,13 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { useStreak } from '../hooks/useStreak';
+import { useQuizStats } from '../hooks/useQuizQuery';
+import { useGameStats } from '../hooks/useGamesQuery';
 import { DailyWord } from './DailyWord';
 import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
+import { RecommendedLearning } from './RecommendedLearning';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -34,9 +37,11 @@ export function HomePage() {
   const clerk = useClerk();
   const { theme, toggleTheme } = useTheme();
   useInitUserData(null, isClerkLoaded && !!user?.id);
-  const { isPremium, isPromoActive, promoEndDate, isChristmasTheme, siteTheme } = useSubscription();
+  const { isPremium, isChristmasTheme } = useSubscription();
   const { needsOnboarding } = useUserPreferences();
   const { streak: streakData } = useStreak();
+  const { data: quizStats, isLoading: isLoadingQuizStats } = useQuizStats();
+  const { data: gameStats, isLoading: isLoadingGameStats } = useGameStats();
   
   const [quickMessage, setQuickMessage] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -112,7 +117,12 @@ export function HomePage() {
               {isChristmasTheme ? '🎄' : '🌺'}
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">HåfaGPT</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">HåfaGPT</h1>
+                <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-md uppercase tracking-wide">
+                  Beta
+                </span>
+              </div>
               <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400 hidden sm:block">
                 Learn Chamorro
               </p>
@@ -142,51 +152,6 @@ export function HomePage() {
       </header>
 
       <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 pb-24 sm:pb-8">
-        
-        {/* Promo Banner */}
-        {isPromoActive && (
-          <div className={`relative overflow-hidden rounded-2xl p-4 sm:p-5 text-white text-center shadow-lg ${
-            siteTheme === 'christmas' 
-              ? 'bg-gradient-to-r from-red-600 to-green-600' 
-              : siteTheme === 'newyear'
-              ? 'bg-gradient-to-r from-purple-600 to-pink-500'
-              : siteTheme === 'chamorro'
-              ? 'bg-gradient-to-r from-blue-600 to-red-500'
-              : 'bg-gradient-to-r from-coral-500 to-teal-500 dark:from-ocean-500 dark:to-teal-600'
-          }`}>
-            {siteTheme === 'christmas' && (
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-1 left-4 text-2xl">❄</div>
-                <div className="absolute top-2 right-8 text-lg">❄</div>
-                <div className="absolute bottom-1 left-1/4 text-xl">❄</div>
-              </div>
-            )}
-            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-              <span className="text-2xl">
-                {siteTheme === 'christmas' ? '🎄' : siteTheme === 'newyear' ? '🎆' : siteTheme === 'chamorro' ? '🇬🇺' : '🎉'}
-              </span>
-              <div>
-                <p className="font-bold text-base sm:text-lg">
-                  {siteTheme === 'christmas' 
-                    ? 'Felis Påsgua! Holiday Gift: Unlimited Access!'
-                    : siteTheme === 'newyear'
-                    ? 'Happy New Year! Celebrate with Unlimited Access!'
-                    : 'Special Promo: Unlimited Access!'
-                  }
-                </p>
-                <p className="text-white/90 text-xs sm:text-sm">
-                  {isSignedIn 
-                    ? `Enjoy unlimited learning through ${promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'the promo period'}!`
-                    : `Create a free account for unlimited access through ${promoEndDate ? new Date(promoEndDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'the promo period'}!`
-                  }
-                </p>
-              </div>
-              <span className="text-2xl">
-                {siteTheme === 'christmas' ? '🎁' : siteTheme === 'newyear' ? '🥳' : siteTheme === 'chamorro' ? '🌺' : '🎊'}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Hero Section - Different for signed in vs signed out */}
         {isSignedIn ? (
@@ -218,26 +183,26 @@ export function HomePage() {
                   </div>
                 </div>
               )}
-            </div>
+          </div>
             
             {/* Quick Chat */}
             <div className="mt-6">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={quickMessage}
-                  onChange={(e) => setQuickMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleQuickChat()}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={quickMessage}
+              onChange={(e) => setQuickMessage(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleQuickChat()}
                   placeholder="Ask me anything in Chamorro..."
                   className="flex-1 px-4 py-3 rounded-xl bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-coral-400 dark:focus:ring-ocean-400"
-                />
-                <button
+            />
+            <button
                   onClick={handleQuickChat}
                   className="px-5 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-medium hover:shadow-lg transition-all active:scale-95 flex items-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
+            >
+              <Send className="w-4 h-4" />
                   <span className="hidden sm:inline">Chat</span>
-                </button>
+            </button>
               </div>
             </div>
           </div>
@@ -255,36 +220,120 @@ export function HomePage() {
             </p>
             <button
               onClick={handleSignInClick}
-              className="px-8 py-3 bg-white text-coral-600 dark:text-ocean-600 rounded-xl font-bold text-lg hover:bg-cream-50 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+              className="px-8 py-3 bg-white text-coral-600 dark:text-ocean-600 rounded-xl font-bold text-lg hover:bg-cream-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 mb-4"
             >
               Start Learning Free
             </button>
+            <p className="text-white/60 text-xs sm:text-sm">
+              Free during beta • Paid plans will help cover AI costs
+            </p>
           </div>
         )}
 
-        {/* Primary Actions - 3 Big Cards */}
+        {/* Recommended Learning Widget - Only for signed-in users */}
+        {isSignedIn && (
+          <RecommendedLearning />
+        )}
+
+        {/* Inline Stats - Moved up for visibility (Only for signed in users) */}
+        {isSignedIn && (isLoadingQuizStats || isLoadingGameStats) && (
+          // Skeleton loader for stats
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 rounded-2xl p-4 shadow-md border border-amber-200/50 dark:border-slate-700/50 animate-pulse">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-200 dark:bg-slate-600" />
+              <div className="h-4 w-20 bg-amber-200 dark:bg-slate-600 rounded" />
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="text-center">
+                  <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-amber-100 dark:bg-slate-700" />
+                  <div className="h-5 w-8 mx-auto mb-1 bg-amber-200 dark:bg-slate-600 rounded" />
+                  <div className="h-3 w-12 mx-auto bg-amber-100 dark:bg-slate-700 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {isSignedIn && !isLoadingQuizStats && !isLoadingGameStats && (quizStats || gameStats) && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 rounded-2xl p-4 shadow-md border border-amber-200/50 dark:border-slate-700/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
+                <Trophy className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-bold text-brown-800 dark:text-white text-sm">Your Stats</h3>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2">
+              {/* Streak */}
+              <div className="text-center">
+                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                  <Flame className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                </div>
+                <p className="text-base font-bold text-brown-800 dark:text-white">
+                  {streakData?.current_streak || 0}
+                </p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Streak</p>
+              </div>
+              
+              {/* Quizzes */}
+              <div className="text-center">
+                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Brain className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                </div>
+                <p className="text-base font-bold text-brown-800 dark:text-white">
+                  {quizStats?.total_quizzes || 0}
+                </p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Quizzes</p>
+              </div>
+              
+              {/* Avg Score */}
+              <div className="text-center">
+                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                </div>
+                <p className="text-base font-bold text-brown-800 dark:text-white">
+                  {quizStats?.total_quizzes ? `${Math.round(quizStats.average_score || 0)}%` : '-'}
+                </p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Avg</p>
+              </div>
+              
+              {/* Games */}
+              <div className="text-center">
+                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                </div>
+                <p className="text-base font-bold text-brown-800 dark:text-white">
+                  {gameStats?.total_games || 0}
+                </p>
+                <p className="text-[10px] text-brown-500 dark:text-gray-400">Games</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Explore - Combined Actions Section */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
-            Start Learning
+            Explore
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* AI Chat - Primary Feature */}
             <Link
               to="/chat"
-              className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-coral-100 to-coral-200/50 dark:from-coral-900/20 dark:to-coral-800/10 rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-coral-100 to-coral-200/50 dark:from-coral-900/20 dark:to-coral-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-coral-500 dark:to-coral-700 flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <MessageSquare className="w-7 h-7 text-white" />
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-coral-500 dark:to-coral-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-lg font-bold text-brown-800 dark:text-white mb-1">Chat with AI</h4>
-                <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
+                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Chat with AI</h4>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
                   Ask questions, get translations, learn phrases
                 </p>
-                <div className="flex items-center text-coral-500 dark:text-coral-400 font-medium text-sm">
-                  Start chatting <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-coral-500 dark:text-coral-400 font-medium text-xs sm:text-sm">
+                  Start chatting <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>
@@ -292,19 +341,19 @@ export function HomePage() {
             {/* Games - Engagement Feature */}
             <Link
               to="/games"
-              className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100 to-emerald-200/50 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-100 to-emerald-200/50 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <Gamepad2 className="w-7 h-7 text-white" />
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <Gamepad2 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-lg font-bold text-brown-800 dark:text-white mb-1">Play Games</h4>
-                <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
+                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Play Games</h4>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
                   Wordle, Memory Match, Word Scramble & more
                 </p>
-                <div className="flex items-center text-emerald-500 dark:text-emerald-400 font-medium text-sm">
-                  Play now <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="flex items-center text-emerald-500 dark:text-emerald-400 font-medium text-xs sm:text-sm">
+                  Play now <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>
@@ -312,33 +361,26 @@ export function HomePage() {
             {/* Quiz - Learning Feature */}
             <Link
               to="/quiz"
-              className="group relative bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-100 to-purple-200/50 dark:from-purple-900/20 dark:to-purple-800/10 rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-100 to-purple-200/50 dark:from-purple-900/20 dark:to-purple-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <Brain className="w-7 h-7 text-white" />
+                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <Brain className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-lg font-bold text-brown-800 dark:text-white mb-1">Take a Quiz</h4>
-                <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
+                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Take a Quiz</h4>
+                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
                   Test your knowledge with fun quizzes
                 </p>
-                <div className="flex items-center text-purple-500 dark:text-purple-400 font-medium text-sm">
-                  Start quiz <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
+                <div className="flex items-center text-purple-500 dark:text-purple-400 font-medium text-xs sm:text-sm">
+                  Start quiz <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
               </div>
             </Link>
           </div>
-        </div>
-
-        {/* Secondary Actions - Compact Row */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
-            Explore & Practice
-          </h3>
           
-          {/* Horizontal scroll on mobile, grid on desktop */}
-          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 scrollbar-hide">
+          {/* Secondary Links - Horizontal scroll on mobile, grid on desktop */}
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 scrollbar-hide mt-4">
             <Link
               to="/flashcards"
               className="flex-shrink-0 flex items-center gap-3 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-md border border-cream-200/50 dark:border-slate-700/50 hover:shadow-lg hover:border-teal-300 dark:hover:border-teal-600 transition-all min-w-[160px] sm:min-w-0"
@@ -392,7 +434,7 @@ export function HomePage() {
             </Link>
           </div>
         </div>
-
+          
         {/* Daily Section - Compact 2-column grid */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
@@ -402,29 +444,8 @@ export function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DailyWord compactOnMobile={false} />
             <DailyWordleCard />
-          </div>
-        </div>
-
-        {/* Progress Link - Only for signed in users */}
-        {isSignedIn && (
-          <Link
-            to="/dashboard"
-            className="flex items-center justify-between p-5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 rounded-2xl shadow-md border border-amber-200/50 dark:border-slate-700/50 hover:shadow-lg transition-all group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                <Trophy className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <p className="font-bold text-brown-800 dark:text-white">View Your Progress</p>
-                <p className="text-sm text-brown-600 dark:text-gray-400">
-                  Stats, achievements, and learning history
-                </p>
               </div>
-            </div>
-            <BarChart3 className="w-6 h-6 text-amber-500 dark:text-amber-400 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        )}
 
         {/* Sign in prompt for non-authenticated users */}
         {!isSignedIn && (

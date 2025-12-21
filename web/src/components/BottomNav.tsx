@@ -11,7 +11,6 @@ import {
   Book,
   BookMarked,
   MessagesSquare,
-  BarChart3,
   Settings,
   Calendar
 } from 'lucide-react';
@@ -72,7 +71,6 @@ export function BottomNav() {
     { icon: <MessagesSquare className="w-5 h-5" />, label: 'Practice', to: '/practice' },
     { icon: <Calendar className="w-5 h-5" />, label: 'Daily Word', to: '/daily-word' },
     ...(user ? [
-      { icon: <BarChart3 className="w-5 h-5" />, label: 'Progress', to: '/dashboard' },
       { icon: <Settings className="w-5 h-5" />, label: 'Settings', to: '/settings' },
     ] : []),
   ];

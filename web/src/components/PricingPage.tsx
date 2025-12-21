@@ -173,7 +173,7 @@ export function PricingPage() {
               <p className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
                 <Crown className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>
-                  <strong>Special beta pricing!</strong> Get unlimited access while we continue adding new features.
+                  <strong>Beta pricing!</strong> Your subscription helps cover AI and hosting costs while we continue improving the platform.
                 </span>
               </p>
             </div>
@@ -281,7 +281,7 @@ export function PricingPage() {
                 What is "Early Adopter Pricing"?
               </h4>
               <p className="text-sm text-brown-600 dark:text-gray-400">
-                We're still in beta and adding new features regularly! Early adopters get special discounted pricing while we continue to improve the platform.
+                We're in beta and adding new features regularly! Early adopters get special discounted pricing. These funds help us cover AI costs (every message uses paid APIs) and keep the platform running.
               </p>
             </div>
 
@@ -308,7 +308,7 @@ export function PricingPage() {
                 How does my subscription help?
               </h4>
               <p className="text-sm text-brown-600 dark:text-gray-400">
-                Your subscription helps us keep HåfaGPT running and supports our mission to make Chamorro language learning accessible to everyone. Si Yu'us Ma'åse'! 🌺
+                Every chat message, game, and quiz uses AI that costs real money to run. Your subscription helps cover these costs (AI, servers, and development) so we can keep HåfaGPT accessible and continue improving it. Si Yu'us Ma'åse'! 🌺
               </p>
             </div>
           </div>

@@ -205,10 +205,10 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
       {
         id: id('num', 3),
         type: 'multiple_choice',
-        question: 'What number is "Singko"?',
+        question: 'What number is "Sinku"?',
         options: ['4', '5', '6', '7'],
         correctAnswer: '5',
-        explanation: '"Singko" is five in Chamorro.'
+        explanation: '"Sinku" is five in Chamorro.'
       },
       {
         id: id('num', 4),
@@ -231,10 +231,10 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('num', 6),
         type: 'type_answer',
         question: 'How do you say "7" in Chamorro?',
-        correctAnswer: 'Siette',
-        acceptableAnswers: ['Siette', 'siette', 'SIETTE', 'Siete', 'siete'],
+        correctAnswer: 'Siete',
+        acceptableAnswers: ['Siete', 'siete', 'SIETE', 'Siette', 'siette'],
         hint: 'Similar to Spanish "siete"',
-        explanation: '"Siette" is seven in Chamorro.'
+        explanation: '"Siete" is seven in Chamorro.'
       },
       {
         id: id('num', 7),
@@ -409,6 +409,82 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
     ]
   },
   {
+    id: 'animals',
+    title: 'Animals',
+    description: 'Learn the Chamorro words for common animals',
+    icon: '🐕',
+    difficulty: 'Beginner',
+    questions: [
+      {
+        id: id('animal', 1),
+        type: 'multiple_choice',
+        question: 'What is "dog" in Chamorro?',
+        options: ['Katu', 'Ga\'lågu', 'Babui', 'Paluma'],
+        correctAnswer: 'Ga\'lågu',
+        explanation: '"Ga\'lågu" means dog in Chamorro.'
+      },
+      {
+        id: id('animal', 2),
+        type: 'multiple_choice',
+        question: 'What animal is "Katu"?',
+        options: ['Dog', 'Cat', 'Bird', 'Fish'],
+        correctAnswer: 'Cat',
+        explanation: '"Katu" means cat in Chamorro.'
+      },
+      {
+        id: id('animal', 3),
+        type: 'type_answer',
+        question: 'How do you say "fish" in Chamorro?',
+        correctAnswer: 'Guihan',
+        acceptableAnswers: ['Guihan', 'guihan', 'GUIHAN'],
+        hint: 'Starts with "Gui"',
+        explanation: '"Guihan" means fish in Chamorro.'
+      },
+      {
+        id: id('animal', 4),
+        type: 'multiple_choice',
+        question: 'What is "Paluma"?',
+        options: ['Fish', 'Pig', 'Bird', 'Crab'],
+        correctAnswer: 'Bird',
+        explanation: '"Paluma" means bird in Chamorro.'
+      },
+      {
+        id: id('animal', 5),
+        type: 'fill_blank',
+        question: 'Complete: "I ___ giya halom tåno\'" (The pig is in the jungle)',
+        correctAnswer: 'babui',
+        acceptableAnswers: ['babui', 'Babui', 'BABUI'],
+        hint: 'Common farm animal',
+        explanation: '"Babui" means pig in Chamorro.'
+      },
+      {
+        id: id('animal', 6),
+        type: 'multiple_choice',
+        question: 'What is "Karabao" in English?',
+        options: ['Cow', 'Horse', 'Water Buffalo', 'Goat'],
+        correctAnswer: 'Water Buffalo',
+        explanation: '"Karabao" is the water buffalo, an important animal in Chamorro history.'
+      },
+      {
+        id: id('animal', 7),
+        type: 'type_answer',
+        question: 'What is "turtle" in Chamorro?',
+        correctAnswer: 'Haggan',
+        acceptableAnswers: ['Haggan', 'haggan', 'HAGGAN', 'Hagan', 'hagan'],
+        hint: 'Starts with "H"',
+        explanation: '"Haggan" means turtle in Chamorro.'
+      },
+      {
+        id: id('animal', 8),
+        type: 'multiple_choice',
+        question: 'What is the famous Chamorro coconut crab called?',
+        options: ['Ngånga\'', 'Ayuyu', 'Haggan', 'Guihan'],
+        correctAnswer: 'Ayuyu',
+        explanation: '"Ayuyu" is the coconut crab, a delicacy in Chamorro cuisine.'
+      }
+    ]
+  },
+  {
     id: 'colors',
     title: 'Colors',
     description: 'Learn the colors in Chamorro',
@@ -461,18 +537,18 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('color', 6),
         type: 'multiple_choice',
         question: 'What is "black" in Chamorro?',
-        options: ['Å\'paka\'', 'Kulot chåda\'', 'Agaga\'', 'Asut'],
-        correctAnswer: 'Kulot chåda\'',
-        explanation: '"Kulot chåda\'" literally means "color of charcoal" and refers to black.'
+        options: ['Å\'paka\'', 'Å\'tot', 'Agaga\'', 'Asut'],
+        correctAnswer: 'Å\'tot',
+        explanation: '"Å\'tot" means black in Chamorro.'
       },
       {
         id: id('color', 7),
         type: 'type_answer',
-        question: 'What color is "Kulot kahel"?',
+        question: 'What color is "Lalala"?',
         correctAnswer: 'Orange',
         acceptableAnswers: ['Orange', 'orange', 'ORANGE'],
-        hint: '"Kahel" sounds like a citrus fruit',
-        explanation: '"Kulot kahel" means orange (the color).'
+        hint: 'Think of something bright and citrusy',
+        explanation: '"Lalala" means orange (the color) in Chamorro.'
       },
       {
         id: id('color', 8),

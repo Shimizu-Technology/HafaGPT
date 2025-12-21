@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Volume2, Plus, Sparkles, ChevronRight, Loader2 } from 'lucide-react';
+import { Volume2, Plus, Sparkles, ChevronRight } from 'lucide-react';
 import { useWordOfTheDay, WordOfTheDay } from '../hooks/useVocabularyQuery';
 import { useSpeech } from '../hooks/useSpeech';
 
@@ -15,11 +15,48 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const [added, setAdded] = useState(false);
 
-  // Loading state
+  // Loading state - skeleton loader
   if (isLoading) {
+    // Mobile skeleton (compact)
+    if (compactOnMobile) {
+      return (
+        <>
+          {/* Mobile skeleton */}
+          <div className="sm:hidden">
+            <div className="w-full bg-gradient-to-r from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-xl border border-coral-200/50 dark:border-ocean-500/40 p-3 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 bg-coral-200 dark:bg-slate-600 rounded" />
+                <div className="flex-1">
+                  <div className="h-3 w-24 bg-coral-200 dark:bg-slate-600 rounded mb-1.5" />
+                  <div className="h-4 w-40 bg-coral-300 dark:bg-slate-500 rounded" />
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Desktop skeleton */}
+          <div className="hidden sm:block bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-2xl border-2 border-coral-200/50 dark:border-ocean-500/40 p-6 animate-pulse">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 bg-coral-200 dark:bg-slate-600 rounded" />
+              <div className="h-4 w-28 bg-coral-200 dark:bg-slate-600 rounded" />
+              <div className="ml-auto h-5 w-16 bg-coral-200 dark:bg-slate-600 rounded-full" />
+            </div>
+            <div className="h-8 w-32 bg-coral-300 dark:bg-slate-500 rounded mb-2" />
+            <div className="h-4 w-48 bg-coral-200 dark:bg-slate-600 rounded" />
+          </div>
+        </>
+      );
+    }
+    
+    // Standard desktop skeleton
     return (
-      <div className="bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-2xl border-2 border-coral-200/50 dark:border-ocean-500/40 p-6 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-coral-500 dark:text-ocean-400" />
+      <div className="bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-700/50 rounded-2xl border-2 border-coral-200/50 dark:border-ocean-500/40 p-6 animate-pulse">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-5 h-5 bg-coral-200 dark:bg-slate-600 rounded" />
+          <div className="h-4 w-28 bg-coral-200 dark:bg-slate-600 rounded" />
+          <div className="ml-auto h-5 w-16 bg-coral-200 dark:bg-slate-600 rounded-full" />
+        </div>
+        <div className="h-8 w-32 bg-coral-300 dark:bg-slate-500 rounded mb-2" />
+        <div className="h-4 w-48 bg-coral-200 dark:bg-slate-600 rounded" />
       </div>
     );
   }
@@ -78,7 +115,11 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-brown-800 dark:text-white">{word.chamorro}</span>
                   <span className="text-brown-500 dark:text-gray-400">•</span>
-                  <span className="text-sm text-brown-600 dark:text-gray-300">{word.english}</span>
+                  <span className="text-sm text-brown-600 dark:text-gray-300">
+                    {word.english && word.english.toLowerCase() !== 'n/a' && word.english !== '-' 
+                      ? word.english 
+                      : 'Definition coming soon'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -153,7 +194,11 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
               )}
             </div>
             <div className="mb-3">
-              <p className="text-lg text-brown-700 dark:text-white font-medium">{word.english}</p>
+              <p className="text-lg text-brown-700 dark:text-white font-medium">
+                {word.english && word.english.toLowerCase() !== 'n/a' && word.english !== '-' 
+                  ? word.english 
+                  : 'Definition coming soon'}
+              </p>
             </div>
             {word.example && (
               <div className="mb-4">
@@ -243,7 +288,9 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
         {/* Meaning */}
         <div className="mb-3">
           <p className="text-lg text-brown-700 dark:text-white font-medium">
-            {word.english}
+            {word.english && word.english.toLowerCase() !== 'n/a' && word.english !== '-' 
+              ? word.english 
+              : 'Definition coming soon'}
           </p>
         </div>
 

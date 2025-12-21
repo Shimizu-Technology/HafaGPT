@@ -1,5 +1,7 @@
 # 🌺 HåfaGPT Frontend
 
+> **Currently in Beta** - Free for all users while we test and improve.
+
 React + TypeScript web interface for the HåfaGPT Chamorro language learning platform.
 
 **Live:** [hafagpt.com](https://hafagpt.com) | **Backend:** [HafaGPT-API](https://github.com/ShimizuTechnology/HafaGPT-API)

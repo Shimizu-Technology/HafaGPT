@@ -38,18 +38,24 @@ import { AdminSettings } from './components/admin/AdminSettings';
 import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
+import { LessonPage } from './components/LessonPage';
 import { BottomNav } from './components/BottomNav';
 import { PWAUpdateBanner } from './components/PWAUpdateBanner';
+import { ScrollToTop } from './components/ScrollToTop';
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Homepage - Learning dashboard */}
         <Route path="/" element={<HomePage />} />
         
         {/* Chat route - AI tutor */}
         <Route path="/chat" element={<Chat />} />
+        
+        {/* Learning Path - Mini-Lessons */}
+        <Route path="/learn/:topicId" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />
         
         {/* Protected routes - require authentication */}
         <Route path="/flashcards" element={<ProtectedRoute><FlashcardDeckList /></ProtectedRoute>} />

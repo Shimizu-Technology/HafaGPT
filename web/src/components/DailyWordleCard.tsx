@@ -66,18 +66,18 @@ export function DailyWordleCard() {
               <p className="text-[10px] text-indigo-500 dark:text-indigo-400">Chamorro Edition</p>
             </div>
           </div>
-          {isPlayed ? (
+              {isPlayed ? (
             <span className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 px-2 py-1 rounded-full font-medium">
-              <Check className="w-3 h-3" />
+                  <Check className="w-3 h-3" />
               Complete
-            </span>
-          ) : (
+                </span>
+              ) : (
             <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full font-medium animate-pulse">
               <Sparkles className="w-3 h-3" />
-              New
-            </span>
-          )}
-        </div>
+                  New
+                </span>
+              )}
+            </div>
 
         {/* Content area with grid */}
         <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ export function DailyWordleCard() {
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-indigo-200/50 dark:border-indigo-700/50">
           <p className="text-xs text-indigo-500 dark:text-indigo-400">
             {isPlayed ? '🎯 Great job!' : '🧠 6 attempts to guess'}
-          </p>
+            </p>
           <div className="flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-700 dark:group-hover:text-indigo-300">
             {isPlayed ? 'View result' : 'Play now'}
             <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
