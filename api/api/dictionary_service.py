@@ -810,6 +810,10 @@ class DictionaryService:
             if len(definition) > 150:
                 continue
             
+            # Skip empty, n/a, or too short definitions
+            if not definition or len(definition) < 3 or definition.lower() in ['n/a', 'na', 'none', '-', '?']:
+                continue
+            
             # Skip taxonomic entries
             if definition.lower().startswith("type of"):
                 continue

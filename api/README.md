@@ -1,5 +1,7 @@
 # 🌺 HåfaGPT - Chamorro Language Learning Platform
 
+> **Currently in Beta** - Free for all users while we test and improve. Paid plans coming to help cover AI costs.
+
 A comprehensive Chamorro language learning platform with AI tutoring, flashcards, quizzes, games, stories, and conversation practice. Built with **RAG** using 45,000+ chunks from Chamorro dictionaries and educational resources.
 
 **Live:** [hafagpt.com](https://hafagpt.com) | **Frontend:** [HafaGPT-frontend](https://github.com/ShimizuTechnology/HafaGPT-frontend)

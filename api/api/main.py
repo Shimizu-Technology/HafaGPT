@@ -3546,15 +3546,33 @@ async def get_user_streak(
         today = get_guam_date()
         
         # Get all activity days for this user (ordered newest first)
+        # Includes: chat, games, quizzes, AND learning activities (lessons/flashcards)
         cursor.execute("""
-            SELECT usage_date, chat_count, game_count, quiz_count
-            FROM user_daily_usage
-            WHERE user_id = %s
-            AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
-            ORDER BY usage_date DESC
-        """, (user_id,))
+            SELECT DISTINCT activity_date FROM (
+                -- Chat, games, quizzes from daily usage
+                SELECT usage_date as activity_date
+                FROM user_daily_usage
+                WHERE user_id = %s
+                AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
+                
+                UNION
+                
+                -- Learning activities (lesson started or completed)
+                SELECT DATE(started_at AT TIME ZONE 'Pacific/Guam') as activity_date
+                FROM user_topic_progress
+                WHERE user_id = %s AND started_at IS NOT NULL
+                
+                UNION
+                
+                -- Learning activities (lesson completed)
+                SELECT DATE(completed_at AT TIME ZONE 'Pacific/Guam') as activity_date
+                FROM user_topic_progress
+                WHERE user_id = %s AND completed_at IS NOT NULL
+            ) combined_activities
+            ORDER BY activity_date DESC
+        """, (user_id, user_id, user_id))
         
-        activity_days = cursor.fetchall()
+        activity_days = [(row[0],) for row in cursor.fetchall()]  # Convert to same format
         
         # Calculate current streak
         current_streak = 0
@@ -3603,6 +3621,7 @@ async def get_user_streak(
         today_chat = 0
         today_games = 0
         today_quizzes = 0
+        today_learning = 0
         is_today_active = False
         
         cursor.execute("""
@@ -3616,7 +3635,22 @@ async def get_user_streak(
             today_chat = today_row[0] or 0
             today_games = today_row[1] or 0
             today_quizzes = today_row[2] or 0
-            is_today_active = (today_chat + today_games + today_quizzes) > 0
+        
+        # Check for learning activities today
+        cursor.execute("""
+            SELECT COUNT(*) FROM user_topic_progress
+            WHERE user_id = %s 
+            AND (
+                DATE(started_at AT TIME ZONE 'Pacific/Guam') = %s
+                OR DATE(completed_at AT TIME ZONE 'Pacific/Guam') = %s
+            )
+        """, (user_id, today, today))
+        
+        learning_row = cursor.fetchone()
+        if learning_row:
+            today_learning = learning_row[0] or 0
+        
+        is_today_active = (today_chat + today_games + today_quizzes + today_learning) > 0
         
         conn.close()
         
@@ -3627,7 +3661,8 @@ async def get_user_streak(
             "today_activities": {
                 "chat": today_chat,
                 "games": today_games,
-                "quizzes": today_quizzes
+                "quizzes": today_quizzes,
+                "learning": today_learning
             },
             "last_activity_date": str(last_activity_date) if last_activity_date else None
         }
@@ -5283,6 +5318,343 @@ def is_promo_active_from_db() -> bool:
         return today <= end_date
     except ValueError:
         return False
+
+
+# ==============================================================================
+# Learning Path Endpoints
+# ==============================================================================
+
+# Define beginner path (same as frontend, keep in sync)
+BEGINNER_PATH = [
+    {"id": "greetings", "title": "Greetings & Basics", "description": "Learn 'Håfa Adai' and how to introduce yourself", "icon": "👋", "estimated_minutes": 5, "flashcard_category": "greetings", "quiz_category": "greetings"},
+    {"id": "numbers", "title": "Numbers (1-10)", "description": "Learn to count in Chamorro", "icon": "🔢", "estimated_minutes": 5, "flashcard_category": "numbers", "quiz_category": "numbers"},
+    {"id": "colors", "title": "Colors", "description": "Learn the colors of the rainbow", "icon": "🎨", "estimated_minutes": 5, "flashcard_category": "colors", "quiz_category": "colors"},
+    {"id": "family", "title": "Family Members", "description": "Words for mother, father, siblings, and more", "icon": "👨‍👩‍👧‍👦", "estimated_minutes": 5, "flashcard_category": "family", "quiz_category": "family"},
+    {"id": "food", "title": "Food & Drinks", "description": "Common foods and island favorites", "icon": "🍚", "estimated_minutes": 5, "flashcard_category": "food", "quiz_category": "food"},
+    {"id": "animals", "title": "Animals", "description": "Learn about island creatures and pets", "icon": "🐠", "estimated_minutes": 5, "flashcard_category": "animals", "quiz_category": "animals"},
+    {"id": "phrases", "title": "Common Phrases", "description": "Everyday expressions and useful phrases", "icon": "💬", "estimated_minutes": 5, "flashcard_category": "phrases", "quiz_category": "common-phrases"},
+]
+
+
+@app.get("/api/learning/recommended", tags=["Learning Path"])
+async def get_recommended_topic(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get the recommended next topic for the user based on their progress.
+    
+    Returns:
+    - recommendation_type: 'start', 'continue', 'next', 'review', or 'complete'
+    - topic: The recommended topic (null if all complete)
+    - progress: User's progress on that topic
+    - completed_topics: Number of topics completed
+    - message: User-friendly message
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        # Get user's progress on all topics
+        cursor.execute("""
+            SELECT topic_id, started_at, completed_at, best_quiz_score, 
+                   flashcards_viewed, last_activity_at
+            FROM user_topic_progress
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        progress_rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        # Build progress map
+        progress_map = {}
+        for row in progress_rows:
+            progress_map[row[0]] = {
+                "topic_id": row[0],
+                "started_at": row[1].isoformat() if row[1] else None,
+                "completed_at": row[2].isoformat() if row[2] else None,
+                "best_quiz_score": row[3],
+                "flashcards_viewed": row[4] or 0,
+                "last_activity_at": row[5].isoformat() if row[5] else None,
+            }
+        
+        completed_count = sum(1 for p in progress_map.values() if p["completed_at"])
+        
+        # Find recommendation
+        recommendation_type = "start"
+        recommended_topic = None
+        topic_progress = None
+        message = ""
+        
+        for topic in BEGINNER_PATH:
+            topic_id = topic["id"]
+            progress = progress_map.get(topic_id)
+            
+            if not progress:
+                # Never started this topic - recommend it
+                recommendation_type = "start" if completed_count == 0 else "next"
+                recommended_topic = topic
+                topic_progress = {
+                    "topic_id": topic_id,
+                    "started_at": None,
+                    "completed_at": None,
+                    "best_quiz_score": None,
+                    "flashcards_viewed": 0,
+                    "last_activity_at": None,
+                }
+                if completed_count == 0:
+                    message = f"Start your Chamorro journey with {topic['title']}!"
+                else:
+                    message = f"Great progress! Ready for {topic['title']}?"
+                break
+            
+            elif not progress["completed_at"]:
+                # Started but not completed - continue
+                recommendation_type = "continue"
+                recommended_topic = topic
+                topic_progress = progress
+                message = f"Continue learning {topic['title']}"
+                break
+        
+        # All completed
+        if not recommended_topic:
+            recommendation_type = "complete"
+            # Suggest reviewing the one with lowest score or oldest
+            worst_topic = None
+            worst_score = 101
+            for topic in BEGINNER_PATH:
+                progress = progress_map.get(topic["id"])
+                if progress and progress["best_quiz_score"] is not None:
+                    if progress["best_quiz_score"] < worst_score:
+                        worst_score = progress["best_quiz_score"]
+                        worst_topic = topic
+                        topic_progress = progress
+            
+            if worst_topic and worst_score < 100:
+                recommendation_type = "review"
+                recommended_topic = worst_topic
+                message = f"You've completed all topics! Review {worst_topic['title']} to improve your score."
+            else:
+                message = "Congratulations! You've mastered all beginner topics! 🎉"
+        
+        return {
+            "recommendation_type": recommendation_type,
+            "topic": recommended_topic,
+            "progress": topic_progress,
+            "total_topics": len(BEGINNER_PATH),
+            "completed_topics": completed_count,
+            "message": message,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get recommended topic error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learning/progress/{topic_id}", tags=["Learning Path"])
+async def update_topic_progress(
+    topic_id: str,
+    action: str = Query(..., description="Action: 'start', 'flashcard_viewed', 'quiz_completed'"),
+    quiz_score: Optional[int] = Query(None, description="Quiz score (0-100) if action is quiz_completed"),
+    flashcards_count: Optional[int] = Query(None, description="Number of flashcards viewed in the deck"),
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update user's progress on a topic.
+    
+    Actions:
+    - 'start': Mark topic as started
+    - 'flashcard_viewed': Set flashcard view count to the deck size
+    - 'quiz_completed': Record quiz completion with score
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        # Validate topic exists
+        topic = next((t for t in BEGINNER_PATH if t["id"] == topic_id), None)
+        if not topic:
+            raise HTTPException(status_code=404, detail=f"Topic '{topic_id}' not found")
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        now = datetime.utcnow()
+        
+        if action == "start":
+            # Insert or update - mark as started
+            cursor.execute("""
+                INSERT INTO user_topic_progress (user_id, topic_id, started_at, last_activity_at)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (user_id, topic_id) 
+                DO UPDATE SET last_activity_at = EXCLUDED.last_activity_at
+            """, (user_id, topic_id, now, now))
+            
+        elif action == "flashcard_viewed":
+            # Set flashcard count to actual cards viewed (passed from frontend)
+            # If not provided, use 10 as default (typical deck size)
+            cards_viewed = flashcards_count or 10
+            cursor.execute("""
+                INSERT INTO user_topic_progress (user_id, topic_id, started_at, flashcards_viewed, last_activity_at)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, topic_id) 
+                DO UPDATE SET 
+                    flashcards_viewed = GREATEST(user_topic_progress.flashcards_viewed, EXCLUDED.flashcards_viewed),
+                    last_activity_at = EXCLUDED.last_activity_at
+            """, (user_id, topic_id, now, cards_viewed, now))
+            
+        elif action == "quiz_completed":
+            if quiz_score is None:
+                raise HTTPException(status_code=400, detail="quiz_score required for quiz_completed action")
+            
+            # Mark as completed if score >= 70%, update best score
+            is_passing = quiz_score >= 70
+            
+            cursor.execute("""
+                INSERT INTO user_topic_progress (user_id, topic_id, started_at, completed_at, best_quiz_score, last_activity_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (user_id, topic_id) 
+                DO UPDATE SET 
+                    completed_at = CASE 
+                        WHEN %s AND user_topic_progress.completed_at IS NULL THEN EXCLUDED.completed_at
+                        ELSE user_topic_progress.completed_at 
+                    END,
+                    best_quiz_score = CASE 
+                        WHEN EXCLUDED.best_quiz_score > COALESCE(user_topic_progress.best_quiz_score, 0) 
+                        THEN EXCLUDED.best_quiz_score 
+                        ELSE user_topic_progress.best_quiz_score 
+                    END,
+                    last_activity_at = EXCLUDED.last_activity_at
+            """, (user_id, topic_id, now, now if is_passing else None, quiz_score, now, is_passing))
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid action: {action}")
+        
+        conn.commit()
+        
+        # Fetch updated progress
+        cursor.execute("""
+            SELECT topic_id, started_at, completed_at, best_quiz_score, 
+                   flashcards_viewed, last_activity_at
+            FROM user_topic_progress
+            WHERE user_id = %s AND topic_id = %s
+        """, (user_id, topic_id))
+        
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not row:
+            raise HTTPException(status_code=500, detail="Failed to fetch updated progress")
+        
+        progress = {
+            "topic_id": row[0],
+            "started_at": row[1].isoformat() if row[1] else None,
+            "completed_at": row[2].isoformat() if row[2] else None,
+            "best_quiz_score": row[3],
+            "flashcards_viewed": row[4] or 0,
+            "last_activity_at": row[5].isoformat() if row[5] else None,
+        }
+        
+        is_completed = progress["completed_at"] is not None
+        
+        # Get next topic if completed
+        next_topic = None
+        if is_completed:
+            current_index = next((i for i, t in enumerate(BEGINNER_PATH) if t["id"] == topic_id), -1)
+            if current_index >= 0 and current_index < len(BEGINNER_PATH) - 1:
+                next_topic = BEGINNER_PATH[current_index + 1]
+        
+        logger.info(f"✅ Updated progress: user={user_id}, topic={topic_id}, action={action}")
+        
+        return {
+            "topic_id": topic_id,
+            "progress": progress,
+            "is_completed": is_completed,
+            "next_topic": next_topic,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Update topic progress error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/learning/progress", tags=["Learning Path"])
+async def get_all_progress(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get user's progress on all topics in the beginner path.
+    """
+    try:
+        user_id = await verify_user(authorization)
+        
+        db_url = os.getenv("DATABASE_URL")
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT topic_id, started_at, completed_at, best_quiz_score, 
+                   flashcards_viewed, last_activity_at
+            FROM user_topic_progress
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        progress_rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        
+        # Build progress map
+        progress_map = {}
+        for row in progress_rows:
+            progress_map[row[0]] = {
+                "topic_id": row[0],
+                "started_at": row[1].isoformat() if row[1] else None,
+                "completed_at": row[2].isoformat() if row[2] else None,
+                "best_quiz_score": row[3],
+                "flashcards_viewed": row[4] or 0,
+                "last_activity_at": row[5].isoformat() if row[5] else None,
+            }
+        
+        # Build full response with all topics
+        topics_with_progress = []
+        for topic in BEGINNER_PATH:
+            topic_id = topic["id"]
+            progress = progress_map.get(topic_id, {
+                "topic_id": topic_id,
+                "started_at": None,
+                "completed_at": None,
+                "best_quiz_score": None,
+                "flashcards_viewed": 0,
+                "last_activity_at": None,
+            })
+            topics_with_progress.append({
+                "topic": topic,
+                "progress": progress,
+            })
+        
+        completed_count = sum(1 for p in progress_map.values() if p["completed_at"])
+        
+        return {
+            "topics": topics_with_progress,
+            "total_topics": len(BEGINNER_PATH),
+            "completed_topics": completed_count,
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Get all progress error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.exception_handler(HTTPException)

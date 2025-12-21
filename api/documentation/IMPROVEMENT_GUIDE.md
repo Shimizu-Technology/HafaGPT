@@ -1,7 +1,35 @@
 # 🌺 HåfaGPT - Development Roadmap
 
-> **Current Status:** Production-ready Chamorro language learning platform with freemium model
-> **Last Updated:** December 20, 2025
+> **Current Status:** Beta - Free Chamorro language learning platform (paid plans coming to cover AI costs)
+> **Last Updated:** December 21, 2025
+
+---
+
+## 🚀 Beta Mode (Current Status)
+
+> **We're in beta!** The app is free for all users while we test and improve.
+
+### Why Beta?
+- Still working out infrastructure issues (token management, DB connections, etc.)
+- Small user base (1-2 regular users)
+- Want quality and stability before charging
+- Being transparent: AI costs real money, but we want to get it right first
+
+### What Users See
+- **Header:** "BETA" badge next to HåfaGPT logo
+- **Hero (signed out):** "Free during beta • Paid plans will help cover AI costs"
+- **Pricing page:** "Beta pricing!" messaging with transparency about AI costs
+
+### How It Works (Technical)
+- `promo_enabled` = true in Admin Settings (with far-future end date like 2030-12-31)
+- All users get unlimited access during beta
+- When ready to exit beta: disable promo in Admin Settings → free tier limits apply
+- Premium subscriptions still work for users who want to support early
+
+### Future Plan
+1. **Beta (Now):** Free for everyone, build community, fix issues
+2. **Launch:** Enable freemium limits, keep $2.99/mo pricing
+3. **Transparent messaging:** "Your subscription helps cover AI costs"
 
 ---
 
@@ -18,13 +46,13 @@ All completed features are documented in [`IMPROVEMENT_GUIDE_V1_ARCHIVE.md`](./I
 - 📚 Vocabulary Browser (10,350+ words)
 - 📅 Daily Word
 - 🎮 Learning Games (Memory Match, Word Scramble, Falling Words, Word Catch, Chamorro Wordle, Hangman, Cultural Trivia)
-- 💳 Freemium Model (Clerk Billing + Stripe)
-- 📊 Progress Dashboard
+- 💳 Freemium Model (Clerk Billing + Stripe) - **Currently in Beta (free for all)**
+- 📊 Progress Dashboard (integrated into homepage)
 - 🔐 Authentication (Clerk)
 - 📱 Mobile-optimized responsive design + bottom navigation
 - 🔧 **Admin Dashboard** (User management, analytics, whitelist, ban, settings)
 - 🎄 **Seasonal Themes** (Christmas, New Year, Chamorro, Default)
-- 🎉 **Promo Management** (Admin-controlled promo periods with theme-aware banners)
+- 📚 **Learning Path** (7-topic beginner path with mini-lessons: Intro → Flashcards → Quiz → Complete)
 
 ---
 
@@ -522,36 +550,299 @@ Automatically switch to faster model during high load:
 
 ---
 
-### **Priority 5: Homepage & UX Professionalization** 🎨 🔨 IN PROGRESS
+### **Priority 5: Homepage & UX Professionalization** 🎨 ✅ COMPLETE
 
 > **Goal:** Make HåfaGPT feel as polished and professional as Duolingo/Drops while maintaining our unique value.
 
 **Comparison Notes (Dec 2025):**
 - Analyzed Duolingo, LearningChamoru.com, and Drops for best practices
-- HåfaGPT has great features but homepage needs clearer hierarchy
 - Professional sites have: single clear CTA, minimal cognitive load, mobile-first
 
-#### **Quick Wins (1-2 hours each)** ✅ COMPLETE
+#### **All Tasks Complete** ✅
 
-| Task | Current | Improvement | Status |
-|------|---------|-------------|--------|
-| **Simplify Hero Section** | Dual "Explore Free / Free Account" panel | Removed - cleaner flow | ✅ Done |
-| **Reduce CTA Clutter** | Multiple "Sign In" buttons, "Account" badges | Removed all badges from cards | ✅ Done |
+| Task | Before | After | Status |
+|------|--------|-------|--------|
+| **Simplify Hero Section** | Dual "Explore Free / Free Account" panel | Personalized greeting + streak badge + quick chat | ✅ Done |
+| **Reduce CTA Clutter** | Multiple "Sign In" buttons, "Account" badges | Single clear CTA per section | ✅ Done |
 | **Move "Our Story" to Footer** | Takes header real estate | Now in footer with ❤️ | ✅ Done |
-| **Cleaner Feature Cards** | Many small cards with red badges | Clean, uniform cards | ✅ Done |
+| **Cleaner Feature Cards** | 7-8 small, equal cards | 3 large primary + 4 compact secondary | ✅ Done |
+| **Mobile Bottom Nav** | No mobile nav | Tab bar (Home, Chat, Learn, Games, More) | ✅ Done |
+| **Redesign Homepage Cards** | All features same visual weight | Clear hierarchy: Hero → Primary → Secondary → Daily | ✅ Done |
+| **Daily Wordle Card** | Plain text only | Rich card with mini grid, gradient, badges | ✅ Done |
+| **Signed-out Experience** | Disabled chat box | Big value prop hero with "Start Learning Free" CTA | ✅ Done |
 
-#### **Medium Effort (3-5 hours each)**
+#### **Homepage Structure (Dec 2025):**
 
-| Task | Description | Status |
-|------|-------------|--------|
-| **Mobile Bottom Nav** | Tab bar (Home, Chat, Games, Learn, More) with slide-up menu | ✅ Done |
-| **Redesign Homepage Cards** | Fewer, larger feature cards with better visual hierarchy | 📋 Planned |
-| **Progressive Disclosure** | Don't show all features at once, guide users | 📋 Future |
+**Signed-In:**
+1. Hero: Personalized greeting + streak + quick chat input
+2. Recommended Learning widget (next lesson based on progress)
+3. Your Stats (streak, quizzes, avg score, games)
+4. EXPLORE: 3 primary cards (Chat, Games, Quiz) + 4 compact cards (Flashcards, Dictionary, Stories, Practice)
+5. TODAY'S LEARNING: Word of the Day + Daily Wordle
+6. Footer with "Our Story" link
+
+**Signed-Out:**
+1. Hero: Value prop + "Start Learning Free" + "Free during beta • Paid plans will help cover AI costs"
+2. EXPLORE: Same card sections as above
+3. TODAY'S LEARNING: Word of the Day + Daily Wordle
+4. Footer with "Our Story" link
+
+**Beta Indicator:**
+- "BETA" badge next to HåfaGPT logo in header
+- Transparent messaging about future pricing
 
 #### **Reference Sites:**
 - **Duolingo** — Gold standard for gamified learning (minimal CTAs, clear value prop)
 - **Drops** — Beautiful visual design, mobile-first, bold colors
 - **LearningChamoru.com** — Structured lessons, dictionary front-and-center
+
+---
+
+### **Priority 6: Learning Platform Transformation** 📚 🔨 IN PROGRESS (Phase 1 & 2 Complete)
+
+> **Goal:** Transform HåfaGPT from a "tool collection" into a cohesive learning journey — while keeping all tools accessible.
+
+#### **The Vision**
+
+> **End Goal:** A Duolingo-quality Chamorro learning experience, powered by AI, that takes users from zero to conversational — while keeping all the powerful tools accessible.
+>
+> **Philosophy:** "Guide, don't gate." Show users the path, but never block access to tools.
+
+**What "Done" Looks Like:**
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  📊 YOUR PROGRESS                                                  │
+│  [⭐⭐⭐ Greet] [⭐⭐☆ Numbr] [⭐☆☆ Color] [🔒 Fam] [🔒 Food]         │
+│                                                                    │
+│  🎯 TODAY'S LESSON: Colors                                         │
+│  ├─ 📖 Introduction ✅  ├─ 🎴 Vocabulary ✅  ├─ 📝 Quiz 🔵         │
+│  └─ 💬 Conversation ⚪  └─ 🎮 Game ⚪                               │
+│                                                                    │
+│  [Continue Quiz →]                                                 │
+│                                                                    │
+│  ── QUICK TOOLS ─────────────────────────────────────────────     │
+│  [💬 Chat] [📚 Dictionary] [🎮 Games] [📖 Stories]                 │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+#### **Current State Analysis (Dec 2025)**
+
+**What HåfaGPT Does Well:**
+| Feature | Status | Competitive Advantage |
+|---------|--------|----------------------|
+| AI Chat | 🏆 Excellent | No competitor has RAG-powered Chamorro AI |
+| Learning Games | 🏆 Excellent | 9 games, pre-reader support, mobile-first |
+| Modern UX | 🏆 Excellent | Beautiful design, dark mode, responsive |
+| Dictionary | ✅ Great | 13,800+ words with search |
+| Flashcards | ✅ Great | Curated + dictionary-based |
+| Quizzes | ✅ Great | Multiple formats, database-tracked |
+| Stories | ✅ Good | 24 stories with tap-to-translate |
+| Conversation Practice | ✅ Good | 7 scenarios with AI feedback |
+
+**What's Missing (Gaps vs Duolingo/LearningChamoru):**
+| Gap | Duolingo Has | LearningChamoru Has | HåfaGPT Has |
+|-----|--------------|---------------------|-------------|
+| **Structured Path** | Skill tree with levels | 25 progressive lessons | ❌ Tools only |
+| **Guided Progression** | "Next lesson" auto-suggested | Clear lesson order | ❌ User chooses randomly |
+| **Cumulative Learning** | Each lesson builds on previous | Vocabulary accumulates | ❌ Topics isolated |
+| **Skill Mastery** | Crown/checkpoint system | Lesson completion tracking | ❌ No mastery tracking |
+| **Daily Goal** | XP target, reminders | — | 🔸 Streak only |
+| **Pronunciation** | Speech recognition | Native audio recordings | 🔸 TTS only (no feedback) |
+
+---
+
+#### **Phase 1: Smart Suggestions** ✅ COMPLETE
+> **Outcome:** Users have direction — "Here's what to do next"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| Define 7-topic Beginner Path | Greetings → Numbers → Colors → Family → Food → Animals → Phrases | 30 min | ✅ |
+| Create `user_topic_progress` table | Track which topics each user has completed | 1 hr | ✅ |
+| Build `GET /api/learning/recommended` | Returns next topic based on user's progress | 1.5 hrs | ✅ |
+| Add "Recommended for You" widget | Homepage card showing next suggested topic | 2 hrs | ✅ |
+| Topic selector for review | "Choose a different topic" option when all complete | 30 min | ✅ |
+
+**The Beginner Path (7 Topics):**
+```typescript
+const BEGINNER_PATH = [
+  { id: 'greetings', title: 'Greetings & Introductions', icon: '👋', minutes: 5 },
+  { id: 'numbers', title: 'Numbers (1-10)', icon: '🔢', minutes: 5 },
+  { id: 'colors', title: 'Colors', icon: '🎨', minutes: 5 },
+  { id: 'family', title: 'Family Members', icon: '👨‍👩‍👧‍👦', minutes: 5 },
+  { id: 'food', title: 'Food & Drinks', icon: '🍚', minutes: 5 },
+  { id: 'animals', title: 'Animals', icon: '🐠', minutes: 5 },
+  { id: 'phrases', title: 'Common Phrases', icon: '💬', minutes: 5 },
+];
+```
+
+**Homepage Widget Mockup:**
+```
+┌─────────────────────────────────────────────────────────┐
+│  🎯 RECOMMENDED FOR YOU                                 │
+│                                                         │
+│  📚 Start with Greetings                               │
+│  Learn "Håfa Adai" and basic introductions             │
+│                                                         │
+│  ⏱️ ~5 min  •  🎴 Flashcards → 📝 Quiz                 │
+│                                                         │
+│  [Start Learning →]                                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+**After Phase 1:** Users see what to do next. Existing tools unchanged.
+
+---
+
+#### **Phase 2: Mini-Lessons** ✅ COMPLETE
+> **Outcome:** Users have structure — "5-minute lessons, not just tools"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| Lesson container component | Wraps flashcards + quiz into one flow | 3-4 hrs | ✅ |
+| Lesson flow UI | Intro → Flashcards → Quiz → Complete | 3-4 hrs | ✅ |
+| Lesson completion tracking | Database: started_at, completed_at, best_quiz_score | 2 hrs | ✅ |
+| "Review Lesson" feature | Revisit any completed lesson via topic selector | 1-2 hrs | ✅ |
+| Progress persistence | Track flashcards_viewed, resume where left off | 1 hr | ✅ |
+| "I don't know" button | Skip quiz questions without penalty | 30 min | ✅ |
+| Vocabulary audit | Ensure quiz questions match flashcard vocabulary | 2 hrs | ✅ |
+
+**Route:** `/learn/:topicId`
+
+**Lesson Flow:**
+```
+1. LessonIntro - Cultural context, key phrases preview, "Start Flashcards" button
+2. LessonFlashcards - Embedded flashcard component, progress tracked
+3. LessonQuiz - Embedded quiz component, "I don't know" option
+4. LessonComplete - Celebration, score summary, "Continue Learning" button
+```
+
+**Lesson Structure:**
+```
+Lesson: "Greetings & Introductions" (~5 min)
+├── 📖 Introduction (30 sec) — Cultural context card
+├── 🎴 Vocabulary (2 min) — 6 flashcards with audio
+├── 📝 Practice Quiz (2 min) — 5 questions
+├── 💬 Chat Prompt (optional) — "Ask about greetings"
+└── ✅ Complete — Mark topic done, show progress
+```
+
+**After Phase 2:** Each topic is a structured mini-lesson, not just "go do flashcards."
+
+---
+
+#### **Phase 3: Visual Progress** 📋 NEXT — 6-8 hours
+> **Outcome:** Users have motivation — "I can see how far I've come"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| Learning path visualization | Visual map showing all 7 topics with status | 3-4 hrs | ⬜ |
+| Mastery levels (1-3 stars) | Earn stars by scoring well on quizzes | 2 hrs | ⬜ |
+| Progress stats card | "You've learned X words, completed Y lessons" | 1-2 hrs | ⬜ |
+
+**Progress Map Mockup:**
+```
+YOUR JOURNEY
+┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐   ┌──────┐
+│ ⭐⭐⭐ │ → │ ⭐⭐☆ │ → │ ⭐☆☆ │ → │ 🔒   │ → │ 🔒   │
+│Greet │   │Numbr │   │Color │   │ Fam  │   │ Food │
+└──────┘   └──────┘   └──────┘   └──────┘   └──────┘
+```
+
+**After Phase 3:** Users can SEE their journey and feel motivated to continue.
+
+---
+
+#### **Phase 4: Expanded Curriculum** 📋 FUTURE — 10-15 hours
+> **Outcome:** Users have depth — "Beyond basics to fluency"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| Intermediate path (7-10 topics) | Grammar, sentences, time, places | 6-8 hrs | ⬜ |
+| Advanced path (5-7 topics) | Culture, history, conversation fluency | 4-6 hrs | ⬜ |
+| Topic prerequisites | "Complete Greetings before Family" | 2 hrs | ⬜ |
+| Skill level indicator | Beginner / Intermediate / Advanced badge | 1 hr | ⬜ |
+
+**Curriculum Structure:**
+```
+BEGINNER (Current)     INTERMEDIATE           ADVANCED
+├─ Greetings           ├─ Grammar Basics      ├─ Chamorro History
+├─ Numbers             ├─ Verb Conjugation    ├─ Cultural Practices
+├─ Colors              ├─ Sentence Building   ├─ Idiomatic Expressions
+├─ Family              ├─ Time & Dates        ├─ Conversation Fluency
+├─ Food                ├─ Directions          └─ Native Speaker Practice
+├─ Animals             └─ Daily Routines
+└─ Common Phrases
+```
+
+**After Phase 4:** Full curriculum from beginner to intermediate fluency.
+
+---
+
+#### **Phase 5: Personalization & XP** 📋 FUTURE — 8-12 hours
+> **Outcome:** Users have engagement — "Learning adapts to me"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| XP system | Earn points for flashcards, quizzes, chat, games | 4-5 hrs | ⬜ |
+| Daily goals | Set 5/10/15 min target, track completion | 2-3 hrs | ⬜ |
+| Weak area detection | "You struggle with numbers, let's practice" | 3-4 hrs | ⬜ |
+| Spaced repetition | Smart flashcard scheduling (SM-2 algorithm) | 4-5 hrs | ⬜ |
+
+**After Phase 5:** Platform adapts to each user's needs and pace.
+
+---
+
+#### **Phase 6: Social & Classroom** 📋 FUTURE — 15-20 hours
+> **Outcome:** Users have community — "Learn together"
+
+| Task | What It Does | Effort | Status |
+|------|--------------|--------|--------|
+| Leaderboards | Weekly/monthly rankings by XP or streak | 4-6 hrs | ⬜ |
+| Achievements/badges | Unlock badges for milestones (7-day streak, etc.) | 4-6 hrs | ⬜ |
+| Classroom mode | Teachers create classes, assign lessons | 10-12 hrs | ⬜ |
+| Progress sharing | Share achievements to social media | 2-3 hrs | ⬜ |
+
+**After Phase 6:** Schools (like Hurao Academy) can use HåfaGPT as their curriculum platform.
+
+---
+
+#### **Phase Summary**
+
+| Phase | Focus | Effort | Outcome | Status |
+|-------|-------|--------|---------|--------|
+| **1** | Smart Suggestions | 4-5 hrs | "Here's what to do next" | ✅ Complete |
+| **2** | Mini-Lessons | 8-12 hrs | "Structured 5-min sessions" | ✅ Complete |
+| **3** | Visual Progress | 6-8 hrs | "I can see my journey" | 📋 Next |
+| **4** | Expanded Curriculum | 10-15 hrs | "Beyond basics" | ⏸️ Planned |
+| **5** | Personalization & XP | 8-12 hrs | "Adapts to me" | ⏸️ Planned |
+| **6** | Social & Classroom | 15-20 hrs | "Learn together" | ⏸️ Future |
+
+**Total Estimated Effort:** 50-70 hours (spread over multiple months)
+**Completed So Far:** ~15-18 hours (Phase 1 + Phase 2)
+
+---
+
+#### **Competitive Analysis**
+
+| Platform | Strength | HåfaGPT Opportunity |
+|----------|----------|---------------------|
+| **Duolingo** | Gamification, habit-building, streak pressure | Adopt XP, daily goals, skill trees |
+| **LearningChamoru** | Structured curriculum, native audio, academic backing | Create our own lesson structure, use AI for personalization |
+| **Drops** | Visual beauty, 5-min sessions, minimal text | Keep our modern design, add timed micro-lessons |
+
+#### **Key Insight**
+
+> **The difference between a "tool" and a "platform" is guidance.**
+>
+> HåfaGPT is BOTH a learning platform AND a tool collection.
+> - **Platform side:** Guided lessons, progress tracking, "what's next"
+> - **Tool side:** Chat, dictionary, games — always accessible
+>
+> We **guide** users, but never **gate** them from the tools.
+
+**First Step (Phase 1):** "Recommended for You" widget — show users exactly what to do next.
 
 ---
 
@@ -772,23 +1063,33 @@ DELETE /api/share/:share_id → revoke share (owner only)
 
 ## 🎯 Next Steps
 
-1. ✅ ~~Set yourself as admin~~ - Done!
-2. ✅ ~~Test Admin Dashboard~~ - Done!
-3. ✅ ~~Phase 2: Analytics Dashboard~~ - Done!
-4. ✅ ~~Phase 2.5: Site Settings~~ - Done!
-5. ✅ ~~Chat UX Improvements~~ - Done!
-6. ✅ ~~Edit & Regenerate~~ - Done!
-7. ✅ ~~Onboarding Flow~~ - Done!
-8. ✅ ~~User Preferences~~ - Done!
-9. ✅ ~~Learning Streaks~~ - Done!
-10. ✅ ~~Onboarding Feature Overview~~ - Done!
-11. ✅ ~~Chat Sidebar Cleanup~~ - Done!
-12. ✅ ~~New Games: Hangman + Cultural Trivia~~ - Done!
-13. ✅ ~~Admin Settings Polish~~ - Done! (Last Active tracking, Settings quick action, toggle styling)
-14. **Voice Input** - Web Speech API for voice-to-text
-15. ✅ ~~**Share Conversations**~~ - Done! Public shareable links
-16. **New Games Phase 2** - Phrase Builder, Speed Challenge
-17. **New Games Phase 3** - Picture Match, Word Search, Crossword
+### Recently Completed ✅
+1. ~~Set yourself as admin~~ - Done!
+2. ~~Admin Dashboard (Phase 1, 2, 2.5)~~ - Done!
+3. ~~Chat UX Improvements~~ - Done!
+4. ~~Onboarding Flow & User Preferences~~ - Done!
+5. ~~Learning Streaks~~ - Done!
+6. ~~New Games: Hangman + Cultural Trivia~~ - Done!
+7. ~~Homepage Professionalization~~ - Done!
+8. ~~Share Conversations~~ - Done!
+9. ✅ ~~**Learning Platform Phase 1: Smart Suggestions**~~ - Done! Recommended Learning widget
+10. ✅ ~~**Learning Platform Phase 2: Mini-Lessons**~~ - Done! 7-topic beginner path with structured lessons
+11. ✅ ~~**Beta Mode Setup**~~ - Done! Removed promo banner, added BETA badge, transparent pricing messaging
+12. ✅ ~~**Streak includes learning activities**~~ - Done! Lessons now count toward streak
+13. ✅ ~~**Scroll to top on navigation**~~ - Done!
+14. ✅ ~~**Skeleton loaders**~~ - Done! Word of the Day, Stats widget
+
+**🎯 Learning Platform Transformation (Priority 6):**
+15. **Phase 3: Visual Progress** (6-8 hrs) - Progress map, mastery stars, stats
+16. **Phase 4: Expanded Curriculum** (10-15 hrs) - Intermediate & advanced paths
+17. **Phase 5: Personalization** (8-12 hrs) - XP system, daily goals, spaced repetition
+18. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
+
+**Other Features:**
+19. **Voice Input** - Web Speech API for voice-to-text
+20. **New Games Phase 2** - Phrase Builder, Speed Challenge
+21. **Knowledge Base Management** - Admin UI for RAG document uploads
+22. **Exit Beta** - When ready: disable promo, enable freemium limits
 
 ---
 

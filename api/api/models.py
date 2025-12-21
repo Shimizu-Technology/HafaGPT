@@ -563,3 +563,50 @@ class ShareInfoResponse(BaseModel):
     view_count: int = Field(..., description="Number of views")
 
 
+# --- Learning Path Models ---
+
+class LearningTopic(BaseModel):
+    """A topic in the learning path"""
+    id: str = Field(..., description="Topic ID (e.g., 'greetings')")
+    title: str = Field(..., description="Display title")
+    description: str = Field(..., description="Short description")
+    icon: str = Field(..., description="Emoji icon")
+    estimated_minutes: int = Field(..., description="Estimated time to complete")
+    flashcard_category: str = Field(..., description="Maps to flashcard category")
+    quiz_category: str = Field(..., description="Maps to quiz category")
+
+
+class TopicProgress(BaseModel):
+    """User's progress on a specific topic"""
+    topic_id: str = Field(..., description="Topic ID")
+    started_at: Optional[datetime] = Field(None, description="When user started this topic")
+    completed_at: Optional[datetime] = Field(None, description="When user completed this topic")
+    best_quiz_score: Optional[int] = Field(None, description="Best quiz score (0-100)")
+    flashcards_viewed: int = Field(0, description="Number of flashcards viewed")
+    last_activity_at: Optional[datetime] = Field(None, description="Last activity on this topic")
+
+
+class RecommendedTopicResponse(BaseModel):
+    """Response for recommended next topic"""
+    recommendation_type: str = Field(..., description="'start', 'continue', 'next', 'review', or 'complete'")
+    topic: Optional[LearningTopic] = Field(None, description="Recommended topic (null if all complete)")
+    progress: TopicProgress = Field(None, description="User's progress on recommended topic")
+    total_topics: int = Field(..., description="Total topics in beginner path")
+    completed_topics: int = Field(..., description="Number of topics completed")
+    message: str = Field(..., description="User-friendly message")
+
+
+class TopicProgressUpdate(BaseModel):
+    """Request to update progress on a topic"""
+    action: str = Field(..., description="'start', 'flashcard_viewed', 'quiz_completed'")
+    quiz_score: Optional[int] = Field(None, description="Quiz score if action is 'quiz_completed'")
+
+
+class TopicProgressResponse(BaseModel):
+    """Response after updating progress"""
+    topic_id: str = Field(..., description="Topic ID")
+    progress: TopicProgress = Field(..., description="Updated progress")
+    is_completed: bool = Field(..., description="Whether topic is now complete")
+    next_topic: Optional[LearningTopic] = Field(None, description="Next topic to do (if completed)")
+
+
