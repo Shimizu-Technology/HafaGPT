@@ -26,7 +26,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Håfa tatatmånu hao?',
         back: 'How are you?',
-        pronunciation: 'HAH-fah tah-taht-MAH-noo how'
+        pronunciation: 'HAW-fah tah-taht-MAW-noo how'
       },
       {
         front: 'Maolek ha\' yu\'',
@@ -522,7 +522,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Tuyan',
         back: 'Stomach / Belly',
-        pronunciation: 'TOO-yan'
+        pronunciation: 'TOO-dzahn'
       }
     ]
   },
@@ -580,7 +580,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Niyok',
         back: 'Coconut',
-        pronunciation: 'nee-YOHK'
+        pronunciation: 'nee-DZOHK'
       },
       {
         front: 'Kelaguen',
@@ -691,10 +691,10 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Pot håfa un hånao? — Why did you go?'
       },
       {
-        front: 'Taimanu / Håfa taimanu',
+        front: 'Tatatmånu / Håfa tatatmånu',
         back: 'How',
-        pronunciation: 'tai-MAH-noo',
-        example: 'Håfa taimanu hao? — How are you?'
+        pronunciation: 'tah-taht-MAW-noo',
+        example: 'Håfa tatatmånu hao? — How are you?'
       },
       {
         front: 'Kuåntu',
@@ -1015,6 +1015,484 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         back: 'I will... (future)',
         pronunciation: 'buy hoo',
         example: 'Bai hu hånao agupa\'. — I will go tomorrow.'
+      }
+    ]
+  },
+
+  // ADVANCED LEVEL DECKS
+
+  places: {
+    topic: 'places',
+    displayName: 'Places & Locations',
+    description: 'Buildings, landmarks, and location phrases',
+    cards: [
+      {
+        front: 'Guma\'',
+        back: 'House / Home',
+        pronunciation: 'GOO-mah',
+        example: 'Dånkolo i guma\'. — The house is big.'
+      },
+      {
+        front: 'Eskuela',
+        back: 'School',
+        pronunciation: 'ehs-KWEH-lah',
+        example: 'Hu hånao para i eskuela. — I go to school.'
+      },
+      {
+        front: 'Tenda',
+        back: 'Store / Shop',
+        pronunciation: 'TEHN-dah',
+        example: 'Gaige i tenda gi chalan. — The store is on the road.'
+      },
+      {
+        front: 'Guma\' Yu\'os',
+        back: 'Church',
+        pronunciation: 'GOO-mah DZOO-ohs',
+        example: 'Bunitu i guma\' Yu\'os. — The church is beautiful.'
+      },
+      {
+        front: 'Lancho',
+        back: 'Farm / Ranch',
+        pronunciation: 'LAHN-tso',
+        example: 'Gaige i lancho gi hålom tåno\'. — The farm is in the countryside.'
+      },
+      {
+        front: 'Ofisina',
+        back: 'Office',
+        pronunciation: 'oh-fee-SEE-nah',
+        example: 'Hu cho\'gue gi ofisina. — I work at the office.'
+      },
+      {
+        front: 'Espitat',
+        back: 'Hospital',
+        pronunciation: 'ehs-pee-TAHT',
+        example: 'Malangu gui\' gi espitat. — He/she is sick at the hospital.'
+      },
+      {
+        front: 'Plasa',
+        back: 'Plaza / Town Square',
+        pronunciation: 'PLAH-sah',
+        example: 'Manbisita ham gi plasa. — We visited the plaza.'
+      },
+      {
+        front: 'Chalan',
+        back: 'Road / Street',
+        pronunciation: 'TSAH-lahn',
+        example: 'Ancho i chalan. — The road is wide.'
+      },
+      {
+        front: 'Tåsi',
+        back: 'Ocean / Sea',
+        pronunciation: 'TAH-see',
+        example: 'Bunitu i tåsi. — The ocean is beautiful.'
+      }
+    ]
+  },
+
+  weather: {
+    topic: 'weather',
+    displayName: 'Weather & Nature',
+    description: 'Weather conditions and natural environment',
+    cards: [
+      {
+        front: 'Atdao',
+        back: 'Sun',
+        pronunciation: 'aht-DOW',
+        example: 'Maipe i atdao. — The sun is hot.'
+      },
+      {
+        front: 'Uchan',
+        back: 'Rain',
+        pronunciation: 'OO-tsahn',
+        example: 'Mañ\'uchan på\'go. — It\'s raining now.'
+      },
+      {
+        front: 'Manglo\'',
+        back: 'Wind',
+        pronunciation: 'MAHNG-loh',
+        example: 'Metgot i manglo\'. — The wind is strong.'
+      },
+      {
+        front: 'Påkyo',
+        back: 'Typhoon / Storm',
+        pronunciation: 'PAHK-dzoh',
+        example: 'Guaha påkyo agupa\'. — There\'s a typhoon tomorrow.'
+      },
+      {
+        front: 'Tiempo',
+        back: 'Weather / Time',
+        pronunciation: 'tee-EHM-poh',
+        example: 'Maolek i tiempo. — The weather is good.'
+      },
+      {
+        front: 'Puti\'on',
+        back: 'Star',
+        pronunciation: 'poo-TEE-ohn',
+        example: 'Bula puti\'on gi puengi. — There are many stars at night.'
+      },
+      {
+        front: 'Pulan',
+        back: 'Moon',
+        pronunciation: 'POO-lahn',
+        example: 'Dånkolo i pulan. — The moon is big.'
+      },
+      {
+        front: 'Trongkon håyu',
+        back: 'Tree',
+        pronunciation: 'TRONG-kohn HAH-dzoo',
+        example: 'Takhilo\' i trongkon håyu. — The tree is tall.'
+      },
+      {
+        front: 'Flores',
+        back: 'Flower',
+        pronunciation: 'FLOH-rehs',
+        example: 'Bunitu i flores. — The flower is beautiful.'
+      },
+      {
+        front: 'Fanomnågan',
+        back: 'Dry Season',
+        pronunciation: 'fah-nohm-NAH-gahn',
+        example: 'Maolek i tiempo gi fanomnågan. — The weather is good in dry season.'
+      }
+    ]
+  },
+
+  household: {
+    topic: 'household',
+    displayName: 'Home & Household',
+    description: 'Rooms, furniture, and household items',
+    cards: [
+      {
+        front: 'Kusina',
+        back: 'Kitchen',
+        pronunciation: 'koo-SEE-nah',
+        example: 'Gaige i nengkånno\' gi kusina. — The food is in the kitchen.'
+      },
+      {
+        front: 'Åpusento',
+        back: 'Room / Bedroom',
+        pronunciation: 'ah-poo-SEHN-toh',
+        example: 'Dikike\' i åpusento. — The room is small.'
+      },
+      {
+        front: 'Båño',
+        back: 'Bathroom',
+        pronunciation: 'BAH-nyoh',
+        example: 'Månu nai gaige i båño? — Where is the bathroom?'
+      },
+      {
+        front: 'Lamasa',
+        back: 'Table',
+        pronunciation: 'lah-MAH-sah',
+        example: 'Pega gi lamasa. — Put it on the table.'
+      },
+      {
+        front: 'Siya',
+        back: 'Chair',
+        pronunciation: 'SEE-dzah',
+        example: 'Fatachong gi siya. — Sit on the chair.'
+      },
+      {
+        front: 'Katre',
+        back: 'Bed',
+        pronunciation: 'KAH-treh',
+        example: 'Nuebu i katre. — The bed is new.'
+      },
+      {
+        front: 'Bentåna',
+        back: 'Window',
+        pronunciation: 'behn-TAH-nah',
+        example: 'Baba i bentåna. — Open the window.'
+      },
+      {
+        front: 'Petta / Potta',
+        back: 'Door',
+        pronunciation: 'PEHT-tah / POHT-tah',
+        example: 'Båba i petta. — Close the door. (Both spellings are used)'
+      },
+      {
+        front: 'Atof',
+        back: 'Roof',
+        pronunciation: 'AH-tohf',
+        example: 'Må\'pos i atof. — The roof is gone/damaged.'
+      },
+      {
+        front: 'Kahon',
+        back: 'Box / Chest',
+        pronunciation: 'KAH-hohn',
+        example: 'Gaige gi hålom kahon. — It\'s inside the box.'
+      }
+    ]
+  },
+
+  directions: {
+    topic: 'directions',
+    displayName: 'Directions & Travel',
+    description: 'Directions, movement, and transportation',
+    cards: [
+      {
+        front: 'Agapa\'',
+        back: 'Right (direction)',
+        pronunciation: 'ah-GAH-pah',
+        example: 'Bira agapa\'. — Turn right.'
+      },
+      {
+        front: 'Akague',
+        back: 'Left (direction)',
+        pronunciation: 'ah-KAH-gweh',
+        example: 'Bira akague. — Turn left.'
+      },
+      {
+        front: 'Tåtte',
+        back: 'Back / Behind',
+        pronunciation: 'TAHT-teh',
+        example: 'Gaige gi tåtte. — It\'s in the back.'
+      },
+      {
+        front: 'Mo\'na',
+        back: 'Front / Forward',
+        pronunciation: 'MOH-nah',
+        example: 'Hågu mo\'na. — You go ahead.'
+      },
+      {
+        front: 'Hulo\'',
+        back: 'Up / Above',
+        pronunciation: 'HOO-loh',
+        example: 'Gaige hulo\'. — It\'s up there.'
+      },
+      {
+        front: 'Papa\'',
+        back: 'Down / Below',
+        pronunciation: 'PAH-pah',
+        example: 'Gaige papa\'. — It\'s down there.'
+      },
+      {
+        front: 'Magi',
+        back: 'Here (come here)',
+        pronunciation: 'MAH-gee',
+        example: 'Mågi fan! — Come here please!'
+      },
+      {
+        front: 'Guatu',
+        back: 'There (over there)',
+        pronunciation: 'GWAH-too',
+        example: 'Hånao guatu. — Go over there.'
+      },
+      {
+        front: 'Kareta',
+        back: 'Car',
+        pronunciation: 'kah-REH-tah',
+        example: 'Nuebu i kareta. — The car is new.'
+      },
+      {
+        front: 'Batko',
+        back: 'Boat / Ship',
+        pronunciation: 'BAHT-koh',
+        example: 'Dånkolo i batko. — The boat is big.'
+      }
+    ]
+  },
+
+  shopping: {
+    topic: 'shopping',
+    displayName: 'Shopping & Money',
+    description: 'Buying, selling, and money vocabulary',
+    cards: [
+      {
+        front: 'Salåpe\'',
+        back: 'Money',
+        pronunciation: 'sah-LAH-peh',
+        example: 'Guaha salåpe\'-hu. — I have money.'
+      },
+      {
+        front: 'Fåhan',
+        back: 'Buy / Purchase',
+        pronunciation: 'FAH-hahn',
+        example: 'Hu fåhan i kareta. — I bought the car.'
+      },
+      {
+        front: 'Bende',
+        back: 'Sell',
+        pronunciation: 'BEHN-deh',
+        example: 'Ha bende i guma\'. — He/she sold the house.'
+      },
+      {
+        front: 'Presiu',
+        back: 'Price',
+        pronunciation: 'PREH-see-oo',
+        example: 'Kuåntu i presiu? — How much is the price?'
+      },
+      {
+        front: 'Båråtu',
+        back: 'Cheap / Inexpensive',
+        pronunciation: 'bah-RAH-too',
+        example: 'Båråtu i kåmisa. — The shirt is cheap.'
+      },
+      {
+        front: 'Guaguan',
+        back: 'Expensive',
+        pronunciation: 'gwah-GWAHN',
+        example: 'Guaguan i sapåtos. — The shoes are expensive.'
+      },
+      {
+        front: 'Hu nisisita',
+        back: 'I need',
+        pronunciation: 'hoo nee-see-SEE-tah',
+        example: 'Hu nisisita hånom. — I need water.'
+      },
+      {
+        front: 'Ayuda',
+        back: 'Help',
+        pronunciation: 'ah-DZOO-dah',
+        example: 'Kao siña un ayuda yu\'? — Can you help me?'
+      },
+      {
+        front: 'Åbona',
+        back: 'Pay',
+        pronunciation: 'AH-boh-nah',
+        example: 'Para bai hu åbona. — I will pay.'
+      },
+      {
+        front: 'Kåmbiyu',
+        back: 'Change (money)',
+        pronunciation: 'KAHM-bee-dzoo',
+        example: 'Guaha kåmbiyu? — Is there change?'
+      }
+    ]
+  },
+
+  'daily-life': {
+    topic: 'daily-life',
+    displayName: 'Work & Daily Life',
+    description: 'Jobs, school, and daily activities',
+    cards: [
+      {
+        front: 'Emplehu',
+        back: 'Job / Employment',
+        pronunciation: 'ehm-PLEH-hoo',
+        example: 'Bunitu i emplehu-hu. — My job is good.'
+      },
+      {
+        front: 'Ma\'estra',
+        back: 'Teacher (female)',
+        pronunciation: 'mah-EHS-trah',
+        example: 'Maolek i ma\'estra. — The teacher is good.'
+      },
+      {
+        front: 'Ma\'estru',
+        back: 'Teacher (male)',
+        pronunciation: 'mah-EHS-troo',
+        example: 'Si Juan ma\'estru. — Juan is a teacher.'
+      },
+      {
+        front: 'Estudiånte',
+        back: 'Student',
+        pronunciation: 'ehs-too-dee-AHN-teh',
+        example: 'Guahu estudiånte. — I am a student.'
+      },
+      {
+        front: 'Tutuhon',
+        back: 'Begin / Start',
+        pronunciation: 'too-TOO-hohn',
+        example: 'Tutuhon i klåse. — The class is starting.'
+      },
+      {
+        front: 'Munhåyan',
+        back: 'Finish / Complete',
+        pronunciation: 'moon-HAH-dzahn',
+        example: 'Esta munhåyan. — It\'s already finished.'
+      },
+      {
+        front: 'Makpo\'',
+        back: 'End / Finish',
+        pronunciation: 'MAHK-poh',
+        example: 'Makpo\' i cho\'cho\'. — The work is finished.'
+      },
+      {
+        front: 'Eskåpa',
+        back: 'Leave / Get out',
+        pronunciation: 'ehs-KAH-pah',
+        example: 'Bai hu eskåpa gi alas singko. — I will leave at 5 o\'clock.'
+      },
+      {
+        front: 'Batkada',
+        back: 'Group / Team',
+        pronunciation: 'baht-KAH-dah',
+        example: 'Maolek i batkada. — The team is good.'
+      },
+      {
+        front: 'Fuetsao',
+        back: 'Forced / Required',
+        pronunciation: 'fweht-SOW',
+        example: 'Fuetsao yu\' chumocho\'gue. — I\'m required to work.'
+      }
+    ]
+  },
+
+  culture: {
+    topic: 'culture',
+    displayName: 'Culture & Celebrations',
+    description: 'Traditions, fiestas, and respect language',
+    cards: [
+      {
+        front: 'Gupot',
+        back: 'Party / Celebration',
+        pronunciation: 'GOO-poht',
+        example: 'Guaha gupot agupa\'. — There\'s a party tomorrow.'
+      },
+      {
+        front: 'Fiesta',
+        back: 'Fiesta / Festival',
+        pronunciation: 'fee-EHS-tah',
+        example: 'Bunitu i fiesta. — The fiesta is beautiful.'
+      },
+      {
+        front: 'Fandånggo',
+        back: 'Wedding Celebration',
+        pronunciation: 'fahn-DAHNG-goh',
+        example: 'Maolek i fandånggo. — The wedding was good.'
+      },
+      {
+        front: 'Manamko\'',
+        back: 'Elders / Elderly',
+        pronunciation: 'mah-NAHM-koh',
+        example: 'Rispeta i manamko\'. — Respect the elders.'
+      },
+      {
+        front: 'Respetu',
+        back: 'Respect',
+        pronunciation: 'rehs-PEH-too',
+        example: 'Impottånte i respetu. — Respect is important.'
+      },
+      {
+        front: 'Inafa\'maolek',
+        back: 'Harmony / Getting along',
+        pronunciation: 'ee-nah-fah-mah-OH-lehk',
+        example: 'I inafa\'maolek impottånte gi familia. — Harmony is important in family.'
+      },
+      {
+        front: 'Chenchule\'',
+        back: 'Gift-giving tradition',
+        pronunciation: 'tsehn-TSOO-leh',
+        example: 'Impottånte i chenchule\' gi Chamorro. — Gift-giving is important in Chamorro culture.'
+      },
+      {
+        front: 'Nånan biha',
+        back: 'Grandmother',
+        pronunciation: 'NAH-nahn BEE-hah',
+        example: 'Hu guaiya i nånan biha-hu. — I love my grandmother.'
+      },
+      {
+        front: 'Tåtan bihu',
+        back: 'Grandfather',
+        pronunciation: 'TAH-tahn BEE-hoo',
+        example: 'Metgot i tåtan bihu-hu. — My grandfather is strong.'
+      },
+      {
+        front: 'Håfa adai',
+        back: 'Hello / Greetings (formal repeat)',
+        pronunciation: 'HAH-fah ah-DIE',
+        example: 'Håfa Adai! — Hello! (The essential Chamorro greeting)'
       }
     ]
   }

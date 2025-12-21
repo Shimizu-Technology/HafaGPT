@@ -109,6 +109,7 @@ export function useGameStats(enabled: boolean = true) {
     },
     enabled: enabled && isSignedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 

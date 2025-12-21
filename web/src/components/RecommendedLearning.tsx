@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle, RotateCcw, BookOpen, ChevronDown, ChevronUp, Map as MapIcon, Trophy } from 'lucide-react';
 import { useRecommendedTopic, useAllProgress } from '../hooks/useLearningPath';
-import { BEGINNER_PATH, INTERMEDIATE_PATH, ALL_TOPICS, isLevelComplete } from '../data/learningPath';
+import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, ALL_TOPICS, isLevelComplete } from '../data/learningPath';
 
 export function RecommendedLearning() {
   const { data, isLoading, error } = useRecommendedTopic();
@@ -52,6 +52,7 @@ export function RecommendedLearning() {
   
   const beginnerComplete = isLevelComplete('beginner', completedTopicIds);
   const intermediateComplete = isLevelComplete('intermediate', completedTopicIds);
+  const advancedComplete = isLevelComplete('advanced', completedTopicIds);
 
   // If beginner is complete but intermediate is not, suggest intermediate
   if (beginnerComplete && !intermediateComplete && recommendation_type === 'complete') {
@@ -122,7 +123,72 @@ export function RecommendedLearning() {
     );
   }
 
-  // All topics complete (both levels) - show celebration with option to review
+  // If intermediate is complete but advanced is not, suggest advanced
+  if (intermediateComplete && !advancedComplete && recommendation_type === 'complete') {
+    // Find first incomplete advanced topic
+    const nextAdvanced = ADVANCED_PATH.find(
+      t => !completedTopicIds.includes(t.id)
+    ) || ADVANCED_PATH[0];
+
+    return (
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 dark:from-purple-600 dark:to-pink-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        
+        <div className="relative">
+          {/* Celebration banner */}
+          <div className="flex items-center gap-2 mb-4 bg-white/20 px-3 py-2 rounded-lg w-fit">
+            <Trophy className="w-4 h-4 text-purple-200" />
+            <span className="text-sm font-medium">Intermediate Complete!</span>
+          </div>
+
+          {/* Next level intro */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl">
+                {nextAdvanced.icon}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
+                    🌳 Advanced Level
+                  </span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-xl">{nextAdvanced.title}</h3>
+              </div>
+            </div>
+            <Sparkles className="w-5 h-5 text-white/60" />
+          </div>
+
+          <p className="text-white/90 mb-4 text-sm sm:text-base">
+            You're ready for advanced topics! Master real-world skills like directions, shopping, and Chamorro culture.
+          </p>
+
+          <Link
+            to={`/learn/${nextAdvanced.id}`}
+            className="w-full flex items-center justify-center gap-2 bg-white text-purple-600 
+                       hover:bg-white/90 font-semibold py-3 px-6 rounded-xl shadow-lg 
+                       hover:shadow-xl transition-all group"
+          >
+            Start Advanced Level
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <Link
+              to="/learning"
+              className="flex items-center justify-center gap-2 text-white/70 hover:text-white 
+                         text-sm py-2 transition-colors"
+            >
+              <MapIcon className="w-4 h-4" />
+              View Full Learning Path
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // All topics complete (all levels) - show celebration with option to review
   if (recommendation_type === 'complete' && !topic) {
     return (
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg">
@@ -133,7 +199,7 @@ export function RecommendedLearning() {
             </div>
             <div>
               <h3 className="font-semibold text-lg">All Paths Complete! 🎉</h3>
-              <p className="text-sm text-white/80">Beginner & Intermediate mastered</p>
+              <p className="text-sm text-white/80">Beginner, Intermediate & Advanced mastered</p>
             </div>
           </div>
         </div>
@@ -187,6 +253,31 @@ export function RecommendedLearning() {
             })}
             <div className="text-xs text-white/60 px-1 py-1 font-medium mt-3">🌿 Intermediate</div>
             {INTERMEDIATE_PATH.map((pathTopic) => {
+              const prog = progressMap.get(pathTopic.id);
+              return (
+                <Link
+                  key={pathTopic.id}
+                  to={`/learn/${pathTopic.id}`}
+                  className="flex items-center justify-between bg-white/10 hover:bg-white/20 
+                           px-4 py-3 rounded-xl transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">{pathTopic.icon}</span>
+                    <span className="font-medium">{pathTopic.title}</span>
+                  </div>
+                  {prog?.best_quiz_score !== null && prog?.best_quiz_score !== undefined && (
+                    <span className={`text-sm font-semibold ${
+                      prog.best_quiz_score >= 80 ? 'text-emerald-200' :
+                      prog.best_quiz_score >= 60 ? 'text-yellow-200' : 'text-red-200'
+                    }`}>
+                      {prog.best_quiz_score}%
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+            <div className="text-xs text-white/60 px-1 py-1 font-medium mt-3">🌳 Advanced</div>
+            {ADVANCED_PATH.map((pathTopic) => {
               const prog = progressMap.get(pathTopic.id);
               return (
                 <Link
@@ -398,6 +489,46 @@ export function RecommendedLearning() {
                   <>
                     <div className="text-xs text-white/60 px-1 py-1 font-medium mt-3">🌿 Intermediate</div>
                     {INTERMEDIATE_PATH.map((pathTopic) => {
+                      const prog = progressMap.get(pathTopic.id);
+                      const isCurrentTopic = pathTopic.id === topic.id;
+                      return (
+                        <Link
+                          key={pathTopic.id}
+                          to={`/learn/${pathTopic.id}`}
+                          className={`flex items-center justify-between px-4 py-3 rounded-xl transition-colors ${
+                            isCurrentTopic 
+                              ? 'bg-white/30 ring-2 ring-white/50' 
+                              : 'bg-white/10 hover:bg-white/20'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{pathTopic.icon}</span>
+                            <span className="font-medium">{pathTopic.title}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {prog?.completed_at && (
+                              <CheckCircle className="w-4 h-4 text-emerald-300" />
+                            )}
+                            {prog?.best_quiz_score !== null && prog?.best_quiz_score !== undefined && (
+                              <span className={`text-sm font-semibold ${
+                                prog.best_quiz_score >= 80 ? 'text-emerald-200' :
+                                prog.best_quiz_score >= 60 ? 'text-yellow-200' : 'text-red-200'
+                              }`}>
+                                {prog.best_quiz_score}%
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* Show advanced topics if intermediate is complete */}
+                {intermediateComplete && (
+                  <>
+                    <div className="text-xs text-white/60 px-1 py-1 font-medium mt-3">🌳 Advanced</div>
+                    {ADVANCED_PATH.map((pathTopic) => {
                       const prog = progressMap.get(pathTopic.id);
                       const isCurrentTopic = pathTopic.id === topic.id;
                       return (

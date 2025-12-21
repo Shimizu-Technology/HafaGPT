@@ -72,7 +72,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         question: 'What does "Håfa tatatmånu hao?" mean?',
         options: ['What is your name?', 'How are you?', 'Where are you from?', 'How old are you?'],
         correctAnswer: 'How are you?',
-        explanation: 'This is a common way to ask someone how they are doing.'
+        explanation: '"Håfa tatatmånu hao?" means "How are you?" — a formal Chamorro greeting.'
       },
       {
         id: id('greet', 6),
@@ -616,9 +616,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('quest', 6),
         type: 'multiple_choice',
         question: 'How do you ask "How are you?" in Chamorro?',
-        options: ['Håfa na\'ån-mu?', 'Håfa taimanu hao?', 'Manu nai gaige hao?', 'Hayi hao?'],
-        correctAnswer: 'Håfa taimanu hao?',
-        explanation: '"Håfa taimanu" means "how" — so "Håfa taimanu hao?" asks how someone is doing.'
+        options: ['Håfa na\'ån-mu?', 'Håfa tatatmånu hao?', 'Manu nai gaige hao?', 'Hayi hao?'],
+        correctAnswer: 'Håfa tatatmånu hao?',
+        explanation: '"Håfa tatatmånu" means "how" — so "Håfa tatatmånu hao?" asks how someone is doing.'
       },
       {
         id: id('quest', 7),
@@ -1021,6 +1021,430 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         options: ['I\'m going to Hagåtña', 'I\'m from Hagåtña', 'I\'m in Hagåtña', 'I want to go to Hagåtña'],
         correctAnswer: 'I\'m in Hagåtña',
         explanation: '"Gaige yu\' giya..." means "I am at/in..." — expressing location.'
+      }
+    ]
+  },
+
+  // ADVANCED LEVEL QUIZZES
+
+  {
+    id: 'places',
+    title: 'Places & Locations',
+    description: 'Test your knowledge of places and location vocabulary',
+    icon: '🏠',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('place', 1),
+        type: 'multiple_choice',
+        question: 'What is "house" or "home" in Chamorro?',
+        options: ['Eskuela', 'Guma\'', 'Tenda', 'Lancho'],
+        correctAnswer: 'Guma\'',
+        explanation: '"Guma\'" means "house" or "home".'
+      },
+      {
+        id: id('place', 2),
+        type: 'multiple_choice',
+        question: 'What does "Eskuela" mean?',
+        options: ['Store', 'Church', 'School', 'Hospital'],
+        correctAnswer: 'School',
+        explanation: '"Eskuela" means "school".'
+      },
+      {
+        id: id('place', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "store" or "shop"',
+        correctAnswer: 'Tenda',
+        acceptableAnswers: ['Tenda', 'tenda', 'TENDA'],
+        hint: 'Starts with "T"',
+        explanation: '"Tenda" means "store" or "shop".'
+      },
+      {
+        id: id('place', 4),
+        type: 'multiple_choice',
+        question: 'What is "Guma\' Yu\'os" in English?',
+        options: ['God\'s house (Church)', 'Hospital', 'School', 'Office'],
+        correctAnswer: 'God\'s house (Church)',
+        explanation: '"Guma\' Yu\'os" literally means "God\'s house" — the church.'
+      },
+      {
+        id: id('place', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Ocean/Sea)',
+        correctAnswer: 'Tåsi',
+        acceptableAnswers: ['Tåsi', 'Tasi', 'tasi', 'tåsi'],
+        hint: 'Beautiful and blue!',
+        explanation: '"Tåsi" means "ocean" or "sea".'
+      },
+      {
+        id: id('place', 6),
+        type: 'multiple_choice',
+        question: 'What does "Chalan" mean?',
+        options: ['Farm', 'Road/Street', 'Plaza', 'Hospital'],
+        correctAnswer: 'Road/Street',
+        explanation: '"Chalan" means "road" or "street".'
+      }
+    ]
+  },
+  {
+    id: 'weather',
+    title: 'Weather & Nature',
+    description: 'Test your knowledge of weather and nature vocabulary',
+    icon: '🌞',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('weather', 1),
+        type: 'multiple_choice',
+        question: 'What is "sun" in Chamorro?',
+        options: ['Pulan', 'Atdao', 'Uchan', 'Manglo\''],
+        correctAnswer: 'Atdao',
+        explanation: '"Atdao" means "sun".'
+      },
+      {
+        id: id('weather', 2),
+        type: 'multiple_choice',
+        question: 'What does "Uchan" mean?',
+        options: ['Sun', 'Wind', 'Rain', 'Storm'],
+        correctAnswer: 'Rain',
+        explanation: '"Uchan" means "rain".'
+      },
+      {
+        id: id('weather', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "wind"',
+        correctAnswer: 'Manglo\'',
+        acceptableAnswers: ['Manglo\'', 'manglo\'', 'Manglo', 'manglo'],
+        hint: 'Starts with "M"',
+        explanation: '"Manglo\'" means "wind".'
+      },
+      {
+        id: id('weather', 4),
+        type: 'multiple_choice',
+        question: 'What is "Påkyo" in English?',
+        options: ['Rain', 'Wind', 'Typhoon/Storm', 'Snow'],
+        correctAnswer: 'Typhoon/Storm',
+        explanation: '"Påkyo" means "typhoon" or "storm".'
+      },
+      {
+        id: id('weather', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Moon)',
+        correctAnswer: 'Pulan',
+        acceptableAnswers: ['Pulan', 'pulan', 'PULAN'],
+        hint: 'Shines at night',
+        explanation: '"Pulan" means "moon".'
+      },
+      {
+        id: id('weather', 6),
+        type: 'multiple_choice',
+        question: 'What does "Puti\'on" mean?',
+        options: ['Moon', 'Star', 'Cloud', 'Sky'],
+        correctAnswer: 'Star',
+        explanation: '"Puti\'on" means "star".'
+      }
+    ]
+  },
+  {
+    id: 'household',
+    title: 'Home & Household',
+    description: 'Test your knowledge of household vocabulary',
+    icon: '🛋️',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('house', 1),
+        type: 'multiple_choice',
+        question: 'What is "kitchen" in Chamorro?',
+        options: ['Åpusento', 'Kusina', 'Båño', 'Lamasa'],
+        correctAnswer: 'Kusina',
+        explanation: '"Kusina" means "kitchen".'
+      },
+      {
+        id: id('house', 2),
+        type: 'multiple_choice',
+        question: 'What does "Åpusento" mean?',
+        options: ['Kitchen', 'Room/Bedroom', 'Bathroom', 'Living room'],
+        correctAnswer: 'Room/Bedroom',
+        explanation: '"Åpusento" means "room" or "bedroom".'
+      },
+      {
+        id: id('house', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "table"',
+        correctAnswer: 'Lamasa',
+        acceptableAnswers: ['Lamasa', 'lamasa', 'LAMASA'],
+        hint: 'You eat on it',
+        explanation: '"Lamasa" means "table".'
+      },
+      {
+        id: id('house', 4),
+        type: 'multiple_choice',
+        question: 'What is "Siya" in English?',
+        options: ['Table', 'Chair', 'Bed', 'Door'],
+        correctAnswer: 'Chair',
+        explanation: '"Siya" means "chair".'
+      },
+      {
+        id: id('house', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Window)',
+        correctAnswer: 'Bentåna',
+        acceptableAnswers: ['Bentåna', 'Bentana', 'bentana', 'bentåna'],
+        hint: 'You look through it',
+        explanation: '"Bentåna" means "window".'
+      },
+      {
+        id: id('house', 6),
+        type: 'multiple_choice',
+        question: 'What does "Petta" (or "Potta") mean?',
+        options: ['Window', 'Roof', 'Door', 'Wall'],
+        correctAnswer: 'Door',
+        explanation: '"Petta" and "Potta" both mean "door" — both spellings are commonly used.'
+      }
+    ]
+  },
+  {
+    id: 'directions',
+    title: 'Directions & Travel',
+    description: 'Test your knowledge of directions and travel vocabulary',
+    icon: '🧭',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('dir', 1),
+        type: 'multiple_choice',
+        question: 'What is "right (direction)" in Chamorro?',
+        options: ['Akague', 'Agapa\'', 'Tåtte', 'Mo\'na'],
+        correctAnswer: 'Agapa\'',
+        explanation: '"Agapa\'" means "right (direction)".'
+      },
+      {
+        id: id('dir', 2),
+        type: 'multiple_choice',
+        question: 'What does "Akague" mean?',
+        options: ['Right', 'Left', 'Up', 'Down'],
+        correctAnswer: 'Left',
+        explanation: '"Akague" means "left (direction)".'
+      },
+      {
+        id: id('dir', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "up" or "above"',
+        correctAnswer: 'Hulo\'',
+        acceptableAnswers: ['Hulo\'', 'hulo\'', 'Hulo', 'hulo'],
+        hint: 'Opposite of down',
+        explanation: '"Hulo\'" means "up" or "above".'
+      },
+      {
+        id: id('dir', 4),
+        type: 'multiple_choice',
+        question: 'What is "Papa\'" in English?',
+        options: ['Up', 'Down/Below', 'Left', 'Right'],
+        correctAnswer: 'Down/Below',
+        explanation: '"Papa\'" means "down" or "below".'
+      },
+      {
+        id: id('dir', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Car)',
+        correctAnswer: 'Kareta',
+        acceptableAnswers: ['Kareta', 'kareta', 'KARETA'],
+        hint: 'You drive it',
+        explanation: '"Kareta" means "car".'
+      },
+      {
+        id: id('dir', 6),
+        type: 'multiple_choice',
+        question: 'How do you say "Come here!" in Chamorro?',
+        options: ['Hånao guatu!', 'Magi fan!', 'Bira agapa\'!', 'Fatachong!'],
+        correctAnswer: 'Magi fan!',
+        explanation: '"Magi fan!" means "Come here please!"'
+      }
+    ]
+  },
+  {
+    id: 'shopping',
+    title: 'Shopping & Money',
+    description: 'Test your knowledge of shopping and money vocabulary',
+    icon: '💰',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('shop', 1),
+        type: 'multiple_choice',
+        question: 'What is "money" in Chamorro?',
+        options: ['Fåhan', 'Bende', 'Salåpe\'', 'Presiu'],
+        correctAnswer: 'Salåpe\'',
+        explanation: '"Salåpe\'" means "money".'
+      },
+      {
+        id: id('shop', 2),
+        type: 'multiple_choice',
+        question: 'What does "Fåhan" mean?',
+        options: ['Sell', 'Buy/Purchase', 'Money', 'Price'],
+        correctAnswer: 'Buy/Purchase',
+        explanation: '"Fåhan" means "buy" or "purchase".'
+      },
+      {
+        id: id('shop', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "sell"',
+        correctAnswer: 'Bende',
+        acceptableAnswers: ['Bende', 'bende', 'BENDE'],
+        hint: 'Opposite of buy',
+        explanation: '"Bende" means "sell".'
+      },
+      {
+        id: id('shop', 4),
+        type: 'multiple_choice',
+        question: 'What is "Båråtu" in English?',
+        options: ['Expensive', 'Cheap/Inexpensive', 'Price', 'Change'],
+        correctAnswer: 'Cheap/Inexpensive',
+        explanation: '"Båråtu" means "cheap" or "inexpensive".'
+      },
+      {
+        id: id('shop', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Price)',
+        correctAnswer: 'Presiu',
+        acceptableAnswers: ['Presiu', 'presiu', 'PRESIU'],
+        hint: 'How much something costs',
+        explanation: '"Presiu" means "price".'
+      },
+      {
+        id: id('shop', 6),
+        type: 'multiple_choice',
+        question: 'How do you ask "How much is the price?" in Chamorro?',
+        options: ['Håfa i presiu?', 'Kuåntu i presiu?', 'Månu i presiu?', 'Hayi i presiu?'],
+        correctAnswer: 'Kuåntu i presiu?',
+        explanation: '"Kuåntu i presiu?" means "How much is the price?"'
+      }
+    ]
+  },
+  {
+    id: 'daily-life',
+    title: 'Work & Daily Life',
+    description: 'Test your knowledge of work and daily life vocabulary',
+    icon: '💼',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('daily', 1),
+        type: 'multiple_choice',
+        question: 'What is "job" or "employment" in Chamorro?',
+        options: ['Eskuela', 'Emplehu', 'Batkada', 'Tutuhon'],
+        correctAnswer: 'Emplehu',
+        explanation: '"Emplehu" means "job" or "employment".'
+      },
+      {
+        id: id('daily', 2),
+        type: 'multiple_choice',
+        question: 'What does "Ma\'estra" mean?',
+        options: ['Student', 'Teacher (female)', 'Worker', 'Doctor'],
+        correctAnswer: 'Teacher (female)',
+        explanation: '"Ma\'estra" means "teacher (female)".'
+      },
+      {
+        id: id('daily', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "student"',
+        correctAnswer: 'Estudiånte',
+        acceptableAnswers: ['Estudiånte', 'Estudiante', 'estudiante', 'estudiånte'],
+        hint: 'Someone who learns',
+        explanation: '"Estudiånte" means "student".'
+      },
+      {
+        id: id('daily', 4),
+        type: 'multiple_choice',
+        question: 'What is "Tutuhon" in English?',
+        options: ['Finish', 'Begin/Start', 'Leave', 'Work'],
+        correctAnswer: 'Begin/Start',
+        explanation: '"Tutuhon" means "begin" or "start".'
+      },
+      {
+        id: id('daily', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Finish/Complete)',
+        correctAnswer: 'Munhåyan',
+        acceptableAnswers: ['Munhåyan', 'Munhayan', 'munhayan', 'munhåyan'],
+        hint: 'When you\'re done',
+        explanation: '"Munhåyan" means "finish" or "complete".'
+      },
+      {
+        id: id('daily', 6),
+        type: 'multiple_choice',
+        question: 'How do you say "The work is finished" in Chamorro?',
+        options: ['Tutuhon i cho\'cho\'', 'Makpo\' i cho\'cho\'', 'Guaha i cho\'cho\'', 'Taya\' i cho\'cho\''],
+        correctAnswer: 'Makpo\' i cho\'cho\'',
+        explanation: '"Makpo\' i cho\'cho\'" means "The work is finished."'
+      }
+    ]
+  },
+  {
+    id: 'culture',
+    title: 'Culture & Celebrations',
+    description: 'Test your knowledge of Chamorro culture and traditions',
+    icon: '🎉',
+    difficulty: 'Advanced',
+    questions: [
+      {
+        id: id('cult', 1),
+        type: 'multiple_choice',
+        question: 'What is "party" or "celebration" in Chamorro?',
+        options: ['Fiesta', 'Gupot', 'Fandånggo', 'Chenchule\''],
+        correctAnswer: 'Gupot',
+        explanation: '"Gupot" means "party" or "celebration".'
+      },
+      {
+        id: id('cult', 2),
+        type: 'multiple_choice',
+        question: 'What does "Fiesta" mean?',
+        options: ['Wedding', 'Birthday', 'Festival/Saint\'s Day', 'Party'],
+        correctAnswer: 'Festival/Saint\'s Day',
+        explanation: '"Fiesta" means a festival, typically celebrating a saint\'s day.'
+      },
+      {
+        id: id('cult', 3),
+        type: 'type_answer',
+        question: 'Type the Chamorro word for "respect"',
+        correctAnswer: 'Respetu',
+        acceptableAnswers: ['Respetu', 'respetu', 'RESPETU'],
+        hint: 'Important in Chamorro culture',
+        explanation: '"Respetu" means "respect".'
+      },
+      {
+        id: id('cult', 4),
+        type: 'multiple_choice',
+        question: 'What is "Manamko\'" in English?',
+        options: ['Children', 'Elders/Elderly', 'Parents', 'Friends'],
+        correctAnswer: 'Elders/Elderly',
+        explanation: '"Manamko\'" means "elders" or "elderly" — highly respected in Chamorro culture.'
+      },
+      {
+        id: id('cult', 5),
+        type: 'fill_blank',
+        question: 'Complete: "___" (Wedding celebration)',
+        correctAnswer: 'Fandånggo',
+        acceptableAnswers: ['Fandånggo', 'Fandanggo', 'fandanggo', 'fandånggo'],
+        hint: 'A wedding party',
+        explanation: '"Fandånggo" means "wedding celebration".'
+      },
+      {
+        id: id('cult', 6),
+        type: 'multiple_choice',
+        question: 'What does "Chenchule\'" refer to?',
+        options: ['A dance', 'Gift-giving tradition', 'A type of food', 'A greeting'],
+        correctAnswer: 'Gift-giving tradition',
+        explanation: '"Chenchule\'" is the traditional Chamorro gift-giving practice, especially for important events.'
+      },
+      {
+        id: id('cult', 7),
+        type: 'multiple_choice',
+        question: 'What does "Inafa\'maolek" mean?',
+        options: ['Sadness', 'Harmony/Getting along', 'Independence', 'Strength'],
+        correctAnswer: 'Harmony/Getting along',
+        explanation: '"Inafa\'maolek" means "harmony" or "getting along" — a core Chamorro value.'
       }
     ]
   }

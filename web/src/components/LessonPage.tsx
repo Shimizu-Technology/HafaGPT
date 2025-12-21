@@ -3,11 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Layers, Brain, CheckCircle, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useUpdateProgress } from '../hooks/useLearningPath';
+import { useAwardXP } from '../hooks/useXP';
 import { getTopic, getTopicIndex, BEGINNER_PATH } from '../data/learningPath';
 import { LessonIntro } from './LessonIntro';
 import { LessonFlashcards } from './LessonFlashcards';
 import { LessonQuiz } from './LessonQuiz';
 import { LessonComplete } from './LessonComplete';
+import { XPToast } from './XPDisplay';
 
 type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
 
@@ -25,10 +27,12 @@ export function LessonPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const updateProgress = useUpdateProgress();
+  const awardXP = useAwardXP();
 
   const [currentStep, setCurrentStep] = useState<LessonStep>('intro');
   const [flashcardsCompleted, setFlashcardsCompleted] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
 
   const topic = topicId ? getTopic(topicId) : undefined;
   const topicIndex = topicId ? getTopicIndex(topicId) : 0;
@@ -71,20 +75,117 @@ export function LessonPage() {
 
   const handleFlashcardsComplete = (cardsCount: number) => {
     setFlashcardsCompleted(true);
-    // Track flashcard completion with actual card count
-    if (topicId) {
-      updateProgress.mutate({ topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount });
-    }
+    // Always proceed to quiz, even if API calls fail
     goToStep('quiz');
+    
+    // Track flashcard completion with actual card count (non-blocking)
+    if (topicId) {
+      setTimeout(() => {
+        updateProgress.mutate(
+          { topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount },
+          {
+            onError: (error) => {
+              console.warn('Failed to update flashcard progress:', error);
+            }
+          }
+        );
+        
+        // Award XP for flashcard completion
+        awardXP.mutate(
+          { 
+            activity_type: 'flashcard_complete', 
+            activity_id: topicId,
+            minutes_spent: 2 // Estimate 2 min for flashcards
+          },
+          {
+            onSuccess: (data) => {
+              setXpToast({ 
+                xp: data.xp_earned, 
+                levelUp: data.level_up, 
+                newLevel: data.new_level || undefined 
+              });
+              setTimeout(() => setXpToast(null), 3000);
+            },
+            onError: (error) => {
+              console.warn('Failed to award flashcard XP:', error);
+            }
+          }
+        );
+      }, 100);
+    }
   };
 
   const handleQuizComplete = (score: number) => {
     setQuizScore(score);
-    // Track quiz completion
-    if (topicId) {
-      updateProgress.mutate({ topicId, action: 'quiz_completed', quizScore: score });
-    }
+    
+    // Always proceed to complete step, even if API calls fail
+    // This ensures the UI doesn't get stuck on loading
     goToStep('complete');
+    
+    // Track quiz completion (non-blocking)
+    if (topicId) {
+      // Use setTimeout to ensure UI updates first
+      setTimeout(() => {
+        updateProgress.mutate(
+          { topicId, action: 'quiz_completed', quizScore: score },
+          {
+            onError: (error) => {
+              console.warn('Failed to update progress:', error);
+              // Don't block UI - user can still see results
+            }
+          }
+        );
+        
+        // Award XP for quiz completion (with bonus for 90%+)
+        awardXP.mutate(
+          { 
+            activity_type: 'quiz_complete', 
+            activity_id: topicId,
+            quiz_score: score,
+            minutes_spent: 3 // Estimate 3 min for quiz
+          },
+          {
+            onSuccess: (data) => {
+              // Also award topic completion XP since quiz is the final step
+              awardXP.mutate(
+                { 
+                  activity_type: 'topic_complete', 
+                  activity_id: topicId,
+                  minutes_spent: 0 // Already counted
+                },
+                {
+                  onSuccess: (topicData) => {
+                    // Show combined XP
+                    setXpToast({ 
+                      xp: data.xp_earned + topicData.xp_earned, 
+                      levelUp: data.level_up || topicData.level_up, 
+                      newLevel: topicData.new_level || data.new_level || undefined 
+                    });
+                    setTimeout(() => setXpToast(null), 4000);
+                  },
+                  onError: (error) => {
+                    console.warn('Failed to award topic completion XP:', error);
+                    // Still show quiz XP if available
+                    if (data) {
+                      setXpToast({ 
+                        xp: data.xp_earned, 
+                        levelUp: data.level_up, 
+                        newLevel: data.new_level || undefined 
+                      });
+                      setTimeout(() => setXpToast(null), 4000);
+                    }
+                  }
+                }
+              );
+            },
+            onError: (error) => {
+              console.warn('Failed to award quiz XP:', error);
+              // UI already progressed, user can see results
+            }
+          }
+        );
+      }, 100);
+    }
   };
 
   const handleNextTopic = () => {
@@ -110,7 +211,14 @@ export function LessonPage() {
           {/* Top row: Back, Title, Theme */}
           <div className="flex items-center justify-between mb-3">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                // Go back to where user came from, or fallback to learning path
+                if (window.history.length > 2) {
+                  navigate(-1);
+                } else {
+                  navigate('/learning');
+                }
+              }}
               className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
@@ -214,6 +322,16 @@ export function LessonPage() {
           />
         )}
       </main>
+
+      {/* XP Toast Notification */}
+      {xpToast && (
+        <XPToast 
+          xpEarned={xpToast.xp} 
+          levelUp={xpToast.levelUp} 
+          newLevel={xpToast.newLevel}
+          onClose={() => setXpToast(null)} 
+        />
+      )}
     </div>
   );
 }

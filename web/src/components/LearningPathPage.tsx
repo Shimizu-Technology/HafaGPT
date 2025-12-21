@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Moon, Sun, Map as MapIcon, Trophy } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { LearningPathMap } from './LearningPathMap';
@@ -6,18 +6,28 @@ import { LearningProgressStats } from './LearningProgressStats';
 
 export function LearningPathPage() {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    // Go back to where user came from, or fallback to home
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 pb-24 md:pb-8">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            to="/"
+          <button
+            onClick={handleBack}
             className="w-10 h-10 rounded-full hover:bg-cream-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-          </Link>
+          </button>
 
           <div className="flex-1 flex justify-center">
             <div className="flex items-center gap-2">

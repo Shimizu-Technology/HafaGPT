@@ -15,7 +15,8 @@ import {
   Flame,
   Trophy,
   Sparkles,
-  Star
+  Star,
+  GraduationCap
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useUser, useClerk } from '@clerk/clerk-react';
@@ -30,6 +31,10 @@ import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { RecommendedLearning } from './RecommendedLearning';
+import { XPDisplay, XPBadge } from './XPDisplay';
+import { WeakAreasWidget } from './WeakAreasWidget';
+import { DueCardsWidget } from './DueCardsWidget';
+import { useXP } from '../hooks/useXP';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -42,6 +47,7 @@ export function HomePage() {
   const { streak: streakData } = useStreak();
   const { data: quizStats, isLoading: isLoadingQuizStats } = useQuizStats();
   const { data: gameStats, isLoading: isLoadingGameStats } = useGameStats();
+  const { data: xpData, isLoading: isLoadingXP } = useXP();
   
   const [quickMessage, setQuickMessage] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -129,6 +135,12 @@ export function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* XP Badge - visible on desktop only */}
+            {isSignedIn && xpData && (
+              <div className="hidden sm:block">
+                <XPBadge />
+              </div>
+            )}
             {isSignedIn && !isPremium && (
               <Link
                 to="/pricing"
@@ -151,7 +163,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 pb-24 sm:pb-8">
+      <div className={`max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 ${!isSignedIn ? 'pb-24 md:pb-8' : 'pb-8'}`}>
 
         {/* Hero Section - Different for signed in vs signed out */}
         {isSignedIn ? (
@@ -180,9 +192,9 @@ export function HomePage() {
                     <p className="text-xs text-amber-700 dark:text-amber-500 font-medium">
                       Day Streak
                     </p>
-                  </div>
-                </div>
-              )}
+            </div>
+          </div>
+        )}
           </div>
             
             {/* Quick Chat */}
@@ -215,15 +227,19 @@ export function HomePage() {
             <p className="text-lg sm:text-xl text-white/90 mb-2">
               Learn Chamorro with AI
             </p>
-            <p className="text-white/70 mb-6 max-w-lg mx-auto">
+            <p className="text-white/70 mb-2 max-w-lg mx-auto">
               Your personal AI tutor for the Chamorro language. Chat, play games, take quizzes, and explore 10,000+ words.
             </p>
-            <button
+            <p className="text-white/90 text-sm font-medium mb-6 flex items-center justify-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              21 structured lessons • Beginner to Advanced
+            </p>
+              <button
               onClick={handleSignInClick}
               className="px-8 py-3 bg-white text-coral-600 dark:text-ocean-600 rounded-xl font-bold text-lg hover:bg-cream-50 transition-all shadow-lg hover:shadow-xl hover:scale-105 mb-4"
-            >
+              >
               Start Learning Free
-            </button>
+              </button>
             <p className="text-white/60 text-xs sm:text-sm">
               Free during beta • Paid plans will help cover AI costs
             </p>
@@ -235,81 +251,108 @@ export function HomePage() {
           <RecommendedLearning />
         )}
 
-        {/* Inline Stats - Moved up for visibility (Only for signed in users) */}
-        {isSignedIn && (isLoadingQuizStats || isLoadingGameStats) && (
-          // Skeleton loader for stats
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 rounded-2xl p-4 shadow-md border border-amber-200/50 dark:border-slate-700/50 animate-pulse">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-200 dark:bg-slate-600" />
-              <div className="h-4 w-20 bg-amber-200 dark:bg-slate-600 rounded" />
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="text-center">
-                  <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-amber-100 dark:bg-slate-700" />
-                  <div className="h-5 w-8 mx-auto mb-1 bg-amber-200 dark:bg-slate-600 rounded" />
-                  <div className="h-3 w-12 mx-auto bg-amber-100 dark:bg-slate-700 rounded" />
+        {/* XP & Progress Widget - Only for signed-in users */}
+        {isSignedIn && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* XP Display */}
+            {isLoadingXP ? (
+              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl p-5 border border-amber-200 dark:border-amber-700/50 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-200 dark:bg-amber-700/50" />
+        <div className="space-y-2">
+                    <div className="h-5 w-24 bg-amber-200 dark:bg-amber-700/50 rounded" />
+                    <div className="h-3 w-16 bg-amber-100 dark:bg-amber-800/50 rounded" />
+                  </div>
+              </div>
+                <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full" />
+              </div>
+            ) : (
+              <XPDisplay />
+            )}
+
+            {/* Stats Card - Compact version */}
+            {(isLoadingQuizStats || isLoadingGameStats) ? (
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-5 border border-purple-200 dark:border-purple-700/50 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-200 dark:bg-purple-700/50" />
+                  <div className="h-5 w-20 bg-purple-200 dark:bg-purple-700/50 rounded" />
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="text-center">
+                      <div className="w-8 h-8 mx-auto mb-1 rounded-lg bg-purple-100 dark:bg-purple-800/50" />
+                      <div className="h-4 w-6 mx-auto bg-purple-200 dark:bg-purple-700/50 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (quizStats || gameStats) && (
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-4 sm:p-5 border border-purple-200 dark:border-purple-700/50 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center shadow-md">
+                    <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-brown-800 dark:text-white text-base">Your Stats</h3>
+                    <p className="text-xs text-brown-500 dark:text-gray-400">Keep it up!</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {/* Streak */}
+              <div className="text-center">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 mx-auto mb-1 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                      <Flame className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                    </div>
+                    <p className="text-sm sm:text-base font-bold text-brown-800 dark:text-white">
+                      {streakData?.current_streak || 0}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-brown-500 dark:text-gray-400">Streak</p>
+              </div>
+
+                  {/* Quizzes */}
+                  <div className="text-center">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 mx-auto mb-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                      <Brain className="w-4 h-4 text-purple-500 dark:text-purple-400" />
+                    </div>
+                    <p className="text-sm sm:text-base font-bold text-brown-800 dark:text-white">
+                      {quizStats?.total_quizzes || 0}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-brown-500 dark:text-gray-400">Quizzes</p>
+              </div>
+                  
+                  {/* Avg Score */}
+              <div className="text-center">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 mx-auto mb-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Trophy className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+                    </div>
+                    <p className="text-sm sm:text-base font-bold text-brown-800 dark:text-white">
+                      {quizStats?.total_quizzes ? `${Math.round(quizStats.average_score || 0)}%` : '-'}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-brown-500 dark:text-gray-400">Avg</p>
+              </div>
+
+                  {/* Games */}
+                  <div className="text-center">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 mx-auto mb-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                      <Star className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                    </div>
+                    <p className="text-sm sm:text-base font-bold text-brown-800 dark:text-white">
+                      {gameStats?.total_games || 0}
+                    </p>
+                    <p className="text-[9px] sm:text-[10px] text-brown-500 dark:text-gray-400">Games</p>
+              </div>
+              </div>
+              </div>
+            )}
+              </div>
         )}
-        {isSignedIn && !isLoadingQuizStats && !isLoadingGameStats && (quizStats || gameStats) && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 rounded-2xl p-4 shadow-md border border-amber-200/50 dark:border-slate-700/50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                <Trophy className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="font-bold text-brown-800 dark:text-white text-sm">Your Stats</h3>
-            </div>
-            
-            <div className="grid grid-cols-4 gap-2">
-              {/* Streak */}
-              <div className="text-center">
-                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-orange-500 dark:text-orange-400" />
-                </div>
-                <p className="text-base font-bold text-brown-800 dark:text-white">
-                  {streakData?.current_streak || 0}
-                </p>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Streak</p>
-              </div>
-              
-              {/* Quizzes */}
-              <div className="text-center">
-                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-                </div>
-                <p className="text-base font-bold text-brown-800 dark:text-white">
-                  {quizStats?.total_quizzes || 0}
-                </p>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Quizzes</p>
-              </div>
-              
-              {/* Avg Score */}
-              <div className="text-center">
-                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Trophy className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-                </div>
-                <p className="text-base font-bold text-brown-800 dark:text-white">
-                  {quizStats?.total_quizzes ? `${Math.round(quizStats.average_score || 0)}%` : '-'}
-                </p>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Avg</p>
-              </div>
-              
-              {/* Games */}
-              <div className="text-center">
-                <div className="w-9 h-9 mx-auto mb-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                </div>
-                <p className="text-base font-bold text-brown-800 dark:text-white">
-                  {gameStats?.total_games || 0}
-                </p>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Games</p>
-              </div>
-            </div>
-          </div>
-        )}
+
+        {/* Weak Areas Widget - Only shown if user has areas to practice */}
+        {isSignedIn && <WeakAreasWidget />}
+
+        {/* Due Cards Widget - Only shown if user has cards to review */}
+        {isSignedIn && <DueCardsWidget />}
 
         {/* Explore - Combined Actions Section */}
         <div className="space-y-3">
@@ -317,68 +360,88 @@ export function HomePage() {
             Explore
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-            {/* AI Chat - Primary Feature */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+            {/* Learning Path - Featured for new users */}
+            <Link
+              to="/learning"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-16 h-16 sm:w-32 sm:h-32 bg-gradient-to-br from-blue-100 to-blue-200/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-bl-[40px] sm:rounded-bl-[80px] -mr-2 -mt-2 sm:-mr-4 sm:-mt-4" />
+              <div className="relative">
+                <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 dark:from-blue-500 dark:to-blue-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <GraduationCap className="w-4 h-4 sm:w-7 sm:h-7 text-white" />
+                </div>
+                <h4 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Learn</h4>
+                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 mb-1 sm:mb-4 line-clamp-2">
+                  21 structured lessons
+                </p>
+                <div className="hidden sm:flex items-center text-blue-500 dark:text-blue-400 font-medium text-sm">
+                  Start learning <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </Link>
+
+            {/* AI Chat */}
             <Link
               to="/chat"
-              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-coral-100 to-coral-200/50 dark:from-coral-900/20 dark:to-coral-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-16 h-16 sm:w-32 sm:h-32 bg-gradient-to-br from-coral-100 to-coral-200/50 dark:from-coral-900/20 dark:to-coral-800/10 rounded-bl-[40px] sm:rounded-bl-[80px] -mr-2 -mt-2 sm:-mr-4 sm:-mt-4" />
               <div className="relative">
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-coral-500 dark:to-coral-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <MessageSquare className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-coral-500 dark:to-coral-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-4 h-4 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Chat with AI</h4>
-                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
-                  Ask questions, get translations, learn phrases
+                <h4 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Chat</h4>
+                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 mb-1 sm:mb-4 line-clamp-2">
+                  Ask AI anything
                 </p>
-                <div className="flex items-center text-coral-500 dark:text-coral-400 font-medium text-xs sm:text-sm">
-                  Start chatting <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="hidden sm:flex items-center text-coral-500 dark:text-coral-400 font-medium text-sm">
+                  Start chatting <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>
 
-            {/* Games - Engagement Feature */}
+            {/* Games */}
             <Link
               to="/games"
-              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-100 to-emerald-200/50 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-16 h-16 sm:w-32 sm:h-32 bg-gradient-to-br from-emerald-100 to-emerald-200/50 dark:from-emerald-900/20 dark:to-emerald-800/10 rounded-bl-[40px] sm:rounded-bl-[80px] -mr-2 -mt-2 sm:-mr-4 sm:-mt-4" />
               <div className="relative">
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <Gamepad2 className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <Gamepad2 className="w-4 h-4 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Play Games</h4>
-                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
-                  Wordle, Memory Match, Word Scramble & more
+                <h4 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Games</h4>
+                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 mb-1 sm:mb-4 line-clamp-2">
+                  Wordle & more
                 </p>
-                <div className="flex items-center text-emerald-500 dark:text-emerald-400 font-medium text-xs sm:text-sm">
-                  Play now <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                <div className="hidden sm:flex items-center text-emerald-500 dark:text-emerald-400 font-medium text-sm">
+                  Play now <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </Link>
 
-            {/* Quiz - Learning Feature */}
+            {/* Quiz */}
             <Link
               to="/quiz"
-              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
+              className="group relative bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 hover:shadow-xl hover:scale-[1.02] transition-all overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-100 to-purple-200/50 dark:from-purple-900/20 dark:to-purple-800/10 rounded-bl-[60px] sm:rounded-bl-[80px] -mr-4 -mt-4" />
+              <div className="absolute top-0 right-0 w-16 h-16 sm:w-32 sm:h-32 bg-gradient-to-br from-purple-100 to-purple-200/50 dark:from-purple-900/20 dark:to-purple-800/10 rounded-bl-[40px] sm:rounded-bl-[80px] -mr-2 -mt-2 sm:-mr-4 sm:-mt-4" />
               <div className="relative">
-                <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
-                  <Brain className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+                <div className="w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center mb-2 sm:mb-4 shadow-lg group-hover:scale-110 transition-transform">
+                  <Brain className="w-4 h-4 sm:w-7 sm:h-7 text-white" />
                 </div>
-                <h4 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Take a Quiz</h4>
-                <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400 mb-2 sm:mb-4">
-                  Test your knowledge with fun quizzes
+                <h4 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white mb-0.5 sm:mb-1">Quiz</h4>
+                <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 mb-1 sm:mb-4 line-clamp-2">
+                  Test knowledge
                 </p>
-                <div className="flex items-center text-purple-500 dark:text-purple-400 font-medium text-xs sm:text-sm">
-                  Start quiz <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </div>
+                <div className="hidden sm:flex items-center text-purple-500 dark:text-purple-400 font-medium text-sm">
+                  Start quiz <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
             </Link>
           </div>
-          
+
           {/* Secondary Links - Horizontal scroll on mobile, grid on desktop */}
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 scrollbar-hide mt-4">
             <Link
@@ -434,7 +497,7 @@ export function HomePage() {
             </Link>
           </div>
         </div>
-          
+
         {/* Daily Section - Compact 2-column grid */}
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
@@ -443,30 +506,9 @@ export function HomePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DailyWord compactOnMobile={false} />
-            <DailyWordleCard />
+        <DailyWordleCard />
               </div>
               </div>
-
-        {/* Sign in prompt for non-authenticated users */}
-        {!isSignedIn && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-coral-900/30 dark:to-coral-800/30 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-coral-500 dark:text-coral-400" />
-            </div>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">
-              Unlock All Features
-            </h3>
-            <p className="text-brown-600 dark:text-gray-400 text-sm mb-4 max-w-md mx-auto">
-              Create a free account to save your progress, chat with AI, play games, and track your learning journey.
-            </p>
-            <button
-              onClick={handleSignInClick}
-              className="px-6 py-2.5 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
-            >
-              Sign Up Free
-            </button>
-          </div>
-        )}
 
         {/* Footer */}
         <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
@@ -509,6 +551,19 @@ export function HomePage() {
         isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
       />
+
+      {/* Floating CTA for signed-out mobile users - positioned above BottomNav */}
+      {!isSignedIn && (
+        <div className="fixed bottom-16 left-0 right-0 sm:hidden z-50 px-4 pb-2">
+          <button
+            onClick={handleSignInClick}
+            className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+          >
+            <Sparkles className="w-4 h-4" />
+            Sign Up Free
+          </button>
+        </div>
+      )}
     </div>
   );
 }

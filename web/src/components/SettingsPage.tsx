@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Check, Save, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Check, Save, RotateCcw, Target, Zap } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences, SkillLevel, LearningGoal } from '../hooks/useUserPreferences';
 import { useSubscription } from '../hooks/useSubscription';
+import { useXP, useUpdateDailyGoal, getLevelInfo } from '../hooks/useXP';
 import { AuthButton } from './AuthButton';
 
 const SKILL_LEVELS: { id: SkillLevel; icon: string; title: string; description: string }[] = [
@@ -35,10 +36,20 @@ const LEARNING_GOALS: { id: LearningGoal; icon: string; title: string }[] = [
   { id: 'all', icon: '✨', title: 'Everything' },
 ];
 
+const DAILY_GOAL_OPTIONS = [
+  { minutes: 0, label: 'Off', description: 'No daily goal' },
+  { minutes: 5, label: '5 min', description: 'Casual' },
+  { minutes: 10, label: '10 min', description: 'Regular' },
+  { minutes: 15, label: '15 min', description: 'Serious' },
+  { minutes: 20, label: '20 min', description: 'Intense' },
+];
+
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
   const { isChristmasTheme } = useSubscription();
+  const { data: xpData, isLoading: isLoadingXP } = useXP();
+  const updateDailyGoal = useUpdateDailyGoal();
   
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
@@ -199,6 +210,105 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* XP & Daily Goal Section */}
+        {xpData && (
+          <section className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-700/50 overflow-hidden">
+            <div className="px-4 py-3 border-b border-amber-200/50 dark:border-amber-700/50">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-500" />
+                <h2 className="font-semibold text-brown-800 dark:text-white">XP & Daily Goal</h2>
+              </div>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {/* Current XP Display */}
+              <div className="flex items-center gap-4 p-3 bg-white/60 dark:bg-gray-800/40 rounded-xl">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+                  <span className="text-2xl">{getLevelInfo(xpData.level).emoji}</span>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold text-amber-800 dark:text-amber-200">
+                      Level {xpData.level}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 bg-amber-200/60 dark:bg-amber-700/40 rounded-full text-amber-700 dark:text-amber-300 font-medium">
+                      {getLevelInfo(xpData.level).title}
+                    </span>
+                  </div>
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    {xpData.total_xp.toLocaleString()} XP total
+                  </p>
+                  {/* Progress bar */}
+                  <div className="mt-2 h-2 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full transition-all duration-500"
+                      style={{ width: `${xpData.xp_progress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Daily Goal Setting */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span className="text-sm font-medium text-brown-700 dark:text-gray-300">
+                    Daily Learning Goal
+                  </span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {DAILY_GOAL_OPTIONS.map((option) => {
+                    const isSelected = xpData.daily_goal_minutes === option.minutes;
+                    return (
+                      <button
+                        key={option.minutes}
+                        onClick={() => updateDailyGoal.mutate(option.minutes)}
+                        disabled={updateDailyGoal.isPending}
+                        className={`p-2 rounded-lg border-2 transition-all text-center ${
+                          isSelected
+                            ? 'border-amber-500 bg-amber-100 dark:bg-amber-900/40 dark:border-amber-400'
+                            : 'border-amber-200 dark:border-amber-700 bg-white/60 dark:bg-gray-800/40 hover:border-amber-300 dark:hover:border-amber-600'
+                        }`}
+                      >
+                        <span className={`block text-sm font-bold ${
+                          isSelected 
+                            ? 'text-amber-700 dark:text-amber-300' 
+                            : 'text-brown-700 dark:text-gray-300'
+                        }`}>
+                          {option.label}
+                        </span>
+                        <span className={`block text-[10px] ${
+                          isSelected 
+                            ? 'text-amber-600 dark:text-amber-400' 
+                            : 'text-brown-500 dark:text-gray-400'
+                        }`}>
+                          {option.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-brown-500 dark:text-gray-400">
+                  Complete your daily goal to earn bonus XP! 🎯
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {isLoadingXP && (
+          <section className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-2xl p-5 border border-amber-200 dark:border-amber-700/50 animate-pulse">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-200 dark:bg-amber-700/50" />
+              <div className="space-y-2">
+                <div className="h-5 w-24 bg-amber-200 dark:bg-amber-700/50 rounded" />
+                <div className="h-3 w-16 bg-amber-100 dark:bg-amber-800/50 rounded" />
+              </div>
+            </div>
+            <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full" />
+          </section>
+        )}
 
         {/* Save Bar - Fixed at bottom when there are changes */}
         {hasChanges && (

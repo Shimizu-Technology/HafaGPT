@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Lock, CheckCircle, Play, RotateCcw, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
 import { useAllProgress } from '../hooks/useLearningPath';
-import { BEGINNER_PATH, INTERMEDIATE_PATH, LearningTopic, LearningLevel, isLevelComplete } from '../data/learningPath';
+import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, LearningTopic, LearningLevel, isLevelComplete } from '../data/learningPath';
 
 interface TopicProgress {
   topic_id: string;
@@ -23,7 +23,7 @@ function getStars(score: number | null): number {
 
 // Get status of a topic
 function getTopicStatus(
-  topic: LearningTopic,
+  _topic: LearningTopic,
   progress: TopicProgress | undefined,
   prevCompleted: boolean,
   isFirst: boolean
@@ -123,9 +123,9 @@ function TopicNode({
             {status === 'completed' && (
               <>
                 <StarDisplay count={stars} />
-                {progress?.best_quiz_score !== null && (
+                {progress?.best_quiz_score != null && (
                   <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                    {progress.best_quiz_score}%
+                    {progress?.best_quiz_score}%
                   </span>
                 )}
               </>
@@ -203,7 +203,7 @@ function LevelSection({
 }: LevelSectionProps) {
   let prevCompleted = false;
 
-  const levelColors = {
+  const levelColors: Record<LearningLevel, { bg: string; border: string; text: string; progress: string }> = {
     beginner: {
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
       border: 'border-emerald-200 dark:border-emerald-700',
@@ -308,7 +308,34 @@ function LevelSection({
 
 export function LearningPathMap() {
   const { data: allProgress, isLoading } = useAllProgress();
-  const [expandedLevel, setExpandedLevel] = useState<LearningLevel>('beginner');
+  const [expandedLevel, setExpandedLevel] = useState<LearningLevel | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Auto-detect which level to expand based on user's progress
+  useEffect(() => {
+    if (allProgress && !hasInitialized) {
+      const progressMap = new Map<string, TopicProgress>(
+        allProgress.topics.map(t => [t.topic.id, t.progress])
+      );
+      
+      const completedIds = Array.from(progressMap.entries())
+        .filter(([_, p]) => p.completed_at)
+        .map(([id]) => id);
+      
+      const beginnerDone = isLevelComplete('beginner', completedIds);
+      const intermediateDone = isLevelComplete('intermediate', completedIds);
+      
+      // Expand the current working level
+      if (!beginnerDone) {
+        setExpandedLevel('beginner');
+      } else if (!intermediateDone) {
+        setExpandedLevel('intermediate');
+      } else {
+        setExpandedLevel('advanced');
+      }
+      setHasInitialized(true);
+    }
+  }, [allProgress, hasInitialized]);
 
   if (isLoading) {
     return (
@@ -337,16 +364,20 @@ export function LearningPathMap() {
   const intermediateCompleted = INTERMEDIATE_PATH.filter(
     topic => progressMap.get(topic.id)?.completed_at
   ).length;
+  const advancedCompleted = ADVANCED_PATH.filter(
+    topic => progressMap.get(topic.id)?.completed_at
+  ).length;
 
-  // Check if beginner is complete to unlock intermediate
+  // Check if levels are complete to unlock next
   const completedTopicIds = Array.from(progressMap.entries())
     .filter(([_, progress]) => progress.completed_at)
     .map(([id, _]) => id);
   const beginnerComplete = isLevelComplete('beginner', completedTopicIds);
+  const intermediateComplete = isLevelComplete('intermediate', completedTopicIds);
 
   // Total progress
-  const totalTopics = BEGINNER_PATH.length + INTERMEDIATE_PATH.length;
-  const totalCompleted = beginnerCompleted + intermediateCompleted;
+  const totalTopics = BEGINNER_PATH.length + INTERMEDIATE_PATH.length + ADVANCED_PATH.length;
+  const totalCompleted = beginnerCompleted + intermediateCompleted + advancedCompleted;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-gray-700">
@@ -384,7 +415,7 @@ export function LearningPathMap() {
           isLocked={false}
           completedCount={beginnerCompleted}
           isExpanded={expandedLevel === 'beginner'}
-          onToggle={() => setExpandedLevel(expandedLevel === 'beginner' ? 'intermediate' : 'beginner')}
+          onToggle={() => setExpandedLevel(expandedLevel === 'beginner' ? null : 'beginner')}
         />
 
         <LevelSection
@@ -396,7 +427,19 @@ export function LearningPathMap() {
           isLocked={!beginnerComplete}
           completedCount={intermediateCompleted}
           isExpanded={expandedLevel === 'intermediate'}
-          onToggle={() => setExpandedLevel(expandedLevel === 'intermediate' ? 'beginner' : 'intermediate')}
+          onToggle={() => setExpandedLevel(expandedLevel === 'intermediate' ? null : 'intermediate')}
+        />
+
+        <LevelSection
+          level="advanced"
+          title="Advanced"
+          icon="🌳"
+          topics={ADVANCED_PATH}
+          progressMap={progressMap}
+          isLocked={!intermediateComplete}
+          completedCount={advancedCompleted}
+          isExpanded={expandedLevel === 'advanced'}
+          onToggle={() => setExpandedLevel(expandedLevel === 'advanced' ? null : 'advanced')}
         />
       </div>
 

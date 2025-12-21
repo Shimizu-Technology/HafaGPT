@@ -263,6 +263,122 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
   },
 ];
 
+// Advanced Level Topics (7 topics)
+export const ADVANCED_PATH: LearningTopic[] = [
+  {
+    id: 'places',
+    title: 'Places & Locations',
+    description: 'Buildings, landmarks, and location phrases',
+    icon: '🏠',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'places',
+    quizCategory: 'places',
+    intro: {
+      culturalContext: 'Knowing place names helps you navigate Guam and the Marianas. Many place names have Spanish influence while keeping their Chamorro roots.',
+      keyPhrases: ['Guma\' — House', 'Eskuela — School', 'Tenda — Store'],
+      tip: 'Practice saying "Gaige gi..." (It\'s at...) to describe locations!',
+    },
+    suggestedGames: ['memory', 'scramble'],
+  },
+  {
+    id: 'weather',
+    title: 'Weather & Nature',
+    description: 'Weather conditions and natural environment',
+    icon: '🌞',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'weather',
+    quizCategory: 'weather',
+    intro: {
+      culturalContext: 'Weather is a constant topic on island! Guam has two main seasons: dry season (fanomnågan) and rainy season (fanuchanan). Typhoons are also part of island life.',
+      keyPhrases: ['Atdao — Sun', 'Uchan — Rain', 'Manglo\' — Wind'],
+      tip: 'Start conversations about weather: "Maolek i tiempo!" (The weather is nice!)',
+    },
+    suggestedGames: ['memory', 'falling'],
+  },
+  {
+    id: 'household',
+    title: 'Home & Household',
+    description: 'Rooms, furniture, and household items',
+    icon: '🛋️',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'household',
+    quizCategory: 'household',
+    intro: {
+      culturalContext: 'The Chamorro home (guma\') is central to family life. Traditional homes had specific areas for different activities, and hospitality is a core value.',
+      keyPhrases: ['Kusina — Kitchen', 'Kuåtto — Room', 'Lamasa — Table'],
+      tip: 'Invite someone to your home: "Hanao magi para i guma\'-hu!" (Come to my house!)',
+    },
+    suggestedGames: ['memory', 'scramble'],
+  },
+  {
+    id: 'directions',
+    title: 'Directions & Travel',
+    description: 'Directions, movement, and transportation',
+    icon: '🧭',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'directions',
+    quizCategory: 'directions',
+    intro: {
+      culturalContext: 'Giving directions is essential for island navigation. Chamorros often use landmarks rather than street addresses. Know your left (akague) from your right (agapa\')!',
+      keyPhrases: ['Agapa\' — Right', 'Akague — Left', 'Magi — Here'],
+      tip: 'When giving directions, combine with landmarks: "Bira agapa\' gi tenda" (Turn right at the store)',
+    },
+    suggestedGames: ['scramble', 'falling'],
+  },
+  {
+    id: 'shopping',
+    title: 'Shopping & Money',
+    description: 'Buying, selling, and money vocabulary',
+    icon: '💰',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'shopping',
+    quizCategory: 'shopping',
+    intro: {
+      culturalContext: 'Shopping and bargaining are social activities in Chamorro culture. Village markets and fiestas are great places to practice these phrases!',
+      keyPhrases: ['Salåpe\' — Money', 'Fåhan — Buy', 'Presiu — Price'],
+      tip: 'Ask "Kuåntu i presiu?" (How much?) when shopping at markets or flea markets!',
+    },
+    suggestedGames: ['scramble', 'wordle'],
+  },
+  {
+    id: 'daily-life',
+    title: 'Work & Daily Life',
+    description: 'Jobs, school, and daily activities',
+    icon: '💼',
+    estimatedMinutes: 8,
+    level: 'advanced',
+    flashcardCategory: 'daily-life',
+    quizCategory: 'daily-life',
+    intro: {
+      culturalContext: 'Understanding daily life vocabulary helps you connect with the community. Education and work are important topics in everyday conversation.',
+      keyPhrases: ['Emplehu — Job', 'Estudiånte — Student', 'Tutuhon — Begin'],
+      tip: 'Describe your day: "Hu tutuhon i cho\'cho\'-hu gi alas ocho" (I start my work at 8 o\'clock)',
+    },
+    suggestedGames: ['scramble', 'memory'],
+  },
+  {
+    id: 'culture',
+    title: 'Culture & Celebrations',
+    description: 'Traditions, fiestas, and respect language',
+    icon: '🎉',
+    estimatedMinutes: 10,
+    level: 'advanced',
+    flashcardCategory: 'culture',
+    quizCategory: 'culture',
+    intro: {
+      culturalContext: 'Chamorro culture is rich with traditions! Understanding values like rispetu (respect), inafa\'maolek (harmony), and chenchule\' (reciprocity) is key to connecting with the community.',
+      keyPhrases: ['Gupot — Party', 'Fiesta — Festival', 'Rispetu — Respect'],
+      tip: 'Show rispetu to manamko\' (elders) — it\'s one of the most important Chamorro values!',
+    },
+    suggestedGames: ['memory', 'wordle'],
+  },
+];
+
 // Combined paths for easy access
 export const ALL_PATHS: LearningPath[] = [
   {
@@ -279,14 +395,31 @@ export const ALL_PATHS: LearningPath[] = [
     icon: '🌿',
     topics: INTERMEDIATE_PATH,
   },
+  {
+    level: 'advanced',
+    title: 'Advanced',
+    description: 'Master practical skills for real-world conversations',
+    icon: '🌳',
+    topics: ADVANCED_PATH,
+  },
 ];
 
 // All topics from all paths (for lookups)
-export const ALL_TOPICS: LearningTopic[] = [...BEGINNER_PATH, ...INTERMEDIATE_PATH];
+export const ALL_TOPICS: LearningTopic[] = [...BEGINNER_PATH, ...INTERMEDIATE_PATH, ...ADVANCED_PATH];
 
 // Helper to get topic by ID (searches all paths)
 export function getTopic(id: string): LearningTopic | undefined {
   return ALL_TOPICS.find(t => t.id === id);
+}
+
+// Helper to get the path array for a level
+function getPathForLevel(level: LearningLevel): LearningTopic[] {
+  switch (level) {
+    case 'beginner': return BEGINNER_PATH;
+    case 'intermediate': return INTERMEDIATE_PATH;
+    case 'advanced': return ADVANCED_PATH;
+    default: return BEGINNER_PATH;
+  }
 }
 
 // Helper to get next topic after a given ID (within same level)
@@ -294,7 +427,7 @@ export function getNextTopic(currentId: string): LearningTopic | undefined {
   const topic = getTopic(currentId);
   if (!topic) return undefined;
   
-  const path = topic.level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+  const path = getPathForLevel(topic.level);
   const currentIndex = path.findIndex(t => t.id === currentId);
   
   if (currentIndex === -1 || currentIndex === path.length - 1) {
@@ -314,7 +447,12 @@ export function getTopicIndex(id: string): number {
 
 // Helper to get path by level
 export function getPath(level: LearningLevel): LearningTopic[] {
-  return level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+  switch (level) {
+    case 'beginner': return BEGINNER_PATH;
+    case 'intermediate': return INTERMEDIATE_PATH;
+    case 'advanced': return ADVANCED_PATH;
+    default: return BEGINNER_PATH;
+  }
 }
 
 // Helper to check if user has completed a level (all topics done)

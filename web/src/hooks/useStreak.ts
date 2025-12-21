@@ -35,8 +35,9 @@ export function useStreak() {
       return response.json();
     },
     enabled: isSignedIn,
-    staleTime: 1000 * 60, // 1 minute - refresh fairly often to catch new activities
+    staleTime: 1000 * 60 * 5, // 5 minutes - streak doesn't change that often
     refetchOnWindowFocus: true,
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 
   return {

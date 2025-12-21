@@ -70,8 +70,9 @@ export function useRecommendedTopic() {
       return response.json();
     },
     enabled: isSignedIn,
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 1000 * 60 * 2, // 2 minutes - recommendations don't change that often
     refetchOnWindowFocus: true,
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
@@ -96,13 +97,14 @@ export function useAllProgress() {
       return response.json();
     },
     enabled: isSignedIn,
-    staleTime: 30 * 1000,
+    staleTime: 1000 * 60 * 2, // 2 minutes - progress doesn't change that often
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
 // Update progress
 export function useUpdateProgress() {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -117,7 +119,17 @@ export function useUpdateProgress() {
       quizScore?: number;
       flashcardsCount?: number;
     }): Promise<UpdateProgressResponse> => {
+      // Skip API call if not signed in
+      if (!isSignedIn) {
+        throw new Error('User not signed in');
+      }
+
+      // Get token - will throw if Clerk fails to load (handled by onError)
       const token = await getToken();
+      
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
       
       const params = new URLSearchParams({ action });
       if (quizScore !== undefined) {

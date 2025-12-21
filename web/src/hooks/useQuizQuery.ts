@@ -78,6 +78,7 @@ export function useQuizStats() {
 
   return useQuery({
     queryKey: ['quizStats'],
+    placeholderData: (previousData) => previousData, // Keep previous data while refetching
     queryFn: async (): Promise<QuizStats> => {
       const token = await getToken();
       
@@ -181,6 +182,48 @@ export function useQuizHistory(page: number = 1, perPage: number = 20) {
     },
     enabled: !!isSignedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+// Types for weak areas
+export interface WeakArea {
+  category_id: string;
+  category_title: string;
+  avg_score: number;
+  attempt_count: number;
+  last_attempt: string;
+  priority: 'high' | 'medium';
+}
+
+export interface WeakAreasResponse {
+  weak_areas: WeakArea[];
+  has_weak_areas: boolean;
+  recommendation: WeakArea | null;
+}
+
+// Hook to get weak areas (categories where user struggles)
+export function useWeakAreas() {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery({
+    queryKey: ['weakAreas'],
+    queryFn: async (): Promise<WeakAreasResponse> => {
+      const token = await getToken();
+      
+      const response = await fetch(`${API_URL}/api/quiz/weak-areas`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch weak areas');
+      }
+
+      return response.json();
+    },
+    enabled: !!isSignedIn,
+    staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
 

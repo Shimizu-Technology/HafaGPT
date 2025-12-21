@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
@@ -9,28 +9,165 @@ interface LessonQuizProps {
 }
 
 const QUESTIONS_PER_QUIZ = 5;
+const STORAGE_KEY_PREFIX = 'hafagpt_quiz_';
+
+interface SavedQuizState {
+  topicId: string;
+  questionIds: string[];  // Preserve the randomized order
+  currentIndex: number;
+  correctCount: number;
+  answeredQuestions: Record<string, { userAnswer: string; isCorrect: boolean }>;
+  timestamp: number;
+}
+
+function getStorageKey(topicId: string) {
+  return `${STORAGE_KEY_PREFIX}${topicId}`;
+}
+
+function saveQuizState(state: SavedQuizState) {
+  try {
+    localStorage.setItem(getStorageKey(state.topicId), JSON.stringify(state));
+  } catch (e) {
+    console.warn('Failed to save quiz state:', e);
+  }
+}
+
+function loadQuizState(topicId: string): SavedQuizState | null {
+  try {
+    const saved = localStorage.getItem(getStorageKey(topicId));
+    if (!saved) return null;
+    
+    const state: SavedQuizState = JSON.parse(saved);
+    
+    // Check if state is older than 1 hour (stale)
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (Date.now() - state.timestamp > ONE_HOUR) {
+      clearQuizState(topicId);
+      return null;
+    }
+    
+    return state;
+  } catch (e) {
+    console.warn('Failed to load quiz state:', e);
+    return null;
+  }
+}
+
+function clearQuizState(topicId: string) {
+  try {
+    localStorage.removeItem(getStorageKey(topicId));
+  } catch (e) {
+    console.warn('Failed to clear quiz state:', e);
+  }
+}
 
 export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
-  // Get questions for this topic
+  // Try to restore saved state first
+  const savedState = useMemo(() => loadQuizState(topic.id), [topic.id]);
+  
+  // Get questions for this topic - preserve order if we have saved state
   const allQuestions = useMemo(() => {
     const category = QUIZ_CATEGORIES.find(c => c.id === topic.quizCategory);
     if (!category) return [];
     
-    // Shuffle and take first N questions
+    // If we have saved state with question IDs, use that order
+    if (savedState?.questionIds) {
+      const questionMap = new Map(category.questions.map(q => [q.id, q]));
+      const restoredQuestions = savedState.questionIds
+        .map(id => questionMap.get(id))
+        .filter((q): q is QuizQuestion => q !== undefined);
+      
+      if (restoredQuestions.length === savedState.questionIds.length) {
+        return restoredQuestions;
+      }
+    }
+    
+    // Otherwise, shuffle and take first N questions
     const shuffled = [...category.questions].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, QUESTIONS_PER_QUIZ);
-  }, [topic.quizCategory]);
+  }, [topic.quizCategory, savedState]);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Initialize state from saved or fresh
+  const [currentIndex, setCurrentIndex] = useState(savedState?.currentIndex ?? 0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [typedAnswer, setTypedAnswer] = useState('');
   const [isAnswered, setIsAnswered] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [correctCount, setCorrectCount] = useState(savedState?.correctCount ?? 0);
   const [showHint, setShowHint] = useState(false);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { userAnswer: string; isCorrect: boolean }>>(
+    savedState?.answeredQuestions ?? {}
+  );
+  const [showResumePrompt, setShowResumePrompt] = useState(
+    savedState !== null && savedState.currentIndex > 0
+  );
+
+  // Save state whenever it changes
+  const persistState = useCallback(() => {
+    if (allQuestions.length === 0) return;
+    
+    const state: SavedQuizState = {
+      topicId: topic.id,
+      questionIds: allQuestions.map(q => q.id),
+      currentIndex,
+      correctCount,
+      answeredQuestions,
+      timestamp: Date.now(),
+    };
+    saveQuizState(state);
+  }, [topic.id, allQuestions, currentIndex, correctCount, answeredQuestions]);
+
+  // Persist on state changes
+  useEffect(() => {
+    if (allQuestions.length > 0 && currentIndex < allQuestions.length) {
+      persistState();
+    }
+  }, [currentIndex, correctCount, answeredQuestions, persistState, allQuestions.length]);
+
+  // Warn user before leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only warn if quiz is in progress (not on first or last question after answering)
+      if (currentIndex > 0 || isAnswered) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentIndex, isAnswered]);
 
   const currentQuestion = allQuestions[currentIndex];
   const progress = ((currentIndex + 1) / allQuestions.length) * 100;
   const isLastQuestion = currentIndex === allQuestions.length - 1;
+
+  // Calculate if answer is correct (must be before early returns to satisfy Rules of Hooks)
+  const isCorrect = useMemo(() => {
+    if (!isAnswered || !currentQuestion) return false;
+    
+    if (currentQuestion.type === 'multiple_choice') {
+      return selectedAnswer === currentQuestion.correctAnswer;
+    } else {
+      const answer = typedAnswer.trim().toLowerCase();
+      const acceptable = currentQuestion.acceptableAnswers?.map(a => a.toLowerCase()) || [];
+      const correct = currentQuestion.correctAnswer.toLowerCase();
+      return answer === correct || acceptable.includes(answer);
+    }
+  }, [isAnswered, selectedAnswer, typedAnswer, currentQuestion]);
+
+  const handleStartFresh = () => {
+    clearQuizState(topic.id);
+    setCurrentIndex(0);
+    setCorrectCount(0);
+    setAnsweredQuestions({});
+    setSelectedAnswer(null);
+    setTypedAnswer('');
+    setIsAnswered(false);
+    setShowHint(false);
+    setShowResumePrompt(false);
+    // Note: questions will stay the same since we don't re-shuffle on fresh start
+    // This is intentional - full page refresh would give new questions
+  };
 
   if (allQuestions.length === 0) {
     return (
@@ -48,30 +185,84 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     );
   }
 
+  // Show resume prompt if there's saved progress
+  if (showResumePrompt && savedState) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 text-center">
+          <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ArrowRight className="w-8 h-8 text-purple-500 dark:text-purple-400" />
+          </div>
+          
+          <h3 className="text-xl font-bold text-brown-800 dark:text-white mb-2">
+            Continue Quiz?
+          </h3>
+          
+          <p className="text-brown-600 dark:text-gray-400 mb-6">
+            You were on question {savedState.currentIndex + 1} of {allQuestions.length} with {savedState.correctCount} correct answer{savedState.correctCount !== 1 ? 's' : ''}.
+          </p>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => setShowResumePrompt(false)}
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700
+                       text-white font-semibold rounded-2xl shadow-lg
+                       hover:from-purple-600 hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800
+                       transition-all"
+            >
+              Continue Where I Left Off
+            </button>
+            
+            <button
+              onClick={handleStartFresh}
+              className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400
+                       font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600 
+                       transition-colors"
+            >
+              Start Fresh
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const checkAnswer = () => {
     if (!currentQuestion) return;
 
-    let isCorrect = false;
+    let correct = false;
+    let userAnswer = '';
     
     if (currentQuestion.type === 'multiple_choice') {
-      isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+      userAnswer = selectedAnswer || '';
+      correct = selectedAnswer === currentQuestion.correctAnswer;
     } else {
       // For fill_blank and type_answer
-      const answer = typedAnswer.trim().toLowerCase();
+      userAnswer = typedAnswer.trim();
+      const answer = userAnswer.toLowerCase();
       const acceptable = currentQuestion.acceptableAnswers?.map(a => a.toLowerCase()) || [];
-      const correct = currentQuestion.correctAnswer.toLowerCase();
-      isCorrect = answer === correct || acceptable.includes(answer);
+      const correctAns = currentQuestion.correctAnswer.toLowerCase();
+      correct = answer === correctAns || acceptable.includes(answer);
     }
 
-    if (isCorrect) {
-      setCorrectCount(correctCount + 1);
+    if (correct) {
+      setCorrectCount(prev => prev + 1);
     }
+    
+    // Track this answer
+    setAnsweredQuestions(prev => ({
+      ...prev,
+      [currentQuestion.id]: { userAnswer, isCorrect: correct }
+    }));
     
     setIsAnswered(true);
   };
 
   const handleNext = () => {
     if (isLastQuestion) {
+      // Clear saved state on completion
+      clearQuizState(topic.id);
+      
       // Calculate final score
       const score = Math.round((correctCount / allQuestions.length) * 100);
       onComplete(score);
@@ -83,19 +274,6 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       setShowHint(false);
     }
   };
-
-  const isCorrect = useMemo(() => {
-    if (!isAnswered || !currentQuestion) return false;
-    
-    if (currentQuestion.type === 'multiple_choice') {
-      return selectedAnswer === currentQuestion.correctAnswer;
-    } else {
-      const answer = typedAnswer.trim().toLowerCase();
-      const acceptable = currentQuestion.acceptableAnswers?.map(a => a.toLowerCase()) || [];
-      const correct = currentQuestion.correctAnswer.toLowerCase();
-      return answer === correct || acceptable.includes(answer);
-    }
-  }, [isAnswered, selectedAnswer, typedAnswer, currentQuestion]);
 
   return (
     <div className="animate-fade-in space-y-6">
