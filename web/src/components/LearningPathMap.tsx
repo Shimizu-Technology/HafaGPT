@@ -70,8 +70,8 @@ function TopicNode({
   const statusColors = {
     locked: 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
     available: 'bg-white dark:bg-gray-800 border-coral-300 dark:border-ocean-400 shadow-md',
-    in_progress: 'bg-gradient-to-br from-coral-50 to-white dark:from-ocean-900 dark:to-gray-800 border-coral-400 dark:border-ocean-400 shadow-lg ring-2 ring-coral-200 dark:ring-ocean-500/30',
-    completed: 'bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/30 dark:to-gray-800 border-emerald-400 dark:border-emerald-500 shadow-md',
+    in_progress: 'bg-gradient-to-br from-coral-50 to-white dark:from-ocean-600/20 dark:to-ocean-500/10 border-coral-400 dark:border-ocean-400 shadow-lg ring-2 ring-coral-200 dark:ring-ocean-400/50',
+    completed: 'bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-600/20 dark:to-emerald-500/10 border-emerald-400 dark:border-emerald-400 shadow-md ring-1 ring-emerald-200 dark:ring-emerald-500/30',
   };
 
   const iconColors = {
