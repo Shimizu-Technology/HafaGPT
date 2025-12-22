@@ -132,7 +132,7 @@ export function SharedConversation() {
     <div className="min-h-screen bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
       {/* Header */}
       <header className="bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-cream-300 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 safe-area-top">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo & Title - clickable to go home */}
             <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity">

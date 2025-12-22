@@ -144,7 +144,7 @@ export function ConversationSidebar({
           ${isOpen ? 'opacity-100 delay-150' : 'opacity-0 pointer-events-none'}
         `}>
           {/* Header with Logo and Close - with safe area padding for iOS */}
-          <div className="px-3 py-3 border-b border-cream-300 dark:border-gray-800 safe-area-top">
+          <div className="p-3 border-b border-cream-300 dark:border-gray-800 safe-area-top">
             <div className="flex items-center justify-between mb-3">
               <Link 
                 to="/" 

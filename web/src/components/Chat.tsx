@@ -879,8 +879,8 @@ End of Export
       {/* Main chat area */}
       <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn && !isCapacitorApp ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
         {/* Header - Fixed Position */}
-        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn && !isCapacitorApp ? 'top-[52px] sm:top-[56px]' : 'top-0'}`}>
-          <div className="px-3 sm:px-6 py-3">
+        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn && !isCapacitorApp ? 'top-[52px] sm:top-[56px] pt-3' : 'top-0'}`}>
+          <div className="px-3 sm:px-6 py-1.5 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {/* Sidebar toggle button - only show if signed in */}

@@ -24,9 +24,10 @@
 
 @layer utilities {
   /* iOS Safe Area Support */
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
-  }
+.safe-area-top {
+  /* Use max() to ensure minimum 1rem padding on web, or safe-area on iOS */
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
   
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);

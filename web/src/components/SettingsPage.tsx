@@ -86,7 +86,7 @@ export function SettingsPage() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
       <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-gray-700/50 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between safe-area-top">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
           <div className="flex items-center gap-2">
             <Link 
               to="/"
