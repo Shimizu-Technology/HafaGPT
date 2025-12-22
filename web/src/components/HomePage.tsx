@@ -90,7 +90,7 @@ export function HomePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
         <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-xl shadow-lg">
                 🌺
@@ -119,7 +119,7 @@ export function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 via-cream-100 to-coral-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-slate-700/50 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg ${
               isChristmasTheme 
