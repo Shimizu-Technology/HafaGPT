@@ -589,6 +589,16 @@ logger.info(f"📍 PORT environment variable: {os.getenv('PORT', 'NOT SET')}")
 allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "*")
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")] if allowed_origins_str != "*" else ["*"]
 
+# Always allow Capacitor iOS app origins
+CAPACITOR_ORIGINS = [
+    "capacitor://localhost",  # iOS Capacitor app
+    "http://localhost",       # Android Capacitor app
+    "ionic://localhost",      # Ionic apps
+]
+# Add Capacitor origins if not already using wildcard
+if allowed_origins != ["*"]:
+    allowed_origins.extend(CAPACITOR_ORIGINS)
+
 # Log CORS configuration
 if allowed_origins == ["*"]:
     logger.warning("⚠️  CORS is set to allow all origins (*). This is OK for development but should be restricted in production!")
