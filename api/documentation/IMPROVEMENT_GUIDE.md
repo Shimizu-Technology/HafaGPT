@@ -382,6 +382,38 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 
 ---
 
+#### **Homepage Loading Performance** ✅ DONE (Dec 2025)
+
+> **Problem:** Homepage made 8-10 separate API calls, causing "waterfall loading" where sections appeared one-by-one.
+
+**Solution Implemented:**
+
+| Component | Before | After |
+|-----------|--------|-------|
+| **API Calls** | 8-10 sequential requests | 1 unified request |
+| **Backend** | Each endpoint queried independently | `asyncio.gather` runs all queries in parallel |
+| **Frontend** | Each component fetched its own data | Single `useHomepageData` hook passes data via props |
+| **Loading UX** | Sections appeared one-by-one | All sections load together with coordinated skeletons |
+
+**Files Changed:**
+- `HafaGPT-API/api/main.py` - Added `GET /api/homepage/data` endpoint
+- `HafaGPT-frontend/src/hooks/useHomepageData.ts` - New unified hook
+- `HafaGPT-frontend/src/components/HomePage.tsx` - Uses unified hook
+- `XPDisplay.tsx`, `WeakAreasWidget.tsx`, `DueCardsWidget.tsx`, `RecommendedLearning.tsx` - Accept data via props (with fallback hooks)
+
+**Future Optimizations (Not Yet Implemented):**
+
+| Optimization | Impact | Effort | Notes |
+|--------------|--------|--------|-------|
+| **Server-Side Rendering (SSR)** | High | 8-12 hrs | Pre-render on server, instant content |
+| **Edge Caching (Vercel/Cloudflare)** | High | 4-6 hrs | Cache unified API at edge |
+| **Incremental Loading** | Medium | 3-4 hrs | Show critical data first, load rest async |
+| **Optimistic Updates** | Low | 2-3 hrs | Update UI before API confirms |
+| **Redis Caching** | Medium | 4-6 hrs | Cache expensive queries (stats, recommendations) |
+| **WebSocket Updates** | Low | 6-8 hrs | Push updates instead of polling |
+
+---
+
 #### **Remaining Scalability Work**
 
 | Strategy | Effort | Impact | Status |
