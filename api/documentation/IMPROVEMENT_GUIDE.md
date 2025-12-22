@@ -144,7 +144,8 @@ PATCH /api/admin/users/:id      # Update user (premium, whitelist, ban, role)
 - [x] Theme Switching (Default, Christmas, New Year, Chamorro)
 - [x] Theme-aware promo banners (different colors/emojis per theme)
 - [x] Christmas snowfall effect (CSS animations)
-- [x] Theme-aware logos across app (🌺 ↔ 🎄)
+- [x] New Year sparkle + firework burst effect (CSS animations)
+- [x] Theme-aware logos across app (🌺 default, 🎄 Christmas, 🎆 New Year)
 - [x] Settings caching (60s TTL for performance)
 
 **Backend Endpoints:**
@@ -942,6 +943,8 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
 | New Learning Games (Phase 2-4) | 📋 Planned | Phrase Builder, Speed Challenge, Picture Match, Word Search, Boss Battles, more |
 | Admin Settings Polish | ✅ Done | Last Active tracking, Settings quick action, toggle styling |
+| New Year Theme | ✅ Done | Sparkles + firework bursts, 🎆 logo, purple/gold colors |
+| More Seasonal Themes | 📋 Planned | Valentine's, Easter, Chamorro Month, Independence Day |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
 | ElevenLabs Voice Cloning | 📋 Future | Better pronunciation |
 | PostHog + Stripe Analytics | 📋 Future | Revenue correlation |
@@ -1166,15 +1169,20 @@ DELETE /api/share/:share_id → revoke share (owner only)
 17. ✅ ~~**Learning Platform Phase 5: Personalization & XP**~~ - Done! XP system, daily goals, weak areas, spaced repetition
 18. ✅ ~~**Homepage Signed-Out Improvements**~~ - Done! Learning path promotion, floating CTA, 2x2 explore grid
 19. ✅ ~~**Word of the Day Filtering**~~ - Done! Exclude names/nicknames from appearing
+20. ✅ ~~**Homepage Performance**~~ - Done! Unified API endpoint, parallel data fetching, coordinated loading
+21. ✅ ~~**New Year's Theme**~~ - Done! Sparkle effect, firework bursts, 🎆 logo
 
 **🎯 Learning Platform Transformation (Priority 6):**
-20. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
+22. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
 
 **Other Features:**
-19. **Voice Input** - Web Speech API for voice-to-text
-20. **New Games Phase 2** - Phrase Builder, Speed Challenge
-21. **Knowledge Base Management** - Admin UI for RAG document uploads
-22. **Exit Beta** - When ready: disable promo, enable freemium limits
+23. **More Seasonal Themes** - Valentine's Day, Easter, Chamorro Month, etc.
+24. **Gemini 3 Flash Testing** - Test new model for improved translations
+25. **Voice Input** - Web Speech API for voice-to-text
+26. **New Games Phase 2** - Phrase Builder, Speed Challenge
+27. **Knowledge Base Management** - Admin UI for RAG document uploads
+28. **Mobile App (PWA/Capacitor)** - Enhanced PWA or native app wrapper
+29. **Exit Beta** - When ready: disable promo, enable freemium limits
 
 ---
 
@@ -1197,6 +1205,14 @@ User management + analytics + site settings all working!
 ---
 
 ## 🐛 Recent Bug Fixes & Improvements
+
+### December 22, 2025 - New Year's Theme & Performance
+|| Feature | Description |
+||---------|-------------|
+|| **🎆 New Year's Theme** | Added sparkle + firework burst effect with twinkling animation. Features: falling sparkles (✦✧✴✵), occasional particle bursts, 🎆 logo across app, purple glow (light mode) / golden glow (dark mode). |
+|| **⚡ Homepage Performance** | Unified API endpoint (`/api/homepage/data`) fetches all data in parallel. Reduced 8-10 API calls to 1. Coordinated loading with skeletons. |
+|| **📱 Homepage Signed-Out UX** | Added "Learn" card to Explore grid, floating CTA for sign-up, 2x2 grid on mobile, removed redundant bottom card. |
+|| **🔍 Word of the Day Filter** | Excludes proper names, nicknames, and abbreviations from appearing. |
 
 ### December 20, 2025 - Stability & Reliability Overhaul
 
