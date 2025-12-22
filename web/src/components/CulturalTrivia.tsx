@@ -441,7 +441,7 @@ export function CulturalTrivia() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
         <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
             <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Games</span>
@@ -598,7 +598,7 @@ export function CulturalTrivia() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
         <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
             <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Games</span>
@@ -706,7 +706,7 @@ export function CulturalTrivia() {
       
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3">
+        <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between mb-2">
             <button
               onClick={() => setShowQuitConfirm(true)}

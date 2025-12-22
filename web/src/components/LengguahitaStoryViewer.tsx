@@ -282,7 +282,7 @@ export function LengguahitaStoryViewer() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-teal-200/20 dark:border-teal-500/20 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
           <Link
             to="/stories"
             className="p-2 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"

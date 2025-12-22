@@ -104,7 +104,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <div className="lg:ml-64">
         {/* Top Header */}
         <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-cream-200 dark:border-slate-700 sticky top-0 z-30">
-          <div className="h-full px-4 flex items-center justify-between">
+          <div className="h-full px-4 flex items-center justify-between safe-area-top">
             {/* Mobile menu button */}
             <button 
               onClick={() => setSidebarOpen(true)}

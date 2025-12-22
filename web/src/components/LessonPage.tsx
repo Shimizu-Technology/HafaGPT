@@ -207,7 +207,7 @@ export function LessonPage() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-slate-700/50 sticky top-0 z-20">
-        <div className="max-w-3xl mx-auto px-4 py-3">
+        <div className="max-w-3xl mx-auto px-4 py-3 safe-area-top">
           {/* Top row: Back, Title, Theme */}
           <div className="flex items-center justify-between mb-3">
             <button

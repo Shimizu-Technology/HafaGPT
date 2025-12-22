@@ -135,6 +135,7 @@ export function BottomNav() {
             <Link
               key={item.to}
               to={item.to}
+              onClick={() => setShowMoreMenu(false)}
               className={`flex flex-col items-center justify-center gap-0.5 px-3 py-2 min-w-[64px] transition-colors ${
                 isActive(item)
                   ? 'text-coral-600 dark:text-ocean-400'

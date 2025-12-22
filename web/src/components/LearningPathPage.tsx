@@ -21,7 +21,7 @@ export function LearningPathPage() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 pb-24 md:pb-8">
       {/* Header */}
       <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
           <button
             onClick={handleBack}
             className="w-10 h-10 rounded-full hover:bg-cream-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
