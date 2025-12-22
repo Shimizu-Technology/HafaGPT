@@ -7,7 +7,7 @@ const config: CapacitorConfig = {
   
   // iOS specific settings
   ios: {
-    contentInset: 'automatic',
+    contentInset: 'never',  // Don't add automatic padding - website handles layout
     backgroundColor: '#FDF8F3',
     preferredContentMode: 'mobile',
   },

@@ -96,7 +96,7 @@ export function BottomNav() {
 
       {/* More Menu Panel */}
       {showMoreMenu && (
-        <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-slate-800 border-t border-cream-200 dark:border-slate-700 rounded-t-2xl shadow-2xl z-50 sm:hidden animate-slide-up">
+        <div className="fixed left-0 right-0 bg-white dark:bg-slate-800 border-t border-cream-200 dark:border-slate-700 rounded-t-2xl shadow-2xl z-50 sm:hidden animate-slide-up above-bottom-nav">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-brown-800 dark:text-white">More</h3>
