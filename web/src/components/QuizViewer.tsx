@@ -345,7 +345,7 @@ export function QuizViewer() {
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
         {/* Header */}
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3 safe-area-top">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3 safe-area-top">
             <Link
               to="/quiz"
               className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
@@ -481,7 +481,7 @@ export function QuizViewer() {
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
       {/* Header */}
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm flex-shrink-0">
-        <div className="max-w-2xl mx-auto px-4 py-3 sm:py-4 safe-area-top">
+        <div className="max-w-2xl mx-auto px-4 py-3 safe-area-top">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center gap-2 sm:gap-3">
               <button
