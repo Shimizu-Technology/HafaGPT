@@ -1,12 +1,21 @@
 import { Link } from 'react-router-dom';
 import { RotateCcw, Clock, CheckCircle, ArrowRight, BookOpen } from 'lucide-react';
 import { useSRSummary } from '../hooks/useSpacedRepetition';
+import type { SRSummaryData } from '../hooks/useHomepageData';
 
-export function DueCardsWidget() {
-  const { data: summary, isLoading } = useSRSummary();
+interface DueCardsWidgetProps {
+  srSummaryData?: SRSummaryData | null; // Optional: Pass data from parent to avoid duplicate fetch
+  isLoading?: boolean;
+}
+
+export function DueCardsWidget({ srSummaryData: passedData, isLoading: passedLoading }: DueCardsWidgetProps) {
+  // Use passed data if available, otherwise fetch our own
+  const { data: fetchedData, isLoading: fetchLoading } = useSRSummary();
+  const summary = passedData ?? fetchedData;
+  const isLoading = passedLoading ?? fetchLoading;
 
   // Don't show if loading
-  if (isLoading) {
+  if (isLoading && !passedData) {
     return null;
   }
 

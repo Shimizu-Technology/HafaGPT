@@ -3,14 +3,31 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle, RotateCcw, BookOpen, ChevronDown, ChevronUp, Map as MapIcon, Trophy } from 'lucide-react';
 import { useRecommendedTopic, useAllProgress } from '../hooks/useLearningPath';
 import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, ALL_TOPICS, isLevelComplete } from '../data/learningPath';
+import type { RecommendedData, AllProgressData } from '../hooks/useHomepageData';
 
-export function RecommendedLearning() {
-  const { data, isLoading, error } = useRecommendedTopic();
-  const { data: allProgress } = useAllProgress();
+interface RecommendedLearningProps {
+  recommendedData?: RecommendedData | null; // Optional: Pass data from parent to avoid duplicate fetch
+  allProgressData?: AllProgressData | null; // Optional: Pass data from parent to avoid duplicate fetch
+  isLoading?: boolean;
+}
+
+export function RecommendedLearning({ 
+  recommendedData: passedRecommendedData, 
+  allProgressData: passedAllProgressData,
+  isLoading: passedLoading
+}: RecommendedLearningProps) {
+  // Use passed data if available, otherwise fetch our own
+  const { data: fetchedRecommended, isLoading: fetchLoading, error } = useRecommendedTopic();
+  const { data: fetchedAllProgress } = useAllProgress();
+  
+  const data = passedRecommendedData ?? fetchedRecommended;
+  const allProgress = passedAllProgressData ?? fetchedAllProgress;
+  const isLoading = passedLoading ?? fetchLoading;
+  
   const [showAllTopics, setShowAllTopics] = useState(false);
 
   // Show skeleton while loading
-  if (isLoading) {
+  if (isLoading && !passedRecommendedData) {
     return (
       <div className="bg-gradient-to-r from-coral-400 to-coral-500 dark:from-ocean-500 dark:to-ocean-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden animate-pulse">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />

@@ -1,12 +1,21 @@
 import { Link } from 'react-router-dom';
 import { AlertCircle, Target, ArrowRight, RefreshCw } from 'lucide-react';
 import { useWeakAreas } from '../hooks/useQuizQuery';
+import type { WeakAreasData } from '../hooks/useHomepageData';
 
-export function WeakAreasWidget() {
-  const { data: weakAreasData, isLoading } = useWeakAreas();
+interface WeakAreasWidgetProps {
+  weakAreasData?: WeakAreasData | null; // Optional: Pass data from parent to avoid duplicate fetch
+  isLoading?: boolean;
+}
+
+export function WeakAreasWidget({ weakAreasData: passedData, isLoading: passedLoading }: WeakAreasWidgetProps) {
+  // Use passed data if available, otherwise fetch our own
+  const { data: fetchedData, isLoading: fetchLoading } = useWeakAreas();
+  const weakAreasData = passedData ?? fetchedData;
+  const isLoading = passedLoading ?? fetchLoading;
 
   // Don't show if loading or no data
-  if (isLoading) {
+  if (isLoading && !passedData) {
     return null; // Could add skeleton here if needed
   }
 

@@ -1,15 +1,19 @@
 import { useXP, getLevelInfo } from '../hooks/useXP';
 import { Zap, Target, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import type { XPData } from '../hooks/useHomepageData';
 
 interface XPDisplayProps {
   compact?: boolean; // For use in header or smaller spaces
+  xpData?: XPData | null; // Optional: Pass data from parent to avoid duplicate fetch
 }
 
-export function XPDisplay({ compact = false }: XPDisplayProps) {
-  const { data: xpData, isLoading } = useXP();
+export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayProps) {
+  // Use passed data if available, otherwise fetch our own
+  const { data: fetchedXpData, isLoading } = useXP();
+  const xpData = passedXpData ?? fetchedXpData;
 
-  if (isLoading) {
+  if (isLoading && !passedXpData) {
     return (
       <div className={`animate-pulse ${compact ? 'h-8' : 'h-24'} bg-gray-100 dark:bg-gray-700 rounded-lg`} />
     );

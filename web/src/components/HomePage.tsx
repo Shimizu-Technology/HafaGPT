@@ -23,9 +23,7 @@ import { useUser, useClerk } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
-import { useStreak } from '../hooks/useStreak';
-import { useQuizStats } from '../hooks/useQuizQuery';
-import { useGameStats } from '../hooks/useGamesQuery';
+import { useHomepageData } from '../hooks/useHomepageData';
 import { DailyWord } from './DailyWord';
 import { DailyWordleCard } from './DailyWordleCard';
 import { AuthButton } from './AuthButton';
@@ -34,7 +32,6 @@ import { RecommendedLearning } from './RecommendedLearning';
 import { XPDisplay, XPBadge } from './XPDisplay';
 import { WeakAreasWidget } from './WeakAreasWidget';
 import { DueCardsWidget } from './DueCardsWidget';
-import { useXP } from '../hooks/useXP';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -44,10 +41,19 @@ export function HomePage() {
   useInitUserData(null, isClerkLoaded && !!user?.id);
   const { isPremium, isChristmasTheme } = useSubscription();
   const { needsOnboarding } = useUserPreferences();
-  const { streak: streakData } = useStreak();
-  const { data: quizStats, isLoading: isLoadingQuizStats } = useQuizStats();
-  const { data: gameStats, isLoading: isLoadingGameStats } = useGameStats();
-  const { data: xpData, isLoading: isLoadingXP } = useXP();
+  
+  // Use unified homepage data hook - one API call instead of 8+
+  const { 
+    isLoading: isLoadingHomepageData,
+    streak: streakData,
+    xp: xpData,
+    quizStats,
+    gameStats,
+    weakAreas: weakAreasData,
+    srSummary: srSummaryData,
+    recommended: recommendedData,
+    allProgress: allProgressData
+  } = useHomepageData();
   
   const [quickMessage, setQuickMessage] = useState('');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -248,14 +254,18 @@ export function HomePage() {
 
         {/* Recommended Learning Widget - Only for signed-in users */}
         {isSignedIn && (
-          <RecommendedLearning />
+          <RecommendedLearning 
+            recommendedData={recommendedData} 
+            allProgressData={allProgressData}
+            isLoading={isLoadingHomepageData}
+          />
         )}
 
         {/* XP & Progress Widget - Only for signed-in users */}
         {isSignedIn && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* XP Display */}
-            {isLoadingXP ? (
+            {isLoadingHomepageData ? (
               <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl p-5 border border-amber-200 dark:border-amber-700/50 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-xl bg-amber-200 dark:bg-amber-700/50" />
@@ -267,11 +277,11 @@ export function HomePage() {
                 <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full" />
               </div>
             ) : (
-              <XPDisplay />
+              <XPDisplay xpData={xpData} />
             )}
 
             {/* Stats Card - Compact version */}
-            {(isLoadingQuizStats || isLoadingGameStats) ? (
+            {isLoadingHomepageData ? (
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-xl p-5 border border-purple-200 dark:border-purple-700/50 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-xl bg-purple-200 dark:bg-purple-700/50" />
@@ -349,10 +359,10 @@ export function HomePage() {
         )}
 
         {/* Weak Areas Widget - Only shown if user has areas to practice */}
-        {isSignedIn && <WeakAreasWidget />}
+        {isSignedIn && <WeakAreasWidget weakAreasData={weakAreasData} isLoading={isLoadingHomepageData} />}
 
         {/* Due Cards Widget - Only shown if user has cards to review */}
-        {isSignedIn && <DueCardsWidget />}
+        {isSignedIn && <DueCardsWidget srSummaryData={srSummaryData} isLoading={isLoadingHomepageData} />}
 
         {/* Explore - Combined Actions Section */}
         <div className="space-y-3">
@@ -377,7 +387,7 @@ export function HomePage() {
                 </p>
                 <div className="hidden sm:flex items-center text-blue-500 dark:text-blue-400 font-medium text-sm">
                   Start learning <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
+              </div>
               </div>
             </Link>
 
@@ -397,7 +407,7 @@ export function HomePage() {
                 </p>
                 <div className="hidden sm:flex items-center text-coral-500 dark:text-coral-400 font-medium text-sm">
                   Start chatting <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
+              </div>
               </div>
             </Link>
 
@@ -437,7 +447,7 @@ export function HomePage() {
                 </p>
                 <div className="hidden sm:flex items-center text-purple-500 dark:text-purple-400 font-medium text-sm">
                   Start quiz <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </div>
+              </div>
               </div>
             </Link>
           </div>
@@ -495,8 +505,8 @@ export function HomePage() {
                 <p className="text-xs text-brown-500 dark:text-gray-400">Conversations</p>
               </div>
             </Link>
-          </div>
-        </div>
+              </div>
+              </div>
 
         {/* Daily Section - Compact 2-column grid */}
         <div className="space-y-3">
@@ -505,10 +515,41 @@ export function HomePage() {
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DailyWord compactOnMobile={false} />
-        <DailyWordleCard />
-              </div>
-              </div>
+            {/* Show skeletons while authenticated data is loading to coordinate visual loading */}
+            {isSignedIn && isLoadingHomepageData ? (
+              <>
+                {/* Daily Word Skeleton */}
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-700/50 animate-pulse">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="h-4 w-24 bg-amber-200 dark:bg-amber-700/50 rounded" />
+                    <div className="h-5 w-16 bg-amber-200 dark:bg-amber-700/50 rounded-full" />
+                  </div>
+                  <div className="h-8 w-32 bg-amber-200 dark:bg-amber-700/50 rounded mb-2" />
+                  <div className="h-4 w-16 bg-amber-200 dark:bg-amber-700/50 rounded mb-2" />
+                  <div className="h-4 w-full bg-amber-200 dark:bg-amber-700/50 rounded" />
+                </div>
+                {/* Daily Wordle Skeleton */}
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl p-4 animate-pulse">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="h-4 w-24 bg-white/20 rounded" />
+                    <div className="h-5 w-12 bg-white/20 rounded-full" />
+                  </div>
+                  <div className="h-6 w-32 bg-white/20 rounded mb-2" />
+                  <div className="h-4 w-48 bg-white/20 rounded mb-4" />
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-28 bg-white/20 rounded" />
+                    <div className="h-8 w-20 bg-white/20 rounded" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <DailyWord compactOnMobile={false} />
+                <DailyWordleCard />
+              </>
+            )}
+          </div>
+        </div>
 
         {/* Footer */}
         <footer className="text-center py-6 mt-4 border-t border-cream-200/50 dark:border-slate-700/50">
