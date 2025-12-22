@@ -8,9 +8,19 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "ios:sync": "npm run build && npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:build": "npm run build && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/haptics": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@clerk/clerk-react": "^5.55.0",
     "@clerk/themes": "^2.4.42",
     "@supabase/supabase-js": "^2.57.4",

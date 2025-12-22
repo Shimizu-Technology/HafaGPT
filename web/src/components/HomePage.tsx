@@ -89,7 +89,7 @@ export function HomePage() {
   if (showLoadingSkeleton) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
+        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 safe-area-top">
           <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-400 to-coral-600 flex items-center justify-center text-xl shadow-lg">
@@ -118,7 +118,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 via-cream-100 to-coral-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-slate-700/50 sticky top-0 z-10">
+      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-slate-700/50 sticky top-0 z-10 safe-area-top">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg ${
@@ -171,7 +171,7 @@ export function HomePage() {
         </div>
       </header>
 
-      <div className={`max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 ${!isSignedIn ? 'pb-24 md:pb-8' : 'pb-8'}`}>
+      <div className={`max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6 sm:space-y-8 ${!isSignedIn ? 'pb-32 sm:pb-8' : 'pb-24 sm:pb-8'}`}>
 
         {/* Hero Section - Different for signed in vs signed out */}
         {isSignedIn ? (
@@ -597,7 +597,7 @@ export function HomePage() {
 
       {/* Floating CTA for signed-out mobile users - positioned above BottomNav */}
       {!isSignedIn && (
-        <div className="fixed bottom-16 left-0 right-0 sm:hidden z-50 px-4 pb-2">
+        <div className="fixed above-bottom-nav left-0 right-0 sm:hidden z-50 px-4 pb-2">
           <button
             onClick={handleSignInClick}
             className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"

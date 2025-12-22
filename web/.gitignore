@@ -21,3 +21,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# iOS build artifacts
+ios/App/Pods/
+ios/App/App/public/
+ios/DerivedData/
+*.xcuserdata
