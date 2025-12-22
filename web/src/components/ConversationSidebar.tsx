@@ -143,8 +143,8 @@ export function ConversationSidebar({
           flex flex-col h-full w-64 transition-opacity duration-300
           ${isOpen ? 'opacity-100 delay-150' : 'opacity-0 pointer-events-none'}
         `}>
-          {/* Header with Logo and Close */}
-          <div className="p-3 border-b border-cream-300 dark:border-gray-800">
+          {/* Header with Logo and Close - with safe area padding for iOS */}
+          <div className="p-3 border-b border-cream-300 dark:border-gray-800 safe-area-top">
             <div className="flex items-center justify-between mb-3">
               <Link 
                 to="/" 
