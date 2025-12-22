@@ -3745,6 +3745,455 @@ async def get_user_streak(
 
 
 # ==========================================
+# Unified Homepage Data Endpoint
+# ==========================================
+
+def _fetch_streak_data(user_id: str, db_url: str):
+    """Fetch streak data for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    today = get_guam_date()
+    
+    # Get all activity days for this user
+    cursor.execute("""
+        SELECT DISTINCT activity_date FROM (
+            SELECT usage_date as activity_date
+            FROM user_daily_usage
+            WHERE user_id = %s
+            AND (chat_count > 0 OR game_count > 0 OR quiz_count > 0)
+            UNION
+            SELECT DATE(started_at AT TIME ZONE 'Pacific/Guam') as activity_date
+            FROM user_topic_progress
+            WHERE user_id = %s AND started_at IS NOT NULL
+            UNION
+            SELECT DATE(completed_at AT TIME ZONE 'Pacific/Guam') as activity_date
+            FROM user_topic_progress
+            WHERE user_id = %s AND completed_at IS NOT NULL
+        ) combined_activities
+        ORDER BY activity_date DESC
+    """, (user_id, user_id, user_id))
+    
+    activity_days = [(row[0],) for row in cursor.fetchall()]
+    
+    current_streak = 0
+    last_activity_date = None
+    
+    if activity_days:
+        check_date = today
+        for row in activity_days:
+            activity_date = row[0]
+            if activity_date == check_date:
+                current_streak += 1
+                check_date = check_date - timedelta(days=1)
+            elif activity_date == check_date - timedelta(days=1):
+                current_streak += 1
+                check_date = activity_date - timedelta(days=1)
+            else:
+                break
+            last_activity_date = activity_date
+    
+    # Get today's activity breakdown
+    cursor.execute("""
+        SELECT chat_count, game_count, quiz_count
+        FROM user_daily_usage
+        WHERE user_id = %s AND usage_date = %s
+    """, (user_id, today))
+    
+    today_row = cursor.fetchone()
+    today_chat = today_row[0] or 0 if today_row else 0
+    today_games = today_row[1] or 0 if today_row else 0
+    today_quizzes = today_row[2] or 0 if today_row else 0
+    
+    cursor.execute("""
+        SELECT COUNT(*) FROM user_topic_progress
+        WHERE user_id = %s 
+        AND (
+            DATE(started_at AT TIME ZONE 'Pacific/Guam') = %s
+            OR DATE(completed_at AT TIME ZONE 'Pacific/Guam') = %s
+        )
+    """, (user_id, today, today))
+    
+    learning_row = cursor.fetchone()
+    today_learning = learning_row[0] or 0 if learning_row else 0
+    is_today_active = (today_chat + today_games + today_quizzes + today_learning) > 0
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        "current_streak": current_streak,
+        "longest_streak": current_streak,  # Simplified for homepage
+        "is_today_active": is_today_active,
+        "today_activities": {
+            "chat": today_chat,
+            "games": today_games,
+            "quizzes": today_quizzes,
+            "learning": today_learning
+        },
+        "last_activity_date": str(last_activity_date) if last_activity_date else None
+    }
+
+
+def _fetch_xp_data(user_id: str, db_url: str):
+    """Fetch XP data for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    today = get_guam_date()
+    
+    cursor.execute("""
+        SELECT total_xp, level, daily_goal_minutes, today_minutes, goal_date
+        FROM user_xp WHERE user_id = %s
+    """, (user_id,))
+    
+    row = cursor.fetchone()
+    
+    if row:
+        total_xp, level, daily_goal_minutes, today_minutes, goal_date = row
+        if goal_date != today:
+            today_minutes = 0
+    else:
+        total_xp, level, daily_goal_minutes, today_minutes = 0, 1, 10, 0
+    
+    cursor.close()
+    conn.close()
+    
+    level = calculate_level(total_xp)
+    xp_for_current = LEVEL_THRESHOLDS[level - 1] if level > 1 else 0
+    xp_for_next = get_xp_for_next_level(level)
+    
+    xp_in_level = total_xp - xp_for_current
+    xp_needed = xp_for_next - xp_for_current
+    xp_progress = min(100, int((xp_in_level / xp_needed) * 100)) if xp_needed > 0 else 100
+    
+    return {
+        "total_xp": total_xp,
+        "level": level,
+        "xp_for_current_level": xp_for_current,
+        "xp_for_next_level": xp_for_next,
+        "xp_progress": xp_progress,
+        "daily_goal_minutes": daily_goal_minutes,
+        "today_minutes": today_minutes,
+        "daily_goal_complete": today_minutes >= daily_goal_minutes if daily_goal_minutes > 0 else True
+    }
+
+
+def _fetch_quiz_stats(user_id: str, db_url: str):
+    """Fetch quiz stats for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT COUNT(*) as total_quizzes, COALESCE(AVG(percentage), 0) as average_score
+        FROM quiz_results WHERE user_id = %s
+    """, (user_id,))
+    
+    stats = cursor.fetchone()
+    total_quizzes = stats[0]
+    average_score = float(stats[1])
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        "total_quizzes": total_quizzes,
+        "average_score": round(average_score, 1)
+    }
+
+
+def _fetch_game_stats(user_id: str, db_url: str):
+    """Fetch game stats for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT COUNT(*) as total_games, COALESCE(AVG(score), 0) as average_score
+        FROM game_results WHERE user_id = %s
+    """, (user_id,))
+    
+    stats = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        "total_games": stats[0],
+        "average_score": round(float(stats[1]), 1)
+    }
+
+
+def _fetch_weak_areas(user_id: str, db_url: str):
+    """Fetch weak areas for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT category_id, category_title, AVG(percentage) as avg_score, COUNT(*) as attempt_count
+        FROM quiz_results
+        WHERE user_id = %s AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY category_id, category_title
+        ORDER BY avg_score ASC
+    """, (user_id,))
+    
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    weak_areas = []
+    for row in rows:
+        category_id, category_title, avg_score, attempt_count = row
+        if avg_score < 70:
+            weak_areas.append({
+                "category_id": category_id,
+                "category_title": category_title,
+                "avg_score": round(float(avg_score), 1),
+                "attempt_count": attempt_count,
+                "priority": "high" if avg_score < 50 else "medium"
+            })
+    
+    return {
+        "weak_areas": weak_areas,
+        "has_weak_areas": len(weak_areas) > 0,
+        "recommendation": weak_areas[0] if weak_areas else None
+    }
+
+
+def _fetch_sr_summary(user_id: str, db_url: str):
+    """Fetch spaced repetition summary for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total_cards,
+            COUNT(*) FILTER (WHERE next_review IS NULL OR next_review <= NOW()) as due_today,
+            COUNT(*) FILTER (WHERE easiness_factor > 2.3 AND interval > 30) as mastered,
+            COUNT(*) FILTER (WHERE interval < 7) as learning
+        FROM spaced_repetition
+        WHERE user_id = %s
+    """, (user_id,))
+    
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if row:
+        return {
+            "total_cards": row[0],
+            "due_today": row[1],
+            "mastered": row[2],
+            "learning": row[3],
+            "has_cards": row[0] > 0
+        }
+    
+    return {"total_cards": 0, "due_today": 0, "mastered": 0, "learning": 0, "has_cards": False}
+
+
+def _fetch_learning_recommended(user_id: str, db_url: str):
+    """Fetch recommended topic for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT topic_id, started_at, completed_at, best_quiz_score, flashcards_viewed, last_activity_at
+        FROM user_topic_progress WHERE user_id = %s
+    """, (user_id,))
+    
+    progress_rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    # Build progress map
+    progress_map = {}
+    for row in progress_rows:
+        progress_map[row[0]] = {
+            "topic_id": row[0],
+            "started_at": row[1].isoformat() if row[1] else None,
+            "completed_at": row[2].isoformat() if row[2] else None,
+            "best_quiz_score": row[3],
+            "flashcards_viewed": row[4] or 0,
+            "last_activity_at": row[5].isoformat() if row[5] else None,
+        }
+    
+    # Count completions per level
+    beginner_completed = sum(1 for t in BEGINNER_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    intermediate_completed = sum(1 for t in INTERMEDIATE_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    advanced_completed = sum(1 for t in ADVANCED_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    total_completed = beginner_completed + intermediate_completed + advanced_completed
+    
+    beginner_complete = beginner_completed == len(BEGINNER_PATH)
+    intermediate_complete = intermediate_completed == len(INTERMEDIATE_PATH)
+    
+    recommendation_type = "start"
+    recommended_topic = None
+    topic_progress = None
+    message = ""
+    
+    # Check each path in order
+    paths = [
+        (BEGINNER_PATH, beginner_complete, "intermediate"),
+        (INTERMEDIATE_PATH, intermediate_complete, "advanced"),
+        (ADVANCED_PATH, True, None)
+    ]
+    
+    for path, path_complete, next_level in paths:
+        if path_complete:
+            continue
+        for topic in path:
+            topic_id = topic["id"]
+            progress = progress_map.get(topic_id)
+            
+            if not progress:
+                recommendation_type = "start" if total_completed == 0 else "next"
+                recommended_topic = topic
+                topic_progress = {"topic_id": topic_id, "started_at": None, "completed_at": None, "best_quiz_score": None, "flashcards_viewed": 0}
+                message = f"Start your Chamorro journey with {topic['title']}!" if total_completed == 0 else f"Great progress! Ready for {topic['title']}?"
+                break
+            elif not progress.get("completed_at"):
+                recommendation_type = "continue"
+                recommended_topic = topic
+                topic_progress = progress
+                message = f"Continue where you left off in {topic['title']}"
+                break
+        if recommended_topic:
+            break
+    
+    if not recommended_topic:
+        recommendation_type = "complete"
+        message = "Congratulations! You've completed all topics! Review any topic to keep your skills sharp."
+    
+    return {
+        "recommendation_type": recommendation_type,
+        "topic": recommended_topic,
+        "progress": topic_progress,
+        "completed_topics": total_completed,
+        "total_topics": len(ALL_TOPICS),
+        "message": message
+    }
+
+
+def _fetch_all_progress(user_id: str, db_url: str):
+    """Fetch all learning progress for user (runs in thread pool)."""
+    import psycopg2
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        SELECT topic_id, started_at, completed_at, best_quiz_score, flashcards_viewed, last_activity_at
+        FROM user_topic_progress WHERE user_id = %s
+    """, (user_id,))
+    
+    progress_rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    progress_map = {}
+    for row in progress_rows:
+        progress_map[row[0]] = {
+            "topic_id": row[0],
+            "started_at": row[1].isoformat() if row[1] else None,
+            "completed_at": row[2].isoformat() if row[2] else None,
+            "best_quiz_score": row[3],
+            "flashcards_viewed": row[4] or 0,
+            "last_activity_at": row[5].isoformat() if row[5] else None,
+        }
+    
+    topics_with_progress = []
+    for topic in ALL_TOPICS:
+        topic_id = topic["id"]
+        progress = progress_map.get(topic_id, {
+            "topic_id": topic_id, "started_at": None, "completed_at": None,
+            "best_quiz_score": None, "flashcards_viewed": 0, "last_activity_at": None,
+        })
+        topics_with_progress.append({"topic": topic, "progress": progress})
+    
+    beginner_completed = sum(1 for t in BEGINNER_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    intermediate_completed = sum(1 for t in INTERMEDIATE_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    advanced_completed = sum(1 for t in ADVANCED_PATH if progress_map.get(t["id"], {}).get("completed_at"))
+    
+    return {
+        "topics": topics_with_progress,
+        "summary": {
+            "beginner": {"completed": beginner_completed, "total": len(BEGINNER_PATH)},
+            "intermediate": {"completed": intermediate_completed, "total": len(INTERMEDIATE_PATH)},
+            "advanced": {"completed": advanced_completed, "total": len(ADVANCED_PATH)},
+            "total_completed": beginner_completed + intermediate_completed + advanced_completed,
+            "total_topics": len(ALL_TOPICS)
+        }
+    }
+
+
+@app.get("/api/homepage/data", tags=["Homepage"])
+async def get_homepage_data(
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Unified endpoint that fetches all data needed for the homepage in one call.
+    
+    This runs all queries in parallel for maximum performance, reducing
+    homepage load from 8+ API calls down to 1.
+    
+    Returns: streak, xp, quiz_stats, game_stats, weak_areas, sr_summary, 
+             recommended_topic, all_progress
+    """
+    try:
+        user_id = await verify_user(authorization)
+        db_url = os.getenv("DATABASE_URL")
+        
+        # Run all data fetching in parallel using asyncio.gather
+        # Each function runs its DB queries synchronously but we run them concurrently in thread pool
+        loop = asyncio.get_event_loop()
+        
+        results = await asyncio.gather(
+            loop.run_in_executor(None, _fetch_streak_data, user_id, db_url),
+            loop.run_in_executor(None, _fetch_xp_data, user_id, db_url),
+            loop.run_in_executor(None, _fetch_quiz_stats, user_id, db_url),
+            loop.run_in_executor(None, _fetch_game_stats, user_id, db_url),
+            loop.run_in_executor(None, _fetch_weak_areas, user_id, db_url),
+            loop.run_in_executor(None, _fetch_sr_summary, user_id, db_url),
+            loop.run_in_executor(None, _fetch_learning_recommended, user_id, db_url),
+            loop.run_in_executor(None, _fetch_all_progress, user_id, db_url),
+            return_exceptions=True
+        )
+        
+        # Handle any exceptions
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.error(f"❌ [HOMEPAGE] Task {i} failed: {result}")
+                results[i] = None
+        
+        streak, xp, quiz_stats, game_stats, weak_areas, sr_summary, recommended, all_progress = results
+        
+        return {
+            "streak": streak,
+            "xp": xp,
+            "quiz_stats": quiz_stats,
+            "game_stats": game_stats,
+            "weak_areas": weak_areas,
+            "sr_summary": sr_summary,
+            "recommended": recommended,
+            "all_progress": all_progress
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [HOMEPAGE] Failed to get homepage data: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get homepage data: {str(e)}"
+        )
+
+
+# ==========================================
 # XP & Leveling System
 # ==========================================
 
