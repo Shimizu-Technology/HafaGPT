@@ -337,6 +337,142 @@
 }
 
 /* ==========================================================================
+   New Year's Fireworks Animation
+   ========================================================================== */
+
+/* Container for fireworks effect */
+.fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+/* Individual floating sparkle */
+.firework {
+  position: absolute;
+  top: -2rem;
+  animation: sparkle-drift linear infinite, sparkle-twinkle ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Dark mode sparkles - golden/amber glow */
+.dark .firework {
+  color: #ffd700;
+  text-shadow: 
+    0 0 4px rgba(255, 215, 0, 0.8),
+    0 0 8px rgba(255, 215, 0, 0.5),
+    0 0 12px rgba(255, 180, 0, 0.3);
+}
+
+/* Light mode sparkles - purple/magenta with good contrast */
+:root:not(.dark) .firework {
+  color: #9333ea;
+  text-shadow: 
+    0 0 4px rgba(147, 51, 234, 0.6),
+    0 0 8px rgba(147, 51, 234, 0.4),
+    0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+/* Sparkle drift animation - gentle fall like snowflakes */
+@keyframes sparkle-drift {
+  0% {
+    transform: translateY(-10px) translateX(0);
+  }
+  25% {
+    transform: translateY(25vh) translateX(12px);
+  }
+  50% {
+    transform: translateY(50vh) translateX(-8px);
+  }
+  75% {
+    transform: translateY(75vh) translateX(10px);
+  }
+  100% {
+    transform: translateY(105vh) translateX(-5px);
+  }
+}
+
+/* Twinkle animation - pulsing glow effect (opacity only, to not conflict with drift transform) */
+@keyframes sparkle-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    filter: brightness(0.6);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+}
+
+/* Firework burst container */
+.firework-burst {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Individual burst particle - small, subtle */
+.firework-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: burst-explode 1s ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+/* Light mode particles - purple */
+:root:not(.dark) .firework-particle {
+  background: #9333ea;
+  box-shadow: 0 0 4px #9333ea, 0 0 8px rgba(147, 51, 234, 0.5);
+}
+
+/* Dark mode particles - golden */
+.dark .firework-particle {
+  background: #ffd700;
+  box-shadow: 0 0 4px #ffd700, 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Burst explosion animation */
+@keyframes burst-explode {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance)),
+        calc(sin(var(--angle)) * var(--distance))
+      ) 
+      scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .fireworks-container {
+    display: none;
+  }
+}
+
+/* Hide some sparkles on very small screens to avoid clutter */
+@media (max-width: 480px) {
+  .fireworks-container .firework:nth-child(n+12) {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    Christmas Theme - Festive Color Overrides
    ========================================================================== */
 
@@ -401,6 +537,74 @@
     135deg,
     rgba(255, 107, 107, 0.03),
     rgba(74, 222, 128, 0.03)
+  );
+}
+
+/* ==========================================================================
+   New Year's Theme - Festive Color Overrides
+   ========================================================================== */
+
+/* New Year's accent colors - applied via data attribute on body */
+[data-theme="newyear"] {
+  /* Light mode New Year's colors */
+  --newyear-primary: #9B59B6; /* Purple */
+  --newyear-secondary: #FFD700; /* Gold */
+  --newyear-accent: #3498DB; /* Blue */
+  --newyear-bg-gradient-from: #faf8fc; /* Light purple tint */
+  --newyear-bg-gradient-to: #f5f0fa;
+}
+
+.dark[data-theme="newyear"] {
+  /* Dark mode New Year's colors */
+  --newyear-primary: #A855F7; /* Lighter purple for dark mode */
+  --newyear-secondary: #FBBF24; /* Amber gold */
+  --newyear-accent: #60A5FA; /* Brighter blue */
+  --newyear-bg-gradient-from: #1a1625; /* Deep purple-black */
+  --newyear-bg-gradient-to: #12101a;
+}
+
+/* New Year gradient background for cards and buttons */
+.newyear-gradient {
+  background: linear-gradient(135deg, var(--newyear-primary), var(--newyear-secondary));
+}
+
+/* Festive glow effect */
+.newyear-glow {
+  box-shadow: 0 0 20px rgba(155, 89, 182, 0.2), 0 0 40px rgba(255, 215, 0, 0.1);
+}
+
+.dark .newyear-glow {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), 0 0 40px rgba(251, 191, 36, 0.1);
+}
+
+/* New Year border accent */
+.newyear-border {
+  border-image: linear-gradient(135deg, var(--newyear-primary), var(--newyear-secondary)) 1;
+}
+
+/* Subtle New Year tint for backgrounds */
+.newyear-tint {
+  position: relative;
+}
+
+.newyear-tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(155, 89, 182, 0.02),
+    rgba(255, 215, 0, 0.02)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .newyear-tint::before {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.03),
+    rgba(251, 191, 36, 0.03)
   );
 }
 

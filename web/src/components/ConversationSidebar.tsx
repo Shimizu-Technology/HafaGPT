@@ -29,7 +29,7 @@ export function ConversationSidebar({
   onToggle,
   isLoading = false
 }: ConversationSidebarProps) {
-  const { isChristmasTheme } = useSubscription();
+  const { isChristmasTheme, isNewYearTheme } = useSubscription();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -156,7 +156,7 @@ export function ConversationSidebar({
                     ? 'bg-gradient-to-br from-red-500 to-green-600' 
                     : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600'
                 }`}>
-                  {isChristmasTheme ? '🎄' : '🌺'}
+                  {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
                 </div>
                 <span className="font-bold text-brown-800 dark:text-white">HåfaGPT</span>
               </Link>

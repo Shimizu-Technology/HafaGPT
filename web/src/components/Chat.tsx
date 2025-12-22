@@ -67,7 +67,7 @@ export function Chat() {
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
   const queryClient = useQueryClient();
-  const { canUse, tryUse, getCount, getLimit, isChristmasTheme } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -904,7 +904,7 @@ End of Export
                       ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/20' 
                       : 'bg-gradient-to-br from-coral-400 to-coral-600 shadow-coral-500/20'
                   }`}>
-                    {isChristmasTheme ? '🎄' : '🌺'}
+                    {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
                   </div>
                   <div className="min-w-0">
                     <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">

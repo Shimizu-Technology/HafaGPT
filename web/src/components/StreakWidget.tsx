@@ -4,7 +4,7 @@ import { useSubscription } from '../hooks/useSubscription';
 
 export function StreakWidget() {
   const { streak, isLoading } = useStreak();
-  const { isChristmasTheme } = useSubscription();
+  const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   if (isLoading) {
     return (
@@ -157,8 +157,8 @@ export function StreakWidget() {
         {totalTodayActivities === 0 && (
           <p className="text-xs text-center text-brown-500 dark:text-gray-400 mt-2">
             {current_streak > 0 
-              ? `${isChristmasTheme ? '🎄' : '🌺'} Chat, play, or quiz to keep your streak!`
-              : `${isChristmasTheme ? '🎄' : '🌺'} Start your streak today!`
+              ? `${isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'} Chat, play, or quiz to keep your streak!`
+              : `${isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'} Start your streak today!`
             }
           </p>
         )}

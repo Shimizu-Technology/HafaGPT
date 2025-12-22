@@ -79,7 +79,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [selectedLevel, setSelectedLevel] = useState<SkillLevel>('beginner');
   const [selectedGoal, setSelectedGoal] = useState<LearningGoal>('all');
   const { completeOnboarding, isUpdating } = useUserPreferences();
-  const { isChristmasTheme } = useSubscription();
+  const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   if (!isOpen) return null;
 
@@ -144,7 +144,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               </p>
             </div>
             <div className="text-2xl sm:text-3xl flex-shrink-0">
-              {isChristmasTheme ? '🎄' : '🌺'}
+              {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
             </div>
           </div>
           

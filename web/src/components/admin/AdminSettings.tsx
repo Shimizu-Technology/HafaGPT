@@ -280,16 +280,16 @@ export function AdminSettings() {
                 <button
                   key={t.id}
                   onClick={() => setTheme(t.id)}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-4 rounded-xl border-2 transition-all bg-white dark:bg-slate-700 ${
                     theme === t.id
-                      ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-900/20'
-                      : 'border-cream-200 dark:border-slate-700 hover:border-cream-300 dark:hover:border-slate-600'
+                      ? 'border-coral-500 dark:border-ocean-400 ring-2 ring-coral-500/20 dark:ring-ocean-400/20'
+                      : 'border-cream-200 dark:border-slate-600 hover:border-cream-300 dark:hover:border-slate-500'
                   }`}
                 >
                   <div className={`w-full h-8 rounded-lg bg-gradient-to-r ${t.color} mb-2`} />
-                  <div className="flex items-center justify-center gap-1.5">
+                  <div className="flex items-center justify-center gap-1.5 bg-cream-100 dark:bg-slate-800 rounded-lg py-1 px-2">
                     <span>{t.emoji}</span>
-                    <span className="text-sm font-medium text-brown-800 dark:text-white">{t.label}</span>
+                    <span className="text-sm font-semibold text-brown-800 dark:text-gray-100">{t.label}</span>
                   </div>
                 </button>
               ))}

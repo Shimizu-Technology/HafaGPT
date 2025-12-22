@@ -293,6 +293,7 @@ export function useSubscription() {
     // Theme
     siteTheme: promo?.theme ?? 'default',
     isChristmasTheme: promo?.theme === 'christmas',
+    isNewYearTheme: promo?.theme === 'newyear',
     
     // Methods
     canUse,

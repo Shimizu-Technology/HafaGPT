@@ -65,6 +65,7 @@ export function Dashboard() {
   const { data: gameStatsData, isLoading: gamesLoading } = useGameStats();
   const { data: promo } = usePromoStatus();
   const isChristmasTheme = promo?.theme === 'christmas';
+  const isNewYearTheme = promo?.theme === 'newyear';
   
   const isLoading = conversationsLoading || quizLoading || gamesLoading;
   
@@ -136,7 +137,7 @@ export function Dashboard() {
         }`}>
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-3xl">
-              {isChristmasTheme ? '🎄' : '🌺'}
+              {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
             </div>
             <div>
               <h2 className="text-xl font-bold">

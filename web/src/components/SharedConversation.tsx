@@ -41,7 +41,7 @@ export function SharedConversation() {
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { theme, toggleTheme } = useTheme();
-  const { isChristmasTheme } = useSubscription();
+  const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   // Helper to check if URL is an image
   const isImageFile = (file: FileInfo) => {
@@ -141,7 +141,7 @@ export function SharedConversation() {
                   ? 'bg-gradient-to-br from-red-500 to-green-600' 
                   : 'bg-gradient-to-br from-coral-400 to-coral-600'
               }`}>
-                {isChristmasTheme ? '🎄' : '🌺'}
+                {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
               </div>
               <div className="min-w-0">
                 <h1 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white truncate">
@@ -206,7 +206,7 @@ export function SharedConversation() {
                         ? 'bg-gradient-to-br from-red-500 to-green-600' 
                         : 'bg-gradient-to-br from-coral-400 to-coral-600'
                     }`}>
-                      {isChristmasTheme ? '🎄' : '🌺'}
+                      {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
                     </div>
                     <span className="text-xs sm:text-sm font-medium text-coral-600 dark:text-ocean-400">
                       HåfaGPT

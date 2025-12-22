@@ -95,6 +95,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const FeatureIcon = featureInfo.icon;
   const { data: promo } = usePromoStatus();
   const isChristmasTheme = promo?.theme === 'christmas';
+  const isNewYearTheme = promo?.theme === 'newyear';
 
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
@@ -131,7 +132,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             {/* Logo & Title */}
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 mb-3">
-                <span className="text-3xl">{isChristmasTheme ? '🎄' : '🌺'}</span>
+                <span className="text-3xl">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
                 <span className="text-2xl font-bold text-brown-800 dark:text-white">HåfaGPT</span>
               </div>
             </div>

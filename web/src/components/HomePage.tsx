@@ -39,7 +39,7 @@ export function HomePage() {
   const clerk = useClerk();
   const { theme, toggleTheme } = useTheme();
   useInitUserData(null, isClerkLoaded && !!user?.id);
-  const { isPremium, isChristmasTheme } = useSubscription();
+  const { isPremium, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { needsOnboarding } = useUserPreferences();
   
   // Use unified homepage data hook - one API call instead of 8+
@@ -124,9 +124,11 @@ export function HomePage() {
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-lg ${
               isChristmasTheme 
                 ? 'bg-gradient-to-br from-red-500 to-green-600 christmas-glow' 
+                : isNewYearTheme
+                ? 'bg-gradient-to-br from-purple-500 to-pink-500 newyear-glow'
                 : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600'
             }`}>
-              {isChristmasTheme ? '🎄' : '🌺'}
+              {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
             </div>
             <div>
               <div className="flex items-center gap-2">

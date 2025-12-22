@@ -47,7 +47,7 @@ const DAILY_GOAL_OPTIONS = [
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
-  const { isChristmasTheme } = useSubscription();
+  const { isChristmasTheme, isNewYearTheme } = useSubscription();
   const { data: xpData, isLoading: isLoadingXP } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
   
@@ -94,7 +94,7 @@ export function SettingsPage() {
             >
               <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
             </Link>
-            <span className="text-lg">{isChristmasTheme ? '🎄' : '🌺'}</span>
+            <span className="text-lg">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
             <h1 className="text-lg font-bold text-brown-800 dark:text-white">Settings</h1>
           </div>
           

@@ -7,6 +7,7 @@ export function WelcomeMessage() {
   const [showModes, setShowModes] = useState(false);
   const { data: promo } = usePromoStatus();
   const isChristmasTheme = promo?.theme === 'christmas';
+  const isNewYearTheme = promo?.theme === 'newyear';
 
   return (
     <div className="flex items-start justify-center px-4 py-4 sm:py-6 w-full">
@@ -18,7 +19,7 @@ export function WelcomeMessage() {
               ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/30' 
               : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 shadow-coral-500/30 dark:shadow-ocean-500/30'
           }`}>
-            {isChristmasTheme ? '🎄' : '🌺'}
+            {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
           </div>
           <h1 className="text-xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">Håfa Adai!</h1>
           <p className="text-sm sm:text-lg text-brown-600 dark:text-gray-400">I'm your Chamorro language tutor.</p>
