@@ -88,6 +88,8 @@ function ClerkWrapper() {
     <QueryClientProvider client={queryClient}>
     <ClerkProvider 
       publishableKey={CLERK_PUBLISHABLE_KEY}
+      // Allow Capacitor origin for iOS app
+      allowedRedirectOrigins={['capacitor://localhost', 'http://localhost:5173', 'https://hafagpt.com']}
       appearance={{
         variables: {
           colorPrimary: isDark ? '#5DAFB0' : '#E85D4B',  // Teal for dark, Coral for light
@@ -109,11 +111,6 @@ function ClerkWrapper() {
           userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
           userPreviewMainIdentifier: isDark ? 'text-white' : '',
           userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
-          // Hide OAuth buttons in iOS app (they don't work in WebView)
-          // This hides the entire social buttons block
-          socialButtonsBlockButton: isCapacitorApp ? 'hidden' : '',
-          socialButtonsProviderIcon: isCapacitorApp ? 'hidden' : '',
-          dividerRow: isCapacitorApp ? 'hidden' : '', // Hide "or" divider when no OAuth
         },
       }}
     >
