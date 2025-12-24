@@ -3,7 +3,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.shimizutech.hafagpt',
   appName: 'HåfaGPT',
-  webDir: 'dist',  // Load from local build (enables OAuth to work properly)
+  webDir: 'dist',
   
   // iOS specific settings
   ios: {
@@ -12,9 +12,12 @@ const config: CapacitorConfig = {
     preferredContentMode: 'mobile',
   },
   
-  // No server.url = loads from local webDir build
-  // This means OAuth works properly (cookies stay in WebView context)
-  // Trade-off: App updates require App Store submission (backend updates are still instant)
+  // Load from production website
+  // Clerk requires HTTPS origin to work properly
+  // Users can sign in with email (Google OAuth hidden on iOS)
+  server: {
+    url: 'https://hafagpt.com',
+  },
   
   // Plugins configuration
   plugins: {
