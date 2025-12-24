@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "4T358A5S74.com.shimizutech.hafagpt",
+        "paths": ["*"]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "4T358A5S74.com.shimizutech.hafagpt"
+    ]
+  }
+}
+
