@@ -5137,6 +5137,127 @@ async def clerk_webhook(request: Request):
                 logger.error(f"❌ [WEBHOOK] Failed to update user metadata: {e}")
                 return {"received": True, "processed": False, "reason": str(e)}
         
+        # Handle user.deleted event - clean up user data from our database
+        elif event_type == "user.deleted":
+            user_id = data.get("id")  # Clerk sends user data with "id" field
+            
+            if not user_id:
+                logger.warning("⚠️ [WEBHOOK] No user_id in user.deleted event")
+                return {"received": True, "processed": False, "reason": "no_user_id"}
+            
+            logger.info(f"🗑️ [WEBHOOK] User deleted event for user: {user_id}")
+            
+            try:
+                # Delete all user data from our database
+                db_url = os.getenv("DATABASE_URL")
+                import psycopg2
+                conn = psycopg2.connect(db_url)
+                cursor = conn.cursor()
+                
+                deleted_counts = {}
+                
+                # Delete shared conversations first (foreign key to conversations)
+                cursor.execute("""
+                    DELETE FROM shared_conversations
+                    WHERE user_id = %s
+                """, (user_id,))
+                deleted_counts["shared_conversations"] = cursor.rowcount
+                
+                # Delete conversation logs
+                cursor.execute("""
+                    DELETE FROM conversation_logs
+                    WHERE conversation_id IN (
+                        SELECT id FROM conversations WHERE user_id = %s
+                    )
+                """, (user_id,))
+                deleted_counts["conversation_logs"] = cursor.rowcount
+                
+                # Delete conversations
+                cursor.execute("""
+                    DELETE FROM conversations
+                    WHERE user_id = %s
+                """, (user_id,))
+                deleted_counts["conversations"] = cursor.rowcount
+                
+                # Delete quiz results
+                cursor.execute("""
+                    DELETE FROM quiz_results
+                    WHERE user_id = %s
+                """, (user_id,))
+                deleted_counts["quiz_results"] = cursor.rowcount
+                
+                # Delete game results
+                cursor.execute("""
+                    DELETE FROM game_results
+                    WHERE user_id = %s
+                """, (user_id,))
+                deleted_counts["game_results"] = cursor.rowcount
+                
+                # Delete daily usage
+                cursor.execute("""
+                    DELETE FROM user_daily_usage
+                    WHERE user_id = %s
+                """, (user_id,))
+                deleted_counts["daily_usage"] = cursor.rowcount
+                
+                # Delete saved flashcard decks (if table exists)
+                try:
+                    cursor.execute("""
+                        DELETE FROM saved_flashcard_decks
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    deleted_counts["flashcard_decks"] = cursor.rowcount
+                except Exception:
+                    pass  # Table may not exist
+                
+                # Delete XP data (if table exists)
+                try:
+                    cursor.execute("""
+                        DELETE FROM user_xp
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    deleted_counts["xp"] = cursor.rowcount
+                except Exception:
+                    pass  # Table may not exist
+                
+                # Delete learning activities (if table exists)
+                try:
+                    cursor.execute("""
+                        DELETE FROM learning_activities
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    deleted_counts["learning_activities"] = cursor.rowcount
+                except Exception:
+                    pass  # Table may not exist
+                
+                # Delete topic progress (if table exists)
+                try:
+                    cursor.execute("""
+                        DELETE FROM topic_progress
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    deleted_counts["topic_progress"] = cursor.rowcount
+                except Exception:
+                    pass  # Table may not exist
+                
+                conn.commit()
+                cursor.close()
+                conn.close()
+                
+                logger.info(f"✅ [WEBHOOK] Deleted user data for {user_id}: {deleted_counts}")
+                
+                return {
+                    "received": True,
+                    "processed": True,
+                    "event_type": event_type,
+                    "user_id": user_id,
+                    "deleted": deleted_counts
+                }
+                
+            except Exception as e:
+                logger.error(f"❌ [WEBHOOK] Failed to delete user data: {e}")
+                return {"received": True, "processed": False, "reason": str(e)}
+        
         # Handle other event types (log but don't process)
         logger.info(f"ℹ️ [WEBHOOK] Unhandled event type: {event_type}")
         return {"received": True, "processed": False, "reason": "unhandled_event_type"}
