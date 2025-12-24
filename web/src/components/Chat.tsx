@@ -29,7 +29,6 @@ import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
-import { useIsCapacitorApp } from '../hooks/useIsCapacitorApp';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -71,7 +70,6 @@ export function Chat() {
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
-  const isCapacitorApp = useIsCapacitorApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -853,8 +851,8 @@ End of Export
 
   return (
     <div className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
-      {/* Public Banner - Only show if not signed in AND not in native app */}
-      {!isSignedIn && !isCapacitorApp && (
+      {/* Public Banner - Only show if not signed in */}
+      {!isSignedIn && (
         <div className="fixed top-0 left-0 right-0 z-50">
           <PublicBanner />
         </div>
@@ -877,9 +875,9 @@ End of Export
       )}
 
       {/* Main chat area */}
-      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn && !isCapacitorApp ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
+      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
         {/* Header - Fixed Position */}
-        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn && !isCapacitorApp ? 'top-[52px] sm:top-[56px] pt-3' : 'top-0'}`}>
+        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn ? 'top-[52px] sm:top-[56px] pt-3' : 'top-0'}`}>
           <div className="px-3 sm:px-6 py-1.5 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">

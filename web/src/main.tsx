@@ -2,15 +2,11 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
 import posthog from 'posthog-js';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
-
-// Check if running in iOS Capacitor app (OAuth doesn't work in WebView)
-const isCapacitorApp = Capacitor.isNativePlatform();
 
 // Register service worker for PWA
 registerSW({
@@ -92,8 +88,6 @@ function ClerkWrapper() {
     <QueryClientProvider client={queryClient}>
     <ClerkProvider 
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      // Allow Capacitor origin for iOS app
-      allowedRedirectOrigins={['capacitor://localhost', 'http://localhost:5173', 'https://hafagpt.com']}
       appearance={{
         variables: {
           colorPrimary: isDark ? '#5DAFB0' : '#E85D4B',  // Teal for dark, Coral for light
@@ -115,10 +109,6 @@ function ClerkWrapper() {
           userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
           userPreviewMainIdentifier: isDark ? 'text-white' : '',
           userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
-          // Hide OAuth buttons in iOS app (they don't work in WebView with remote URL)
-          socialButtonsBlockButton: isCapacitorApp ? 'hidden' : '',
-          socialButtonsProviderIcon: isCapacitorApp ? 'hidden' : '',
-          dividerRow: isCapacitorApp ? 'hidden' : '',
         },
       }}
     >
