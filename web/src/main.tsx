@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Capacitor } from '@capacitor/core';
 import posthog from 'posthog-js';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
@@ -57,6 +58,9 @@ if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key. Add VITE_CLERK_PUBLISHABLE_KEY to .env.local');
 }
 
+// Check if running in iOS app (hide OAuth buttons that don't work in WebView)
+const isCapacitorApp = Capacitor.isNativePlatform();
+
 // Wrapper component to dynamically update Clerk appearance based on theme
 function ClerkWrapper() {
   const [isDark, setIsDark] = useState(() => {
@@ -109,6 +113,11 @@ function ClerkWrapper() {
           userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
           userPreviewMainIdentifier: isDark ? 'text-white' : '',
           userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
+          // Hide OAuth buttons in iOS app (they don't work in WebView)
+          // This hides the entire social buttons block
+          socialButtonsBlockButton: isCapacitorApp ? 'hidden' : '',
+          socialButtonsProviderIcon: isCapacitorApp ? 'hidden' : '',
+          dividerRow: isCapacitorApp ? 'hidden' : '', // Hide "or" divider when no OAuth
         },
       }}
     >
