@@ -38,6 +38,8 @@ import { AdminSettings } from './components/admin/AdminSettings';
 import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import SupportPage from './components/SupportPage';
 import { LessonPage } from './components/LessonPage';
 import { LearningPathPage } from './components/LearningPathPage';
 import { BottomNav } from './components/BottomNav';
@@ -106,6 +108,12 @@ function App() {
         
         {/* About page - public */}
         <Route path="/about" element={<AboutPage />} />
+        
+        {/* Privacy Policy - public */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        
+        {/* Support page - public */}
+        <Route path="/support" element={<SupportPage />} />
         
         {/* Shared conversation - public, no auth required */}
         <Route path="/share/:shareId" element={<SharedConversation />} />

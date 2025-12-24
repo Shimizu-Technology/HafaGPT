@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Check, Save, RotateCcw, Target, Zap } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Check, Save, RotateCcw, Target, Zap, Shield, HelpCircle } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences, SkillLevel, LearningGoal } from '../hooks/useUserPreferences';
 import { useSubscription } from '../hooks/useSubscription';
@@ -393,9 +393,33 @@ export function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* Quick Links Section */}
+        <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-cream-200/50 dark:border-gray-700/50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-cream-200/50 dark:border-gray-700/50">
+            <h2 className="font-semibold text-brown-800 dark:text-white">More</h2>
+          </div>
+          
+          <div className="divide-y divide-cream-100 dark:divide-gray-700">
+            <Link 
+              to="/support"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-cream-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <HelpCircle className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <span className="text-brown-700 dark:text-gray-300">Help & Support</span>
+            </Link>
+            <Link 
+              to="/privacy"
+              className="flex items-center gap-3 px-4 py-3 hover:bg-cream-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <Shield className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <span className="text-brown-700 dark:text-gray-300">Privacy Policy</span>
+            </Link>
+          </div>
+        </section>
         
-        {/* Spacer for fixed save bar */}
-        {hasChanges && <div className="h-20" />}
+        {/* Spacer for fixed save bar and bottom nav */}
+        <div className={hasChanges ? "h-28" : "h-20"} />
       </main>
     </div>
   );
