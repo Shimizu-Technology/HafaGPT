@@ -2,7 +2,6 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Capacitor } from '@capacitor/core';
 import posthog from 'posthog-js';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
@@ -57,9 +56,6 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key. Add VITE_CLERK_PUBLISHABLE_KEY to .env.local');
 }
-
-// Check if running in iOS app (hide OAuth buttons that don't work in WebView)
-const isCapacitorApp = Capacitor.isNativePlatform();
 
 // Wrapper component to dynamically update Clerk appearance based on theme
 function ClerkWrapper() {
