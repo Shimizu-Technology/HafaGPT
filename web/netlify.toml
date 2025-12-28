@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Redirect netlify subdomain to primary domain
+[[redirects]]
+  from = "https://hafagpt.netlify.app/*"
+  to = "https://hafagpt.com/:splat"
+  status = 301
+  force = true
+
+# SPA fallback - must come after domain redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
