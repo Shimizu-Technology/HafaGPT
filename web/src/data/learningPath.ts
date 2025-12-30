@@ -58,7 +58,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     flashcardCategory: 'numbers',
     quizCategory: 'numbers',
     intro: {
-      culturalContext: 'Chamorro numbers have roots in the ancient counting system used by the CHamoru people. While Spanish numbers are also used in daily life, learning the traditional Chamorro numbers connects you to the island\'s heritage.',
+      culturalContext: 'Chamorro numbers have roots in the ancient counting system used by the Chamorro people. While Spanish numbers are also used in daily life, learning the traditional Chamorro numbers connects you to the island\'s heritage.',
       keyPhrases: ['Unu — One', 'Dos — Two', 'Tres — Three'],
       tip: 'Practice counting everyday objects around you — mangga (mangoes), niyok (coconuts), or palao\'an (women)!',
     },
@@ -122,7 +122,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     flashcardCategory: 'animals',
     quizCategory: 'animals',
     intro: {
-      culturalContext: 'Guam is home to unique wildlife. The ko\'ko\' (Guam rail) is an endemic bird that nearly went extinct. Carabao (water buffalo) are symbols of CHamoru heritage, once used for farming.',
+      culturalContext: 'Guam is home to unique wildlife. The ko\'ko\' (Guam rail) is an endemic bird that nearly went extinct. Carabao (water buffalo) are symbols of Chamorro heritage, once used for farming.',
       keyPhrases: ['Ga\'lågu — Dog', 'Guihan — Fish', 'Paluma — Bird'],
       tip: 'The ko\'ko\' bird is so special to Guam that it\'s featured on the island\'s seal. It\'s called "totot" in Chamorro after its call!',
     },
