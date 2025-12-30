@@ -5811,8 +5811,8 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
         if not clerk:
             raise HTTPException(status_code=500, detail="Clerk not initialized")
         
-        # Get all users from Clerk
-        users_response = clerk.users.list()
+        # Get all users from Clerk (limit=500 is max, default is only 10!)
+        users_response = clerk.users.list(limit=500)
         users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
         
         total_users = len(users)
@@ -5905,9 +5905,10 @@ async def get_admin_users(
         
         if search:
             # Search by email or name - Clerk SDK uses email_address or query param
-            users_response = clerk.users.list(query=search)
+            users_response = clerk.users.list(query=search, limit=500)
         else:
-            users_response = clerk.users.list()
+            # limit=500 is max, default is only 10!
+            users_response = clerk.users.list(limit=500)
         
         all_users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
         total = len(all_users)
@@ -6376,8 +6377,8 @@ async def get_user_growth(
         if not clerk:
             raise HTTPException(status_code=500, detail="Clerk not initialized")
         
-        # Get all users from Clerk
-        users_response = clerk.users.list()
+        # Get all users from Clerk (limit=500 is max, default is only 10!)
+        users_response = clerk.users.list(limit=500)
         users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
         
         # Group users by signup date
