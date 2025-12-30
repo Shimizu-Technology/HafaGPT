@@ -16,7 +16,6 @@ const CURATED_WORDS = {
   // 4-letter words (Easy)
   4: [
     { word: 'TÅNO', meaning: 'land/earth' },
-    { word: 'GUÅFI', meaning: 'fire' },
     { word: 'NANÅ', meaning: 'mother' },
     { word: 'TÅTA', meaning: 'father' },
     { word: 'HÅFA', meaning: 'what/hello' },
@@ -27,10 +26,12 @@ const CURATED_WORDS = {
     { word: 'LAHI', meaning: 'male' },
     { word: 'HÅGA', meaning: 'daughter' },
     { word: 'LAGU', meaning: 'north' },
+    { word: 'TASI', meaning: 'sea/ocean' },
   ],
   // 5-letter words (Medium)
   5: [
     { word: 'HÅNOM', meaning: 'water' },
+    { word: 'GUÅFI', meaning: 'fire' },  // Moved from 4-letter list (actually 5 letters)
     { word: 'MANGÅ', meaning: 'mango' },
     { word: 'GALÅI', meaning: 'vegetables' },
     { word: 'KÅTNE', meaning: 'meat' },
@@ -141,7 +142,9 @@ export function ChamorroWordle() {
     const targetLength = DIFFICULTY_CONFIG[difficulty].length;
     
     if (wordMode === 'beginner') {
-      return CURATED_WORDS[targetLength as keyof typeof CURATED_WORDS] || [];
+      const curatedList = CURATED_WORDS[targetLength as keyof typeof CURATED_WORDS] || [];
+      // Safety filter: ensure all words actually match the target length
+      return curatedList.filter(entry => entry.word.length === targetLength);
     } else {
       // Challenge mode - filter dictionary words by length
       if (!dictionaryWords) return [];
