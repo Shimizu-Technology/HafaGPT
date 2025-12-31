@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { 
-  BarChart3, TrendingUp, Users, Loader2, AlertCircle,
-  MessageSquare, Gamepad2, GraduationCap, PieChart
+  BarChart3, TrendingUp, Users, Loader2,
+  MessageSquare, Gamepad2, GraduationCap, PieChart,
+  BookOpen, Clock, Target, ArrowRight
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPie, 
-  Pie, Cell
+  Pie, Cell, FunnelChart, Funnel, LabelList
 } from 'recharts';
-import { useUsageTrends, useUserGrowth, useFeatureUsage } from '../../hooks/useAdminQuery';
+import { useUsageTrends, useUserGrowth, useFeatureUsage, useAdvancedAnalytics } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
 
 type Period = '7d' | '30d' | '90d';
 
 const COLORS = ['#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const FUNNEL_COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
 
 export function AdminAnalytics() {
   const [period, setPeriod] = useState<Period>('30d');
@@ -21,8 +25,29 @@ export function AdminAnalytics() {
   const { data: usageData, isLoading: usageLoading } = useUsageTrends(period);
   const { data: growthData, isLoading: growthLoading } = useUserGrowth(period);
   const { data: featureData, isLoading: featureLoading } = useFeatureUsage();
+  const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(period);
   
-  const isLoading = usageLoading || growthLoading || featureLoading;
+  const isLoading = usageLoading || growthLoading || featureLoading || advancedLoading;
+  
+  // Prepare funnel data
+  const funnelData = advancedData?.user_funnel ? [
+    { name: 'Any Activity', value: advancedData.user_funnel.total_users, fill: FUNNEL_COLORS[0] },
+    { name: 'Chatted', value: advancedData.user_funnel.chatted, fill: FUNNEL_COLORS[1] },
+    { name: 'Played Game', value: advancedData.user_funnel.played_game, fill: FUNNEL_COLORS[2] },
+    { name: 'Took Quiz', value: advancedData.user_funnel.took_quiz, fill: FUNNEL_COLORS[3] },
+    { name: 'Returned', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
+  ] : [];
+  
+  // Get heatmap color based on intensity
+  const getHeatmapColor = (value: number, max: number) => {
+    if (max === 0) return 'bg-cream-100 dark:bg-slate-700';
+    const intensity = value / max;
+    if (intensity === 0) return 'bg-cream-100 dark:bg-slate-700';
+    if (intensity < 0.25) return 'bg-teal-100 dark:bg-teal-900/30';
+    if (intensity < 0.5) return 'bg-teal-300 dark:bg-teal-700/50';
+    if (intensity < 0.75) return 'bg-teal-500 dark:bg-teal-600';
+    return 'bg-teal-700 dark:bg-teal-500';
+  };
   
   // Prepare pie chart data for games
   const gamesPieData = featureData?.game_breakdown 
@@ -307,6 +332,214 @@ export function AdminAnalytics() {
                   <p className="text-sm text-brown-600 dark:text-gray-400">Conversations</p>
                 </div>
               </div>
+            </div>
+            
+            {/* Quiz Pass Rates */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+                <Target className="w-5 h-5 text-indigo-500" />
+                Quiz Pass Rates
+              </h2>
+              {advancedData?.quiz_pass_rates && advancedData.quiz_pass_rates.length > 0 ? (
+                <div className="space-y-3">
+                  {advancedData.quiz_pass_rates.map((quiz) => (
+                    <div key={quiz.category} className="flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-brown-700 dark:text-gray-300 truncate">
+                            {quiz.category}
+                          </span>
+                          <span className="text-sm font-bold text-brown-800 dark:text-white">
+                            {quiz.avg_score}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              quiz.avg_score >= 70 ? 'bg-emerald-500' : 
+                              quiz.avg_score >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${quiz.avg_score}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-0.5">
+                          {quiz.attempts} attempts · {quiz.pass_rate}% pass rate
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  No quiz data yet
+                </div>
+              )}
+            </div>
+            
+            {/* Learning Path Progress */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-emerald-500" />
+                Learning Path Progress
+              </h2>
+              {advancedData?.learning_path_progress && advancedData.learning_path_progress.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {advancedData.learning_path_progress.map((topic) => (
+                    <div 
+                      key={topic.topic_id} 
+                      className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3"
+                    >
+                      <p className="text-sm font-medium text-brown-700 dark:text-gray-300 truncate mb-2">
+                        {topic.topic_name}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-2 bg-cream-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${topic.completion_rate}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-brown-800 dark:text-white">
+                          {topic.completion_rate}%
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
+                        {topic.completed}/{topic.started} completed
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  No learning path data yet
+                </div>
+              )}
+            </div>
+            
+            {/* Peak Hours Heatmap */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-500" />
+                Peak Activity Hours
+                <span className="text-xs font-normal text-brown-400 dark:text-gray-500 ml-2">
+                  Last {period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}
+                </span>
+              </h2>
+              {advancedData?.peak_hours ? (
+                <div className="overflow-x-auto">
+                  <div className="min-w-[600px]">
+                    {/* Hour labels */}
+                    <div className="flex mb-1 ml-12">
+                      {[0, 3, 6, 9, 12, 15, 18, 21].map((hour) => (
+                        <div key={hour} className="flex-1 text-[10px] text-brown-400 dark:text-gray-500">
+                          {hour === 0 ? '12am' : hour === 12 ? '12pm' : hour > 12 ? `${hour-12}pm` : `${hour}am`}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Heatmap grid */}
+                    {advancedData.peak_hours.map((dayData, dayIndex) => (
+                      <div key={dayIndex} className="flex items-center gap-1 mb-1">
+                        <span className="w-10 text-xs text-brown-500 dark:text-gray-400 text-right pr-2">
+                          {DAYS[dayIndex]}
+                        </span>
+                        <div className="flex-1 flex gap-0.5">
+                          {dayData.map((count, hourIndex) => (
+                            <div
+                              key={hourIndex}
+                              className={`flex-1 h-5 rounded-sm ${getHeatmapColor(count, advancedData.peak_hours_max)} transition-colors`}
+                              title={`${DAYS[dayIndex]} ${hourIndex}:00 - ${count} activities`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {/* Legend */}
+                    <div className="flex items-center justify-end gap-2 mt-3">
+                      <span className="text-[10px] text-brown-400 dark:text-gray-500">Less</span>
+                      <div className="w-4 h-4 rounded bg-cream-100 dark:bg-slate-700" />
+                      <div className="w-4 h-4 rounded bg-teal-100 dark:bg-teal-900/30" />
+                      <div className="w-4 h-4 rounded bg-teal-300 dark:bg-teal-700/50" />
+                      <div className="w-4 h-4 rounded bg-teal-500 dark:bg-teal-600" />
+                      <div className="w-4 h-4 rounded bg-teal-700 dark:bg-teal-500" />
+                      <span className="text-[10px] text-brown-400 dark:text-gray-500">More</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  No activity data yet
+                </div>
+              )}
+            </div>
+            
+            {/* User Funnel */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+                <ArrowRight className="w-5 h-5 text-purple-500" />
+                User Journey Funnel
+              </h2>
+              {funnelData.length > 0 && funnelData[0].value > 0 ? (
+                <div className="flex flex-col lg:flex-row items-center gap-6">
+                  {/* Funnel visualization */}
+                  <div className="flex-1 w-full">
+                    <div className="space-y-2">
+                      {funnelData.map((stage, index) => {
+                        const widthPercent = (stage.value / funnelData[0].value) * 100;
+                        const conversionRate = index > 0 
+                          ? ((stage.value / funnelData[0].value) * 100).toFixed(0)
+                          : '100';
+                        return (
+                          <div key={stage.name} className="relative">
+                            <div 
+                              className="h-10 rounded-lg flex items-center justify-between px-4 transition-all"
+                              style={{ 
+                                width: `${Math.max(widthPercent, 20)}%`,
+                                backgroundColor: stage.fill,
+                                marginLeft: `${(100 - Math.max(widthPercent, 20)) / 2}%`
+                              }}
+                            >
+                              <span className="text-sm font-medium text-white truncate">
+                                {stage.name}
+                              </span>
+                              <span className="text-sm font-bold text-white">
+                                {stage.value}
+                              </span>
+                            </div>
+                            {index > 0 && (
+                              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 text-xs text-brown-500 dark:text-gray-400">
+                                {conversionRate}%
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {/* Stats */}
+                  <div className="lg:w-48 space-y-3">
+                    <div className="text-center lg:text-left">
+                      <p className="text-2xl font-bold text-purple-600">
+                        {funnelData[0].value > 0 
+                          ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(0) 
+                          : 0}%
+                      </p>
+                      <p className="text-xs text-brown-500 dark:text-gray-400">Return Rate</p>
+                    </div>
+                    <div className="text-center lg:text-left">
+                      <p className="text-2xl font-bold text-teal-600">
+                        {funnelData[0].value > 0 
+                          ? ((funnelData[2].value / funnelData[0].value) * 100).toFixed(0) 
+                          : 0}%
+                      </p>
+                      <p className="text-xs text-brown-500 dark:text-gray-400">Game Adoption</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  No user funnel data yet
+                </div>
+              )}
             </div>
           </>
         )}

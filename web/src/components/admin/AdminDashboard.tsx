@@ -22,9 +22,10 @@ import {
   Calendar,
   CalendarDays,
   CalendarRange,
-  HelpCircle
+  HelpCircle,
+  BookOpen as BookOpenIcon
 } from 'lucide-react';
-import { useAdminStats } from '../../hooks/useAdminQuery';
+import { useAdminStats, useAdminActivity } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
 
 interface StatComparison {
@@ -111,6 +112,39 @@ function StatCard({ title, value, icon, color, description, comparison }: StatCa
 
 export function AdminDashboard() {
   const { data: stats, isLoading, error } = useAdminStats();
+  const { data: activityData } = useAdminActivity(10);
+  
+  // Helper to format relative time
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  };
+  
+  // Get icon for activity type
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'chat':
+        return <MessageSquare className="w-4 h-4 text-coral-500" />;
+      case 'quiz':
+        return <GraduationCap className="w-4 h-4 text-indigo-500" />;
+      case 'game':
+        return <Gamepad2 className="w-4 h-4 text-pink-500" />;
+      case 'lesson':
+        return <BookOpenIcon className="w-4 h-4 text-emerald-500" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-500" />;
+    }
+  };
   
   if (isLoading) {
     return (
@@ -549,6 +583,72 @@ export function AdminDashboard() {
               <div className="px-4 py-8 text-center text-brown-500 dark:text-gray-400">
                 <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No user activity yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Activity Feed */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-cream-200 dark:border-slate-700">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-coral-500" />
+              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Recent Activity</h3>
+              <span className="ml-auto text-[10px] text-brown-400 dark:text-gray-500 flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" /> Live
+              </span>
+            </div>
+          </div>
+          <div className="divide-y divide-cream-100 dark:divide-slate-700 max-h-80 overflow-y-auto">
+            {activityData?.activities && activityData.activities.length > 0 ? (
+              activityData.activities.map((activity) => (
+                <div 
+                  key={activity.id} 
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors"
+                >
+                  {/* Activity Icon */}
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cream-100 dark:bg-slate-700 flex items-center justify-center">
+                    {getActivityIcon(activity.type)}
+                  </div>
+                  
+                  {/* User Avatar */}
+                  <div className="flex-shrink-0">
+                    {activity.user_image ? (
+                      <img 
+                        src={activity.user_image} 
+                        alt={activity.user_name} 
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-coral-100 dark:bg-ocean-900/30 flex items-center justify-center">
+                        <span className="text-[10px] font-medium text-coral-600 dark:text-ocean-400">
+                          {activity.user_name?.charAt(0).toUpperCase() || '?'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Activity info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-brown-700 dark:text-gray-300">
+                      <span className="font-medium text-brown-800 dark:text-white">{activity.user_name}</span>
+                      {' '}{activity.description}
+                      {activity.detail && (
+                        <span className="ml-1 text-brown-500 dark:text-gray-400">({activity.detail})</span>
+                      )}
+                    </p>
+                  </div>
+                  
+                  {/* Time */}
+                  <div className="flex-shrink-0 text-[10px] text-brown-400 dark:text-gray-500">
+                    {formatTimeAgo(activity.timestamp)}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-8 text-center text-brown-500 dark:text-gray-400">
+                <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No recent activity</p>
               </div>
             )}
           </div>

@@ -110,7 +110,42 @@ export interface UserUpdateResponse {
   message: string;
 }
 
+export interface ActivityItem {
+  id: string;
+  type: 'chat' | 'quiz' | 'game' | 'lesson';
+  user_id: string;
+  user_name: string;
+  user_image: string | null;
+  description: string;
+  detail: string | null;
+  timestamp: string;
+}
+
 // Hooks
+export function useAdminActivity(limit: number = 15) {
+  const { getToken } = useAuth();
+  
+  return useQuery<{ activities: ActivityItem[] }>({
+    queryKey: ['admin', 'activity', limit],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/activity?limit=${limit}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch activity');
+      }
+      
+      return response.json();
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+}
+
 export function useAdminStats() {
   const { getToken } = useAuth();
   
@@ -369,6 +404,55 @@ export function useFeatureUsage() {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch feature usage');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// Advanced Analytics Types
+export interface QuizPassRate {
+  category: string;
+  attempts: number;
+  avg_score: number;
+  pass_rate: number;
+}
+
+export interface LearningPathProgress {
+  topic_id: string;
+  topic_name: string;
+  started: number;
+  completed: number;
+  completion_rate: number;
+}
+
+export interface UserFunnel {
+  total_users: number;
+  chatted: number;
+  played_game: number;
+  took_quiz: number;
+  returned: number;
+}
+
+export interface AdvancedAnalyticsResponse {
+  quiz_pass_rates: QuizPassRate[];
+  learning_path_progress: LearningPathProgress[];
+  peak_hours: number[][];  // 7x24 grid
+  peak_hours_max: number;
+  user_funnel: UserFunnel;
+}
+
+export function useAdvancedAnalytics(period: string = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<AdvancedAnalyticsResponse>({
+    queryKey: ['admin', 'analytics', 'advanced', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/advanced?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch advanced analytics');
       return response.json();
     },
     staleTime: 1000 * 60 * 5,
