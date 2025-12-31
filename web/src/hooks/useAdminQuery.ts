@@ -4,6 +4,13 @@ import { useAuth } from '@clerk/clerk-react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Types
+export interface StatComparison {
+  current: number;
+  previous: number;
+  change: number;
+  change_percent: number | null;
+}
+
 export interface AdminStats {
   total_users: number;
   premium_users: number;
@@ -14,6 +21,43 @@ export interface AdminStats {
   total_messages: number;
   total_quiz_attempts: number;
   total_game_plays: number;
+  // Weekly comparison data
+  messages_this_week?: StatComparison | null;
+  quizzes_this_week?: StatComparison | null;
+  games_this_week?: StatComparison | null;
+  new_users_this_week?: StatComparison | null;
+  active_users_this_week?: StatComparison | null;
+  // Engagement metrics
+  avg_messages_per_user?: number | null;
+  avg_quiz_score?: number | null;
+  avg_games_per_user?: number | null;
+  avg_quizzes_per_user?: number | null;
+  users_with_messages?: number | null;
+  users_with_games?: number | null;
+  users_with_quizzes?: number | null;
+  // Feature adoption
+  chat_adoption_pct?: number | null;
+  games_adoption_pct?: number | null;
+  quizzes_adoption_pct?: number | null;
+  learning_path_adoption_pct?: number | null;
+  users_with_lessons?: number | null;
+  // Top users
+  top_users?: Array<{
+    user_id: string;
+    name: string;
+    email: string | null;
+    image_url: string | null;
+    messages: number;
+    quizzes: number;
+    games: number;
+    total_activity: number;
+  }> | null;
+  // Retention metrics
+  dau?: number | null;
+  wau?: number | null;
+  mau?: number | null;
+  dau_mau_ratio?: number | null;
+  returning_users_pct?: number | null;
 }
 
 export interface AdminUser {
