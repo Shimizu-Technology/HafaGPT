@@ -421,6 +421,18 @@ class StatComparison(BaseModel):
     change_percent: Optional[float] = Field(None, description="Percentage change")
 
 
+class ActivityItem(BaseModel):
+    """Single activity item for activity feed"""
+    id: str = Field(..., description="Unique ID for the activity")
+    type: str = Field(..., description="Activity type: chat, quiz, game, lesson")
+    user_id: str = Field(..., description="User who performed the action")
+    user_name: str = Field(..., description="Display name of user")
+    user_image: Optional[str] = Field(None, description="User avatar URL")
+    description: str = Field(..., description="Human-readable description")
+    detail: Optional[str] = Field(None, description="Additional detail (score, stars, etc)")
+    timestamp: datetime = Field(..., description="When the activity occurred")
+
+
 class AdminStatsResponse(BaseModel):
     """Response model for admin dashboard stats"""
     total_users: int = Field(..., description="Total number of users")

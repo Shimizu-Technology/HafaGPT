@@ -6230,6 +6230,185 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/admin/activity", tags=["Admin"])
+async def get_admin_activity(
+    limit: int = 15,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get recent activity feed for admin dashboard.
+    Returns the most recent user actions (messages, quizzes, games, lessons).
+    Requires admin role.
+    """
+    from api.models import ActivityItem
+    
+    # Verify admin
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization")
+    
+    token = authorization.split(" ")[1]
+    try:
+        payload = verify_clerk_token(token)
+        user_id = payload.get("sub")
+        
+        user = clerk.users.get(user_id=user_id)
+        public_metadata = getattr(user, 'public_metadata', {}) or {}
+        if public_metadata.get('role') != 'admin':
+            raise HTTPException(status_code=403, detail="Admin access required")
+        
+        logger.info(f"✅ [ADMIN] Activity feed requested by {user_id}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Activity auth error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    try:
+        # Get all Clerk users for name lookup
+        users_response = clerk.users.list(request={"limit": 500})
+        users = users_response.data if hasattr(users_response, 'data') else users_response
+        
+        user_lookup = {}
+        for u in users:
+            uid = u.id
+            email = None
+            first_name = None
+            if hasattr(u, 'email_addresses') and u.email_addresses:
+                email = u.email_addresses[0].email_address
+            if hasattr(u, 'first_name'):
+                first_name = u.first_name
+            user_lookup[uid] = {
+                'name': first_name or (email.split('@')[0] if email else 'User'),
+                'image': getattr(u, 'image_url', None)
+            }
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        activities = []
+        
+        # Get recent messages (last 7 days)
+        cursor.execute("""
+            SELECT id, user_id, timestamp, conversation_id
+            FROM conversation_logs 
+            WHERE user_id IS NOT NULL 
+              AND role = 'user'
+              AND timestamp >= NOW() - INTERVAL '7 days'
+            ORDER BY timestamp DESC
+            LIMIT %s
+        """, (limit,))
+        
+        for row in cursor.fetchall():
+            uid = row[1]
+            if uid not in user_lookup:
+                continue
+            activities.append({
+                'id': f"msg-{row[0]}",
+                'type': 'chat',
+                'user_id': uid,
+                'user_name': user_lookup[uid]['name'],
+                'user_image': user_lookup[uid]['image'],
+                'description': 'sent a message',
+                'detail': None,
+                'timestamp': row[2]
+            })
+        
+        # Get recent quizzes (last 7 days)
+        cursor.execute("""
+            SELECT id, user_id, category_title, percentage, created_at
+            FROM quiz_results 
+            WHERE user_id IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '7 days'
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (limit,))
+        
+        for row in cursor.fetchall():
+            uid = row[1]
+            if uid not in user_lookup:
+                continue
+            activities.append({
+                'id': f"quiz-{row[0]}",
+                'type': 'quiz',
+                'user_id': uid,
+                'user_name': user_lookup[uid]['name'],
+                'user_image': user_lookup[uid]['image'],
+                'description': f'completed {row[2]} quiz',
+                'detail': f'{row[3]:.0f}%',
+                'timestamp': row[4]
+            })
+        
+        # Get recent games (last 7 days)
+        cursor.execute("""
+            SELECT id, user_id, game_type, difficulty, stars, created_at
+            FROM game_results 
+            WHERE user_id IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '7 days'
+            ORDER BY created_at DESC
+            LIMIT %s
+        """, (limit,))
+        
+        for row in cursor.fetchall():
+            uid = row[1]
+            if uid not in user_lookup:
+                continue
+            game_name = row[2].replace('_', ' ').title()
+            stars = row[4] or 0
+            activities.append({
+                'id': f"game-{row[0]}",
+                'type': 'game',
+                'user_id': uid,
+                'user_name': user_lookup[uid]['name'],
+                'user_image': user_lookup[uid]['image'],
+                'description': f'played {game_name}',
+                'detail': f'{"⭐" * stars}' if stars > 0 else None,
+                'timestamp': row[5]
+            })
+        
+        # Get recent lesson progress (last 7 days)
+        cursor.execute("""
+            SELECT id, user_id, topic_id, status, updated_at
+            FROM user_topic_progress 
+            WHERE user_id IS NOT NULL
+              AND updated_at >= NOW() - INTERVAL '7 days'
+            ORDER BY updated_at DESC
+            LIMIT %s
+        """, (limit,))
+        
+        for row in cursor.fetchall():
+            uid = row[1]
+            if uid not in user_lookup:
+                continue
+            topic = row[2].replace('-', ' ').replace('_', ' ').title()
+            status = row[3]
+            if status == 'completed':
+                desc = f'completed "{topic}" lesson'
+            else:
+                desc = f'started "{topic}" lesson'
+            activities.append({
+                'id': f"lesson-{row[0]}",
+                'type': 'lesson',
+                'user_id': uid,
+                'user_name': user_lookup[uid]['name'],
+                'user_image': user_lookup[uid]['image'],
+                'description': desc,
+                'detail': None,
+                'timestamp': row[4]
+            })
+        
+        conn.close()
+        
+        # Sort all activities by timestamp and take the top N
+        activities.sort(key=lambda x: x['timestamp'], reverse=True)
+        activities = activities[:limit]
+        
+        return {"activities": activities}
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Activity feed error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/admin/users", response_model=AdminUsersResponse, tags=["Admin"])
 async def get_admin_users(
     authorization: Optional[str] = Header(None),
@@ -6842,6 +7021,178 @@ async def get_feature_usage(
         
     except Exception as e:
         logger.error(f"❌ [ADMIN] Feature usage error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/analytics/advanced", tags=["Admin"])
+async def get_advanced_analytics(
+    period: str = "30d",
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get advanced analytics: quiz pass rates, learning path progress, 
+    peak hours, and user funnel.
+    Requires admin role.
+    """
+    await verify_admin(authorization)
+    
+    # Parse period to interval
+    if period == "7d":
+        interval = "7 days"
+    elif period == "90d":
+        interval = "90 days"
+    else:
+        interval = "30 days"
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # --- 1. Quiz Pass Rates by Category ---
+        cursor.execute(f"""
+            SELECT 
+                category_title,
+                COUNT(*) as attempts,
+                ROUND(AVG(percentage)::numeric, 1) as avg_score,
+                ROUND((SUM(CASE WHEN percentage >= 70 THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1) as pass_rate
+            FROM quiz_results
+            WHERE category_title IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '{interval}'
+            GROUP BY category_title
+            ORDER BY attempts DESC
+            LIMIT 10
+        """)
+        quiz_pass_rates = []
+        for row in cursor.fetchall():
+            quiz_pass_rates.append({
+                'category': row[0],
+                'attempts': row[1],
+                'avg_score': float(row[2]) if row[2] else 0,
+                'pass_rate': float(row[3]) if row[3] else 0
+            })
+        
+        # --- 2. Learning Path Progress ---
+        cursor.execute(f"""
+            SELECT 
+                topic_id,
+                COUNT(*) as total_started,
+                SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as completed,
+                ROUND((SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1) as completion_rate
+            FROM user_topic_progress
+            WHERE started_at >= NOW() - INTERVAL '{interval}'
+            GROUP BY topic_id
+            ORDER BY total_started DESC
+        """)
+        learning_path_progress = []
+        for row in cursor.fetchall():
+            topic_name = row[0].replace('-', ' ').replace('_', ' ').title() if row[0] else 'Unknown'
+            learning_path_progress.append({
+                'topic_id': row[0],
+                'topic_name': topic_name,
+                'started': row[1],
+                'completed': row[2],
+                'completion_rate': float(row[3]) if row[3] else 0
+            })
+        
+        # --- 3. Peak Hours Heatmap (hour of day x day of week) ---
+        cursor.execute(f"""
+            SELECT 
+                EXTRACT(DOW FROM timestamp) as day_of_week,
+                EXTRACT(HOUR FROM timestamp) as hour,
+                COUNT(*) as activity_count
+            FROM conversation_logs
+            WHERE timestamp >= NOW() - INTERVAL '{interval}'
+            GROUP BY EXTRACT(DOW FROM timestamp), EXTRACT(HOUR FROM timestamp)
+            ORDER BY day_of_week, hour
+        """)
+        
+        # Initialize 7x24 grid (days x hours)
+        peak_hours = [[0 for _ in range(24)] for _ in range(7)]
+        max_activity = 0
+        
+        for row in cursor.fetchall():
+            day = int(row[0])  # 0=Sunday, 6=Saturday
+            hour = int(row[1])
+            count = row[2]
+            peak_hours[day][hour] = count
+            if count > max_activity:
+                max_activity = count
+        
+        # --- 4. User Funnel (based on selected period) ---
+        # Users who sent at least 1 message in period
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT user_id) 
+            FROM conversation_logs 
+            WHERE user_id IS NOT NULL 
+              AND role = 'user'
+              AND timestamp >= NOW() - INTERVAL '{interval}'
+        """)
+        users_who_chatted = cursor.fetchone()[0] or 0
+        
+        # Users who played at least 1 game in period
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT user_id) 
+            FROM game_results 
+            WHERE user_id IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '{interval}'
+        """)
+        users_who_played_game = cursor.fetchone()[0] or 0
+        
+        # Users who took at least 1 quiz in period
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT user_id) 
+            FROM quiz_results 
+            WHERE user_id IS NOT NULL
+              AND created_at >= NOW() - INTERVAL '{interval}'
+        """)
+        users_who_took_quiz = cursor.fetchone()[0] or 0
+        
+        # Users who returned (active on 2+ different days in period)
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT user_id)
+            FROM (
+                SELECT user_id, COUNT(DISTINCT DATE(timestamp)) as active_days
+                FROM conversation_logs
+                WHERE user_id IS NOT NULL
+                  AND timestamp >= NOW() - INTERVAL '{interval}'
+                GROUP BY user_id
+                HAVING COUNT(DISTINCT DATE(timestamp)) >= 2
+            ) returning_users
+        """)
+        users_who_returned = cursor.fetchone()[0] or 0
+        
+        # Get total users from all activity in period
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT user_id) FROM (
+                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL AND timestamp >= NOW() - INTERVAL '{interval}'
+                UNION
+                SELECT user_id FROM game_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
+                UNION
+                SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
+            ) all_users
+        """)
+        total_active_users = cursor.fetchone()[0] or 0
+        
+        user_funnel = {
+            'total_users': total_active_users,
+            'chatted': users_who_chatted,
+            'played_game': users_who_played_game,
+            'took_quiz': users_who_took_quiz,
+            'returned': users_who_returned
+        }
+        
+        conn.close()
+        
+        return {
+            'quiz_pass_rates': quiz_pass_rates,
+            'learning_path_progress': learning_path_progress,
+            'peak_hours': peak_hours,
+            'peak_hours_max': max_activity,
+            'user_funnel': user_funnel
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Advanced analytics error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
