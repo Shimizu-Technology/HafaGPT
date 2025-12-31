@@ -413,6 +413,14 @@ class SubscriptionStatusResponse(BaseModel):
 
 # --- Admin Dashboard Models ---
 
+class StatComparison(BaseModel):
+    """Comparison data for a stat (this week vs last week)"""
+    current: int = Field(..., description="Current period value")
+    previous: int = Field(..., description="Previous period value")
+    change: int = Field(..., description="Absolute change (current - previous)")
+    change_percent: Optional[float] = Field(None, description="Percentage change")
+
+
 class AdminStatsResponse(BaseModel):
     """Response model for admin dashboard stats"""
     total_users: int = Field(..., description="Total number of users")
@@ -424,6 +432,39 @@ class AdminStatsResponse(BaseModel):
     total_messages: int = Field(..., description="Total messages sent")
     total_quiz_attempts: int = Field(..., description="Total quiz attempts")
     total_game_plays: int = Field(..., description="Total game plays")
+    
+    # Weekly comparison data
+    messages_this_week: Optional[StatComparison] = Field(None, description="Messages this week vs last week")
+    quizzes_this_week: Optional[StatComparison] = Field(None, description="Quizzes this week vs last week")
+    games_this_week: Optional[StatComparison] = Field(None, description="Games this week vs last week")
+    new_users_this_week: Optional[StatComparison] = Field(None, description="New users this week vs last week")
+    active_users_this_week: Optional[StatComparison] = Field(None, description="Active users this week vs last week")
+    
+    # Engagement metrics
+    avg_messages_per_user: Optional[float] = Field(None, description="Average messages per active user")
+    avg_quiz_score: Optional[float] = Field(None, description="Average quiz score (percentage)")
+    avg_games_per_user: Optional[float] = Field(None, description="Average games played per active user")
+    avg_quizzes_per_user: Optional[float] = Field(None, description="Average quizzes per active user")
+    users_with_messages: Optional[int] = Field(None, description="Users who have sent at least 1 message")
+    users_with_games: Optional[int] = Field(None, description="Users who have played at least 1 game")
+    users_with_quizzes: Optional[int] = Field(None, description="Users who have taken at least 1 quiz")
+    
+    # Feature adoption (percentage of total users)
+    chat_adoption_pct: Optional[float] = Field(None, description="% of users who have used chat")
+    games_adoption_pct: Optional[float] = Field(None, description="% of users who have played games")
+    quizzes_adoption_pct: Optional[float] = Field(None, description="% of users who have taken quizzes")
+    learning_path_adoption_pct: Optional[float] = Field(None, description="% of users who have started learning path")
+    users_with_lessons: Optional[int] = Field(None, description="Users who have started at least 1 lesson")
+    
+    # Top users
+    top_users: Optional[list] = Field(None, description="Top 5 most active users")
+    
+    # Retention metrics
+    dau: Optional[int] = Field(None, description="Daily Active Users (today)")
+    wau: Optional[int] = Field(None, description="Weekly Active Users (last 7 days)")
+    mau: Optional[int] = Field(None, description="Monthly Active Users (last 30 days)")
+    dau_mau_ratio: Optional[float] = Field(None, description="DAU/MAU stickiness ratio (0-100%)")
+    returning_users_pct: Optional[float] = Field(None, description="% of users who returned after first visit")
 
 
 class AdminUserInfo(BaseModel):

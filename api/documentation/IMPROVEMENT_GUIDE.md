@@ -1181,8 +1181,9 @@ DELETE /api/share/:share_id → revoke share (owner only)
 25. **Voice Input** - Web Speech API for voice-to-text
 26. **New Games Phase 2** - Phrase Builder, Speed Challenge
 27. **Knowledge Base Management** - Admin UI for RAG document uploads
-28. **Mobile App (PWA/Capacitor)** - Enhanced PWA or native app wrapper
+28. **Mobile App (React Native)** - Native iOS/Android app (Capacitor approach abandoned)
 29. **Exit Beta** - When ready: disable promo, enable freemium limits
+30. **In-App Feedback System** - Floating feedback button + PostHog survey integration (WIP - stashed)
 
 ---
 
@@ -1201,6 +1202,61 @@ DELETE /api/share/:share_id → revoke share (owner only)
 **Admin Dashboard Phase 1, 2 & 2.5 Complete! 🎄**
 
 User management + analytics + site settings all working!
+
+---
+
+## 📊 Admin Dashboard Phase 3: Enhanced Analytics 🔨 IN PROGRESS
+
+> **Goal:** Make the admin dashboard more insightful with better metrics, comparisons, and engagement data.
+
+### Planned Improvements
+
+| Step | Feature | What It Adds | Effort | Status |
+|------|---------|--------------|--------|--------|
+| 1 | **Comparison Stats** | "+15% vs last week" badges on dashboard cards | 1-2 hrs | 🔨 In Progress |
+| 2 | **Engagement Metrics** | Avg messages/user, avg quiz score, avg games/user | 2-3 hrs | ✅ Complete |
+| 3 | **Feature Adoption** | % of users using chat, games, quizzes, learning path | 1-2 hrs | ✅ Complete |
+| 4 | **Top Users Widget** | Leaderboard of most active users this week | 1-2 hrs | ✅ Complete |
+| 5 | **Retention Metrics** | DAU/MAU ratio, returning users % | 2-3 hrs | ✅ Complete |
+
+### Step 1: Comparison Stats
+
+Add percentage change indicators to dashboard stats:
+- "Total Users: 24 ↑ +2 this week"
+- "Messages: 8,126 ↑ +15% vs last week"
+- Green for positive, red for negative, gray for no change
+
+**Backend:** Update `/api/admin/stats` to include `previous_period` data
+**Frontend:** Add change badges to `AdminDashboard.tsx` stat cards
+
+### Step 2: Engagement Metrics
+
+New metrics section showing:
+- Average messages per active user
+- Average quiz score across all users
+- Average games played per user
+- Average lessons completed per user
+
+### Step 3: Feature Adoption
+
+Pie chart or bar showing what % of users have used each feature:
+- Chat (at least 1 message)
+- Games (at least 1 game)
+- Quizzes (at least 1 quiz)
+- Learning Path (at least 1 lesson)
+
+### Step 4: Top Users Widget
+
+Leaderboard showing top 5-10 most active users:
+- By total XP
+- By messages this week
+- By streak length
+
+### Step 5: Retention Metrics
+
+- **DAU/MAU Ratio:** Daily Active Users / Monthly Active Users (healthy = 20%+)
+- **Returning Users:** % of users who came back after first day
+- **7-day Retention:** % still active after 1 week
 
 ---
 

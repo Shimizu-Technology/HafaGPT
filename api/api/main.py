@@ -5862,6 +5862,310 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
         )
         active_today = cursor.fetchone()[0]
         
+        # --- Weekly Comparison Stats ---
+        from datetime import timedelta
+        from .models import StatComparison
+        
+        # Calculate date ranges
+        # This week: last 7 days (including today)
+        # Last week: 7-14 days ago
+        this_week_start = today - timedelta(days=6)
+        last_week_start = today - timedelta(days=13)
+        last_week_end = today - timedelta(days=7)
+        
+        # Messages this week vs last week
+        cursor.execute("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN DATE(timestamp) >= %s THEN 1 ELSE 0 END), 0) as this_week,
+                COALESCE(SUM(CASE WHEN DATE(timestamp) >= %s AND DATE(timestamp) < %s THEN 1 ELSE 0 END), 0) as last_week
+            FROM conversation_logs
+        """, (this_week_start, last_week_start, this_week_start))
+        msg_row = cursor.fetchone()
+        messages_this = msg_row[0] or 0
+        messages_last = msg_row[1] or 0
+        messages_change = messages_this - messages_last
+        messages_pct = round((messages_change / messages_last * 100), 1) if messages_last > 0 else None
+        
+        # Quizzes this week vs last week
+        cursor.execute("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN DATE(created_at) >= %s THEN 1 ELSE 0 END), 0) as this_week,
+                COALESCE(SUM(CASE WHEN DATE(created_at) >= %s AND DATE(created_at) < %s THEN 1 ELSE 0 END), 0) as last_week
+            FROM quiz_results
+        """, (this_week_start, last_week_start, this_week_start))
+        quiz_row = cursor.fetchone()
+        quizzes_this = quiz_row[0] or 0
+        quizzes_last = quiz_row[1] or 0
+        quizzes_change = quizzes_this - quizzes_last
+        quizzes_pct = round((quizzes_change / quizzes_last * 100), 1) if quizzes_last > 0 else None
+        
+        # Games this week vs last week
+        cursor.execute("""
+            SELECT 
+                COALESCE(SUM(CASE WHEN DATE(created_at) >= %s THEN 1 ELSE 0 END), 0) as this_week,
+                COALESCE(SUM(CASE WHEN DATE(created_at) >= %s AND DATE(created_at) < %s THEN 1 ELSE 0 END), 0) as last_week
+            FROM game_results
+        """, (this_week_start, last_week_start, this_week_start))
+        game_row = cursor.fetchone()
+        games_this = game_row[0] or 0
+        games_last = game_row[1] or 0
+        games_change = games_this - games_last
+        games_pct = round((games_change / games_last * 100), 1) if games_last > 0 else None
+        
+        # Active users this week vs last week
+        cursor.execute("""
+            SELECT 
+                COALESCE(COUNT(DISTINCT CASE WHEN usage_date >= %s THEN user_id END), 0) as this_week,
+                COALESCE(COUNT(DISTINCT CASE WHEN usage_date >= %s AND usage_date < %s THEN user_id END), 0) as last_week
+            FROM user_daily_usage
+        """, (this_week_start, last_week_start, this_week_start))
+        active_row = cursor.fetchone()
+        active_this = active_row[0] or 0
+        active_last = active_row[1] or 0
+        active_change = active_this - active_last
+        active_pct = round((active_change / active_last * 100), 1) if active_last > 0 else None
+        
+        # New users this week vs last week (from Clerk created_at timestamps)
+        new_users_this = 0
+        new_users_last = 0
+        for user in users:
+            if hasattr(user, 'created_at') and user.created_at:
+                # Clerk timestamps are in milliseconds
+                created_ts = user.created_at / 1000 if user.created_at > 1e12 else user.created_at
+                from datetime import datetime
+                created_date = datetime.fromtimestamp(created_ts).date()
+                if created_date >= this_week_start:
+                    new_users_this += 1
+                elif created_date >= last_week_start and created_date < this_week_start:
+                    new_users_last += 1
+        
+        new_users_change = new_users_this - new_users_last
+        new_users_pct = round((new_users_change / new_users_last * 100), 1) if new_users_last > 0 else None
+        
+        # --- Engagement Metrics ---
+        
+        # Users with messages (distinct users who have sent at least 1 message)
+        cursor.execute("SELECT COUNT(DISTINCT user_id) FROM conversation_logs WHERE user_id IS NOT NULL")
+        users_with_messages = cursor.fetchone()[0] or 0
+        
+        # Users with games
+        cursor.execute("SELECT COUNT(DISTINCT user_id) FROM game_results WHERE user_id IS NOT NULL")
+        users_with_games = cursor.fetchone()[0] or 0
+        
+        # Users with quizzes
+        cursor.execute("SELECT COUNT(DISTINCT user_id) FROM quiz_results WHERE user_id IS NOT NULL")
+        users_with_quizzes = cursor.fetchone()[0] or 0
+        
+        # Average messages per user (who has messaged)
+        avg_messages_per_user = round(total_messages / users_with_messages, 1) if users_with_messages > 0 else 0
+        
+        # Average games per user (who has played)
+        avg_games_per_user = round(total_game_plays / users_with_games, 1) if users_with_games > 0 else 0
+        
+        # Average quizzes per user (who has taken quizzes)
+        avg_quizzes_per_user = round(total_quiz_attempts / users_with_quizzes, 1) if users_with_quizzes > 0 else 0
+        
+        # Average quiz score
+        cursor.execute("SELECT AVG(score) FROM quiz_results WHERE score IS NOT NULL")
+        avg_score_row = cursor.fetchone()
+        avg_quiz_score = round(avg_score_row[0], 1) if avg_score_row[0] is not None else None
+        
+        # --- Feature Adoption Percentages ---
+        # Only count REGISTERED users (those with Clerk user_ids that match our user list)
+        # Get list of registered user IDs from Clerk
+        registered_user_ids = [user.id for user in users if hasattr(user, 'id')]
+        
+        # Count registered users who have used each feature
+        if registered_user_ids:
+            # Create a placeholder string for the IN clause
+            placeholders = ','.join(['%s'] * len(registered_user_ids))
+            
+            cursor.execute(f"""
+                SELECT COUNT(DISTINCT user_id) FROM conversation_logs 
+                WHERE user_id IN ({placeholders})
+            """, registered_user_ids)
+            registered_with_messages = cursor.fetchone()[0] or 0
+            
+            cursor.execute(f"""
+                SELECT COUNT(DISTINCT user_id) FROM game_results 
+                WHERE user_id IN ({placeholders})
+            """, registered_user_ids)
+            registered_with_games = cursor.fetchone()[0] or 0
+            
+            cursor.execute(f"""
+                SELECT COUNT(DISTINCT user_id) FROM quiz_results 
+                WHERE user_id IN ({placeholders})
+            """, registered_user_ids)
+            registered_with_quizzes = cursor.fetchone()[0] or 0
+        else:
+            registered_with_messages = 0
+            registered_with_games = 0
+            registered_with_quizzes = 0
+        
+        # Calculate adoption percentages (what % of registered users use each feature)
+        chat_adoption_pct = round((registered_with_messages / total_users * 100), 1) if total_users > 0 else 0
+        games_adoption_pct = round((registered_with_games / total_users * 100), 1) if total_users > 0 else 0
+        quizzes_adoption_pct = round((registered_with_quizzes / total_users * 100), 1) if total_users > 0 else 0
+        
+        # Users with learning path progress (check if table exists first)
+        users_with_lessons = 0
+        try:
+            if registered_user_ids:
+                cursor.execute(f"""
+                    SELECT COUNT(DISTINCT user_id) 
+                    FROM user_topic_progress 
+                    WHERE user_id IN ({placeholders})
+                """, registered_user_ids)
+                users_with_lessons = cursor.fetchone()[0] or 0
+        except Exception:
+            # Table might not exist
+            users_with_lessons = 0
+        
+        learning_path_adoption_pct = round((users_with_lessons / total_users * 100), 1) if total_users > 0 else 0
+        
+        # Update the counts to show registered users only
+        users_with_messages = registered_with_messages
+        users_with_games = registered_with_games
+        users_with_quizzes = registered_with_quizzes
+        
+        # --- Top Users (by total activity) ---
+        top_users = []
+        if registered_user_ids:
+            # Get activity counts for each registered user
+            cursor.execute("""
+                SELECT 
+                    user_id,
+                    COALESCE(msg_count, 0) as messages,
+                    COALESCE(quiz_count, 0) as quizzes,
+                    COALESCE(game_count, 0) as games,
+                    COALESCE(msg_count, 0) + COALESCE(quiz_count, 0) + COALESCE(game_count, 0) as total_activity
+                FROM (
+                    SELECT user_id, COUNT(*) as msg_count 
+                    FROM conversation_logs 
+                    WHERE user_id IS NOT NULL 
+                    GROUP BY user_id
+                ) m
+                FULL OUTER JOIN (
+                    SELECT user_id, COUNT(*) as quiz_count 
+                    FROM quiz_results 
+                    WHERE user_id IS NOT NULL 
+                    GROUP BY user_id
+                ) q USING (user_id)
+                FULL OUTER JOIN (
+                    SELECT user_id, COUNT(*) as game_count 
+                    FROM game_results 
+                    WHERE user_id IS NOT NULL 
+                    GROUP BY user_id
+                ) g USING (user_id)
+                WHERE user_id IS NOT NULL
+                ORDER BY total_activity DESC
+                LIMIT 20
+            """)
+            
+            top_user_rows = cursor.fetchall()
+            
+            # Create a lookup for Clerk users
+            user_lookup = {}
+            for user in users:
+                user_id = user.id
+                email = None
+                first_name = None
+                if hasattr(user, 'email_addresses') and user.email_addresses:
+                    email = user.email_addresses[0].email_address
+                if hasattr(user, 'first_name'):
+                    first_name = user.first_name
+                user_lookup[user_id] = {
+                    'email': email,
+                    'first_name': first_name,
+                    'image_url': getattr(user, 'image_url', None)
+                }
+            
+            for row in top_user_rows:
+                if len(top_users) >= 5:
+                    break
+                    
+                user_id = row[0]
+                user_info = user_lookup.get(user_id)
+                
+                # Only include users that still exist in Clerk
+                if user_info is None:
+                    continue
+                    
+                top_users.append({
+                    'user_id': user_id,
+                    'name': user_info.get('first_name') or (user_info.get('email', '').split('@')[0] if user_info.get('email') else 'User'),
+                    'email': user_info.get('email'),
+                    'image_url': user_info.get('image_url'),
+                    'messages': row[1] or 0,
+                    'quizzes': row[2] or 0,
+                    'games': row[3] or 0,
+                    'total_activity': row[4] or 0
+                })
+        
+        # --- Retention Metrics ---
+        # DAU - users active today (already have active_today)
+        dau = active_today
+        
+        # WAU - users active in last 7 days
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(DISTINCT user_id) FROM (
+                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL AND timestamp >= NOW() - INTERVAL '7 days'
+                UNION
+                SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '7 days'
+                UNION
+                SELECT user_id FROM game_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '7 days'
+            ) active_users
+        """)
+        wau = cursor.fetchone()[0] or 0
+        
+        # MAU - users active in last 30 days
+        cursor.execute("""
+            SELECT COUNT(DISTINCT user_id) FROM (
+                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL AND timestamp >= NOW() - INTERVAL '30 days'
+                UNION
+                SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '30 days'
+                UNION
+                SELECT user_id FROM game_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '30 days'
+            ) active_users
+        """)
+        mau = cursor.fetchone()[0] or 0
+        
+        # DAU/MAU ratio (stickiness - higher is better, typically 10-20% is good)
+        dau_mau_ratio = round((dau / mau) * 100, 1) if mau > 0 else 0
+        
+        # Returning users % - users who have activity on more than 1 distinct day
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT user_id) as returning_users
+            FROM (
+                SELECT user_id, COUNT(DISTINCT activity_date) as active_days
+                FROM (
+                    SELECT user_id, DATE(timestamp) as activity_date FROM conversation_logs WHERE user_id IS NOT NULL
+                    UNION ALL
+                    SELECT user_id, DATE(created_at) as activity_date FROM quiz_results WHERE user_id IS NOT NULL
+                    UNION ALL
+                    SELECT user_id, DATE(created_at) as activity_date FROM game_results WHERE user_id IS NOT NULL
+                ) all_activity
+                GROUP BY user_id
+                HAVING COUNT(DISTINCT activity_date) > 1
+            ) multi_day_users
+        """)
+        returning_users = cursor.fetchone()[0] or 0
+        
+        # Get total users who have any activity (reuse the query pattern)
+        cursor.execute("""
+            SELECT COUNT(DISTINCT user_id) FROM (
+                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL
+                UNION
+                SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL
+                UNION
+                SELECT user_id FROM game_results WHERE user_id IS NOT NULL
+            ) all_users
+        """)
+        total_active_users = cursor.fetchone()[0] or 0
+        returning_users_pct = round((returning_users / total_active_users) * 100, 1) if total_active_users > 0 else 0
+        
         conn.close()
         
         return AdminStatsResponse(
@@ -5873,7 +6177,50 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
             total_conversations=total_conversations,
             total_messages=total_messages,
             total_quiz_attempts=total_quiz_attempts,
-            total_game_plays=total_game_plays
+            total_game_plays=total_game_plays,
+            # Comparison stats
+            messages_this_week=StatComparison(
+                current=messages_this, previous=messages_last, 
+                change=messages_change, change_percent=messages_pct
+            ),
+            quizzes_this_week=StatComparison(
+                current=quizzes_this, previous=quizzes_last,
+                change=quizzes_change, change_percent=quizzes_pct
+            ),
+            games_this_week=StatComparison(
+                current=games_this, previous=games_last,
+                change=games_change, change_percent=games_pct
+            ),
+            new_users_this_week=StatComparison(
+                current=new_users_this, previous=new_users_last,
+                change=new_users_change, change_percent=new_users_pct
+            ),
+            active_users_this_week=StatComparison(
+                current=active_this, previous=active_last,
+                change=active_change, change_percent=active_pct
+            ),
+            # Engagement metrics
+            avg_messages_per_user=avg_messages_per_user,
+            avg_quiz_score=avg_quiz_score,
+            avg_games_per_user=avg_games_per_user,
+            avg_quizzes_per_user=avg_quizzes_per_user,
+            users_with_messages=users_with_messages,
+            users_with_games=users_with_games,
+            users_with_quizzes=users_with_quizzes,
+            # Feature adoption
+            chat_adoption_pct=chat_adoption_pct,
+            games_adoption_pct=games_adoption_pct,
+            quizzes_adoption_pct=quizzes_adoption_pct,
+            learning_path_adoption_pct=learning_path_adoption_pct,
+            users_with_lessons=users_with_lessons,
+            # Top users
+            top_users=top_users,
+            # Retention metrics
+            dau=dau,
+            wau=wau,
+            mau=mau,
+            dau_mau_ratio=dau_mau_ratio,
+            returning_users_pct=returning_users_pct
         )
         
     except HTTPException:
