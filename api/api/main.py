@@ -5812,8 +5812,9 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
             raise HTTPException(status_code=500, detail="Clerk not initialized")
         
         # Get all users from Clerk (limit=500 is max, default is only 10!)
-        users_response = clerk.users.list(limit=500)
-        users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        # Clerk SDK v4 uses request parameter with dict
+        users_response = clerk.users.list(request={"limit": 500})
+        users = users_response if isinstance(users_response, list) else (users_response.data if hasattr(users_response, 'data') else [])
         
         total_users = len(users)
         premium_users = 0
@@ -5904,13 +5905,13 @@ async def get_admin_users(
         offset = (page - 1) * per_page
         
         if search:
-            # Search by email or name - Clerk SDK uses email_address or query param
-            users_response = clerk.users.list(query=search, limit=500)
+            # Search by email or name - Clerk SDK v4 uses request parameter
+            users_response = clerk.users.list(request={"query": search, "limit": 500})
         else:
             # limit=500 is max, default is only 10!
-            users_response = clerk.users.list(limit=500)
+            users_response = clerk.users.list(request={"limit": 500})
         
-        all_users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        all_users = users_response if isinstance(users_response, list) else (users_response.data if hasattr(users_response, 'data') else [])
         total = len(all_users)
         
         # Apply pagination
@@ -6378,8 +6379,9 @@ async def get_user_growth(
             raise HTTPException(status_code=500, detail="Clerk not initialized")
         
         # Get all users from Clerk (limit=500 is max, default is only 10!)
-        users_response = clerk.users.list(limit=500)
-        users = users_response.data if hasattr(users_response, 'data') else (users_response if isinstance(users_response, list) else [])
+        # Clerk SDK v4 uses request parameter with dict
+        users_response = clerk.users.list(request={"limit": 500})
+        users = users_response if isinstance(users_response, list) else (users_response.data if hasattr(users_response, 'data') else [])
         
         # Group users by signup date
         from collections import defaultdict
