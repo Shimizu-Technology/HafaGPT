@@ -64,14 +64,15 @@ export function Games() {
           </p>
         </div>
 
-        {/* Pre-Reader Section */}
-        <div className="mb-8">
+        {/* 👶 For Young Learners (Pre-Reader) */}
+        <section className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">👶</span>
             <h3 className="text-lg font-bold text-brown-800 dark:text-white">For Young Learners</h3>
             <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">No Reading Required!</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Perfect for pre-readers and beginners. Just listen and tap!</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <GameCard
               to="/games/sound-match"
               title="Sound Match"
@@ -86,69 +87,124 @@ export function Games() {
               icon={<span className="text-2xl sm:text-3xl">🖼️</span>}
               difficulty="Pre-Reader"
             />
+            <GameCard
+              to="/games/color-touch"
+              title="Color Touch"
+              description="Hear a Chamorro color, tap the matching colored square! Learn all the colors."
+              icon={<span className="text-2xl sm:text-3xl">🎨</span>}
+              difficulty="Pre-Reader"
+            />
+            <GameCard
+              to="/games/number-tap"
+              title="Number Tap"
+              description="Count the items and tap the number you hear in Chamorro! Learn to count."
+              icon={<span className="text-2xl sm:text-3xl">🔢</span>}
+              difficulty="Pre-Reader"
+            />
+            <GameCard
+              to="/games/simon-says"
+              title="Simon Says"
+              description="Touch your body parts! Learn Chamorro words for head, eyes, nose, and more."
+              icon={<span className="text-2xl sm:text-3xl">👆</span>}
+              difficulty="Pre-Reader"
+            />
           </div>
-        </div>
+        </section>
 
-        {/* Games Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          {/* Foundation Games */}
-          <GameCard
-            to="/games/memory"
-            title="Memory Match"
-            description="Match Chamorro words with their English translations. Great for vocabulary practice!"
-            icon={<Puzzle className="w-7 h-7 sm:w-8 sm:h-8" />}
-            difficulty="All Ages"
-          />
-          
-          <GameCard
-            to="/games/scramble"
-            title="Word Scramble"
-            description="Unscramble the letters to form Chamorro words. Practice your spelling!"
-            icon={<span className="text-2xl sm:text-3xl">🔤</span>}
-            difficulty="Medium"
-          />
-          
-          {/* Action Games */}
-          <GameCard
-            to="/games/falling"
-            title="Falling Words"
-            description="Words fall from the sky! Tap the correct translation before they hit bottom. Gets faster!"
-            icon={<span className="text-2xl sm:text-3xl">⬇️</span>}
-            difficulty="Easy → Hard"
-          />
-          
-          <GameCard
-            to="/games/catch"
-            title="Word Catch"
-            description="Catch correct word pairs as they fly by! Avoid the wrong ones for combo points."
-            icon={<Sword className="w-7 h-7 sm:w-8 sm:h-8" />}
-            difficulty="Medium"
-          />
-          
-          <GameCard
-            to="/games/wordle"
-            title="Chamorro Wordle"
-            description="Guess the Chamorro word in 6 tries! Daily challenge or practice mode."
-            icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
-            difficulty="Hard"
-          />
-          
-          <GameCard
-            to="/games/hangman"
-            title="Hangman"
-            description="Classic word guessing! See the meaning, guess the Chamorro word letter by letter."
-            icon={<span className="text-2xl sm:text-3xl">🎯</span>}
-            difficulty="Medium"
-          />
-          
-          <GameCard
-            to="/games/trivia"
-            title="Cultural Trivia"
-            description="Test your knowledge of Guam history, Chamorro culture, language, and traditions!"
-            icon={<span className="text-2xl sm:text-3xl">🏝️</span>}
-            difficulty="All Levels"
-          />
-        </div>
+        {/* 📚 Vocabulary Builders */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📚</span>
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Vocabulary Builders</h3>
+          </div>
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Build your Chamorro vocabulary with these classic learning games.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <GameCard
+              to="/games/memory"
+              title="Memory Match"
+              description="Match Chamorro words with their English translations. Great for vocabulary practice!"
+              icon={<Puzzle className="w-7 h-7 sm:w-8 sm:h-8" />}
+              difficulty="All Ages"
+            />
+            <GameCard
+              to="/games/scramble"
+              title="Word Scramble"
+              description="Unscramble the letters to form Chamorro words. Practice your spelling!"
+              icon={<span className="text-2xl sm:text-3xl">🔤</span>}
+              difficulty="Medium"
+            />
+            <GameCard
+              to="/games/hangman"
+              title="Hangman"
+              description="Classic word guessing! See the meaning, guess the Chamorro word letter by letter."
+              icon={<span className="text-2xl sm:text-3xl">🎯</span>}
+              difficulty="Medium"
+            />
+          </div>
+        </section>
+
+        {/* ⚡ Quick Play (Action Games) */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">⚡</span>
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Quick Play</h3>
+            <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-medium rounded-full">Fast-Paced!</span>
+          </div>
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Test your reflexes! Great for short practice sessions.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <GameCard
+              to="/games/falling"
+              title="Falling Words"
+              description="Words fall from the sky! Tap the correct translation before they hit bottom. Gets faster!"
+              icon={<span className="text-2xl sm:text-3xl">⬇️</span>}
+              difficulty="Easy → Hard"
+            />
+            <GameCard
+              to="/games/catch"
+              title="Word Catch"
+              description="Catch correct word pairs as they fly by! Avoid the wrong ones for combo points."
+              icon={<Sword className="w-7 h-7 sm:w-8 sm:h-8" />}
+              difficulty="Medium"
+            />
+          </div>
+        </section>
+
+        {/* 🧩 Word Puzzles */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🧩</span>
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Word Puzzles</h3>
+            <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full">Challenge</span>
+          </div>
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Put your Chamorro knowledge to the test with these brain teasers.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <GameCard
+              to="/games/wordle"
+              title="Chamorro Wordle"
+              description="Guess the Chamorro word in 6 tries! Daily challenge or practice mode."
+              icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
+              difficulty="Hard"
+            />
+          </div>
+        </section>
+
+        {/* 🎓 Knowledge & Culture */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🎓</span>
+            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Knowledge & Culture</h3>
+          </div>
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Learn about Chamorro history, traditions, and island culture.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <GameCard
+              to="/games/trivia"
+              title="Cultural Trivia"
+              description="Test your knowledge of Guam history, Chamorro culture, language, and traditions!"
+              icon={<span className="text-2xl sm:text-3xl">🏝️</span>}
+              difficulty="All Levels"
+            />
+          </div>
+        </section>
 
         {/* Tips Section */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-lg border border-cream-200 dark:border-slate-700">

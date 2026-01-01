@@ -27,6 +27,9 @@ import { WordCatch } from './components/WordCatch';
 import { ChamorroWordle } from './components/ChamorroWordle';
 import { Hangman } from './components/Hangman';
 import { CulturalTrivia } from './components/CulturalTrivia';
+import { ColorTouch } from './components/ColorTouch';
+import { NumberTap } from './components/NumberTap';
+import { SimonSays } from './components/SimonSays';
 import { PricingPage } from './components/PricingPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
@@ -102,6 +105,9 @@ function App() {
         <Route path="/games/wordle" element={<ProtectedRoute><ChamorroWordle /></ProtectedRoute>} />
         <Route path="/games/hangman" element={<ProtectedRoute><Hangman /></ProtectedRoute>} />
         <Route path="/games/trivia" element={<ProtectedRoute><CulturalTrivia /></ProtectedRoute>} />
+        <Route path="/games/color-touch" element={<ProtectedRoute><ColorTouch /></ProtectedRoute>} />
+        <Route path="/games/number-tap" element={<ProtectedRoute><NumberTap /></ProtectedRoute>} />
+        <Route path="/games/simon-says" element={<ProtectedRoute><SimonSays /></ProtectedRoute>} />
         
         {/* Pricing page - public */}
         <Route path="/pricing" element={<PricingPage />} />
