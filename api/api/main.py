@@ -1872,19 +1872,87 @@ async def get_share_info(
 
 # --- Text-to-Speech Endpoint ---
 
+def chamorro_to_phonetic(text: str) -> str:
+    """
+    Convert Chamorro text to phonetic respelling that OpenAI TTS can pronounce better.
+    
+    Chamorro has unique sounds that English TTS doesn't handle well:
+    - Y = /dz/ (like "dz" in "adds") - NOT English "y"
+    - CH = /ts/ (like "ts" in "bits") - NOT English "ch" 
+    - Å = /ɑ/ (like "aw" in "saw") - NOT regular "a"
+    - Ñ = /ɲ/ (like Spanish "ñ") - OpenAI handles this well
+    - ' = glottal stop (brief pause)
+    - NG = /ŋ/ (single sound like in "sing")
+    
+    Based on: Dr. Sandra Chung's "Two Chamorro Orthographies" and
+    the Revised and Updated Chamorro Dictionary
+    """
+    import re
+    
+    result = text
+    
+    # --- Handle digraphs and special combinations FIRST (order matters!) ---
+    
+    # NG should stay as-is (OpenAI handles "ng" sound well)
+    # But mark it temporarily so we don't accidentally transform it
+    result = re.sub(r'ng', 'ŊĢ', result, flags=re.IGNORECASE)
+    result = re.sub(r'Ng', 'ŊĢ', result)
+    result = re.sub(r'NG', 'ŊĢ', result)
+    
+    # CH → TS (must do before individual letter replacements)
+    # "chocho" → "tsotso"
+    result = re.sub(r'ch', 'ts', result, flags=re.IGNORECASE)
+    result = re.sub(r'Ch', 'Ts', result)
+    result = re.sub(r'CH', 'TS', result)
+    
+    # --- Handle individual letters ---
+    
+    # Y → DZ (the most commonly mispronounced sound)
+    # "hayi" → "hadzi", "yu'" → "dzu"
+    result = re.sub(r'y', 'dz', result, flags=re.IGNORECASE)
+    result = re.sub(r'Y', 'Dz', result)
+    
+    # Å → AW (the ringed 'a' sound)
+    # "håfa" → "hawfa", "på'go" → "paw'go"
+    result = result.replace('å', 'aw')
+    result = result.replace('Å', 'Aw')
+    
+    # Ñ → NY (OpenAI handles Spanish ñ, but explicit "ny" is clearer)
+    # "siña" → "sinya", "mañana" → "manyanna"
+    result = result.replace('ñ', 'ny')
+    result = result.replace('Ñ', 'Ny')
+    
+    # Glottal stop (') → slight pause
+    # Remove it for now as OpenAI doesn't understand it
+    # The pause between syllables will still be somewhat natural
+    result = result.replace("'", "")
+    
+    # --- Restore NG ---
+    result = result.replace('ŊĢ', 'ng')
+    
+    return result
+
+
 @app.post("/api/tts", tags=["Speech"])
 async def text_to_speech(
     text: str = Form(...),
-    voice: str = Form(default="shimmer")  # Shimmer works best for Chamorro/Spanish
+    voice: str = Form(default="shimmer"),  # Shimmer works best for Chamorro/Spanish
+    phonetic: bool = Form(default=True)  # Apply Chamorro phonetic preprocessing
 ):
     """
-    Convert text to speech using OpenAI TTS HD.
+    Convert text to speech using OpenAI TTS.
     
     Returns base64-encoded MP3 audio that can be played in browser.
     
-    Using tts-1-hd model for higher quality pronunciation.
+    Chamorro Pronunciation Enhancement:
+    - When phonetic=True (default), text is preprocessed to help OpenAI
+      pronounce Chamorro sounds correctly:
+      - Y → DZ (hayi → hadzi)
+      - CH → TS (chocho → tsotso)
+      - Å → AW (håfa → hawfa)
+      - Ñ → NY (siña → sinya)
     
-    Voices available (try different ones for Chamorro):
+    Voices available:
     - shimmer: Soft, gentle (BEST for Spanish/Chamorro) ⭐
     - alloy: Neutral, balanced (good for multilingual)
     - echo: Clear, professional  
@@ -1905,10 +1973,14 @@ async def text_to_speech(
         # Limit text length (OpenAI TTS max is 4096 characters)
         text_to_speak = text[:4096]
         
-        # Note: OpenAI TTS handles Chamorro reasonably well without hints
-        # The model auto-detects language from text content
+        # Apply Chamorro phonetic preprocessing if enabled
+        original_text = text_to_speak
+        if phonetic:
+            text_to_speak = chamorro_to_phonetic(text_to_speak)
+            if text_to_speak != original_text:
+                logger.info(f"🔤 Phonetic: '{original_text}' → '{text_to_speak}'")
         
-        logger.info(f"🔊 TTS request: {len(text_to_speak)} characters, voice={voice}")
+        logger.info(f"🔊 TTS request: {len(text_to_speak)} chars, voice={voice}, phonetic={phonetic}")
         
         # Call OpenAI TTS API
         response = client.audio.speech.create(
