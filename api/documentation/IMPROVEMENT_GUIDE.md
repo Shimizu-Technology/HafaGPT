@@ -1023,9 +1023,9 @@ DELETE /api/share/:share_id → revoke share (owner only)
 |------|--------------|--------|--------|
 | **🎵 Sound Match** | Hear a Chamorro word, tap the matching emoji | Listening, vocabulary | ✅ Done |
 | **🖼️ Picture Pairs** | Memory match with emoji pairs (audio on match) | Visual memory, vocabulary | ✅ Done |
-| **🎨 Color Touch** | "Tap the BLUE one" (Chamorro audio) | Colors, listening | 📋 Planned |
-| **🔢 Number Tap** | "Tap 3 coconuts" (Chamorro audio) | Numbers, counting | 📋 Planned |
-| **👆 Simon Says** | "Touch your nose" (Chamorro audio) | Body parts, commands | 📋 Planned |
+| **🎨 Color Touch** | Hear a Chamorro color, tap the matching colored square | Colors, listening | ✅ Done |
+| **🔢 Number Tap** | Count the items and tap the number you hear | Numbers, counting | ✅ Done |
+| **👆 Simon Says** | Hear "Touch your nose", tap the body part | Body parts, commands | ✅ Done |
 
 **Next:** Voice Input — add speech-to-text for chat.
 

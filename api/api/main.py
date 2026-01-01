@@ -6242,26 +6242,8 @@ async def get_admin_activity(
     """
     from api.models import ActivityItem
     
-    # Verify admin
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing authorization")
-    
-    token = authorization.split(" ")[1]
-    try:
-        payload = verify_clerk_token(token)
-        user_id = payload.get("sub")
-        
-        user = clerk.users.get(user_id=user_id)
-        public_metadata = getattr(user, 'public_metadata', {}) or {}
-        if public_metadata.get('role') != 'admin':
-            raise HTTPException(status_code=403, detail="Admin access required")
-        
-        logger.info(f"✅ [ADMIN] Activity feed requested by {user_id}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"❌ [ADMIN] Activity auth error: {e}")
-        raise HTTPException(status_code=401, detail="Invalid token")
+    # Verify admin using standard helper
+    await verify_admin(authorization)
     
     try:
         # Get all Clerk users for name lookup
@@ -6282,7 +6264,7 @@ async def get_admin_activity(
                 'image': getattr(u, 'image_url', None)
             }
         
-        conn = get_db_connection()
+        conn = conversations.get_db_connection()
         cursor = conn.cursor()
         
         activities = []
@@ -7045,7 +7027,7 @@ async def get_advanced_analytics(
         interval = "30 days"
     
     try:
-        conn = get_db_connection()
+        conn = conversations.get_db_connection()
         cursor = conn.cursor()
         
         # --- 1. Quiz Pass Rates by Category ---
