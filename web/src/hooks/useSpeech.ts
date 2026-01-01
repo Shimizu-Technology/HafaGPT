@@ -50,7 +50,7 @@ export function useSpeech() {
    */
   const speakOpenAI = useCallback(async (text: string, voice: string = 'shimmer'): Promise<boolean> => {
     try {
-      console.log(`🔊 Attempting OpenAI TTS HD with voice: ${voice}...`);
+      console.log(`🔊 TTS request for: "${text}" (${text.length} chars) with voice: ${voice}`);
       setIsSpeaking(true);
       
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
