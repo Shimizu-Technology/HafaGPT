@@ -6348,12 +6348,13 @@ async def get_admin_activity(
             })
         
         # Get recent lesson progress (last 7 days)
+        # Use started_at and completed_at columns (no status or updated_at in this table)
         cursor.execute("""
-            SELECT id, user_id, topic_id, status, updated_at
+            SELECT id, user_id, topic_id, started_at, completed_at
             FROM user_topic_progress 
             WHERE user_id IS NOT NULL
-              AND updated_at >= NOW() - INTERVAL '7 days'
-            ORDER BY updated_at DESC
+              AND (started_at >= NOW() - INTERVAL '7 days' OR completed_at >= NOW() - INTERVAL '7 days')
+            ORDER BY COALESCE(completed_at, started_at) DESC
             LIMIT %s
         """, (limit,))
         
@@ -6361,12 +6362,17 @@ async def get_admin_activity(
             uid = row[1]
             if uid not in user_lookup:
                 continue
-            topic = row[2].replace('-', ' ').replace('_', ' ').title()
-            status = row[3]
-            if status == 'completed':
+            topic = row[2].replace('-', ' ').replace('_', ' ').title() if row[2] else 'Unknown'
+            started_at = row[3]
+            completed_at = row[4]
+            
+            if completed_at:
                 desc = f'completed "{topic}" lesson'
+                timestamp = completed_at
             else:
                 desc = f'started "{topic}" lesson'
+                timestamp = started_at
+            
             activities.append({
                 'id': f"lesson-{row[0]}",
                 'type': 'lesson',
@@ -6375,7 +6381,7 @@ async def get_admin_activity(
                 'user_image': user_lookup[uid]['image'],
                 'description': desc,
                 'detail': None,
-                'timestamp': row[4]
+                'timestamp': timestamp
             })
         
         conn.close()
