@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
+import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
 
 interface LessonQuizProps {
   topic: LearningTopic;
@@ -237,12 +238,15 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       userAnswer = selectedAnswer || '';
       correct = selectedAnswer === currentQuestion.correctAnswer;
     } else {
-      // For fill_blank and type_answer
+      // For fill_blank and type_answer - use fuzzy matching
       userAnswer = typedAnswer.trim();
-      const answer = userAnswer.toLowerCase();
-      const acceptable = currentQuestion.acceptableAnswers?.map(a => a.toLowerCase()) || [];
-      const correctAns = currentQuestion.correctAnswer.toLowerCase();
-      correct = answer === correctAns || acceptable.includes(answer);
+      const result = checkFuzzyAnswer(
+        userAnswer,
+        currentQuestion.correctAnswer,
+        currentQuestion.acceptableAnswers || [],
+        0.75 // 75% similarity threshold - tolerant of minor typos
+      );
+      correct = result.isCorrect;
     }
 
     if (correct) {

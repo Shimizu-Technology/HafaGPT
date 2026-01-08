@@ -1465,21 +1465,34 @@ export function shuffleQuestions(questions: QuizQuestion[]): QuizQuestion[] {
   return shuffled;
 }
 
-// Check if an answer is correct (handles multiple acceptable answers)
+// Check if an answer is correct (handles multiple acceptable answers with fuzzy matching)
 export function checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
-  const normalizedUser = userAnswer.trim().toLowerCase();
-  const normalizedCorrect = question.correctAnswer.toLowerCase();
+  const { checkFuzzyAnswer } = require('../utils/fuzzyMatch');
   
-  // Check main answer
-  if (normalizedUser === normalizedCorrect) return true;
-  
-  // Check acceptable alternatives
-  if (question.acceptableAnswers) {
-    return question.acceptableAnswers.some(
-      ans => ans.toLowerCase() === normalizedUser
-    );
+  // For multiple choice, use exact matching
+  if (question.type === 'multiple_choice') {
+    const normalizedUser = userAnswer.trim().toLowerCase();
+    const normalizedCorrect = question.correctAnswer.toLowerCase();
+    
+    if (normalizedUser === normalizedCorrect) return true;
+    
+    if (question.acceptableAnswers) {
+      return question.acceptableAnswers.some(
+        ans => ans.toLowerCase() === normalizedUser
+      );
+    }
+    
+    return false;
   }
   
-  return false;
+  // For type_answer and fill_blank, use fuzzy matching
+  const result = checkFuzzyAnswer(
+    userAnswer,
+    question.correctAnswer,
+    question.acceptableAnswers || [],
+    0.75 // 75% similarity threshold - tolerant of minor typos
+  );
+  
+  return result.isCorrect;
 }
 
