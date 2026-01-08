@@ -6,273 +6,143 @@
 
 ## 📖 What is TTS?
 
-Text-to-Speech (TTS) converts written text into spoken audio. HåfaGPT uses TTS to help users hear correct Chamorro pronunciation in:
+Text-to-Speech (TTS) converts written text into spoken audio. HåfaGPT uses TTS to help users hear Chamorro pronunciation in:
 
 - **Vocabulary Browser** - Click speaker icon to hear words
 - **Flashcards** - Hear pronunciation while studying
+- **Games** - Audio feedback and word pronunciation
 - **Stories** - Listen to Chamorro text
-- **Conversation Practice** - Hear AI character responses
+- **Word of the Day** - Hear the daily word
 - **Quizzes** - Hear questions and answer options
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture Overview (Current)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          TTS ARCHITECTURE                               │
+│                     TTS ARCHITECTURE (2026)                              │
 └─────────────────────────────────────────────────────────────────────────┘
 
-     USER CLICKS              FRONTEND                    BACKEND
-     SPEAKER ICON         ┌───────────────┐          ┌───────────────┐
-         │                │   React       │          │   FastAPI     │
-         │                │   Component   │   API    │   /api/tts    │
-         ▼                │               │ ───────▶ │               │
-    ┌─────────┐          │  1. Try       │          │  OpenAI TTS   │
-    │   🔊    │          │     OpenAI    │          │  HD API       │
-    │  Icon   │          │     HD First  │          │               │
-    └─────────┘          │               │          └───────────────┘
-                         │  2. Fallback  │                  │
-                         │     to Browser│                  │
-                         │     Speech    │                  ▼
-                         │     API       │          ┌───────────────┐
-                         └───────────────┘          │   Audio Blob  │
-                                │                   │   (MP3)       │
-                                ▼                   └───────────────┘
-                         ┌───────────────┐
-                         │  Browser      │
-                         │  Audio API    │
-                         │  (fallback)   │
-                         └───────────────┘
+    USER CLICKS         useSpeech.ts                  AUDIO SOURCE
+    SPEAKER ICON        ┌───────────────┐
+        │               │               │
+        │               │  1. Check     │     ┌─────────────────────┐
+        ▼               │     manifest  │────▶│  S3 Pre-Generated   │
+   ┌─────────┐          │               │     │  (712 words)        │
+   │   🔊    │          │  2. If found, │     │  - Instant playback │
+   │  Icon   │          │     play S3   │     │  - Consistent audio │
+   └─────────┘          │               │     └─────────────────────┘
+                        │  3. If not,   │
+                        │     call API  │     ┌─────────────────────┐
+                        │               │────▶│  OpenAI TTS API     │
+                        │  4. Cache     │     │  - /api/tts         │
+                        │     result    │     │  - Phonetic preproc │
+                        │               │     └─────────────────────┘
+                        │  5. Fallback  │
+                        │     browser   │     ┌─────────────────────┐
+                        │               │────▶│  Browser Speech     │
+                        └───────────────┘     │  (Web Speech API)   │
+                                              └─────────────────────┘
 ```
 
 ---
 
-## 🔄 Two TTS Methods
+## 🎯 Three TTS Sources (Priority Order)
 
-### Method 1: OpenAI TTS HD (Primary)
+### 1. Pre-Generated Audio (S3) - **Preferred**
 
-Used in **Vocabulary Browser** for high-quality pronunciation:
+For 712 core vocabulary words, we have pre-generated audio stored in S3 for instant, consistent playback.
 
-```typescript
-// VocabularyCategory.tsx
-const speakWord = async (text: string) => {
-  try {
-    // Call backend TTS API
-    const response = await fetch(`${API_URL}/api/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        text, 
-        voice: 'nova',
-        language_hint: 'es'  // Spanish hint for better å/ñ sounds
-      })
-    });
-    
-    // Play the audio blob
-    const audioBlob = await response.blob();
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    await audio.play();
-    
-  } catch (error) {
-    // Fallback to browser speech
-    fallbackToBrowserSpeech(text);
-  }
-};
-```
+**Coverage:**
+| Category | Words | Description |
+|----------|-------|-------------|
+| Games & UI | 73 | All game words, feedback phrases ("Bunitu!", "Tåya'!") |
+| Dictionary | 500 | Most common vocabulary words |
+| Flashcards | 142 | All curated flashcard decks |
+| **Total** | **712** | Core learning features |
 
-**Pros:**
-- High quality, natural-sounding voice
-- Better pronunciation of special characters (å, ñ, ')
-- Consistent across all browsers/devices
+**Why Pre-Generated?**
+- ✅ **100% consistent** - Same audio every time
+- ✅ **Instant playback** - No API latency
+- ✅ **No per-request cost** - Audio already generated
+- ✅ **Works offline** - If cached by browser
+- ✅ **Manually reviewable** - Can improve individual words
 
-**Cons:**
-- Costs money (~$0.015 per 1K characters)
-- Requires API call (network latency)
+**How it works:**
+1. `useSpeech.ts` loads `audio_manifest.json` on app start
+2. When speaking a word, check if it's in the manifest
+3. If found → play directly from S3 URL
+4. Audio files stored at `https://hafagpt.s3.amazonaws.com/audio/`
 
----
+### 2. OpenAI TTS API (Fallback)
 
-### Method 2: Browser Speech API (Fallback)
+For words not in the pre-generated library, we call OpenAI's TTS API in real-time.
 
-Used in **Stories**, **Conversation Practice**, and **Quizzes**:
+**Configuration:**
+- **Model**: `tts-1` (standard, 2x faster than HD)
+- **Voice**: `shimmer` (female, good for Spanish/Chamorro sounds)
+- **Phonetic preprocessing**: Converts Chamorro → English-like pronunciation
 
-```typescript
-// Simple browser-based TTS
-const speak = (text: string) => {
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES';  // Spanish for better Chamorro sounds
-    utterance.rate = 0.85;     // Slightly slower for clarity
-    speechSynthesis.speak(utterance);
-  }
-};
-```
-
-**Pros:**
-- Free (no API costs)
-- Works offline
-- Instant (no network latency)
-
-**Cons:**
-- Quality varies by browser/OS
-- Some voices struggle with Chamorro special characters
-- Less natural sounding
-
----
-
-## 🌐 Language Hint Strategy
-
-Chamorro has sounds similar to Spanish (å ≈ "o", ñ = same):
-
-```typescript
-// Use Spanish locale for better pronunciation
-utterance.lang = 'es-ES';  // Spanish (Spain)
-
-// Why Spanish?
-// - å sounds like Spanish "o" in "todo"
-// - ñ is native to Spanish
-// - Glottal stops (') handled reasonably well
-```
-
----
-
-## 📁 Implementation by Component
-
-### 1. Vocabulary Browser (OpenAI TTS HD)
-
-```
-VocabularyCategory.tsx
-├── speakWord(text)           → POST /api/tts → OpenAI
-└── fallbackToBrowserSpeech() → speechSynthesis.speak()
-```
-
-**Flow:**
-1. User clicks speaker icon 🔊
-2. Try OpenAI TTS HD API
-3. If fails, fallback to browser speech
-4. Audio plays through `<audio>` element
-
-### 2. Flashcards (Browser Speech)
-
-```
-Flashcard.tsx
-└── speak(text) → speechSynthesis.speak()
-```
-
-**Flow:**
-1. User clicks audio button on flashcard
-2. Browser speech API speaks the word
-3. Uses Spanish locale for pronunciation
-
-### 3. Stories (Browser Speech)
-
-```
-StoryViewer.tsx / LengguahitaStoryViewer.tsx
-└── speak(text) → speechSynthesis.speak()
-```
-
-**Flow:**
-1. User clicks play on a story sentence
-2. Browser speech reads the Chamorro text
-3. Slower rate (0.85) for clarity
-
-### 4. Conversation Practice (Browser Speech)
-
-```
-ConversationPractice.tsx
-└── speak(text) → speechSynthesis.speak()
-```
-
-**Flow:**
-1. AI character responds with text
-2. User can click to hear the response spoken
-3. Uses Spanish locale
-
-### 5. Quizzes (Browser Speech)
-
-```
-Quiz.tsx
-└── speak(text) → speechSynthesis.speak()
-```
-
-**Flow:**
-1. Quiz displays question/options
-2. Speaker icons allow hearing pronunciation
-3. Helps with listening comprehension
-
----
-
-## 🔧 Backend TTS Endpoint
-
+**Phonetic Preprocessing:**
 ```python
-# api/main.py
-
-@app.post("/api/tts")
-async def text_to_speech(request: TTSRequest):
-    """
-    Generate audio from text using OpenAI TTS HD.
-    
-    Body:
-        text: str - Text to speak
-        voice: str - Voice name (nova, alloy, echo, fable, onyx, shimmer)
-        language_hint: str - Language hint for pronunciation (default: es)
-    
-    Returns:
-        Audio blob (MP3)
-    """
-    response = openai.audio.speech.create(
-        model="tts-1-hd",
-        voice=request.voice or "nova",
-        input=request.text
-    )
-    
-    return StreamingResponse(
-        response.iter_bytes(),
-        media_type="audio/mpeg"
-    )
+# Backend: api/main.py
+def chamorro_to_phonetic(text):
+    # Y → dz (Chamorro Y sounds like "dz")
+    # CH → ts (softer than English "ch")
+    # Å → aw (open back rounded vowel)
+    # Ñ → ny (like Spanish ñ)
+    # Glottal stop (') → handled naturally
 ```
 
----
+**Examples:**
+| Chamorro | Phonetic | Sounds Like |
+|----------|----------|-------------|
+| Håfa | Hawfa | "Haw-fa" |
+| Yanggen | Dzanggen | "Jahng-gen" |
+| Chålan | Tsawlan | "Tsah-lan" |
+| Maila' | Maila | "My-la" |
 
-## 💰 Cost Considerations
+### 3. Browser Speech API (Last Resort)
 
-| Method | Cost | Quality | Use Case |
-|--------|------|---------|----------|
-| OpenAI TTS HD | ~$0.015/1K chars | ⭐⭐⭐⭐⭐ | Vocabulary (high quality) |
-| Browser Speech | Free | ⭐⭐⭐ | Stories, Quizzes (high volume) |
-
-**Strategy:** Use OpenAI for vocabulary (where quality matters most), browser for everything else.
-
----
-
-## 🐛 Common Issues & Fixes
-
-### Issue: No audio on mobile
-
-**Cause:** Mobile browsers require user interaction before playing audio.
-
-**Fix:** Ensure TTS is triggered by user click, not automatically.
-
-### Issue: Broken pronunciation
-
-**Cause:** Default English voice doesn't know Chamorro sounds.
-
-**Fix:** Use Spanish locale (`es-ES`) for better å/ñ handling.
-
-### Issue: Audio overlaps
-
-**Cause:** User clicks multiple speaker icons quickly.
-
-**Fix:** Cancel previous audio before starting new:
+If OpenAI TTS fails (network error, rate limit), fall back to browser's Web Speech API.
 
 ```typescript
-if (audioRef.current) {
-  audioRef.current.pause();
-}
-audioRef.current = new Audio(audioUrl);
-await audioRef.current.play();
+// Uses Spanish locale for better å/ñ sounds
+utterance.lang = 'es-ES';
+utterance.rate = 0.85;  // Slower for clarity
 ```
+
+**Pros:** Free, works offline
+**Cons:** Quality varies by browser, less natural
+
+---
+
+## 🔧 Implementation: useSpeech Hook
+
+All TTS functionality is centralized in `useSpeech.ts`:
+
+```typescript
+// HafaGPT-frontend/src/hooks/useSpeech.ts
+
+const { speak, preload, isSpeaking, clearCache } = useSpeech();
+
+// Speak a word (checks manifest first, then API)
+await speak('Håfa Adai');
+
+// Preload for instant playback later
+await preload('Bunitu!');
+
+// Force fresh audio (bypass cache)
+await speakFresh('Håfa Adai');
+```
+
+**Features:**
+- **Manifest priority** - Pre-generated audio played first
+- **Aggressive caching** - API responses cached in memory
+- **Audio validation** - Rejects truncated audio before caching
+- **Previous audio cancellation** - Stops current audio before new
+- **Promise deduplication** - Multiple calls = one API request
 
 ---
 
@@ -280,21 +150,127 @@ await audioRef.current.play();
 
 | File | Purpose |
 |------|---------|
-| `api/main.py` | Backend TTS endpoint (`/api/tts`) |
-| `VocabularyCategory.tsx` | OpenAI TTS HD implementation |
-| `StoryViewer.tsx` | Browser speech implementation |
-| `Flashcard.tsx` | Audio button on flashcards |
-| `Quiz.tsx` | TTS for quiz questions |
+| **Frontend** | |
+| `src/hooks/useSpeech.ts` | Main TTS hook with manifest, caching, fallback |
+| `public/audio_manifest.json` | List of pre-generated words + S3 URLs |
+| `src/components/TTSDisclaimer.tsx` | "Pronunciation may vary" disclaimer |
+| **Backend** | |
+| `api/main.py` → `/api/tts` | OpenAI TTS endpoint with phonetic preprocessing |
+| `audio_generation/manifest.json` | Master manifest (source of truth) |
+| `audio_generation/generate_audio.py` | Script to generate + upload to S3 |
+
+---
+
+## 🎵 Pre-Generated Audio Management
+
+### Adding New Words
+
+```bash
+cd HafaGPT-API && source .venv/bin/activate
+
+# Generate single word
+python -m audio_generation.generate_audio --word "Bunitu"
+
+# Generate + upload flashcard words
+python -m audio_generation.generate_audio --flashcards --upload
+
+# Generate tier 2 dictionary words
+python -m audio_generation.generate_audio --tier 2 --upload
+
+# Preview what would be generated (no actual generation)
+python -m audio_generation.generate_audio --flashcards --dry-run
+```
+
+### Manifest Format
+
+```json
+{
+  "version": 1,
+  "last_updated": "2026-01-09",
+  "total_words": 712,
+  "words": {
+    "Håfa Adai": {
+      "file": "hafa_adai.mp3",
+      "english": "Hello",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Hawfa Adai",
+      "size_bytes": 15360,
+      "generated_at": "2026-01-05"
+    }
+  }
+}
+```
+
+### After Adding Words
+
+1. Copy manifest to frontend: `cp audio_generation/manifest.json ../HafaGPT-frontend/public/audio_manifest.json`
+2. Commit both repos
+3. Push to deploy
+
+---
+
+## 💰 Cost Considerations
+
+| Method | Cost | Quality | Speed | Use Case |
+|--------|------|---------|-------|----------|
+| **Pre-Generated (S3)** | $0 (already generated) | ⭐⭐⭐⭐⭐ | Instant | Core vocab (712 words) |
+| **OpenAI TTS API** | ~$0.015/1K chars | ⭐⭐⭐⭐ | ~1-2s | New words, chat |
+| **Browser Speech** | Free | ⭐⭐⭐ | Instant | Fallback only |
+
+**Monthly TTS Costs:** ~$0.50-2 (most words pre-generated)
+
+---
+
+## 🐛 Common Issues & Fixes
+
+### Issue: Inconsistent pronunciation
+
+**Cause:** OpenAI TTS is non-deterministic - slightly different each time.
+
+**Fix:** Pre-generated audio solves this. For non-pre-generated words, we cache the first successful response.
+
+### Issue: Word sounds truncated
+
+**Cause:** OpenAI occasionally returns incomplete audio.
+
+**Fix:** Audio validation before caching - rejects if duration < expected minimum.
+
+### Issue: No audio on mobile
+
+**Cause:** Mobile browsers require user interaction before playing audio.
+
+**Fix:** TTS is always triggered by user click (speaker icon), never automatically.
+
+### Issue: Audio overlaps
+
+**Cause:** User clicks multiple speaker icons quickly.
+
+**Fix:** `useSpeech.ts` stops previous audio before starting new.
 
 ---
 
 ## 💡 Future Improvements
 
-- [ ] Record native speaker audio for common words
-- [ ] Train custom TTS voice on Chamorro
-- [ ] Add pronunciation guides (IPA) alongside TTS
-- [ ] Cache frequently-requested TTS audio
+- [x] Pre-generated audio for core vocabulary (712 words)
+- [x] Phonetic preprocessing for better pronunciation
+- [x] Aggressive caching for API responses
+- [x] Audio validation before caching
+- [ ] **ElevenLabs voice cloning** - Clone native Chamorro speaker
+- [ ] **Native speaker recordings** - Partner with Chamorro community
+- [ ] **Expand pre-generated library** - Story vocabulary, more dictionary words
+- [ ] **Custom TTS model** - Train on Chamorro audio (long-term)
 
 ---
 
-**Questions?** The browser speech API is standard web technology - check [MDN SpeechSynthesis docs](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis) for more! 🌺
+## 📖 Pronunciation Disclaimer
+
+Since AI TTS doesn't natively understand Chamorro, we show a disclaimer:
+
+> **Note on Pronunciation:** This uses AI text-to-speech, which may not perfectly capture Chamorro pronunciation. For authentic pronunciation, we recommend consulting native speakers or educational resources like [LearningChamoru.com](https://learningchamoru.com).
+
+This appears in the `TTSDisclaimer.tsx` component as a tooltip or banner.
+
+---
+
+**Questions?** Check the [IMPROVEMENT_GUIDE.md](./IMPROVEMENT_GUIDE.md) for TTS roadmap and status! 🌺
