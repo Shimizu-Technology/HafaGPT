@@ -1,0 +1,2577 @@
+{
+  "description": "Tier 2: Core dictionary vocabulary (500 words)",
+  "version": 1,
+  "last_updated": "2026-01-05",
+  "categories": {
+    "actions": {
+      "description": "Actions vocabulary",
+      "words": [
+        {
+          "chamorro": "Diós",
+          "english": "god",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chetnut dinalak",
+          "english": "gout",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chiba",
+          "english": "goat",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dinalak",
+          "english": "gout",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gahut",
+          "english": "gout",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "oru",
+          "english": "gold",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bi'uda",
+          "english": "widow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "butmacha",
+          "english": "drunk",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dusena",
+          "english": "dozen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gånsu",
+          "english": "goose",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "karetón",
+          "english": "wagon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåtga",
+          "english": "cargo",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ånining",
+          "english": "shadow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "apbladoriha",
+          "english": "gossip",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atbladoriha",
+          "english": "gossip",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dragón",
+          "english": "dragon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ibangheliu",
+          "english": "gospel",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "body": {
+      "description": "Body vocabulary",
+      "words": [
+        {
+          "chamorro": "åñu",
+          "english": "year",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gaputulu",
+          "english": "hair",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gui'ing",
+          "english": "nose",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kapitulu",
+          "english": "head",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåra",
+          "english": "face",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kinibåtdi",
+          "english": "fear",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lågu'",
+          "english": "tear",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "osu",
+          "english": "bear",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såkkan",
+          "english": "year",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ulu",
+          "english": "head",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "klåru",
+          "english": "clear",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mepplu",
+          "english": "hairy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "påchut",
+          "english": "mouth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pahang",
+          "english": "pearl",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sekus",
+          "english": "mouth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "afa'fa'",
+          "english": "armpit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "flema",
+          "english": "phlegm",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "descriptions": {
+      "description": "Descriptions vocabulary",
+      "words": [
+        {
+          "chamorro": "hågui",
+          "english": "small",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "emotions": {
+      "description": "Emotions vocabulary",
+      "words": [
+        {
+          "chamorro": "amåntis",
+          "english": "lovers",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "family": {
+      "description": "Family vocabulary",
+      "words": [
+        {
+          "chamorro": "kånta",
+          "english": "song",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tiha",
+          "english": "aunt",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tihu",
+          "english": "uncle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "binenu",
+          "english": "poison",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "che'lun palåo'an",
+          "english": "sister",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "familia",
+          "english": "family",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "food": {
+      "description": "Food vocabulary",
+      "words": [
+        {
+          "chamorro": "boka",
+          "english": "food",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "finatai",
+          "english": "death",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "masahalum",
+          "english": "sweat",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "minatai",
+          "english": "death",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "plegis",
+          "english": "pleat",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "alentus",
+          "english": "breath",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "alientus",
+          "english": "breath",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "general": {
+      "description": "General vocabulary",
+      "words": [
+        {
+          "chamorro": "gåchai",
+          "english": "ax",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "achuman",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "affåo",
+          "english": "fog",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åfnu'",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ais",
+          "english": "ice",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atkitrån",
+          "english": "tar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atoto",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "baberu",
+          "english": "bib",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båhia",
+          "english": "bay",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båka",
+          "english": "cow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bakalåo",
+          "english": "cod",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bakåna",
+          "english": "bay",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bås",
+          "english": "bus",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bu'an",
+          "english": "bay",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chi'up",
+          "english": "dew",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "distansiåo",
+          "english": "far",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "épapa'",
+          "english": "low",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fachi'",
+          "english": "mud",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "foksun",
+          "english": "gum",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "goha",
+          "english": "fan",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gora",
+          "english": "cap",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hammun",
+          "english": "ham",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hiniebra",
+          "english": "gin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ingglera",
+          "english": "row",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåmalin",
+          "english": "hut",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåt",
+          "english": "cot",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåti",
+          "english": "cry",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kihådas",
+          "english": "jaw",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kuha",
+          "english": "hoe",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kustiyas",
+          "english": "rib",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kusukake'",
+          "english": "hoe",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "la'ung båstus",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lakugua",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lampåsu",
+          "english": "mop",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lobrigu",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Makmåmåo",
+          "english": "May",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Måyu",
+          "english": "May",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ménchagu'",
+          "english": "far",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "minatåyan",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mongha",
+          "english": "nun",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "otdut",
+          "english": "ant",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pai",
+          "english": "pie",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "påsu",
+          "english": "urn",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pindihotus",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "plaset",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "prontu",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pusuelu",
+          "english": "cup",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "rikahida",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "simentineru",
+          "english": "n/a",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sistet",
+          "english": "nun",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tinta",
+          "english": "ink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "a'gang",
+          "english": "loud",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "achahit",
+          "english": "peer",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "áchikak",
+          "english": "race",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "áchikat",
+          "english": "race",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "alådu",
+          "english": "plow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åsidu",
+          "english": "acid",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "asiga",
+          "english": "salt",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atgan",
+          "english": "loud",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atgåyas",
+          "english": "gill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åtpa",
+          "english": "harp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åtuf",
+          "english": "roof",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bábali'",
+          "english": "moth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båbas",
+          "english": "chin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "balåku",
+          "english": "boar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bålas",
+          "english": "whip",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båm",
+          "english": "bomb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bandera",
+          "english": "flag",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båtsa",
+          "english": "raft",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bes",
+          "english": "base",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "betbu",
+          "english": "verb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "binådu",
+          "english": "deer",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "binu",
+          "english": "wine",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bomba",
+          "english": "pump",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chebbang",
+          "english": "chip",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chícharus",
+          "english": "peas",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dais",
+          "english": "dice",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dibi",
+          "english": "debt",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dilingding",
+          "english": "ring",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ekkis",
+          "english": "an X",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "eku",
+          "english": "echo",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "eyuk",
+          "english": "pain",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fåktu",
+          "english": "fact",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fecha",
+          "english": "date",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "finalingu",
+          "english": "loss",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fiús",
+          "english": "fuse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fleti",
+          "english": "fare",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gofis",
+          "english": "lung",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hasta",
+          "english": "pole",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hatpuyidus",
+          "english": "rash",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hila",
+          "english": "rope",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hos",
+          "english": "hose",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hotnu",
+          "english": "oven",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "huguåhnum",
+          "english": "whey",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Huliu",
+          "english": "July",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Huniu",
+          "english": "June",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hurådu",
+          "english": "jury",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iråna",
+          "english": "toad",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "irideru",
+          "english": "heir",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iskåma",
+          "english": "mark",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iskoban sanhiyung",
+          "english": "rake",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iskopplu",
+          "english": "adze",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iståka",
+          "english": "post",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kampamentu",
+          "english": "camp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kampåna",
+          "english": "bell",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kandålu",
+          "english": "lock",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kånilu",
+          "english": "horn",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kaniya",
+          "english": "shin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kantiku",
+          "english": "hymn",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kápsulas",
+          "english": "pill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kas",
+          "english": "cash",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåtnin babui",
+          "english": "pork",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåtnin\r\nguaka",
+          "english": "beef",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kek",
+          "english": "cake",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "koma",
+          "english": "coma",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kopia",
+          "english": "copy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "låna",
+          "english": "wool",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "langasi'",
+          "english": "sink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lenti",
+          "english": "lens",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "liga",
+          "english": "wall",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lión",
+          "english": "lion",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ma'etdut",
+          "english": "numb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mådduluk dågan",
+          "english": "anus",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "máma'ti",
+          "english": "reef",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mantu",
+          "english": "robe",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "metcha",
+          "english": "wick",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "miyas",
+          "english": "mile",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "monhi",
+          "english": "monk",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "nå'an",
+          "english": "name",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "nangasi'",
+          "english": "sink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "neri'",
+          "english": "okra",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "niebi",
+          "english": "snow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "o'pan",
+          "english": "echo",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "odda' sabåna",
+          "english": "clay",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "oksu'",
+          "english": "hill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "opela",
+          "english": "opal",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "óssitan",
+          "english": "joke",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "paini",
+          "english": "comb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "palåbra",
+          "english": "word",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "påpa",
+          "english": "pope",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "papaloti",
+          "english": "kite",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pasadura",
+          "english": "lane",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pétduras",
+          "english": "pill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pintu'",
+          "english": "will",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pitduras",
+          "english": "pill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "planeha",
+          "english": "plan",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "potgas",
+          "english": "flea",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "rai",
+          "english": "king",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ramienta",
+          "english": "tool",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "riskåta",
+          "english": "bail",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "royu",
+          "english": "roll",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sådduk",
+          "english": "lake",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ságamai",
+          "english": "gnat",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sanchu",
+          "english": "hoop",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Såntu Påpa",
+          "english": "pope",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sasalåguan",
+          "english": "hell",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såtduk",
+          "english": "lake",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Semu",
+          "english": "July",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "siladura",
+          "english": "lock",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sitbesa",
+          "english": "beer",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sumi'",
+          "english": "leak",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sungasi'",
+          "english": "busy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "talåpus",
+          "english": "rags",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tåmbut",
+          "english": "drum",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tátkilu'",
+          "english": "high",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ténidut",
+          "english": "fork",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "to'lang",
+          "english": "bone",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tråba",
+          "english": "bond",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "un biåhi",
+          "english": "once",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "unai",
+          "english": "sand",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "yip",
+          "english": "jeep",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Abrit",
+          "english": "April",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "achón",
+          "english": "torch",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "aduåna",
+          "english": "taxes",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "aflågu",
+          "english": "groin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "agå'ga' kannai",
+          "english": "wrist",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ahenti",
+          "english": "agent",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ånghit",
+          "english": "angel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "apuya'",
+          "english": "navel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "arina",
+          "english": "flour",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "asukat",
+          "english": "sugar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atåska",
+          "english": "muddy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åtchu' ñåñak",
+          "english": "coral",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atmoniu",
+          "english": "organ",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atnibat",
+          "english": "syrup",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åttat",
+          "english": "altar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åttilung",
+          "english": "black",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "baila",
+          "english": "dance",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bånyu",
+          "english": "banjo",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "barohu",
+          "english": "drill",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "basula",
+          "english": "trash",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båtchit",
+          "english": "blind",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "batkåda",
+          "english": "group",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "båtsu",
+          "english": "waltz",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "báttalan",
+          "english": "porch",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bayena",
+          "english": "whale",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bayeta'",
+          "english": "sword",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bayogun ådding",
+          "english": "ankle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "betsu",
+          "english": "verse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bíblia",
+          "english": "bible",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bikåriu",
+          "english": "vicar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "binibu",
+          "english": "anger",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "biola",
+          "english": "viola",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bisågra",
+          "english": "hinge",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "blångka",
+          "english": "white",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bos",
+          "english": "voice",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "botas",
+          "english": "boots",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bras",
+          "english": "brass",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "buet",
+          "english": "vowel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "buf",
+          "english": "booth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "buseru",
+          "english": "diver",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chå'guan",
+          "english": "grass",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chå'kan díkiki'",
+          "english": "mouse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chåk",
+          "english": "chalk",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chalan håga'",
+          "english": "veins",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chámbara'",
+          "english": "sword",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chibaling",
+          "english": "blink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chichibanda",
+          "english": "radio",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chigålu",
+          "english": "cigar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dámma'gas",
+          "english": "thumb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dåndan",
+          "english": "music",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "espiniya",
+          "english": "shank",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "etchan",
+          "english": "match",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fa'it",
+          "english": "salty",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fåsu",
+          "english": "cheek",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fifiha",
+          "english": "entry",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "finedda'",
+          "english": "width",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "flåota",
+          "english": "flute",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "frihonera",
+          "english": "joker",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fundiyus",
+          "english": "groin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gågalak",
+          "english": "piles",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "galafåti",
+          "english": "caulk",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "galaidi'",
+          "english": "canoe",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gånti",
+          "english": "giant",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gåpi",
+          "english": "anger",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gåsa",
+          "english": "gauze",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gasetiria",
+          "english": "media",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gofgufan",
+          "english": "scaly",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gomgum",
+          "english": "loose",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "guesguis",
+          "english": "brush",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "guinifi",
+          "english": "dream",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "håbitu",
+          "english": "habit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "håga'",
+          "english": "blood",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "harina",
+          "english": "flour",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hígadu",
+          "english": "liver",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hineplat",
+          "english": "stain",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "historia",
+          "english": "story",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "inaflitu",
+          "english": "fried",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "inaftan",
+          "english": "grave",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "infitmera",
+          "english": "nurse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "insalåda",
+          "english": "salad",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iskatu'",
+          "english": "skirt",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iskribenti",
+          "english": "clerk",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ispichi'",
+          "english": "patch",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iståmpa",
+          "english": "stamp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ityenti",
+          "english": "agent",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kå'ka'",
+          "english": "crack",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kabåyu",
+          "english": "horse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kalåktus",
+          "english": "sharp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kalintura",
+          "english": "fever",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kandi",
+          "english": "candy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kanoha",
+          "english": "canoe",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kantora",
+          "english": "choir",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kari",
+          "english": "curry",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kichåla",
+          "english": "spoon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kicharón",
+          "english": "ladle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "klas",
+          "english": "class",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kuchåla",
+          "english": "spoon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kucharón",
+          "english": "ladle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kulepbla",
+          "english": "snake",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kumbiti",
+          "english": "guest",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kunisidu",
+          "english": "known",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kuråling",
+          "english": "coral",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kutba",
+          "english": "curve",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ladriyu",
+          "english": "brick",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "laidot",
+          "english": "alibi",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "laraina",
+          "english": "queen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "låssas ulu",
+          "english": "scalp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lasu",
+          "english": "lasso",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lehngun",
+          "english": "shady",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lepra",
+          "english": "leper",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "liensu",
+          "english": "linen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "líli'uf",
+          "english": "diver",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "lisu",
+          "english": "plain",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lumuhu",
+          "english": "April",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "makalatun",
+          "english": "rough",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "malåktus",
+          "english": "sharp",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "máma'udai",
+          "english": "rider",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mamis",
+          "english": "sugar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mansåna",
+          "english": "apple",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "masi'",
+          "english": "penny",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "mayót",
+          "english": "mayor",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "me'mi'",
+          "english": "urine",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "met",
+          "english": "honey",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "metåt",
+          "english": "metal",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "miét",
+          "english": "honey",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "muneda",
+          "english": "coins",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "músika",
+          "english": "music",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "naftan",
+          "english": "grave",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "nibenu",
+          "english": "ninth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "obehas",
+          "english": "sheep",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ofresimientu",
+          "english": "offer",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "onru",
+          "english": "honor",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pån",
+          "english": "bread",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "panaderu",
+          "english": "baker",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "panelón",
+          "english": "shawl",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "panocha",
+          "english": "taffy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pañuelu",
+          "english": "scarf",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "påppit",
+          "english": "paper",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "påtiu",
+          "english": "patio",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "petna",
+          "english": "thigh",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "pinatoksu'",
+          "english": "hilly",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "prueba",
+          "english": "proof",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "puntåda",
+          "english": "stick",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "raina",
+          "english": "queen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "raraina",
+          "english": "queen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "rediu",
+          "english": "radio",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ribit",
+          "english": "rivet",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sanme'na",
+          "english": "front",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såntus",
+          "english": "saint",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såpbli",
+          "english": "sword",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "satén",
+          "english": "satin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såtsa",
+          "english": "salsa",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "såttu",
+          "english": "exact",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "se'si'",
+          "english": "knife",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sensin",
+          "english": "flesh",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "sokkus",
+          "english": "dirty",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "suberudai",
+          "english": "slide",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "subrina",
+          "english": "niece",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tåki'",
+          "english": "feces",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tigiri",
+          "english": "tiger",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tinaddung",
+          "english": "depth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tokchin talu'",
+          "english": "infix",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tommun kånnai",
+          "english": "wrist",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tommun kodu",
+          "english": "elbow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tori",
+          "english": "tower",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tosta",
+          "english": "toast",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "yellu",
+          "english": "jello",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "yungki",
+          "english": "anvil",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "adiktåo",
+          "english": "addict",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Agostu",
+          "english": "August",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ahensia",
+          "english": "agency",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "akunsehu",
+          "english": "advice",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "alikåtis",
+          "english": "pliers",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "alunan",
+          "english": "pillow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "anggostu",
+          "english": "narrow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ånghelis",
+          "english": "angels",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ångkla",
+          "english": "anchor",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "apiu",
+          "english": "celery",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "arendatåriu",
+          "english": "lessor",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "arendót",
+          "english": "renter",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "aridondu",
+          "english": "circle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ariendót",
+          "english": "renter",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ariensåo",
+          "english": "daring",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "asahin",
+          "english": "summit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "aseru",
+          "english": "magnet",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atbetbu",
+          "english": "adverb",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atbientu",
+          "english": "advent",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "åtgidun",
+          "english": "cotton",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "atmuhåda",
+          "english": "pillow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "attisa",
+          "english": "artist",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ayenda",
+          "english": "agenda",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "banduleru",
+          "english": "bandit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bangkeru",
+          "english": "banker",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "barilis",
+          "english": "barrel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "batåtas",
+          "english": "potato",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "batberu",
+          "english": "barber",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "battu",
+          "english": "marlin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "biktima",
+          "english": "victim",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "binatti",
+          "english": "batter",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bittut",
+          "english": "virtue",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "blåos",
+          "english": "blouse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "blusa",
+          "english": "blouse",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "botåna",
+          "english": "botany",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "brin",
+          "english": "canvas",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "buelu",
+          "english": "ruffle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "cháflaki'",
+          "english": "nipple",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Chosing",
+          "english": "Korean",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "damoha",
+          "english": "barrel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dangis",
+          "english": "candle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dibibiyun",
+          "english": "lender",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dibinu",
+          "english": "divine",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "diga",
+          "english": "raffle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dihåkunu",
+          "english": "deacon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "disettu",
+          "english": "desert",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "dispensiya",
+          "english": "pantry",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "donseya",
+          "english": "virgin",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "espongha",
+          "english": "sponge",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "estima",
+          "english": "esteem",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fåba'",
+          "english": "embryo",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "famosu",
+          "english": "famous",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fanatchu'an",
+          "english": "quarry",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fanumåkan",
+          "english": "shower",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fininut",
+          "english": "bundle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fotmåt",
+          "english": "formal",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "fråsa",
+          "english": "phrase",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gakna",
+          "english": "winner",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "galón",
+          "english": "gallon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gåstadut",
+          "english": "costly",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gitåla",
+          "english": "guitar",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "gratifika",
+          "english": "reward",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "guitgueru",
+          "english": "throat",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "guliya",
+          "english": "gullet",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ha'fi",
+          "english": "splint",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "haikiu'",
+          "english": "ration",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hatdín",
+          "english": "garden",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hesuitas",
+          "english": "Jesuit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hibiyas",
+          "english": "buckle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hinanum",
+          "english": "watery",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "hula'",
+          "english": "tongue",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "ihensia",
+          "english": "agency",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "imbudu",
+          "english": "funnel",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "imperiu",
+          "english": "empire",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "inihu'",
+          "english": "thrift",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "interinu",
+          "english": "intern",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iresa",
+          "english": "eraser",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "iridåo",
+          "english": "victim",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "istretchu",
+          "english": "narrow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kabesånti",
+          "english": "leader",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "káhaga'",
+          "english": "bloody",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kåmma'",
+          "english": "sickle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kanåriu",
+          "english": "canary",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kanåstra",
+          "english": "basket",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kandela",
+          "english": "candle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kånsit",
+          "english": "cancer",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "home": {
+      "description": "Home vocabulary",
+      "words": [
+        {
+          "chamorro": "kuåttu",
+          "english": "room",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "chenchi'",
+          "english": "bedbug",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "eståbli",
+          "english": "stable",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "kabayerisa",
+          "english": "stable",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "nature": {
+      "description": "Nature vocabulary",
+      "words": [
+        {
+          "chamorro": "åtdåo",
+          "english": "sun",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "puti'un",
+          "english": "star",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "trongkun håyu",
+          "english": "tree",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "riesgu",
+          "english": "risky",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "bintåna",
+          "english": "window",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Damenggu",
+          "english": "Sunday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "draiba",
+          "english": "driver",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "numbers_ordinals": {
+      "description": "Numbers Ordinals vocabulary",
+      "words": [
+        {
+          "chamorro": "kintu",
+          "english": "fifth",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "primét",
+          "english": "first",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "prumera",
+          "english": "first",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tetseru",
+          "english": "third",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "tetsét",
+          "english": "third",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "people": {
+      "description": "People vocabulary",
+      "words": [
+        {
+          "chamorro": "pulun tenghu",
+          "english": "mane",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Alimån",
+          "english": "German",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "places": {
+      "description": "Places vocabulary",
+      "words": [
+        {
+          "chamorro": "tienda",
+          "english": "store",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "isla",
+          "english": "island",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "time": {
+      "description": "Time vocabulary",
+      "words": [
+        {
+          "chamorro": "diha",
+          "english": "day",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "simåna",
+          "english": "week",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "puengi",
+          "english": "night",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Betnis",
+          "english": "Friday",
+          "phonetic_hint": null
+        }
+      ]
+    },
+    "weather": {
+      "description": "Weather vocabulary",
+      "words": [
+        {
+          "chamorro": "mapagåhis",
+          "english": "cloud",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "nubegilla",
+          "english": "cloud",
+          "phonetic_hint": null
+        }
+      ]
+    }
+  }
+}
