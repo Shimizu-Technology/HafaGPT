@@ -1,0 +1,133 @@
+{
+  "description": "Tier 1: Core game vocabulary and UI feedback phrases (~100 words)",
+  "version": 1,
+  "last_updated": "2026-01-05",
+  "categories": {
+    "animals": {
+      "description": "Animal vocabulary from Sound Match game",
+      "words": [
+        { "chamorro": "Ga'lågu", "english": "Dog", "phonetic_hint": "Ga-law-gu" },
+        { "chamorro": "Katu", "english": "Cat", "phonetic_hint": null },
+        { "chamorro": "Mannok", "english": "Chicken", "phonetic_hint": null },
+        { "chamorro": "Babui", "english": "Pig", "phonetic_hint": null },
+        { "chamorro": "Guihan", "english": "Fish", "phonetic_hint": null },
+        { "chamorro": "Haggan", "english": "Turtle", "phonetic_hint": null },
+        { "chamorro": "Paluma", "english": "Bird", "phonetic_hint": null },
+        { "chamorro": "Karabao", "english": "Carabao", "phonetic_hint": null }
+      ]
+    },
+    "colors": {
+      "description": "Color vocabulary from Sound Match and Color Touch games",
+      "words": [
+        { "chamorro": "Agaga'", "english": "Red", "phonetic_hint": "A-ga-ga" },
+        { "chamorro": "Asut", "english": "Blue", "phonetic_hint": null },
+        { "chamorro": "Betde", "english": "Green", "phonetic_hint": null },
+        { "chamorro": "Amariyu", "english": "Yellow", "phonetic_hint": null },
+        { "chamorro": "Kulot kahel", "english": "Orange", "phonetic_hint": null },
+        { "chamorro": "Lila", "english": "Purple", "phonetic_hint": null },
+        { "chamorro": "Å'paka'", "english": "White", "phonetic_hint": "Aw-pa-ka" },
+        { "chamorro": "Åttelong", "english": "Black", "phonetic_hint": "Awt-te-long" },
+        { "chamorro": "Kulot rosa", "english": "Pink", "phonetic_hint": null },
+        { "chamorro": "Kulot kafe", "english": "Brown", "phonetic_hint": null }
+      ]
+    },
+    "food": {
+      "description": "Food vocabulary from Sound Match game",
+      "words": [
+        { "chamorro": "Niyok", "english": "Coconut", "phonetic_hint": "Nee-dzok" },
+        { "chamorro": "Chotda", "english": "Banana", "phonetic_hint": "Tsot-da" },
+        { "chamorro": "Mangga", "english": "Mango", "phonetic_hint": null },
+        { "chamorro": "Hineksa", "english": "Rice", "phonetic_hint": null },
+        { "chamorro": "Månnge", "english": "Delicious", "phonetic_hint": "Mawng-eh" },
+        { "chamorro": "Kåtne", "english": "Meat", "phonetic_hint": "Kawt-neh" },
+        { "chamorro": "Chåda", "english": "Egg", "phonetic_hint": "Tsaw-da" },
+        { "chamorro": "Hånom", "english": "Water", "phonetic_hint": "Haw-nom" }
+      ]
+    },
+    "nature": {
+      "description": "Nature vocabulary from Sound Match game",
+      "words": [
+        { "chamorro": "Flores", "english": "Flower", "phonetic_hint": null },
+        { "chamorro": "Trongkon niyok", "english": "Palm tree", "phonetic_hint": "Trong-kon nee-dzok" },
+        { "chamorro": "Tåsi", "english": "Ocean", "phonetic_hint": "Taw-see" },
+        { "chamorro": "Atdao", "english": "Sun", "phonetic_hint": null },
+        { "chamorro": "Pilan", "english": "Moon", "phonetic_hint": null },
+        { "chamorro": "Puti'on", "english": "Star", "phonetic_hint": "Poo-tee-on" },
+        { "chamorro": "Uchan", "english": "Rain", "phonetic_hint": "Oo-tsan" },
+        { "chamorro": "Manglo'", "english": "Wind", "phonetic_hint": "Mang-lo" }
+      ]
+    },
+    "numbers": {
+      "description": "Number vocabulary from Sound Match and Number Tap games (1-10)",
+      "words": [
+        { "chamorro": "Unu", "english": "One", "phonetic_hint": null },
+        { "chamorro": "Dos", "english": "Two", "phonetic_hint": null },
+        { "chamorro": "Tres", "english": "Three", "phonetic_hint": null },
+        { "chamorro": "Kuåttro", "english": "Four", "phonetic_hint": "Koo-awt-tro" },
+        { "chamorro": "Singko", "english": "Five", "phonetic_hint": null },
+        { "chamorro": "Sais", "english": "Six", "phonetic_hint": null },
+        { "chamorro": "Siette", "english": "Seven", "phonetic_hint": "See-et-teh" },
+        { "chamorro": "Ocho", "english": "Eight", "phonetic_hint": "O-tso" },
+        { "chamorro": "Nuebi", "english": "Nine", "phonetic_hint": null },
+        { "chamorro": "Dies", "english": "Ten", "phonetic_hint": "Dee-es" }
+      ]
+    },
+    "body_parts": {
+      "description": "Body part vocabulary from Simon Says game",
+      "words": [
+        { "chamorro": "Ulo", "english": "Head", "phonetic_hint": null },
+        { "chamorro": "Mata", "english": "Eyes", "phonetic_hint": null },
+        { "chamorro": "Talanga", "english": "Ears", "phonetic_hint": null },
+        { "chamorro": "Gui'eng", "english": "Nose", "phonetic_hint": "Gee-eng" },
+        { "chamorro": "Pachot", "english": "Mouth", "phonetic_hint": "Pa-tsot" },
+        { "chamorro": "Kanai", "english": "Hand", "phonetic_hint": null },
+        { "chamorro": "Addeng", "english": "Foot", "phonetic_hint": null },
+        { "chamorro": "Tata'ao", "english": "Stomach", "phonetic_hint": "Ta-ta-a-o" }
+      ]
+    },
+    "simon_says_instructions": {
+      "description": "Full instruction phrases from Simon Says game",
+      "words": [
+        { "chamorro": "Påtti i ulo-mu!", "english": "Touch your head!", "phonetic_hint": "Pawt-tee ee oo-lo-moo" },
+        { "chamorro": "Påtti i mata-mu!", "english": "Touch your eyes!", "phonetic_hint": "Pawt-tee ee ma-ta-moo" },
+        { "chamorro": "Påtti i talanga-mu!", "english": "Touch your ears!", "phonetic_hint": "Pawt-tee ee ta-lang-a-moo" },
+        { "chamorro": "Påtti i gui'eng-mu!", "english": "Touch your nose!", "phonetic_hint": "Pawt-tee ee gee-eng-moo" },
+        { "chamorro": "Påtti i pachot-mu!", "english": "Touch your mouth!", "phonetic_hint": "Pawt-tee ee pa-tsot-moo" },
+        { "chamorro": "Na'fåna i kanai-mu!", "english": "Show your hand!", "phonetic_hint": "Na-faw-na ee ka-nai-moo" },
+        { "chamorro": "Na'fåna i addeng-mu!", "english": "Show your foot!", "phonetic_hint": "Na-faw-na ee ad-deng-moo" },
+        { "chamorro": "Påtti i tata'ao-mu!", "english": "Touch your stomach!", "phonetic_hint": "Pawt-tee ee ta-ta-a-o-moo" }
+      ]
+    },
+    "ui_feedback": {
+      "description": "Game feedback phrases and common UI audio",
+      "words": [
+        { "chamorro": "Bunitu!", "english": "Beautiful! / Good job!", "phonetic_hint": "Boo-nee-too" },
+        { "chamorro": "Håfa Adai!", "english": "Hello!", "phonetic_hint": "Haw-fa A-dai" },
+        { "chamorro": "Si Yu'os Ma'åse'!", "english": "Thank you!", "phonetic_hint": "See Dzoo-os Ma-aw-seh" },
+        { "chamorro": "Håfa Adai! Great Job!", "english": "Hello! Great Job!", "phonetic_hint": "Haw-fa A-dai Great Job" },
+        { "chamorro": "Tåya'", "english": "Nothing / None / Missed", "phonetic_hint": "Taw-dza" },
+        { "chamorro": "Maolek", "english": "Good / OK", "phonetic_hint": "Ma-o-lek" },
+        { "chamorro": "Bai hu sångan", "english": "I will say", "phonetic_hint": "Bai hoo sawng-an" }
+      ]
+    },
+    "greetings": {
+      "description": "Basic greeting vocabulary (essential for all learners)",
+      "words": [
+        { "chamorro": "Håfa Adai", "english": "Hello", "phonetic_hint": "Haw-fa A-dai" },
+        { "chamorro": "Buenas dias", "english": "Good morning", "phonetic_hint": null },
+        { "chamorro": "Buenas tåtdes", "english": "Good afternoon", "phonetic_hint": "Bweh-nas tawt-des" },
+        { "chamorro": "Buenas noches", "english": "Good evening", "phonetic_hint": "Bweh-nas no-tses" },
+        { "chamorro": "Adios", "english": "Goodbye", "phonetic_hint": null },
+        { "chamorro": "Asta agupa'", "english": "See you tomorrow", "phonetic_hint": "As-ta a-goo-pa" }
+      ]
+    }
+  },
+  "total_words": 87,
+  "notes": [
+    "Words are extracted from: SoundMatch.tsx, ColorTouch.tsx, NumberTap.tsx, SimonSays.tsx",
+    "phonetic_hint is optional - only provided where pronunciation differs significantly from spelling",
+    "UI feedback phrases are used across multiple games for consistency",
+    "Greetings added as they appear in game completion screens"
+  ]
+}
+

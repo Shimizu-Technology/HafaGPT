@@ -49,6 +49,10 @@ conversation_logs_*.jsonl
 # Note: dictionary_data/ is NOT ignored - needed for vocabulary API
 # The JSON files (~6MB total) are required for the dictionary service
 
+# Audio generation (MP3 files stored in S3, not git)
+audio_generation/audio_files/
+# Keep: tier1_words.json, manifest.json, generate_audio.py, README.md
+
 # Evaluation test outputs (generated, not tracked)
 evaluation/tmp/
 evaluation/comparison_results/

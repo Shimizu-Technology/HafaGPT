@@ -1,0 +1,671 @@
+{
+  "version": 1,
+  "last_updated": "2026-01-05T17:25:27.306758",
+  "generated_by": "generate_audio.py",
+  "storage": {
+    "type": "s3",
+    "bucket": "hafagpt",
+    "prefix": "audio/",
+    "public_url": "https://hafagpt.s3.amazonaws.com/audio/"
+  },
+  "total_words": 73,
+  "words": {
+    "Ga'lågu": {
+      "file": "galagu.mp3",
+      "english": "Dog",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Ga-law-gu",
+      "size_bytes": 12000,
+      "generated_at": "2026-01-05T17:23:51.233703"
+    },
+    "Katu": {
+      "file": "katu.mp3",
+      "english": "Cat",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Katu",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:23:52.973631"
+    },
+    "Mannok": {
+      "file": "mannok.mp3",
+      "english": "Chicken",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Mannok",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:23:54.512394"
+    },
+    "Babui": {
+      "file": "babui.mp3",
+      "english": "Pig",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Babui",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:23:56.470658"
+    },
+    "Guihan": {
+      "file": "guihan.mp3",
+      "english": "Fish",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Guihan",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:23:58.024302"
+    },
+    "Haggan": {
+      "file": "haggan.mp3",
+      "english": "Turtle",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Haggan",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:23:59.071252"
+    },
+    "Paluma": {
+      "file": "paluma.mp3",
+      "english": "Bird",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Paluma",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:00.031536"
+    },
+    "Karabao": {
+      "file": "karabao.mp3",
+      "english": "Carabao",
+      "category": "animals",
+      "tier": 1,
+      "phonetic_used": "Karabao",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:02.031343"
+    },
+    "Agaga'": {
+      "file": "agaga.mp3",
+      "english": "Red",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "A-ga-ga",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:02.750546"
+    },
+    "Asut": {
+      "file": "asut.mp3",
+      "english": "Blue",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Asut",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:03.866258"
+    },
+    "Betde": {
+      "file": "betde.mp3",
+      "english": "Green",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Betde",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:04.828018"
+    },
+    "Amariyu": {
+      "file": "amariyu.mp3",
+      "english": "Yellow",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Amaridzu",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:06.560787"
+    },
+    "Kulot kahel": {
+      "file": "kulot_kahel.mp3",
+      "english": "Orange",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Kulot kahel",
+      "size_bytes": 12960,
+      "generated_at": "2026-01-05T17:24:08.100335"
+    },
+    "Lila": {
+      "file": "lila.mp3",
+      "english": "Purple",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Lila",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:09.759830"
+    },
+    "Å'paka'": {
+      "file": "apaka.mp3",
+      "english": "White",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Aw-pa-ka",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:11.151477"
+    },
+    "Åttelong": {
+      "file": "attelong.mp3",
+      "english": "Black",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Awt-te-long",
+      "size_bytes": 12960,
+      "generated_at": "2026-01-05T17:24:13.375842"
+    },
+    "Kulot rosa": {
+      "file": "kulot_rosa.mp3",
+      "english": "Pink",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Kulot rosa",
+      "size_bytes": 12960,
+      "generated_at": "2026-01-05T17:24:14.258777"
+    },
+    "Kulot kafe": {
+      "file": "kulot_kafe.mp3",
+      "english": "Brown",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Kulot kafe",
+      "size_bytes": 12960,
+      "generated_at": "2026-01-05T17:24:15.823869"
+    },
+    "Niyok": {
+      "file": "niyok.mp3",
+      "english": "Coconut",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Nee-dzok",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:16.600214"
+    },
+    "Chotda": {
+      "file": "chotda.mp3",
+      "english": "Banana",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Tsot-da",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:17.470643"
+    },
+    "Mangga": {
+      "file": "mangga.mp3",
+      "english": "Mango",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Mangga",
+      "size_bytes": 9120,
+      "generated_at": "2026-01-05T17:24:19.792286"
+    },
+    "Hineksa": {
+      "file": "hineksa.mp3",
+      "english": "Rice",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Hineksa",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:21.331278"
+    },
+    "Månnge": {
+      "file": "mannge.mp3",
+      "english": "Delicious",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Mawng-eh",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:22.995051"
+    },
+    "Kåtne": {
+      "file": "katne.mp3",
+      "english": "Meat",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Kawt-neh",
+      "size_bytes": 9120,
+      "generated_at": "2026-01-05T17:24:25.331733"
+    },
+    "Chåda": {
+      "file": "chada.mp3",
+      "english": "Egg",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Tsaw-da",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:26.093337"
+    },
+    "Hånom": {
+      "file": "hanom.mp3",
+      "english": "Water",
+      "category": "food",
+      "tier": 1,
+      "phonetic_used": "Haw-nom",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:28.270708"
+    },
+    "Flores": {
+      "file": "flores.mp3",
+      "english": "Flower",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Flores",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:29.048285"
+    },
+    "Trongkon niyok": {
+      "file": "trongkon_niyok.mp3",
+      "english": "Palm tree",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Trong-kon nee-dzok",
+      "size_bytes": 21120,
+      "generated_at": "2026-01-05T17:24:30.091688"
+    },
+    "Tåsi": {
+      "file": "tasi.mp3",
+      "english": "Ocean",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Taw-see",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:30.986072"
+    },
+    "Atdao": {
+      "file": "atdao.mp3",
+      "english": "Sun",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Atdao",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:32.186542"
+    },
+    "Pilan": {
+      "file": "pilan.mp3",
+      "english": "Moon",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Pilan",
+      "size_bytes": 9120,
+      "generated_at": "2026-01-05T17:24:33.909950"
+    },
+    "Puti'on": {
+      "file": "pution.mp3",
+      "english": "Star",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Poo-tee-on",
+      "size_bytes": 12000,
+      "generated_at": "2026-01-05T17:24:34.767741"
+    },
+    "Uchan": {
+      "file": "uchan.mp3",
+      "english": "Rain",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Oo-tsan",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:36.369504"
+    },
+    "Manglo'": {
+      "file": "manglo.mp3",
+      "english": "Wind",
+      "category": "nature",
+      "tier": 1,
+      "phonetic_used": "Mang-lo",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:37.221414"
+    },
+    "Unu": {
+      "file": "unu.mp3",
+      "english": "One",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Unu",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:38.663894"
+    },
+    "Dos": {
+      "file": "dos.mp3",
+      "english": "Two",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Dos",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:40.456619"
+    },
+    "Tres": {
+      "file": "tres.mp3",
+      "english": "Three",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Tres",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:41.325396"
+    },
+    "Kuåttro": {
+      "file": "kuattro.mp3",
+      "english": "Four",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Koo-awt-tro",
+      "size_bytes": 12000,
+      "generated_at": "2026-01-05T17:24:42.783082"
+    },
+    "Singko": {
+      "file": "singko.mp3",
+      "english": "Five",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Singko",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:43.626958"
+    },
+    "Sais": {
+      "file": "sais.mp3",
+      "english": "Six",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Sais",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:44.682938"
+    },
+    "Siette": {
+      "file": "siette.mp3",
+      "english": "Seven",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "See-et-teh",
+      "size_bytes": 12960,
+      "generated_at": "2026-01-05T17:24:45.464230"
+    },
+    "Ocho": {
+      "file": "ocho.mp3",
+      "english": "Eight",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "O-tso",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:46.344139"
+    },
+    "Nuebi": {
+      "file": "nuebi.mp3",
+      "english": "Nine",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Nuebi",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:52.683520"
+    },
+    "Dies": {
+      "file": "dies.mp3",
+      "english": "Ten",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Dee-es",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:24:54.244670"
+    },
+    "Ulo": {
+      "file": "ulo.mp3",
+      "english": "Head",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Ulo",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:24:55.787025"
+    },
+    "Mata": {
+      "file": "mata.mp3",
+      "english": "Eyes",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Mata",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:57.466753"
+    },
+    "Talanga": {
+      "file": "talanga.mp3",
+      "english": "Ears",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Talanga",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:24:58.993729"
+    },
+    "Gui'eng": {
+      "file": "guieng.mp3",
+      "english": "Nose",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Gee-eng",
+      "size_bytes": 8640,
+      "generated_at": "2026-01-05T17:24:59.746829"
+    },
+    "Pachot": {
+      "file": "pachot.mp3",
+      "english": "Mouth",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Pa-tsot",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:25:01.065697"
+    },
+    "Kanai": {
+      "file": "kanai.mp3",
+      "english": "Hand",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Kanai",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:25:01.865795"
+    },
+    "Addeng": {
+      "file": "addeng.mp3",
+      "english": "Foot",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Addeng",
+      "size_bytes": 9600,
+      "generated_at": "2026-01-05T17:25:03.359355"
+    },
+    "Tata'ao": {
+      "file": "tataao.mp3",
+      "english": "Stomach",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Ta-ta-a-o",
+      "size_bytes": 11520,
+      "generated_at": "2026-01-05T17:25:04.144305"
+    },
+    "Påtti i ulo-mu!": {
+      "file": "patti_i_ulomu.mp3",
+      "english": "Touch your head!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee oo-lo-moo",
+      "size_bytes": 25920,
+      "generated_at": "2026-01-05T17:25:05.435986"
+    },
+    "Påtti i mata-mu!": {
+      "file": "patti_i_matamu.mp3",
+      "english": "Touch your eyes!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee ma-ta-moo",
+      "size_bytes": 26880,
+      "generated_at": "2026-01-05T17:25:06.289900"
+    },
+    "Påtti i talanga-mu!": {
+      "file": "patti_i_talangamu.mp3",
+      "english": "Touch your ears!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee ta-lang-a-moo",
+      "size_bytes": 31680,
+      "generated_at": "2026-01-05T17:25:07.214017"
+    },
+    "Påtti i gui'eng-mu!": {
+      "file": "patti_i_guiengmu.mp3",
+      "english": "Touch your nose!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee gee-eng-moo",
+      "size_bytes": 28320,
+      "generated_at": "2026-01-05T17:25:08.682154"
+    },
+    "Påtti i pachot-mu!": {
+      "file": "patti_i_pachotmu.mp3",
+      "english": "Touch your mouth!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee pa-tsot-moo",
+      "size_bytes": 29280,
+      "generated_at": "2026-01-05T17:25:09.626480"
+    },
+    "Na'fåna i kanai-mu!": {
+      "file": "nafana_i_kanaimu.mp3",
+      "english": "Show your hand!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Na-faw-na ee ka-nai-moo",
+      "size_bytes": 28320,
+      "generated_at": "2026-01-05T17:25:11.231091"
+    },
+    "Na'fåna i addeng-mu!": {
+      "file": "nafana_i_addengmu.mp3",
+      "english": "Show your foot!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Na-faw-na ee ad-deng-moo",
+      "size_bytes": 29280,
+      "generated_at": "2026-01-05T17:25:12.966206"
+    },
+    "Påtti i tata'ao-mu!": {
+      "file": "patti_i_tataaomu.mp3",
+      "english": "Touch your stomach!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee ta-ta-a-o-moo",
+      "size_bytes": 29760,
+      "generated_at": "2026-01-05T17:25:14.018956"
+    },
+    "Bunitu!": {
+      "file": "bunitu.mp3",
+      "english": "Beautiful! / Good job!",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Boo-nee-too",
+      "size_bytes": 14400,
+      "generated_at": "2026-01-05T17:25:14.794445"
+    },
+    "Håfa Adai!": {
+      "file": "hafa_adai.mp3",
+      "english": "Hello!",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Haw-fa A-dai",
+      "size_bytes": 14880,
+      "generated_at": "2026-01-05T17:25:16.308116"
+    },
+    "Si Yu'os Ma'åse'!": {
+      "file": "si_yuos_maase.mp3",
+      "english": "Thank you!",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "See Dzoo-os Ma-aw-seh",
+      "size_bytes": 26880,
+      "generated_at": "2026-01-05T17:25:17.195763"
+    },
+    "Håfa Adai! Great Job!": {
+      "file": "hafa_adai_great_job.mp3",
+      "english": "Hello! Great Job!",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Haw-fa A-dai Great Job",
+      "size_bytes": 27840,
+      "generated_at": "2026-01-05T17:25:18.578351"
+    },
+    "Tåya'": {
+      "file": "taya.mp3",
+      "english": "Nothing / None / Missed",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Taw-dza",
+      "size_bytes": 9120,
+      "generated_at": "2026-01-05T17:25:19.357743"
+    },
+    "Maolek": {
+      "file": "maolek.mp3",
+      "english": "Good / OK",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Ma-o-lek",
+      "size_bytes": 10080,
+      "generated_at": "2026-01-05T17:25:20.514925"
+    },
+    "Bai hu sångan": {
+      "file": "bai_hu_sangan.mp3",
+      "english": "I will say",
+      "category": "ui_feedback",
+      "tier": 1,
+      "phonetic_used": "Bai hoo sawng-an",
+      "size_bytes": 17760,
+      "generated_at": "2026-01-05T17:25:21.711247"
+    },
+    "Håfa Adai": {
+      "file": "hafa_adai.mp3",
+      "english": "Hello",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Haw-fa A-dai",
+      "size_bytes": 15840,
+      "generated_at": "2026-01-05T17:25:22.825790"
+    },
+    "Buenas dias": {
+      "file": "buenas_dias.mp3",
+      "english": "Good morning",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Buenas dias",
+      "size_bytes": 13920,
+      "generated_at": "2026-01-05T17:25:23.635544"
+    },
+    "Buenas tåtdes": {
+      "file": "buenas_tatdes.mp3",
+      "english": "Good afternoon",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Bweh-nas tawt-des",
+      "size_bytes": 22080,
+      "generated_at": "2026-01-05T17:25:24.432897"
+    },
+    "Buenas noches": {
+      "file": "buenas_noches.mp3",
+      "english": "Good evening",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Bweh-nas no-tses",
+      "size_bytes": 21120,
+      "generated_at": "2026-01-05T17:25:25.306204"
+    },
+    "Adios": {
+      "file": "adios.mp3",
+      "english": "Goodbye",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "Adios",
+      "size_bytes": 10560,
+      "generated_at": "2026-01-05T17:25:26.186688"
+    },
+    "Asta agupa'": {
+      "file": "asta_agupa.mp3",
+      "english": "See you tomorrow",
+      "category": "greetings",
+      "tier": 1,
+      "phonetic_used": "As-ta a-goo-pa",
+      "size_bytes": 16320,
+      "generated_at": "2026-01-05T17:25:27.306701"
+    }
+  }
+}

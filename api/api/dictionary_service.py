@@ -479,6 +479,14 @@ class DictionaryService:
         - Diacritic-insensitive search: "hanum" finds "hånum"
         - Spelling variant search: "hanom" finds "hånum" (o/u variants)
         - "maase" will find "ma'åse'"
+        - English search: "water" finds Chamorro words meaning "water"
+        
+        Priority system ensures best matches appear first:
+        - Priority 0-1: Exact Chamorro matches
+        - Priority 2: English definition starts with query (e.g., "water" → "water; liquid")
+        - Priority 3-4: Chamorro starts-with/contains
+        - Priority 5: English as complete word (e.g., "water" in "fresh water")
+        - Priority 6+: Partial matches
         """
         if not query or len(query) < 2:
             return []
@@ -493,18 +501,19 @@ class DictionaryService:
         for entry in self._word_list:
             chamorro_lower = entry["chamorro"].lower()
             chamorro_normalized = normalize_chamorro(entry["chamorro"])
+            definition_lower = entry["definition"].lower()
             
             # Skip if we've already added this word
             if chamorro_lower in seen_words:
                 continue
             
-            # Priority 0: Exact match (with diacritics)
+            # Priority 0: Exact Chamorro match (with diacritics)
             if query_lower == chamorro_lower:
                 results.append((0, entry))
                 seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 1: Exact match (normalized/without diacritics)
+            # Priority 1: Exact Chamorro match (normalized/without diacritics)
             if query_normalized == chamorro_normalized:
                 results.append((1, entry))
                 seen_words.add(chamorro_lower)
@@ -516,45 +525,68 @@ class DictionaryService:
                 seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 2: Starts with (with diacritics)
-            if chamorro_lower.startswith(query_lower):
+            # Priority 2: English definition STARTS with query
+            # (e.g., searching "water" matches "water; liquid" but not "fresh water")
+            if definition_lower.startswith(query_lower):
                 results.append((2, entry))
                 seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 3: Starts with (normalized)
+            # Priority 2.5: Query is one of the first meanings (comma-separated)
+            # e.g., "tåsi" has "sea, ocean, beach" - "ocean" should match highly
+            first_meanings = [m.strip() for m in definition_lower.split(',')[:3]]
+            if query_lower in first_meanings:
+                results.append((2, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 3: Chamorro starts with (with diacritics)
+            if chamorro_lower.startswith(query_lower):
+                results.append((3, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 4: Chamorro starts with (normalized)
             if chamorro_normalized.startswith(query_normalized):
-                results.append((3, entry))
-                seen_words.add(chamorro_lower)
-                continue
-            
-            # Priority 3.5: Starts with spelling variant
-            if any(chamorro_normalized.startswith(v) for v in query_variants):
-                results.append((3, entry))
-                seen_words.add(chamorro_lower)
-                continue
-            
-            # Priority 4: Contains (with diacritics)
-            if query_lower in chamorro_lower:
                 results.append((4, entry))
                 seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 5: Contains (normalized)
-            if query_normalized in chamorro_normalized:
+            # Priority 4.5: Starts with spelling variant
+            if any(chamorro_normalized.startswith(v) for v in query_variants):
+                results.append((4, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 5: English definition contains query as a complete word
+            # Use word boundary check to avoid matching "water" in "underwater"
+            if re.search(rf'\b{re.escape(query_lower)}\b', definition_lower):
                 results.append((5, entry))
                 seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 5.5: Contains spelling variant
-            if any(v in chamorro_normalized for v in query_variants):
-                results.append((5, entry))
-                seen_words.add(chamorro_lower)
-                continue
-            
-            # Priority 6: English definition match
-            if query_lower in entry["definition"].lower():
+            # Priority 6: Chamorro contains (with diacritics)
+            if query_lower in chamorro_lower:
                 results.append((6, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 7: Chamorro contains (normalized)
+            if query_normalized in chamorro_normalized:
+                results.append((7, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 7.5: Contains spelling variant
+            if any(v in chamorro_normalized for v in query_variants):
+                results.append((7, entry))
+                seen_words.add(chamorro_lower)
+                continue
+            
+            # Priority 8: English definition contains query (partial match)
+            if query_lower in definition_lower:
+                results.append((8, entry))
+                seen_words.add(chamorro_lower)
         
         # Sort by priority, then alphabetically
         results.sort(key=lambda x: (x[0], x[1]["chamorro"].lower()))

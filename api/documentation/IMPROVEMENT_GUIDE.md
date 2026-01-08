@@ -934,10 +934,12 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
+| **TTS Pre-Generated Audio** | 🔨 In Progress | Generate static audio files for consistent pronunciation |
+| TTS Phonetic Preprocessing | ✅ Done | Y→dz, CH→ts, Å→aw, Ñ→ny conversions |
 | Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
 | Share Conversations | ✅ Done | Shareable public links for conversations |
-| Pre-Reader Games | 🔨 In Progress | Sound Match + Picture Pairs done |
+| Pre-Reader Games | ✅ Done | Sound Match, Color Touch, Number Tap, Simon Says |
 | Homepage Polish | 📋 Next | Simplify hero, reduce CTAs, mobile nav |
 | LearningChamoru Partnership | ⏳ Phase 1 Done | Dictionary sources added, collaboration later |
 | New Learning Games (Phase 1) | ✅ Done | Hangman, Cultural Trivia |
@@ -946,7 +948,8 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 | New Year Theme | ✅ Done | Sparkles + firework bursts, 🎆 logo, purple/gold colors |
 | More Seasonal Themes | 📋 Planned | Valentine's, Easter, Chamorro Month, Independence Day |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
-| ElevenLabs Voice Cloning | 📋 Future | Better pronunciation |
+| ElevenLabs Voice Cloning | 📋 Future | Native speaker voice cloning for authentic pronunciation |
+| Native Speaker Recordings | 📋 Future | Partner with Chamorro speakers for authentic audio |
 | PostHog + Stripe Analytics | 📋 Future | Revenue correlation |
 
 #### **Voice Input** (Next)
@@ -1027,7 +1030,145 @@ DELETE /api/share/:share_id → revoke share (owner only)
 | **🔢 Number Tap** | Count the items and tap the number you hear | Numbers, counting | ✅ Done |
 | **👆 Simon Says** | Hear "Touch your nose", tap the body part | Body parts, commands | ✅ Done |
 
-**Next:** Voice Input — add speech-to-text for chat.
+**Next:** TTS Improvements — pre-generated audio for consistency.
+
+---
+
+#### **TTS Improvements** 🔨 IN PROGRESS
+
+> **Goal:** Make Chamorro pronunciation consistent and as accurate as possible across the app.
+
+**Current State:**
+- OpenAI TTS (`tts-1` model, `shimmer` voice)
+- Phonetic preprocessing converts Chamorro → English-like pronunciation
+- Browser TTS fallback (Spanish locale) if OpenAI fails
+- In-memory caching prevents duplicate API calls
+
+**The Problem:**
+| Issue | Description |
+|-------|-------------|
+| **Non-determinism** | OpenAI TTS produces slightly different audio each time, even for identical text |
+| **Truncation** | Sometimes words are cut off or incomplete |
+| **Mispronunciation** | OpenAI doesn't understand Chamorro phonetics natively |
+| **Inconsistency** | Same word sounds different across sessions |
+
+**Solution: Pre-Generated Audio System** 🔨
+
+Generate audio files ONCE for core vocabulary, store in S3, serve statically for consistent playback.
+
+**Architecture:**
+```
+HafaGPT-API/
+├── audio_generation/
+│   ├── manifest.json           # Master list of all pre-generated words
+│   ├── generate_audio.py       # Script to generate MP3s
+│   ├── tier1_words.json        # Tier 1: Games, UI, feedback (~100 words)
+│   ├── tier2_words.json        # Tier 2: Flashcards (~300 words)
+│   ├── tier3_words.json        # Tier 3: Daily words, stories (~500 words)
+│   └── README.md               # Instructions for adding words
+
+S3 Bucket (hafagpt-audio/):
+├── manifest.json               # Public manifest for frontend
+└── words/
+    ├── hafa_adai.mp3
+    ├── bunitu.mp3
+    └── ...
+```
+
+**Manifest Format:**
+```json
+{
+  "version": 1,
+  "last_updated": "2026-01-05",
+  "total_words": 100,
+  "words": {
+    "håfa adai": {
+      "file": "hafa_adai.mp3",
+      "phonetic": "hawfa adai",
+      "category": "greetings",
+      "tier": 1,
+      "generated_at": "2026-01-05"
+    }
+  }
+}
+```
+
+**Implementation Tiers:**
+
+| Tier | Words | Source | Priority | Effort |
+|------|-------|--------|----------|--------|
+| **Tier 1** | ~100 | Games (Sound Match, Color Touch, etc.), UI feedback ("Bunitu!", "Tåya'!") | 🔴 High | 2-3 hrs |
+| **Tier 2** | ~300 | Flashcard vocabulary (all 21 lesson topics) | 🟡 Medium | 4-5 hrs |
+| **Tier 3** | ~500 | Daily Word pool, story vocabulary, common phrases | 🟢 Low | 6-8 hrs |
+
+**Frontend Changes (`useSpeech.ts`):**
+```typescript
+const speak = async (text: string) => {
+  // 1. Check for pre-generated audio
+  const staticUrl = getPreGeneratedAudioUrl(text);
+  if (staticUrl) {
+    return playFromUrl(staticUrl);  // Instant, consistent!
+  }
+  
+  // 2. Fall back to real-time OpenAI TTS
+  return speakOpenAI(text);
+};
+```
+
+**Benefits:**
+- ✅ 100% consistent pronunciation (same file every time)
+- ✅ Instant playback (no API latency)
+- ✅ Lower costs (no per-request TTS charges)
+- ✅ Works offline (if cached by browser)
+- ✅ Can be manually reviewed/improved
+
+**Status:**
+- [x] Phonetic preprocessing implemented (backend)
+- [x] Aggressive caching implemented (frontend)
+- [x] Audio validation before caching
+- [ ] Tier 1: Collect game/UI words
+- [ ] Tier 1: Generate audio files
+- [ ] Tier 1: Upload to S3
+- [ ] Tier 1: Update frontend to use static audio
+- [ ] Tier 2: Flashcard vocabulary
+- [ ] Tier 3: Daily words and stories
+
+---
+
+#### **Future: Native Speaker Audio (ElevenLabs)** 📋 FUTURE
+
+> **Goal:** Professional-quality Chamorro pronunciation using voice cloning or native recordings.
+
+**Options:**
+
+| Option | Description | Pros | Cons | Cost |
+|--------|-------------|------|------|------|
+| **ElevenLabs Voice Cloning** | Clone a native Chamorro speaker's voice | Natural, consistent, scalable | Requires voice samples, $22+/mo | ~$22-99/mo |
+| **Native Speaker Recordings** | Record actual native speakers | Most authentic, cultural preservation | Time-consuming, not scalable | Volunteer or $$$ |
+| **Custom TTS Model** | Train model on Chamorro audio | Full control, unlimited usage | Requires ML expertise, training data | High initial |
+
+**ElevenLabs Integration (If Chosen):**
+1. Partner with Chamorro speaker for voice samples (30+ mins)
+2. Create cloned voice in ElevenLabs
+3. Generate all vocabulary audio
+4. Store in S3 (same as pre-generated system)
+5. ~$0.18 per 1,000 characters
+
+**LearningChamoru Partnership Opportunity:**
+- They have native speaker audio recordings
+- Could potentially license or collaborate
+- Win-win: their audio + our AI platform
+
+**Effort:** 
+- ElevenLabs setup: 4-6 hours
+- Native recordings: 20-40+ hours (depends on scope)
+
+**When to Consider:**
+- After pre-generated system is working well
+- When user base grows (justify cost)
+- If community partner emerges with audio assets
+
+---
 
 #### **LearningChamoru.com — Learn & Build First (Option A)** 📋 IN PROGRESS
 
@@ -1122,6 +1263,8 @@ DELETE /api/share/:share_id → revoke share (owner only)
 | [`BILLING_AND_SUBSCRIPTIONS.md`](./BILLING_AND_SUBSCRIPTIONS.md) | Freemium model, Clerk Billing, testing |
 | [`GAMES_FEATURE.md`](./GAMES_FEATURE.md) | Learning games documentation |
 | [`HOW_RAG_WORKS.md`](./HOW_RAG_WORKS.md) | RAG system explanation |
+| [`HOW_TTS_WORKS.md`](./HOW_TTS_WORKS.md) | Text-to-speech system, phonetic preprocessing |
+| [`CHAMORRO_PRONUNCIATION_GUIDE.md`](./CHAMORRO_PRONUNCIATION_GUIDE.md) | Chamorro phonetic rules for TTS |
 | [`LEARNINGCHAMORU_ANALYSIS.md`](./LEARNINGCHAMORU_ANALYSIS.md) | LearningChamoru.com research & strategy |
 | [`LEARNING_PATH_RESEARCH.md`](./LEARNING_PATH_RESEARCH.md) | Topping's lesson structure analysis |
 | [`../crawlers/SOURCES.md`](../crawlers/SOURCES.md) | RAG knowledge base source tracking |
@@ -1171,19 +1314,32 @@ DELETE /api/share/:share_id → revoke share (owner only)
 19. ✅ ~~**Word of the Day Filtering**~~ - Done! Exclude names/nicknames from appearing
 20. ✅ ~~**Homepage Performance**~~ - Done! Unified API endpoint, parallel data fetching, coordinated loading
 21. ✅ ~~**New Year's Theme**~~ - Done! Sparkle effect, firework bursts, 🎆 logo
+22. ✅ ~~**Pre-Reader Games Complete**~~ - Done! Color Touch, Number Tap, Simon Says added
+23. ✅ ~~**Admin Dashboard Phase 3**~~ - Done! Comparison stats, engagement metrics, feature adoption, top users, retention
+24. ✅ ~~**Admin Analytics Advanced**~~ - Done! Quiz pass rates, learning path progress, peak hours, user funnel
+25. ✅ ~~**Dictionary English Search**~~ - Done! Search English words to find Chamorro translations
+26. ✅ ~~**Quiz Fuzzy Matching**~~ - Done! Type-in answers allow minor typos
+27. ✅ ~~**TTS Phonetic Preprocessing**~~ - Done! Y→dz, CH→ts, Å→aw, Ñ→ny conversions
+28. ✅ ~~**TTS Caching & Validation**~~ - Done! Aggressive caching, audio validation before cache
 
-**🎯 Learning Platform Transformation (Priority 6):**
-22. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
+**🔊 TTS Improvements (Current Priority):**
+29. 🔨 **Pre-Generated Audio Tier 1** - Collect game/UI words, generate MP3s, upload to S3
+30. 📋 **Pre-Generated Audio Tier 2** - Flashcard vocabulary (~300 words)
+31. 📋 **Pre-Generated Audio Tier 3** - Daily words, stories (~500 words)
+
+**🎯 Learning Platform Transformation:**
+32. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
 
 **Other Features:**
-23. **More Seasonal Themes** - Valentine's Day, Easter, Chamorro Month, etc.
-24. **Gemini 3 Flash Testing** - Test new model for improved translations
-25. **Voice Input** - Web Speech API for voice-to-text
-26. **New Games Phase 2** - Phrase Builder, Speed Challenge
-27. **Knowledge Base Management** - Admin UI for RAG document uploads
-28. **Mobile App (React Native)** - Native iOS/Android app (Capacitor approach abandoned)
-29. **Exit Beta** - When ready: disable promo, enable freemium limits
-30. **In-App Feedback System** - Floating feedback button + PostHog survey integration (WIP - stashed)
+33. **More Seasonal Themes** - Valentine's Day, Easter, Chamorro Month, etc.
+34. **Gemini 3 Flash Testing** - Test new model for improved translations
+35. **Voice Input** - Web Speech API for voice-to-text
+36. **New Games Phase 2** - Phrase Builder, Speed Challenge
+37. **Knowledge Base Management** - Admin UI for RAG document uploads
+38. **Mobile App (React Native)** - Native iOS/Android app (Capacitor approach abandoned)
+39. **Exit Beta** - When ready: disable promo, enable freemium limits
+40. **In-App Feedback System** - Floating feedback button + PostHog survey integration (WIP - stashed)
+41. 📋 **ElevenLabs Voice Cloning** - Partner with Chamorro speaker for authentic TTS (Future)
 
 ---
 
