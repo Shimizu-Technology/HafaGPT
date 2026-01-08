@@ -1,0 +1,722 @@
+{
+  "description": "Curated flashcard words missing from audio manifest",
+  "version": 1,
+  "total": 142,
+  "categories": {
+    "flashcards": {
+      "description": "Curated flashcard vocabulary",
+      "words": [
+        {
+          "chamorro": "Håfa tatatmånu hao?",
+          "english": "How are you?",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Buenas yan hågu",
+          "english": "Good (day) to you / Hello",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bula",
+          "english": "Goodbye (informal)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Buenas tatdes",
+          "english": "Good afternoon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Sinku",
+          "english": "Five (5)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Siete",
+          "english": "Seven (7)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nuebe",
+          "english": "Nine (9)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nana",
+          "english": "Mother / Mom",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tata",
+          "english": "Father / Dad",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lahi",
+          "english": "Son / Boy",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Haga",
+          "english": "Daughter / Girl",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Biha",
+          "english": "Grandmother / Grandma",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bihu",
+          "english": "Grandfather / Grandpa",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Asagua",
+          "english": "Spouse / Husband / Wife",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Prima / Primu",
+          "english": "Cousin (female/male)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Påtgon",
+          "english": "Child",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tiu",
+          "english": "Uncle",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tia",
+          "english": "Aunt",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ayuyu",
+          "english": "Coconut Crab",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Månnok",
+          "english": "Chicken",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Åmariyu",
+          "english": "Yellow",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Såksan",
+          "english": "Brown",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Rosa",
+          "english": "Pink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Gris",
+          "english": "Gray",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lalala",
+          "english": "Orange",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hunggan",
+          "english": "Yes",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu guaiya hao",
+          "english": "I love you",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ti hu komprende",
+          "english": "I don\\",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Pot fabot",
+          "english": "Please",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Mångge ginen hao?",
+          "english": "Where are you from?",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Buen prubechu",
+          "english": "Enjoy your meal / Bon appetit",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kao siña un tulaika?",
+          "english": "Can you repeat that?",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fan hånao hit",
+          "english": "Let\\",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Guahu",
+          "english": "Me / I (emphatic)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kao guåha?",
+          "english": "Is there? / Do you have?",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ti siña",
+          "english": "Cannot / Not possible",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Pot fabot",
+          "english": "Please",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kannai",
+          "english": "Hand / Hands",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bråsu",
+          "english": "Arm / Arms",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kueyu",
+          "english": "Neck / Nape",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Korason",
+          "english": "Heart",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tuyan",
+          "english": "Stomach / Belly",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Månha",
+          "english": "Chicken",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kådu",
+          "english": "Soup / Stew",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lechuga",
+          "english": "Lettuce / Vegetables",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kafé",
+          "english": "Coffee",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kelaguen",
+          "english": "Grilled dish with lemon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu hungok",
+          "english": "I hear / I heard",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu hånao",
+          "english": "I go / I went",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu gimen",
+          "english": "I drink",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu fåhan",
+          "english": "I speak / I say",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu guaiya",
+          "english": "I love",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Håfa",
+          "english": "What",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hayi",
+          "english": "Who",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Manu",
+          "english": "Where / Which",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Pot håfa",
+          "english": "Why / For what",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tatatmånu / Håfa tatatmånu",
+          "english": "How",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kuåntu",
+          "english": "How many / How much",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Håyi",
+          "english": "Whose",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kao",
+          "english": "Is it? / Do you? (question marker)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hafa bidå-mu?",
+          "english": "What are you doing?",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Dåmenggo",
+          "english": "Sunday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lunes",
+          "english": "Monday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Måttes",
+          "english": "Tuesday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Metkoles",
+          "english": "Wednesday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Huebes",
+          "english": "Thursday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Betnes",
+          "english": "Friday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Såbalu",
+          "english": "Saturday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nigap",
+          "english": "Yesterday",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Eneru",
+          "english": "January",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Febreru",
+          "english": "February",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Mårso",
+          "english": "March",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ågosto",
+          "english": "August",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Septiembre",
+          "english": "September",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Oktubre",
+          "english": "October",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nobiembre",
+          "english": "November",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Disiembre",
+          "english": "December",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Båba",
+          "english": "Bad / Wrong",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bunitu",
+          "english": "Beautiful / Handsome",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Dånkolo",
+          "english": "Big / Large",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Metgot",
+          "english": "Strong",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Maipe",
+          "english": "Hot (temperature)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Manengheng",
+          "english": "Cold",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nuebu",
+          "english": "New",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bihu",
+          "english": "Old (things)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nahong",
+          "english": "Enough / Sufficient",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Chaddek",
+          "english": "Fast / Quick",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Guahu si...",
+          "english": "I am... (introducing yourself)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ti siña",
+          "english": "Cannot / Not possible",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Debi di",
+          "english": "Must / Should / Have to",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Guaha",
+          "english": "There is / There are / Have",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bai hu...",
+          "english": "I will... (future)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Eskuela",
+          "english": "School",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tenda",
+          "english": "Store / Shop",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lancho",
+          "english": "Farm / Ranch",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ofisina",
+          "english": "Office",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Espitat",
+          "english": "Hospital",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Plasa",
+          "english": "Plaza / Town Square",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Chalan",
+          "english": "Road / Street",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Påkyo",
+          "english": "Typhoon / Storm",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tiempo",
+          "english": "Weather / Time",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Pulan",
+          "english": "Moon",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Trongkon håyu",
+          "english": "Tree",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fanomnågan",
+          "english": "Dry Season",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kusina",
+          "english": "Kitchen",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Åpusento",
+          "english": "Room / Bedroom",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Båño",
+          "english": "Bathroom",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Lamasa",
+          "english": "Table",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Siya",
+          "english": "Chair",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Katre",
+          "english": "Bed",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bentåna",
+          "english": "Window",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Petta / Potta",
+          "english": "Door",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Atof",
+          "english": "Roof",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kahon",
+          "english": "Box / Chest",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Akague",
+          "english": "Left (direction)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tåtte",
+          "english": "Back / Behind",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Magi",
+          "english": "Here (come here)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Guatu",
+          "english": "There (over there)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kareta",
+          "english": "Car",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Batko",
+          "english": "Boat / Ship",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fåhan",
+          "english": "Buy / Purchase",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Bende",
+          "english": "Sell",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Presiu",
+          "english": "Price",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Båråtu",
+          "english": "Cheap / Inexpensive",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Guaguan",
+          "english": "Expensive",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Hu nisisita",
+          "english": "I need",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Ayuda",
+          "english": "Help",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Åbona",
+          "english": "Pay",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Kåmbiyu",
+          "english": "Change (money)",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Emplehu",
+          "english": "Job / Employment",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Estudiånte",
+          "english": "Student",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tutuhon",
+          "english": "Begin / Start",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Munhåyan",
+          "english": "Finish / Complete",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Eskåpa",
+          "english": "Leave / Get out",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Batkada",
+          "english": "Group / Team",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fuetsao",
+          "english": "Forced / Required",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Gupot",
+          "english": "Party / Celebration",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fiesta",
+          "english": "Fiesta / Festival",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fandånggo",
+          "english": "Wedding Celebration",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Respetu",
+          "english": "Respect",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Nånan biha",
+          "english": "Grandmother",
+          "phonetic_hint": null
+        },
+        {
+          "chamorro": "Tåtan bihu",
+          "english": "Grandfather",
+          "phonetic_hint": null
+        }
+      ]
+    }
+  }
+}

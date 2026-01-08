@@ -780,16 +780,30 @@ class DictionaryService:
         Get a word of the day based on the current date.
         
         Uses a deterministic selection based on day of year so everyone
-        sees the same word on the same day. Prioritizes common, useful words
-        from family-friendly categories.
+        sees the same word on the same day. Only picks from words with
+        pre-generated audio for consistent TTS playback.
         """
         import datetime
         import hashlib
+        import json
+        from pathlib import Path
         
         # Get day of year (1-365/366)
         today = datetime.date.today()
         day_of_year = today.timetuple().tm_yday
         year = today.year
+        
+        # Load pre-generated audio manifest to ensure consistent TTS
+        manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
+        pregenerated_words = set()
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, 'r', encoding='utf-8') as f:
+                    manifest = json.load(f)
+                pregenerated_words = set(w.lower() for w in manifest.get("words", {}).keys())
+                logger.info(f"📢 [WOTD] Loaded {len(pregenerated_words)} pre-generated audio words")
+            except Exception as e:
+                logger.warning(f"⚠️ [WOTD] Failed to load audio manifest: {e}")
         
         # SAFE CATEGORIES - Only pick from these family-friendly categories
         safe_categories = {
@@ -872,6 +886,10 @@ class DictionaryService:
             
             # Skip words that are just abbreviations or initialisms
             if chamorro.isupper() and len(chamorro) <= 4:
+                continue
+            
+            # IMPORTANT: Only include words with pre-generated audio for consistent TTS
+            if pregenerated_words and chamorro.lower() not in pregenerated_words:
                 continue
             
             good_words.append(entry)
