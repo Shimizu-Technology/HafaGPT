@@ -1612,7 +1612,7 @@ async def create_share_link(
         # Verify user owns this conversation
         user_id = await verify_user(authorization)
         
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Verify conversation exists and belongs to user
@@ -1708,7 +1708,7 @@ async def get_shared_conversation(share_id: str):
     Anyone with the link can view the conversation.
     """
     try:
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get share info and conversation
@@ -1785,7 +1785,7 @@ async def revoke_share_link(
     try:
         user_id = await verify_user(authorization)
         
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Delete share if user owns it
@@ -1826,7 +1826,7 @@ async def get_share_info(
     try:
         user_id = await verify_user(authorization)
         
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         cursor.execute("""
@@ -2665,7 +2665,7 @@ async def submit_feedback(request: MessageFeedbackRequest, authorization: Option
             )
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Insert feedback
@@ -2726,7 +2726,7 @@ async def save_quiz_result(
         percentage = (request.score / request.total) * 100 if request.total > 0 else 0
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Insert quiz result
@@ -2813,7 +2813,7 @@ async def get_quiz_result_detail(
         user_id = await verify_user(authorization)
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get quiz result (verify ownership)
@@ -2891,7 +2891,7 @@ async def get_quiz_stats(authorization: Optional[str] = Header(None)):
         user_id = await verify_user(authorization)
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get total quizzes and average score
@@ -3004,7 +3004,7 @@ async def get_quiz_history(
         offset = (page - 1) * per_page
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get total count
@@ -3078,7 +3078,7 @@ async def get_weak_areas(
     try:
         user_id = await verify_user(authorization)
         
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get average scores per category from recent quizzes (last 30 days)
@@ -3151,7 +3151,7 @@ async def save_game_result(
         user_id = await verify_user(authorization)
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Insert game result
@@ -3225,7 +3225,7 @@ async def get_game_stats(
         user_id = await verify_user(authorization)
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get total games and averages
@@ -3338,7 +3338,7 @@ async def get_game_history(
         user_id = await verify_user(authorization)
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         offset = (page - 1) * per_page
@@ -3502,7 +3502,7 @@ async def get_today_usage(
         is_premium = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         today = get_guam_date()  # Use Guam timezone for daily reset
@@ -3588,7 +3588,7 @@ async def increment_usage(
         is_premium = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
         
         # Get database connection
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         today = get_guam_date()  # Use Guam timezone for daily reset
@@ -6336,7 +6336,7 @@ async def get_admin_activity(
                 'image': getattr(u, 'image_url', None)
             }
         
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         activities = []
@@ -7105,7 +7105,7 @@ async def get_advanced_analytics(
         interval = "30 days"
     
     try:
-        conn = conversations.get_db_connection()
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # --- 1. Quiz Pass Rates by Category ---

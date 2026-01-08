@@ -24,9 +24,60 @@ logger = logging.getLogger(__name__)
 
 
 def get_db_connection():
-    """Get database connection"""
+    """Get database connection (simple, no retry)"""
     database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
     return psycopg.connect(database_url)
+
+
+def get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
+    """
+    Get a database connection with retry logic for serverless PostgreSQL.
+    
+    Neon and other serverless databases can drop connections after idle periods.
+    This function retries connection on SSL/connection errors.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        retry_delay: Base delay between retries (doubles each attempt)
+    
+    Returns:
+        A psycopg connection object
+    
+    Raises:
+        Exception: If all retries fail
+    """
+    import time
+    
+    database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
+    last_error = None
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg.connect(database_url)
+            return conn
+        except Exception as e:
+            last_error = e
+            error_msg = str(e).lower()
+            
+            # Check if it's a connection error worth retrying
+            is_connection_error = any(term in error_msg for term in [
+                'ssl', 'connection', 'server closed', 'broken pipe',
+                'connection reset', 'timeout', 'network', 'eof'
+            ])
+            
+            if is_connection_error and attempt < max_retries - 1:
+                if attempt == 0:
+                    logger.warning(f"⚠️  Database connection issue, reconnecting...")
+                time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                continue
+            
+            # If not a connection error or max retries reached, raise
+            raise
+    
+    # Should never reach here, but just in case
+    if last_error:
+        raise last_error
+    raise Exception("Failed to connect to database after retries")
 
 
 def create_conversation(user_id: str, title: str = "New Chat") -> ConversationResponse:
@@ -44,7 +95,7 @@ def create_conversation(user_id: str, title: str = "New Chat") -> ConversationRe
     logger.info(f"🆕 Creating conversation: id={conversation_id}, user_id={user_id}, title={title}")
     
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         cursor.execute("""
@@ -86,7 +137,7 @@ def get_conversations(user_id: str, limit: int = 50) -> ConversationListResponse
     """
     try:
         logger.info(f"🔍 get_conversations called with user_id: {user_id}")
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get conversations (excluding soft-deleted) - optimized without COUNT
@@ -144,7 +195,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         MessagesResponse with list of messages
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Get messages for conversation (even if conversation is soft-deleted)
@@ -269,7 +320,7 @@ def delete_conversation(conversation_id: str, user_id: Optional[str] = None) -> 
         True if deleted, False if not found
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Soft delete with optional user_id check for security
@@ -313,7 +364,7 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
         True if updated, False if not found
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         if user_id:
@@ -354,7 +405,7 @@ def delete_messages_after(conversation_id: str, timestamp: int, user_id: Optiona
         Number of messages deleted
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Convert milliseconds to timestamp
@@ -410,7 +461,7 @@ def create_system_message(
         True if created successfully
     """
     try:
-        conn = get_db_connection()
+        conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
         # Insert system message
