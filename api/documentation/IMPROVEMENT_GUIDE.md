@@ -934,7 +934,7 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| **TTS Pre-Generated Audio** | 🔨 In Progress | Generate static audio files for consistent pronunciation |
+| **TTS Pre-Generated Audio** | ✅ Done | 712 words pre-generated for games, flashcards, Word of Day |
 | TTS Phonetic Preprocessing | ✅ Done | Y→dz, CH→ts, Å→aw, Ñ→ny conversions |
 | Quiz TTS (Audio) | 🔨 In Progress | Read questions and options aloud for accessibility |
 | Voice Input | 📋 Next | Web Speech API for voice-to-text input |
@@ -1126,12 +1126,25 @@ const speak = async (text: string) => {
 - [x] Phonetic preprocessing implemented (backend)
 - [x] Aggressive caching implemented (frontend)
 - [x] Audio validation before caching
-- [ ] Tier 1: Collect game/UI words
-- [ ] Tier 1: Generate audio files
-- [ ] Tier 1: Upload to S3
-- [ ] Tier 1: Update frontend to use static audio
-- [ ] Tier 2: Flashcard vocabulary
-- [ ] Tier 3: Daily words and stories
+- [x] Tier 1: Game/UI words (73 words) - ✅ Complete
+- [x] Tier 2: Dictionary words (500 words) - ✅ Complete
+- [x] Flashcards: Curated vocabulary (142 words) - ✅ Complete
+- [x] Word of the Day: Only uses pre-generated words - ✅ Complete
+- [x] Frontend integration: `useSpeech.ts` checks manifest first - ✅ Complete
+- [ ] Story vocabulary (~100-200 words) - 📋 Future
+- [ ] ElevenLabs voice cloning - 📋 Future
+
+**Total Pre-Generated Words: 712**
+
+**Files Created:**
+- `audio_generation/manifest.json` - Master list of all pre-generated words with S3 URLs
+- `audio_generation/generate_audio.py` - Script to generate MP3s and upload to S3
+- `audio_generation/tier1_words.json` - Game/UI vocabulary
+- `audio_generation/tier2_words.json` - Dictionary vocabulary (500 words)
+- `audio_generation/flashcard_words.json` - Curated flashcard vocabulary
+- `audio_generation/extract_tier2_words.py` - Script to extract dictionary words
+- `audio_generation/extract_flashcard_words.py` - Script to extract flashcard words
+- `HafaGPT-frontend/public/audio_manifest.json` - Frontend manifest copy
 
 ---
 
@@ -1322,10 +1335,13 @@ const speak = async (text: string) => {
 27. ✅ ~~**TTS Phonetic Preprocessing**~~ - Done! Y→dz, CH→ts, Å→aw, Ñ→ny conversions
 28. ✅ ~~**TTS Caching & Validation**~~ - Done! Aggressive caching, audio validation before cache
 
-**🔊 TTS Improvements (Current Priority):**
-29. 🔨 **Pre-Generated Audio Tier 1** - Collect game/UI words, generate MP3s, upload to S3
-30. 📋 **Pre-Generated Audio Tier 2** - Flashcard vocabulary (~300 words)
-31. 📋 **Pre-Generated Audio Tier 3** - Daily words, stories (~500 words)
+**🔊 TTS Improvements (Complete):**
+29. ✅ **Pre-Generated Audio Tier 1** - Game/UI words (73 words) uploaded to S3
+30. ✅ **Pre-Generated Audio Tier 2** - Dictionary words (500 words) uploaded to S3
+31. ✅ **Pre-Generated Audio Flashcards** - Curated flashcard vocabulary (142 words) uploaded to S3
+32. ✅ **Word of the Day** - Now only uses pre-generated words for consistent TTS
+33. ✅ **Frontend Integration** - `useSpeech.ts` checks manifest first, falls back to OpenAI TTS
+34. **Total: 712 pre-generated words** covering all core learning features
 
 **🎯 Learning Platform Transformation:**
 32. **Phase 6: Social & Classroom** (15-20 hrs) - Leaderboards, badges, teacher mode
