@@ -780,7 +780,7 @@ class DictionaryService:
         Get a word of the day based on the current date.
         
         Uses a deterministic selection based on day of year so everyone
-        sees the same word on the same day. Only picks from words with
+        sees the same word on the same day. ONLY picks from words with
         pre-generated audio for consistent TTS playback.
         """
         import datetime
@@ -793,125 +793,75 @@ class DictionaryService:
         day_of_year = today.timetuple().tm_yday
         year = today.year
         
-        # Load pre-generated audio manifest to ensure consistent TTS
+        # Load pre-generated audio manifest - this is our ONLY source for Word of the Day
         manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
-        pregenerated_words = set()
+        manifest_words = {}
         if manifest_path.exists():
             try:
                 with open(manifest_path, 'r', encoding='utf-8') as f:
                     manifest = json.load(f)
-                pregenerated_words = set(w.lower() for w in manifest.get("words", {}).keys())
-                logger.info(f"📢 [WOTD] Loaded {len(pregenerated_words)} pre-generated audio words")
+                manifest_words = manifest.get("words", {})
+                logger.info(f"📢 [WOTD] Loaded {len(manifest_words)} pre-generated audio words")
             except Exception as e:
                 logger.warning(f"⚠️ [WOTD] Failed to load audio manifest: {e}")
         
-        # SAFE CATEGORIES - Only pick from these family-friendly categories
-        safe_categories = {
-            'greetings', 'numbers', 'colors', 'food', 'family', 
-            'animals', 'nature', 'places', 'time', 'body'
-        }
-        
         # BLOCKLIST - Words that shouldn't be word of the day
-        # (inappropriate, too obscure, or not useful for learners)
         blocklist = {
-            # Bodily functions / inappropriate
             "takmi'", "takme'", "mutot", "mumu", "ngånga'", "ñaknak",
             "chi'ok", "podong", "mamokkat", "pokpok", "mamuti",
-            # Death / violence related
-            "matai", "puno'", "patgon matai",
-            # Rude words
-            "poksai", "dåkon", "båba",
-            # Too obscure or archaic
+            "matai", "puno'", "patgon matai", "poksai", "dåkon", "båba",
             "magåhet", "umassagua",
         }
         
-        # Create a list of "good" words for word of the day
-        # Filter for words that are:
-        # - From safe categories only
-        # - Not in blocklist
-        # - Not too long (< 20 chars)
-        # - Have clear, simple definitions (< 100 chars)
-        # - Not taxonomic ("type of...")
-        # - Have examples (preferred)
-        
+        # Build list of good words directly from manifest
+        # This ensures we ONLY use pre-generated audio words
         good_words = []
-        for entry in self._word_list:
-            chamorro = entry["chamorro"]
-            definition = entry["definition"]
-            category = entry.get("category", "").lower()
-            
-            # Skip if not from a safe category
-            if category not in safe_categories:
-                continue
-            
+        for chamorro, word_data in manifest_words.items():
             # Skip blocklisted words
             if chamorro.lower() in blocklist:
                 continue
             
-            # Skip long words
-            if len(chamorro) > 20:
+            # Skip very long words
+            if len(chamorro) > 25:
                 continue
             
-            # Skip complex definitions
-            if len(definition) > 150:
-                continue
-            
-            # Skip empty, n/a, or too short definitions
-            if not definition or len(definition) < 3 or definition.lower() in ['n/a', 'na', 'none', '-', '?']:
-                continue
-            
-            # Skip taxonomic entries
-            if definition.lower().startswith("type of"):
-                continue
-            
-            # Skip cross-references
-            if definition.lower().startswith("see "):
-                continue
-            
-            # Skip words with special characters in the middle (compounds)
-            if " " in chamorro and len(chamorro) > 15:
+            # Get English translation from manifest
+            english = word_data.get("english", "")
+            if not english or len(english) < 2:
                 continue
             
             # Skip definitions with inappropriate keywords
-            definition_lower = definition.lower()
-            if any(word in definition_lower for word in ['urinate', 'feces', 'excrement', 'buttocks', 'genitals', 'prostitute', 'drunk']):
+            english_lower = english.lower()
+            if any(word in english_lower for word in ['urinate', 'feces', 'excrement', 'buttocks', 'genitals', 'prostitute', 'drunk']):
                 continue
             
-            # Skip proper names and nicknames (not useful for language learners)
-            part_of_speech = entry.get("part_of_speech", "").lower()
-            if 'name' in part_of_speech or part_of_speech in ['name.', 'n.pr.', 'proper noun']:
-                continue
-            if 'nickname' in definition_lower or 'proper name' in definition_lower:
+            # Skip proper names
+            if 'nickname' in english_lower or 'proper name' in english_lower:
                 continue
             
-            # Skip words that are just abbreviations or initialisms
-            if chamorro.isupper() and len(chamorro) <= 4:
-                continue
-            
-            # IMPORTANT: Only include words with pre-generated audio for consistent TTS
-            if pregenerated_words and chamorro.lower() not in pregenerated_words:
-                continue
-            
-            good_words.append(entry)
+            # Create entry compatible with existing format
+            good_words.append({
+                "chamorro": chamorro,
+                "definition": english,
+                "category": word_data.get("category", "vocabulary"),
+                "part_of_speech": "",
+                "examples": []
+            })
         
-        if not good_words:
-            good_words = self._word_list[:1000]  # Fallback
+        logger.info(f"📢 [WOTD] {len(good_words)} words available for Word of the Day")
         
-        # Safety check - if dictionary failed to load, return a default
+        # Safety check - if no manifest words available, return a default
         if not good_words:
-            logger.error("Dictionary not loaded - returning default word of the day")
+            logger.warning("⚠️ [WOTD] No pre-generated words available - returning default")
             return {
                 "chamorro": "Håfa Adai",
-                "definition": "Hello; a common Chamorro greeting",
+                "english": "Hello; a common Chamorro greeting",
                 "part_of_speech": "interjection",
-                "pronunciation": "HAH-fah ah-DYE",
                 "example": {
                     "chamorro": "Håfa Adai! Kao maolek hao?",
                     "english": "Hello! How are you?"
                 },
                 "category": "Greetings & Basics",
-                "difficulty": "beginner",
-                "day": day_of_year,
                 "date": today.isoformat()
             }
         
@@ -922,28 +872,14 @@ class DictionaryService:
         
         word = good_words[index]
         
-        # Get example if available
-        example = None
-        if word.get("examples") and len(word["examples"]) > 0:
-            ex = word["examples"][0]
-            example = {
-                "chamorro": ex.get("chamorro", ""),
-                "english": ex.get("english", "")
-            }
-        
-        # Determine category
-        category = "General"
-        for cat_id, cat_words in self._categories_cache.items():
-            if word in cat_words:
-                category = CATEGORY_DEFINITIONS[cat_id]["title"]
-                break
+        logger.info(f"📢 [WOTD] Selected: {word['chamorro']} = {word['definition']}")
         
         return {
             "chamorro": word["chamorro"],
             "english": word["definition"],
             "part_of_speech": word.get("part_of_speech", ""),
-            "example": example,
-            "category": category,
+            "example": None,  # Manifest words don't have examples
+            "category": word.get("category", "Vocabulary"),
             "date": today.isoformat()
         }
     
