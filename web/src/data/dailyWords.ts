@@ -316,7 +316,7 @@ export const DAILY_WORDS: DailyWord[] = [
 
   // === NUMBERS (Days 31-40) ===
   {
-    chamorro: 'Unu',
+    chamorro: 'Uno',
     english: 'One (1)',
     pronunciation: 'OO-noo',
     example: {

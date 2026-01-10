@@ -11,7 +11,8 @@ import {
   X,
   Shield,
   Moon,
-  Sun
+  Sun,
+  Volume2
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -23,6 +24,7 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { path: '/admin/audio', label: 'Audio Review', icon: Volume2 },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

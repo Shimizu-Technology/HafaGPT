@@ -17,7 +17,7 @@ interface NumberItem {
 }
 
 const NUMBERS: NumberItem[] = [
-  { chamorro: 'Unu', english: 'One', value: 1 },
+  { chamorro: 'Uno', english: 'One', value: 1 },
   { chamorro: 'Dos', english: 'Two', value: 2 },
   { chamorro: 'Tres', english: 'Three', value: 3 },
   { chamorro: 'Kuåttro', english: 'Four', value: 4 },

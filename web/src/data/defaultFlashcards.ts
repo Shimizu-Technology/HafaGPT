@@ -97,7 +97,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Learn to count from 1 to 10 in Chamorro',
     cards: [
       {
-        front: 'Unu',
+        front: 'Uno',
         back: 'One (1)',
         pronunciation: 'OO-noo'
       },

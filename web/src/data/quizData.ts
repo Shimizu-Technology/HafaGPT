@@ -189,9 +189,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('num', 1),
         type: 'multiple_choice',
         question: 'What is "1" in Chamorro?',
-        options: ['Dos', 'Unu', 'Tres', 'Kuåttro'],
-        correctAnswer: 'Unu',
-        explanation: '"Unu" is the Chamorro word for one.'
+        options: ['Dos', 'Uno', 'Tres', 'Kuåttro'],
+        correctAnswer: 'Uno',
+        explanation: '"Uno" is the Chamorro word for one.'
       },
       {
         id: id('num', 2),

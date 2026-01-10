@@ -38,6 +38,7 @@ import { AdminUsers } from './components/admin/AdminUsers';
 import { AdminUserDetail } from './components/admin/AdminUserDetail';
 import { AdminAnalytics } from './components/admin/AdminAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
+import { AdminAudioReview } from './components/admin/AdminAudioReview';
 import { SettingsPage } from './components/SettingsPage';
 import { AboutPage } from './components/AboutPage';
 import { SharedConversation } from './components/SharedConversation';
@@ -132,6 +133,7 @@ function App() {
         <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
         <Route path="/admin/users/:userId" element={<AdminRoute><AdminUserDetail /></AdminRoute>} />
         <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+        <Route path="/admin/audio" element={<AdminRoute><AdminAudioReview /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
       </Routes>
       

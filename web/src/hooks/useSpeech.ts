@@ -6,7 +6,7 @@ const preloadingPromises = new Map<string, Promise<boolean>>(); // text -> prelo
 
 // Pre-generated audio manifest (loaded from S3)
 // Maps Chamorro text to filename
-const STATIC_AUDIO_BASE_URL = 'https://hafagpt.s3.amazonaws.com/audio/';
+const STATIC_AUDIO_BASE_URL = 'https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/';
 let staticAudioManifest: Record<string, string> | null = null;
 let manifestLoaded = false;
 let manifestLoading = false;

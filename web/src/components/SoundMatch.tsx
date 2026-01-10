@@ -89,7 +89,7 @@ const GAME_CATEGORIES: Category[] = [
     name: 'Numbers',
     icon: '🔢',
     words: [
-      { chamorro: 'Unu', english: 'One', emoji: '1️⃣' },
+      { chamorro: 'Uno', english: 'One', emoji: '1️⃣' },
       { chamorro: 'Dos', english: 'Two', emoji: '2️⃣' },
       { chamorro: 'Tres', english: 'Three', emoji: '3️⃣' },
       { chamorro: 'Kuåttro', english: 'Four', emoji: '4️⃣' },
