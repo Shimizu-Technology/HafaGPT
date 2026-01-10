@@ -1876,13 +1876,13 @@ def chamorro_to_phonetic(text: str) -> str:
     """
     Convert Chamorro text to phonetic respelling that OpenAI TTS can pronounce better.
     
-    Chamorro has unique sounds that English TTS doesn't handle well:
-    - Y = /dz/ (like "dz" in "adds") - NOT English "y"
-    - CH = /ts/ (like "ts" in "bits") - NOT English "ch" 
-    - Å = /ɑ/ (like "aw" in "saw") - NOT regular "a"
-    - Ñ = /ɲ/ (like Spanish "ñ") - OpenAI handles this well
-    - ' = glottal stop (brief pause)
-    - NG = /ŋ/ (single sound like in "sing")
+    Key Chamorro sounds:
+    - Y sounds like "dz" (hayi → hadzi)
+    - CH sounds like "ts" (chocho → tsotso)
+    - Å sounds like "aw" in "saw"
+    - Ñ sounds like Spanish "ny"
+    - Glottal stop (') is a brief pause
+    - All vowels are pure Spanish-style (a=ah, e=eh, i=ee, o=oh, u=oo)
     
     Based on: Dr. Sandra Chung's "Two Chamorro Orthographies" and
     the Revised and Updated Chamorro Dictionary
@@ -1891,111 +1891,177 @@ def chamorro_to_phonetic(text: str) -> str:
     
     result = text
     
-    # --- Handle digraphs and special combinations FIRST (order matters!) ---
+    # ===== STEP 1: Mark NG to preserve it (will restore later) =====
+    result = re.sub(r'ng', 'NGMARKER', result, flags=re.IGNORECASE)
     
-    # NG should stay as-is (OpenAI handles "ng" sound well)
-    # But mark it temporarily so we don't accidentally transform it
-    result = re.sub(r'ng', 'ŊĢ', result, flags=re.IGNORECASE)
-    result = re.sub(r'Ng', 'ŊĢ', result)
-    result = re.sub(r'NG', 'ŊĢ', result)
+    # ===== STEP 2: Handle Chamorro consonant sounds =====
     
-    # CH → TS (must do before individual letter replacements)
-    # "chocho" → "tsotso"
-    result = re.sub(r'ch', 'ts', result, flags=re.IGNORECASE)
-    result = re.sub(r'Ch', 'Ts', result)
-    result = re.sub(r'CH', 'TS', result)
+    # CH → TS (case-insensitive, preserve case of first letter)
+    def replace_ch(m):
+        return 'Ts' if m.group(0)[0].isupper() else 'ts'
+    result = re.sub(r'ch', replace_ch, result, flags=re.IGNORECASE)
     
-    # --- Handle individual letters ---
+    # Y → DZ (Chamorro Y is voiced like "dz")
+    def replace_y(m):
+        return 'Dz' if m.group(0).isupper() else 'dz'
+    result = re.sub(r'y', replace_y, result, flags=re.IGNORECASE)
     
-    # Y → DZ (the most commonly mispronounced sound)
-    # "hayi" → "hadzi", "yu'" → "dzu"
-    result = re.sub(r'y', 'dz', result, flags=re.IGNORECASE)
-    result = re.sub(r'Y', 'Dz', result)
+    # ===== STEP 3: Handle Chamorro special letters =====
     
-    # Å → AW (the ringed 'a' sound)
-    # "håfa" → "hawfa", "på'go" → "paw'go"
+    # Å → AW (the ringed A)
     result = result.replace('å', 'aw')
     result = result.replace('Å', 'Aw')
     
-    # Ñ → NY (OpenAI handles Spanish ñ, but explicit "ny" is clearer)
-    # "siña" → "sinya", "mañana" → "manyanna"
+    # Ñ → NY
     result = result.replace('ñ', 'ny')
     result = result.replace('Ñ', 'Ny')
     
-    # Glottal stop (') → slight pause
-    # Remove it for now as OpenAI doesn't understand it
-    # The pause between syllables will still be somewhat natural
-    result = result.replace("'", "")
+    # Glottal stop → small pause (comma helps TTS pause slightly)
+    result = result.replace("'", ",")
     
-    # --- Restore NG ---
-    result = result.replace('ŊĢ', 'ng')
+    # ===== STEP 4: Restore NG =====
+    result = result.replace('NGMARKER', 'ng')
+    
+    # ===== STEP 5: Add pronunciation hints for clearer vowels =====
+    # Only apply to isolated vowel sounds that TTS might mispronounce
+    
+    # Final 'i' should be "ee" (Chamorro "i" = Spanish "i" = "ee")
+    result = re.sub(r'i\b', 'ee', result, flags=re.IGNORECASE)
+    
+    # ===== STEP 6: Clean up =====
+    result = re.sub(r'\s+', ' ', result)
+    result = re.sub(r',\s*$', '', result)  # Remove trailing comma
+    result = result.strip()
     
     return result
+
+
+def load_pronunciation_dictionary() -> dict:
+    """Load the Chamorro pronunciation dictionary."""
+    from pathlib import Path
+    import json
+    
+    dict_path = Path(__file__).parent.parent / "audio_generation" / "chamorro_pronunciations.json"
+    if dict_path.exists():
+        try:
+            with open(dict_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # Filter out metadata keys (starting with _)
+                return {k: v for k, v in data.items() if not k.startswith('_')}
+        except Exception as e:
+            logger.warning(f"Failed to load pronunciation dictionary: {e}")
+    return {}
+
+
+def get_pronunciation(word: str) -> str:
+    """Get pronunciation for a word from dictionary, or apply automatic conversion."""
+    pron_dict = load_pronunciation_dictionary()
+    
+    # Check exact match
+    if word in pron_dict:
+        return pron_dict[word]
+    
+    # Check case-insensitive match
+    word_lower = word.lower()
+    for key, value in pron_dict.items():
+        if key.lower() == word_lower:
+            return value
+    
+    # Fall back to automatic phonetic conversion
+    return chamorro_to_phonetic(word)
 
 
 @app.post("/api/tts", tags=["Speech"])
 async def text_to_speech(
     text: str = Form(...),
     voice: str = Form(default="shimmer"),  # Shimmer works best for Chamorro/Spanish
-    phonetic: bool = Form(default=True)  # Apply Chamorro phonetic preprocessing
+    phonetic: bool = Form(default=True),  # Apply Chamorro phonetic preprocessing
+    provider: str = Form(default="elevenlabs")  # "elevenlabs" or "openai"
 ):
     """
-    Convert text to speech using OpenAI TTS.
+    Convert text to speech using OpenAI or ElevenLabs TTS.
     
     Returns base64-encoded MP3 audio that can be played in browser.
     
     Chamorro Pronunciation Enhancement:
-    - When phonetic=True (default), text is preprocessed to help OpenAI
-      pronounce Chamorro sounds correctly:
-      - Y → DZ (hayi → hadzi)
-      - CH → TS (chocho → tsotso)
-      - Å → AW (håfa → hawfa)
-      - Ñ → NY (siña → sinya)
+    - When phonetic=True (default), text is preprocessed using:
+      1. Pronunciation dictionary (exact word matches)
+      2. Automatic phonetic conversion (Y→DZ, CH→TS, Å→AW, etc.)
     
-    Voices available:
-    - shimmer: Soft, gentle (BEST for Spanish/Chamorro) ⭐
-    - alloy: Neutral, balanced (good for multilingual)
-    - echo: Clear, professional  
-    - fable: Expressive, dramatic
-    - onyx: Deep, authoritative (male voice)
-    - nova: Warm, engaging (female voice)
+    Providers:
+    - openai: Fast, affordable, uses phonetic conversion
+    - elevenlabs: Higher quality, better for non-English (requires ELEVENLABS_API_KEY)
     """
     try:
-        # Import OpenAI client (lazy load to avoid startup overhead)
+        import requests as http_requests
         from openai import OpenAI
         
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-        
-        client = OpenAI(api_key=api_key)
-        
-        # Limit text length (OpenAI TTS max is 4096 characters)
+        # Limit text length
         text_to_speak = text[:4096]
+        original_text = text_to_speak
         
         # Apply Chamorro phonetic preprocessing if enabled
-        original_text = text_to_speak
         if phonetic:
-            text_to_speak = chamorro_to_phonetic(text_to_speak)
+            text_to_speak = get_pronunciation(text_to_speak)
             if text_to_speak != original_text:
                 logger.info(f"🔤 Phonetic: '{original_text}' → '{text_to_speak}'")
         
-        logger.info(f"🔊 TTS request: {len(text_to_speak)} chars, voice={voice}, phonetic={phonetic}")
+        logger.info(f"🔊 TTS request: {len(text_to_speak)} chars, voice={voice}, phonetic={phonetic}, provider={provider}")
         
-        # Call OpenAI TTS API
-        response = client.audio.speech.create(
-            model="tts-1",  # Standard quality (2x faster, $0.015/1K chars) - HD not needed for single words
-            voice=voice,
-            input=text_to_speak,
-        )
+        audio_bytes = None
         
-        # Get audio bytes
-        audio_bytes = response.content
+        if provider == "elevenlabs":
+            # Use ElevenLabs TTS
+            elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+            if not elevenlabs_api_key:
+                logger.warning("ElevenLabs key not set, falling back to OpenAI")
+                provider = "openai"
+            else:
+                ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")
+                elevenlabs_url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+                
+                headers = {
+                    "Accept": "audio/mpeg",
+                    "Content-Type": "application/json",
+                    "xi-api-key": elevenlabs_api_key
+                }
+                
+                data = {
+                    "text": text_to_speak,
+                    "model_id": "eleven_multilingual_v2",
+                    "voice_settings": {
+                        "stability": 0.75,
+                        "similarity_boost": 0.75
+                    }
+                }
+                
+                response = http_requests.post(elevenlabs_url, json=data, headers=headers)
+                
+                if response.status_code == 200:
+                    audio_bytes = response.content
+                else:
+                    logger.warning(f"ElevenLabs failed: {response.text}, falling back to OpenAI")
+                    provider = "openai"
+        
+        if provider == "openai" or audio_bytes is None:
+            # Use OpenAI TTS
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+            
+            client = OpenAI(api_key=api_key)
+            
+            response = client.audio.speech.create(
+                model="tts-1",  # Standard quality (2x faster, $0.015/1K chars)
+                voice=voice,
+                input=text_to_speak,
+            )
+            audio_bytes = response.content
         
         # Convert to base64 for easy transport
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
         
-        logger.info(f"✅ TTS successful: {len(audio_bytes)} bytes")
+        logger.info(f"✅ TTS successful: {len(audio_bytes)} bytes via {provider}")
         
         return {
             "audio": audio_base64,
@@ -7893,6 +7959,354 @@ async def get_all_progress(
         raise
     except Exception as e:
         logger.error(f"❌ Get all progress error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Admin Audio Review Endpoints
+# ============================================================================
+
+@app.get("/api/admin/audio", tags=["Admin"])
+async def get_admin_audio_words(
+    status_filter: Optional[str] = None,
+    tier_filter: Optional[str] = None,
+    search: Optional[str] = None,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Get all pre-generated audio words with their review status.
+    
+    status_filter: 'approved', 'needs_review', 'needs_fix', or None for all
+    tier_filter: '1', '2', 'flashcards', or None for all
+    search: Search by word or English translation
+    """
+    try:
+        await verify_admin(authorization)
+        
+        import json
+        from pathlib import Path
+        
+        manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
+        
+        if not manifest_path.exists():
+            return {"words": [], "total": 0, "stats": {}}
+        
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+        
+        words_data = manifest.get("words", {})
+        
+        # Normalize text for accent-insensitive search
+        def normalize_for_search(text: str) -> str:
+            """Remove Chamorro diacritics for fuzzy matching."""
+            return (text.lower()
+                    .replace('å', 'a')
+                    .replace('ñ', 'n')
+                    .replace("'", "")
+                    .replace("-", " "))
+        
+        words = []
+        stats = {
+            "total": 0,
+            "approved": 0,
+            "needs_review": 0,
+            "needs_fix": 0,
+            "by_tier": {"1": 0, "2": 0, "flashcards": 0}
+        }
+        
+        for chamorro, data in words_data.items():
+            tier = str(data.get("tier", "unknown"))
+            status = data.get("review_status", "needs_review")
+            english = data.get("english", "")
+            
+            # Update stats
+            stats["total"] += 1
+            if status in stats:
+                stats[status] += 1
+            if tier in stats["by_tier"]:
+                stats["by_tier"][tier] += 1
+            
+            # Apply filters
+            if status_filter and status != status_filter:
+                continue
+            if tier_filter and tier != tier_filter:
+                continue
+            if search:
+                # Normalize both search term and words for accent-insensitive matching
+                search_normalized = normalize_for_search(search)
+                chamorro_normalized = normalize_for_search(chamorro)
+                english_lower = english.lower()
+                if search_normalized not in chamorro_normalized and search_normalized not in english_lower:
+                    continue
+            
+            words.append({
+                "chamorro": chamorro,
+                "english": english,
+                "tier": tier,
+                "category": data.get("category", ""),
+                "status": status,
+                "url": data.get("url", ""),
+                "phonetic_used": data.get("phonetic_used", chamorro),
+                "generated_at": data.get("generated_at", ""),
+                "needs_regeneration": data.get("needs_regeneration", False)
+            })
+        
+        # Sort alphabetically
+        words.sort(key=lambda x: x["chamorro"].lower())
+        
+        return {
+            "words": words,
+            "total": len(words),
+            "stats": stats
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Get audio words error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch("/api/admin/audio/{word}/status", tags=["Admin"])
+async def update_audio_status(
+    word: str,
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Update the review status of an audio word.
+    
+    Body: { "status": "approved" | "needs_review" | "needs_fix", "phonetic_hint": "optional" }
+    """
+    try:
+        await verify_admin(authorization)
+        
+        import json
+        from pathlib import Path
+        from datetime import datetime
+        
+        body = await request.json()
+        new_status = body.get("status")
+        phonetic_hint = body.get("phonetic_hint")
+        
+        if new_status not in ["approved", "needs_review", "needs_fix"]:
+            raise HTTPException(status_code=400, detail="Invalid status")
+        
+        manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
+        
+        if not manifest_path.exists():
+            raise HTTPException(status_code=404, detail="Manifest not found")
+        
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+        
+        # URL decode the word
+        from urllib.parse import unquote
+        decoded_word = unquote(word)
+        
+        if decoded_word not in manifest.get("words", {}):
+            raise HTTPException(status_code=404, detail=f"Word '{decoded_word}' not found")
+        
+        # Update status
+        manifest["words"][decoded_word]["review_status"] = new_status
+        manifest["words"][decoded_word]["reviewed_at"] = datetime.now().isoformat()
+        
+        if phonetic_hint:
+            manifest["words"][decoded_word]["phonetic_hint"] = phonetic_hint
+        
+        if new_status == "needs_fix":
+            manifest["words"][decoded_word]["needs_regeneration"] = True
+        elif new_status == "approved":
+            manifest["words"][decoded_word]["needs_regeneration"] = False
+        
+        # Save manifest
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        # Also update frontend manifest
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        if frontend_manifest_path.exists():
+            with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"✅ [ADMIN] Updated audio status: {decoded_word} -> {new_status}")
+        
+        return {"success": True, "word": decoded_word, "status": new_status}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Update audio status error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/audio/{word}/regenerate", tags=["Admin"])
+async def regenerate_audio(
+    word: str,
+    request: Request,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Regenerate audio for a word using OpenAI or ElevenLabs TTS.
+    
+    Body: { 
+        "phonetic_hint": "optional phonetic spelling",
+        "provider": "openai" | "elevenlabs" (optional, defaults to env TTS_PROVIDER)
+    }
+    """
+    try:
+        await verify_admin(authorization)
+        
+        import json
+        import boto3
+        import requests as http_requests
+        from pathlib import Path
+        from datetime import datetime
+        from openai import OpenAI
+        from urllib.parse import unquote
+        
+        body = await request.json()
+        phonetic_hint = body.get("phonetic_hint")
+        provider = body.get("provider", os.getenv("TTS_PROVIDER", "elevenlabs"))
+        
+        manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
+        
+        if not manifest_path.exists():
+            raise HTTPException(status_code=404, detail="Manifest not found")
+        
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+        
+        decoded_word = unquote(word)
+        
+        if decoded_word not in manifest.get("words", {}):
+            raise HTTPException(status_code=404, detail=f"Word '{decoded_word}' not found")
+        
+        word_data = manifest["words"][decoded_word]
+        
+        # Load pronunciation dictionary
+        pron_dict_path = Path(__file__).parent.parent / "audio_generation" / "chamorro_pronunciations.json"
+        pron_dict = {}
+        if pron_dict_path.exists():
+            with open(pron_dict_path, 'r', encoding='utf-8') as f:
+                pron_dict = {k: v for k, v in json.load(f).items() if not k.startswith('_')}
+        
+        # Priority: 1) Explicit phonetic_hint, 2) Pronunciation dictionary, 3) Auto-conversion
+        if phonetic_hint:
+            processed_text = phonetic_hint
+        elif decoded_word in pron_dict:
+            processed_text = pron_dict[decoded_word]
+        elif provider == "elevenlabs":
+            # ElevenLabs multilingual model handles Chamorro-like sounds better
+            processed_text = decoded_word
+        else:
+            # OpenAI needs phonetic conversion
+            processed_text = chamorro_to_phonetic(decoded_word)
+        
+        logger.info(f"🔊 [ADMIN] Regenerating audio: {decoded_word} -> {processed_text} (provider: {provider})")
+        
+        # Generate audio based on provider
+        if provider == "elevenlabs":
+            elevenlabs_key = os.getenv("ELEVENLABS_API_KEY")
+            if not elevenlabs_key:
+                raise HTTPException(status_code=400, detail="ELEVENLABS_API_KEY not configured")
+            
+            voice_id = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")
+            url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+            
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": elevenlabs_key
+            }
+            
+            data = {
+                "text": processed_text,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.85,
+                    "similarity_boost": 0.75,
+                    "style": 0.0,
+                    "use_speaker_boost": True
+                }
+            }
+            
+            response = http_requests.post(url, json=data, headers=headers)
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=500, detail=f"ElevenLabs error: {response.text}")
+            
+            audio_content = response.content
+        else:
+            # OpenAI TTS
+            client = OpenAI()
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice="shimmer",
+                input=processed_text
+            )
+            audio_content = response.content
+        
+        # Upload to S3
+        region = os.getenv('AWS_REGION', 'ap-southeast-2')
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=region
+        )
+        
+        bucket_name = os.getenv('AWS_S3_BUCKET', 'hafagpt')
+        # Generate filename from word, removing special characters
+        default_filename = decoded_word.lower().replace(' ', '_').replace("'", '') + '.mp3'
+        filename = word_data.get("file", default_filename)
+        s3_key = f"audio/{filename}"  # Use audio/ prefix to match existing files
+        
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=audio_content,
+            ContentType='audio/mpeg'
+        )
+        
+        s3_url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{s3_key}"
+        
+        # Update manifest
+        manifest["words"][decoded_word]["url"] = s3_url
+        manifest["words"][decoded_word]["phonetic_used"] = processed_text
+        manifest["words"][decoded_word]["size_bytes"] = len(audio_content)
+        manifest["words"][decoded_word]["generated_at"] = datetime.now().isoformat()
+        manifest["words"][decoded_word]["needs_regeneration"] = False
+        manifest["words"][decoded_word]["review_status"] = "needs_review"  # Mark for re-review
+        manifest["words"][decoded_word]["tts_provider"] = provider
+        
+        if phonetic_hint:
+            manifest["words"][decoded_word]["phonetic_hint"] = phonetic_hint
+        
+        # Save manifest
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        # Also update frontend manifest
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        if frontend_manifest_path.exists():
+            with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"✅ [ADMIN] Regenerated audio: {decoded_word} -> {s3_url}")
+        
+        return {
+            "success": True,
+            "word": decoded_word,
+            "url": s3_url,
+            "phonetic_used": processed_text,
+            "size_bytes": len(audio_content)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Regenerate audio error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

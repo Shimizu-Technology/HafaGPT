@@ -2,7 +2,7 @@
 """
 Chamorro TTS Audio Generator
 
-Generates pre-recorded audio files for Chamorro vocabulary using OpenAI TTS.
+Generates pre-recorded audio files for Chamorro vocabulary using OpenAI or ElevenLabs TTS.
 This ensures consistent pronunciation across the app.
 
 Usage:
@@ -10,6 +10,7 @@ Usage:
     python generate_audio.py --tier 1 --dry-run    # Preview without generating
     python generate_audio.py --word "Håfa Adai"    # Generate single word
     python generate_audio.py --upload              # Upload to S3 after generation
+    python generate_audio.py --provider elevenlabs # Use ElevenLabs instead of OpenAI
 """
 
 import argparse
@@ -20,6 +21,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import requests
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -33,35 +35,109 @@ MANIFEST_PATH = BASE_DIR / "manifest.json"
 TIER1_PATH = BASE_DIR / "tier1_words.json"
 TIER2_PATH = BASE_DIR / "tier2_words.json"
 FLASHCARD_PATH = BASE_DIR / "flashcard_words.json"
+PRONUNCIATION_DICT_PATH = BASE_DIR / "chamorro_pronunciations.json"
+
+# S3 settings
+S3_BUCKET = os.getenv("AWS_S3_BUCKET", "hafagpt")
+S3_REGION = os.getenv("AWS_REGION", "ap-southeast-2")
+S3_BASE_URL = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/audio"
+
+# TTS Provider settings
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "elevenlabs")  # "elevenlabs" or "openai"
 
 # OpenAI TTS settings
-TTS_MODEL = "tts-1"
-TTS_VOICE = "shimmer"  # Best for Chamorro/Spanish sounds
+OPENAI_TTS_MODEL = "tts-1"
+OPENAI_TTS_VOICE = "shimmer"  # Best for Chamorro/Spanish sounds
+
+# ElevenLabs TTS settings
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")  # "Sarah" - clear female voice
+ELEVENLABS_MODEL = "eleven_multilingual_v2"  # Best for non-English languages
+
+
+def load_pronunciation_dictionary() -> dict:
+    """Load custom Chamorro pronunciation dictionary."""
+    if PRONUNCIATION_DICT_PATH.exists():
+        with open(PRONUNCIATION_DICT_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
+def get_pronunciation(word: str, phonetic_hint: str = None) -> str:
+    """
+    Get the pronunciation for a word.
+    Priority: 1) Explicit phonetic_hint, 2) Pronunciation dictionary, 3) Auto-conversion
+    """
+    if phonetic_hint:
+        return phonetic_hint
+    
+    # Check pronunciation dictionary
+    pron_dict = load_pronunciation_dictionary()
+    if word in pron_dict:
+        return pron_dict[word]
+    
+    # Fall back to automatic conversion (for OpenAI)
+    return chamorro_to_phonetic(word)
 
 
 def chamorro_to_phonetic(text: str) -> str:
     """
     Converts Chamorro text to a phonetic representation that OpenAI TTS
     can pronounce more accurately, based on Chamorro pronunciation rules.
+    
+    Key Chamorro sounds:
+    - Y sounds like "dz" (hayi → hadzi)
+    - CH sounds like "ts" (chocho → tsotso)
+    - Å sounds like "aw" in "saw"
+    - Ñ sounds like Spanish "ny"
+    - Glottal stop (') is a brief pause
+    - All vowels are pure Spanish-style (a=ah, e=eh, i=ee, o=oh, u=oo)
     """
-    processed_text = text
+    result = text
     
-    # 1. Y = /dz/ (like "d" + "z" together)
-    processed_text = re.sub(r'y', 'dz', processed_text, flags=re.IGNORECASE)
+    # ===== STEP 1: Mark NG to preserve it (will restore later) =====
+    result = re.sub(r'ng', 'NGMARKER', result, flags=re.IGNORECASE)
     
-    # 2. CH = /ts/ (like "ts")
-    processed_text = re.sub(r'ch', 'ts', processed_text, flags=re.IGNORECASE)
+    # ===== STEP 2: Handle Chamorro consonant sounds =====
     
-    # 3. Å = /ɑ/ (like "aw")
-    processed_text = re.sub(r'å', 'aw', processed_text, flags=re.IGNORECASE)
+    # CH → TS (case-insensitive, preserve case of first letter)
+    def replace_ch(m):
+        return 'Ts' if m.group(0)[0].isupper() else 'ts'
+    result = re.sub(r'ch', replace_ch, result, flags=re.IGNORECASE)
     
-    # 4. Ñ = /ɲ/ (like Spanish "ny")
-    processed_text = re.sub(r'ñ', 'ny', processed_text, flags=re.IGNORECASE)
+    # Y → DZ (Chamorro Y is voiced like "dz")
+    def replace_y(m):
+        return 'Dz' if m.group(0).isupper() else 'dz'
+    result = re.sub(r'y', replace_y, result, flags=re.IGNORECASE)
     
-    # 5. Glottal Stop (') - add a slight pause or remove
-    processed_text = processed_text.replace("'", "")
+    # ===== STEP 3: Handle Chamorro special letters =====
     
-    return processed_text
+    # Å → AW (the ringed A)
+    result = result.replace('å', 'aw')
+    result = result.replace('Å', 'Aw')
+    
+    # Ñ → NY
+    result = result.replace('ñ', 'ny')
+    result = result.replace('Ñ', 'Ny')
+    
+    # Glottal stop → small pause (comma helps TTS pause slightly)
+    result = result.replace("'", ",")
+    
+    # ===== STEP 4: Restore NG =====
+    result = result.replace('NGMARKER', 'ng')
+    
+    # ===== STEP 5: Add pronunciation hints for clearer vowels =====
+    # Only apply to isolated vowel sounds that TTS might mispronounce
+    
+    # Final 'i' should be "ee" (Chamorro "i" = Spanish "i" = "ee")
+    result = re.sub(r'i\b', 'ee', result, flags=re.IGNORECASE)
+    
+    # ===== STEP 6: Clean up =====
+    result = re.sub(r'\s+', ' ', result)
+    result = re.sub(r',\s*$', '', result)  # Remove trailing comma
+    result = result.strip()
+    
+    return result
 
 
 def sanitize_filename(text: str) -> str:
@@ -159,23 +235,83 @@ def load_flashcard_words() -> list:
     return words
 
 
-def generate_audio(client: OpenAI, text: str, phonetic_hint: str = None) -> bytes:
-    """Generate audio for a single word/phrase."""
-    # Use phonetic hint if provided, otherwise apply automatic conversion
-    text_to_speak = phonetic_hint if phonetic_hint else chamorro_to_phonetic(text)
+def generate_audio_openai(client: OpenAI, text: str, phonetic_hint: str = None) -> bytes:
+    """Generate audio using OpenAI TTS."""
+    # Use get_pronunciation which checks: 1) hint, 2) dictionary, 3) auto-conversion
+    text_to_speak = get_pronunciation(text, phonetic_hint)
     
     response = client.audio.speech.create(
-        model=TTS_MODEL,
-        voice=TTS_VOICE,
+        model=OPENAI_TTS_MODEL,
+        voice=OPENAI_TTS_VOICE,
         input=text_to_speak,
     )
     
     return response.content
 
 
-def generate_tier1(dry_run: bool = False, force: bool = False):
+def generate_audio_elevenlabs(text: str, phonetic_hint: str = None) -> bytes:
+    """Generate audio using ElevenLabs TTS."""
+    if not ELEVENLABS_API_KEY:
+        raise ValueError("ELEVENLABS_API_KEY not set in environment")
+    
+    # Get pronunciation from: 1) hint, 2) dictionary, 3) original text
+    # For ElevenLabs, we prefer the pronunciation dictionary but don't apply auto-conversion
+    # because ElevenLabs handles pronunciation better with its multilingual model
+    if phonetic_hint:
+        text_to_speak = phonetic_hint
+    else:
+        # Check pronunciation dictionary first
+        pron_dict = load_pronunciation_dictionary()
+        if text in pron_dict:
+            text_to_speak = pron_dict[text]
+        else:
+            # Use original text (ElevenLabs multilingual handles it well)
+            text_to_speak = text
+    
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
+    
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": ELEVENLABS_API_KEY
+    }
+    
+    data = {
+        "text": text_to_speak,
+        "model_id": ELEVENLABS_MODEL,
+        "voice_settings": {
+            "stability": 0.85,        # Higher = more consistent
+            "similarity_boost": 0.75,  # Balance between clarity and naturalness
+            "style": 0.0,             # No style exaggeration
+            "use_speaker_boost": True  # Improve clarity
+        }
+    }
+    
+    response = requests.post(url, json=data, headers=headers)
+    
+    if response.status_code != 200:
+        raise Exception(f"ElevenLabs API error: {response.status_code} - {response.text}")
+    
+    return response.content
+
+
+def generate_audio(text: str, phonetic_hint: str = None, provider: str = None, openai_client: OpenAI = None) -> bytes:
+    """Generate audio using the configured TTS provider."""
+    provider = provider or TTS_PROVIDER
+    
+    if provider == "elevenlabs":
+        return generate_audio_elevenlabs(text, phonetic_hint)
+    else:
+        # OpenAI (default)
+        if openai_client is None:
+            openai_client = OpenAI()
+        return generate_audio_openai(openai_client, text, phonetic_hint)
+
+
+def generate_tier1(dry_run: bool = False, force: bool = False, provider: str = None):
     """Generate audio for all Tier 1 words."""
-    print("🔊 Generating Tier 1 Audio (Games + UI)")
+    provider = provider or TTS_PROVIDER
+    print(f"🔊 Generating Tier 1 Audio (Games + UI) using {provider.upper()}")
     print("=" * 50)
     
     # Ensure output directory exists
@@ -208,13 +344,18 @@ def generate_tier1(dry_run: bool = False, force: bool = False):
             print(f"  - {word['chamorro']} ({word['english']}) → \"{phonetic}\"")
         return
     
-    # Initialize OpenAI client
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("❌ OPENAI_API_KEY not found in environment")
-        sys.exit(1)
-    
-    client = OpenAI(api_key=api_key)
+    # Validate API keys
+    if provider == "elevenlabs":
+        if not ELEVENLABS_API_KEY:
+            print("❌ ELEVENLABS_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = None
+    else:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ OPENAI_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = OpenAI(api_key=api_key)
     
     # Generate audio for each word
     success_count = 0
@@ -231,7 +372,7 @@ def generate_tier1(dry_run: bool = False, force: bool = False):
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ")
         
         try:
-            audio_data = generate_audio(client, chamorro, phonetic)
+            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
             
             # Validate audio (check minimum size)
             if len(audio_data) < 1000:  # Less than 1KB is suspicious
@@ -246,12 +387,15 @@ def generate_tier1(dry_run: bool = False, force: bool = False):
             # Update manifest
             manifest["words"][chamorro] = {
                 "file": filename,
+                "url": f"{S3_BASE_URL}/{filename}",
                 "english": english,
                 "category": category,
                 "tier": 1,
-                "phonetic_used": phonetic or chamorro_to_phonetic(chamorro),
+                "phonetic_used": phonetic or chamorro,
                 "size_bytes": len(audio_data),
-                "generated_at": datetime.now().isoformat()
+                "generated_at": datetime.now().isoformat(),
+                "tts_provider": provider,
+                "review_status": "needs_review"
             }
             
             print(f"✅ ({len(audio_data)} bytes)")
@@ -271,9 +415,10 @@ def generate_tier1(dry_run: bool = False, force: bool = False):
     print(f"   📁 Audio files: {AUDIO_DIR}")
 
 
-def generate_tier2(dry_run: bool = False, force: bool = False):
+def generate_tier2(dry_run: bool = False, force: bool = False, provider: str = None):
     """Generate audio for all Tier 2 words (core dictionary vocabulary)."""
-    print("🔊 Generating Tier 2 Audio (Core Dictionary)")
+    provider = provider or TTS_PROVIDER
+    print(f"🔊 Generating Tier 2 Audio (Core Dictionary) using {provider.upper()}")
     print("=" * 50)
     
     # Ensure output directory exists
@@ -311,13 +456,18 @@ def generate_tier2(dry_run: bool = False, force: bool = False):
             print(f"  ... and {len(words) - 20} more")
         return
     
-    # Initialize OpenAI client
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("❌ OPENAI_API_KEY not found in environment")
-        sys.exit(1)
-    
-    client = OpenAI(api_key=api_key)
+    # Validate API keys
+    if provider == "elevenlabs":
+        if not ELEVENLABS_API_KEY:
+            print("❌ ELEVENLABS_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = None
+    else:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ OPENAI_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = OpenAI(api_key=api_key)
     
     # Generate audio for each word
     success_count = 0
@@ -334,7 +484,7 @@ def generate_tier2(dry_run: bool = False, force: bool = False):
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ", flush=True)
         
         try:
-            audio_data = generate_audio(client, chamorro, phonetic)
+            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
             
             # Validate audio (check minimum size)
             if len(audio_data) < 1000:  # Less than 1KB is suspicious
@@ -349,12 +499,15 @@ def generate_tier2(dry_run: bool = False, force: bool = False):
             # Update manifest
             manifest["words"][chamorro] = {
                 "file": filename,
+                "url": f"{S3_BASE_URL}/{filename}",
                 "english": english,
                 "category": category,
                 "tier": 2,
-                "phonetic_used": phonetic or chamorro_to_phonetic(chamorro),
+                "phonetic_used": phonetic or chamorro,
                 "size_bytes": len(audio_data),
-                "generated_at": datetime.now().isoformat()
+                "generated_at": datetime.now().isoformat(),
+                "tts_provider": provider,
+                "review_status": "needs_review"
             }
             
             print(f"✅ ({len(audio_data)} bytes)")
@@ -379,9 +532,10 @@ def generate_tier2(dry_run: bool = False, force: bool = False):
     print(f"   📁 Audio files: {AUDIO_DIR}")
 
 
-def generate_flashcards(dry_run: bool = False, force: bool = False):
+def generate_flashcards(dry_run: bool = False, force: bool = False, provider: str = None):
     """Generate audio for curated flashcard words."""
-    print("🔊 Generating Flashcard Audio")
+    provider = provider or TTS_PROVIDER
+    print(f"🔊 Generating Flashcard Audio using {provider.upper()}")
     print("=" * 50)
     
     # Ensure output directory exists
@@ -419,13 +573,18 @@ def generate_flashcards(dry_run: bool = False, force: bool = False):
             print(f"  ... and {len(words) - 20} more")
         return
     
-    # Initialize OpenAI client
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("❌ OPENAI_API_KEY not found in environment")
-        sys.exit(1)
-    
-    client = OpenAI(api_key=api_key)
+    # Validate API keys
+    if provider == "elevenlabs":
+        if not ELEVENLABS_API_KEY:
+            print("❌ ELEVENLABS_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = None
+    else:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ OPENAI_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = OpenAI(api_key=api_key)
     
     # Generate audio for each word
     success_count = 0
@@ -442,7 +601,7 @@ def generate_flashcards(dry_run: bool = False, force: bool = False):
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ", flush=True)
         
         try:
-            audio_data = generate_audio(client, chamorro, phonetic)
+            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
             
             # Validate audio
             if len(audio_data) < 1000:
@@ -457,12 +616,15 @@ def generate_flashcards(dry_run: bool = False, force: bool = False):
             # Update manifest
             manifest["words"][chamorro] = {
                 "file": filename,
+                "url": f"{S3_BASE_URL}/{filename}",
                 "english": english,
                 "category": category,
                 "tier": "flashcards",
-                "phonetic_used": phonetic or chamorro_to_phonetic(chamorro),
+                "phonetic_used": phonetic or chamorro,
                 "size_bytes": len(audio_data),
-                "generated_at": datetime.now().isoformat()
+                "generated_at": datetime.now().isoformat(),
+                "tts_provider": provider,
+                "review_status": "needs_review"
             }
             
             print(f"✅ ({len(audio_data)} bytes)")
@@ -487,25 +649,33 @@ def generate_flashcards(dry_run: bool = False, force: bool = False):
     print(f"   📁 Audio files: {AUDIO_DIR}")
 
 
-def generate_single_word(word: str, phonetic: str = None):
+def generate_single_word(word: str, phonetic: str = None, provider: str = None):
     """Generate audio for a single word."""
-    print(f"🔊 Generating audio for: {word}")
+    provider = provider or TTS_PROVIDER
+    print(f"🔊 Generating audio for: {word} using {provider.upper()}")
     
     AUDIO_DIR.mkdir(exist_ok=True)
     
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        print("❌ OPENAI_API_KEY not found in environment")
-        sys.exit(1)
+    # Validate API key based on provider
+    if provider == "elevenlabs":
+        if not ELEVENLABS_API_KEY:
+            print("❌ ELEVENLABS_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = None
+    else:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ OPENAI_API_KEY not found in environment")
+            sys.exit(1)
+        openai_client = OpenAI(api_key=api_key)
     
-    client = OpenAI(api_key=api_key)
     manifest = load_manifest()
     
     filename = sanitize_filename(word)
     filepath = AUDIO_DIR / filename
     
     try:
-        audio_data = generate_audio(client, word, phonetic)
+        audio_data = generate_audio(word, phonetic, provider, openai_client)
         
         with open(filepath, 'wb') as f:
             f.write(audio_data)
@@ -513,12 +683,15 @@ def generate_single_word(word: str, phonetic: str = None):
         # Update manifest
         manifest["words"][word] = {
             "file": filename,
+            "url": f"{S3_BASE_URL}/{filename}",
             "english": "(manual)",
             "category": "manual",
             "tier": 0,
-            "phonetic_used": phonetic or chamorro_to_phonetic(word),
+            "phonetic_used": phonetic or word,  # For ElevenLabs, we use the word directly
             "size_bytes": len(audio_data),
-            "generated_at": datetime.now().isoformat()
+            "generated_at": datetime.now().isoformat(),
+            "tts_provider": provider,
+            "review_status": "needs_review"
         }
         
         save_manifest(manifest)
@@ -593,6 +766,8 @@ def main():
     parser.add_argument("--force", action="store_true", help="Regenerate all (ignore manifest)")
     parser.add_argument("--upload", action="store_true", help="Upload to S3 after generation")
     parser.add_argument("--list", action="store_true", help="List all generated words")
+    parser.add_argument("--provider", type=str, choices=["openai", "elevenlabs"], 
+                        default=TTS_PROVIDER, help="TTS provider to use")
     
     args = parser.parse_args()
     
@@ -609,17 +784,17 @@ def main():
         return
     
     if args.word:
-        generate_single_word(args.word, args.phonetic)
+        generate_single_word(args.word, args.phonetic, provider=args.provider)
     elif args.flashcards:
-        generate_flashcards(dry_run=args.dry_run, force=args.force)
+        generate_flashcards(dry_run=args.dry_run, force=args.force, provider=args.provider)
         if args.upload and not args.dry_run:
             upload_to_s3()
     elif args.tier == 1:
-        generate_tier1(dry_run=args.dry_run, force=args.force)
+        generate_tier1(dry_run=args.dry_run, force=args.force, provider=args.provider)
         if args.upload and not args.dry_run:
             upload_to_s3()
     elif args.tier == 2:
-        generate_tier2(dry_run=args.dry_run, force=args.force)
+        generate_tier2(dry_run=args.dry_run, force=args.force, provider=args.provider)
         if args.upload and not args.dry_run:
             upload_to_s3()
     elif args.tier == 3:
