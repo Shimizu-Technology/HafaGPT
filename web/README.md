@@ -4,27 +4,33 @@
 
 React + TypeScript web interface for the HåfaGPT Chamorro language learning platform.
 
-**Live:** [hafagpt.com](https://hafagpt.com) | **Backend:** [HafaGPT-API](https://github.com/ShimizuTechnology/HafaGPT-API)
+> 📚 **New to the team?** Start with the **[Developer Setup Guide](https://github.com/Shimizu-Technology/HafaGPT-API/blob/main/documentation/SETUP_GUIDE.md)** in the backend repo for complete onboarding instructions.
+
+**Live:** [hafagpt.com](https://hafagpt.com) | **Backend:** [HafaGPT-API](https://github.com/Shimizu-Technology/HafaGPT-API)
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Install dependencies
+# 1. Clone the repo
+git clone https://github.com/Shimizu-Technology/chamorro-chatbot-frontend.git HafaGPT-frontend
+cd HafaGPT-frontend
+
+# 2. Install dependencies
 npm install
 
-# 2. Create .env.local
-VITE_API_URL=http://localhost:8000
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+# 3. Set up environment
+cp .env.example .env.local
+# Edit .env.local with your Clerk key (get from team lead or Clerk dashboard)
 
-# 3. Run dev server
+# 4. Run dev server
 npm run dev
 ```
 
 Open http://localhost:5173
 
-> **Note:** Backend must be running on port 8000. See [HafaGPT-API](https://github.com/ShimizuTechnology/HafaGPT-API) for setup.
+> **Note:** Backend must be running on port 8000. See [HafaGPT-API](https://github.com/Shimizu-Technology/HafaGPT-API) for setup.
 
 ---
 
@@ -110,7 +116,7 @@ Auto-deploys to Netlify on push to `main`.
 
 ## 📚 Full Documentation
 
-See **[HafaGPT-API/documentation/](https://github.com/ShimizuTechnology/HafaGPT-API/tree/main/documentation)** for:
+See **[HafaGPT-API/documentation/](https://github.com/Shimizu-Technology/HafaGPT-API/tree/main/documentation)** for:
 - Setup Guide (employee onboarding)
 - Billing & Subscriptions
 - Games Feature

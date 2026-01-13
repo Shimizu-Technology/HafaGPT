@@ -424,11 +424,13 @@
       "english": "One",
       "category": "numbers",
       "tier": 1,
-      "phonetic_used": "Oo-no",
-      "size_bytes": 16345,
-      "generated_at": "2026-01-10T18:05:16.783930",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
+      "phonetic_used": null,
+      "size_bytes": 20105,
+      "generated_at": "2026-01-13T17:23:27.633598",
+      "tts_provider": "human_recording",
+      "review_status": "needs_review",
+      "needs_regeneration": false,
+      "phonetic_hint": "U-no"
     },
     "Dos": {
       "file": "dos.mp3",
@@ -748,11 +750,13 @@
       "english": "Hello!",
       "category": "greetings",
       "tier": 1,
-      "phonetic_used": "Hawfa day",
+      "phonetic_used": "Hahfa day",
       "size_bytes": 17599,
-      "generated_at": "2026-01-10T18:05:50.153114",
+      "generated_at": "2026-01-13T18:32:32.388326",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
+      "review_status": "needs_review",
+      "needs_regeneration": false,
+      "phonetic_hint": "Hahfa day"
     },
     "Si Yu'os Ma'åse'!": {
       "file": "si_yuos_maase.mp3",

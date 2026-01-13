@@ -19,10 +19,13 @@ async function loadStaticAudioManifest(): Promise<void> {
   
   manifestLoading = true;
   try {
-    const response = await fetch(`${STATIC_AUDIO_BASE_URL}manifest.json`);
+    // Add cache-buster to manifest fetch to get latest version
+    const response = await fetch(`${STATIC_AUDIO_BASE_URL}manifest.json?t=${Date.now()}`);
     if (response.ok) {
       const manifest = await response.json();
       staticAudioManifest = {};
+      // Update manifest load time for cache-busting audio URLs
+      manifestLoadTime = Date.now();
       // Build lookup: Chamorro text -> filename
       for (const [text, info] of Object.entries(manifest.words || {})) {
         staticAudioManifest[text] = (info as { file: string }).file;
@@ -41,14 +44,18 @@ async function loadStaticAudioManifest(): Promise<void> {
 
 /**
  * Get the static audio URL for a word if available
+ * Includes cache-busting parameter based on manifest load time
  */
+let manifestLoadTime = Date.now();
+
 function getStaticAudioUrl(text: string): string | null {
   if (!staticAudioManifest) return null;
   
   // Try exact match first, then lowercase
   const filename = staticAudioManifest[text] || staticAudioManifest[text.toLowerCase()];
   if (filename) {
-    return `${STATIC_AUDIO_BASE_URL}${filename}`;
+    // Add cache-buster to ensure we get the latest audio after regeneration
+    return `${STATIC_AUDIO_BASE_URL}${filename}?v=${manifestLoadTime}`;
   }
   return null;
 }

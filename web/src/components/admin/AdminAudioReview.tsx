@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { 
@@ -13,7 +13,10 @@ import {
   CheckCircle2,
   Clock,
   Music,
-  Filter
+  Filter,
+  Mic,
+  Square,
+  Upload
 } from 'lucide-react';
 import { AdminLayout } from './AdminLayout';
 
@@ -55,6 +58,16 @@ export function AdminAudioReview() {
   const [editingWord, setEditingWord] = useState<string | null>(null);
   const [phoneticHint, setPhoneticHint] = useState('');
   const [ttsProvider, setTtsProvider] = useState<'openai' | 'elevenlabs'>('elevenlabs');
+  
+  // Recording state
+  const [recordingWord, setRecordingWord] = useState<AudioWord | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch audio words
   const { data, isLoading, error } = useQuery({
@@ -124,6 +137,134 @@ export function AdminAudioReview() {
       setPhoneticHint('');
     }
   });
+
+  // Upload recording mutation
+  const uploadRecordingMutation = useMutation({
+    mutationFn: async ({ word, audioBlob }: { word: string; audioBlob: Blob }) => {
+      const token = await getToken();
+      const formData = new FormData();
+      formData.append('audio_file', audioBlob, 'recording.webm');
+      
+      const response = await fetch(
+        `${API_URL}/api/admin/audio/${encodeURIComponent(word)}/upload-recording`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: formData
+        }
+      );
+      if (!response.ok) throw new Error('Failed to upload recording');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-audio'] });
+      closeRecordingModal();
+    }
+  });
+
+  // Recording functions
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+          ? 'audio/webm;codecs=opus' 
+          : 'audio/webm'
+      });
+      
+      const chunks: BlobPart[] = [];
+      
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+      
+      // Start duration counter
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 0.1);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+      }
+    }
+  }, [isRecording]);
+
+  const playPreview = useCallback(() => {
+    if (!recordedBlob) return;
+    
+    if (isPlayingPreview && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      setIsPlayingPreview(false);
+      return;
+    }
+    
+    const url = URL.createObjectURL(recordedBlob);
+    const audio = new Audio(url);
+    previewAudioRef.current = audio;
+    
+    audio.onplay = () => setIsPlayingPreview(true);
+    audio.onended = () => {
+      setIsPlayingPreview(false);
+      URL.revokeObjectURL(url);
+    };
+    audio.onerror = () => setIsPlayingPreview(false);
+    
+    audio.play();
+  }, [recordedBlob, isPlayingPreview]);
+
+  const closeRecordingModal = useCallback(() => {
+    if (isRecording) {
+      stopRecording();
+    }
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+    }
+    setRecordingWord(null);
+    setRecordedBlob(null);
+    setRecordingDuration(0);
+    setIsPlayingPreview(false);
+  }, [isRecording, stopRecording]);
+
+  const uploadRecording = useCallback(() => {
+    if (recordingWord && recordedBlob) {
+      uploadRecordingMutation.mutate({ 
+        word: recordingWord.chamorro, 
+        audioBlob: recordedBlob 
+      });
+    }
+  }, [recordingWord, recordedBlob, uploadRecordingMutation]);
 
   const playAudio = (word: AudioWord) => {
     if (audioRef.current) {
@@ -372,6 +513,15 @@ export function AdminAudioReview() {
                       <X className="w-5 h-5" />
                     </button>
                     
+                    {/* Record button */}
+                    <button
+                      onClick={() => setRecordingWord(word)}
+                      className="p-2.5 rounded-lg transition-colors bg-purple-500 text-white hover:bg-purple-600"
+                      title="Record pronunciation"
+                    >
+                      <Mic className="w-5 h-5" />
+                    </button>
+                    
                     {/* Regenerate button */}
                     <button
                       onClick={() => {
@@ -479,6 +629,136 @@ export function AdminAudioReview() {
           </div>
         )}
       </div>
+
+      {/* Recording Modal */}
+      {recordingWord && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Record Pronunciation
+                </h3>
+                <button
+                  onClick={closeRecordingModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Word to record */}
+              <div className="text-center">
+                <p className="text-3xl font-bold text-coral-600 dark:text-coral-400 mb-2">
+                  {recordingWord.chamorro}
+                </p>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {recordingWord.english}
+                </p>
+              </div>
+
+              {/* Recording visualization */}
+              <div className="flex flex-col items-center space-y-4">
+                {/* Recording button */}
+                {!recordedBlob ? (
+                  <button
+                    onClick={isRecording ? stopRecording : startRecording}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
+                      isRecording
+                        ? 'bg-red-500 animate-pulse'
+                        : 'bg-purple-500 hover:bg-purple-600'
+                    }`}
+                  >
+                    {isRecording ? (
+                      <Square className="w-10 h-10 text-white" />
+                    ) : (
+                      <Mic className="w-10 h-10 text-white" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex gap-4">
+                    <button
+                      onClick={playPreview}
+                      className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                        isPlayingPreview
+                          ? 'bg-coral-600'
+                          : 'bg-coral-500 hover:bg-coral-600'
+                      }`}
+                    >
+                      {isPlayingPreview ? (
+                        <Pause className="w-8 h-8 text-white" />
+                      ) : (
+                        <Play className="w-8 h-8 text-white" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setRecordedBlob(null);
+                        setRecordingDuration(0);
+                      }}
+                      className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      <RefreshCw className="w-8 h-8 text-gray-700 dark:text-gray-200" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Duration / Status */}
+                <p className="text-lg font-mono text-gray-700 dark:text-gray-300">
+                  {isRecording ? (
+                    <span className="text-red-500">● Recording: {recordingDuration.toFixed(1)}s</span>
+                  ) : recordedBlob ? (
+                    <span className="text-green-500">✓ Recorded: {recordingDuration.toFixed(1)}s</span>
+                  ) : (
+                    <span className="text-gray-400">Tap to record</span>
+                  )}
+                </p>
+
+                {/* Instructions */}
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                  {isRecording 
+                    ? 'Speak clearly, then tap to stop'
+                    : recordedBlob
+                    ? 'Preview your recording or re-record'
+                    : 'Make sure you\'re in a quiet environment'
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+              <button
+                onClick={closeRecordingModal}
+                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={uploadRecording}
+                disabled={!recordedBlob || uploadRecordingMutation.isPending}
+                className="flex-1 px-4 py-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+              >
+                {uploadRecordingMutation.isPending ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    Save Recording
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }
