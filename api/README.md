@@ -4,7 +4,9 @@
 
 A comprehensive Chamorro language learning platform with AI tutoring, flashcards, quizzes, games, stories, and conversation practice. Built with **RAG** using 45,000+ chunks from Chamorro dictionaries and educational resources.
 
-**Live:** [hafagpt.com](https://hafagpt.com) | **Frontend:** [HafaGPT-frontend](https://github.com/ShimizuTechnology/HafaGPT-frontend)
+> 📚 **New to the team?** Start with the **[Developer Setup Guide](documentation/SETUP_GUIDE.md)** for step-by-step onboarding.
+
+**Live:** [hafagpt.com](https://hafagpt.com) | **Frontend:** [chamorro-chatbot-frontend](https://github.com/Shimizu-Technology/chamorro-chatbot-frontend)
 
 ---
 
@@ -28,7 +30,7 @@ A comprehensive Chamorro language learning platform with AI tutoring, flashcards
 
 ```bash
 # 1. Clone & install
-git clone https://github.com/ShimizuTechnology/HafaGPT-API.git
+git clone https://github.com/Shimizu-Technology/HafaGPT-API.git
 cd HafaGPT-API
 uv sync
 

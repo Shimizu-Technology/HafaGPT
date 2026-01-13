@@ -8310,6 +8310,169 @@ async def regenerate_audio(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/admin/audio/{word}/upload-recording", tags=["Admin"])
+async def upload_audio_recording(
+    word: str,
+    audio_file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Upload a recorded audio file for a word.
+    
+    Accepts audio files (webm, mp3, wav, ogg) and converts to MP3 for consistency.
+    Applies audio normalization for consistent volume levels.
+    """
+    try:
+        await verify_admin(authorization)
+        
+        import json
+        import boto3
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        from datetime import datetime
+        from urllib.parse import unquote
+        
+        decoded_word = unquote(word)
+        
+        # Load manifest
+        manifest_path = Path(__file__).parent.parent / "audio_generation" / "manifest.json"
+        
+        if not manifest_path.exists():
+            raise HTTPException(status_code=404, detail="Manifest not found")
+        
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            manifest = json.load(f)
+        
+        if decoded_word not in manifest.get("words", {}):
+            raise HTTPException(status_code=404, detail=f"Word '{decoded_word}' not found in manifest")
+        
+        word_data = manifest["words"][decoded_word]
+        
+        # Read uploaded file
+        audio_content = await audio_file.read()
+        original_filename = audio_file.filename or "recording.webm"
+        
+        logger.info(f"🎤 [ADMIN] Received recording for '{decoded_word}': {len(audio_content)} bytes, {original_filename}")
+        
+        # Check file size (max 5MB)
+        if len(audio_content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Audio file too large (max 5MB)")
+        
+        # Create temp files for processing
+        with tempfile.NamedTemporaryFile(suffix=Path(original_filename).suffix, delete=False) as temp_input:
+            temp_input.write(audio_content)
+            temp_input_path = temp_input.name
+        
+        temp_output_path = temp_input_path.rsplit('.', 1)[0] + '_normalized.mp3'
+        
+        try:
+            # Convert to MP3 and normalize audio using FFmpeg
+            # -af loudnorm: Normalize audio levels
+            # -ar 44100: Standard sample rate
+            # -ac 1: Mono (smaller file, good for speech)
+            # -b:a 128k: Good quality for speech
+            ffmpeg_cmd = [
+                'ffmpeg', '-y', '-i', temp_input_path,
+                '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11',  # EBU R128 loudness normalization
+                '-ar', '44100',
+                '-ac', '1',
+                '-b:a', '128k',
+                temp_output_path
+            ]
+            
+            result = subprocess.run(
+                ffmpeg_cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode != 0:
+                logger.warning(f"⚠️ FFmpeg failed, using raw audio: {result.stderr}")
+                # Fall back to raw audio if FFmpeg fails
+                final_audio = audio_content
+                content_type = 'audio/webm'
+                file_extension = Path(original_filename).suffix
+            else:
+                with open(temp_output_path, 'rb') as f:
+                    final_audio = f.read()
+                content_type = 'audio/mpeg'
+                file_extension = '.mp3'
+                logger.info(f"✅ Audio normalized: {len(audio_content)} -> {len(final_audio)} bytes")
+        
+        finally:
+            # Clean up temp files
+            import os
+            if os.path.exists(temp_input_path):
+                os.unlink(temp_input_path)
+            if os.path.exists(temp_output_path):
+                os.unlink(temp_output_path)
+        
+        # Upload to S3
+        region = os.getenv('AWS_REGION', 'ap-southeast-2')
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region_name=region
+        )
+        
+        bucket_name = os.getenv('AWS_S3_BUCKET', 'hafagpt')
+        
+        # Generate filename from word
+        default_filename = decoded_word.lower().replace(' ', '_').replace("'", '') + '.mp3'
+        filename = word_data.get("file", default_filename)
+        # Ensure .mp3 extension
+        if not filename.endswith('.mp3'):
+            filename = filename.rsplit('.', 1)[0] + '.mp3'
+        s3_key = f"audio/{filename}"
+        
+        s3_client.put_object(
+            Bucket=bucket_name,
+            Key=s3_key,
+            Body=final_audio,
+            ContentType=content_type
+        )
+        
+        s3_url = f"https://{bucket_name}.s3.{region}.amazonaws.com/{s3_key}"
+        
+        # Update manifest
+        manifest["words"][decoded_word]["url"] = s3_url
+        manifest["words"][decoded_word]["size_bytes"] = len(final_audio)
+        manifest["words"][decoded_word]["generated_at"] = datetime.now().isoformat()
+        manifest["words"][decoded_word]["needs_regeneration"] = False
+        manifest["words"][decoded_word]["review_status"] = "needs_review"  # Mark for re-review
+        manifest["words"][decoded_word]["tts_provider"] = "human_recording"
+        manifest["words"][decoded_word]["phonetic_used"] = None  # Human recordings don't use phonetic conversion
+        
+        # Save manifest
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        # Also update frontend manifest
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        if frontend_manifest_path.exists():
+            with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
+                json.dump(manifest, f, indent=2, ensure_ascii=False)
+        
+        logger.info(f"✅ [ADMIN] Uploaded recording: {decoded_word} -> {s3_url}")
+        
+        return {
+            "success": True,
+            "word": decoded_word,
+            "url": s3_url,
+            "size_bytes": len(final_audio),
+            "provider": "human_recording"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [ADMIN] Upload recording error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Custom HTTP exception handler"""

@@ -4,164 +4,160 @@
 
 ---
 
-## Prerequisites
+## 🔑 Step 0: Get Credentials From Your Team Lead
 
-Before you start, make sure you have:
+**Before you start**, ask your team lead for these credentials:
 
-| Tool | Version | Check Command |
-|------|---------|---------------|
-| **Node.js** | 18+ | `node --version` |
-| **Python** | 3.12+ | `python --version` |
-| **Git** | Any | `git --version` |
+| Credential | What It's For |
+|------------|---------------|
+| `DATABASE_URL` | PostgreSQL database connection |
+| `CLERK_SECRET_KEY` | Backend authentication |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Frontend authentication |
+| `OPENAI_API_KEY` | AI embeddings |
+| `OPENROUTER_API_KEY` | AI chat (DeepSeek) |
 
-Optional (for database):
-- **PostgreSQL** 15+ (or use the hosted Render database)
+> 💡 **Tip:** Your team lead will share these via Slack DM or a secure password manager. Keep them private!
 
 ---
 
-## 1. Clone the Repositories
+## ✅ Prerequisites
+
+Make sure you have these installed:
+
+| Tool | Version | Check Command | Install Guide |
+|------|---------|---------------|---------------|
+| **Node.js** | 18+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Python** | 3.12+ | `python --version` | [python.org](https://python.org) |
+| **Git** | Any | `git --version` | [git-scm.com](https://git-scm.com) |
+
+---
+
+## Step 1: Clone the Repositories
+
+Open your terminal and run:
 
 ```bash
-# Clone the main workspace (contains both repos as subfolders)
-git clone https://github.com/ShimizuTechnology/HafaGPT.git
-cd HafaGPT
+# Create a workspace folder
+mkdir HafaGPT && cd HafaGPT
 
-# Or clone separately:
-git clone https://github.com/ShimizuTechnology/HafaGPT-API.git
-git clone https://github.com/ShimizuTechnology/HafaGPT-frontend.git
+# Clone backend
+git clone https://github.com/Shimizu-Technology/HafaGPT-API.git
+
+# Clone frontend
+git clone https://github.com/Shimizu-Technology/chamorro-chatbot-frontend.git HafaGPT-frontend
+```
+
+You should now have:
+```
+HafaGPT/
+├── HafaGPT-API/        # Backend
+└── HafaGPT-frontend/   # Frontend
 ```
 
 ---
 
-## 2. Backend Setup (HafaGPT-API)
+## Step 2: Set Up the Backend
 
-### Install Dependencies
+### 2.1 Install Python dependencies
 
 ```bash
 cd HafaGPT-API
 
-# Install uv (Python package manager) if not installed
+# Install uv (Python package manager) - only needed once
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Create virtual environment and install dependencies
+# Restart your terminal, then run:
 uv sync
 ```
 
-### Environment Variables
-
-Create `.env` file in `HafaGPT-API/`:
+### 2.2 Create your `.env` file
 
 ```bash
-# Copy the example (or create manually)
 cp .env.example .env
 ```
 
-Required variables:
+Now open `.env` in your editor and fill in the credentials from Step 0:
 
 ```env
-# Database (get from team lead or use Render dashboard)
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
+DATABASE_URL=<paste from team lead>
+OPENAI_API_KEY=<paste from team lead>
+OPENROUTER_API_KEY=<paste from team lead>
+CLERK_SECRET_KEY=<paste from team lead>
 
-# OpenAI (for embeddings)
-OPENAI_API_KEY=sk-...
-
-# OpenRouter (for DeepSeek chat model)
-OPENROUTER_API_KEY=sk-or-...
-
-# Clerk (authentication) - get from Clerk Dashboard
-CLERK_SECRET_KEY=sk_test_...
-
-# AWS S3 (for file uploads) - optional for local dev
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_S3_BUCKET=hafagpt-uploads
-
-# Chat model selection
+# These can stay as-is:
 CHAT_MODEL=deepseek-v3
 EMBEDDING_MODE=openai
 ```
 
-### Getting API Keys
-
-| Service | Where to Get | Notes |
-|---------|--------------|-------|
-| **OpenAI** | [platform.openai.com](https://platform.openai.com/api-keys) | For embeddings |
-| **OpenRouter** | [openrouter.ai](https://openrouter.ai/keys) | For DeepSeek |
-| **Clerk** | [dashboard.clerk.com](https://dashboard.clerk.com) | See Clerk Setup below |
-| **AWS S3** | Ask team lead | Optional for local |
-
-### Run the Backend
+### 2.3 Test the backend
 
 ```bash
-cd HafaGPT-API
-
-# Option 1: Using uv (recommended)
 uv run uvicorn api.main:app --reload --port 8000
-
-# Option 2: Use the dev script
-./scripts/dev-network.sh
 ```
 
-Backend runs at: **http://localhost:8000**
+Open http://localhost:8000/api/health in your browser. You should see:
+```json
+{"status": "healthy"}
+```
 
-Test it: `curl http://localhost:8000/api/health`
+✅ **Backend is running!** Keep this terminal open.
 
 ---
 
-## 3. Frontend Setup (HafaGPT-frontend)
+## Step 3: Set Up the Frontend
 
-### Install Dependencies
+Open a **new terminal** (keep the backend running).
+
+### 3.1 Install Node dependencies
 
 ```bash
 cd HafaGPT-frontend
 npm install
 ```
 
-### Environment Variables
+### 3.2 Create your `.env.local` file
 
-Create `.env.local` file in `HafaGPT-frontend/`:
-
-```env
-# Backend URL
-VITE_API_URL=http://localhost:8000
-
-# Clerk (get from Clerk Dashboard → API Keys)
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+```bash
+cp .env.example .env.local
 ```
 
-### Run the Frontend
+Open `.env.local` and fill in:
+
+```env
+VITE_API_URL=http://localhost:8000
+VITE_CLERK_PUBLISHABLE_KEY=<paste from team lead>
+```
+
+### 3.3 Start the frontend
 
 ```bash
 npm run dev
 ```
 
-Frontend runs at: **http://localhost:5173**
+Open http://localhost:5173 in your browser.
+
+✅ **Frontend is running!** You should see the HåfaGPT homepage.
 
 ---
 
-## 4. Clerk Setup (Authentication)
+## Step 4: Create Your Account & Test
 
-Clerk handles all user authentication. Here's how to get set up:
+1. Click **Sign In** on the homepage
+2. Create an account with your work email
+3. Try sending a message in the chat!
 
-### Get Your Keys
+---
+
+## Step 5: Get Admin Access (Optional)
+
+To access the admin dashboard for testing:
 
 1. Go to [dashboard.clerk.com](https://dashboard.clerk.com)
-2. Sign in with your work email (ask team lead to add you)
-3. Select the **HafaGPT** application
-4. Go to **API Keys** in the sidebar
-5. Copy:
-   - `CLERK_SECRET_KEY` → backend `.env`
-   - `VITE_CLERK_PUBLISHABLE_KEY` → frontend `.env.local`
-
-### Set Yourself as Admin
-
-To access the admin dashboard:
-
-1. Go to Clerk Dashboard → **Users**
-2. Find your user (search by email)
-3. Click on your user
-4. Scroll to **Public metadata**
-5. Click **Edit** and set:
+2. Sign in (ask team lead to add you if needed)
+3. Click **Users** in the sidebar
+4. Find your email and click on it
+5. Scroll to **Public metadata** → Click **Edit**
+6. Paste this and save:
 
 ```json
 {
@@ -170,83 +166,38 @@ To access the admin dashboard:
 }
 ```
 
-6. Save
-7. Refresh your local app
-8. Click your profile avatar → **Admin Dashboard**
-
-### Set Yourself as Premium (for testing)
-
-Same as above, but just:
-
-```json
-{
-  "is_premium": true
-}
-```
+7. Refresh the app → Click your avatar → **Admin Dashboard**
 
 ---
 
-## 5. Database Access
+## 🎉 You're Done!
 
-### Option A: Use Hosted Database (Recommended)
+Your local development environment is ready. Here's what you have:
 
-The team uses a shared PostgreSQL database on Render. Get the `DATABASE_URL` from your team lead.
+| Service | URL |
+|---------|-----|
+| **Frontend** | http://localhost:5173 |
+| **Backend API** | http://localhost:8000 |
+| **API Docs** | http://localhost:8000/docs |
+| **Admin Dashboard** | http://localhost:5173/admin |
 
-### Option B: Local PostgreSQL
-
-```bash
-# Install PostgreSQL (macOS)
-brew install postgresql@15
-brew services start postgresql@15
-
-# Create database
-createdb hafagpt_dev
-
-# Set DATABASE_URL
-DATABASE_URL=postgresql://localhost/hafagpt_dev
-```
-
-Run migrations:
+### Daily Workflow
 
 ```bash
+# Terminal 1: Start backend
 cd HafaGPT-API
-uv run alembic upgrade head
-```
+uv run uvicorn api.main:app --reload --port 8000
 
----
-
-## 6. Running Both Together
-
-### Terminal 1 - Backend
-
-```bash
-cd HafaGPT-API
-./scripts/dev-network.sh
-# Or: uv run uvicorn api.main:app --reload --port 8000
-```
-
-### Terminal 2 - Frontend
-
-```bash
+# Terminal 2: Start frontend
 cd HafaGPT-frontend
 npm run dev
 ```
 
-### Access Points
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
-| Health Check | http://localhost:8000/api/health |
-| Admin Dashboard | http://localhost:5173/admin |
-
 ---
 
-## 7. Common Issues & Fixes
+## 🔧 Troubleshooting
 
-### "Module not found" errors (Backend)
+### "Module not found" (Backend)
 
 ```bash
 cd HafaGPT-API
@@ -255,97 +206,36 @@ uv sync  # Reinstall dependencies
 
 ### "CORS error" in browser
 
-Make sure backend is running on port 8000 and frontend `.env.local` has:
+Make sure backend is running on port 8000 and your frontend `.env.local` has:
 ```env
 VITE_API_URL=http://localhost:8000
 ```
 
-### "Clerk error" or auth not working
+### "Clerk error" or login not working
 
-1. Check your Clerk keys are correct
-2. Make sure you're using **Development** instance keys (not Production)
+1. Double-check your Clerk keys are correct
+2. Make sure you're using **Development** keys (not Production)
 3. Clear browser cookies and try again
 
-### Database connection errors
+### Backend won't start / Database error
 
-1. Verify `DATABASE_URL` is correct
-2. Check if you can connect directly:
-   ```bash
-   psql $DATABASE_URL
-   ```
+1. Verify your `DATABASE_URL` is correct
+2. Ask team lead if the database is up
 
 ### "Admin access denied"
 
-Make sure your Clerk user has `"role": "admin"` in public metadata.
+Make sure you completed Step 5 (setting `"role": "admin"` in Clerk).
 
 ---
 
-## 8. Project Structure
+## 📚 Learn More
 
-```
-HafaGPT/
-├── HafaGPT-API/              # Backend (FastAPI + Python)
-│   ├── api/                  # API endpoints
-│   ├── src/rag/              # RAG system
-│   ├── dictionary_data/      # Chamorro dictionary
-│   ├── documentation/        # 📚 You are here
-│   └── evaluation/           # Test suite
-│
-├── HafaGPT-frontend/         # Frontend (React + TypeScript)
-│   ├── src/components/       # React components
-│   ├── src/hooks/            # Custom hooks
-│   └── public/               # Static assets
-│
-└── .cursorrules              # AI assistant rules
-```
-
----
-
-## 9. Useful Commands
-
-### Backend
-
-```bash
-# Run server
-uv run uvicorn api.main:app --reload --port 8000
-
-# Run tests
-uv run pytest
-
-# Add a dependency
-uv add <package>
-uv pip compile pyproject.toml --universal -o requirements.txt
-
-# Database migration
-uv run alembic upgrade head
-uv run alembic revision --autogenerate -m "description"
-```
-
-### Frontend
-
-```bash
-# Run dev server
-npm run dev
-
-# Build for production
-npm run build
-
-# Type check
-npm run typecheck
-
-# Add a dependency
-npm install <package>
-```
-
----
-
-## 10. Getting Help
-
-- **Documentation**: See other files in `documentation/` folder
-- **Roadmap**: `IMPROVEMENT_GUIDE.md`
-- **Billing/Subscriptions**: `BILLING_AND_SUBSCRIPTIONS.md`
-- **Games**: `GAMES_FEATURE.md`
-- **RAG System**: `HOW_RAG_WORKS.md`
+| Topic | Document |
+|-------|----------|
+| How the AI works | [HOW_RAG_WORKS.md](HOW_RAG_WORKS.md) |
+| Billing system | [BILLING_AND_SUBSCRIPTIONS.md](BILLING_AND_SUBSCRIPTIONS.md) |
+| Learning games | [GAMES_FEATURE.md](GAMES_FEATURE.md) |
+| Project roadmap | [IMPROVEMENT_GUIDE.md](IMPROVEMENT_GUIDE.md) |
 
 ---
 
@@ -355,20 +245,24 @@ npm install <package>
 ┌─────────────────────────────────────────────────────────┐
 │  HåfaGPT Quick Start                                    │
 ├─────────────────────────────────────────────────────────┤
-│  Backend:  cd HafaGPT-API && ./scripts/dev-network.sh   │
-│  Frontend: cd HafaGPT-frontend && npm run dev           │
+│                                                         │
+│  1. Get credentials from team lead                      │
+│  2. Clone repos: HafaGPT-API + chamorro-chatbot-frontend│
+│  3. Backend: cd HafaGPT-API && uv sync                  │
+│             cp .env.example .env (fill in keys)         │
+│             uv run uvicorn api.main:app --reload        │
+│  4. Frontend: cd HafaGPT-frontend && npm install        │
+│              cp .env.example .env.local (fill in keys)  │
+│              npm run dev                                │
 │                                                         │
 │  URLs:                                                  │
 │    App:      http://localhost:5173                      │
 │    API:      http://localhost:8000                      │
 │    Admin:    http://localhost:5173/admin                │
 │                                                         │
-│  Become Admin:                                          │
-│    Clerk → Users → Edit metadata → {"role": "admin"}    │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 **Welcome to the team! 🌺**
-
