@@ -118,6 +118,8 @@ Auto-deploys to Netlify on push to `main`.
 
 See **[HafaGPT-API/documentation/](https://github.com/Shimizu-Technology/HafaGPT-API/tree/main/documentation)** for:
 - Setup Guide (employee onboarding)
+- How Auth Works (Clerk vs bcrypt/JWT)
+- How Migrations Work (Alembic vs Rails)
 - Billing & Subscriptions
 - Games Feature
 - Roadmap
