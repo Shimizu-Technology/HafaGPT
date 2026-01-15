@@ -948,6 +948,7 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 | New Year Theme | ✅ Done | Sparkles + firework bursts, 🎆 logo, purple/gold colors |
 | More Seasonal Themes | 📋 Planned | Valentine's, Easter, Chamorro Month, Independence Day |
 | Full Offline/Local Mode | ⏸️ Deferred | Needs local LLM setup |
+| **Local PostgreSQL Option** | 📋 Planned | Let devs run fully local DB (Rails-style isolation) |
 | ElevenLabs Voice Cloning | 📋 Future | Native speaker voice cloning for authentic pronunciation |
 | Native Speaker Recordings | 📋 Future | Partner with Chamorro speakers for authentic audio |
 | PostHog + Stripe Analytics | 📋 Future | Revenue correlation |
@@ -958,6 +959,34 @@ BEGINNER (7 topics)      INTERMEDIATE (7 topics)    ADVANCED (7 topics)
 - Works on Chrome, Edge, Safari (iOS)
 - Fallback message for unsupported browsers
 - **Effort:** 2-3 hours
+
+#### **Local PostgreSQL Option** 📋 PLANNED
+
+> **Goal:** Allow developers to run a fully local PostgreSQL database for complete isolation (like Rails).
+
+**Current Setup:** All developers share a Neon dev branch (simpler onboarding, RAG data pre-loaded).
+
+**Future Option:** For developers who want Rails-style isolation:
+```bash
+# Create local database
+createdb hafagpt_dev
+
+# Run migrations
+uv run alembic upgrade head
+
+# Seed RAG data (would need to create this)
+./scripts/seed_rag_data.sh
+```
+
+**What's needed:**
+- [ ] Create `scripts/seed_rag_data.sh` - Download and import RAG snapshot (~100MB)
+- [ ] Host RAG snapshot on S3 for developers to download
+- [ ] Update SETUP_GUIDE with "Option B: Local PostgreSQL" section
+- [ ] Document how to switch between local and shared DB
+
+**Challenge:** RAG knowledge base is ~45,000 chunks. Would need to create a downloadable snapshot that devs can import.
+
+**Effort:** 4-6 hours
 
 #### **Share Conversations** ✅ COMPLETE
 > **Goal:** Generate public shareable links so users can share conversations with friends/family.

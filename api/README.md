@@ -130,6 +130,8 @@ HafaGPT-API/
 ### How Things Work
 | Document | Description |
 |----------|-------------|
+| **[HOW_AUTH_WORKS.md](documentation/HOW_AUTH_WORKS.md)** | 🔐 Clerk authentication (for devs familiar with bcrypt/JWT) |
+| **[HOW_MIGRATIONS_WORK.md](documentation/HOW_MIGRATIONS_WORK.md)** | 🗄️ Alembic migrations (for devs familiar with Rails) |
 | **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | 🔍 RAG system, hybrid search, vector similarity |
 | **[HOW_CRAWLING_AND_PROCESSING_WORKS.md](documentation/HOW_CRAWLING_AND_PROCESSING_WORKS.md)** | 🕷️ Crawl4AI, Docling, chunking |
 | **[HOW_EVALUATION_WORKS.md](documentation/HOW_EVALUATION_WORKS.md)** | 🧪 Test suites, running tests, accuracy tracking |

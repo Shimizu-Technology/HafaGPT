@@ -18,6 +18,64 @@
 
 > 💡 **Tip:** Your team lead will share these via Slack DM or a secure password manager. Keep them private!
 
+### ❓ Do I Need to Create My Own Accounts?
+
+**No!** You'll use the team's shared credentials for development:
+
+| Service | Create your own? | Why |
+|---------|------------------|-----|
+| OpenAI | ❌ No | Uses team's API key (costs money) |
+| OpenRouter | ❌ No | Uses team's API key |
+| Clerk | ❌ No | Uses team's project (you'll be added) |
+| AWS S3 | ❌ No | Optional, uses team's bucket |
+
+The only account you'll create is a **user account in the app itself** (like any normal user would).
+
+### 🌐 Understanding the Shared Development Environment
+
+Unlike Rails where each developer runs `rails db:create` for their own local database, we use a **shared cloud-based development environment**:
+
+```
+┌─────────────────────────────────────────┐
+│     Shared Clerk (Authentication)       │
+│  • All devs see the same user accounts  │
+│  • Your test account = visible to team  │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│   Shared Neon PostgreSQL (Dev Branch)   │
+│  • Separate from production database    │
+│  • All devs see the same conversations  │
+│  • Quiz results, game scores, etc.      │
+│  • Includes RAG knowledge base (45K+)   │
+└─────────────────────────────────────────┘
+```
+
+**How it differs from Rails:**
+
+| Rails (what you know) | HåfaGPT (what we do) |
+|-----------------------|----------------------|
+| `rails db:create` locally | Shared cloud database |
+| Each dev has own users | All devs share users |
+| `rails db:seed` for test data | RAG data already in shared DB |
+| Complete isolation | Shared development environment |
+
+**What this means for you:**
+- ✅ You can see other developers' test data (and they can see yours)
+- ✅ Your team lead can help debug your issues
+- ✅ No complex setup - everyone uses the same credentials
+- ✅ RAG/AI features work immediately (no need to seed 45,000+ chunks)
+- ⚠️ Don't put sensitive personal info in test data
+- ⚠️ The dev database is **separate from production** - you can't break real users
+
+**Why it's set up this way:**
+- Simpler onboarding (no per-developer infrastructure)
+- RAG knowledge base is huge (~45,000 chunks) - impractical to seed locally
+- Easier collaboration and debugging
+- Consistent test environment for the whole team
+
+> 📋 **Future:** We plan to add a local PostgreSQL option for developers who want full isolation. See IMPROVEMENT_GUIDE.md.
+
 ---
 
 ## ✅ Prerequisites
@@ -142,22 +200,25 @@ Open http://localhost:5173 in your browser.
 
 ## Step 4: Create Your Account & Test
 
-1. Click **Sign In** on the homepage
-2. Create an account with your work email
-3. Try sending a message in the chat!
+1. Click **Sign Up** on the homepage
+2. Create an account with your **work email**
+3. Verify your email if prompted
+4. Try sending a message in the chat!
+
+> 💡 **You create your own account** - Your team lead doesn't create it for you. Just sign up like any normal user would.
 
 ---
 
-## Step 5: Get Admin Access (Optional)
+## Step 5: Get Admin/Premium Access
 
-To access the admin dashboard for testing:
+After you've created your account, **tell your team lead your email** so they can give you admin access.
 
-1. Go to [dashboard.clerk.com](https://dashboard.clerk.com)
-2. Sign in (ask team lead to add you if needed)
-3. Click **Users** in the sidebar
-4. Find your email and click on it
-5. Scroll to **Public metadata** → Click **Edit**
-6. Paste this and save:
+### What Your Team Lead Will Do
+
+1. Go to [dashboard.clerk.com](https://dashboard.clerk.com) → **Users**
+2. Search for your email
+3. Click on your user → **Public metadata** → **Edit**
+4. Add this and save:
 
 ```json
 {
@@ -166,7 +227,13 @@ To access the admin dashboard for testing:
 }
 ```
 
-7. Refresh the app → Click your avatar → **Admin Dashboard**
+### What You Do
+
+1. **Refresh** the app in your browser
+2. Click your avatar (top right)
+3. You should now see **Admin Dashboard** in the menu!
+
+> 📖 **Want to understand how auth works?** See [HOW_AUTH_WORKS.md](HOW_AUTH_WORKS.md) for a comparison with bcrypt/JWT.
 
 ---
 
@@ -232,6 +299,8 @@ Make sure you completed Step 5 (setting `"role": "admin"` in Clerk).
 
 | Topic | Document |
 |-------|----------|
+| How authentication works | [HOW_AUTH_WORKS.md](HOW_AUTH_WORKS.md) ← If you're used to bcrypt/JWT |
+| How migrations work | [HOW_MIGRATIONS_WORK.md](HOW_MIGRATIONS_WORK.md) ← If you're used to Rails migrations |
 | How the AI works | [HOW_RAG_WORKS.md](HOW_RAG_WORKS.md) |
 | Billing system | [BILLING_AND_SUBSCRIPTIONS.md](BILLING_AND_SUBSCRIPTIONS.md) |
 | Learning games | [GAMES_FEATURE.md](GAMES_FEATURE.md) |
