@@ -88,9 +88,9 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# DON'T import heavy modules at startup - lazy load them!
-# This saves ~400MB of memory on free tier
-# from src.rag.chamorro_rag import rag
+# Import RAG for warmup (uses OpenAI embeddings - lightweight!)
+# This is needed to keep the database connection warm and reduce cold start latency
+from src.rag.chamorro_rag import rag, RAG_ENABLED
 # RAGDatabaseManager is only needed for health check stats, not API runtime
 # from src.rag.manage_rag_db import RAGDatabaseManager
 
@@ -641,18 +641,114 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
+# ============================================================================
+# DATABASE WARMUP - Prevents cold start latency from Neon auto-suspend
+# ============================================================================
+# Neon serverless PostgreSQL suspends compute after ~5 minutes of inactivity.
+# This causes 500ms-2s latency on the first query after suspension.
+# Solution: Warm up the database at startup and keep it alive with periodic pings.
+
+# Keep-alive interval (4 minutes = 240 seconds, before Neon's 5-minute auto-suspend)
+DATABASE_KEEPALIVE_INTERVAL = 240
+
+# Flag to track if keep-alive task is running (avoid multiple tasks)
+_keepalive_task = None
+
+
+def warmup_database():
+    """
+    Warm up the database connection by running a lightweight query.
+    
+    This forces the RAG system to establish a connection to Neon,
+    waking up any suspended compute and reducing latency for the first real user query.
+    """
+    if not RAG_ENABLED or rag is None:
+        logger.warning("⚠️  RAG not enabled, skipping database warmup")
+        return False
+    
+    try:
+        start_time = time.time()
+        
+        # Run a simple search to force database connection
+        # Using a common word that will definitely have results
+        results = rag.search("hello", k=1)
+        
+        elapsed = time.time() - start_time
+        logger.info(f"✅ Database warmup complete in {elapsed:.2f}s (found {len(results)} chunks)")
+        return True
+        
+    except Exception as e:
+        logger.error(f"⚠️  Database warmup failed: {e}")
+        return False
+
+
+async def database_keepalive_loop():
+    """
+    Background task that periodically pings the database to prevent Neon auto-suspend.
+    
+    Runs every 4 minutes (before Neon's 5-minute auto-suspend threshold).
+    This ensures the first user message after idle is fast.
+    """
+    logger.info(f"🔄 Database keep-alive task started (interval: {DATABASE_KEEPALIVE_INTERVAL}s)")
+    
+    while True:
+        await asyncio.sleep(DATABASE_KEEPALIVE_INTERVAL)
+        
+        try:
+            # Run in a thread to avoid blocking the async loop
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, warmup_database)
+            
+        except Exception as e:
+            logger.error(f"⚠️  Keep-alive ping failed: {e}")
+
+
 @app.on_event("startup")
 async def startup_event():
-    """Log startup information"""
+    """Log startup information and warm up database connections"""
+    global _keepalive_task
+    
     logger.info("="*80)
     logger.info("🚀 Chamorro Chatbot API Starting Up")
     logger.info("="*80)
     logger.info(f"CORS Origins: {allowed_origins}")
     logger.info(f"Rate Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW} seconds")
-    logger.info(f"Database: {os.getenv('DATABASE_URL', 'postgresql://localhost/chamorro_rag')}")
+    logger.info(f"Database: {os.getenv('DATABASE_URL', 'postgresql://localhost/chamorro_rag')[:50]}...")
     if FREE_PROMO_ACTIVE:
         logger.info(f"🎄 FREE PROMO PERIOD ACTIVE until {FREE_PROMO_END_DATE}")
     logger.info("="*80)
+    
+    # Warm up the database connection at startup
+    # This runs in a background thread to not block the startup
+    logger.info("🔥 Warming up database connections...")
+    loop = asyncio.get_event_loop()
+    warmup_success = await loop.run_in_executor(None, warmup_database)
+    
+    if warmup_success:
+        logger.info("✅ Database warmup successful - first user message will be fast!")
+    else:
+        logger.warning("⚠️  Database warmup failed - first message may be slow")
+    
+    # Start the keep-alive background task (only if not already running)
+    if _keepalive_task is None:
+        _keepalive_task = asyncio.create_task(database_keepalive_loop())
+        logger.info("🔄 Database keep-alive task scheduled")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean up background tasks on shutdown"""
+    global _keepalive_task
+    
+    if _keepalive_task is not None:
+        logger.info("🛑 Stopping database keep-alive task...")
+        _keepalive_task.cancel()
+        try:
+            await _keepalive_task
+        except asyncio.CancelledError:
+            pass
+        _keepalive_task = None
+        logger.info("✅ Keep-alive task stopped")
 
 
 @app.get("/", tags=["Root"])
@@ -675,26 +771,32 @@ async def health_check():
     Health check endpoint
     
     Returns service status and database information.
+    Also warms up the database connection to prevent cold starts.
     """
     try:
-        # Try to get database stats (lazy load RAGDatabaseManager)
-        # This may fail if transformers isn't installed (production optimization)
-        try:
-            from src.rag.manage_rag_db import RAGDatabaseManager
-            manager = RAGDatabaseManager()
-            chunk_count = manager._get_chunk_count()
-        except ImportError as e:
-            logger.warning(f"Could not load RAGDatabaseManager (transformers not installed): {e}")
-            chunk_count = -1  # Indicate stats unavailable
-        except Exception as e:
-            logger.warning(f"Could not get chunk count: {e}")
-            chunk_count = -1
+        # Use the actual RAG singleton to warm up the database connection
+        # This ensures the health check keeps the database alive
+        if RAG_ENABLED and rag is not None:
+            try:
+                # Run a quick search to keep the connection warm
+                # This also validates the database is responsive
+                loop = asyncio.get_event_loop()
+                results = await loop.run_in_executor(None, lambda: rag.search("test", k=1))
+                chunk_count = len(results) if results else 0
+                db_status = "connected"
+            except Exception as e:
+                logger.warning(f"Health check RAG query failed: {e}")
+                chunk_count = 0
+                db_status = "reconnecting"
+        else:
+            chunk_count = 0
+            db_status = "rag_disabled"
         
-        logger.info("Health check successful")
+        logger.info(f"Health check successful (db: {db_status})")
         return HealthResponse(
             status="healthy",
-            database="connected" if chunk_count >= 0 else "stats_unavailable",
-            chunks=chunk_count if chunk_count >= 0 else 0
+            database=db_status,
+            chunks=chunk_count
         )
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
