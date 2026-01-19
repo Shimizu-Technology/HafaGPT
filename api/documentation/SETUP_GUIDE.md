@@ -215,17 +215,12 @@ After you've created your account, **tell your team lead your email** so they ca
 
 ### What Your Team Lead Will Do
 
-1. Go to [dashboard.clerk.com](https://dashboard.clerk.com) → **Users**
-2. Search for your email
-3. Click on your user → **Public metadata** → **Edit**
-4. Add this and save:
+1. Log into the app at `http://localhost:5173`
+2. Go to **Admin Dashboard** → **Users**
+3. Search for your email and click on your user
+4. Click **"Grant Admin"** button → Confirm
 
-```json
-{
-  "role": "admin",
-  "is_premium": true
-}
-```
+That's it! The app UI handles everything.
 
 ### What You Do
 

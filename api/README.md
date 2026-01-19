@@ -53,50 +53,14 @@ curl http://localhost:8000/api/health
 
 | Layer | Technology |
 |-------|------------|
-| **Backend** | FastAPI + Python 3.12 + Gunicorn |
-| **Database** | Neon PostgreSQL + PGVector (connection pooling enabled) |
+| **Backend** | FastAPI + Python 3.12 |
+| **Database** | Neon PostgreSQL + PGVector |
 | **LLM** | DeepSeek V3 (via OpenRouter) |
-| **Embeddings** | OpenAI text-embedding-3-small (cloud, not local) |
+| **Embeddings** | OpenAI text-embedding-3-small |
 | **Auth** | Clerk |
-| **Billing** | Stripe (via Clerk) |
 | **Storage** | AWS S3 |
 | **Frontend** | React 18 + TypeScript + Vite |
-| **Deployment** | Render Standard (API) + Netlify (Frontend) |
-
-### Infrastructure Details
-
-- **Gunicorn**: 3 workers for parallel request handling
-- **Neon Pooling**: PgBouncer via `-pooler` URL suffix (handles 100+ connections)
-- **Cloud Embeddings**: OpenAI instead of local models (saves 500MB RAM)
-- **Render Standard**: 2GB RAM, auto-deploy on push
-
-### Why Gunicorn Instead of Uvicorn?
-
-| Aspect | Uvicorn (default) | Gunicorn + Uvicorn Workers |
-|--------|-------------------|----------------------------|
-| **Processes** | 1 process | Multiple (we use 3) |
-| **Parallelism** | Async I/O only | True parallelism across CPUs |
-| **Memory** | Shared | Each worker has own memory |
-| **Crash Recovery** | App crashes = downtime | One worker crashes, others continue |
-
-**Start Command:**
-```bash
-gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
-```
-
-| Flag | Purpose |
-|------|---------|
-| `-w 3` | 3 parallel worker processes |
-| `-k uvicorn.workers.UvicornWorker` | Use async uvicorn under the hood |
-| `--timeout 120` | Kill stuck workers after 2 min |
-| `--keep-alive 300` | Keep connections open for streaming (5 min) |
-
-**What works with multiple workers:**
-- ✅ Freemium limits (5 chats/day, etc.) - stored in database
-- ✅ All database queries - workers share the same DB
-- ⚠️ IP rate limiting - in-memory, so ~3x more lenient with 3 workers (minor)
-
-> See [IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md) for full infrastructure documentation.
+| **Deployment** | Render (API) + Netlify (Frontend) |
 
 ---
 
@@ -121,42 +85,15 @@ HafaGPT-API/
 
 ## 📚 Documentation
 
-### Getting Started
 | Document | Description |
 |----------|-------------|
-| **[SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** | 🆕 Local development setup |
-| **[IMPROVEMENT_GUIDE.md](documentation/IMPROVEMENT_GUIDE.md)** | Roadmap & feature status |
+| **[SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** | 🚀 Start here - local development setup |
+| **[HOW_AUTH_WORKS.md](documentation/HOW_AUTH_WORKS.md)** | 🔐 Clerk auth (if you're used to bcrypt/JWT) |
+| **[HOW_MIGRATIONS_WORK.md](documentation/HOW_MIGRATIONS_WORK.md)** | 🗄️ Alembic (if you're used to Rails) |
+| **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | 🔍 How the AI knowledge base works |
+| **[HOW_DEPLOYMENT_WORKS.md](documentation/HOW_DEPLOYMENT_WORKS.md)** | 🚀 Gunicorn, Render, production setup |
 
-### How Things Work
-| Document | Description |
-|----------|-------------|
-| **[HOW_AUTH_WORKS.md](documentation/HOW_AUTH_WORKS.md)** | 🔐 Clerk authentication (for devs familiar with bcrypt/JWT) |
-| **[HOW_MIGRATIONS_WORK.md](documentation/HOW_MIGRATIONS_WORK.md)** | 🗄️ Alembic migrations (for devs familiar with Rails) |
-| **[HOW_RAG_WORKS.md](documentation/HOW_RAG_WORKS.md)** | 🔍 RAG system, hybrid search, vector similarity |
-| **[HOW_CRAWLING_AND_PROCESSING_WORKS.md](documentation/HOW_CRAWLING_AND_PROCESSING_WORKS.md)** | 🕷️ Crawl4AI, Docling, chunking |
-| **[HOW_EVALUATION_WORKS.md](documentation/HOW_EVALUATION_WORKS.md)** | 🧪 Test suites, running tests, accuracy tracking |
-| **[HOW_TTS_WORKS.md](documentation/HOW_TTS_WORKS.md)** | 🔊 Text-to-speech, pronunciation |
-| **[HOW_FILE_UPLOADS_WORK.md](documentation/HOW_FILE_UPLOADS_WORK.md)** | 📎 Image/document uploads, S3, vision AI |
-
-### Features
-| Document | Description |
-|----------|-------------|
-| **[BILLING_AND_SUBSCRIPTIONS.md](documentation/BILLING_AND_SUBSCRIPTIONS.md)** | 💳 Freemium model & Clerk/Stripe |
-| **[GAMES_FEATURE.md](documentation/GAMES_FEATURE.md)** | 🎮 Learning games |
-| **[MODEL_SWITCHING_GUIDE.md](documentation/MODEL_SWITCHING_GUIDE.md)** | 🤖 LLM configuration |
-
-### Data & Sources
-| Document | Description |
-|----------|-------------|
-| **[RAG_MANAGEMENT_GUIDE.md](documentation/RAG_MANAGEMENT_GUIDE.md)** | 📝 Adding documents to RAG |
-| **[crawlers/SOURCES.md](crawlers/SOURCES.md)** | 📚 Knowledge base sources |
-| **[evaluation/BASELINE_METRICS.md](evaluation/BASELINE_METRICS.md)** | 📊 Accuracy history |
-
-### Testing
-| File | Description |
-|------|-------------|
-| **[evaluation/test_evaluation.py](evaluation/test_evaluation.py)** | 🧪 RAG accuracy tests (240 queries) |
-| **[evaluation/test_conversation_context.py](evaluation/test_conversation_context.py)** | 🔄 Multi-turn context tests (6 tests) |
+📂 **More docs:** [documentation/](documentation/) folder
 
 ---
 

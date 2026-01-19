@@ -6903,6 +6903,12 @@ async def update_admin_user(
         user = clerk.users.get(user_id=user_id)
         current_metadata = getattr(user, 'public_metadata', {}) or {}
         
+        # Get admin user info for audit trail
+        admin_user = clerk.users.get(user_id=admin_user_id)
+        admin_name = f"{admin_user.first_name or ''} {admin_user.last_name or ''}".strip()
+        if not admin_name:
+            admin_name = getattr(admin_user, 'email_addresses', [{}])[0].get('email_address', admin_user_id) if hasattr(admin_user, 'email_addresses') and admin_user.email_addresses else admin_user_id
+        
         # Build new metadata
         new_metadata = dict(current_metadata)
         
@@ -6916,14 +6922,20 @@ async def update_admin_user(
                 # Whitelisting automatically grants premium
                 new_metadata['is_premium'] = True
         
+        # Handle role updates - use empty string to clear role
         if request.role is not None:
-            new_metadata['role'] = request.role
+            if request.role == '':
+                # Empty string means clear the role
+                new_metadata.pop('role', None)
+            else:
+                new_metadata['role'] = request.role
         
         if request.is_banned is not None:
             new_metadata['is_banned'] = request.is_banned
             if request.is_banned:
                 new_metadata['banned_at'] = datetime.utcnow().isoformat()
                 new_metadata['banned_by'] = admin_user_id
+                new_metadata['banned_by_name'] = admin_name
         
         if request.plan_name is not None:
             new_metadata['plan_name'] = request.plan_name
@@ -6932,6 +6944,7 @@ async def update_admin_user(
         
         new_metadata['updated_at'] = datetime.utcnow().isoformat()
         new_metadata['updated_by'] = admin_user_id
+        new_metadata['updated_by_name'] = admin_name
         
         # Update user in Clerk
         clerk.users.update(
@@ -6939,7 +6952,7 @@ async def update_admin_user(
             public_metadata=new_metadata
         )
         
-        logger.info(f"✅ [ADMIN] User {user_id} updated by admin {admin_user_id}")
+        logger.info(f"✅ [ADMIN] User {user_id} updated by admin {admin_name} ({admin_user_id})")
         logger.info(f"   New metadata: {new_metadata}")
         
         # Get updated user info
