@@ -23,7 +23,7 @@ export function AdminUserDetail() {
   const handleAction = async (action: string) => {
     if (!userId) return;
     
-    let data: { is_premium?: boolean; is_whitelisted?: boolean; is_banned?: boolean } = {};
+    let data: { is_premium?: boolean; is_whitelisted?: boolean; is_banned?: boolean; role?: string } = {};
     
     switch (action) {
       case 'grant_premium':
@@ -43,6 +43,12 @@ export function AdminUserDetail() {
         break;
       case 'unban':
         data = { is_banned: false };
+        break;
+      case 'grant_admin':
+        data = { role: 'admin', is_premium: true };
+        break;
+      case 'revoke_admin':
+        data = { role: '' };  // Empty string clears the role
         break;
       case 'reset_onboarding':
         // Handle separately
@@ -471,6 +477,27 @@ export function AdminUserDetail() {
               </button>
             )}
             
+            {/* Admin Role Actions */}
+            {user.role === 'admin' ? (
+              <button
+                onClick={() => setShowConfirm('revoke_admin')}
+                disabled={updateUser.isPending}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+              >
+                <Shield className="w-5 h-5" />
+                Revoke Admin
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowConfirm('grant_admin')}
+                disabled={updateUser.isPending}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/30 transition-colors"
+              >
+                <Shield className="w-5 h-5" />
+                Grant Admin
+              </button>
+            )}
+            
             {/* Reset Onboarding */}
             <button
               onClick={() => setShowConfirm('reset_onboarding')}
@@ -497,6 +524,8 @@ export function AdminUserDetail() {
                 {showConfirm === 'unwhitelist' && 'Remove this user from the whitelist? They will lose premium access.'}
                 {showConfirm === 'ban' && 'Ban this user? They will not be able to use the app.'}
                 {showConfirm === 'unban' && 'Unban this user? They will be able to use the app again.'}
+                {showConfirm === 'grant_admin' && 'Grant admin access to this user? They will be able to access the admin dashboard and manage other users.'}
+                {showConfirm === 'revoke_admin' && 'Revoke admin access from this user? They will no longer be able to access the admin dashboard.'}
                 {showConfirm === 'reset_onboarding' && 'Reset this user\'s onboarding? They will see the skill level selection modal on their next login.'}
               </p>
               <div className="flex gap-3">

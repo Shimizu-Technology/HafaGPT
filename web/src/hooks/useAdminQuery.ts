@@ -100,7 +100,7 @@ export interface UserUpdateRequest {
   is_premium?: boolean;
   is_whitelisted?: boolean;
   is_banned?: boolean;
-  role?: string;
+  role?: string;  // Use empty string '' to clear role
   plan_name?: string;
 }
 
