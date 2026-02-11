@@ -90,6 +90,66 @@ from src.utils.token_manager import (
 import logging
 logger = logging.getLogger(__name__)
 
+# Transient upstream/provider errors that should be retried automatically.
+RETRYABLE_LLM_ERROR_PATTERNS = (
+    "incomplete chunked read",
+    "peer closed connection",
+    "connection reset",
+    "connection aborted",
+    "connection refused",
+    "read timeout",
+    "timed out",
+    "temporarily unavailable",
+    "internal server error",
+    "bad gateway",
+    "service unavailable",
+    "gateway timeout",
+    "stream closed",
+)
+
+# Keep retries small to preserve responsiveness while masking flaky upstream calls.
+DEFAULT_MAX_LLM_RETRIES = 2
+DEFAULT_LLM_RETRY_BASE_DELAY_SECONDS = 0.75
+
+
+def _get_max_llm_retries() -> int:
+    """Read retry count from env safely (supports values loaded via .env)."""
+    raw_value = os.getenv("LLM_MAX_RETRIES", str(DEFAULT_MAX_LLM_RETRIES))
+    try:
+        return max(1, int(raw_value))
+    except (TypeError, ValueError):
+        logger.warning(
+            f"Invalid LLM_MAX_RETRIES='{raw_value}', using default={DEFAULT_MAX_LLM_RETRIES}"
+        )
+        return DEFAULT_MAX_LLM_RETRIES
+
+
+def _get_llm_retry_base_delay_seconds() -> float:
+    """Read base retry delay from env safely (supports values loaded via .env)."""
+    raw_value = os.getenv(
+        "LLM_RETRY_BASE_DELAY_SECONDS",
+        str(DEFAULT_LLM_RETRY_BASE_DELAY_SECONDS)
+    )
+    try:
+        return max(0.0, float(raw_value))
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid LLM_RETRY_BASE_DELAY_SECONDS="
+            f"'{raw_value}', using default={DEFAULT_LLM_RETRY_BASE_DELAY_SECONDS}"
+        )
+        return DEFAULT_LLM_RETRY_BASE_DELAY_SECONDS
+
+
+def _is_retryable_llm_error(error: Exception) -> bool:
+    """Return True if this looks like a transient provider/network failure."""
+    error_str = str(error).lower()
+    return any(pattern in error_str for pattern in RETRYABLE_LLM_ERROR_PATTERNS)
+
+
+def _retry_sleep_seconds(attempt_index: int) -> float:
+    """Exponential backoff for transient LLM retries."""
+    return _get_llm_retry_base_delay_seconds() * (2 ** attempt_index)
+
 
 def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
     """
@@ -1046,14 +1106,31 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     request_client, request_model = get_client_for_request(has_image=bool(image_base64))
     
     try:
-        response = request_client.chat.completions.create(
-            model=request_model,
-            temperature=0.7,
-            messages=history
-        )
-        
-        response_text = response.choices[0].message.content
-        
+        response_text = None
+        max_attempts = _get_max_llm_retries()
+        for attempt in range(max_attempts):
+            try:
+                response = request_client.chat.completions.create(
+                    model=request_model,
+                    temperature=0.7,
+                    messages=history
+                )
+                response_text = response.choices[0].message.content
+                break
+            except Exception as retry_error:
+                if _is_retryable_llm_error(retry_error) and attempt < max_attempts - 1:
+                    wait_time = _retry_sleep_seconds(attempt)
+                    logger.warning(
+                        f"Transient LLM error (attempt {attempt + 1}/{max_attempts}) "
+                        f"for model={request_model}; retrying in {wait_time:.2f}s: {retry_error}"
+                    )
+                    time.sleep(wait_time)
+                    continue
+                raise
+
+        if response_text is None:
+            raise RuntimeError("LLM response text was not generated")
+
     except Exception as e:
         error_str = str(e).lower()
         
@@ -1419,40 +1496,67 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         return
     
     full_response = ""
+    streamed_any_content = False
     try:
-        stream = request_client.chat.completions.create(
-            model=request_model,
-            temperature=0.7,
-            messages=history,
-            stream=True  # Enable streaming!
-        )
-        
-        for chunk in stream:
-            # Check for cancellation during streaming
-            if is_message_cancelled(pending_id):
-                yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-                # Log partial response as cancelled
-                log_conversation(
-                    user_message=message_for_logging,  # Use original message for logging
-                    bot_response="[Message was cancelled by user]",
-                    mode=mode,
-                    sources=formatted_sources,
-                    used_rag=used_rag,
-                    used_web_search=use_web,
-                    response_time=time.time() - start_time,
-                    session_id=session_id,
-                    user_id=user_id,
-                    conversation_id=conversation_id,
-                    image_url=image_url
+        max_attempts = _get_max_llm_retries()
+        stream_completed = False
+        for attempt in range(max_attempts):
+            try:
+                stream = request_client.chat.completions.create(
+                    model=request_model,
+                    temperature=0.7,
+                    messages=history,
+                    stream=True  # Enable streaming!
                 )
-                cleanup_cancelled_message(pending_id)
-                return
-            
-            if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                full_response += content
-                yield {"type": "chunk", "content": content}
-        
+
+                for chunk in stream:
+                    # Check for cancellation during streaming
+                    if is_message_cancelled(pending_id):
+                        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
+                        # Log partial response as cancelled
+                        log_conversation(
+                            user_message=message_for_logging,  # Use original message for logging
+                            bot_response="[Message was cancelled by user]",
+                            mode=mode,
+                            sources=formatted_sources,
+                            used_rag=used_rag,
+                            used_web_search=use_web,
+                            response_time=time.time() - start_time,
+                            session_id=session_id,
+                            user_id=user_id,
+                            conversation_id=conversation_id,
+                            image_url=image_url
+                        )
+                        cleanup_cancelled_message(pending_id)
+                        return
+
+                    if chunk.choices[0].delta.content:
+                        content = chunk.choices[0].delta.content
+                        full_response += content
+                        streamed_any_content = True
+                        yield {"type": "chunk", "content": content}
+
+                stream_completed = True
+                break
+            except Exception as retry_error:
+                can_retry = (
+                    _is_retryable_llm_error(retry_error)
+                    and attempt < max_attempts - 1
+                    and not streamed_any_content
+                )
+                if can_retry:
+                    wait_time = _retry_sleep_seconds(attempt)
+                    logger.warning(
+                        f"Transient streaming LLM error (attempt {attempt + 1}/{max_attempts}) "
+                        f"for model={request_model}; retrying in {wait_time:.2f}s: {retry_error}"
+                    )
+                    time.sleep(wait_time)
+                    continue
+                raise
+
+        if not stream_completed:
+            raise RuntimeError("Streaming response did not complete")
+
     except Exception as e:
         error_str = str(e).lower()
         
@@ -1468,7 +1572,10 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             logger.error(f"Full token error details: input_tokens={total_input_tokens}, model={request_model}, error={e}")
         else:
             logger.error(f"LLM error: {e}")
-            error_message = "Error: I encountered an issue processing your message. Please try again."
+            if streamed_any_content:
+                error_message = "Connection interrupted while streaming. Please try again."
+            else:
+                error_message = "Error: I encountered an issue processing your message. Please try again."
         
         # IMPORTANT: Save the user message even when LLM fails
         # This ensures the message is never lost
