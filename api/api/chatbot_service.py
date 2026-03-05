@@ -181,34 +181,39 @@ def _extract_non_stream_response_text(response) -> str | None:
     return str(content)
 
 
-def _extract_stream_chunk_content(chunk) -> str:
+def _extract_stream_chunk_content_and_empty_choice(chunk) -> tuple[str, bool]:
     """
     Safely extract streamed text content from a chat completion chunk.
 
     OpenRouter/OpenAI-compatible streams can emit chunks with empty choices
     (e.g., provider metadata/usage events). Those should be skipped.
+
+    Returns:
+        tuple[str, bool]:
+            - extracted text content (empty string when no text content)
+            - True when the chunk had empty choices, False otherwise
     """
     choices = getattr(chunk, "choices", None) or []
     if not choices:
-        return ""
+        return "", True
 
     delta = getattr(choices[0], "delta", None)
     if delta is None:
-        return ""
+        return "", False
 
     content = getattr(delta, "content", None)
     if content is None:
-        return ""
+        return "", False
     if isinstance(content, str):
-        return content
+        return content, False
     if isinstance(content, list):
         parts = []
         for item in content:
             text = getattr(item, "text", None)
             if text:
                 parts.append(text)
-        return "".join(parts)
-    return str(content)
+        return "".join(parts), False
+    return str(content), False
 
 
 def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
@@ -1594,9 +1599,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                         cleanup_cancelled_message(pending_id)
                         return
 
-                    if not (getattr(chunk, "choices", None) or []):
+                    content, is_empty_choice_chunk = _extract_stream_chunk_content_and_empty_choice(chunk)
+                    if is_empty_choice_chunk:
                         empty_choice_chunk_count += 1
-                    content = _extract_stream_chunk_content(chunk)
                     if content:
                         if empty_choice_chunk_count > 0 and not logged_empty_choice_chunks:
                             logger.debug(
