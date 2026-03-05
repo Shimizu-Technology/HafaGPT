@@ -1176,7 +1176,7 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                     messages=history
                 )
                 response_text = _extract_non_stream_response_text(response)
-                if response_text is None:
+                if not response_text:
                     raise RuntimeError("LLM response had no text content")
                 break
             except Exception as retry_error:
