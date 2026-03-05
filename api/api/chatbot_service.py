@@ -1559,12 +1559,12 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     
     full_response = ""
     streamed_any_content = False
-    empty_choice_chunk_count = 0
-    logged_empty_choice_chunks = False
     try:
         max_attempts = _get_max_llm_retries()
         stream_completed = False
         for attempt in range(max_attempts):
+            empty_choice_chunk_count = 0
+            logged_empty_choice_chunks = False
             try:
                 stream = request_client.chat.completions.create(
                     model=request_model,
@@ -1628,11 +1628,18 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                 raise
 
         if empty_choice_chunk_count > 0 and not logged_empty_choice_chunks:
-            logger.debug(
-                "Streaming completed with only empty-choice chunk(s): "
-                f"count={empty_choice_chunk_count}, model={request_model}, "
-                f"conversation_id={conversation_id}"
-            )
+            if streamed_any_content:
+                logger.debug(
+                    "Streaming completed with trailing empty-choice chunk(s): "
+                    f"count={empty_choice_chunk_count}, model={request_model}, "
+                    f"conversation_id={conversation_id}"
+                )
+            else:
+                logger.debug(
+                    "Streaming completed with only empty-choice chunk(s): "
+                    f"count={empty_choice_chunk_count}, model={request_model}, "
+                    f"conversation_id={conversation_id}"
+                )
 
         if not stream_completed:
             raise RuntimeError("Streaming response did not complete")
