@@ -151,6 +151,71 @@ def _retry_sleep_seconds(attempt_index: int) -> float:
     return _get_llm_retry_base_delay_seconds() * (2 ** attempt_index)
 
 
+def _extract_non_stream_response_text(response) -> str | None:
+    """
+    Safely extract text content from a non-streaming chat completion response.
+
+    Some providers may return an empty choices list in edge cases, which would
+    otherwise raise index errors when accessing choices[0].
+    """
+    choices = getattr(response, "choices", None) or []
+    if not choices:
+        return None
+
+    message = getattr(choices[0], "message", None)
+    if message is None:
+        return None
+
+    content = getattr(message, "content", None)
+    if content is None:
+        return None
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            text = getattr(item, "text", None)
+            if text:
+                parts.append(text)
+        return "".join(parts) if parts else None
+    return str(content)
+
+
+def _extract_stream_chunk_content_and_empty_choice(chunk) -> tuple[str, bool]:
+    """
+    Safely extract streamed text content from a chat completion chunk.
+
+    OpenRouter/OpenAI-compatible streams can emit chunks with empty choices
+    (e.g., provider metadata/usage events). Those should be skipped.
+
+    Returns:
+        tuple[str, bool]:
+            - extracted text content (empty string when no text content)
+            - True when the chunk had empty choices, False otherwise
+    """
+    choices = getattr(chunk, "choices", None) or []
+    if not choices:
+        return "", True
+
+    delta = getattr(choices[0], "delta", None)
+    if delta is None:
+        return "", False
+
+    content = getattr(delta, "content", None)
+    if content is None:
+        return "", False
+    if isinstance(content, str):
+        return content, False
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            text = getattr(item, "text", None)
+            if text:
+                parts.append(text)
+        return "".join(parts), False
+    return str(content), False
+
+
 def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
     """
     Get a database connection with retry logic for serverless PostgreSQL.
@@ -1115,7 +1180,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                     temperature=0.7,
                     messages=history
                 )
-                response_text = response.choices[0].message.content
+                response_text = _extract_non_stream_response_text(response)
+                if not response_text:
+                    raise RuntimeError("LLM response had no text content")
                 break
             except Exception as retry_error:
                 if _is_retryable_llm_error(retry_error) and attempt < max_attempts - 1:
@@ -1501,6 +1568,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         max_attempts = _get_max_llm_retries()
         stream_completed = False
         for attempt in range(max_attempts):
+            empty_choice_chunk_count = 0
+            logged_empty_choice_chunks = False
             try:
                 stream = request_client.chat.completions.create(
                     model=request_model,
@@ -1530,8 +1599,17 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                         cleanup_cancelled_message(pending_id)
                         return
 
-                    if chunk.choices[0].delta.content:
-                        content = chunk.choices[0].delta.content
+                    content, is_empty_choice_chunk = _extract_stream_chunk_content_and_empty_choice(chunk)
+                    if is_empty_choice_chunk:
+                        empty_choice_chunk_count += 1
+                    if content:
+                        if empty_choice_chunk_count > 0 and not logged_empty_choice_chunks:
+                            logger.debug(
+                                "Streaming chunk(s) with empty choices detected and skipped: "
+                                f"count={empty_choice_chunk_count}, model={request_model}, "
+                                f"conversation_id={conversation_id}"
+                            )
+                            logged_empty_choice_chunks = True
                         full_response += content
                         streamed_any_content = True
                         yield {"type": "chunk", "content": content}
@@ -1553,6 +1631,20 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                     time.sleep(wait_time)
                     continue
                 raise
+
+        if empty_choice_chunk_count > 0 and not logged_empty_choice_chunks:
+            if streamed_any_content:
+                logger.debug(
+                    "Streaming completed with trailing empty-choice chunk(s): "
+                    f"count={empty_choice_chunk_count}, model={request_model}, "
+                    f"conversation_id={conversation_id}"
+                )
+            else:
+                logger.debug(
+                    "Streaming completed with only empty-choice chunk(s): "
+                    f"count={empty_choice_chunk_count}, model={request_model}, "
+                    f"conversation_id={conversation_id}"
+                )
 
         if not stream_completed:
             raise RuntimeError("Streaming response did not complete")
