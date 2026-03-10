@@ -279,6 +279,8 @@ load_dotenv()
 #   CHAT_MODEL=gemini-2.5-flash
 # ============================================================================
 
+OPENROUTER_GEMINI_FLASH_MODEL_ID = "google/gemini-2.5-flash"
+
 # Model to provider/ID mapping
 # supports_vision: whether the model can process image inputs
 MODEL_CONFIG = {
@@ -288,7 +290,7 @@ MODEL_CONFIG = {
     "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo", "supports_vision": True},
     
     # OpenRouter models (via OpenRouter API)
-    "gemini-2.5-flash": {"provider": "openrouter", "model_id": "google/gemini-2.5-flash-preview-09-2025", "supports_vision": True},
+    "gemini-2.5-flash": {"provider": "openrouter", "model_id": OPENROUTER_GEMINI_FLASH_MODEL_ID, "supports_vision": True},
     "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
     "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
     "deepseek-v3.1-terminus": {"provider": "openrouter", "model_id": "deepseek/deepseek-v3.1-terminus", "supports_vision": False},  # Translation #9
@@ -353,13 +355,13 @@ def get_vision_client():
     Returns:
         tuple: (client, model_id)
     """
-    # Use Gemini 2.5 Flash for vision - 16x cheaper than GPT-4o and very fast
+    # Use Gemini 2.5 Flash for vision - fast, cheap, and supports image input
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     if openrouter_key:
         return OpenAI(
             api_key=openrouter_key,
             base_url="https://openrouter.ai/api/v1"
-        ), "google/gemini-2.5-flash-preview-09-2025"
+        ), OPENROUTER_GEMINI_FLASH_MODEL_ID
     
     # Fallback to GPT-4o if OpenRouter not configured
     return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
