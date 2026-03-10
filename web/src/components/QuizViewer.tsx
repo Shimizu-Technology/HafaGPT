@@ -67,6 +67,7 @@ export function QuizViewer() {
   const {
     data: dictQuizData,
     isLoading: isDictLoading,
+    isFetching: isDictFetching,
     isError: isDictError,
     error: dictQuizError,
     refetch: refetchDictQuiz
@@ -230,9 +231,10 @@ export function QuizViewer() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => void refetchDictQuiz()}
+              disabled={isDictFetching}
               className="flex-1 px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
             >
-              Try Again
+              {isDictFetching ? 'Retrying...' : 'Try Again'}
             </button>
             <Link
               to="/quiz"
