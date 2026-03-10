@@ -1,3 +1,5 @@
+import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
+
 // Quiz question types
 export type QuizType = 'multiple_choice' | 'type_answer' | 'fill_blank';
 
@@ -1467,8 +1469,6 @@ export function shuffleQuestions(questions: QuizQuestion[]): QuizQuestion[] {
 
 // Check if an answer is correct (handles multiple acceptable answers with fuzzy matching)
 export function checkAnswer(question: QuizQuestion, userAnswer: string): boolean {
-  const { checkFuzzyAnswer } = require('../utils/fuzzyMatch');
-  
   // For multiple choice, use exact matching
   if (question.type === 'multiple_choice') {
     const normalizedUser = userAnswer.trim().toLowerCase();

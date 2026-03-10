@@ -55,6 +55,7 @@ export function QuizViewer() {
   const { speak, isSpeaking, stop } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [usageChecked, setUsageChecked] = useState(false);
+  const [quizError, setQuizError] = useState<string | null>(null);
   const usageCheckRef = useRef(false); // Prevent double-checking
   
   // Check if this is a dictionary quiz (category starts with "dict-")
@@ -63,7 +64,14 @@ export function QuizViewer() {
   const questionCount = parseInt(searchParams.get('count') || '10');
   
   // Fetch dictionary quiz if needed
-  const { data: dictQuizData, isLoading: isDictLoading, refetch: refetchDictQuiz } = useDictionaryQuiz(
+  const {
+    data: dictQuizData,
+    isLoading: isDictLoading,
+    isFetching: isDictFetching,
+    isError: isDictError,
+    error: dictQuizError,
+    refetch: refetchDictQuiz
+  } = useDictionaryQuiz(
     actualCategoryId,
     questionCount,
     'multiple_choice,type_answer',
@@ -77,6 +85,7 @@ export function QuizViewer() {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
 
@@ -143,9 +152,15 @@ export function QuizViewer() {
         return;
       }
       
-      const allowed = await tryUse('quiz');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
+      try {
+        const allowed = await tryUse('quiz');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+        }
+      } catch (error) {
+        console.error('Failed to check quiz usage:', error);
+        usageCheckRef.current = false;
+        setQuizError('We could not start the quiz right now. Please try again.');
       }
       setUsageChecked(true);
     };
@@ -204,6 +219,36 @@ export function QuizViewer() {
     );
   }
 
+  if (isDictionaryQuiz && isDictError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+            We couldn't load this quiz
+          </p>
+          <p className="text-brown-600 dark:text-gray-400 mb-4">
+            {dictQuizError instanceof Error ? dictQuizError.message : 'Please try again in a moment.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => void refetchDictQuiz()}
+              disabled={isDictFetching}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+            >
+              {isDictFetching ? 'Retrying...' : 'Try Again'}
+            </button>
+            <Link
+              to="/quiz"
+              className="flex-1 px-4 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600"
+            >
+              Back to Quiz List
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Not found state
   if (!isDictionaryQuiz && !category) {
     return (
@@ -219,12 +264,52 @@ export function QuizViewer() {
   }
 
   // No questions yet (but not at limit - show loading)
-  if (questions.length === 0) {
+  if (questions.length === 0 && !usageChecked) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
           <p className="text-brown-600 dark:text-gray-400">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (quizError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+            Quiz temporarily unavailable
+          </p>
+          <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
+          <Link
+            to="/quiz"
+            className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+          >
+            Back to Quiz List
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+            No quiz questions available
+          </p>
+          <p className="text-brown-600 dark:text-gray-400 mb-4">
+            Please try a different quiz or come back in a moment.
+          </p>
+          <Link
+            to="/quiz"
+            className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+          >
+            Back to Quiz List
+          </Link>
         </div>
       </div>
     );
@@ -294,32 +379,56 @@ export function QuizViewer() {
   };
 
   const handleRestart = async () => {
-    // Check usage limits before restarting
-    if (isSignedIn) {
-      if (!canUse('quiz')) {
-        setShowUpgradePrompt(true);
-        return;
+    if (isRestarting) return;
+
+    setIsRestarting(true);
+    setQuizError(null);
+
+    try {
+      // Check usage limits before restarting
+      if (isSignedIn) {
+        if (!canUse('quiz')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+
+        try {
+          const allowed = await tryUse('quiz');
+          if (!allowed) {
+            setShowUpgradePrompt(true);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to restart quiz:', error);
+          setQuizError('We could not restart the quiz right now. Please try again.');
+          setShowResults(false);
+          return;
+        }
       }
-      const allowed = await tryUse('quiz');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
+
+      if (isDictionaryQuiz) {
+        // Refetch new random questions for dictionary quiz
+        const result = await refetchDictQuiz();
+        if (result.error) {
+          console.error('Failed to fetch new dictionary quiz questions:', result.error);
+          setQuizError('We could not load new quiz questions right now. Please try again.');
+          setShowResults(false);
+          return;
+        }
+      } else if (category) {
+        setQuestions(shuffleQuestions(category.questions));
       }
+
+      setCurrentIndex(0);
+      setUserAnswer('');
+      setAnswerState('unanswered');
+      setResults([]);
+      setShowResults(false);
+      setShowHint(false);
+      startTimeRef.current = Date.now(); // Reset timer
+    } finally {
+      setIsRestarting(false);
     }
-    
-    if (isDictionaryQuiz) {
-      // Refetch new random questions for dictionary quiz
-      refetchDictQuiz();
-    } else if (category) {
-      setQuestions(shuffleQuestions(category.questions));
-    }
-    setCurrentIndex(0);
-    setUserAnswer('');
-    setAnswerState('unanswered');
-    setResults([]);
-    setShowResults(false);
-    setShowHint(false);
-    startTimeRef.current = Date.now(); // Reset timer
   };
 
   // Handle back navigation with confirmation if quiz is in progress
@@ -433,10 +542,11 @@ export function QuizViewer() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleRestart}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95"
+              disabled={isRestarting}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RotateCcw className="w-5 h-5" />
-              {isDictionaryQuiz ? 'New Questions' : 'Try Again'}
+              {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
             </button>
             <Link
               to="/quiz"

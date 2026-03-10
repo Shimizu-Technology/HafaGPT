@@ -3,6 +3,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 // Global audio cache - persists across component instances
 const audioCache = new Map<string, string>(); // text -> audioUrl
 const preloadingPromises = new Map<string, Promise<boolean>>(); // text -> preload promise
+const AUDIO_LOAD_TIMEOUT_MS = 8000;
+const TTS_REQUEST_TIMEOUT_MS = 15000;
 
 // Pre-generated audio manifest (loaded from S3)
 // Maps Chamorro text to filename
@@ -75,6 +77,78 @@ export function useSpeech() {
   const [isSupported, setIsSupported] = useState(true);
   const [isPreloading, setIsPreloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const transientAudioUrlRef = useRef<string | null>(null);
+
+  const stopCurrentAudio = useCallback(() => {
+    if (!audioRef.current) return;
+
+    audioRef.current.pause();
+    audioRef.current.removeAttribute('src');
+    audioRef.current.load();
+    audioRef.current = null;
+
+    if (transientAudioUrlRef.current) {
+      URL.revokeObjectURL(transientAudioUrlRef.current);
+      transientAudioUrlRef.current = null;
+    }
+  }, []);
+
+  const fetchWithTimeout = useCallback(async (url: string, init: RequestInit = {}) => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), TTS_REQUEST_TIMEOUT_MS);
+
+    try {
+      return await fetch(url, {
+        ...init,
+        signal: controller.signal,
+      });
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
+  }, []);
+
+  const waitForAudioReady = useCallback((audio: HTMLAudioElement, label: string) => {
+    return new Promise<void>((resolve, reject) => {
+      let settled = false;
+
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        audio.oncanplaythrough = null;
+        audio.onloadeddata = null;
+        audio.onerror = null;
+        audio.onstalled = null;
+        audio.onabort = null;
+        audio.onemptied = null;
+      };
+
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        finish(new Error(`${label} timed out while loading`));
+      }, AUDIO_LOAD_TIMEOUT_MS);
+
+      audio.oncanplaythrough = () => finish();
+      audio.onloadeddata = () => finish();
+      audio.onerror = () => finish(new Error(`${label} failed to load`));
+      // `stalled` can be transient on mobile/slow networks, so let the timeout handle real hangs.
+      audio.onstalled = () => console.warn(`${label} stalled while loading`);
+      audio.onabort = () => finish(new Error(`${label} was aborted before playback`));
+      audio.onemptied = () => console.warn(`${label} emptied while loading`);
+
+      audio.load();
+    });
+  }, []);
 
   // Check if Speech Synthesis is supported (for fallback)
   // Also load static audio manifest on first use
@@ -86,6 +160,15 @@ export function useSpeech() {
     // Load static audio manifest in background
     loadStaticAudioManifest();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      stopCurrentAudio();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [stopCurrentAudio]);
 
   /**
    * Convert base64 audio to playable Blob
@@ -108,13 +191,13 @@ export function useSpeech() {
    *                alloy = Also good for multilingual
    */
   const speakOpenAI = useCallback(async (text: string, voice: string = 'shimmer'): Promise<boolean> => {
+    let audioUrl: string | null = null;
+
     try {
       // Stop any currently playing audio first
       if (audioRef.current) {
         console.log('🛑 Stopping previous audio');
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
+        stopCurrentAudio();
       }
       
       setIsSpeaking(true);
@@ -140,7 +223,7 @@ export function useSpeech() {
       
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       
-      const response = await fetch(`${API_URL}/api/tts`, {
+      const response = await fetchWithTimeout(`${API_URL}/api/tts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -155,23 +238,18 @@ export function useSpeech() {
       const data = await response.json();
       
       const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
-      const audioUrl = URL.createObjectURL(audioBlob);
+      audioUrl = URL.createObjectURL(audioBlob);
+      transientAudioUrlRef.current = audioUrl;
       
       console.log(`📦 Audio received: ${audioBlob.size} bytes`);
       
       const audio = new Audio();
       audio.preload = 'auto';
       audioRef.current = audio;
+      audio.src = audioUrl;
       
-      await new Promise<void>((resolve, reject) => {
-        audio.oncanplaythrough = () => {
-          console.log(`⏱️ Audio ready: ${audio.duration.toFixed(2)}s`);
-          resolve();
-        };
-        audio.onerror = (e) => reject(new Error('Audio load failed: ' + e));
-        audio.src = audioUrl;
-        audio.load();
-      });
+      await waitForAudioReady(audio, 'Generated audio');
+      console.log(`⏱️ Audio ready: ${audio.duration.toFixed(2)}s`);
       
       // Validate audio duration before caching
       // Minimum expected: 0.3s base + 0.04s per character
@@ -181,6 +259,8 @@ export function useSpeech() {
         // Audio seems complete - cache it for consistent playback
         audioCache.set(text, audioUrl);
         console.log(`💾 Cached audio for: "${text}" (${audio.duration.toFixed(2)}s >= ${minExpectedDuration.toFixed(2)}s min)`);
+        transientAudioUrlRef.current = null;
+        audioUrl = null;
       } else {
         // Audio seems truncated - don't cache, let user try again
         console.warn(`⚠️ Audio too short (${audio.duration.toFixed(2)}s < ${minExpectedDuration.toFixed(2)}s), not caching`);
@@ -190,6 +270,13 @@ export function useSpeech() {
         console.log('✅ OpenAI TTS playback finished');
         setIsSpeaking(false);
         audioRef.current = null;
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl);
+          if (transientAudioUrlRef.current === audioUrl) {
+            transientAudioUrlRef.current = null;
+          }
+          audioUrl = null;
+        }
       };
       
       audio.currentTime = 0;
@@ -201,10 +288,11 @@ export function useSpeech() {
     } catch (error) {
       console.warn('⚠️ OpenAI TTS failed:', error);
       setIsSpeaking(false);
-      audioRef.current = null;
+      stopCurrentAudio();
+
       return false;
     }
-  }, []);
+  }, [fetchWithTimeout, stopCurrentAudio, waitForAudioReady]);
 
   /**
    * Speak using Browser TTS (free, works offline)
@@ -287,7 +375,7 @@ export function useSpeech() {
         
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         
-        const response = await fetch(`${API_URL}/api/tts`, {
+        const response = await fetchWithTimeout(`${API_URL}/api/tts`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -320,7 +408,7 @@ export function useSpeech() {
     
     preloadingPromises.set(text, preloadPromise);
     return preloadPromise;
-  }, []);
+  }, [fetchWithTimeout]);
 
   /**
    * Play from cache if available (instant!)
@@ -343,7 +431,7 @@ export function useSpeech() {
       
       audio.onerror = () => {
         setIsSpeaking(false);
-        audioRef.current = null;
+        stopCurrentAudio();
         // Remove invalid cache entry
         audioCache.delete(text);
       };
@@ -353,9 +441,10 @@ export function useSpeech() {
     } catch (error) {
       console.warn('Cache playback failed:', error);
       setIsSpeaking(false);
+      stopCurrentAudio();
       return false;
     }
-  }, []);
+  }, [stopCurrentAudio]);
 
   /**
    * Play from pre-generated static audio (S3)
@@ -371,19 +460,15 @@ export function useSpeech() {
       
       // Stop any currently playing audio
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
+        stopCurrentAudio();
       }
       
       const audio = new Audio(staticUrl);
       audio.crossOrigin = 'anonymous';
+      audio.preload = 'auto';
       audioRef.current = audio;
       
-      await new Promise<void>((resolve, reject) => {
-        audio.oncanplaythrough = () => resolve();
-        audio.onerror = () => reject(new Error('Static audio load failed'));
-        audio.load();
-      });
+      await waitForAudioReady(audio, 'Static audio');
       
       audio.onended = () => {
         console.log('✅ Static audio finished');
@@ -398,10 +483,10 @@ export function useSpeech() {
     } catch (error) {
       console.warn(`⚠️ Static audio failed for "${text}":`, error);
       setIsSpeaking(false);
-      audioRef.current = null;
+      stopCurrentAudio();
       return false;
     }
-  }, []);
+  }, [stopCurrentAudio, waitForAudioReady]);
 
   /**
    * Main speak function - checks static audio, cache, then OpenAI
@@ -438,18 +523,14 @@ export function useSpeech() {
    */
   const stop = useCallback(() => {
     // Stop OpenAI audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null;
-    }
+    stopCurrentAudio();
     
     // Stop browser TTS
     window.speechSynthesis.cancel();
     
     setIsSpeaking(false);
     console.log('🛑 Speech stopped');
-  }, []);
+  }, [stopCurrentAudio]);
 
   /**
    * Clear cached audio for a specific word (or all if no text provided)

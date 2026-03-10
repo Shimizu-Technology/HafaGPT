@@ -27,7 +27,7 @@ export function normalizeChamorro(text: string): string {
     'ó': 'o',
     'ú': 'u',
     "'": '',  // Glottal stop (straight apostrophe)
-    "'": '',  // Curly apostrophe
+    "’": '',  // Curly apostrophe
     "‑": '-', // Non-breaking hyphen
   };
   
