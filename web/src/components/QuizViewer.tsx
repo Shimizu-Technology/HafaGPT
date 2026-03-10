@@ -393,6 +393,7 @@ export function QuizViewer() {
       } catch (error) {
         console.error('Failed to restart quiz:', error);
         setQuizError('We could not restart the quiz right now. Please try again.');
+        setShowResults(false);
         return;
       }
     }

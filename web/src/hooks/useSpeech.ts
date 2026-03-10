@@ -138,7 +138,7 @@ export function useSpeech() {
       // `stalled` can be transient on mobile/slow networks, so let the timeout handle real hangs.
       audio.onstalled = () => console.warn(`${label} stalled while loading`);
       audio.onabort = () => finish(new Error(`${label} was aborted before playback`));
-      audio.onemptied = () => finish(new Error(`${label} became empty before playback`));
+      audio.onemptied = () => console.warn(`${label} emptied while loading`);
 
       audio.load();
     });
