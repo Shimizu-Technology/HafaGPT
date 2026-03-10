@@ -276,7 +276,7 @@ class OpenRouterProvider(ModelProvider):
         
         # Google Gemini - December 2025
         "google/gemini-3-pro-preview": (1.25, 5.00),
-        "google/gemini-2.5-flash-preview-09-2025": (0.15, 0.60),
+        "google/gemini-2.5-flash": (0.15, 0.60),
         "google/gemini-2.5-flash-lite-preview-09-2025": (0.075, 0.30),
         "google/gemini-2.0-flash-exp:free": (0.0, 0.0),
         "google/gemini-2.0-flash-thinking-exp:free": (0.0, 0.0),
@@ -430,7 +430,7 @@ AVAILABLE_MODELS = {
     # Gemini 3 Series (LATEST!)
     "gemini-3-pro": ("openrouter", "google/gemini-3-pro-preview"),
     # Gemini 2.5 Series
-    "gemini-2.5-flash": ("openrouter", "google/gemini-2.5-flash-preview-09-2025"),
+    "gemini-2.5-flash": ("openrouter", "google/gemini-2.5-flash"),
     "gemini-2.5-flash-lite": ("openrouter", "google/gemini-2.5-flash-lite-preview-09-2025"),
     # Gemini 2.0 Series
     "gemini-2.0-flash": ("openrouter", "google/gemini-2.0-flash-exp:free"),
