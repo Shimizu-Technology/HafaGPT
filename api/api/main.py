@@ -2148,8 +2148,10 @@ async def text_to_speech(
                         headers=headers,
                         timeout=(provider_connect_timeout_seconds, provider_timeout_seconds),
                     )
-                except http_requests.Timeout:
-                    logger.warning("ElevenLabs timed out, falling back to OpenAI")
+                except http_requests.RequestException as exc:
+                    logger.warning(
+                        f"ElevenLabs request failed ({exc.__class__.__name__}), falling back to OpenAI"
+                    )
                     provider = "openai"
                 else:
                     if response.status_code == 200:
