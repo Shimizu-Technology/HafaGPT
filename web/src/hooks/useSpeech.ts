@@ -290,10 +290,6 @@ export function useSpeech() {
       setIsSpeaking(false);
       stopCurrentAudio();
 
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-
       return false;
     }
   }, [fetchWithTimeout, stopCurrentAudio, waitForAudioReady]);
