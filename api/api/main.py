@@ -2098,8 +2098,11 @@ async def text_to_speech(
         import requests as http_requests
         from openai import APITimeoutError, OpenAI
 
-        provider_timeout_seconds = 20
-        provider_connect_timeout_seconds = 5
+        total_timeout_budget_seconds = 14.0
+        provider_connect_timeout_seconds = 3.0
+        elevenlabs_read_timeout_seconds = 8.0
+        openai_timeout_seconds = 10.0
+        tts_started_at = time.monotonic()
         
         # Limit text length
         text_to_speak = text[:4096]
@@ -2146,7 +2149,7 @@ async def text_to_speech(
                         elevenlabs_url,
                         json=data,
                         headers=headers,
-                        timeout=(provider_connect_timeout_seconds, provider_timeout_seconds),
+                        timeout=(provider_connect_timeout_seconds, elevenlabs_read_timeout_seconds),
                     )
                 except http_requests.RequestException as exc:
                     logger.warning(
@@ -2165,8 +2168,16 @@ async def text_to_speech(
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
                 raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+
+            elapsed_seconds = time.monotonic() - tts_started_at
+            remaining_budget_seconds = total_timeout_budget_seconds - elapsed_seconds
+            if remaining_budget_seconds <= 0:
+                raise HTTPException(status_code=504, detail="TTS provider timed out")
             
-            client = OpenAI(api_key=api_key, timeout=provider_timeout_seconds)
+            client = OpenAI(
+                api_key=api_key,
+                timeout=min(openai_timeout_seconds, remaining_budget_seconds),
+            )
             
             try:
                 response = await asyncio.to_thread(
