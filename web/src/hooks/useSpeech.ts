@@ -77,6 +77,7 @@ export function useSpeech() {
   const [isSupported, setIsSupported] = useState(true);
   const [isPreloading, setIsPreloading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const transientAudioUrlRef = useRef<string | null>(null);
 
   const stopCurrentAudio = useCallback(() => {
     if (!audioRef.current) return;
@@ -85,6 +86,11 @@ export function useSpeech() {
     audioRef.current.removeAttribute('src');
     audioRef.current.load();
     audioRef.current = null;
+
+    if (transientAudioUrlRef.current) {
+      URL.revokeObjectURL(transientAudioUrlRef.current);
+      transientAudioUrlRef.current = null;
+    }
   }, []);
 
   const fetchWithTimeout = useCallback(async (url: string, init: RequestInit = {}) => {
@@ -233,6 +239,7 @@ export function useSpeech() {
       
       const audioBlob = base64ToBlob(data.audio, 'audio/mpeg');
       audioUrl = URL.createObjectURL(audioBlob);
+      transientAudioUrlRef.current = audioUrl;
       
       console.log(`📦 Audio received: ${audioBlob.size} bytes`);
       
@@ -252,6 +259,7 @@ export function useSpeech() {
         // Audio seems complete - cache it for consistent playback
         audioCache.set(text, audioUrl);
         console.log(`💾 Cached audio for: "${text}" (${audio.duration.toFixed(2)}s >= ${minExpectedDuration.toFixed(2)}s min)`);
+        transientAudioUrlRef.current = null;
         audioUrl = null;
       } else {
         // Audio seems truncated - don't cache, let user try again
@@ -262,6 +270,13 @@ export function useSpeech() {
         console.log('✅ OpenAI TTS playback finished');
         setIsSpeaking(false);
         audioRef.current = null;
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl);
+          if (transientAudioUrlRef.current === audioUrl) {
+            transientAudioUrlRef.current = null;
+          }
+          audioUrl = null;
+        }
       };
       
       audio.currentTime = 0;

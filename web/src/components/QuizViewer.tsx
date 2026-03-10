@@ -157,6 +157,7 @@ export function QuizViewer() {
         }
       } catch (error) {
         console.error('Failed to check quiz usage:', error);
+        usageCheckRef.current = false;
         setQuizError('We could not start the quiz right now. Please try again.');
       }
       setUsageChecked(true);
