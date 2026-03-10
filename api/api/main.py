@@ -2193,6 +2193,8 @@ async def text_to_speech(
     except ImportError:
         logger.error("❌ OpenAI library not installed")
         raise HTTPException(status_code=500, detail="OpenAI library not available")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ TTS failed: {e}")
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
