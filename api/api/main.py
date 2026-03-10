@@ -2099,6 +2099,7 @@ async def text_to_speech(
         from openai import APITimeoutError, OpenAI
 
         total_timeout_budget_seconds = 14.0
+        minimum_openai_budget_seconds = 1.0
         provider_connect_timeout_seconds = 3.0
         elevenlabs_read_timeout_seconds = 8.0
         openai_timeout_seconds = 10.0
@@ -2171,7 +2172,7 @@ async def text_to_speech(
 
             elapsed_seconds = time.monotonic() - tts_started_at
             remaining_budget_seconds = total_timeout_budget_seconds - elapsed_seconds
-            if remaining_budget_seconds <= 0:
+            if remaining_budget_seconds < minimum_openai_budget_seconds:
                 raise HTTPException(status_code=504, detail="TTS provider timed out")
             
             client = OpenAI(
