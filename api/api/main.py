@@ -2096,7 +2096,7 @@ async def text_to_speech(
     """
     try:
         import requests as http_requests
-        from openai import OpenAI
+        from openai import APITimeoutError, OpenAI
 
         provider_timeout_seconds = 20
         provider_connect_timeout_seconds = 5
@@ -2168,12 +2168,16 @@ async def text_to_speech(
             
             client = OpenAI(api_key=api_key, timeout=provider_timeout_seconds)
             
-            response = await asyncio.to_thread(
-                client.audio.speech.create,
-                model="tts-1",  # Standard quality (2x faster, $0.015/1K chars)
-                voice=voice,
-                input=text_to_speak,
-            )
+            try:
+                response = await asyncio.to_thread(
+                    client.audio.speech.create,
+                    model="tts-1",  # Standard quality (2x faster, $0.015/1K chars)
+                    voice=voice,
+                    input=text_to_speak,
+                )
+            except APITimeoutError as exc:
+                logger.warning(f"OpenAI TTS timed out: {exc}")
+                raise HTTPException(status_code=504, detail="TTS provider timed out") from exc
             audio_bytes = response.content
         
         # Convert to base64 for easy transport
@@ -2191,8 +2195,6 @@ async def text_to_speech(
         raise HTTPException(status_code=500, detail="OpenAI library not available")
     except Exception as e:
         logger.error(f"❌ TTS failed: {e}")
-        if "timeout" in str(e).lower():
-            raise HTTPException(status_code=504, detail="TTS provider timed out")
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
 
