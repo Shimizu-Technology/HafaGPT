@@ -85,6 +85,7 @@ export function QuizViewer() {
   const [results, setResults] = useState<QuestionResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
 
@@ -378,48 +379,56 @@ export function QuizViewer() {
   };
 
   const handleRestart = async () => {
+    if (isRestarting) return;
+
+    setIsRestarting(true);
     setQuizError(null);
 
-    // Check usage limits before restarting
-    if (isSignedIn) {
-      if (!canUse('quiz')) {
-        setShowUpgradePrompt(true);
-        return;
-      }
-
-      try {
-        const allowed = await tryUse('quiz');
-        if (!allowed) {
+    try {
+      // Check usage limits before restarting
+      if (isSignedIn) {
+        if (!canUse('quiz')) {
           setShowUpgradePrompt(true);
           return;
         }
-      } catch (error) {
-        console.error('Failed to restart quiz:', error);
-        setQuizError('We could not restart the quiz right now. Please try again.');
-        setShowResults(false);
-        return;
+
+        try {
+          const allowed = await tryUse('quiz');
+          if (!allowed) {
+            setShowUpgradePrompt(true);
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to restart quiz:', error);
+          setQuizError('We could not restart the quiz right now. Please try again.');
+          setShowResults(false);
+          return;
+        }
       }
-    }
-    
-    if (isDictionaryQuiz) {
-      // Refetch new random questions for dictionary quiz
-      const result = await refetchDictQuiz();
-      if (result.error) {
-        console.error('Failed to fetch new dictionary quiz questions:', result.error);
-        setQuizError('We could not load new quiz questions right now. Please try again.');
-        setShowResults(false);
-        return;
+
+      if (isDictionaryQuiz) {
+        // Refetch new random questions for dictionary quiz
+        const result = await refetchDictQuiz();
+        if (result.error) {
+          console.error('Failed to fetch new dictionary quiz questions:', result.error);
+          setQuizError('We could not load new quiz questions right now. Please try again.');
+          setShowResults(false);
+          return;
+        }
+      } else if (category) {
+        setQuestions(shuffleQuestions(category.questions));
       }
-    } else if (category) {
-      setQuestions(shuffleQuestions(category.questions));
+
+      setCurrentIndex(0);
+      setUserAnswer('');
+      setAnswerState('unanswered');
+      setResults([]);
+      setShowResults(false);
+      setShowHint(false);
+      startTimeRef.current = Date.now(); // Reset timer
+    } finally {
+      setIsRestarting(false);
     }
-    setCurrentIndex(0);
-    setUserAnswer('');
-    setAnswerState('unanswered');
-    setResults([]);
-    setShowResults(false);
-    setShowHint(false);
-    startTimeRef.current = Date.now(); // Reset timer
   };
 
   // Handle back navigation with confirmation if quiz is in progress
@@ -533,10 +542,11 @@ export function QuizViewer() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleRestart}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95"
+              disabled={isRestarting}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <RotateCcw className="w-5 h-5" />
-              {isDictionaryQuiz ? 'New Questions' : 'Try Again'}
+              {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
             </button>
             <Link
               to="/quiz"
