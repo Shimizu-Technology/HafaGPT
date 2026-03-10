@@ -135,7 +135,8 @@ export function useSpeech() {
       audio.oncanplaythrough = () => finish();
       audio.onloadeddata = () => finish();
       audio.onerror = () => finish(new Error(`${label} failed to load`));
-      audio.onstalled = () => finish(new Error(`${label} stalled while loading`));
+      // `stalled` can be transient on mobile/slow networks, so let the timeout handle real hangs.
+      audio.onstalled = () => console.warn(`${label} stalled while loading`);
       audio.onabort = () => finish(new Error(`${label} was aborted before playback`));
       audio.onemptied = () => finish(new Error(`${label} became empty before playback`));
 
@@ -419,7 +420,7 @@ export function useSpeech() {
       
       audio.onerror = () => {
         setIsSpeaking(false);
-        audioRef.current = null;
+        stopCurrentAudio();
         // Remove invalid cache entry
         audioCache.delete(text);
       };
@@ -429,10 +430,10 @@ export function useSpeech() {
     } catch (error) {
       console.warn('Cache playback failed:', error);
       setIsSpeaking(false);
-      audioRef.current = null;
+      stopCurrentAudio();
       return false;
     }
-  }, []);
+  }, [stopCurrentAudio]);
 
   /**
    * Play from pre-generated static audio (S3)

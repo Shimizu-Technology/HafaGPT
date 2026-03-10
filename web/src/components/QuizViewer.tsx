@@ -403,6 +403,7 @@ export function QuizViewer() {
       if (result.error) {
         console.error('Failed to fetch new dictionary quiz questions:', result.error);
         setQuizError('We could not load new quiz questions right now. Please try again.');
+        setShowResults(false);
         return;
       }
     } else if (category) {
