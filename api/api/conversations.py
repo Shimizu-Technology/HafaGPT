@@ -81,21 +81,33 @@ def get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5)
     raise Exception("Failed to connect to database after retries")
 
 
-def conversation_belongs_to_user(conversation_id: str, user_id: str) -> bool:
+def conversation_belongs_to_user(
+    conversation_id: str,
+    user_id: str,
+    include_deleted: bool = False,
+) -> bool:
     """
-    Check whether a non-deleted conversation belongs to the given user.
+    Check whether a conversation belongs to the given user.
+
+    Args:
+        conversation_id: Conversation ID to check
+        user_id: Owning user ID
+        include_deleted: When True, allow soft-deleted conversations to match
     """
     try:
         with closing(get_db_connection_with_retry()) as conn:
             with closing(conn.cursor()) as cursor:
-                cursor.execute("""
+                query = """
                     SELECT 1
                     FROM conversations
                     WHERE id = %s
                       AND user_id = %s
-                      AND deleted_at IS NULL
-                    LIMIT 1
-                """, (conversation_id, user_id))
+                """
+                if not include_deleted:
+                    query += "\n                      AND deleted_at IS NULL"
+                query += "\n                    LIMIT 1"
+
+                cursor.execute(query, (conversation_id, user_id))
                 return cursor.fetchone() is not None
     except Exception as e:
         logger.error(f"Failed to verify conversation ownership: {e}")
@@ -519,4 +531,3 @@ def create_system_message(
     except Exception as e:
         logger.error(f"Failed to create system message: {e}")
         raise
-

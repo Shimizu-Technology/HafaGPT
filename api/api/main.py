@@ -1574,7 +1574,11 @@ async def get_conversation_messages_endpoint(
     try:
         user_id = await verify_user(authorization)
 
-        if not conversations.conversation_belongs_to_user(conversation_id, user_id):
+        if not conversations.conversation_belongs_to_user(
+            conversation_id,
+            user_id,
+            include_deleted=True,
+        ):
             raise HTTPException(status_code=404, detail="Conversation not found")
 
         # Get messages
