@@ -446,50 +446,59 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
 # Background S3 Upload Functions
 # ============================================================================
 
-def append_file_url_to_conversation_log(conversation_id: str, pending_id: Optional[str], file_info: dict):
+def append_file_url_to_conversation_log(
+    conversation_id: str,
+    pending_id: Optional[str],
+    file_infos: list[dict]
+):
     """
-    Append a file URL to the conversation log's file_urls array.
-    Called from background task after each S3 upload completes.
+    Append uploaded file URLs to the conversation log for the exact pending row.
     
     Args:
         conversation_id: The conversation ID
         pending_id: The client-generated pending ID for this message
-        file_info: Dict with {url, filename, type} - type is 'image' or 'document'
+        file_infos: List of dicts with {url, filename, type, content_type}
     """
     if not pending_id:
         logger.warning("Skipping file URL append because pending_id is missing")
         return
+    if not file_infos:
+        return
 
     try:
-        import psycopg
         import json
-        conn = psycopg.connect(os.getenv("DATABASE_URL"))
+        conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
-
-        # The chat row is created after generation completes, so poll briefly for
-        # the exact row instead of attaching files to whichever row is newest.
-        rows_updated = 0
-        deadline = time.time() + 20
-        while time.time() < deadline:
-            cursor.execute("""
-                UPDATE conversation_logs
-                SET
-                    file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
-                    image_url = COALESCE(image_url, %s)
-                WHERE conversation_id = %s
-                  AND pending_id = %s
-            """, (json.dumps([file_info]), file_info['url'], conversation_id, pending_id))
-            rows_updated = cursor.rowcount
-            if rows_updated > 0:
-                conn.commit()
-                break
-            time.sleep(0.25)
+        primary_image_url = next(
+            (file_info["url"] for file_info in file_infos if file_info.get("type") == "image"),
+            file_infos[0]["url"]
+        )
+        cursor.execute("""
+            UPDATE conversation_logs
+            SET
+                file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
+                image_url = COALESCE(image_url, %s)
+            WHERE conversation_id = %s
+              AND pending_id = %s
+        """, (json.dumps(file_infos), primary_image_url, conversation_id, pending_id))
+        rows_updated = cursor.rowcount
+        if rows_updated > 1:
+            conn.rollback()
+            raise RuntimeError(
+                f"Expected exactly one conversation log row for conversation_id={conversation_id}, "
+                f"pending_id={pending_id}, but updated {rows_updated}"
+            )
+        if rows_updated == 1:
+            conn.commit()
 
         cursor.close()
         conn.close()
         
         if rows_updated > 0:
-            logger.info(f"✅ Background: Added {file_info['filename']} to file_urls")
+            logger.info(
+                f"✅ Background: Added {len(file_infos)} file(s) to file_urls "
+                f"for conversation_id={conversation_id}"
+            )
         else:
             logger.warning(
                 f"No conversation_log found for conversation_id={conversation_id}, "
@@ -500,60 +509,56 @@ def append_file_url_to_conversation_log(conversation_id: str, pending_id: Option
 
 
 def upload_file_to_s3_background(
-    file_data: bytes,
-    filename: str,
-    content_type: str,
+    files_to_upload: list[dict],
     user_id: str,
     conversation_id: str,
     pending_id: Optional[str],
-    file_index: int
 ):
     """
-    Background task to upload file to S3 and update conversation_logs.
+    Background task to upload request files to S3 and update conversation_logs.
     
     Args:
-        file_data: Raw file bytes
-        filename: Original filename
-        content_type: MIME type
+        files_to_upload: List of files with raw bytes and metadata
         user_id: User ID for S3 path
         conversation_id: Conversation ID for DB update
         pending_id: Client-generated pending ID for matching the final DB row
-        file_index: Index for unique filename
     """
     try:
         if not s3_client:
             logger.warning("⚠️ S3 client not configured, skipping background upload")
             return
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
-        
-        # Upload to S3
-        logger.info(f"📤 Background: Uploading {filename} to S3...")
-        s3_client.put_object(
-            Bucket=S3_BUCKET,
-            Key=s3_key,
-            Body=file_data,
-            ContentType=content_type
-        )
-        
-        file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
-        logger.info(f"✅ Background: Uploaded {filename} → {file_url}")
-        
-        # Determine file type for display
-        file_type = 'image' if content_type.startswith('image/') else 'document'
-        
-        # Append to conversation_logs file_urls array
-        if conversation_id:
-            append_file_url_to_conversation_log(conversation_id, pending_id, {
+        uploaded_files: list[dict] = []
+
+        for file_info in files_to_upload:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = file_info["filename"]
+            content_type = file_info["content_type"]
+            file_index = file_info["index"]
+            s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
+
+            logger.info(f"📤 Background: Uploading {filename} to S3...")
+            s3_client.put_object(
+                Bucket=S3_BUCKET,
+                Key=s3_key,
+                Body=file_info["data"],
+                ContentType=content_type
+            )
+
+            file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
+            logger.info(f"✅ Background: Uploaded {filename} → {file_url}")
+
+            uploaded_files.append({
                 'url': file_url,
                 'filename': filename,
-                'type': file_type,
+                'type': 'image' if content_type.startswith('image/') else 'document',
                 'content_type': content_type
             })
+
+        if conversation_id:
+            append_file_url_to_conversation_log(conversation_id, pending_id, uploaded_files)
             
     except Exception as e:
-        logger.error(f"❌ Background S3 upload error for {filename}: {e}")
+        logger.error(f"❌ Background S3 upload error: {e}")
 
 
 # Rate limiting storage (in-memory - use Redis in production for multiple servers)
@@ -1196,20 +1201,14 @@ async def chat_stream(
             except Exception as e:
                 logger.error(f"File processing error for {uploaded_file.filename}: {e}")
         
-        # Schedule S3 uploads as background tasks (user doesn't wait!)
-        for file_info in files_to_upload:
+        if files_to_upload:
             background_tasks.add_task(
                 upload_file_to_s3_background,
-                file_data=file_info['data'],
-                filename=file_info['filename'],
-                content_type=file_info['content_type'],
+                files_to_upload=files_to_upload,
                 user_id=user_id,
                 conversation_id=conversation_id,
-                pending_id=pending_id,
-                file_index=file_info['index']
+                pending_id=pending_id
             )
-        
-        if files_to_upload:
             logger.info(f"📤 Scheduled {len(files_to_upload)} background S3 uploads")
         
         # Combine all document texts into the message

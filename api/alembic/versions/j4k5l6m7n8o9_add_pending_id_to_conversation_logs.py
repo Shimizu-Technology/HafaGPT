@@ -21,10 +21,16 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Add pending_id for safely targeting async file attachment updates."""
     op.add_column('conversation_logs', sa.Column('pending_id', sa.String(), nullable=True))
-    op.create_index('idx_conversation_logs_pending_id', 'conversation_logs', ['pending_id'])
+    op.create_index(
+        'uq_conversation_logs_conversation_id_pending_id',
+        'conversation_logs',
+        ['conversation_id', 'pending_id'],
+        unique=True,
+        postgresql_where=sa.text('conversation_id IS NOT NULL AND pending_id IS NOT NULL')
+    )
 
 
 def downgrade() -> None:
     """Remove pending_id."""
-    op.drop_index('idx_conversation_logs_pending_id', table_name='conversation_logs')
+    op.drop_index('uq_conversation_logs_conversation_id_pending_id', table_name='conversation_logs')
     op.drop_column('conversation_logs', 'pending_id')
