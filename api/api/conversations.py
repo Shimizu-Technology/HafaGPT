@@ -7,6 +7,7 @@ Simple CRUD operations for conversations.
 import uuid
 import psycopg
 import os
+from contextlib import closing
 from datetime import datetime
 from typing import Optional
 import logging
@@ -78,6 +79,39 @@ def get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5)
     if last_error:
         raise last_error
     raise Exception("Failed to connect to database after retries")
+
+
+def conversation_belongs_to_user(
+    conversation_id: str,
+    user_id: str,
+    include_deleted: bool = False,
+) -> bool:
+    """
+    Check whether a conversation belongs to the given user.
+
+    Args:
+        conversation_id: Conversation ID to check
+        user_id: Owning user ID
+        include_deleted: When True, allow soft-deleted conversations to match
+    """
+    try:
+        with closing(get_db_connection_with_retry()) as conn:
+            with closing(conn.cursor()) as cursor:
+                query = """
+                    SELECT 1
+                    FROM conversations
+                    WHERE id = %s
+                      AND user_id = %s
+                """
+                if not include_deleted:
+                    query += "\n                      AND deleted_at IS NULL"
+                query += "\n                    LIMIT 1"
+
+                cursor.execute(query, (conversation_id, user_id))
+                return cursor.fetchone() is not None
+    except Exception as e:
+        logger.error(f"Failed to verify conversation ownership: {e}")
+        raise
 
 
 def create_conversation(user_id: str, title: str = "New Chat") -> ConversationResponse:
@@ -256,7 +290,10 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     mode=row[9],  # Mode from database
                     response_time=None  # System messages don't have response time
                 ))
-            else:
+                continue
+
+            # User message
+            if row[2] is not None or row[8] is not None or file_urls:
                 # User message
                 messages.append(MessageResponse(
                     id=row[0],
@@ -272,26 +309,26 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 ))
             
             # Assistant message
-            sources = []
-            if row[5]:  # sources_used (JSONB)
-                for source in row[5]:
-                    sources.append(SourceInfo(
-                        name=source.get("name", ""),
-                        page=source.get("page")
-                    ))
-            
-            messages.append(MessageResponse(
-                id=row[0],
-                role="assistant",
-                content=row[3],
-                timestamp=row[4],
-                sources=sources,
-                used_rag=row[6],
-                used_web_search=row[7],
-                image_url=None,  # Assistant messages don't have images
-                file_urls=None,
-                response_time=row[10]  # Response time from database
-            ))
+            if row[3] and row[3].strip():
+                sources = []
+                if row[5]:  # sources_used (JSONB)
+                    for source in row[5]:
+                        sources.append(SourceInfo(
+                            name=source.get("name", ""),
+                            page=source.get("page")
+                        ))
+                messages.append(MessageResponse(
+                    id=row[0],
+                    role="assistant",
+                    content=row[3],
+                    timestamp=row[4],
+                    sources=sources,
+                    used_rag=row[6],
+                    used_web_search=row[7],
+                    image_url=None,  # Assistant messages don't have images
+                    file_urls=None,
+                    response_time=row[10]  # Response time from database
+                ))
         
         cursor.close()
         conn.close()
@@ -494,7 +531,3 @@ def create_system_message(
     except Exception as e:
         logger.error(f"Failed to create system message: {e}")
         raise
-
-
-
-
