@@ -7,6 +7,7 @@ Simple CRUD operations for conversations.
 import uuid
 import psycopg
 import os
+from contextlib import closing
 from datetime import datetime
 from typing import Optional
 import logging
@@ -85,20 +86,17 @@ def conversation_belongs_to_user(conversation_id: str, user_id: str) -> bool:
     Check whether a non-deleted conversation belongs to the given user.
     """
     try:
-        conn = get_db_connection_with_retry()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT 1
-            FROM conversations
-            WHERE id = %s
-              AND user_id = %s
-              AND deleted_at IS NULL
-            LIMIT 1
-        """, (conversation_id, user_id))
-        exists = cursor.fetchone() is not None
-        cursor.close()
-        conn.close()
-        return exists
+        with closing(get_db_connection_with_retry()) as conn:
+            with closing(conn.cursor()) as cursor:
+                cursor.execute("""
+                    SELECT 1
+                    FROM conversations
+                    WHERE id = %s
+                      AND user_id = %s
+                      AND deleted_at IS NULL
+                    LIMIT 1
+                """, (conversation_id, user_id))
+                return cursor.fetchone() is not None
     except Exception as e:
         logger.error(f"Failed to verify conversation ownership: {e}")
         raise
@@ -521,5 +519,4 @@ def create_system_message(
     except Exception as e:
         logger.error(f"Failed to create system message: {e}")
         raise
-
 
