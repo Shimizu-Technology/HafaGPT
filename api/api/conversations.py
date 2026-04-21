@@ -309,7 +309,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 ))
             
             # Assistant message
-            if row[3]:
+            if row[3] and row[3].strip():
                 sources = []
                 if row[5]:  # sources_used (JSONB)
                     for source in row[5]:

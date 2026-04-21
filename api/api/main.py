@@ -1163,6 +1163,19 @@ async def chat_stream(
         MAX_FILES = 5
         if len(files) > MAX_FILES:
             raise HTTPException(status_code=400, detail=f"Maximum {MAX_FILES} files allowed")
+
+        # Persisted file uploads need both identifiers so the background S3 task
+        # can attach the uploaded URLs to the exact conversation row.
+        if files and not conversation_id:
+            raise HTTPException(
+                status_code=400,
+                detail="conversation_id is required when uploading files to the streaming endpoint",
+            )
+        if files and not pending_id:
+            raise HTTPException(
+                status_code=400,
+                detail="pending_id is required when uploading files to the streaming endpoint",
+            )
         
         # Verify user authentication
         user_id = await verify_user(authorization)
