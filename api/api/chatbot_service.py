@@ -664,8 +664,10 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
                 # For non-vision models with past images, just use the text portion
                 history.append({"role": "user", "content": user_msg or "What does this say?"})
             
-            # Add bot response
-            history.append({"role": "assistant", "content": bot_msg})
+            # Add bot response only when content exists. Some historical rows can
+            # have NULL assistant content, which OpenAI-compatible APIs reject.
+            if bot_msg is not None:
+                history.append({"role": "assistant", "content": bot_msg})
         
         return history
         
