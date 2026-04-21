@@ -80,6 +80,30 @@ def get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5)
     raise Exception("Failed to connect to database after retries")
 
 
+def conversation_belongs_to_user(conversation_id: str, user_id: str) -> bool:
+    """
+    Check whether a non-deleted conversation belongs to the given user.
+    """
+    try:
+        conn = get_db_connection_with_retry()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 1
+            FROM conversations
+            WHERE id = %s
+              AND user_id = %s
+              AND deleted_at IS NULL
+            LIMIT 1
+        """, (conversation_id, user_id))
+        exists = cursor.fetchone() is not None
+        cursor.close()
+        conn.close()
+        return exists
+    except Exception as e:
+        logger.error(f"Failed to verify conversation ownership: {e}")
+        raise
+
+
 def create_conversation(user_id: str, title: str = "New Chat") -> ConversationResponse:
     """
     Create a new conversation.
@@ -256,7 +280,10 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     mode=row[9],  # Mode from database
                     response_time=None  # System messages don't have response time
                 ))
-            else:
+                continue
+
+            # User message
+            if row[2] is not None or row[8] is not None or file_urls:
                 # User message
                 messages.append(MessageResponse(
                     id=row[0],
@@ -272,26 +299,26 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 ))
             
             # Assistant message
-            sources = []
-            if row[5]:  # sources_used (JSONB)
-                for source in row[5]:
-                    sources.append(SourceInfo(
-                        name=source.get("name", ""),
-                        page=source.get("page")
-                    ))
-            
-            messages.append(MessageResponse(
-                id=row[0],
-                role="assistant",
-                content=row[3],
-                timestamp=row[4],
-                sources=sources,
-                used_rag=row[6],
-                used_web_search=row[7],
-                image_url=None,  # Assistant messages don't have images
-                file_urls=None,
-                response_time=row[10]  # Response time from database
-            ))
+            if row[3]:
+                sources = []
+                if row[5]:  # sources_used (JSONB)
+                    for source in row[5]:
+                        sources.append(SourceInfo(
+                            name=source.get("name", ""),
+                            page=source.get("page")
+                        ))
+                messages.append(MessageResponse(
+                    id=row[0],
+                    role="assistant",
+                    content=row[3],
+                    timestamp=row[4],
+                    sources=sources,
+                    used_rag=row[6],
+                    used_web_search=row[7],
+                    image_url=None,  # Assistant messages don't have images
+                    file_urls=None,
+                    response_time=row[10]  # Response time from database
+                ))
         
         cursor.close()
         conn.close()
@@ -494,7 +521,5 @@ def create_system_message(
     except Exception as e:
         logger.error(f"Failed to create system message: {e}")
         raise
-
-
 
 

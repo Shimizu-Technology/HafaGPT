@@ -446,45 +446,55 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
 # Background S3 Upload Functions
 # ============================================================================
 
-def append_file_url_to_conversation_log(conversation_id: str, file_info: dict):
+def append_file_url_to_conversation_log(conversation_id: str, pending_id: Optional[str], file_info: dict):
     """
     Append a file URL to the conversation log's file_urls array.
     Called from background task after each S3 upload completes.
     
     Args:
         conversation_id: The conversation ID
+        pending_id: The client-generated pending ID for this message
         file_info: Dict with {url, filename, type} - type is 'image' or 'document'
     """
+    if not pending_id:
+        logger.warning("Skipping file URL append because pending_id is missing")
+        return
+
     try:
         import psycopg
         import json
         conn = psycopg.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
-        
-        # Append to file_urls JSON array (create array if null)
-        # Also update legacy image_url field for backwards compatibility
-        cursor.execute("""
-            UPDATE conversation_logs 
-            SET 
-                file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
-                image_url = COALESCE(image_url, %s)
-            WHERE id = (
-                SELECT id FROM conversation_logs 
+
+        # The chat row is created after generation completes, so poll briefly for
+        # the exact row instead of attaching files to whichever row is newest.
+        rows_updated = 0
+        deadline = time.time() + 20
+        while time.time() < deadline:
+            cursor.execute("""
+                UPDATE conversation_logs
+                SET
+                    file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
+                    image_url = COALESCE(image_url, %s)
                 WHERE conversation_id = %s
-                ORDER BY timestamp DESC
-                LIMIT 1
-            )
-        """, (json.dumps([file_info]), file_info['url'], conversation_id))
-        
-        rows_updated = cursor.rowcount
-        conn.commit()
+                  AND pending_id = %s
+            """, (json.dumps([file_info]), file_info['url'], conversation_id, pending_id))
+            rows_updated = cursor.rowcount
+            if rows_updated > 0:
+                conn.commit()
+                break
+            time.sleep(0.25)
+
         cursor.close()
         conn.close()
         
         if rows_updated > 0:
             logger.info(f"✅ Background: Added {file_info['filename']} to file_urls")
         else:
-            logger.debug(f"No conversation_log to update for {conversation_id}")
+            logger.warning(
+                f"No conversation_log found for conversation_id={conversation_id}, "
+                f"pending_id={pending_id}; skipping file URL append"
+            )
     except Exception as e:
         logger.error(f"Failed to append file_url: {e}")
 
@@ -495,6 +505,7 @@ def upload_file_to_s3_background(
     content_type: str,
     user_id: str,
     conversation_id: str,
+    pending_id: Optional[str],
     file_index: int
 ):
     """
@@ -506,6 +517,7 @@ def upload_file_to_s3_background(
         content_type: MIME type
         user_id: User ID for S3 path
         conversation_id: Conversation ID for DB update
+        pending_id: Client-generated pending ID for matching the final DB row
         file_index: Index for unique filename
     """
     try:
@@ -533,7 +545,7 @@ def upload_file_to_s3_background(
         
         # Append to conversation_logs file_urls array
         if conversation_id:
-            append_file_url_to_conversation_log(conversation_id, {
+            append_file_url_to_conversation_log(conversation_id, pending_id, {
                 'url': file_url,
                 'filename': filename,
                 'type': file_type,
@@ -887,6 +899,7 @@ async def chat(
         # Process file if present (images, PDFs, Word docs, text files)
         image_base64 = None
         file_url = None  # S3 URL
+        uploaded_file_infos = None
         document_text = None  # Extracted text from documents
         
         if file:
@@ -925,6 +938,12 @@ async def chat(
                 )
                 
                 if file_url:
+                    uploaded_file_infos = [{
+                        "url": file_url,
+                        "filename": file.filename or "uploaded_file",
+                        "type": "image" if file.content_type and file.content_type.startswith("image/") else "document",
+                        "content_type": file.content_type,
+                    }]
                     logger.info(f"✅ S3 upload successful: {file_url}")
                 else:
                     logger.warning("⚠️  S3 upload failed, but continuing with extracted content")
@@ -964,6 +983,7 @@ async def chat(
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
             image_base64=image_base64,  # Pass base64-encoded image for Vision
             image_url=file_url,  # Pass S3 URL for logging (works for all file types)
+            file_urls=uploaded_file_infos,
             pending_id=pending_id,  # Pass pending_id for cancel tracking
             original_message=message  # Original user message for logging/display
         )
@@ -1185,6 +1205,7 @@ async def chat_stream(
                 content_type=file_info['content_type'],
                 user_id=user_id,
                 conversation_id=conversation_id,
+                pending_id=pending_id,
                 file_index=file_info['index']
             )
         
@@ -1419,12 +1440,7 @@ async def create_conversation_endpoint(
     request: ConversationCreate,
     authorization: Optional[str] = Header(None)
 ):
-    """
-    Create a new conversation.
-    
-    Anonymous users can create conversations (user_id will be NULL).
-    Authenticated users get conversations tied to their account.
-    """
+    """Create a new conversation for the authenticated user."""
     try:
         # Verify authentication
         user_id = await verify_user(authorization)
@@ -1437,6 +1453,8 @@ async def create_conversation_endpoint(
         
         logger.info(f"Created conversation: {conversation.id} for user: {user_id or 'anonymous'}")
         return conversation
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to create conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1446,11 +1464,7 @@ async def create_conversation_endpoint(
 async def list_conversations(
     authorization: Optional[str] = Header(None)
 ):
-    """
-    List all conversations for the authenticated user.
-    
-    Returns empty list for anonymous users (no auth token).
-    """
+    """List all conversations for the authenticated user."""
     try:
         # Verify authentication
         user_id = await verify_user(authorization)
@@ -1460,6 +1474,8 @@ async def list_conversations(
         
         logger.info(f"Listed {len(conversation_list.conversations)} conversations for user: {user_id or 'anonymous'}")
         return conversation_list
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to list conversations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1523,7 +1539,8 @@ async def init_user_data(
             messages=messages_list,
             active_conversation_id=validated_conversation_id
         )
-        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Failed to initialize user data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1534,17 +1551,20 @@ async def get_conversation_messages_endpoint(
     conversation_id: str,
     authorization: Optional[str] = Header(None)
 ):
-    """
-    Get all messages for a specific conversation.
-    
-    TODO: Add ownership verification for security.
-    """
+    """Get all messages for a specific conversation owned by the user."""
     try:
+        user_id = await verify_user(authorization)
+
+        if not conversations.conversation_belongs_to_user(conversation_id, user_id):
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
         # Get messages
         messages = conversations.get_conversation_messages(conversation_id)
         
         logger.info(f"Retrieved {len(messages.messages)} messages for conversation: {conversation_id}")
         return messages
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to get messages: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1661,15 +1681,14 @@ async def create_system_message_endpoint(
     Create a system message (e.g., mode change indicator).
     
     System messages are used to track events like mode switching for analytics
-    and to provide context in conversation history.
+    and to provide context in conversation history. Only the conversation owner
+    may create them.
     """
     try:
-        # Verify authentication (optional - allow anonymous users too)
-        user_id = None
-        try:
-            user_id = await verify_user(authorization)
-        except:
-            pass  # Allow anonymous users
+        user_id = await verify_user(authorization)
+
+        if not conversations.conversation_belongs_to_user(request.conversation_id, user_id):
+            raise HTTPException(status_code=404, detail="Conversation not found")
         
         # Get session ID from somewhere (we'll need to add this to the request model)
         session_id = None
@@ -8649,4 +8668,3 @@ async def general_exception_handler(request, exc):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-

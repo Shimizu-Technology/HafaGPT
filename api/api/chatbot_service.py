@@ -627,6 +627,7 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
                 SELECT user_message, bot_response, image_url, timestamp
                 FROM conversation_logs
                 WHERE conversation_id = %s
+                  AND COALESCE(role, 'user') != 'system'
                 ORDER BY timestamp DESC
                 LIMIT %s
             ) AS recent_messages
@@ -685,7 +686,9 @@ def log_conversation(
     session_id: str = None,
     user_id: str = None,
     conversation_id: str = None,
-    image_url: str = None  # NEW: S3 URL of uploaded image
+    image_url: str = None,  # NEW: S3 URL of uploaded image
+    file_urls: list[dict] | None = None,
+    pending_id: str = None,
 ):
     """
     Log conversation to PostgreSQL database for future training/analysis.
@@ -708,12 +711,12 @@ def log_conversation(
         conn = _get_db_connection_with_retry()
         cursor = conn.cursor()
         
-        # Insert conversation log (with user_id, conversation_id, and image_url)
+        # Insert conversation log (with user_id, conversation_id, file metadata, and pending_id)
         cursor.execute("""
             INSERT INTO conversation_logs (
                 session_id, user_id, conversation_id, mode, user_message, bot_response,
-                sources_used, used_rag, used_web_search, response_time_seconds, image_url
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             session_id,
             user_id,  # Add user_id
@@ -725,7 +728,9 @@ def log_conversation(
             used_rag,
             used_web_search,
             response_time,
-            image_url  # NEW: Add S3 image URL
+            image_url,  # NEW: Add S3 image URL
+            json.dumps(file_urls) if file_urls else None,
+            pending_id,
         ))
         
         conn.commit()
@@ -913,6 +918,7 @@ def get_chatbot_response(
     conversation_id: str = None,
     image_base64: str = None,  # Base64-encoded image
     image_url: str = None,  # S3 URL of uploaded image
+    file_urls: list[dict] | None = None,
     pending_id: str = None,  # Unique ID for cancel tracking
     original_message: str = None,  # Original user message (without appended doc text)
     skill_level: str = None  # User's skill level for personalized responses
@@ -965,7 +971,9 @@ def get_chatbot_response(
                 session_id=session_id,
                 user_id=user_id,
                 conversation_id=conversation_id,
-                image_url=image_url
+                image_url=image_url,
+                file_urls=file_urls,
+                pending_id=pending_id,
             )
         
         cleanup_cancelled_message(pending_id)
@@ -1267,7 +1275,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             session_id=session_id,
             user_id=user_id,
             conversation_id=conversation_id,
-            image_url=image_url
+            image_url=image_url,
+            file_urls=file_urls,
+            pending_id=pending_id,
         )
         cleanup_cancelled_message(pending_id)
         return {
@@ -1291,7 +1301,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         session_id=session_id,
         user_id=user_id,
         conversation_id=conversation_id,
-        image_url=image_url
+        image_url=image_url,
+        file_urls=file_urls,
+        pending_id=pending_id,
     )
     
     # Cleanup pending_id tracking
@@ -1316,6 +1328,7 @@ def get_chatbot_response_stream(
     conversation_id: str = None,
     image_base64: str = None,
     image_url: str = None,
+    file_urls: list[dict] | None = None,
     pending_id: str = None,
     original_message: str = None,  # Original user message (without appended doc text)
     skill_level: str = None  # User's skill level for personalized responses
@@ -1558,7 +1571,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             session_id=session_id,
             user_id=user_id,
             conversation_id=conversation_id,
-            image_url=image_url
+            image_url=image_url,
+            file_urls=file_urls,
+            pending_id=pending_id,
         )
         
         yield {"type": "error", "content": error_message}
@@ -1596,7 +1611,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                             session_id=session_id,
                             user_id=user_id,
                             conversation_id=conversation_id,
-                            image_url=image_url
+                            image_url=image_url,
+                            file_urls=file_urls,
+                            pending_id=pending_id,
                         )
                         cleanup_cancelled_message(pending_id)
                         return
@@ -1684,7 +1701,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             session_id=session_id,
             user_id=user_id,
             conversation_id=conversation_id,
-            image_url=image_url
+            image_url=image_url,
+            file_urls=file_urls,
+            pending_id=pending_id,
         )
         
         yield {"type": "error", "content": error_message}
@@ -1706,7 +1725,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         session_id=session_id,
         user_id=user_id,
         conversation_id=conversation_id,
-        image_url=image_url
+        image_url=image_url,
+        file_urls=file_urls,
+        pending_id=pending_id,
     )
     
     cleanup_cancelled_message(pending_id)
@@ -1716,4 +1737,3 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         "type": "done",
         "response_time": response_time
     }
-
