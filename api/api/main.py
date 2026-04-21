@@ -465,6 +465,8 @@ def append_file_url_to_conversation_log(
     if not file_infos:
         return
 
+    conn = None
+    cursor = None
     try:
         import json
         conn = conversations.get_db_connection_with_retry()
@@ -490,9 +492,6 @@ def append_file_url_to_conversation_log(
             )
         if rows_updated == 1:
             conn.commit()
-
-        cursor.close()
-        conn.close()
         
         if rows_updated > 0:
             logger.info(
@@ -506,6 +505,11 @@ def append_file_url_to_conversation_log(
             )
     except Exception as e:
         logger.error(f"Failed to append file_url: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 def upload_file_to_s3_background(
