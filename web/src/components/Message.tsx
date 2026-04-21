@@ -1,5 +1,6 @@
 import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw } from 'lucide-react';
 import { useState, memo, useMemo } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
@@ -20,7 +21,7 @@ function cleanMarkdownContent(content: string): string {
   if (!content) return content;
   
   // Trim overall content
-  let cleaned = content.trim();
+  const cleaned = content.trim();
   
   // If the content starts with actual code block markers, leave it alone
   if (cleaned.startsWith('```')) return cleaned;
@@ -119,6 +120,7 @@ interface MessageProps {
 export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
+  const { getToken } = useAuth();
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
@@ -204,13 +206,14 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
 
     try {
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = await getToken();
       
       const response = await fetch(`${API_BASE_URL}/api/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(localStorage.getItem('clerk-token') && {
-            'Authorization': `Bearer ${localStorage.getItem('clerk-token')}`
+          ...(token && {
+            'Authorization': `Bearer ${token}`
           })
         },
         body: JSON.stringify({

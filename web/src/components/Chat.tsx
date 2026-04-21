@@ -12,7 +12,7 @@ import {
   useUpdateConversationTitle,
   ConversationMessage 
 } from '../hooks/useConversationsQuery';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '../hooks/useSubscription';
 import { useUserPreferences } from '../hooks/useUserPreferences';
@@ -62,10 +62,11 @@ export function Chat() {
     return null;
   });
   
-  const { sendMessage, sendMessageStream, cancelMessage, resetSession, loading, error, setError } = useChatbot();
+  const { sendMessageStream, cancelMessage, resetSession, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
@@ -75,13 +76,13 @@ export function Chat() {
   
   // React Query hooks - replaces old useConversations hook
   // Only enable when Clerk is fully loaded AND user is signed in
-  const { data: initData, isLoading: conversationsLoading, error: initError } = useInitUserData(
+  const { data: initData, isLoading: conversationsLoading } = useInitUserData(
     null, // Always load conversations list without specific conversation
     isLoaded && !!user?.id // Wait for Clerk to load AND user to be signed in
   );
   
   // Separate query for messages of the active conversation (for fast switching)
-  const { data: conversationMessages, isLoading: messagesLoading } = useConversationMessages(
+  const { data: conversationMessages } = useConversationMessages(
     activeConversationId
   );
   
@@ -149,6 +150,7 @@ export function Chat() {
         const isCancelled = msg.role === 'assistant' && msg.content === '[Message was cancelled by user]';
         
         return {
+          id: String(msg.id),
           role: msg.role,
           content: msg.content,
           imageUrl: msg.image_url || undefined,
@@ -201,17 +203,25 @@ export function Chat() {
 
       // Save system message to database if there's an active conversation
       if (activeConversationId) {
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/system-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            conversation_id: activeConversationId,
-            content: `Switched to ${modeDetails.label} mode`,
-            mode: mode,
-          }),
-        }).catch(err => console.error('Failed to save system message:', err));
+        void (async () => {
+          try {
+            const token = await getToken();
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/system-message`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` }),
+              },
+              body: JSON.stringify({
+                conversation_id: activeConversationId,
+                content: `Switched to ${modeDetails.label} mode`,
+                mode: mode,
+              }),
+            });
+          } catch (err) {
+            console.error('Failed to save system message:', err);
+          }
+        })();
       }
 
       // Show toast notification
@@ -223,7 +233,7 @@ export function Chat() {
       setShowToast(true);
     }
     previousModeRef.current = mode;
-  }, [mode, messages.length, activeConversationId]);
+  }, [mode, messages.length, activeConversationId, getToken]);
 
   // Load messages when activeConversationId changes
   // NOTE: This is now handled by React Query (initUserData), but we keep this

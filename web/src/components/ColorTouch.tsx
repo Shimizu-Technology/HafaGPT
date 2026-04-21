@@ -30,16 +30,6 @@ const COLORS: ColorItem[] = [
   { chamorro: 'Kulot kafe', english: 'Brown', hex: '#92400E', emoji: '🟤' },
 ];
 
-// Fun items to show with colors
-const COLORABLE_ITEMS = [
-  { name: 'flower', emoji: '🌸', template: '🌺' },
-  { name: 'heart', emoji: '❤️', template: '💜' },
-  { name: 'star', emoji: '⭐', template: '🌟' },
-  { name: 'circle', emoji: '⭕', template: '🔴' },
-  { name: 'butterfly', emoji: '🦋', template: '🦋' },
-  { name: 'balloon', emoji: '🎈', template: '🎈' },
-];
-
 const ROUNDS_PER_GAME = 10;
 
 type GameState = 'setup' | 'playing' | 'feedback' | 'complete';
@@ -160,7 +150,8 @@ export function ColorTouch() {
         score,
         stars,
         difficulty: 'easy',
-        category: 'colors',
+        category_id: 'colors',
+        category_title: 'Colors',
       });
     }
   }, [gameState, score, isSignedIn, saveGameResultMutation]);
@@ -331,8 +322,6 @@ export function ColorTouch() {
                 
                 // Handle white and black specially for visibility
                 const isWhite = option.english === 'White';
-                const isBlack = option.english === 'Black';
-                
                 return (
                   <button
                     key={index}
@@ -455,4 +444,3 @@ export function ColorTouch() {
     </div>
   );
 }
-

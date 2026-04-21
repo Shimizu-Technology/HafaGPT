@@ -110,7 +110,7 @@ export function PicturePairs() {
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
-  const { speak, preload, isSpeaking } = useSpeech();
+  const { speak, preload } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -151,7 +151,8 @@ export function PicturePairs() {
           score: calculateScore(moves, elapsedTime, pairsCount),
           stars,
           difficulty,
-          category: selectedCategory.id,
+          category_id: selectedCategory.id,
+          category_title: selectedCategory.name,
           moves,
           time_seconds: elapsedTime,
         });

@@ -51,8 +51,6 @@ export function SimonSays() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [usedParts, setUsedParts] = useState<Set<string>>(new Set());
-  const [showInstruction, setShowInstruction] = useState(true);
-
   // Generate a new round
   const generateRound = useCallback(() => {
     // Filter out body parts we've already used (if possible)
@@ -156,7 +154,8 @@ export function SimonSays() {
         score,
         stars,
         difficulty: 'easy',
-        category: 'body_parts',
+        category_id: 'body_parts',
+        category_title: 'Body Parts',
       });
     }
   }, [gameState, score, isSignedIn, saveGameResultMutation]);
@@ -436,4 +435,3 @@ export function SimonSays() {
     </div>
   );
 }
-
