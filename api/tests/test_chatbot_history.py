@@ -75,6 +75,7 @@ def test_get_conversation_history_skips_rows_without_user_text_or_image():
     get_conversation_history = _load_get_conversation_history()
     rows = [
         (None, "Assistant-only row", None, None),
+        (None, "Image-only answer", "https://example.com/photo.png", None),
         ("Real question", "Real answer", None, None),
     ]
     fake_connection = FakeConnection(rows)
@@ -85,6 +86,8 @@ def test_get_conversation_history_skips_rows_without_user_text_or_image():
     history = get_conversation_history("conv-123", max_messages=10)
 
     assert history == [
+        {"role": "user", "content": "What does this say?"},
+        {"role": "assistant", "content": "Image-only answer"},
         {"role": "user", "content": "Real question"},
         {"role": "assistant", "content": "Real answer"},
     ]

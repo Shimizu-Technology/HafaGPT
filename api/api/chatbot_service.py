@@ -668,7 +668,7 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
             else:
                 # Regular text-only message (includes PDFs, Word docs, non-vision models, etc.)
                 # For non-vision models with past images, just use the text portion
-                history.append({"role": "user", "content": user_msg})
+                history.append({"role": "user", "content": user_msg or "What does this say?"})
             
             # Skip blank assistant messages. Some historical rows can contain
             # NULL/empty bot responses, which OpenAI-compatible APIs reject.
