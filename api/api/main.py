@@ -446,6 +446,10 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
 # Background S3 Upload Functions
 # ============================================================================
 
+FILE_URL_APPEND_RETRY_WINDOW_SECONDS = 20.0
+FILE_URL_APPEND_RETRY_INTERVAL_SECONDS = 0.25
+
+
 def append_file_url_to_conversation_log(
     conversation_id: str,
     pending_id: Optional[str],
@@ -475,34 +479,46 @@ def append_file_url_to_conversation_log(
             (file_info["url"] for file_info in file_infos if file_info.get("type") == "image"),
             file_infos[0]["url"]
         )
-        cursor.execute("""
-            UPDATE conversation_logs
-            SET
-                file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
-                image_url = COALESCE(image_url, %s)
-            WHERE conversation_id = %s
-              AND pending_id = %s
-        """, (json.dumps(file_infos), primary_image_url, conversation_id, pending_id))
-        rows_updated = cursor.rowcount
-        if rows_updated > 1:
+        file_infos_json = json.dumps(file_infos)
+        deadline = time.monotonic() + FILE_URL_APPEND_RETRY_WINDOW_SECONDS
+        attempts = 0
+
+        while True:
+            attempts += 1
+            cursor.execute("""
+                UPDATE conversation_logs
+                SET
+                    file_urls = COALESCE(file_urls, '[]'::jsonb) || %s::jsonb,
+                    image_url = COALESCE(image_url, %s)
+                WHERE conversation_id = %s
+                  AND pending_id = %s
+            """, (file_infos_json, primary_image_url, conversation_id, pending_id))
+            rows_updated = cursor.rowcount
+
+            if rows_updated > 1:
+                conn.rollback()
+                raise RuntimeError(
+                    f"Expected exactly one conversation log row for conversation_id={conversation_id}, "
+                    f"pending_id={pending_id}, but updated {rows_updated}"
+                )
+            if rows_updated == 1:
+                conn.commit()
+                logger.info(
+                    f"✅ Background: Added {len(file_infos)} file(s) to file_urls "
+                    f"for conversation_id={conversation_id} after {attempts} attempt(s)"
+                )
+                break
+
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                logger.warning(
+                    f"No conversation_log found for conversation_id={conversation_id}, "
+                    f"pending_id={pending_id} after {attempts} attempt(s); skipping file URL append"
+                )
+                break
+
             conn.rollback()
-            raise RuntimeError(
-                f"Expected exactly one conversation log row for conversation_id={conversation_id}, "
-                f"pending_id={pending_id}, but updated {rows_updated}"
-            )
-        if rows_updated == 1:
-            conn.commit()
-        
-        if rows_updated > 0:
-            logger.info(
-                f"✅ Background: Added {len(file_infos)} file(s) to file_urls "
-                f"for conversation_id={conversation_id}"
-            )
-        else:
-            logger.warning(
-                f"No conversation_log found for conversation_id={conversation_id}, "
-                f"pending_id={pending_id}; skipping file URL append"
-            )
+            time.sleep(min(FILE_URL_APPEND_RETRY_INTERVAL_SECONDS, remaining))
     except Exception as e:
         logger.error(f"Failed to append file_url: {e}")
     finally:
