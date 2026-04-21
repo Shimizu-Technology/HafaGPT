@@ -69,3 +69,22 @@ def test_get_conversation_history_skips_blank_assistant_messages():
     assert fake_connection.cursor_instance.executions[0][1] == ("conv-123", 10)
     assert fake_connection.cursor_instance.closed is True
     assert fake_connection.closed is True
+
+
+def test_get_conversation_history_skips_rows_without_user_text_or_image():
+    get_conversation_history = _load_get_conversation_history()
+    rows = [
+        (None, "Assistant-only row", None, None),
+        ("Real question", "Real answer", None, None),
+    ]
+    fake_connection = FakeConnection(rows)
+
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+    get_conversation_history.__globals__["model_supports_vision"] = lambda: False
+
+    history = get_conversation_history("conv-123", max_messages=10)
+
+    assert history == [
+        {"role": "user", "content": "Real question"},
+        {"role": "assistant", "content": "Real answer"},
+    ]

@@ -649,6 +649,12 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
             # Build user message (with image if available AND is a valid image format)
             # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
             is_valid_image = img_url and img_url.lower().endswith(VALID_IMAGE_EXTENSIONS)
+            has_user_text = bool(user_msg and user_msg.strip())
+
+            # Defensive guard for malformed historical rows. If we have neither
+            # user text nor a valid image, don't fabricate a placeholder user turn.
+            if not has_user_text and not is_valid_image:
+                continue
             
             if is_valid_image and supports_vision:
                 # Reconstruct vision message with image URL (only for actual images and vision models)
@@ -662,7 +668,7 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
             else:
                 # Regular text-only message (includes PDFs, Word docs, non-vision models, etc.)
                 # For non-vision models with past images, just use the text portion
-                history.append({"role": "user", "content": user_msg or "What does this say?"})
+                history.append({"role": "user", "content": user_msg})
             
             # Skip blank assistant messages. Some historical rows can contain
             # NULL/empty bot responses, which OpenAI-compatible APIs reject.

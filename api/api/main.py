@@ -1723,7 +1723,11 @@ async def create_system_message_endpoint(
     try:
         user_id = await verify_user(authorization)
 
-        if not conversations.conversation_belongs_to_user(request.conversation_id, user_id):
+        if not conversations.conversation_belongs_to_user(
+            request.conversation_id,
+            user_id,
+            include_deleted=True,
+        ):
             raise HTTPException(status_code=404, detail="Conversation not found")
         
         # Get session ID from somewhere (we'll need to add this to the request model)
