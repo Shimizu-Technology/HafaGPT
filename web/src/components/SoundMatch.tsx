@@ -231,7 +231,8 @@ export function SoundMatch() {
         score,
         stars,
         difficulty: 'easy',
-        category: selectedCategory.id,
+        category_id: selectedCategory.id,
+        category_title: selectedCategory.name,
       });
     }
   }, [gameState, score, isSignedIn, saveGameResultMutation, selectedCategory]);

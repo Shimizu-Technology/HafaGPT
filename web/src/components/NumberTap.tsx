@@ -175,7 +175,8 @@ export function NumberTap() {
         score,
         stars,
         difficulty: 'easy',
-        category: 'numbers',
+        category_id: 'numbers',
+        category_title: 'Numbers',
       });
     }
   }, [gameState, score, isSignedIn, saveGameResultMutation]);
@@ -472,4 +473,3 @@ export function NumberTap() {
     </div>
   );
 }
-
