@@ -159,8 +159,9 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
     const newFiles: FileWithPreview[] = [];
     const rejectedMessages: string[] = [];
     const currentCount = selectedFiles.length;
+    let capRejectedCount = 0;
 
-    for (let i = 0; i < incomingFiles.length && currentCount + newFiles.length < MAX_FILES; i++) {
+    for (let i = 0; i < incomingFiles.length; i++) {
       const file = incomingFiles[i];
 
       if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
@@ -173,6 +174,11 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
         continue;
       }
 
+      if (currentCount + newFiles.length >= MAX_FILES) {
+        capRejectedCount += 1;
+        continue;
+      }
+
       const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
 
       newFiles.push({
@@ -182,7 +188,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       });
     }
 
-    if (currentCount + incomingFiles.length > MAX_FILES) {
+    if (capRejectedCount > 0) {
       rejectedMessages.push(`Maximum ${MAX_FILES} files allowed. Some files were not added.`);
     }
 
