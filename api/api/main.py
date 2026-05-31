@@ -436,7 +436,6 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
         'file_type': file_type,
         'text_content': None,
         'image_base64': None,
-        'content_type': content_type,
         'filename': filename
     }
     

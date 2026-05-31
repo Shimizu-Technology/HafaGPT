@@ -108,10 +108,10 @@ def _normalize_image_inputs(
 
 def _build_current_user_message(
     message: str,
-    image_inputs: list[dict] | None = None
+    normalized_image_inputs: list[dict] | None = None
 ) -> dict:
-    """Build the current user message with all attached images for vision models."""
-    images = _normalize_image_inputs(image_inputs=image_inputs)
+    """Build the current user message with normalized images for vision models."""
+    images = normalized_image_inputs or []
     if not images:
         return {"role": "user", "content": message}
 
