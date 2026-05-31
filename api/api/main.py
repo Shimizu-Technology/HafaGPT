@@ -312,6 +312,18 @@ SUPPORTED_FILE_TYPES = {
     'image/webp': 'image',
     'image/gif': 'image',
 }
+MAX_UPLOAD_FILES = 5
+MAX_UPLOAD_FILE_SIZE_MB = 20
+MAX_UPLOAD_FILE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024
+
+
+def validate_uploaded_file_size(file_data: bytes, filename: str) -> None:
+    """Reject uploaded chat files that exceed the documented size limit."""
+    if len(file_data) > MAX_UPLOAD_FILE_BYTES:
+        display_name = filename or "Uploaded file"
+        raise ValueError(
+            f"{display_name} exceeds the {MAX_UPLOAD_FILE_SIZE_MB}MB file size limit"
+        )
 
 def extract_text_from_pdf(file_data: bytes) -> str:
     """Extract text from PDF file."""
@@ -424,6 +436,7 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
         'file_type': file_type,
         'text_content': None,
         'image_base64': None,
+        'content_type': content_type,
         'filename': filename
     }
     
@@ -552,7 +565,7 @@ def upload_file_to_s3_background(
         for file_info in files_to_upload:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = file_info["filename"]
-            content_type = file_info["content_type"]
+            content_type = file_info["content_type"] or "application/octet-stream"
             file_index = file_info["index"]
             s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
 
@@ -933,6 +946,7 @@ async def chat(
             try:
                 file_data = await file.read()
                 logger.info(f"📦 File data read: {len(file_data)} bytes")
+                validate_uploaded_file_size(file_data, file.filename or "uploaded_file")
                 
                 # Process file based on type
                 file_result = process_uploaded_file(
@@ -1007,6 +1021,10 @@ async def chat(
             user_id=user_id,  # Pass user_id for tracking
             conversation_id=conversation_id,  # Pass conversation_id for multi-conversation support
             image_base64=image_base64,  # Pass base64-encoded image for Vision
+            image_inputs=[{
+                "data": image_base64,
+                "content_type": file.content_type or "image/jpeg",
+            }] if image_base64 else None,
             image_url=file_url,  # Pass S3 URL for logging (works for all file types)
             file_urls=uploaded_file_infos,
             pending_id=pending_id,  # Pass pending_id for cancel tracking
@@ -1160,9 +1178,8 @@ async def chat_stream(
             raise HTTPException(status_code=400, detail=f"Invalid mode. Must be one of: {', '.join(valid_modes)}")
         
         # Limit number of files
-        MAX_FILES = 5
-        if len(files) > MAX_FILES:
-            raise HTTPException(status_code=400, detail=f"Maximum {MAX_FILES} files allowed")
+        if len(files) > MAX_UPLOAD_FILES:
+            raise HTTPException(status_code=400, detail=f"Maximum {MAX_UPLOAD_FILES} files allowed")
 
         # Persisted file uploads need both identifiers so the background S3 task
         # can attach the uploaded URLs to the exact conversation row.
@@ -1189,8 +1206,8 @@ async def chat_stream(
         )
         
         # Process files if present
-        image_base64 = None  # First image for vision model
-        all_images_base64 = []  # All images for multi-image support
+        image_base64 = None  # Legacy first image for backwards compatibility
+        all_image_inputs = []  # All images for multi-image vision support
         document_texts = []  # Text content from documents
         final_message = message
         files_to_upload = []  # Store file data for background upload
@@ -1203,6 +1220,7 @@ async def chat_stream(
             try:
                 # Read file data once (we'll need it for both processing and S3 upload)
                 file_data = await uploaded_file.read()
+                validate_uploaded_file_size(file_data, uploaded_file.filename)
                 
                 # Store for background S3 upload
                 files_to_upload.append({
@@ -1221,8 +1239,11 @@ async def chat_stream(
                 
                 # Handle images
                 if file_result.get("image_base64"):
-                    all_images_base64.append(file_result["image_base64"])
-                    # Use first image for the vision model
+                    all_image_inputs.append({
+                        "data": file_result["image_base64"],
+                        "content_type": uploaded_file.content_type or "image/jpeg",
+                    })
+                    # Keep first image for callers that still rely on the legacy argument.
                     if image_base64 is None:
                         image_base64 = file_result["image_base64"]
                 
@@ -1231,8 +1252,17 @@ async def chat_stream(
                     doc_text = file_result["text_content"]
                     document_texts.append(f"[{uploaded_file.filename}]\n{doc_text}")
                     
+            except ValueError as e:
+                logger.error(f"File validation error for {uploaded_file.filename}: {e}")
+                raise HTTPException(status_code=400, detail=str(e))
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"File processing error for {uploaded_file.filename}: {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Failed to process {uploaded_file.filename}: {str(e)}"
+                )
         
         if files_to_upload:
             background_tasks.add_task(
@@ -1254,7 +1284,7 @@ async def chat_stream(
         
         # Log file summary
         if files:
-            logger.info(f"📁 Processed {len(files)} files: {len(all_images_base64)} images, {len(document_texts)} documents")
+            logger.info(f"📁 Processed {len(files)} files: {len(all_image_inputs)} images, {len(document_texts)} documents")
         
         # Note: image_url will be updated by background task after S3 upload completes
         file_url = None  # S3 upload happens in background
@@ -1278,6 +1308,7 @@ async def chat_stream(
                         user_id=user_id,
                         conversation_id=conversation_id,
                         image_base64=image_base64,
+                        image_inputs=all_image_inputs,
                         image_url=file_url,
                         pending_id=pending_id,
                         original_message=message,  # Original user message for logging/display

@@ -6,7 +6,9 @@
 
 ## 📖 What Does File Upload Do?
 
-Users can attach files to chat messages for the AI to analyze:
+Users can attach files to chat messages for the AI to analyze. Images can be
+selected from the upload button or pasted directly into the chat composer from
+the clipboard.
 
 - **Images** (JPEG, PNG, WebP, GIF) → Vision AI reads and translates text
 - **PDFs** → Text extracted and included in context
@@ -77,6 +79,10 @@ const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 };
 ```
 
+Pasted images are converted into normal browser `File` objects before they enter
+this same flow, so pasted screenshots and manually selected images share one
+validation, preview, upload, and analysis path.
+
 **Supported types:**
 | Type | MIME Type | Max Size |
 |------|-----------|----------|
@@ -123,7 +129,7 @@ async def chat_stream(
     mode: str = Form("english"),
     files: List[UploadFile] = File(default=[])  # Up to 5 files
 ):
-    image_base64 = None
+    image_inputs = []
     document_texts = []
     
     for uploaded_file in files:
@@ -137,8 +143,11 @@ async def chat_stream(
         )
         
         if file_result['file_type'] == 'image':
-            # Convert to base64 for vision model
-            image_base64 = file_result['image_base64']
+            # Convert every image to a data URL payload for the vision model
+            image_inputs.append({
+                "data": file_result['image_base64'],
+                "content_type": uploaded_file.content_type
+            })
         else:
             # Extract text from document
             document_texts.append(file_result['text_content'])

@@ -35,6 +35,7 @@ def _load_chat_stream():
         "File": lambda default=None: default,
         "UploadFile": object,
         "HTTPException": HTTPException,
+        "MAX_UPLOAD_FILES": 5,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["chat_stream"]
