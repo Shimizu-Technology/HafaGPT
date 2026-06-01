@@ -203,23 +203,26 @@ For images, we use a vision-capable LLM:
 ```python
 # api/chatbot_service.py
 
-if image_base64:
-    # Use Gemini 2.5 Flash for vision (fallback from DeepSeek)
-    vision_model = "google/gemini-2.5-flash-preview"
-    
-    messages = [
-        {"role": "user", "content": [
-            {"type": "text", "text": user_message},
-            {"type": "image_url", "image_url": {
-                "url": f"data:image/jpeg;base64,{image_base64}"
-            }}
-        ]}
-    ]
-    
-    response = openrouter_client.chat.completions.create(
-        model=vision_model,
-        messages=messages
-    )
+normalized_image_inputs = _normalize_image_inputs(
+    image_base64=image_base64,
+    image_inputs=image_inputs,
+)
+
+user_message = _build_current_user_message(
+    message,
+    normalized_image_inputs,
+)
+history.append(user_message)
+
+# Use a vision-capable model when any images are attached.
+request_client, request_model = get_client_for_request(
+    has_image=bool(normalized_image_inputs),
+)
+
+response = request_client.chat.completions.create(
+    model=request_model,
+    messages=history,
+)
 ```
 
 **Vision capabilities:**
