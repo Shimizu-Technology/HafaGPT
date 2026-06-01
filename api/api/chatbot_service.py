@@ -71,6 +71,66 @@ def cleanup_cancelled_message(pending_id: str):
     with _pending_lock:
         _cancelled_messages.discard(pending_id)
 
+
+def _normalize_image_inputs(
+    image_base64: str = None,
+    image_inputs: list[dict] | None = None
+) -> list[dict]:
+    """Normalize legacy single-image input and new multi-image input."""
+    normalized: list[dict] = []
+
+    for image in image_inputs or []:
+        if isinstance(image, dict):
+            data = image.get("data") or image.get("image_base64")
+            content_type = image.get("content_type") or "image/jpeg"
+        else:
+            data = str(image)
+            content_type = "image/jpeg"
+
+        if not data:
+            continue
+        if not content_type.startswith("image/"):
+            content_type = "image/jpeg"
+
+        normalized.append({
+            "data": data,
+            "content_type": content_type,
+        })
+
+    if not normalized and image_base64:
+        normalized.append({
+            "data": image_base64,
+            "content_type": "image/jpeg",
+        })
+
+    return normalized
+
+
+def _build_current_user_message(
+    message: str,
+    normalized_image_inputs: list[dict] | None = None
+) -> dict:
+    """Build the current user message with normalized images for vision models."""
+    images = normalized_image_inputs or []
+    if not images:
+        return {"role": "user", "content": message}
+
+    content = [{
+        "type": "text",
+        "text": message or "What does this say in Chamorro?"
+    }]
+
+    for image in images:
+        content.append({
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:{image['content_type']};base64,{image['data']}",
+                "detail": "low",
+            }
+        })
+
+    return {"role": "user", "content": content}
+
 # Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
 from src.rag.web_search_tool import web_search, format_search_results
@@ -925,6 +985,7 @@ def get_chatbot_response(
     user_id: str = None,
     conversation_id: str = None,
     image_base64: str = None,  # Base64-encoded image
+    image_inputs: list[dict] | None = None,  # All uploaded images with MIME metadata
     image_url: str = None,  # S3 URL of uploaded image
     file_urls: list[dict] | None = None,
     pending_id: str = None,  # Unique ID for cancel tracking
@@ -941,7 +1002,8 @@ def get_chatbot_response(
         session_id: Session identifier for tracking conversations
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
-        image_base64: Optional base64-encoded image for vision analysis
+        image_base64: Optional legacy base64-encoded image for vision analysis
+        image_inputs: Optional list of image dicts with data and content_type
         image_url: Optional S3 URL of uploaded image (for logging)
         pending_id: Optional unique ID for tracking cancellation
         original_message: Original user message for logging/display (if None, uses message)
@@ -958,6 +1020,10 @@ def get_chatbot_response(
         }
     """
     start_time = time.time()
+    normalized_image_inputs = _normalize_image_inputs(
+        image_base64=image_base64,
+        image_inputs=image_inputs,
+    )
     
     # Use original_message for logging if provided, otherwise use message
     message_for_logging = original_message if original_message else message
@@ -1041,12 +1107,12 @@ def get_chatbot_response(
     has_document_text = "--- Document Content" in message
     
     # Add document analysis instructions for images OR uploaded documents
-    if image_base64 or has_document_text:
+    if normalized_image_inputs or has_document_text:
         # Customize based on what type of content
-        if image_base64 and has_document_text:
+        if normalized_image_inputs and has_document_text:
             doc_type = "uploaded image(s) and document(s)"
-        elif image_base64:
-            doc_type = "uploaded image"
+        elif normalized_image_inputs:
+            doc_type = "uploaded image(s)"
         else:
             doc_type = "uploaded document(s)"
         
@@ -1136,28 +1202,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         logger.warning(f"Current message ({message_tokens} tokens) exceeds budget, truncating...")
         message = truncate_text(message, token_manager.budget.current_message)
     
-    # Build user message (text + optional image)
-    if image_base64:
-        # Vision message with image
-        user_message = {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": message or "What does this say in Chamorro?"
-                },
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{image_base64}",
-                        "detail": "low"  # Cost-effective for text recognition
-                    }
-                }
-            ]
-        }
-    else:
-        # Regular text-only message
-        user_message = {"role": "user", "content": message}
+    # Build user message (text + optional images)
+    user_message = _build_current_user_message(message, normalized_image_inputs)
     
     # Add current user message
     history.append(user_message)
@@ -1186,7 +1232,7 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     
     # Get LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
-    request_client, request_model = get_client_for_request(has_image=bool(image_base64))
+    request_client, request_model = get_client_for_request(has_image=bool(normalized_image_inputs))
     
     try:
         response_text = None
@@ -1335,6 +1381,7 @@ def get_chatbot_response_stream(
     user_id: str = None,
     conversation_id: str = None,
     image_base64: str = None,
+    image_inputs: list[dict] | None = None,
     image_url: str = None,
     file_urls: list[dict] | None = None,
     pending_id: str = None,
@@ -1358,6 +1405,10 @@ def get_chatbot_response_stream(
     # Use original_message for logging if provided, otherwise use message
     message_for_logging = original_message if original_message else message
     start_time = time.time()
+    normalized_image_inputs = _normalize_image_inputs(
+        image_base64=image_base64,
+        image_inputs=image_inputs,
+    )
     
     # Initialize token manager for this request
     token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
@@ -1411,12 +1462,12 @@ def get_chatbot_response_stream(
     has_document_text = "--- Document Content" in message
     
     # Add document analysis instructions for images OR uploaded documents
-    if image_base64 or has_document_text:
+    if normalized_image_inputs or has_document_text:
         # Customize based on what type of content
-        if image_base64 and has_document_text:
+        if normalized_image_inputs and has_document_text:
             doc_type = "uploaded image(s) and document(s)"
-        elif image_base64:
-            doc_type = "uploaded image"
+        elif normalized_image_inputs:
+            doc_type = "uploaded image(s)"
         else:
             doc_type = "uploaded document(s)"
         
@@ -1500,16 +1551,7 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         message = truncate_text(message, token_manager.budget.current_message)
     
     # Build user message
-    if image_base64:
-        user_message = {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": message or "What does this say in Chamorro?"},
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}", "detail": "low"}}
-            ]
-        }
-    else:
-        user_message = {"role": "user", "content": message}
+    user_message = _build_current_user_message(message, normalized_image_inputs)
     
     history.append(user_message)
     
@@ -1555,7 +1597,7 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     
     # Stream LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
-    request_client, request_model = get_client_for_request(has_image=bool(image_base64))
+    request_client, request_model = get_client_for_request(has_image=bool(normalized_image_inputs))
     
     # Log token usage before LLM call
     total_input_tokens = count_message_tokens(history)
