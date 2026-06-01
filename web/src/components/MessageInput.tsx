@@ -220,9 +220,8 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       ? itemFiles
       : Array.from(e.clipboardData.files || []);
     const pastedFiles = clipboardFiles.map((file, index) => normalizePastedFile(file, index));
-    const hasSupportedFile = pastedFiles.some(file => SUPPORTED_FILE_TYPES.includes(file.type));
 
-    if (!hasSupportedFile) return;
+    if (pastedFiles.length === 0) return;
 
     e.preventDefault();
     addFiles(pastedFiles);
