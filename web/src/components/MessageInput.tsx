@@ -1,5 +1,5 @@
-import { useState, KeyboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File, Square, Plus } from 'lucide-react';
+import { useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
+import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
 
 // Supported file types
@@ -20,6 +20,8 @@ const FILE_ACCEPT = 'image/*,.pdf,.docx,.txt';
 
 // Maximum number of files allowed
 const MAX_FILES = 5;
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface MessageInputProps {
   onSend: (message: string, files?: File[]) => void;
@@ -41,11 +43,13 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedFilesRef = useRef<FileWithPreview[]>([]);
 
   // Detect mobile for responsive placeholder
   useEffect(() => {
@@ -82,7 +86,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [disabled, textareaRef]);
 
   // Cleanup speech recognition and file previews on unmount
   useEffect(() => {
@@ -91,48 +95,136 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
         recognitionRef.current.abort();
       }
       // Cleanup all preview URLs
-      selectedFiles.forEach(f => {
+      selectedFilesRef.current.forEach(f => {
         if (f.preview) URL.revokeObjectURL(f.preview);
       });
     };
   }, []);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
+  useEffect(() => {
+    selectedFilesRef.current = selectedFiles;
+  }, [selectedFiles]);
+
+  const getExtensionForMimeType = (mimeType: string) => {
+    switch (mimeType) {
+      case 'image/jpeg':
+        return 'jpg';
+      case 'image/png':
+        return 'png';
+      case 'image/webp':
+        return 'webp';
+      case 'image/gif':
+        return 'gif';
+      default:
+        return 'png';
+    }
+  };
+
+  const formatPasteTimestamp = () => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, '0');
+    return [
+      now.getFullYear(),
+      pad(now.getMonth() + 1),
+      pad(now.getDate()),
+      '-',
+      pad(now.getHours()),
+      pad(now.getMinutes()),
+      pad(now.getSeconds()),
+    ].join('');
+  };
+
+  const normalizePastedFile = (file: File, index: number) => {
+    if (!file.type.startsWith('image/')) {
+      return file;
+    }
+
+    const genericImageName = /^image\.(png|jpe?g|webp|gif)$/i.test(file.name);
+    if (file.name && !genericImageName) {
+      return file;
+    }
+
+    const extension = getExtensionForMimeType(file.type);
+    return new globalThis.File(
+      [file],
+      `pasted-image-${formatPasteTimestamp()}-${index + 1}.${extension}`,
+      { type: file.type, lastModified: file.lastModified || Date.now() }
+    );
+  };
+
+  const addFiles = (files: FileList | File[]) => {
+    const incomingFiles = Array.from(files || []);
+    if (incomingFiles.length === 0) return;
+
     const newFiles: FileWithPreview[] = [];
+    const rejectedMessages: string[] = [];
     const currentCount = selectedFiles.length;
-    
-    for (let i = 0; i < files.length && currentCount + newFiles.length < MAX_FILES; i++) {
-      const file = files[i];
-      
-      // Check if file type is supported
+    let capRejectedCount = 0;
+
+    for (let i = 0; i < incomingFiles.length; i++) {
+      const file = incomingFiles[i];
+
       if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
-        alert(`Unsupported file type: ${file.name}. Please upload images, PDFs, Word documents (.docx), or text files.`);
+        rejectedMessages.push(`${file.name || 'File'} is not supported.`);
         continue;
       }
-      
-      // Create preview for images only
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        rejectedMessages.push(`${file.name || 'File'} is larger than ${MAX_FILE_SIZE_MB}MB.`);
+        continue;
+      }
+
+      if (currentCount + newFiles.length >= MAX_FILES) {
+        capRejectedCount += 1;
+        continue;
+      }
+
       const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
-      
+
       newFiles.push({
         file,
         preview,
         id: `${Date.now()}-${i}-${file.name}`,
       });
     }
-    
-    if (currentCount + files.length > MAX_FILES) {
-      alert(`Maximum ${MAX_FILES} files allowed. Some files were not added.`);
+
+    if (capRejectedCount > 0) {
+      rejectedMessages.push(`Maximum ${MAX_FILES} files allowed. Some files were not added.`);
     }
-    
-    setSelectedFiles(prev => [...prev, ...newFiles]);
+
+    setFileError(rejectedMessages.length > 0
+      ? `${rejectedMessages.join(' ')} Please upload images, PDFs, Word documents (.docx), or text files up to ${MAX_FILE_SIZE_MB}MB.`
+      : null
+    );
+
+    if (newFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    addFiles(e.target.files || []);
     
     // Reset file input so same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const itemFiles = Array.from(e.clipboardData.items || [])
+      .filter(item => item.kind === 'file')
+      .map(item => item.getAsFile())
+      .filter((file): file is File => Boolean(file));
+    const clipboardFiles = itemFiles.length > 0
+      ? itemFiles
+      : Array.from(e.clipboardData.files || []);
+    const pastedFiles = clipboardFiles.map((file, index) => normalizePastedFile(file, index));
+
+    if (pastedFiles.length === 0) return;
+
+    e.preventDefault();
+    addFiles(pastedFiles);
   };
 
   const removeFile = (id: string) => {
@@ -143,6 +235,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       }
       return prev.filter(f => f.id !== id);
     });
+    setFileError(null);
   };
 
   const clearAllFiles = () => {
@@ -150,6 +243,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
       if (f.preview) URL.revokeObjectURL(f.preview);
     });
     setSelectedFiles([]);
+    setFileError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -164,9 +258,9 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
     } else if (file.type.includes('wordprocessingml') || file.type === 'application/msword') {
       return { icon: <FileText className="w-4 h-4" />, label: 'Word' };
     } else if (file.type === 'text/plain') {
-      return { icon: <File className="w-4 h-4" />, label: 'Text' };
+      return { icon: <FileIcon className="w-4 h-4" />, label: 'Text' };
     }
-    return { icon: <File className="w-4 h-4" />, label: 'File' };
+    return { icon: <FileIcon className="w-4 h-4" />, label: 'File' };
   };
 
   const startListening = () => {
@@ -339,6 +433,15 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             )}
           </div>
         )}
+        {fileError && (
+          <div
+            className="mb-2 rounded-xl border border-hibiscus-200 dark:border-red-900/60 bg-hibiscus-50 dark:bg-red-950/30 px-3 py-2 text-xs text-hibiscus-800 dark:text-red-300"
+            role="status"
+            aria-live="polite"
+          >
+            {fileError}
+          </div>
+        )}
 
         <div className="flex gap-2 sm:gap-3 items-end">
           {/* Microphone Button */}
@@ -385,6 +488,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}
             rows={1}
             className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-[13px] sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-y-auto shadow-sm disabled:cursor-pointer max-h-[100px] sm:max-h-[200px]"
