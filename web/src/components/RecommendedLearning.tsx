@@ -369,9 +369,7 @@ export function RecommendedLearning({
 
   // Icon
   const IconComponent = isReview ? RotateCcw : isContinue ? BookOpen : Sparkles;
-  const estimatedMinutes =
-    (topic as { estimatedMinutes?: number }).estimatedMinutes ??
-    (topic as { estimated_minutes?: number }).estimated_minutes;
+  const estimatedMinutes = topic.estimated_minutes;
 
   return (
     <div className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden`}>
@@ -427,7 +425,7 @@ export function RecommendedLearning({
         {/* Main action */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3 text-sm text-white/80">
-            <span>⏱️ ~{estimatedMinutes ?? 10} min</span>
+            <span>⏱️ ~{estimatedMinutes} min</span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden sm:inline">
               {completed_topics}/{total_topics} topics done

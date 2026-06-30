@@ -258,6 +258,7 @@ export function FlashcardViewer() {
             setTimeout(() => generateMoreCards('advanced', updatedCards), 1000);
           } else {
             batchCountRef.current += 1;
+            hasGeneratedMoreRef.current = false;
           }
           
           return updatedCards;
