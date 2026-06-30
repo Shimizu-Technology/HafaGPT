@@ -738,9 +738,14 @@ if allowed_origins_str == "*":
 elif allowed_origins_str:
     allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
 elif is_production_environment():
-    allowed_origins = PRODUCTION_ORIGINS
+    allowed_origins = PRODUCTION_ORIGINS.copy()
 else:
-    allowed_origins = DEVELOPMENT_ORIGINS + PRODUCTION_ORIGINS + CAPACITOR_ORIGINS
+    allowed_origins = DEVELOPMENT_ORIGINS + PRODUCTION_ORIGINS
+
+# Always allow the packaged Capacitor mobile app origins unless explicitly using
+# wildcard local debugging. Preserve order while avoiding duplicates.
+if allowed_origins != ["*"]:
+    allowed_origins = list(dict.fromkeys(allowed_origins + CAPACITOR_ORIGINS))
 
 # Log CORS configuration
 if allowed_origins == ["*"]:
@@ -5676,18 +5681,40 @@ async def clerk_webhook(request: Request):
                 # Delete all user data from our database
                 db_url = os.getenv("DATABASE_URL")
                 import psycopg2
+                from psycopg2 import sql
                 conn = psycopg2.connect(db_url)
                 cursor = conn.cursor()
                 
                 deleted_counts = {}
 
+                def table_exists(table_name: str) -> bool:
+                    cursor.execute("SELECT to_regclass(%s)", (table_name,))
+                    return cursor.fetchone()[0] is not None
+
                 def delete_optional_user_rows(table_name: str, count_key: str):
                     """Delete user rows from an optional table without aborting on missing tables."""
-                    cursor.execute("SELECT to_regclass(%s)", (table_name,))
-                    if cursor.fetchone()[0] is None:
+                    if not table_exists(table_name):
                         return
-                    cursor.execute(f"DELETE FROM {table_name} WHERE user_id = %s", (user_id,))
+                    cursor.execute(
+                        sql.SQL("DELETE FROM {} WHERE user_id = %s").format(sql.Identifier(table_name)),
+                        (user_id,)
+                    )
                     deleted_counts[count_key] = cursor.rowcount
+
+                def delete_flashcards_for_user_decks():
+                    """Delete flashcard children before deleting a user's generated decks."""
+                    if not table_exists("flashcards") or not table_exists("flashcard_decks"):
+                        return
+                    cursor.execute(
+                        """
+                        DELETE FROM flashcards
+                        WHERE deck_id IN (
+                            SELECT id FROM flashcard_decks WHERE user_id = %s
+                        )
+                        """,
+                        (user_id,)
+                    )
+                    deleted_counts["flashcards"] = cursor.rowcount
                 
                 # Delete shared conversations first (foreign key to conversations)
                 cursor.execute("""
@@ -5738,6 +5765,7 @@ async def clerk_webhook(request: Request):
                 # Delete flashcard spaced-repetition state and generated decks.
                 delete_optional_user_rows("user_flashcard_progress", "flashcard_progress")
                 delete_optional_user_rows("spaced_repetition", "spaced_repetition")
+                delete_flashcards_for_user_decks()
                 delete_optional_user_rows("flashcard_decks", "flashcard_decks")
                 
                 # Delete XP and learning progress data.
