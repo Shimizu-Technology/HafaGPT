@@ -545,7 +545,7 @@ export function PicturePairs() {
       {/* Upgrade Prompt */}
       {showUpgradePrompt && (
         <UpgradePrompt
-          feature="games"
+          feature="game"
           onClose={() => setShowUpgradePrompt(false)}
         />
       )}

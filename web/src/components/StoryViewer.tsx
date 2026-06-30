@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Volume2, ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info } from 'lucide-react';
-import { getStoryById, StoryWord, ComprehensionQuestion } from '../data/storyData';
+import { getStoryById, StoryWord } from '../data/storyData';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 

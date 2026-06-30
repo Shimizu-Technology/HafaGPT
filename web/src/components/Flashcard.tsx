@@ -28,13 +28,23 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
     }
   };
 
-  const handleSpeak = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent flip when clicking audio button
+  const toggleSpeech = () => {
     if (isSpeaking) {
       stop();
     } else {
       speak(front);
     }
+  };
+
+  const handleSpeak = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation(); // Prevent flip when clicking audio button
+    toggleSpeech();
+  };
+
+  const handleSpeakTouch = (e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSpeech();
   };
 
   return (
@@ -60,11 +70,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
             {isSupported && (
               <button
                 onClick={handleSpeak}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  handleSpeak(e as any);
-                }}
+                onTouchEnd={handleSpeakTouch}
                 className="absolute top-4 right-4 p-3 rounded-full bg-coral-100 dark:bg-ocean-900/30 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800/50 transition-colors touch-manipulation"
               >
                 <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse' : ''}`} />

@@ -7,7 +7,7 @@ import {
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPie, 
-  Pie, Cell, FunnelChart, Funnel, LabelList
+  Pie, Cell
 } from 'recharts';
 import { useUsageTrends, useUserGrowth, useFeatureUsage, useAdvancedAnalytics } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
@@ -230,7 +230,7 @@ export function AdminAnalytics() {
                         outerRadius={80}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent = 0 }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                         labelLine={false}
                       >
                         {gamesPieData.map((_, index) => (
@@ -273,7 +273,7 @@ export function AdminAnalytics() {
                         outerRadius={80}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent = 0 }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                         labelLine={false}
                       >
                         {quizzesPieData.map((_, index) => (

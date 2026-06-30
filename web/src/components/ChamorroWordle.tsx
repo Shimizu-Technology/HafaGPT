@@ -147,10 +147,10 @@ export function ChamorroWordle() {
       return curatedList.filter(entry => entry.word.length === targetLength);
     } else {
       // Challenge mode - filter dictionary words by length
-      if (!dictionaryWords) return [];
-      return dictionaryWords
-        .filter(card => card.front.length === targetLength && !card.front.includes(' '))
-        .map(card => ({ word: card.front.toUpperCase(), meaning: card.back }));
+      const cards = dictionaryWords?.cards ?? [];
+      return cards
+        .filter((card) => card.front.length === targetLength && !card.front.includes(' '))
+        .map((card) => ({ word: card.front.toUpperCase(), meaning: card.back }));
     }
   }, [wordMode, difficulty, dictionaryWords]);
 
@@ -566,7 +566,7 @@ export function ChamorroWordle() {
                 <div className="mb-4">
                   <h4 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-2">Category</h4>
                   <div className="flex flex-wrap gap-2">
-                    {categories.slice(0, 8).map((cat) => (
+                    {categories.categories.slice(0, 8).map((cat) => (
                       <button
                         key={cat.id}
                         onClick={() => setCategory(cat.id)}
@@ -576,7 +576,7 @@ export function ChamorroWordle() {
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600'
                         }`}
                       >
-                        {cat.name}
+                        {cat.title}
                       </button>
                     ))}
                   </div>

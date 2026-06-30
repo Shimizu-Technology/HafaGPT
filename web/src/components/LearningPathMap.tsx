@@ -319,7 +319,7 @@ export function LearningPathMap() {
       );
       
       const completedIds = Array.from(progressMap.entries())
-        .filter(([_, p]) => p.completed_at)
+        .filter(([, p]) => p.completed_at)
         .map(([id]) => id);
       
       const beginnerDone = isLevelComplete('beginner', completedIds);
@@ -370,8 +370,8 @@ export function LearningPathMap() {
 
   // Check if levels are complete to unlock next
   const completedTopicIds = Array.from(progressMap.entries())
-    .filter(([_, progress]) => progress.completed_at)
-    .map(([id, _]) => id);
+    .filter(([, progress]) => progress.completed_at)
+    .map(([id]) => id);
   const beginnerComplete = isLevelComplete('beginner', completedTopicIds);
   const intermediateComplete = isLevelComplete('intermediate', completedTopicIds);
 

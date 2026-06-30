@@ -30,7 +30,7 @@ export function LessonPage() {
   const awardXP = useAwardXP();
 
   const [currentStep, setCurrentStep] = useState<LessonStep>('intro');
-  const [flashcardsCompleted, setFlashcardsCompleted] = useState(false);
+  const [, setFlashcardsCompleted] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
 

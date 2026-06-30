@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, CheckCircle, RotateCcw, BookOpen, ChevronDown, ChevronUp, Map as MapIcon, Trophy } from 'lucide-react';
 import { useRecommendedTopic, useAllProgress } from '../hooks/useLearningPath';
-import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, ALL_TOPICS, isLevelComplete } from '../data/learningPath';
+import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, isLevelComplete } from '../data/learningPath';
 import type { RecommendedData, AllProgressData } from '../hooks/useHomepageData';
 
 interface RecommendedLearningProps {
@@ -64,7 +64,7 @@ export function RecommendedLearning({
 
   // Check which levels are complete
   const completedTopicIds = Array.from(progressMap.entries())
-    .filter(([_, progress]) => progress.completed_at)
+    .filter(([, progress]) => progress.completed_at)
     .map(([id]) => id);
   
   const beginnerComplete = isLevelComplete('beginner', completedTopicIds);
@@ -369,6 +369,9 @@ export function RecommendedLearning({
 
   // Icon
   const IconComponent = isReview ? RotateCcw : isContinue ? BookOpen : Sparkles;
+  const estimatedMinutes =
+    (topic as { estimatedMinutes?: number }).estimatedMinutes ??
+    (topic as { estimated_minutes?: number }).estimated_minutes;
 
   return (
     <div className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-5 sm:p-6 text-white shadow-lg relative overflow-hidden`}>
@@ -424,7 +427,7 @@ export function RecommendedLearning({
         {/* Main action */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3 text-sm text-white/80">
-            <span>⏱️ ~{topic.estimated_minutes} min</span>
+            <span>⏱️ ~{estimatedMinutes ?? 10} min</span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden sm:inline">
               {completed_topics}/{total_topics} topics done

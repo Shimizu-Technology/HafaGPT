@@ -20,14 +20,6 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
 
   const shortText = "AI audio may differ from traditional pronunciation";
   
-  const detailedText = `Our text-to-speech uses AI to help with pronunciation, but Chamorro has unique sounds that AI doesn't capture perfectly:
-
-• Y sounds like "dz" (hayi = "ha-dzee")
-• CH sounds like "ts" (chocho = "tso-tso")  
-• Å sounds like "aw" (håfa = "haw-fa")
-
-We apply phonetic hints to improve accuracy, but for authentic pronunciation, listen to native Chamorro speakers.`;
-
   if (variant === 'banner') {
     return (
       <div className={`bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 ${className}`}>

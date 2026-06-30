@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { 
@@ -13,7 +13,6 @@ import {
   CheckCircle2,
   Clock,
   Music,
-  Filter,
   Mic,
   Square,
   Upload
