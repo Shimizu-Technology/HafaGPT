@@ -408,12 +408,6 @@ export function FallingWords() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const isLoading = settings.mode === 'challenge' ? flashcardsLoading : false;
   const hasEnoughWords = wordPool.length >= ANSWER_OPTIONS;
 

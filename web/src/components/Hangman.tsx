@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, RotateCcw, Trophy, Sun, Moon, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2 } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
@@ -76,7 +76,6 @@ const MAX_WRONG_GUESSES = 6;
 
 export function Hangman() {
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -105,7 +104,7 @@ export function Hangman() {
   const [wordPool, setWordPool] = useState<Array<{ word: string; hint: string }>>([]);
 
   // Only fetch dictionary flashcards in challenge mode
-  const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
+  const { data: flashcardsData } = useDictionaryFlashcards(
     settings.mode === 'challenge' ? settings.category : ''
   );
 
@@ -478,7 +477,7 @@ export function Hangman() {
           </p>
         </main>
         
-        {showUpgradePrompt && <UpgradePrompt feature="games" onClose={() => setShowUpgradePrompt(false)} />}
+        {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </div>
     );
   }

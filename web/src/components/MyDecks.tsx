@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { ArrowLeft, Loader2, BookOpen, AlertCircle } from 'lucide-react';

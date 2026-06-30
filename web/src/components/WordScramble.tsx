@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Trophy, Timer, Lightbulb, Sun, Moon, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, RotateCcw, Timer, Lightbulb, Sun, Moon, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { useTheme } from '../hooks/useTheme';
@@ -60,7 +60,6 @@ const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 
 export function WordScramble() {
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);

@@ -61,7 +61,7 @@ export function LearningProgressStats() {
   const stars = calculateTotalStars(allProgress.topics);
   const flashcardsViewed = calculateTotalFlashcards(allProgress.topics);
   const avgScore = calculateAverageScore(allProgress.topics);
-  const currentStreak = streak?.streak || 0;
+  const currentStreak = streak?.current_streak || 0;
 
   const stats = [
     {

@@ -72,7 +72,6 @@ const GAME_DURATION = 60; // 60 seconds per game
 const SPAWN_INTERVAL_START = 3000; // ms between spawns (starts slower)
 const SPAWN_INTERVAL_MIN = 1500; // ms minimum spawn interval
 const PAIR_SPEED_START = 0.003; // Starting speed (much slower for playability)
-const PAIR_SPEED_INCREMENT = 0.0003; // Speed increase over time (gentler)
 const CORRECT_PAIR_RATIO = 0.65; // 65% of pairs are correct (slightly easier)
 const MAX_LIVES = 3;
 
@@ -99,7 +98,7 @@ export function WordCatch() {
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [caught, setCaught] = useState(0);
-  const [missed, setMissed] = useState(0);
+  const [, setMissed] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [currentSpeed, setCurrentSpeed] = useState(PAIR_SPEED_START);
   const [spawnInterval, setSpawnInterval] = useState(SPAWN_INTERVAL_START);

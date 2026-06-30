@@ -77,7 +77,6 @@ export function SimonSays() {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setUsedParts(prev => new Set([...prev, correctPart.chamorro]));
-    setShowInstruction(true);
     
     // Preload audio
     preload(correctPart.instruction);
@@ -428,7 +427,7 @@ export function SimonSays() {
 
       {showUpgradePrompt && (
         <UpgradePrompt
-          feature="games"
+          feature="game"
           onClose={() => setShowUpgradePrompt(false)}
         />
       )}

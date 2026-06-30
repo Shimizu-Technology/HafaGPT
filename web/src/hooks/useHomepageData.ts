@@ -75,10 +75,9 @@ export interface Topic {
   description: string;
   icon: string;
   level: string;
-  flashcardCategory: string;
-  quizCategory: string;
-  order: number;
-  estimatedMinutes?: number;
+  flashcard_category: string;
+  quiz_category: string;
+  estimated_minutes: number;
 }
 
 export interface RecommendedData {

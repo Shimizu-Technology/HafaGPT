@@ -10,6 +10,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -119,8 +120,14 @@ export const flashcardKeys = {
 // API Functions
 // ===========================
 
-async function fetchUserDecks(userId: string): Promise<{ decks: UserDeck[] }> {
-  const response = await fetch(`${API_URL}/api/flashcards/decks?user_id=${userId}`);
+function authHeaders(token: string | null): HeadersInit {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function fetchUserDecks(userId: string, token: string | null): Promise<{ decks: UserDeck[] }> {
+  const response = await fetch(`${API_URL}/api/flashcards/decks?user_id=${encodeURIComponent(userId)}`, {
+    headers: authHeaders(token),
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch decks');
@@ -129,8 +136,10 @@ async function fetchUserDecks(userId: string): Promise<{ decks: UserDeck[] }> {
   return response.json();
 }
 
-async function fetchDeckCards(deckId: string, userId: string): Promise<DeckCardsResponse> {
-  const response = await fetch(`${API_URL}/api/flashcards/decks/${deckId}/cards?user_id=${userId}`);
+async function fetchDeckCards(deckId: string, userId: string, token: string | null): Promise<DeckCardsResponse> {
+  const response = await fetch(`${API_URL}/api/flashcards/decks/${deckId}/cards?user_id=${encodeURIComponent(userId)}`, {
+    headers: authHeaders(token),
+  });
   
   if (!response.ok) {
     throw new Error('Failed to fetch deck cards');
@@ -139,10 +148,11 @@ async function fetchDeckCards(deckId: string, userId: string): Promise<DeckCards
   return response.json();
 }
 
-async function saveDeck(request: SaveDeckRequest): Promise<SaveDeckResponse> {
+async function saveDeck(request: SaveDeckRequest, token: string | null): Promise<SaveDeckResponse> {
   const response = await fetch(`${API_URL}/api/flashcards/decks`, {
     method: 'POST',
     headers: {
+      ...authHeaders(token),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(request),
@@ -155,10 +165,11 @@ async function saveDeck(request: SaveDeckRequest): Promise<SaveDeckResponse> {
   return response.json();
 }
 
-async function reviewCard(request: ReviewCardRequest): Promise<ReviewCardResponse> {
-  const response = await fetch(`${API_URL}/api/flashcards/review`, {
+async function reviewCard(request: ReviewCardRequest, token: string | null): Promise<ReviewCardResponse> {
+  const response = await fetch(`${API_URL}/api/flashcards/decks/review`, {
     method: 'POST',
     headers: {
+      ...authHeaders(token),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(request),
@@ -179,10 +190,12 @@ async function reviewCard(request: ReviewCardRequest): Promise<ReviewCardRespons
  * Fetch all decks for a user
  */
 export function useUserDecks(userId: string | undefined, enabled: boolean = true) {
+  const { getToken, isSignedIn } = useAuth();
+
   return useQuery({
     queryKey: flashcardKeys.decks(userId || ''),
-    queryFn: () => fetchUserDecks(userId!),
-    enabled: enabled && !!userId,
+    queryFn: async () => fetchUserDecks(userId!, await getToken()),
+    enabled: enabled && isSignedIn && !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
@@ -191,10 +204,12 @@ export function useUserDecks(userId: string | undefined, enabled: boolean = true
  * Fetch cards in a specific deck with progress
  */
 export function useDeckCards(deckId: string | undefined, userId: string | undefined, enabled: boolean = true) {
+  const { getToken, isSignedIn } = useAuth();
+
   return useQuery({
     queryKey: flashcardKeys.deck(deckId || '', userId || ''),
-    queryFn: () => fetchDeckCards(deckId!, userId!),
-    enabled: enabled && !!deckId && !!userId,
+    queryFn: async () => fetchDeckCards(deckId!, userId!, await getToken()),
+    enabled: enabled && isSignedIn && !!deckId && !!userId,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
@@ -204,10 +219,11 @@ export function useDeckCards(deckId: string | undefined, userId: string | undefi
  */
 export function useSaveDeck() {
   const queryClient = useQueryClient();
+  const { getToken } = useAuth();
   
   return useMutation({
-    mutationFn: saveDeck,
-    onSuccess: (data, variables) => {
+    mutationFn: async (request: SaveDeckRequest) => saveDeck(request, await getToken()),
+    onSuccess: (_data, variables) => {
       // Invalidate user decks query to refetch the list
       queryClient.invalidateQueries({
         queryKey: flashcardKeys.decks(variables.user_id),
@@ -221,10 +237,11 @@ export function useSaveDeck() {
  */
 export function useReviewCard(deckId: string) {
   const queryClient = useQueryClient();
+  const { getToken } = useAuth();
   
   return useMutation({
-    mutationFn: reviewCard,
-    onSuccess: (data, variables) => {
+    mutationFn: async (request: ReviewCardRequest) => reviewCard(request, await getToken()),
+    onSuccess: (_data, variables) => {
       // Invalidate deck cards query to update progress
       queryClient.invalidateQueries({
         queryKey: flashcardKeys.deck(deckId, variables.user_id),

@@ -32,7 +32,7 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
     dom_event_allowlist: ['click'], // Only auto-capture clicks
     url_allowlist: [window.location.origin], // Only track your domain
   },
-  loaded: (posthog) => {
+  loaded: () => {
     if (import.meta.env.DEV) {
       console.log('✅ PostHog loaded successfully');
     }

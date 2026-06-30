@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, Refre
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 
 interface FlashcardData {
@@ -37,6 +37,7 @@ export function FlashcardViewer() {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [searchParams] = useSearchParams();
   const cardTypeParam = searchParams.get('type') as 'curated' | 'dictionary' | 'default' | 'custom' | null;
   // Map old values to new ones for backwards compatibility
@@ -47,7 +48,6 @@ export function FlashcardViewer() {
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [showNewCardsNotification, setShowNewCardsNotification] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -214,8 +214,10 @@ export function FlashcardViewer() {
       
       console.log(`🎴 [FRONTEND] Batch ${batchCountRef.current + 1}: Checking against ${cardsToCheck.length} previous cards`);
       
+      const token = await getToken();
       const response = await fetch(`${API_URL}/api/generate-flashcards`, {
         method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body: formData
       });
 
@@ -256,6 +258,7 @@ export function FlashcardViewer() {
             setTimeout(() => generateMoreCards('advanced', updatedCards), 1000);
           } else {
             batchCountRef.current += 1;
+            hasGeneratedMoreRef.current = false;
           }
           
           return updatedCards;
@@ -282,6 +285,16 @@ export function FlashcardViewer() {
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setIsCardFlipped(false); // Reset flip state
+
+      if (
+        cardTypeParam === 'custom' &&
+        currentIndex >= flashcards.length - 3 &&
+        !isGeneratingMore &&
+        !hasGeneratedMoreRef.current &&
+        batchCountRef.current < 3
+      ) {
+        void generateMoreCards(batchCountRef.current === 0 ? 'conversational' : 'advanced');
+      }
     }
   };
 
@@ -378,27 +391,6 @@ export function FlashcardViewer() {
       handlePrevious();
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <Loader2 className="w-12 h-12 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
-            Generating flashcards...
-          </p>
-          <p className="text-sm text-brown-600 dark:text-gray-300">
-            Creating personalized {topicTitles[topic || '']} flashcards from our Chamorro knowledge base
-          </p>
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-coral-500 dark:bg-ocean-400 animate-pulse"></div>
-            <div className="w-2 h-2 rounded-full bg-coral-500 dark:bg-ocean-400 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-2 h-2 rounded-full bg-coral-500 dark:bg-ocean-400 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (

@@ -182,7 +182,7 @@ export function useChatbot() {
       
       // Use FormData if file is present, otherwise JSON
       let body: FormData | string;
-      let headers: Record<string, string> = {
+      const headers: Record<string, string> = {
         // Add Authorization header if user is logged in
         ...(token && { 'Authorization': `Bearer ${token}` })
       };
@@ -293,7 +293,7 @@ export function useChatbot() {
       
       // Use FormData if files are present, otherwise JSON
       let body: FormData | string;
-      let headers: Record<string, string> = {
+      const headers: Record<string, string> = {
         ...(token && { 'Authorization': `Bearer ${token}` })
       };
 

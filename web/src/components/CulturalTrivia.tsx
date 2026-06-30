@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Trophy, Sun, Moon, Play, HelpCircle, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame } from 'lucide-react';
+import { ArrowLeft, RotateCcw, Sun, Moon, Play, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
@@ -582,7 +582,7 @@ export function CulturalTrivia() {
           </p>
         </main>
         
-        {showUpgradePrompt && <UpgradePrompt feature="games" onClose={() => setShowUpgradePrompt(false)} />}
+        {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </div>
     );
   }
@@ -590,10 +590,6 @@ export function CulturalTrivia() {
   // Game complete
   if (gameState === 'complete') {
     const stars = getStars();
-    const correctCount = questions.filter((q, i) => {
-      // This is approximate - we don't track individual answers
-      return true;
-    }).length;
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">

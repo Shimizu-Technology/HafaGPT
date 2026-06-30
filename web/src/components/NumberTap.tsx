@@ -466,7 +466,7 @@ export function NumberTap() {
 
       {showUpgradePrompt && (
         <UpgradePrompt
-          feature="games"
+          feature="game"
           onClose={() => setShowUpgradePrompt(false)}
         />
       )}
