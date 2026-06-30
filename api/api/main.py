@@ -14,6 +14,7 @@ import base64
 import queue
 import threading
 import asyncio
+import hmac
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
@@ -120,12 +121,105 @@ clerk = None
 if CLERK_AVAILABLE and os.getenv("CLERK_SECRET_KEY"):
     try:
         clerk = Clerk(bearer_auth=os.getenv("CLERK_SECRET_KEY"))
-        logger.info(f"✅ Clerk initialized: {os.getenv('CLERK_SECRET_KEY')[:15]}...")
+        logger.info("✅ Clerk initialized")
     except Exception as e:
         logger.error(f"❌ Failed to initialize Clerk: {e}")
 else:
     if not os.getenv("CLERK_SECRET_KEY"):
         logger.warning("⚠️  CLERK_SECRET_KEY not set. Running without authentication.")
+
+CLERK_JWKS_TTL_SECONDS = 60 * 60
+_clerk_jwks_cache = {"keys": [], "expires_at": 0.0}
+_clerk_jwks_lock = threading.Lock()
+
+
+def _extract_bearer_token(authorization: Optional[str]) -> str:
+    """Parse an Authorization header and return the bearer token."""
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Please sign in to use HåfaGPT."
+        )
+
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authorization format. Expected Bearer token."
+        )
+
+    return token.strip()
+
+
+def _key_to_dict(key):
+    if hasattr(key, "model_dump"):
+        return key.model_dump()
+    if isinstance(key, dict):
+        return key
+    return {
+        "kty": key.kty,
+        "use": key.use,
+        "kid": key.kid,
+        "n": key.n,
+        "e": key.e,
+    }
+
+
+def _get_clerk_jwks(force_refresh: bool = False):
+    """Fetch Clerk JWKS with a short cache to avoid hitting Clerk on every API call."""
+    if not clerk:
+        logger.error("⚠️  Clerk not initialized but authentication required")
+        raise HTTPException(
+            status_code=500,
+            detail="Authentication service unavailable"
+        )
+
+    now = time.time()
+    with _clerk_jwks_lock:
+        if (
+            not force_refresh
+            and _clerk_jwks_cache["keys"]
+            and _clerk_jwks_cache["expires_at"] > now
+        ):
+            return _clerk_jwks_cache["keys"]
+
+        jwks_response = clerk.jwks.get_jwks()
+        keys = jwks_response.keys if hasattr(jwks_response, "keys") else []
+        _clerk_jwks_cache["keys"] = keys
+        _clerk_jwks_cache["expires_at"] = now + CLERK_JWKS_TTL_SECONDS
+        return keys
+
+
+def _decode_clerk_token(token: str, force_jwks_refresh: bool = False) -> dict:
+    from jose import jwt
+
+    unverified_header = jwt.get_unverified_header(token)
+    kid = unverified_header.get("kid")
+
+    signing_key = None
+    for key in _get_clerk_jwks(force_refresh=force_jwks_refresh):
+        key_kid = key.get("kid") if isinstance(key, dict) else getattr(key, "kid", None)
+        if key_kid == kid:
+            signing_key = key
+            break
+
+    if not signing_key:
+        if not force_jwks_refresh:
+            return _decode_clerk_token(token, force_jwks_refresh=True)
+
+        logger.warning(f"⚠️  No matching key found for kid: {kid}")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication token. Please sign in again."
+        )
+
+    return jwt.decode(
+        token,
+        _key_to_dict(signing_key),
+        algorithms=["RS256"],
+        options={"verify_aud": False}
+    )
+
 
 async def verify_user(authorization: Optional[str] = Header(None)) -> str:
     """
@@ -142,66 +236,11 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> str:
     Raises:
         HTTPException: 401 if not authenticated or invalid token
     """
-    from jose import jwt
     from jose.exceptions import JWTError
     
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authentication required. Please sign in to use HåfaGPT."
-        )
-    
-    if not clerk:
-        logger.error("⚠️  Clerk not initialized but authentication required")
-        raise HTTPException(
-            status_code=500,
-            detail="Authentication service unavailable"
-        )
-    
     try:
-        # Extract token from "Bearer <token>"
-        token = authorization.replace("Bearer ", "")
-        
-        # Get JWKS from Clerk - use get_jwks() method
-        jwks_response = clerk.jwks.get_jwks()
-        
-        # Decode and verify JWT
-        # First, decode without verification to get the kid (key ID)
-        unverified_header = jwt.get_unverified_header(token)
-        kid = unverified_header.get('kid')
-        
-        # Find the matching key in JWKS
-        jwks_keys = jwks_response.keys if hasattr(jwks_response, 'keys') else []
-        matching_key = None
-        for key in jwks_keys:
-            if hasattr(key, 'kid') and key.kid == kid:
-                matching_key = key
-                break
-        
-        if not matching_key:
-            logger.warning(f"⚠️  No matching key found for kid: {kid}")
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid authentication token. Please sign in again."
-            )
-        
-        # Verify and decode the JWT
-        # Convert the key to dict format for jose
-        key_dict = {
-            'kty': matching_key.kty,
-            'use': matching_key.use,
-            'kid': matching_key.kid,
-            'n': matching_key.n,
-            'e': matching_key.e,
-        }
-        
-        # Decode the token
-        payload = jwt.decode(
-            token,
-            key_dict,
-            algorithms=['RS256'],
-            options={'verify_aud': False}  # Clerk doesn't always set aud
-        )
+        token = _extract_bearer_token(authorization)
+        payload = _decode_clerk_token(token)
         
         user_id = payload.get('sub')
         
@@ -230,6 +269,32 @@ async def verify_user(authorization: Optional[str] = Header(None)) -> str:
             status_code=401,
             detail="Authentication failed. Please sign in again."
         )
+
+
+def is_production_environment() -> bool:
+    """Return True when running in a deployed/production-like environment."""
+    environment = os.getenv("SENTRY_ENVIRONMENT", "").lower()
+    return environment in {"production", "prod"} or bool(os.getenv("RENDER_GIT_COMMIT"))
+
+
+def verify_eval_access(x_eval_api_key: Optional[str] = None) -> None:
+    """
+    Protect unauthenticated evaluation endpoints from public production access.
+
+    Local/CI test runners may set ENABLE_EVAL_ENDPOINTS=true. Production should
+    prefer EVAL_API_KEY and pass it in the X-Eval-API-Key header.
+    """
+    configured_key = os.getenv("EVAL_API_KEY")
+    if configured_key:
+        if x_eval_api_key and hmac.compare_digest(x_eval_api_key, configured_key):
+            return
+        raise HTTPException(status_code=401, detail="Invalid evaluation API key")
+
+    if os.getenv("ENABLE_EVAL_ENDPOINTS", "false").lower() == "true":
+        return
+
+    raise HTTPException(status_code=404, detail="Not found")
+
 
 # Initialize S3 client for image uploads
 try:
@@ -593,32 +658,47 @@ def upload_file_to_s3_background(
         logger.error(f"❌ Background S3 upload error: {e}")
 
 
-# Rate limiting storage (in-memory - use Redis in production for multiple servers)
+# Rate limiting storage (in-memory - use Redis in production for multiple workers/servers)
 rate_limit_storage = defaultdict(list)
+tts_rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))  # requests
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))  # seconds
+TTS_RATE_LIMIT_REQUESTS = int(os.getenv("TTS_RATE_LIMIT_REQUESTS", "20"))
+TTS_RATE_LIMIT_WINDOW = int(os.getenv("TTS_RATE_LIMIT_WINDOW", "60"))
+
+def _check_window_rate_limit(storage, client_key: str, max_requests: int, window_seconds: int) -> bool:
+    now = datetime.now()
+    cutoff = now - timedelta(seconds=window_seconds)
+    storage[client_key] = [req_time for req_time in storage[client_key] if req_time > cutoff]
+
+    if len(storage[client_key]) >= max_requests:
+        return False
+
+    storage[client_key].append(now)
+    return True
+
 
 def check_rate_limit(client_ip: str) -> bool:
     """
     Check if client has exceeded rate limit.
     Returns True if allowed, False if rate limited.
     """
-    now = datetime.now()
-    cutoff = now - timedelta(seconds=RATE_LIMIT_WINDOW)
-    
-    # Clean old requests
-    rate_limit_storage[client_ip] = [
-        req_time for req_time in rate_limit_storage[client_ip]
-        if req_time > cutoff
-    ]
-    
-    # Check limit
-    if len(rate_limit_storage[client_ip]) >= RATE_LIMIT_REQUESTS:
-        return False
-    
-    # Add current request
-    rate_limit_storage[client_ip].append(now)
-    return True
+    return _check_window_rate_limit(
+        rate_limit_storage,
+        client_ip,
+        RATE_LIMIT_REQUESTS,
+        RATE_LIMIT_WINDOW,
+    )
+
+
+def check_tts_rate_limit(client_ip: str) -> bool:
+    """Stricter public TTS limiter to protect the paid speech endpoint."""
+    return _check_window_rate_limit(
+        tts_rate_limit_storage,
+        client_ip,
+        TTS_RATE_LIMIT_REQUESTS,
+        TTS_RATE_LIMIT_WINDOW,
+    )
 
 # Create FastAPI app
 app = FastAPI(
@@ -633,20 +713,39 @@ app = FastAPI(
 logger.info("🚀 FastAPI app created successfully")
 logger.info(f"📍 PORT environment variable: {os.getenv('PORT', 'NOT SET')}")
 
-# Get allowed origins from environment variable
-# Format: "https://domain1.com,https://domain2.com" or "*" for development
-allowed_origins_str = os.getenv("ALLOWED_ORIGINS", "*")
-allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")] if allowed_origins_str != "*" else ["*"]
-
-# Always allow Capacitor iOS app origins
+# Get allowed origins from environment variable.
+# Format: "https://domain1.com,https://domain2.com" or "*" for local-only debugging.
+PRODUCTION_ORIGINS = [
+    "https://hafagpt.com",
+    "https://www.hafagpt.com",
+    "https://hafagpt.netlify.app",
+]
+DEVELOPMENT_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 CAPACITOR_ORIGINS = [
     "capacitor://localhost",  # iOS Capacitor app
     "http://localhost",       # Android Capacitor app
     "ionic://localhost",      # Ionic apps
 ]
-# Add Capacitor origins if not already using wildcard
+
+allowed_origins_str = os.getenv("ALLOWED_ORIGINS")
+if allowed_origins_str == "*":
+    if is_production_environment():
+        raise RuntimeError("ALLOWED_ORIGINS='*' is not allowed in production")
+    allowed_origins = ["*"]
+elif allowed_origins_str:
+    allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",") if origin.strip()]
+elif is_production_environment():
+    allowed_origins = PRODUCTION_ORIGINS.copy()
+else:
+    allowed_origins = DEVELOPMENT_ORIGINS + PRODUCTION_ORIGINS
+
+# Always allow the packaged Capacitor mobile app origins unless explicitly using
+# wildcard local debugging. Preserve order while avoiding duplicates.
 if allowed_origins != ["*"]:
-    allowed_origins.extend(CAPACITOR_ORIGINS)
+    allowed_origins = list(dict.fromkeys(allowed_origins + CAPACITOR_ORIGINS))
 
 # Log CORS configuration
 if allowed_origins == ["*"]:
@@ -762,7 +861,7 @@ async def startup_event():
     logger.info("="*80)
     logger.info(f"CORS Origins: {allowed_origins}")
     logger.info(f"Rate Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW} seconds")
-    logger.info(f"Database: {os.getenv('DATABASE_URL', 'postgresql://localhost/chamorro_rag')[:50]}...")
+    logger.info(f"Database configured: {bool(os.getenv('DATABASE_URL'))}")
     if FREE_PROMO_ACTIVE:
         logger.info(f"🎄 FREE PROMO PERIOD ACTIVE until {FREE_PROMO_END_DATE}")
     logger.info("="*80)
@@ -1367,7 +1466,8 @@ async def eval_chat(
     message: Optional[str] = Form(None),
     mode: Optional[str] = Form(None),
     session_id: Optional[str] = Form(None),
-    conversation_id: Optional[str] = Form(None)  # NEW: For context testing
+    conversation_id: Optional[str] = Form(None),  # NEW: For context testing
+    x_eval_api_key: Optional[str] = Header(None)
 ):
     """
     **EVALUATION ENDPOINT** - No authentication required.
@@ -1387,6 +1487,7 @@ async def eval_chat(
     The endpoint will retrieve and use prior messages from that conversation.
     """
     try:
+        verify_eval_access(x_eval_api_key)
         # Check if this is a JSON request
         content_type = request.headers.get('content-type', '')
         
@@ -1466,7 +1567,10 @@ async def eval_chat(
 
 
 @app.post("/api/eval/conversations", response_model=ConversationResponse, tags=["Evaluation"])
-async def eval_create_conversation(request: ConversationCreate):
+async def eval_create_conversation(
+    request: ConversationCreate,
+    x_eval_api_key: Optional[str] = Header(None)
+):
     """
     **EVALUATION ENDPOINT** - Create conversation without authentication.
     
@@ -1475,6 +1579,7 @@ async def eval_create_conversation(request: ConversationCreate):
     **DO NOT USE THIS IN PRODUCTION CLIENT** - Use `/api/conversations` instead.
     """
     try:
+        verify_eval_access(x_eval_api_key)
         # Create conversation with a test user ID (so we can identify test data)
         # conversations.create_conversation returns a ConversationResponse directly
         conversation = conversations.create_conversation(
@@ -2164,6 +2269,7 @@ def get_pronunciation(word: str) -> str:
 
 @app.post("/api/tts", tags=["Speech"])
 async def text_to_speech(
+    request: Request,
     text: str = Form(...),
     voice: str = Form(default="shimmer"),  # Shimmer works best for Chamorro/Spanish
     phonetic: bool = Form(default=True),  # Apply Chamorro phonetic preprocessing
@@ -2184,6 +2290,13 @@ async def text_to_speech(
     - elevenlabs: Higher quality, better for non-English (requires ELEVENLABS_API_KEY)
     """
     try:
+        client_ip = request.client.host if request.client else "unknown"
+        if not check_tts_rate_limit(client_ip):
+            raise HTTPException(
+                status_code=429,
+                detail=f"TTS rate limit exceeded. Maximum {TTS_RATE_LIMIT_REQUESTS} requests per {TTS_RATE_LIMIT_WINDOW} seconds."
+            )
+
         import requests as http_requests
         from openai import APITimeoutError, OpenAI
 
@@ -2309,6 +2422,7 @@ async def generate_flashcards(
     count: int = Form(default=20),
     variety: str = Form(default="basic"),  # New parameter: basic, conversational, or advanced
     previous_cards: str = Form(default="[]"),  # JSON string of previously generated cards
+    authorization: Optional[str] = Header(None),
 ):
     """
     Generate Chamorro language flashcards using GPT + RAG knowledge.
@@ -2336,6 +2450,7 @@ async def generate_flashcards(
     logger.info(f"🎴 [FLASHCARDS] Request received - topic: {topic}, count: {count}, variety: {variety}")
     
     try:
+        await verify_user(authorization)
         # Parse previous cards if provided
         previous_cards_list = []
         try:
@@ -2591,6 +2706,8 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
             count=len(flashcards)
         )
         
+    except HTTPException:
+        raise
     except json.JSONDecodeError as e:
         logger.error(f"❌ Failed to parse GPT response as JSON: {e}")
         logger.error(f"Response was: {response_text[:500]}")
@@ -2611,7 +2728,10 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
 # ===========================
 
 @app.post("/api/flashcards/decks", response_model=SaveDeckResponse, tags=["Flashcard Progress"])
-async def save_flashcard_deck(request: SaveDeckRequest):
+async def save_flashcard_deck(
+    request: SaveDeckRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     Save a deck of flashcards to the user's collection.
     
@@ -2627,9 +2747,12 @@ async def save_flashcard_deck(request: SaveDeckRequest):
     from datetime import datetime
     import uuid
     
-    logger.info(f"💾 [SAVE DECK] User {request.user_id} saving deck: {request.title} ({len(request.cards)} cards)")
-    
     try:
+        user_id = await verify_user(authorization)
+        if request.user_id and request.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Cannot save a deck for another user")
+
+        logger.info(f"💾 [SAVE DECK] User {user_id} saving deck: {request.title} ({len(request.cards)} cards)")
         conn = psycopg.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
         
@@ -2641,7 +2764,7 @@ async def save_flashcard_deck(request: SaveDeckRequest):
             VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
-            (deck_id, request.user_id, request.topic, request.title, request.card_type, datetime.now())
+            (deck_id, user_id, request.topic, request.title, request.card_type, datetime.now())
         )
         
         # Insert all cards
@@ -2665,6 +2788,8 @@ async def save_flashcard_deck(request: SaveDeckRequest):
             message=f"Successfully saved {len(request.cards)} cards to '{request.title}'"
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ [SAVE DECK] Failed to save deck: {e}")
         raise HTTPException(
@@ -2674,7 +2799,10 @@ async def save_flashcard_deck(request: SaveDeckRequest):
 
 
 @app.get("/api/flashcards/decks", response_model=UserDecksResponse, tags=["Flashcard Progress"])
-async def get_user_decks(user_id: str):
+async def get_user_decks(
+    user_id: Optional[str] = None,
+    authorization: Optional[str] = Header(None),
+):
     """
     Get all flashcard decks for a user with progress statistics.
     
@@ -2692,9 +2820,13 @@ async def get_user_decks(user_id: str):
     import psycopg
     from datetime import datetime
     
-    logger.info(f"📚 [GET DECKS] Fetching decks for user: {user_id}")
-    
     try:
+        authenticated_user_id = await verify_user(authorization)
+        if user_id and user_id != authenticated_user_id:
+            raise HTTPException(status_code=403, detail="Cannot fetch decks for another user")
+        user_id = authenticated_user_id
+        logger.info(f"📚 [GET DECKS] Fetching decks for user: {user_id}")
+
         conn = psycopg.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
         
@@ -2741,6 +2873,8 @@ async def get_user_decks(user_id: str):
         
         return UserDecksResponse(decks=decks)
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ [GET DECKS] Failed to fetch decks: {e}")
         raise HTTPException(
@@ -2750,7 +2884,11 @@ async def get_user_decks(user_id: str):
 
 
 @app.get("/api/flashcards/decks/{deck_id}/cards", response_model=DeckCardsResponse, tags=["Flashcard Progress"])
-async def get_deck_cards(deck_id: str, user_id: str):
+async def get_deck_cards(
+    deck_id: str,
+    user_id: Optional[str] = None,
+    authorization: Optional[str] = Header(None),
+):
     """
     Get all cards in a deck with user progress.
     
@@ -2763,9 +2901,13 @@ async def get_deck_cards(deck_id: str, user_id: str):
     """
     import psycopg
     
-    logger.info(f"🃏 [GET CARDS] Fetching cards for deck: {deck_id}, user: {user_id}")
-    
     try:
+        authenticated_user_id = await verify_user(authorization)
+        if user_id and user_id != authenticated_user_id:
+            raise HTTPException(status_code=403, detail="Cannot fetch cards for another user")
+        user_id = authenticated_user_id
+        logger.info(f"🃏 [GET CARDS] Fetching cards for deck: {deck_id}, user: {user_id}")
+
         conn = psycopg.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
         
@@ -2777,6 +2919,8 @@ async def get_deck_cards(deck_id: str, user_id: str):
         deck_row = cursor.fetchone()
         
         if not deck_row:
+            cursor.close()
+            conn.close()
             raise HTTPException(status_code=404, detail="Deck not found")
         
         topic, title = deck_row
@@ -2845,8 +2989,11 @@ async def get_deck_cards(deck_id: str, user_id: str):
         )
 
 
-@app.post("/api/flashcards/review", response_model=ReviewCardResponse, tags=["Flashcard Progress"])
-async def review_flashcard(request: ReviewCardRequest):
+@app.post("/api/flashcards/decks/review", response_model=ReviewCardResponse, tags=["Flashcard Progress"])
+async def review_flashcard(
+    request: ReviewCardRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     Mark a flashcard as reviewed and update spaced repetition schedule.
     
@@ -2864,9 +3011,12 @@ async def review_flashcard(request: ReviewCardRequest):
     import psycopg
     from datetime import datetime, timedelta
     
-    logger.info(f"✍️ [REVIEW] User {request.user_id} reviewed card {request.flashcard_id} with confidence {request.confidence}")
-    
     try:
+        user_id = await verify_user(authorization)
+        if request.user_id and request.user_id != user_id:
+            raise HTTPException(status_code=403, detail="Cannot review a card for another user")
+
+        logger.info(f"✍️ [REVIEW] User {user_id} reviewed card {request.flashcard_id} with confidence {request.confidence}")
         # Calculate next review date based on confidence
         intervals = {
             1: 1,   # Hard: 1 day
@@ -2878,6 +3028,20 @@ async def review_flashcard(request: ReviewCardRequest):
         
         conn = psycopg.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT 1
+            FROM flashcards f
+            JOIN flashcard_decks d ON f.deck_id = d.id
+            WHERE f.id = %s AND d.user_id = %s
+            """,
+            (request.flashcard_id, user_id)
+        )
+        if not cursor.fetchone():
+            cursor.close()
+            conn.close()
+            raise HTTPException(status_code=404, detail="Flashcard not found")
         
         # Upsert progress record
         cursor.execute(
@@ -2895,7 +3059,7 @@ async def review_flashcard(request: ReviewCardRequest):
                 updated_at = %s
             """,
             (
-                request.user_id, request.flashcard_id, datetime.now(), next_review, request.confidence,
+                user_id, request.flashcard_id, datetime.now(), next_review, request.confidence,
                 datetime.now(), datetime.now(),
                 datetime.now(), next_review, request.confidence, datetime.now()
             )
@@ -2920,6 +3084,8 @@ async def review_flashcard(request: ReviewCardRequest):
             days_until_next=days
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ [REVIEW] Failed to update progress: {e}")
         raise HTTPException(
@@ -5417,9 +5583,13 @@ async def clerk_webhook(request: Request):
                 logger.error(f"❌ [WEBHOOK] Signature verification failed: {e}")
                 raise HTTPException(status_code=401, detail="Invalid webhook signature")
         else:
-            # No secret configured - parse body directly (for testing)
+            if is_production_environment():
+                logger.error("❌ [WEBHOOK] CLERK_WEBHOOK_SECRET is required in production")
+                raise HTTPException(status_code=500, detail="Webhook verification is not configured")
+
+            # No secret configured - parse body directly for local webhook testing only.
             payload = json.loads(body)
-            logger.warning("⚠️ [WEBHOOK] No CLERK_WEBHOOK_SECRET configured - skipping signature verification")
+            logger.warning("⚠️ [WEBHOOK] No CLERK_WEBHOOK_SECRET configured - local testing mode")
         
         # Extract event type and data
         event_type = payload.get("type", "")
@@ -5446,12 +5616,9 @@ async def clerk_webhook(request: Request):
             
             logger.info(f"🔔 [WEBHOOK] Subscription event for user {user_id}")
             logger.info(f"   Plan: {plan_name}, Status: {status}")
-            logger.info(f"   Items: {items}")
-            logger.info(f"   Payer: {payer}")
             
             if not user_id:
                 logger.warning("⚠️ [WEBHOOK] No user_id/payer_id in subscription event")
-                logger.warning(f"   Full data: {json.dumps(data, default=str)[:500]}")
                 return {"received": True, "processed": False, "reason": "no_user_id"}
             
             if not clerk:
@@ -5514,10 +5681,40 @@ async def clerk_webhook(request: Request):
                 # Delete all user data from our database
                 db_url = os.getenv("DATABASE_URL")
                 import psycopg2
+                from psycopg2 import sql
                 conn = psycopg2.connect(db_url)
                 cursor = conn.cursor()
                 
                 deleted_counts = {}
+
+                def table_exists(table_name: str) -> bool:
+                    cursor.execute("SELECT to_regclass(%s)", (table_name,))
+                    return cursor.fetchone()[0] is not None
+
+                def delete_optional_user_rows(table_name: str, count_key: str):
+                    """Delete user rows from an optional table without aborting on missing tables."""
+                    if not table_exists(table_name):
+                        return
+                    cursor.execute(
+                        sql.SQL("DELETE FROM {} WHERE user_id = %s").format(sql.Identifier(table_name)),
+                        (user_id,)
+                    )
+                    deleted_counts[count_key] = cursor.rowcount
+
+                def delete_flashcards_for_user_decks():
+                    """Delete flashcard children before deleting a user's generated decks."""
+                    if not table_exists("flashcards") or not table_exists("flashcard_decks"):
+                        return
+                    cursor.execute(
+                        """
+                        DELETE FROM flashcards
+                        WHERE deck_id IN (
+                            SELECT id FROM flashcard_decks WHERE user_id = %s
+                        )
+                        """,
+                        (user_id,)
+                    )
+                    deleted_counts["flashcards"] = cursor.rowcount
                 
                 # Delete shared conversations first (foreign key to conversations)
                 cursor.execute("""
@@ -5563,45 +5760,20 @@ async def clerk_webhook(request: Request):
                 """, (user_id,))
                 deleted_counts["daily_usage"] = cursor.rowcount
                 
-                # Delete saved flashcard decks (if table exists)
-                try:
-                    cursor.execute("""
-                        DELETE FROM saved_flashcard_decks
-                        WHERE user_id = %s
-                    """, (user_id,))
-                    deleted_counts["flashcard_decks"] = cursor.rowcount
-                except Exception:
-                    pass  # Table may not exist
+                delete_optional_user_rows("message_feedback", "message_feedback")
+
+                # Delete flashcard spaced-repetition state and generated decks.
+                delete_optional_user_rows("user_flashcard_progress", "flashcard_progress")
+                delete_optional_user_rows("spaced_repetition", "spaced_repetition")
+                delete_flashcards_for_user_decks()
+                delete_optional_user_rows("flashcard_decks", "flashcard_decks")
                 
-                # Delete XP data (if table exists)
-                try:
-                    cursor.execute("""
-                        DELETE FROM user_xp
-                        WHERE user_id = %s
-                    """, (user_id,))
-                    deleted_counts["xp"] = cursor.rowcount
-                except Exception:
-                    pass  # Table may not exist
-                
-                # Delete learning activities (if table exists)
-                try:
-                    cursor.execute("""
-                        DELETE FROM learning_activities
-                        WHERE user_id = %s
-                    """, (user_id,))
-                    deleted_counts["learning_activities"] = cursor.rowcount
-                except Exception:
-                    pass  # Table may not exist
-                
-                # Delete topic progress (if table exists)
-                try:
-                    cursor.execute("""
-                        DELETE FROM topic_progress
-                        WHERE user_id = %s
-                    """, (user_id,))
-                    deleted_counts["topic_progress"] = cursor.rowcount
-                except Exception:
-                    pass  # Table may not exist
+                # Delete XP and learning progress data.
+                delete_optional_user_rows("xp_history", "xp_history")
+                delete_optional_user_rows("user_xp", "xp")
+                delete_optional_user_rows("learning_activities", "learning_activities")
+                delete_optional_user_rows("topic_progress", "topic_progress")
+                delete_optional_user_rows("user_topic_progress", "user_topic_progress")
                 
                 conn.commit()
                 cursor.close()
@@ -6099,45 +6271,9 @@ async def verify_admin(authorization: Optional[str] = Header(None)) -> str:
     Verify that the request is from an admin user.
     Returns the user_id if valid, raises HTTPException if not.
     """
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header required")
-    
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid authorization format")
-    
-    token = authorization.replace("Bearer ", "")
-    
-    if not clerk:
-        raise HTTPException(status_code=500, detail="Clerk not initialized")
-    
     try:
-        # Decode and verify the JWT
-        jwks_client = clerk.jwks.get_jwks()
-        keys = jwks_client.keys if hasattr(jwks_client, 'keys') else []
-        
-        if not keys:
-            raise HTTPException(status_code=500, detail="Unable to fetch JWKS keys")
-        
-        from jose import jwt
-        
-        # Get the signing key
-        unverified_header = jwt.get_unverified_header(token)
-        signing_key = None
-        for key in keys:
-            if key.kid == unverified_header.get("kid"):
-                signing_key = key
-                break
-        
-        if not signing_key:
-            raise HTTPException(status_code=401, detail="Unable to find signing key")
-        
-        # Verify and decode the token
-        payload = jwt.decode(
-            token,
-            signing_key.model_dump() if hasattr(signing_key, 'model_dump') else dict(signing_key),
-            algorithms=["RS256"],
-            options={"verify_aud": False}
-        )
+        token = _extract_bearer_token(authorization)
+        payload = _decode_clerk_token(token)
         
         user_id = payload.get("sub")
         if not user_id:
