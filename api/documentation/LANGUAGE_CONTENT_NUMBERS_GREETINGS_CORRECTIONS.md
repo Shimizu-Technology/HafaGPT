@@ -55,13 +55,14 @@ The local and S3 static audio manifests now map corrected terms and no longer ma
 
 ## Remaining work
 
-Some greeting/introductory phrases remain useful but need phrase-level review before deeper correction, especially:
+A later common-phrases pass reviewed some of these items; see `documentation/LANGUAGE_CONTENT_COMMON_PHRASES_SENTENCE_REVIEW.md` for the current status.
 
-- `Maolek ha' yu'`
+Phrase-level items that still need reviewer confirmation include:
+
 - `Håyi na'ån-mu?`
 - `I na'ån-hu si...`
-- `Kao siña un ayuda yu'?`
+- broader/help-request uses around `Kao siña un ayuda yu'?`
 - sentence-level uses of `Buenas yan hågu` in conversation scenarios
 - spelling variants around `Si Yu'os Ma'åse'` vs local-source `Si Yu'us ...` forms
 
-Those were not rewritten blindly because phrase grammar and common usage should be confirmed by a fluent speaker/teacher.
+These should not be rewritten blindly because phrase grammar and common usage should be confirmed by a fluent speaker/teacher.

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02T00:55:50.389169",
+  "last_updated": "2026-07-02T01:52:06.953084",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
   },
-  "total_words": 713,
+  "total_words": 714,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -6800,7 +6800,7 @@
     },
     "Ti hu komprende": {
       "file": "ti_hu_komprende.mp3",
-      "english": "I don\\",
+      "english": "I don't understand",
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Ti hu komprende",
@@ -6828,26 +6828,6 @@
       "generated_at": "2026-01-09T09:04:34.624274",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/mangge_ginen_hao.mp3"
     },
-    "Kao siña un tulaika?": {
-      "file": "kao_sina_un_tulaika.mp3",
-      "english": "Can you repeat that?",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Kao sinya un tulaika?",
-      "size_bytes": 26400,
-      "generated_at": "2026-01-09T09:04:37.349504",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kao_sina_un_tulaika.mp3"
-    },
-    "Fan hånao hit": {
-      "file": "fan_hanao_hit.mp3",
-      "english": "Let\\",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Fan hawnao hit",
-      "size_bytes": 18240,
-      "generated_at": "2026-01-09T09:04:38.301062",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/fan_hanao_hit.mp3"
-    },
     "Guahu": {
       "file": "guahu.mp3",
       "english": "Me / I (emphatic)",
@@ -6857,16 +6837,6 @@
       "size_bytes": 10560,
       "generated_at": "2026-01-09T09:04:39.439840",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/guahu.mp3"
-    },
-    "Kao guåha?": {
-      "file": "kao_guaha.mp3",
-      "english": "Is there? / Do you have?",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Kao guawha?",
-      "size_bytes": 13920,
-      "generated_at": "2026-01-09T09:04:40.640035",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kao_guaha.mp3"
     },
     "Ti siña": {
       "file": "ti_sina.mp3",
@@ -7082,21 +7052,6 @@
       "size_bytes": 10080,
       "generated_at": "2026-01-09T09:05:12.639804",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kao.mp3"
-    },
-    "Hafa bidå-mu?": {
-      "file": "hafa_bidamu.mp3",
-      "english": "What are you doing?",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Hafa bidaw-mu?",
-      "size_bytes": 19271,
-      "generated_at": "2026-01-10T17:57:02.817135",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hafa_bidamu.mp3",
-      "needs_regeneration": false,
-      "review_status": "approved",
-      "tts_provider": "elevenlabs",
-      "phonetic_hint": "Hafa bidaw-mu?",
-      "reviewed_at": "2026-01-10T17:58:12.568535"
     },
     "Dåmenggo": {
       "file": "damenggo.mp3",
@@ -8382,6 +8337,66 @@
       "phonetic_used": "Hoo saw-ngan",
       "size_bytes": 19688,
       "generated_at": "2026-07-02T00:43:25.669603",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Måolik ha' yu'": {
+      "file": "maolik_ha_yu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/maolik_ha_yu.mp3",
+      "english": "I'm fine / I'm good",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Maw-leek hah yoo",
+      "size_bytes": 21777,
+      "generated_at": "2026-07-02T01:51:36.885985",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Atgun sumångan ennåo": {
+      "file": "atgun_sumangan_ennao.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/atgun_sumangan_ennao.mp3",
+      "english": "Say that again / Repeat that",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Aht-goon soo-maw-ngan en-now",
+      "size_bytes": 27629,
+      "generated_at": "2026-07-02T01:51:37.819577",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Nihi ta hånåo": {
+      "file": "nihi_ta_hanao.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nihi_ta_hanao.mp3",
+      "english": "Let's go",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Nee-hee tah haw-now",
+      "size_bytes": 20942,
+      "generated_at": "2026-07-02T01:51:38.714788",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kao guaha?": {
+      "file": "kao_guaha.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kao_guaha.mp3",
+      "english": "Is there? / Do you have?",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Kah-oh gwah-hah",
+      "size_bytes": 22613,
+      "generated_at": "2026-07-02T01:51:39.635255",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Håfa bidåda-mu?": {
+      "file": "hafa_bidadamu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hafa_bidadamu.mp3",
+      "english": "What are you doing?",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Haw-fah bee-daw-dah-moo",
+      "size_bytes": 24703,
+      "generated_at": "2026-07-02T01:51:40.585444",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

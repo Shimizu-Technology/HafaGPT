@@ -415,3 +415,59 @@ def test_common_verb_static_manifest_has_sangan_and_correct_fahan_metadata():
     assert "buy" in fahan_english or "purchase" in fahan_english
     assert "speak" not in fahan_english
     assert "say" not in fahan_english
+
+
+def test_common_phrase_audio_source_list_uses_corrected_sentence_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    flashcard_words = load_json(api_root / "audio_generation" / "flashcard_words.json")
+    flashcard_exact_terms, _ = collect_chamorro_terms_from_word_list(flashcard_words)
+
+    stale_terms = {
+        exact_key("Maolek ha' yu'"),
+        exact_key("Kao siña un tulaika?"),
+        exact_key("Fan hånao hit"),
+        exact_key("Kao guåha?"),
+        exact_key("Hafa bidå-mu?"),
+        exact_key("Håfa na bidå-mu?"),
+    }
+    assert flashcard_exact_terms.isdisjoint(stale_terms)
+
+    corrected_terms = {
+        exact_key("Måolik ha' yu'"),
+        exact_key("Atgun sumångan ennåo"),
+        exact_key("Nihi ta hånåo"),
+        exact_key("Kao guaha?"),
+        exact_key("Håfa bidåda-mu?"),
+    }
+    assert corrected_terms.issubset(flashcard_exact_terms)
+
+    for category in flashcard_words.get("categories", {}).values():
+        for word in category.get("words", []):
+            if exact_key(word.get("chamorro", "")) == exact_key("Ti hu komprende"):
+                assert word.get("english") == "I don't understand"
+
+
+def test_common_phrase_static_manifest_uses_corrected_sentence_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    stale_terms = {
+        "Maolek ha' yu'",
+        "Kao siña un tulaika?",
+        "Fan hånao hit",
+        "Kao guåha?",
+        "Hafa bidå-mu?",
+        "Håfa na bidå-mu?",
+    }
+    assert words.keys().isdisjoint(stale_terms)
+
+    corrected_terms = {
+        "Måolik ha' yu'",
+        "Atgun sumångan ennåo",
+        "Nihi ta hånåo",
+        "Kao guaha?",
+        "Håfa bidåda-mu?",
+    }
+    assert corrected_terms.issubset(words.keys())
+    assert words["Ti hu komprende"].get("english") == "I don't understand"
