@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-01T08:24:23.448866",
+  "last_updated": "2026-07-01T13:27:48.566039",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.amazonaws.com/audio/"
   },
-  "total_words": 707,
+  "total_words": 701,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -358,20 +358,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Uno": {
-      "file": "uno.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/uno.mp3",
-      "english": "One",
-      "category": "numbers",
-      "tier": 1,
-      "phonetic_used": null,
-      "size_bytes": 20105,
-      "generated_at": "2026-01-13T17:23:27.633598",
-      "tts_provider": "human_recording",
-      "review_status": "needs_review",
-      "needs_regeneration": false,
-      "phonetic_hint": "U-no"
-    },
     "Dos": {
       "file": "dos.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/dos.mp3",
@@ -396,30 +382,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Kuåttro": {
-      "file": "kuattro.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kuattro.mp3",
-      "english": "Four",
-      "category": "numbers",
-      "tier": 1,
-      "phonetic_used": "Kwaw-tro",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:05:19.866668",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Singko": {
-      "file": "singko.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/singko.mp3",
-      "english": "Five",
-      "category": "numbers",
-      "tier": 1,
-      "phonetic_used": "Seeng-ko",
-      "size_bytes": 17599,
-      "generated_at": "2026-01-10T18:05:20.873603",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Sais": {
       "file": "sais.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/sais.mp3",
@@ -429,18 +391,6 @@
       "phonetic_used": "Sah-ees",
       "size_bytes": 17181,
       "generated_at": "2026-01-10T18:05:21.884391",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Siette": {
-      "file": "siette.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/siette.mp3",
-      "english": "Seven",
-      "category": "numbers",
-      "tier": 1,
-      "phonetic_used": "See-eh-teh",
-      "size_bytes": 19271,
-      "generated_at": "2026-01-10T18:05:23.219500",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
@@ -6818,54 +6768,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Buenas yan hågu": {
-      "file": "buenas_yan_hagu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/buenas_yan_hagu.mp3",
-      "english": "Good (day) to you / Hello",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Buenas yan hågu",
-      "size_bytes": 22196,
-      "generated_at": "2026-01-10T18:22:07.404033",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Bula": {
-      "file": "bula.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/bula.mp3",
-      "english": "Goodbye (informal)",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Bula",
-      "size_bytes": 13419,
-      "generated_at": "2026-01-10T18:22:08.355849",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Buenas tatdes": {
-      "file": "buenas_tatdes.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/buenas_tatdes.mp3",
-      "english": "Good afternoon",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Buenas tatdes",
-      "size_bytes": 20525,
-      "generated_at": "2026-01-10T18:22:09.446546",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Sinku": {
-      "file": "sinku.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/sinku.mp3",
-      "english": "Five (5)",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Sinku",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:22:10.520836",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Siete": {
       "file": "siete.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/siete.mp3",
@@ -6875,18 +6777,6 @@
       "phonetic_used": "Siete",
       "size_bytes": 17599,
       "generated_at": "2026-01-10T18:22:11.790073",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Nuebe": {
-      "file": "nuebe.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nuebe.mp3",
-      "english": "Nine (9)",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Nuebe",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:22:13.146963",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
@@ -8280,6 +8170,42 @@
       "phonetic_used": "Koo-lot ah-poo",
       "size_bytes": 19688,
       "generated_at": "2026-07-01T08:23:23.579419",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Unu": {
+      "file": "unu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/unu.mp3",
+      "english": "One",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Oo-noo",
+      "size_bytes": 13836,
+      "generated_at": "2026-07-01T13:26:34.346825",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kuåtro": {
+      "file": "kuatro.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kuatro.mp3",
+      "english": "Four",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Kwaw-tro",
+      "size_bytes": 17598,
+      "generated_at": "2026-07-01T13:26:35.274865",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Sinko": {
+      "file": "sinko.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/sinko.mp3",
+      "english": "Five",
+      "category": "numbers",
+      "tier": 1,
+      "phonetic_used": "Seen-ko",
+      "size_bytes": 17598,
+      "generated_at": "2026-07-01T13:26:36.205664",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

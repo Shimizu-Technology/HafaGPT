@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 142,
+  "total": 139,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -12,24 +12,9 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Buenas yan hågu",
-          "english": "Good (day) to you / Hello",
-          "phonetic_hint": null
-        },
-        {
-          "chamorro": "Bula",
-          "english": "Goodbye (informal)",
-          "phonetic_hint": null
-        },
-        {
-          "chamorro": "Buenas tatdes",
-          "english": "Good afternoon",
-          "phonetic_hint": null
-        },
-        {
-          "chamorro": "Sinku",
+          "chamorro": "Sinko",
           "english": "Five (5)",
-          "phonetic_hint": null
+          "phonetic_hint": "Seen-ko"
         },
         {
           "chamorro": "Siete",
@@ -37,9 +22,9 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Nuebe",
+          "chamorro": "Nuebi",
           "english": "Nine (9)",
-          "phonetic_hint": null
+          "phonetic_hint": "Noo-eh-bee"
         },
         {
           "chamorro": "Nana",

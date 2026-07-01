@@ -30,11 +30,9 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def disallowed_color_audio_terms(vocabulary: dict[str, Any]) -> set[str]:
+def disallowed_audio_terms(vocabulary: dict[str, Any]) -> set[str]:
     disallowed_terms: set[str] = set()
     for entry in vocabulary["entries"]:
-        if entry["category"] != "colors":
-            continue
         for item in entry.get("deprecated_app_terms", []) + entry.get("needs_review_terms", []):
             disallowed_terms.add(normalize_text(item["term"]))
         for variant in entry.get("variants", []):
@@ -43,10 +41,10 @@ def disallowed_color_audio_terms(vocabulary: dict[str, Any]) -> set[str]:
     return disallowed_terms
 
 
-def test_audio_source_lists_do_not_teach_known_deprecated_or_review_needed_color_terms():
+def test_audio_source_lists_do_not_teach_known_deprecated_or_review_needed_terms():
     api_root = Path(__file__).resolve().parents[1]
     vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
-    disallowed_terms = disallowed_color_audio_terms(vocabulary)
+    disallowed_terms = disallowed_audio_terms(vocabulary)
 
     source_paths = [
         api_root / "audio_generation" / "flashcard_words.json",
@@ -92,10 +90,10 @@ def test_validator_reports_invalid_optional_array_shapes_without_crashing(tmp_pa
     assert "entries[0].needs_review_terms[0]: reason is required" in errors
 
 
-def test_static_audio_manifest_does_not_map_stale_color_teaching_terms():
+def test_static_audio_manifest_does_not_map_stale_teaching_terms():
     api_root = Path(__file__).resolve().parents[1]
     vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
-    disallowed_terms = disallowed_color_audio_terms(vocabulary)
+    disallowed_terms = disallowed_audio_terms(vocabulary)
     manifest = load_json(api_root / "audio_generation" / "manifest.json")
 
     manifest_terms = {normalize_text(term) for term in manifest["words"].keys()}

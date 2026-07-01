@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 starts with colors because Phase 1 found clear drift there.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers and core greetings/basics.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
@@ -633,6 +633,911 @@
         }
       ],
       "notes": "Use full source-backed color phrase for beginner teaching; bare Lila may still be valid but needs review."
+    },
+    {
+      "id": "numbers.one",
+      "category": "numbers",
+      "english": "One",
+      "canonical_chamorro": "Unu",
+      "recommended_teaching_term": "Unu",
+      "normalized_key": "unu",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "OO-noo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Uno",
+          "reason": "Local dictionary sources for the Chamorro number one support Unu; Uno was a legacy app spelling.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-frontend/src/components/SoundMatch.tsx",
+            "HafaGPT-frontend/src/components/NumberTap.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "unu",
+          "definition": "one",
+          "part_of_speech": "adj."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "unu",
+          "definition": "one"
+        }
+      ],
+      "notes": "Standardize beginner number teaching to source-backed Unu."
+    },
+    {
+      "id": "numbers.two",
+      "category": "numbers",
+      "english": "Two",
+      "canonical_chamorro": "Dos",
+      "recommended_teaching_term": "Dos",
+      "normalized_key": "dos",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "dohs",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "dos",
+          "definition": "two",
+          "part_of_speech": "num."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "dos",
+          "definition": "Two."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "dos",
+          "definition": "two"
+        }
+      ],
+      "notes": "Already consistent across core app surfaces."
+    },
+    {
+      "id": "numbers.three",
+      "category": "numbers",
+      "english": "Three",
+      "canonical_chamorro": "Tres",
+      "recommended_teaching_term": "Tres",
+      "normalized_key": "tres",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "trehs",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tres",
+          "definition": "three",
+          "part_of_speech": "num."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tres",
+          "definition": "Three."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tres",
+          "definition": "three"
+        }
+      ],
+      "notes": "Already consistent across core app surfaces."
+    },
+    {
+      "id": "numbers.four",
+      "category": "numbers",
+      "english": "Four",
+      "canonical_chamorro": "Kuåtro",
+      "recommended_teaching_term": "Kuåtro",
+      "normalized_key": "kuatro",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KWAH-troh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kuåttru",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary spelling for four."
+        },
+        {
+          "term": "Kuatro",
+          "type": "orthographic",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "Unaccented source spelling."
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Kuåttro",
+          "reason": "Legacy app spelling; local source forms found are Kuåtro/Kuatro and Kuåttru.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-frontend/src/components/SoundMatch.tsx",
+            "HafaGPT-frontend/src/components/NumberTap.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kuåtro",
+          "definition": "Four."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kuatro",
+          "definition": "four"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kuåttru",
+          "definition": "four",
+          "part_of_speech": "num."
+        }
+      ],
+      "notes": "Teach Kuåtro while preserving the revised-dictionary Kuåttru variant."
+    },
+    {
+      "id": "numbers.five",
+      "category": "numbers",
+      "english": "Five",
+      "canonical_chamorro": "Sinko",
+      "recommended_teaching_term": "Sinko",
+      "normalized_key": "sinko",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "SEEN-koh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Singku",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary spelling for five."
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Sinku",
+          "reason": "Legacy app spelling; local source forms found are Sinko and Singku.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json"
+          ]
+        },
+        {
+          "term": "Singko",
+          "reason": "Legacy app spelling; local source forms found are Sinko and Singku.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/components/SoundMatch.tsx",
+            "HafaGPT-frontend/src/components/NumberTap.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "sinko",
+          "definition": "Five."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "sinko",
+          "definition": "five"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "singku",
+          "definition": "five",
+          "part_of_speech": "num."
+        }
+      ],
+      "notes": "Teach the source-backed Sinko form; preserve Singku as a source variant."
+    },
+    {
+      "id": "numbers.six",
+      "category": "numbers",
+      "english": "Six",
+      "canonical_chamorro": "Sais",
+      "recommended_teaching_term": "Sais",
+      "normalized_key": "sais",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "sah-EES",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "sais",
+          "definition": "six",
+          "part_of_speech": "num."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "sais",
+          "definition": "Six."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "sais",
+          "definition": "six"
+        }
+      ],
+      "notes": "Already source-backed."
+    },
+    {
+      "id": "numbers.seven",
+      "category": "numbers",
+      "english": "Seven",
+      "canonical_chamorro": "Siete",
+      "recommended_teaching_term": "Siete",
+      "normalized_key": "siete",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "see-EH-teh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Sietti",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary spelling for seven."
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Siette",
+          "reason": "Legacy app spelling; local source forms found are Siete and Sietti.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-frontend/src/components/SoundMatch.tsx",
+            "HafaGPT-frontend/src/components/NumberTap.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "siete",
+          "definition": "Seven."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "siete",
+          "definition": "seven"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "sietti",
+          "definition": "seven",
+          "part_of_speech": "num."
+        }
+      ],
+      "notes": "Default flashcards already used Siete; align games/daily/audio to it."
+    },
+    {
+      "id": "numbers.eight",
+      "category": "numbers",
+      "english": "Eight",
+      "canonical_chamorro": "Ocho",
+      "recommended_teaching_term": "Ocho",
+      "normalized_key": "ocho",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "OH-choh",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "ocho",
+          "definition": "Eight."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "ocho",
+          "definition": "eight"
+        }
+      ],
+      "notes": "Already source-backed."
+    },
+    {
+      "id": "numbers.nine",
+      "category": "numbers",
+      "english": "Nine",
+      "canonical_chamorro": "Nuebi",
+      "recommended_teaching_term": "Nuebi",
+      "normalized_key": "nuebi",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "NOO-eh-bee",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Nuebe",
+          "reason": "Legacy app spelling; local dictionary sources support Nuebi for nine.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "nuebi",
+          "definition": "nine",
+          "part_of_speech": "num."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "nuebi",
+          "definition": "Nine."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "nuebi",
+          "definition": "nine"
+        }
+      ],
+      "notes": "Tier 1 audio/game data already used Nuebi; align flashcards/quizzes/daily words."
+    },
+    {
+      "id": "numbers.ten",
+      "category": "numbers",
+      "english": "Ten",
+      "canonical_chamorro": "Dies",
+      "recommended_teaching_term": "Dies",
+      "normalized_key": "dies",
+      "part_of_speech": "num.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "dee-EHS",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "dies",
+          "definition": "ten",
+          "part_of_speech": "num."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "dies",
+          "definition": "Ten."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "dies",
+          "definition": "ten"
+        }
+      ],
+      "notes": "Already source-backed."
+    },
+    {
+      "id": "greetings.hello",
+      "category": "greetings",
+      "english": "Hello / Hi",
+      "canonical_chamorro": "Håfa Adai",
+      "recommended_teaching_term": "Håfa Adai",
+      "normalized_key": "hafa adai",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "HAH-fah ah-DYE",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Håfa Adai!",
+          "type": "orthographic",
+          "status": "source_backed",
+          "notes": "Punctuated display variant."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Buenas yan hågu",
+          "reason": "Used as a greeting in legacy flashcards/audio but no local dictionary headword was found for this teaching meaning.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "håfa adai",
+          "definition": "hello, hi (informal greeting)",
+          "part_of_speech": "intj."
+        }
+      ],
+      "notes": "Primary HåfaGPT greeting."
+    },
+    {
+      "id": "greetings.how_are_you",
+      "category": "greetings",
+      "english": "How are you?",
+      "canonical_chamorro": "Håfa tatatmånu hao?",
+      "recommended_teaching_term": "Håfa tatatmånu hao?",
+      "normalized_key": "hafa tatatmanu hao",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "HAW-fah tah-taht-MAW-noo how",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Håfa tåtåtmånu hao?",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tåtåtmånu",
+          "definition": "Greeting word, but cannot be used by itself, only in a phrase, such as Håfa tåtåtmånu hao? (How are you?)"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tatatmanu",
+          "definition": "greeting word, but cannot be used by itself, only in a phrase, such as Hafa tatatmanu hao? |How are you?"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tatatmånu",
+          "definition": "used exclusively in the expression",
+          "part_of_speech": "pred."
+        }
+      ],
+      "notes": "Keep current app spelling pending reviewer decision between tatatmånu/tåtåtmånu variants."
+    },
+    {
+      "id": "greetings.thank_you",
+      "category": "greetings",
+      "english": "Thank you",
+      "canonical_chamorro": "Si Yu'os Ma'åse'",
+      "recommended_teaching_term": "Si Yu'os Ma'åse'",
+      "normalized_key": "si yuos maase",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "see DZOO-ohs mah-AW-seh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Si Yu'us ma'åse'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Si Yu'us ma'åsi'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "si Yu'us ma'åse'",
+          "definition": "noun. (gratitude) 1. Thank you. 2. Thanks."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "si Yu'us ma'åsi'",
+          "definition": "thank you",
+          "part_of_speech": "intj."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "si Yu'us ma'ase'",
+          "definition": "thank you, (literal translation - God have mercy)"
+        }
+      ],
+      "notes": "Current app spelling uses Yu'os; local sources list Yu'us variants. Keep as source-backed but medium confidence pending reviewer sign-off."
+    },
+    {
+      "id": "greetings.good_morning",
+      "category": "greetings",
+      "english": "Good morning",
+      "canonical_chamorro": "Buenas dias",
+      "recommended_teaching_term": "Buenas dias",
+      "normalized_key": "buenas dias",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BWAY-nahs DEE-ahs",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Mañana si Yu'os",
+          "reason": "Used as Good morning in legacy content, but no local dictionary source was found for this phrase/meaning.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/components/CulturalTrivia.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "buenas dias",
+          "definition": "Good morning; good day; hello."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "buenas dias",
+          "definition": "good morning, good day, hello"
+        }
+      ],
+      "notes": "Use the source-backed greeting instead of unsupported Mañana si Yu'os."
+    },
+    {
+      "id": "greetings.good_afternoon",
+      "category": "greetings",
+      "english": "Good afternoon",
+      "canonical_chamorro": "Buenas tåtdes",
+      "recommended_teaching_term": "Buenas tåtdes",
+      "normalized_key": "buenas tatdes",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BWAY-nahs TAHT-dehs",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Buenas tatdes",
+          "type": "orthographic",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "Unaccented spelling appears in TOD source; use diacritic form for teaching."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "buenas tåtdes",
+          "definition": "Good afternoon."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "buenas tatdes",
+          "definition": "good afternoon"
+        }
+      ],
+      "notes": "Normalize teaching display to the diacritic form."
+    },
+    {
+      "id": "greetings.good_evening_night",
+      "category": "greetings",
+      "english": "Good evening / Good night",
+      "canonical_chamorro": "Buenas noches",
+      "recommended_teaching_term": "Buenas noches",
+      "normalized_key": "buenas noches",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BWAY-nahs NOH-chehs",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "buenas noches",
+          "definition": "Good evening; good night."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "buenas noches",
+          "definition": "good evening, good night"
+        }
+      ],
+      "notes": "Already source-backed."
+    },
+    {
+      "id": "greetings.goodbye",
+      "category": "greetings",
+      "english": "Goodbye",
+      "canonical_chamorro": "Adios",
+      "recommended_teaching_term": "Adios",
+      "normalized_key": "adios",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-dee-OHS",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Adiós",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        },
+        {
+          "term": "Ådios",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Bula",
+          "reason": "Local dictionary sources define Bula as much/plenty/lots, not goodbye.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "adiós",
+          "definition": "goodbye, farewell",
+          "part_of_speech": "intj."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "ådios",
+          "definition": "Good-bye; farewell."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "adios",
+          "definition": "good-by, farewell, adieu"
+        }
+      ],
+      "notes": "Remove Bula as a goodbye teaching term; Bula remains valid for much/plenty in other contexts."
+    },
+    {
+      "id": "greetings.see_you_tomorrow",
+      "category": "greetings",
+      "english": "See you tomorrow",
+      "canonical_chamorro": "Asta agupa'",
+      "recommended_teaching_term": "Asta agupa'",
+      "normalized_key": "asta agupa",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "AHS-tah ah-GOO-pah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "asta",
+          "definition": "until, to, toward, up to",
+          "part_of_speech": "prep."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "agupa'",
+          "definition": "tomorrow",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "ågupa'",
+          "definition": "Tomorrow."
+        }
+      ],
+      "notes": "Phrase is source-backed through its components; still mark pronunciation/phrase naturalness for reviewer confirmation."
+    },
+    {
+      "id": "basics.yes",
+      "category": "basics",
+      "english": "Yes",
+      "canonical_chamorro": "Hunggan",
+      "recommended_teaching_term": "Hunggan",
+      "normalized_key": "hunggan",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "HOONG-gahn",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hunggan",
+          "definition": "yes, sure",
+          "part_of_speech": "intj."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "hunggan",
+          "definition": "Yes--used to express affirmation, assent, or confirmation in answer to a question; sure."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "hunggan",
+          "definition": "yes--used to express affirmation, assent, or comfirmation in answer to a question, sure"
+        }
+      ],
+      "notes": "Core beginner response term."
+    },
+    {
+      "id": "basics.no",
+      "category": "basics",
+      "english": "No",
+      "canonical_chamorro": "Åhe'",
+      "recommended_teaching_term": "Åhe'",
+      "normalized_key": "ahe",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "AH-heh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Ahe'",
+          "type": "orthographic",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "Unaccented source spelling."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åhe'",
+          "definition": "No---negative reply to yes-no question."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "ahe'",
+          "definition": "no--negative reply to yes-no question; contrast with munga"
+        }
+      ],
+      "notes": "Core beginner response term."
     }
   ]
 }
