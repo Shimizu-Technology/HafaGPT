@@ -32,8 +32,8 @@ const CURATED_WORDS = {
   5: [
     { word: 'HÅNOM', meaning: 'water' },
     { word: 'GUÅFI', meaning: 'fire' },  // Moved from 4-letter list (actually 5 letters)
-    { word: 'MANGÅ', meaning: 'mango' },
-    { word: 'GALÅI', meaning: 'vegetables' },
+    { word: 'NIYOK', meaning: 'coconut palm' },
+    { word: 'KÅDDO', meaning: 'soup/broth' },
     { word: 'KÅTNE', meaning: 'meat' },
     { word: 'HUGUA', meaning: 'two' },
     { word: 'SAGAN', meaning: 'place' },
@@ -53,7 +53,9 @@ const CURATED_WORDS = {
     { word: 'LALÅHI', meaning: 'man/male' },
     { word: 'BUNITA', meaning: 'beautiful' },
     { word: 'DIKIKE', meaning: 'small' },
-    { word: 'CHOCHO', meaning: 'food/eat' },
+    { word: 'MÅNGGA', meaning: 'mango' },
+    { word: 'GOLLAI', meaning: 'vegetables' },
+    { word: 'CHOCHO', meaning: 'eat' },
     { word: 'MAPÅGA', meaning: 'awake' },
     { word: 'NÅLANG', meaning: 'hungry' },
     { word: "CHE'LU", meaning: 'sibling' },
