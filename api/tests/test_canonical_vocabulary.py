@@ -287,3 +287,91 @@ def test_tier1_body_parts_source_list_uses_corrected_simon_says_terms():
         exact_key("Påtti i tuyan-mu!"),
     }
     assert corrected_terms.issubset(exact_terms)
+
+
+def test_food_manifest_uses_corrected_teaching_terms_and_safe_aliases():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    stale_terms = {
+        "Buen prubechu",
+        "Kådu",
+        "Lechuga",
+    }
+    assert words.keys().isdisjoint(stale_terms)
+    if "Månha" in words:
+        assert "chicken" not in words["Månha"].get("english", "").casefold()
+
+    corrected_terms = {
+        "Buen prubetchu",
+        "Nengkånno'",
+        "Kåddo",
+        "Gollai",
+        "Fina'denne'",
+        "Månnok",
+        "Mångga",
+        "Hineksa'",
+        "Månnge'",
+        "Chåda'",
+    }
+    assert corrected_terms.issubset(words.keys())
+
+    expected_aliases = {
+        "Mannok": "Månnok",
+        "Hineksa": "Hineksa'",
+        "Mangga": "Mångga",
+        "Månnge": "Månnge'",
+        "Chåda": "Chåda'",
+    }
+    for alias, canonical in expected_aliases.items():
+        assert alias in words
+        assert words[alias]["alias_of"] == canonical
+        assert words[alias]["file"] == words[canonical]["file"]
+        assert words[alias].get("compatibility_note")
+
+
+def test_food_audio_source_lists_use_corrected_teaching_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    tier1_words = load_json(api_root / "audio_generation" / "tier1_words.json")
+    flashcard_words = load_json(api_root / "audio_generation" / "flashcard_words.json")
+    tier1_exact_terms, _ = collect_chamorro_terms_from_word_list(tier1_words)
+    flashcard_exact_terms, _ = collect_chamorro_terms_from_word_list(flashcard_words)
+
+    stale_tier1_terms = {
+        exact_key("Mannok"),
+        exact_key("Mangga"),
+        exact_key("Hineksa"),
+        exact_key("Månnge"),
+        exact_key("Chåda"),
+    }
+    assert tier1_exact_terms.isdisjoint(stale_tier1_terms)
+
+    corrected_tier1_terms = {
+        exact_key("Månnok"),
+        exact_key("Mångga"),
+        exact_key("Hineksa'"),
+        exact_key("Månnge'"),
+        exact_key("Chåda'"),
+    }
+    assert corrected_tier1_terms.issubset(tier1_exact_terms)
+
+    stale_flashcard_terms = {
+        exact_key("Buen prubechu"),
+        exact_key("Kådu"),
+        exact_key("Lechuga"),
+    }
+    assert flashcard_exact_terms.isdisjoint(stale_flashcard_terms)
+    for category in flashcard_words.get("categories", {}).values():
+        for word in category.get("words", []):
+            if exact_key(word.get("chamorro", "")) == exact_key("Månha"):
+                assert "chicken" not in word.get("english", "").casefold()
+
+    corrected_flashcard_terms = {
+        exact_key("Buen prubetchu"),
+        exact_key("Nengkånno'"),
+        exact_key("Kåddo"),
+        exact_key("Gollai"),
+        exact_key("Fina'denne'"),
+    }
+    assert corrected_flashcard_terms.issubset(flashcard_exact_terms)

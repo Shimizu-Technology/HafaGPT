@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 140,
+  "total": 141,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -147,9 +147,9 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Buen prubechu",
-          "english": "Enjoy your meal / Bon appetit",
-          "phonetic_hint": null
+          "chamorro": "Buen prubetchu",
+          "english": "You're welcome",
+          "phonetic_hint": "Bwen proo-beht-choo"
         },
         {
           "chamorro": "Kao siña un tulaika?",
@@ -207,19 +207,19 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Månha",
-          "english": "Chicken",
-          "phonetic_hint": null
+          "chamorro": "Nengkånno'",
+          "english": "Food / Nourishment",
+          "phonetic_hint": "Neng-kahn-noh"
         },
         {
-          "chamorro": "Kådu",
-          "english": "Soup / Stew",
-          "phonetic_hint": null
+          "chamorro": "Kåddo",
+          "english": "Soup / Broth / Stew",
+          "phonetic_hint": "Kah-doh"
         },
         {
-          "chamorro": "Lechuga",
-          "english": "Lettuce / Vegetables",
-          "phonetic_hint": null
+          "chamorro": "Gollai",
+          "english": "Vegetables",
+          "phonetic_hint": "Gohl-lai"
         },
         {
           "chamorro": "Kafé",
@@ -228,8 +228,13 @@
         },
         {
           "chamorro": "Kelaguen",
-          "english": "Grilled dish with lemon",
+          "english": "Citrus-cured meat dish",
           "phonetic_hint": null
+        },
+        {
+          "chamorro": "Fina'denne'",
+          "english": "Hot sauce / Condiment",
+          "phonetic_hint": "Fee-nah-den-neh"
         },
         {
           "chamorro": "Hu hungok",

@@ -14,11 +14,11 @@ Phase 1 inventories user-facing language content from:
 ## Summary counts
 
 - Dictionary normalized headwords indexed: 14984
-- Content items inventoried: 2159
-- By source repo: {'api': 1416, 'frontend': 743}
-- By source kind: {'api_json_language_content': 1416, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
-- By match status: {'exact_dictionary_key': 1847, 'near_dictionary_key': 42, 'not_found_in_local_dictionaries': 103, 'phrase_or_sentence_not_directly_indexed': 167}
-- By risk: {'low': 1797, 'medium': 195, 'review': 167}
+- Content items inventoried: 2165
+- By source repo: {'api': 1422, 'frontend': 743}
+- By source kind: {'api_json_language_content': 1422, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
+- By match status: {'exact_dictionary_key': 1860, 'near_dictionary_key': 39, 'not_found_in_local_dictionaries': 99, 'phrase_or_sentence_not_directly_indexed': 167}
+- By risk: {'low': 1815, 'medium': 183, 'review': 167}
 
 ## Immediate high-confidence concerns
 
@@ -33,7 +33,6 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Bunitu` → `Beautiful / Handsome` (adjectives, frontend:src/data/defaultFlashcards.ts:902) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
 - `Talanga` → `Ears` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; talanga (revised_and_updated_chamorro_dictionary.json): ear
 - `Åtadok` → `Eyes` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; åtadok (chamoru_info_dictionary.json): Eye; eyeball.
-- `Buen prubechu` → `Enjoy your meal / Bon appetit` (common_phrases, frontend:src/data/defaultFlashcards.ts:415) — near_dictionary_key; close: buen prubetchu
 - `Kao guåha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:457) — near_dictionary_key; close: káguaha
 - `Ti siña` → `Cannot / Not possible` (common_phrases, frontend:src/data/defaultFlashcards.ts:463) — not_found_in_local_dictionaries; none
 - `Inafa'maolek` → `To make peace / Interdependence` (culture, frontend:src/data/dailyWords.ts:680) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
@@ -45,9 +44,9 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Ma'estra` → `Teacher (female)` (daily_life, frontend:src/data/defaultFlashcards.ts:1386) — not_found_in_local_dictionaries; none
 - `Nåna` → `Mother / Mom` (family, frontend:src/data/dailyWords.ts:119) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
 - `Nåna` → `Mother / Mom` (family, frontend:src/data/defaultFlashcards.ts:163) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
-- `Buen prubechu` → `Enjoy your meal / Bon appetit` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: buen prubetchu
 - `Bunitu` → `Beautiful / Handsome` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
 - `Eskåpa` → `Leave / Get out` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; eskåpa (revised_and_updated_chamorro_dictionary.json): escape, avoid, evade, elude
+- `Gollai` → `Vegetables` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; gollai (revised_and_updated_chamorro_dictionary.json): vegetable  (generic)
 - `Hu fåhan` → `I speak / I say` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu gimen` → `I drink` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu guaiya` → `I love` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
@@ -56,10 +55,7 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Hu nisisita` → `I need` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Håyi` → `Whose` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; håyi (revised_and_updated_chamorro_dictionary.json): who?  (interrogative pronoun)
 - `Kao guåha?` → `Is there? / Do you have?` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: káguaha
-- `Kådu` → `Soup / Stew` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; kadu' (revised_and_updated_chamorro_dictionary.json): pretend, make believe
 - `Kåmbiyu` → `Change (money)` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
-- `Lechuga` → `Lettuce / Vegetables` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
-- `Månha` → `Chicken` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; månha (revised_and_updated_chamorro_dictionary.json): green coconut
 - `Mårso` → `March` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: måso'
 - `Nana` → `Mother / Mom` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
 - `Nåna` → `Mother / Mom` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
@@ -73,17 +69,21 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Tiu` → `Uncle` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Trongkon håyu` → `Tree` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: tronkon håyu, trongkun håyu
 - `Tåtan bihu` → `Grandfather` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
-- `Kådu` → `Soup / Stew` (food, frontend:src/data/defaultFlashcards.ts:571) — exact_dictionary_key; kadu' (revised_and_updated_chamorro_dictionary.json): pretend, make believe
-- `Kånno'` → `Food` (food, frontend:src/data/defaultFlashcards.ts:546) — exact_dictionary_key; kånno' (chamoru_info_dictionary.json): Eat something; devour something; consume something; gnaw on something. Must always take an object.
-- `Lechuga` → `Lettuce / Vegetables` (food, frontend:src/data/defaultFlashcards.ts:576) — not_found_in_local_dictionaries; none
-- `Månha` → `Chicken` (food, frontend:src/data/defaultFlashcards.ts:566) — exact_dictionary_key; månha (revised_and_updated_chamorro_dictionary.json): green coconut
+- `Gollai` → `Vegetables` (food, frontend:src/data/defaultFlashcards.ts:576) — exact_dictionary_key; gollai (revised_and_updated_chamorro_dictionary.json): vegetable  (generic)
 - `Asta agupa'` → `See you tomorrow` (greetings, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Asta agupa'` → `See you tomorrow` (greetings, frontend:src/data/defaultFlashcards.ts:52) — not_found_in_local_dictionaries; none
 - `Dispensa yu'` → `Excuse me / Sorry` (greetings, frontend:src/data/dailyWords.ts:95) — not_found_in_local_dictionaries; none
+- `Si Yu'os Ma'åse'` → `Thank you` (greetings, frontend:src/data/dailyWords.ts:30) — near_dictionary_key; close: si Yu'us ma'åse'
+- `Si Yu'os Ma'åse'` → `Thank you` (greetings, frontend:src/data/defaultFlashcards.ts:37) — near_dictionary_key; close: si Yu'us ma'åse'
+- `Petta / Potta` → `Door` (household, frontend:src/data/defaultFlashcards.ts:1218) — not_found_in_local_dictionaries; none
+- `Mårso` → `March` (months, frontend:src/data/defaultFlashcards.ts:822) — near_dictionary_key; close: måso'
+- `Septiembre` → `September` (months, frontend:src/data/defaultFlashcards.ts:858) — near_dictionary_key; close: Septembre
+- `Pilan` → `Moon` (nature, api:audio_generation/manifest.json) — near_dictionary_key; close: pila
+- `Trongkon niyok` → `Palm tree` (nature, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 
 ## Phase 1 interpretation
 
-The clearest initial content drift was in the color vocabulary. Follow-up passes have now updated source-backed colors, beginner numbers, core greetings/basics, family terms, and body-part terms across core frontend learning surfaces and API audio source lists from `language_content/canonical_vocabulary.json`.
+The clearest initial content drift was in the color vocabulary. Follow-up passes have now updated source-backed colors, beginner numbers, core greetings/basics, family terms, body-part terms, and food/drink terms across core frontend learning surfaces and API audio source lists from `language_content/canonical_vocabulary.json`.
 
 The old high-risk beginner drift has now been removed from core beginner surfaces and from active static-audio lookup:
 
@@ -92,10 +92,11 @@ The old high-risk beginner drift has now been removed from core beginner surface
 - Greeting/basic drift such as `Bula` taught as goodbye, `Mañana si Yu'os` taught as good morning, and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces.
 - Family drift such as `Nana`/`Tata`/`Lahi`/`Haga`, combined `Prima / Primu`, and `Tiu`/`Tia` as primary beginner display has been replaced with reviewed canonical entries while source-backed variants remain documented.
 - Body-part drift such as `Ulo` for head, `Kanai` for hand, `Tata'ao` for stomach, and primary beginner `Mata` for eye has been replaced or deferred with source-backed canonical entries and review notes.
+- Food/drink drift such as `Kånno'` taught as the food noun, `Månha` taught as chicken, `Kådu` taught as soup, `Lechuga` taught as vegetables, unsupported `Buen prubechu` as a meal phrase, and truncated Wordle food forms has been corrected or documented with source-backed terms.
 
 ## Recommended next step
 
-Continue category by category, not by blind global replacement. Expand `language_content/canonical_vocabulary.json` for food, common verbs, and remaining common phrases with source citations, variants, pronunciation guidance, confidence, and review status.
+Continue category by category, not by blind global replacement. Expand `language_content/canonical_vocabulary.json` for common verbs and remaining common phrases with source citations, variants, pronunciation guidance, confidence, and review status.
 
 Regenerate static audio from corrected source lists and keep regression tests/checkers in place so hardcoded terms cannot drift again.
 
