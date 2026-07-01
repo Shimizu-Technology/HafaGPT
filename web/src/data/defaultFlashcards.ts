@@ -160,24 +160,24 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'fah-MEE-lee-ah'
       },
       {
-        front: 'Nana',
+        front: 'Nåna',
         back: 'Mother / Mom',
-        pronunciation: 'NAH-nah'
+        pronunciation: 'NAW-nah'
       },
       {
-        front: 'Tata',
+        front: 'Tåta',
         back: 'Father / Dad',
-        pronunciation: 'TAH-tah'
+        pronunciation: 'TAW-tah'
       },
       {
-        front: 'Lahi',
-        back: 'Son / Boy',
-        pronunciation: 'LAH-hee'
+        front: 'Låhi',
+        back: 'Son / Boy / Male',
+        pronunciation: 'LAW-hee'
       },
       {
-        front: 'Haga',
-        back: 'Daughter / Girl',
-        pronunciation: 'HAH-gah'
+        front: 'Håga',
+        back: 'Daughter',
+        pronunciation: 'HAW-gah'
       },
       {
         front: 'Che\'lu',
@@ -200,9 +200,14 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'ah-sah-GWAH'
       },
       {
-        front: 'Prima / Primu',
-        back: 'Cousin (female/male)',
-        pronunciation: 'PREE-mah / PREE-moo'
+        front: 'Prima',
+        back: 'Female cousin',
+        pronunciation: 'PREE-mah'
+      },
+      {
+        front: 'Primu',
+        back: 'Male cousin',
+        pronunciation: 'PREE-moo'
       },
       {
         front: 'Påtgon',
@@ -210,14 +215,14 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'PAHT-gohn'
       },
       {
-        front: 'Tiu',
+        front: 'Tihu',
         back: 'Uncle',
-        pronunciation: 'TEE-oo'
+        pronunciation: 'TEE-hoo'
       },
       {
-        front: 'Tia',
+        front: 'Tiha',
         back: 'Aunt',
-        pronunciation: 'TEE-ah'
+        pronunciation: 'TEE-hah'
       }
     ]
   },

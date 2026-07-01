@@ -16,14 +16,14 @@ const CURATED_WORDS = {
   // 4-letter words (Easy)
   4: [
     { word: 'TÅNO', meaning: 'land/earth' },
-    { word: 'NANÅ', meaning: 'mother' },
+    { word: 'NÅNA', meaning: 'mother' },
     { word: 'TÅTA', meaning: 'father' },
     { word: 'HÅFA', meaning: 'what/hello' },
     { word: 'ADAI', meaning: 'greeting word' },
     { word: 'EGGA', meaning: 'watch/see' },
     { word: 'GUMA', meaning: 'house' },
     { word: 'NENI', meaning: 'baby' },
-    { word: 'LAHI', meaning: 'male' },
+    { word: 'LÅHI', meaning: 'male/son' },
     { word: 'HÅGA', meaning: 'daughter' },
     { word: 'LAGU', meaning: 'north' },
     { word: 'TASI', meaning: 'sea/ocean' },
@@ -49,14 +49,14 @@ const CURATED_WORDS = {
   ],
   // 6-letter words (Hard)
   6: [
-    { word: 'PATGON', meaning: 'child' },
+    { word: 'PÅTGON', meaning: 'child' },
     { word: 'LALÅHI', meaning: 'man/male' },
     { word: 'BUNITA', meaning: 'beautiful' },
     { word: 'DIKIKE', meaning: 'small' },
     { word: 'CHOCHO', meaning: 'food/eat' },
     { word: 'MAPÅGA', meaning: 'awake' },
     { word: 'NÅLANG', meaning: 'hungry' },
-    { word: 'FAMAGU', meaning: 'children' },
+    { word: "CHE'LU", meaning: 'sibling' },
     { word: 'MAOLEK', meaning: 'good/well' },
     { word: 'ASAINA', meaning: 'owner/lord' },
     { word: 'GUÅHAN', meaning: 'Guam' },
