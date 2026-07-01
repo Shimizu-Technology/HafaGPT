@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "last_updated": "2026-07-01T22:54:20.627181",
+  "last_updated": "2026-07-02T00:55:50.389169",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
     "bucket": "hafagpt",
     "prefix": "audio/",
-    "public_url": "https://hafagpt.s3.amazonaws.com/audio/"
+    "public_url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
   },
-  "total_words": 712,
+  "total_words": 713,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -6980,7 +6980,7 @@
     },
     "Hu fåhan": {
       "file": "hu_fahan.mp3",
-      "english": "I speak / I say",
+      "english": "I buy / I purchase",
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Hu fawhan",
@@ -8370,6 +8370,18 @@
       "phonetic_used": "Fee-nah-den-neh",
       "size_bytes": 20524,
       "generated_at": "2026-07-01T22:54:20.627163",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Hu sångan": {
+      "file": "hu_sangan.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hu_sangan.mp3",
+      "english": "I say / I tell / I speak",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Hoo saw-ngan",
+      "size_bytes": 19688,
+      "generated_at": "2026-07-02T00:43:25.669603",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

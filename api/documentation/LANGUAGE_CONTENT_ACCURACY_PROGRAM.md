@@ -154,5 +154,9 @@ This program also does not require all content to be perfect before any improvem
 - `scripts/check_language_content_against_canonical.py`: checker for deprecated/review-needed terms still present in app/API surfaces.
 - `documentation/CANONICAL_LANGUAGE_CONTENT_SCHEMA.md`: schema and workflow notes.
 - `documentation/language_content_audit/canonical_usage_report.md`: generated report of remaining color-content cleanup targets.
-- `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`: source-backed Phase 3 color corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`: source-backed color corrections and remaining review work.
 - `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`: source-backed numbers/greetings corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_FAMILY_CORRECTIONS.md`: source-backed family corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_BODY_PARTS_CORRECTIONS.md`: source-backed body-part corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_FOOD_CORRECTIONS.md`: source-backed food/drink corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_COMMON_VERBS_CORRECTIONS.md`: source-backed common-verb corrections and remaining review work.
