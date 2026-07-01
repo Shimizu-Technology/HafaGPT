@@ -530,7 +530,7 @@ const advancedStories: Story[] = [
       },
       {
         id: 'p2',
-        chamorro: 'Dos påtte gi Latte: i haligi yan i tasa. I haligi i pilon. I tasa i ulo.',
+        chamorro: 'Dos påtte gi Latte: i haligi yan i tasa. I haligi i pilon. I tasa i ulu.',
         english: 'There are two parts to the Latte: the pillar and the capstone. The haligi is the pillar. The tasa is the head.',
         words: [
           { chamorro: 'Dos', english: 'two', pronunciation: 'dohs' },
@@ -538,7 +538,7 @@ const advancedStories: Story[] = [
           { chamorro: 'haligi', english: 'pillar/post', pronunciation: 'hah-LEE-gee' },
           { chamorro: 'tasa', english: 'cup/capstone', pronunciation: 'TAH-sah' },
           { chamorro: 'pilon', english: 'pillar', pronunciation: 'pee-LOHN' },
-          { chamorro: 'ulo', english: 'head', pronunciation: 'OO-loh' },
+          { chamorro: 'ulu', english: 'head', pronunciation: 'OO-loo' },
         ]
       },
       {

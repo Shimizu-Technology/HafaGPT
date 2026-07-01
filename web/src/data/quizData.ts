@@ -643,17 +643,17 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('body', 1),
         type: 'multiple_choice',
         question: 'What is "head" in Chamorro?',
-        options: ['Mata', 'Ulu', 'Kannai', 'Addeng'],
+        options: ['Åtadok', 'Ulu', 'Kannai', 'Addeng'],
         correctAnswer: 'Ulu',
         explanation: '"Ulu" means "head" in Chamorro.'
       },
       {
         id: id('body', 2),
         type: 'multiple_choice',
-        question: 'What does "Mata" mean?',
+        question: 'What does "Åtadok" mean?',
         options: ['Mouth', 'Nose', 'Eye/Eyes', 'Ear'],
         correctAnswer: 'Eye/Eyes',
-        explanation: '"Mata" means "eye" or "eyes".'
+        explanation: '"Åtadok" means "eye" or "eyes".'
       },
       {
         id: id('body', 3),

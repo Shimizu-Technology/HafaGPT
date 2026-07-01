@@ -485,9 +485,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'OO-loo'
       },
       {
-        front: 'Mata',
+        front: 'Åtadok',
         back: 'Eye / Eyes',
-        pronunciation: 'MAH-tah'
+        pronunciation: 'AW-tah-dok'
       },
       {
         front: 'Talanga',
@@ -497,12 +497,12 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Gui\'eng',
         back: 'Nose',
-        pronunciation: 'GWEE-eng'
+        pronunciation: 'GEE-eng'
       },
       {
         front: 'Pachot',
         back: 'Mouth',
-        pronunciation: 'pah-CHOHT'
+        pronunciation: 'pah-TSOHT'
       },
       {
         front: 'Kannai',
@@ -512,7 +512,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Bråsu',
         back: 'Arm / Arms',
-        pronunciation: 'BRAH-soo'
+        pronunciation: 'BRAW-soo'
       },
       {
         front: 'Addeng',

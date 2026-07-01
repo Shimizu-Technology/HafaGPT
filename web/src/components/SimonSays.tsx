@@ -18,14 +18,14 @@ interface BodyPart {
 }
 
 const BODY_PARTS: BodyPart[] = [
-  { chamorro: 'Ulo', english: 'Head', emoji: '🧠', instruction: "Påtti i ulo-mu!" },
-  { chamorro: 'Mata', english: 'Eyes', emoji: '👁️', instruction: "Påtti i mata-mu!" },
+  { chamorro: 'Ulu', english: 'Head', emoji: '🧠', instruction: "Påtti i ulu-mu!" },
+  { chamorro: 'Åtadok', english: 'Eyes', emoji: '👁️', instruction: "Påtti i åtadok-mu!" },
   { chamorro: 'Talanga', english: 'Ears', emoji: '👂', instruction: "Påtti i talanga-mu!" },
   { chamorro: 'Gui\'eng', english: 'Nose', emoji: '👃', instruction: "Påtti i gui'eng-mu!" },
   { chamorro: 'Pachot', english: 'Mouth', emoji: '👄', instruction: "Påtti i pachot-mu!" },
-  { chamorro: 'Kanai', english: 'Hand', emoji: '✋', instruction: "Na'fåna i kanai-mu!" },
+  { chamorro: 'Kannai', english: 'Hand', emoji: '✋', instruction: "Na'fåna i kannai-mu!" },
   { chamorro: 'Addeng', english: 'Foot', emoji: '🦶', instruction: "Na'fåna i addeng-mu!" },
-  { chamorro: 'Tata\'ao', english: 'Stomach', emoji: '🫃', instruction: "Påtti i tata'ao-mu!" },
+  { chamorro: 'Tuyan', english: 'Stomach', emoji: '🫃', instruction: "Påtti i tuyan-mu!" },
 ];
 
 const ROUNDS_PER_GAME = 10;
