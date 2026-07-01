@@ -76,7 +76,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     intro: {
       culturalContext: 'Colors in Chamorro often connect to nature — the blue of the Pacific Ocean (asut), the green of the jungle (betde), and the red of the flame tree flowers (agaga\').',
       keyPhrases: ['Agaga\' — Red', 'Asut — Blue', 'Betde — Green'],
-      tip: 'Look around you and try to name colors in Chamorro. The sunset has many: agaga\' (red), amariyu (yellow), and kulot kahel (orange)!',
+      tip: 'Look around you and try to name colors in Chamorro. The sunset has many: agaga\' (red), amariyu (yellow), and kulot kåhet (orange)!',
     },
     suggestedGames: ['memory', 'sound-match'],
   },

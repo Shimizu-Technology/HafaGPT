@@ -539,26 +539,26 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('color', 6),
         type: 'multiple_choice',
         question: 'What is "black" in Chamorro?',
-        options: ['Å\'paka\'', 'Å\'tot', 'Agaga\'', 'Asut'],
-        correctAnswer: 'Å\'tot',
-        explanation: '"Å\'tot" means black in Chamorro.'
+        options: ['Å\'paka\'', 'Åttilung', 'Agaga\'', 'Asut'],
+        correctAnswer: 'Åttilung',
+        explanation: '"Åttilung" means black in Chamorro.'
       },
       {
         id: id('color', 7),
         type: 'type_answer',
-        question: 'What color is "Lalala"?',
+        question: 'What color is "Kulot kåhet"?',
         correctAnswer: 'Orange',
         acceptableAnswers: ['Orange', 'orange', 'ORANGE'],
         hint: 'Think of something bright and citrusy',
-        explanation: '"Lalala" means orange (the color) in Chamorro.'
+        explanation: '"Kulot kåhet" means orange (the color) in Chamorro.'
       },
       {
         id: id('color', 8),
         type: 'multiple_choice',
-        question: 'What is "Rosa" in English?',
+        question: 'What is "Kulot di rosa" in English?',
         options: ['Red', 'Pink', 'Purple', 'Orange'],
         correctAnswer: 'Pink',
-        explanation: '"Rosa" means pink, borrowed from Spanish.'
+        explanation: '"Kulot di rosa" means pink in Chamorro.'
       }
     ]
   },

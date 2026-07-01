@@ -48,10 +48,10 @@ const GAME_CATEGORIES: Category[] = [
       { chamorro: 'Asut', english: 'Blue', emoji: '🔵' },
       { chamorro: 'Betde', english: 'Green', emoji: '🟢' },
       { chamorro: "Amariyu", english: 'Yellow', emoji: '🟡' },
-      { chamorro: "Kulot kahel", english: 'Orange', emoji: '🟠' },
-      { chamorro: 'Lila', english: 'Purple', emoji: '🟣' },
+      { chamorro: "Kulot kåhet", english: 'Orange', emoji: '🟠' },
+      { chamorro: 'Kulot lila', english: 'Purple', emoji: '🟣' },
       { chamorro: "Å'paka'", english: 'White', emoji: '⚪' },
-      { chamorro: "Åttelong", english: 'Black', emoji: '⚫' },
+      { chamorro: "Åttilung", english: 'Black', emoji: '⚫' },
     ],
   },
   {

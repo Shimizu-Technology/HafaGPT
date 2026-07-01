@@ -291,9 +291,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'AH-pah-kah'
       },
       {
-        front: 'Å\'tot',
+        front: 'Åttilung',
         back: 'Black',
-        pronunciation: 'AH-toht'
+        pronunciation: 'Awt-tee-loong'
       },
       {
         front: 'Agaga\'',
@@ -301,9 +301,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'ah-GAH-gah'
       },
       {
-        front: 'Åmariyu',
+        front: 'Amariyu',
         back: 'Yellow',
-        pronunciation: 'aw-mah-REE-dzoo'
+        pronunciation: 'ah-mah-REE-yoo'
       },
       {
         front: 'Asut',
@@ -316,24 +316,29 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'BEHT-deh'
       },
       {
-        front: 'Såksan',
+        front: 'Kulot chukulåti',
         back: 'Brown',
-        pronunciation: 'SAHK-sahn'
+        pronunciation: 'KOO-loht choo-koo-LAH-tee'
       },
       {
-        front: 'Rosa',
+        front: 'Kulot di rosa',
         back: 'Pink',
-        pronunciation: 'ROH-sah'
+        pronunciation: 'KOO-loht dee ROH-sah'
       },
       {
-        front: 'Gris',
+        front: 'Kulot åpu',
         back: 'Gray',
-        pronunciation: 'GREES'
+        pronunciation: 'KOO-loht AH-poo'
       },
       {
-        front: 'Lalala',
+        front: 'Kulot kåhet',
         back: 'Orange',
-        pronunciation: 'lah-LAH-lah'
+        pronunciation: 'KOO-loht KAH-het'
+      },
+      {
+        front: 'Kulot lila',
+        back: 'Purple',
+        pronunciation: 'KOO-loht LEE-lah'
       }
     ]
   },
