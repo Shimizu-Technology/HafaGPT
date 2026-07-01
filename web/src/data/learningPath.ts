@@ -176,8 +176,8 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     quizCategory: 'body-parts',
     intro: {
       culturalContext: 'Knowing body part words is practical for health, descriptions, and everyday life. These words are also used in traditional Chamorro songs and dances that celebrate the human form.',
-      keyPhrases: ['Ulu — Head', 'Mata — Eyes', 'Kannai — Hand'],
-      tip: 'Many body parts double as action words: "Mata" (eye) relates to "li\'e\'" (to see), and "talanga" (ear) relates to "hungok" (to hear).',
+      keyPhrases: ['Ulu — Head', 'Åtadok — Eye', 'Kannai — Hand'],
+      tip: 'Body-part words often appear with possessive endings in practice, such as “-mu” for “your” in Simon Says commands.',
     },
     suggestedGames: ['memory', 'sound-match'],
   },
