@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-01-10T18:32:39.479957",
+  "last_updated": "2026-07-01T08:24:23.448866",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.amazonaws.com/audio/"
   },
-  "total_words": 710,
+  "total_words": 707,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -154,30 +154,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Kulot kahel": {
-      "file": "kulot_kahel.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_kahel.mp3",
-      "english": "Orange",
-      "category": "colors",
-      "tier": 1,
-      "phonetic_used": "Koo-lot kah-hel",
-      "size_bytes": 20525,
-      "generated_at": "2026-01-10T18:04:53.472361",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Lila": {
-      "file": "lila.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/lila.mp3",
-      "english": "Purple",
-      "category": "colors",
-      "tier": 1,
-      "phonetic_used": "Lee-lah",
-      "size_bytes": 16345,
-      "generated_at": "2026-01-10T18:04:54.489388",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Å'paka'": {
       "file": "apaka.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/apaka.mp3",
@@ -187,42 +163,6 @@
       "phonetic_used": "Aw-pah-kah",
       "size_bytes": 19271,
       "generated_at": "2026-01-10T18:04:55.518351",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Åttelong": {
-      "file": "attelong.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/attelong.mp3",
-      "english": "Black",
-      "category": "colors",
-      "tier": 1,
-      "phonetic_used": "Awt-teh-long",
-      "size_bytes": 15509,
-      "generated_at": "2026-01-10T18:04:56.550143",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Kulot rosa": {
-      "file": "kulot_rosa.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_rosa.mp3",
-      "english": "Pink",
-      "category": "colors",
-      "tier": 1,
-      "phonetic_used": "Koo-lot roh-sah",
-      "size_bytes": 21360,
-      "generated_at": "2026-01-10T18:04:57.604910",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Kulot kafe": {
-      "file": "kulot_kafe.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_kafe.mp3",
-      "english": "Brown",
-      "category": "colors",
-      "tier": 1,
-      "phonetic_used": "Koo-lot kah-feh",
-      "size_bytes": 21360,
-      "generated_at": "2026-01-10T18:04:58.739013",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
@@ -7118,54 +7058,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Såksan": {
-      "file": "saksan.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/saksan.mp3",
-      "english": "Brown",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Såksan",
-      "size_bytes": 17599,
-      "generated_at": "2026-01-10T18:22:29.958592",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Rosa": {
-      "file": "rosa.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/rosa.mp3",
-      "english": "Pink",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Rosa",
-      "size_bytes": 16345,
-      "generated_at": "2026-01-10T18:22:30.970348",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Gris": {
-      "file": "gris.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/gris.mp3",
-      "english": "Gray",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Gris",
-      "size_bytes": 12583,
-      "generated_at": "2026-01-10T18:22:32.247539",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Lalala": {
-      "file": "lalala.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/lalala.mp3",
-      "english": "Orange",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Lalala",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:22:33.546908",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Hunggan": {
       "file": "hunggan.mp3",
       "english": "Yes",
@@ -8318,6 +8210,78 @@
       "size_bytes": 14880,
       "generated_at": "2026-01-09T09:07:00.784581",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tatan_bihu.mp3"
+    },
+    "Kulot kåhet": {
+      "file": "kulot_kahet.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_kahet.mp3",
+      "english": "Orange",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Koo-lot kah-het",
+      "size_bytes": 20942,
+      "generated_at": "2026-07-01T08:23:11.703310",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kulot lila": {
+      "file": "kulot_lila.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_lila.mp3",
+      "english": "Purple",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Koo-lot lee-lah",
+      "size_bytes": 18016,
+      "generated_at": "2026-07-01T08:23:14.150454",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Åttilung": {
+      "file": "attilung.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/attilung.mp3",
+      "english": "Black",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Awt-tee-loong",
+      "size_bytes": 15090,
+      "generated_at": "2026-07-01T08:23:16.616617",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kulot di rosa": {
+      "file": "kulot_di_rosa.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_di_rosa.mp3",
+      "english": "Pink",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Koo-lot dee roh-sah",
+      "size_bytes": 24285,
+      "generated_at": "2026-07-01T08:23:18.579536",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kulot chukulåti": {
+      "file": "kulot_chukulati.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_chukulati.mp3",
+      "english": "Brown",
+      "category": "colors",
+      "tier": 1,
+      "phonetic_used": "Koo-lot choo-koo-lah-tee",
+      "size_bytes": 27211,
+      "generated_at": "2026-07-01T08:23:20.713420",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Kulot åpu": {
+      "file": "kulot_apu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_apu.mp3",
+      "english": "Gray",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Koo-lot ah-poo",
+      "size_bytes": 19688,
+      "generated_at": "2026-07-01T08:23:23.579419",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
     }
   }
 }

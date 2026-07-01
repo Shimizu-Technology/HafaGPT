@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hafagpt.com/schemas/canonical-vocabulary.schema.json",
+  "title": "HåfaGPT Canonical Vocabulary",
+  "type": "object",
+  "required": ["schema_version", "metadata", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "metadata": {
+      "type": "object",
+      "required": ["purpose", "created_at", "review_policy"],
+      "additionalProperties": true,
+      "properties": {
+        "purpose": { "type": "string" },
+        "created_at": { "type": "string" },
+        "review_policy": { "type": "string" }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "category",
+        "english",
+        "canonical_chamorro",
+        "recommended_teaching_term",
+        "review_status",
+        "confidence",
+        "source_citations"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_.-]+$" },
+        "category": { "type": "string" },
+        "english": { "type": "string" },
+        "canonical_chamorro": { "type": "string" },
+        "recommended_teaching_term": { "type": "string" },
+        "normalized_key": { "type": "string" },
+        "part_of_speech": { "type": "string" },
+        "teaching_level": { "type": "string" },
+        "review_status": {
+          "type": "string",
+          "enum": ["verified", "source_backed", "variant", "needs_review", "deprecated", "do_not_teach"]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "unknown"]
+        },
+        "pronunciation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "guide": { "type": "string" },
+            "status": { "type": "string", "enum": ["verified", "source_backed", "needs_native_review", "unknown"] },
+            "notes": { "type": "string" }
+          }
+        },
+        "variants": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/variant" }
+        },
+        "deprecated_app_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/deprecatedTerm" }
+        },
+        "needs_review_terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/reviewTerm" }
+        },
+        "source_citations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/sourceCitation" }
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "required": ["term", "type", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "term": { "type": "string" },
+        "type": { "type": "string", "enum": ["orthographic", "source_variant", "regional", "app_legacy", "other"] },
+        "status": { "type": "string", "enum": ["source_backed", "needs_review", "deprecated", "do_not_teach"] },
+        "source": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "deprecatedTerm": {
+      "type": "object",
+      "required": ["term", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "term": { "type": "string" },
+        "reason": { "type": "string" },
+        "found_in": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "reviewTerm": {
+      "type": "object",
+      "required": ["term", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "term": { "type": "string" },
+        "reason": { "type": "string" },
+        "found_in": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "sourceCitation": {
+      "type": "object",
+      "required": ["source", "headword", "definition"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "headword": { "type": "string" },
+        "definition": { "type": "string" },
+        "part_of_speech": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

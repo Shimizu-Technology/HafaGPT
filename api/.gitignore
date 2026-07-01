@@ -54,6 +54,9 @@ conversation_logs_*.jsonl
 audio_generation/audio_files/
 # Keep: tier1_words.json, manifest.json, generate_audio.py, README.md
 
+# Language-content audit outputs (generated, not tracked)
+documentation/language_content_audit/phase1_inventory.json
+
 # Evaluation test outputs (generated, not tracked)
 evaluation/tmp/
 evaluation/comparison_results/

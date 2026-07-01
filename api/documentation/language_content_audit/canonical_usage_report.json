@@ -1,0 +1,28 @@
+{
+  "findings": [
+    {
+      "entry_id": "colors.purple",
+      "category": "colors",
+      "english": "Purple",
+      "term": "Lila",
+      "recommended_teaching_term": "Kulot lila",
+      "action": "review_variant_before_teaching",
+      "reason": "Used by games/story content; local color entries use full kulot lila phrase.",
+      "path": "HafaGPT-frontend/src/data/storyData.ts",
+      "line": 257,
+      "snippet": "chamorro: 'I kuåtto-hu dikike\\'. Lila i kulot-ña.',"
+    },
+    {
+      "entry_id": "colors.purple",
+      "category": "colors",
+      "english": "Purple",
+      "term": "Lila",
+      "recommended_teaching_term": "Kulot lila",
+      "action": "review_variant_before_teaching",
+      "reason": "Used by games/story content; local color entries use full kulot lila phrase.",
+      "path": "HafaGPT-frontend/src/data/storyData.ts",
+      "line": 262,
+      "snippet": "{ chamorro: 'Lila', english: 'purple', pronunciation: 'LEE-lah' },"
+    }
+  ]
+}

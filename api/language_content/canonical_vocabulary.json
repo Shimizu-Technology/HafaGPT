@@ -1,0 +1,638 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 starts with colors because Phase 1 found clear drift there.",
+    "created_at": "2026-06-30",
+    "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
+    "source_priority": [
+      "revised_and_updated_chamorro_dictionary.json",
+      "chamoru_info_dictionary.json",
+      "chamorro_english_dictionary_TOD.json",
+      "human/native-speaker review"
+    ]
+  },
+  "entries": [
+    {
+      "id": "colors.white",
+      "category": "colors",
+      "english": "White",
+      "canonical_chamorro": "Å'paka'",
+      "recommended_teaching_term": "Å'paka'",
+      "normalized_key": "apaka",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "AH-pah-kah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "A'paka'",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "ASCII fallback without å; keep for search, not primary teaching display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "å'paka'",
+          "definition": "white",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Å'paka' kulot-ña i gima'-måmi — The color of our house is white"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "å'paka'",
+          "definition": "White; light-colored skin."
+        }
+      ],
+      "notes": "Already used in app flashcards. Keep diacritic/glottal spelling for teaching."
+    },
+    {
+      "id": "colors.red",
+      "category": "colors",
+      "english": "Red",
+      "canonical_chamorro": "Agaga'",
+      "recommended_teaching_term": "Agaga'",
+      "normalized_key": "agaga",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-GAH-gah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "agaga'",
+          "definition": "red",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Ma'lak i agaga' na kulot"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "agaga'",
+          "definition": "Red (color)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "agaga'",
+          "definition": "red (color)"
+        }
+      ],
+      "notes": "Strongly source-backed across all local dictionaries."
+    },
+    {
+      "id": "colors.yellow",
+      "category": "colors",
+      "english": "Yellow",
+      "canonical_chamorro": "Amariyu",
+      "recommended_teaching_term": "Amariyu",
+      "normalized_key": "amariyu",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-mah-REE-yoo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Åmariyu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json",
+          "notes": "App currently uses this spelling."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "amariyu",
+          "definition": "yellow",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Amariyu chininå-ña para i iskuela — She wore a yellow dress to school"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åmariyu",
+          "definition": "Yellow."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "amariyu",
+          "definition": "yellow"
+        }
+      ],
+      "notes": "Teaching/audio display intentionally uses Amariyu because the revised dictionary and TOD source use this spelling. Åmariyu remains source-backed as a variant from chamoru_info; choose final display spelling with reviewer."
+    },
+    {
+      "id": "colors.blue",
+      "category": "colors",
+      "english": "Blue",
+      "canonical_chamorro": "Asut",
+      "recommended_teaching_term": "Asut",
+      "normalized_key": "asut",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-SOOT",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Asút",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "asút",
+          "definition": "blue, azure",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "I langit asut kulot-ña — The sky is blue"
+          ]
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "asut",
+          "definition": "blue, azure"
+        }
+      ],
+      "notes": "Teaching display keeps app's current unaccented Asut while preserving source variant Asút."
+    },
+    {
+      "id": "colors.green",
+      "category": "colors",
+      "english": "Green",
+      "canonical_chamorro": "Betde",
+      "recommended_teaching_term": "Betde",
+      "normalized_key": "betde",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "BEHT-deh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Betdi",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Primary revised dictionary spelling."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "betdi",
+          "definition": "green (color)",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Si Ana ya-ña kulot betdi — Ana likes the color green"
+          ]
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "betde",
+          "definition": "green (color)"
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "betde",
+          "definition": "To be verdent; grow green; thrive."
+        }
+      ],
+      "notes": "Betde is already used in the app and is source-backed; revised dictionary uses Betdi. Needs reviewer decision for preferred display."
+    },
+    {
+      "id": "colors.black",
+      "category": "colors",
+      "english": "Black",
+      "canonical_chamorro": "Åttilung",
+      "recommended_teaching_term": "Åttilung",
+      "normalized_key": "attilung",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "Awt-tee-loong",
+        "status": "needs_native_review",
+        "notes": "Guide follows the project pronunciation rule that Å sounds like aw in saw; verify stress/vowel quality with reviewer."
+      },
+      "variants": [
+        {
+          "term": "Åttilong",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Attilong",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Åttelong",
+          "type": "app_legacy",
+          "status": "needs_review",
+          "notes": "Used by games/audio, but local dictionaries found åttilung/åttilong/attilong instead."
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Å'tot",
+          "reason": "Local dictionary normalization points to atot, a fish entry, not black.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/quizData.ts"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "åttilung",
+          "definition": "black",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Bunitu i attilung na kulot — Black is a beautiful color"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åttilong",
+          "definition": "Black."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "attilong",
+          "definition": "black"
+        }
+      ],
+      "notes": "Correct app drift by removing Å'tot from color teaching content."
+    },
+    {
+      "id": "colors.brown",
+      "category": "colors",
+      "english": "Brown",
+      "canonical_chamorro": "Kulót chukulåti",
+      "recommended_teaching_term": "Kulot chukulåti",
+      "normalized_key": "kulot chukulati",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KOO-loht choo-koo-LAH-tee",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kulot chikolåti",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Kulot chokolåti",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Kulót chikulåti",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Såksan",
+          "reason": "No local dictionary headword found for Brown; flagged by Phase 1 audit.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+          ]
+        }
+      ],
+      "needs_review_terms": [
+        {
+          "term": "Kulot kafe",
+          "reason": "Used in color games/audio but not found as a local dictionary headword for brown; may be a modern/common borrowing and needs reviewer decision.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-frontend/src/components/ColorTouch.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kulót chukulåti",
+          "definition": "brown (color)",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Kulot chukulåti i kareta ni maloffan — The car that passed by is brown",
+            "Variant: kulót chikulåti"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kulot chikolåti",
+          "definition": "Brown (color). Also kulot chokolåti."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kulot chikolati",
+          "definition": "brown (color); also chokolati",
+          "notes": "TOD source is unaccented in normalized JSON."
+        }
+      ],
+      "notes": "Primary correction target from Phase 1. Final teaching spelling should be confirmed with a reviewer because local sources list several chocolate-color variants."
+    },
+    {
+      "id": "colors.pink",
+      "category": "colors",
+      "english": "Pink",
+      "canonical_chamorro": "Kulót di rosa",
+      "recommended_teaching_term": "Kulot di rosa",
+      "normalized_key": "kulot di rosa",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KOO-loht dee ROH-sah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Rosa",
+          "reason": "Rosa appears as a flower headword; color sources use kulot di rosa for pink.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/quizData.ts"
+          ]
+        },
+        {
+          "term": "Kulot rosa",
+          "reason": "Used in audio/game content; local color sources found kulot di rosa.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-frontend/src/components/ColorTouch.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kulót di rosa",
+          "definition": "pink (color)",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Kulot di rosa i kuattun i nenin palåo'an — The baby girl's room is pink"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kulot di rosa",
+          "definition": "Pink (color)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kulot di rosa",
+          "definition": "pink (color)"
+        }
+      ],
+      "notes": "Use the full color phrase for teaching rather than bare Rosa."
+    },
+    {
+      "id": "colors.gray",
+      "category": "colors",
+      "english": "Gray",
+      "canonical_chamorro": "Kulót åpu",
+      "recommended_teaching_term": "Kulot åpu",
+      "normalized_key": "kulot apu",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KOO-loht AH-poo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Grey",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "English spelling variant only."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Gris",
+          "reason": "Used in flashcards/audio but not found as a local dictionary headword for gray; local color sources use kulot åpu.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kulót åpu",
+          "definition": "gray (color)",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Kulot åpu i mapagåhis yanggin para u uchan — The clouds are gray if it is going to rain"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kulot åpu",
+          "definition": "Gray (color)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kulot apu",
+          "definition": "gray (color)",
+          "notes": "TOD source is unaccented in normalized JSON."
+        }
+      ],
+      "notes": "Use full source-backed color phrase for beginner teaching."
+    },
+    {
+      "id": "colors.orange",
+      "category": "colors",
+      "english": "Orange",
+      "canonical_chamorro": "Kulot kåhet",
+      "recommended_teaching_term": "Kulot kåhet",
+      "normalized_key": "kulot kahet",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KOO-loht KAH-het",
+        "status": "needs_native_review",
+        "notes": "Guide follows app-style kåhet variant; verify against reviewer."
+      },
+      "variants": [
+        {
+          "term": "Kulót kåhit",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Lalala",
+          "reason": "Normalized local dictionary hit points to lalå'lå' meaning live/alive/exist, not orange.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/quizData.ts"
+          ]
+        }
+      ],
+      "needs_review_terms": [
+        {
+          "term": "Kulot kahel",
+          "reason": "Close to source-backed kulot kåhet but local sources use å/e or å/i spellings. Treat as legacy spelling until reviewed.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/chamorro_pronunciations.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-frontend/src/components/ColorTouch.tsx",
+            "HafaGPT-frontend/src/components/PicturePairs.tsx",
+            "HafaGPT-frontend/src/components/SoundMatch.tsx",
+            "HafaGPT-frontend/src/data/dailyWords.ts",
+            "HafaGPT-frontend/src/data/learningPath.ts"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kulót kåhit",
+          "definition": "orange (color)",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Månu nai siña bai fañodda' kulot kåhit na frañela? — Where can I find an orange-colored t-shirt?"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kulot kåhet",
+          "definition": "Orange (color)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kulot kahet",
+          "definition": "orange (color)",
+          "notes": "TOD source is unaccented in normalized JSON."
+        }
+      ],
+      "notes": "Use a source-backed kulot kåhet/kåhit form instead of Lalala. Reviewer should decide final display spelling."
+    },
+    {
+      "id": "colors.purple",
+      "category": "colors",
+      "english": "Purple",
+      "canonical_chamorro": "Kulót lila",
+      "recommended_teaching_term": "Kulot lila",
+      "normalized_key": "kulot lila",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KOO-loht LEE-lah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Lila",
+          "type": "app_legacy",
+          "status": "needs_review",
+          "notes": "Used by games/story content; local color entries use full kulot lila phrase."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kulót lila",
+          "definition": "purple (color)",
+          "part_of_speech": "n.",
+          "evidence": [
+            "I mås bunitu na floris para guåhu i kulot lila — Purple-colored flowers appeal to me the most"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kulot lila",
+          "definition": "Purple (color)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kulot lila",
+          "definition": "purple (color)"
+        }
+      ],
+      "notes": "Use full source-backed color phrase for beginner teaching; bare Lila may still be valid but needs review."
+    }
+  ]
+}
