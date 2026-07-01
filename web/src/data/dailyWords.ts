@@ -271,7 +271,7 @@ export const DAILY_WORDS: DailyWord[] = [
     english: 'Citrus-cured meat dish',
     pronunciation: 'keh-lah-GWEN',
     example: {
-      chamorro: 'Hu cho\'gue kelaguen mannok.',
+      chamorro: 'Hu cho\'gue kelaguen månnok.',
       english: 'I made chicken kelaguen.'
     },
     category: 'Food',
@@ -666,11 +666,11 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'intermediate'
   },
   {
-    chamorro: 'Fanague',
-    english: 'To teach',
+    chamorro: 'Fa\'nå\'gue',
+    english: 'To teach / instruct',
     pronunciation: 'fah-NAH-gweh',
     example: {
-      chamorro: 'Hu fanague i patgon.',
+      chamorro: 'Hu fa\'nå\'gue i påtgon.',
       english: 'I teach the child.'
     },
     category: 'Verbs',

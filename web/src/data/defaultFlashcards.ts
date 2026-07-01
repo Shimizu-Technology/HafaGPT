@@ -646,9 +646,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'hoo my-GOH'
       },
       {
-        front: 'Hu fåhan',
-        back: 'I speak / I say',
-        pronunciation: 'hoo FAH-hahn'
+        front: 'Hu sångan',
+        back: 'I say / I tell / I speak',
+        pronunciation: 'hoo SAW-ngan'
       },
       {
         front: 'Hu guaiya',

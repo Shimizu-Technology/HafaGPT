@@ -889,6 +889,14 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         options: ['I hear', 'I see', 'I think', 'I believe'],
         correctAnswer: 'I see',
         explanation: '"Hu li\'e\'" means "I see" or "I saw".'
+      },
+      {
+        id: id('verb', 8),
+        type: 'multiple_choice',
+        question: 'What does "Hu sångan" mean?',
+        options: ['I buy', 'I say / I tell', 'I sleep', 'I drink'],
+        correctAnswer: 'I say / I tell',
+        explanation: '"Hu sångan" means "I say" or "I tell". Use "fåhan" for buying/purchasing.'
       }
     ]
   },

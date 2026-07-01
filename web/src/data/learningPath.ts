@@ -223,9 +223,9 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     flashcardCategory: 'verbs',
     quizCategory: 'verbs',
     intro: {
-      culturalContext: 'Chamorro verbs work differently from English. The pronoun "Hu" (I) comes before the verb: "Hu kånno\'" (I eat), "Hu maigo\'" (I sleep). This pattern is key to forming sentences!',
-      keyPhrases: ['Hu kånno\' — I eat', 'Hu maigo\' — I sleep', 'Hu hånao — I go'],
-      tip: 'Start with "Hu" + verb for "I do something." You\'ll learn other pronouns (Un = you, Ha = he/she) in the advanced level!',
+      culturalContext: 'Chamorro verbs work differently from English. Many beginner transitive phrases use "Hu" before the verb, as in "Hu li\'e\'" (I see) and "Hu hungok" (I hear). Movement, sleep, and object-required verbs need more context, so practice them with reviewed examples.',
+      keyPhrases: ['Hu li\'e\' — I see', 'Hu hungok — I hear', 'Hu sångan — I say / I tell'],
+      tip: 'Start by learning each verb with a reviewed example phrase; Chamorro verb forms can change depending on focus, tense/aspect, and whether the verb takes an object.',
     },
     suggestedGames: ['scramble', 'falling'],
   },
