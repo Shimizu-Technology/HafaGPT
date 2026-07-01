@@ -23,12 +23,12 @@
         { "chamorro": "Asut", "english": "Blue", "phonetic_hint": "Ah-soot" },
         { "chamorro": "Betde", "english": "Green", "phonetic_hint": "Beht-deh" },
         { "chamorro": "Amariyu", "english": "Yellow", "phonetic_hint": "Ah-mah-ree-dzoo" },
-        { "chamorro": "Kulot kahel", "english": "Orange", "phonetic_hint": "Koo-lot kah-hel" },
-        { "chamorro": "Lila", "english": "Purple", "phonetic_hint": "Lee-lah" },
+        { "chamorro": "Kulot kåhet", "english": "Orange", "phonetic_hint": "Koo-lot kah-het" },
+        { "chamorro": "Kulot lila", "english": "Purple", "phonetic_hint": "Koo-lot lee-lah" },
         { "chamorro": "Å'paka'", "english": "White", "phonetic_hint": "Aw-pah-kah" },
-        { "chamorro": "Åttelong", "english": "Black", "phonetic_hint": "Awt-teh-long" },
-        { "chamorro": "Kulot rosa", "english": "Pink", "phonetic_hint": "Koo-lot roh-sah" },
-        { "chamorro": "Kulot kafe", "english": "Brown", "phonetic_hint": "Koo-lot kah-feh" }
+        { "chamorro": "Åttilung", "english": "Black", "phonetic_hint": "Awt-tee-loong" },
+        { "chamorro": "Kulot di rosa", "english": "Pink", "phonetic_hint": "Koo-lot dee roh-sah" },
+        { "chamorro": "Kulot chukulåti", "english": "Brown", "phonetic_hint": "Koo-lot choo-koo-lah-tee" }
       ]
     },
     "food": {
