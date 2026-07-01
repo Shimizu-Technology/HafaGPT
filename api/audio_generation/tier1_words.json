@@ -8,7 +8,7 @@
       "words": [
         { "chamorro": "Ga'lågu", "english": "Dog", "phonetic_hint": "Gah-law-goo" },
         { "chamorro": "Katu", "english": "Cat", "phonetic_hint": "Kah-too" },
-        { "chamorro": "Mannok", "english": "Chicken", "phonetic_hint": "Mahn-nok" },
+        { "chamorro": "Månnok", "english": "Chicken", "phonetic_hint": "Mahn-nok" },
         { "chamorro": "Babui", "english": "Pig", "phonetic_hint": "Bah-boo-ee" },
         { "chamorro": "Guihan", "english": "Fish", "phonetic_hint": "Gee-hahn" },
         { "chamorro": "Haggan", "english": "Turtle", "phonetic_hint": "Hahg-gahn" },
@@ -34,13 +34,13 @@
     "food": {
       "description": "Food vocabulary from Sound Match game",
       "words": [
-        { "chamorro": "Niyok", "english": "Coconut", "phonetic_hint": "Nee-dzok" },
-        { "chamorro": "Chotda", "english": "Banana", "phonetic_hint": "Tsot-dah" },
-        { "chamorro": "Mangga", "english": "Mango", "phonetic_hint": "Mahng-gah" },
-        { "chamorro": "Hineksa", "english": "Rice", "phonetic_hint": "Hee-nek-sah" },
-        { "chamorro": "Månnge", "english": "Delicious", "phonetic_hint": "Mawng-eh" },
+        { "chamorro": "Niyok", "english": "Coconut palm", "phonetic_hint": "Nee-dzok" },
+        { "chamorro": "Chotda", "english": "Green banana", "phonetic_hint": "Tsot-dah" },
+        { "chamorro": "Mångga", "english": "Mango", "phonetic_hint": "Mahng-gah" },
+        { "chamorro": "Hineksa'", "english": "Cooked rice", "phonetic_hint": "Hee-nek-sah" },
+        { "chamorro": "Månnge'", "english": "Delicious", "phonetic_hint": "Mawng-eh" },
         { "chamorro": "Kåtne", "english": "Meat", "phonetic_hint": "Kawt-neh" },
-        { "chamorro": "Chåda", "english": "Egg", "phonetic_hint": "Tsaw-dah" },
+        { "chamorro": "Chåda'", "english": "Egg", "phonetic_hint": "Tsaw-dah" },
         { "chamorro": "Hånom", "english": "Water", "phonetic_hint": "Haw-nom" }
       ]
     },

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, and body-part terms.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, body-part terms, and food/drink terms.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
@@ -2863,6 +2863,793 @@
         }
       ],
       "notes": "Frontend flashcards/quizzes already used Tuyan; this pass aligns Simon Says and static audio source lists."
+    },
+    {
+      "id": "food.food_noun",
+      "category": "food",
+      "english": "Food / nourishment",
+      "canonical_chamorro": "Nengkånno'",
+      "recommended_teaching_term": "Nengkånno'",
+      "normalized_key": "nengkanno",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "neng-KAHN-noh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Nengkanno'",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "Bundled Chamoru.info spelling omits å; keep for search, not primary teaching display."
+        },
+        {
+          "term": "Nenkanno'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Boka",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Source-backed word for food/eat/eaten; not selected as the beginner food-noun display in this pass."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "nengkanno'",
+          "definition": "noun. food; aliment; nutriment; nourishment; sustenance. Also: nenkanno'."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "nenkanno'",
+          "definition": "food, aliment, nutriment, nourishment, sustenance"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "boka",
+          "definition": "food",
+          "part_of_speech": "n."
+        }
+      ],
+      "notes": "Replaces beginner food-noun teaching that used Kånno', which local sources define as the transitive verb 'eat something'. Kånno' remains valid in verb contexts such as Hu kånno'."
+    },
+    {
+      "id": "food.cooked_rice",
+      "category": "food",
+      "english": "Cooked rice",
+      "canonical_chamorro": "Hineksa'",
+      "recommended_teaching_term": "Hineksa'",
+      "normalized_key": "hineksa",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hee-NEHK-sah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hineksa",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "Glottal-stop fallback used by older game/audio content; keep for compatibility/search, not primary display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hineksa'",
+          "definition": "cooked rice",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "hineksa'",
+          "definition": "Cooked rice."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "hineksa'",
+          "definition": "cooked rice"
+        }
+      ],
+      "notes": "Teaching display keeps the glottal stop from all local source headwords."
+    },
+    {
+      "id": "food.fish",
+      "category": "food",
+      "english": "Fish",
+      "canonical_chamorro": "Guihan",
+      "recommended_teaching_term": "Guihan",
+      "normalized_key": "guihan",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "GEE-hahn",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "guihan",
+          "definition": "fish (generic)",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "guihan",
+          "definition": "noun. fish (animal)"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "guihan",
+          "definition": "fish--generic term"
+        }
+      ],
+      "notes": "Source-backed food/animal term already broadly used in the app."
+    },
+    {
+      "id": "food.meat",
+      "category": "food",
+      "english": "Meat / flesh",
+      "canonical_chamorro": "Kåtne",
+      "recommended_teaching_term": "Kåtne",
+      "normalized_key": "katne",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KAHT-neh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Katne",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kåtne",
+          "definition": "Meat; flesh (especially refers to mammal's flesh)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "katne",
+          "definition": "meat, flesh, (esp. refers to mammal's flesh)"
+        }
+      ],
+      "notes": "No revised-dictionary exact food headword found in local data, but Chamoru.info and TOD support the term."
+    },
+    {
+      "id": "food.chicken",
+      "category": "food",
+      "english": "Chicken / poultry",
+      "canonical_chamorro": "Månnok",
+      "recommended_teaching_term": "Månnok",
+      "normalized_key": "mannok",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "MAHN-nok",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Mannok",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "månnok",
+          "definition": "Chicken; poultry. (Generic term)"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "mannok",
+          "definition": "chicken, poultry. (Generic term)"
+        }
+      ],
+      "notes": "Preserves unaccented Mannok as a source-backed variant while teaching Månnok as the primary display form. Older app food content incorrectly paired Månha with “Chicken”; this was corrected to Månnok, while Månha remains a valid green-coconut term in its own entry."
+    },
+    {
+      "id": "food.green_coconut",
+      "category": "food",
+      "english": "Green coconut",
+      "canonical_chamorro": "Månha",
+      "recommended_teaching_term": "Månha",
+      "normalized_key": "manha",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "MAWN-hah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Manha",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "månha",
+          "definition": "green coconut",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "månha",
+          "definition": "Green coconut, with tender meat. Also månna."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "manha",
+          "definition": "green coconut, with tender meat\nal   manna"
+        }
+      ],
+      "notes": "Valid term, but not the word for chicken. Keep out of beginner chicken teaching."
+    },
+    {
+      "id": "food.soup_stew",
+      "category": "food",
+      "english": "Soup / broth / stew",
+      "canonical_chamorro": "Kåddo",
+      "recommended_teaching_term": "Kåddo",
+      "normalized_key": "kaddo",
+      "part_of_speech": "n./v.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "KAH-doh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kaddo",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Kådu",
+          "reason": "Local dictionaries support Kåddo/Kaddo for soup/broth; Kådu normalizes to revised-dictionary kadu' meaning pretend/make believe.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kaddo",
+          "definition": "Boil--type of cooking meat or soup, sauce, broth, soup."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kaddo",
+          "definition": "boil--type of cooking meat or soup, sauce, broth, soup"
+        }
+      ],
+      "notes": "Teaching display uses Kåddo to distinguish it from kadu' / pretend."
+    },
+    {
+      "id": "food.vegetable",
+      "category": "food",
+      "english": "Vegetable(s)",
+      "canonical_chamorro": "Gollai",
+      "recommended_teaching_term": "Gollai",
+      "normalized_key": "gollai",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "GOHL-lai",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Lechuga",
+          "reason": "Lechuga was not found in bundled local dictionaries; use source-backed Gollai for generic vegetables.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "gollai",
+          "definition": "vegetable  (generic)",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "gollai",
+          "definition": "Vegetable (generic term)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "gollai",
+          "definition": "vegetable, (generic term)"
+        }
+      ],
+      "notes": "Replaces unsupported beginner Lechuga card with source-backed generic vegetable term."
+    },
+    {
+      "id": "food.water",
+      "category": "food",
+      "english": "Water / liquid",
+      "canonical_chamorro": "Hånom",
+      "recommended_teaching_term": "Hånom",
+      "normalized_key": "hanom",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "HAW-nom",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hanom",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "ASCII fallback without å; keep for typed-answer acceptance, not primary teaching display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "hånom",
+          "definition": "noun. water; liquid."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "hanom",
+          "definition": "water, liquid"
+        }
+      ],
+      "notes": "Existing flashcards and quiz already use Hånom; trivia display is aligned in this pass."
+    },
+    {
+      "id": "food.coffee",
+      "category": "food",
+      "english": "Coffee",
+      "canonical_chamorro": "Kafé",
+      "recommended_teaching_term": "Kafé",
+      "normalized_key": "kafe",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "kah-FEH",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kåfe",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Kafe",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kafé",
+          "definition": "type of plant:  coffee",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kåfe",
+          "definition": "Type of plant--coffea arabica. Coffee."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kafe",
+          "definition": "type of plant-coffea arabica; coffee"
+        }
+      ],
+      "notes": "Teaching display follows revised-dictionary accent while preserving source variants."
+    },
+    {
+      "id": "food.coconut",
+      "category": "food",
+      "english": "Coconut / coconut palm",
+      "canonical_chamorro": "Niyok",
+      "recommended_teaching_term": "Niyok",
+      "normalized_key": "niyok",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "NEE-dzok",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "niyok",
+          "definition": "Type of plant--cocos nucifera. Coconut palm"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "niyok",
+          "definition": "type of plant-cocos nucifera; coconut palm"
+        }
+      ],
+      "notes": "Beginner app can gloss as coconut/coconut palm; Månha is specifically green coconut with tender meat."
+    },
+    {
+      "id": "food.kelaguen",
+      "category": "food",
+      "english": "Citrus-cured meat dish",
+      "canonical_chamorro": "Kelaguen",
+      "recommended_teaching_term": "Kelaguen",
+      "normalized_key": "kelaguen",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "keh-lah-GWEN",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kelaguen",
+          "definition": "Type of food. Dish made of meat, salt, onion, red pepper, and lemon juice."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kelaguen",
+          "definition": "type of food; dish made of fish, chicken, venison or beef, salt, red pepper, and lemon juice"
+        }
+      ],
+      "notes": "Corrects beginner explanations away from requiring the dish to be grilled."
+    },
+    {
+      "id": "food.hot_sauce",
+      "category": "food",
+      "english": "Hot sauce / condiment",
+      "canonical_chamorro": "Fina'denne'",
+      "recommended_teaching_term": "Fina'denne'",
+      "normalized_key": "finadenne",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "fee-nah-DEN-neh",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "fina'denne'",
+          "definition": "noun. sauce (hot); hot sauce consisting of pepper, onion, vinegar or lemon, etc."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "fina'denne'",
+          "definition": "sauce (hot), hot sauce made of pepper, onion, soy sauce, vinegar or lemon"
+        }
+      ],
+      "notes": "Existing flashcard spelling is source-backed; static audio was missing and is added in this pass."
+    },
+    {
+      "id": "food.green_banana",
+      "category": "food",
+      "english": "Green banana / banana tree",
+      "canonical_chamorro": "Chotda",
+      "recommended_teaching_term": "Chotda",
+      "normalized_key": "chotda",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TSOHT-dah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "chotda",
+          "definition": "green banana",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "chotda",
+          "definition": "Green banana; banana tree."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "chotda",
+          "definition": "green banana, banana tree"
+        }
+      ],
+      "notes": "Updates English glosses that previously taught Chotda as generic banana without qualification."
+    },
+    {
+      "id": "food.mango",
+      "category": "food",
+      "english": "Mango",
+      "canonical_chamorro": "Mångga",
+      "recommended_teaching_term": "Mångga",
+      "normalized_key": "mangga",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "MAHNG-gah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Mangga",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Mangå",
+          "reason": "Appears to be a truncated app Wordle form for mango; local source-backed forms are Mångga/Mangga.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "mångga",
+          "definition": "Mango (fruit)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "mangga",
+          "definition": "mango (fruit)"
+        }
+      ],
+      "notes": "Revised local JSON has a conflicting mångga=manganese entry, so teaching display relies on Chamoru.info/TOD and remains medium confidence pending educator review."
+    },
+    {
+      "id": "food.delicious",
+      "category": "food",
+      "english": "Delicious",
+      "canonical_chamorro": "Månnge'",
+      "recommended_teaching_term": "Månnge'",
+      "normalized_key": "mannge",
+      "part_of_speech": "adj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "MAHNG-eh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Månnge",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "Older app/game display without final glottal stop; keep as compatibility alias, not primary display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "månnge'",
+          "definition": "Delicious; exquisite; highly pleasing to the senses, taste, or mind."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "mannge'",
+          "definition": "delicious, exquisite, highly pleasing to the senses, taste, or mind"
+        }
+      ],
+      "notes": "Used in food/restaurant teaching contexts."
+    },
+    {
+      "id": "food.egg",
+      "category": "food",
+      "english": "Egg",
+      "canonical_chamorro": "Chåda'",
+      "recommended_teaching_term": "Chåda'",
+      "normalized_key": "chada",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TSAW-dah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Chåda",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "Older app/game display without final glottal stop; keep as compatibility alias, not primary display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "chåda'",
+          "definition": "egg, ovum",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "chåda'",
+          "definition": "noun. 1) egg; ovum; vagina (vulgar slang)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "chada'",
+          "definition": "egg, ovum, vagina (slang)"
+        }
+      ],
+      "notes": "Teach only the food meaning in beginner food games; source notes secondary slang sense for reviewer awareness."
+    },
+    {
+      "id": "food.pig_pork",
+      "category": "food",
+      "english": "Pig / swine",
+      "canonical_chamorro": "Babui",
+      "recommended_teaching_term": "Babui",
+      "normalized_key": "babui",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "bah-BOO-ee",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "babui",
+          "definition": "pig",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "babui",
+          "definition": "pig, swine; a term used in keeping track of score by counting the number of games won in tres siete (card game)"
+        }
+      ],
+      "notes": "Keep food-context gloss as pig/swine rather than treating Babui as a direct generic pork term without context."
+    },
+    {
+      "id": "common_phrases.you_are_welcome_buen_prubetchu",
+      "category": "common_phrases",
+      "english": "You are welcome",
+      "canonical_chamorro": "Buen prubetchu",
+      "recommended_teaching_term": "Buen prubetchu",
+      "normalized_key": "buen prubetchu",
+      "part_of_speech": "intj.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BWEN proo-BEHT-choo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Buen prubechu",
+          "reason": "Local source backs Buen prubetchu as “you are welcome”; app spelling/meaning as “Enjoy your meal / Bon appetit” was not source-backed.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "buen prubetchu",
+          "definition": "you are welcome",
+          "part_of_speech": "intj."
+        }
+      ],
+      "notes": "This phrase appeared as a food-related “bon appetit” card; this pass corrects it to the source-backed response-to-thanks meaning instead of continuing an unsupported meal phrase."
     }
   ]
 }
