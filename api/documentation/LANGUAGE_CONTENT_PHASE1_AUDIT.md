@@ -14,11 +14,11 @@ Phase 1 inventories user-facing language content from:
 ## Summary counts
 
 - Dictionary normalized headwords indexed: 14984
-- Content items inventoried: 2151
-- By source repo: {'api': 1409, 'frontend': 742}
-- By source kind: {'api_json_language_content': 1409, 'chamorro_english_object': 416, 'flashcard_front_back': 226, 'quiz_question_answer': 100}
-- By match status: {'exact_dictionary_key': 1823, 'near_dictionary_key': 45, 'not_found_in_local_dictionaries': 116, 'phrase_or_sentence_not_directly_indexed': 167}
-- By risk: {'low': 1768, 'medium': 216, 'review': 167}
+- Content items inventoried: 2161
+- By source repo: {'api': 1418, 'frontend': 743}
+- By source kind: {'api_json_language_content': 1418, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
+- By match status: {'exact_dictionary_key': 1843, 'near_dictionary_key': 45, 'not_found_in_local_dictionaries': 106, 'phrase_or_sentence_not_directly_indexed': 167}
+- By risk: {'low': 1787, 'medium': 207, 'review': 167}
 
 ## Immediate high-confidence concerns
 
@@ -30,30 +30,25 @@ No high-risk findings in the current generated inventory.
 
 Medium-risk findings need review, but many may be valid spelling variants, borrowed terms, inflected forms, or terms missing from one dictionary source.
 
-- `Bunitu` → `Beautiful / Handsome` (adjectives, frontend:src/data/defaultFlashcards.ts:897) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
-- `Mata` → `Eye / Eyes` (body, frontend:src/data/defaultFlashcards.ts:483) — exact_dictionary_key; måta (revised_and_updated_chamorro_dictionary.json): hole for  planting, area where a plant grows
+- `Bunitu` → `Beautiful / Handsome` (adjectives, frontend:src/data/defaultFlashcards.ts:902) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
+- `Mata` → `Eye / Eyes` (body, frontend:src/data/defaultFlashcards.ts:488) — exact_dictionary_key; måta (revised_and_updated_chamorro_dictionary.json): hole for  planting, area where a plant grows
 - `Kanai` → `Hand` (body_parts, api:audio_generation/manifest.json) — near_dictionary_key; close: kånnai, kana', anai
 - `Mata` → `Eyes` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; måta (revised_and_updated_chamorro_dictionary.json): hole for  planting, area where a plant grows
 - `Talanga` → `Ears` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; talanga (revised_and_updated_chamorro_dictionary.json): ear
 - `Tata'ao` → `Stomach` (body_parts, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Ulo` → `Head` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; ulo' (chamoru_info_dictionary.json): Worm, germ, bacteria, caterpillar, maggot.
-- `Buen prubechu` → `Enjoy your meal / Bon appetit` (common_phrases, frontend:src/data/defaultFlashcards.ts:410) — near_dictionary_key; close: buen prubetchu
-- `Kao guåha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:452) — near_dictionary_key; close: káguaha
-- `Ti siña` → `Cannot / Not possible` (common_phrases, frontend:src/data/defaultFlashcards.ts:458) — not_found_in_local_dictionaries; none
+- `Buen prubechu` → `Enjoy your meal / Bon appetit` (common_phrases, frontend:src/data/defaultFlashcards.ts:415) — near_dictionary_key; close: buen prubetchu
+- `Kao guåha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:457) — near_dictionary_key; close: káguaha
+- `Ti siña` → `Cannot / Not possible` (common_phrases, frontend:src/data/defaultFlashcards.ts:463) — not_found_in_local_dictionaries; none
 - `Inafa'maolek` → `To make peace / Interdependence` (culture, frontend:src/data/dailyWords.ts:680) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
-- `Inafa'maolek` → `Harmony / Getting along` (culture, frontend:src/data/defaultFlashcards.ts:1473) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
-- `Manamko'` → `Elders / Elderly` (culture, frontend:src/data/defaultFlashcards.ts:1461) — not_found_in_local_dictionaries; none
-- `Nånan biha` → `Grandmother` (culture, frontend:src/data/defaultFlashcards.ts:1485) — not_found_in_local_dictionaries; none
-- `Tåtan bihu` → `Grandfather` (culture, frontend:src/data/defaultFlashcards.ts:1491) — not_found_in_local_dictionaries; none
-- `Eskåpa` → `Leave / Get out` (daily_life, frontend:src/data/defaultFlashcards.ts:1417) — exact_dictionary_key; eskåpa (revised_and_updated_chamorro_dictionary.json): escape, avoid, evade, elude
-- `Ma'estra` → `Teacher (female)` (daily_life, frontend:src/data/defaultFlashcards.ts:1381) — not_found_in_local_dictionaries; none
-- `Nana` → `Mother / Mom` (family, frontend:src/data/defaultFlashcards.ts:163) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
+- `Inafa'maolek` → `Harmony / Getting along` (culture, frontend:src/data/defaultFlashcards.ts:1478) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
+- `Manamko'` → `Elders / Elderly` (culture, frontend:src/data/defaultFlashcards.ts:1466) — not_found_in_local_dictionaries; none
+- `Nånan biha` → `Grandmother` (culture, frontend:src/data/defaultFlashcards.ts:1490) — not_found_in_local_dictionaries; none
+- `Tåtan bihu` → `Grandfather` (culture, frontend:src/data/defaultFlashcards.ts:1496) — not_found_in_local_dictionaries; none
+- `Eskåpa` → `Leave / Get out` (daily_life, frontend:src/data/defaultFlashcards.ts:1422) — exact_dictionary_key; eskåpa (revised_and_updated_chamorro_dictionary.json): escape, avoid, evade, elude
+- `Ma'estra` → `Teacher (female)` (daily_life, frontend:src/data/defaultFlashcards.ts:1386) — not_found_in_local_dictionaries; none
 - `Nåna` → `Mother / Mom` (family, frontend:src/data/dailyWords.ts:119) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
-- `Prima / Primu` → `Cousin (female/male)` (family, frontend:src/data/defaultFlashcards.ts:203) — not_found_in_local_dictionaries; none
-- `Tia` → `Aunt` (family, frontend:src/data/dailyWords.ts:188) — not_found_in_local_dictionaries; none
-- `Tia` → `Aunt` (family, frontend:src/data/defaultFlashcards.ts:218) — not_found_in_local_dictionaries; none
-- `Tiu` → `Uncle` (family, frontend:src/data/dailyWords.ts:181) — not_found_in_local_dictionaries; none
-- `Tiu` → `Uncle` (family, frontend:src/data/defaultFlashcards.ts:213) — not_found_in_local_dictionaries; none
+- `Nåna` → `Mother / Mom` (family, frontend:src/data/defaultFlashcards.ts:163) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
 - `Buen prubechu` → `Enjoy your meal / Bon appetit` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: buen prubetchu
 - `Bunitu` → `Beautiful / Handsome` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
 - `Eskåpa` → `Leave / Get out` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; eskåpa (revised_and_updated_chamorro_dictionary.json): escape, avoid, evade, elude
@@ -71,6 +66,7 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Månha` → `Chicken` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; månha (revised_and_updated_chamorro_dictionary.json): green coconut
 - `Mårso` → `March` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: måso'
 - `Nana` → `Mother / Mom` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
+- `Nåna` → `Mother / Mom` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
 - `Nånan biha` → `Grandmother` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Petta / Potta` → `Door` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Prima / Primu` → `Cousin (female/male)` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
@@ -80,6 +76,10 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Tia` → `Aunt` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Tiu` → `Uncle` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Trongkon håyu` → `Tree` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: tronkon håyu, trongkun håyu
+- `Tåtan bihu` → `Grandfather` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
+- `Kådu` → `Soup / Stew` (food, frontend:src/data/defaultFlashcards.ts:571) — exact_dictionary_key; kadu' (revised_and_updated_chamorro_dictionary.json): pretend, make believe
+- `Kånno'` → `Food` (food, frontend:src/data/defaultFlashcards.ts:546) — exact_dictionary_key; kånno' (chamoru_info_dictionary.json): Eat something; devour something; consume something; gnaw on something. Must always take an object.
+- `Lechuga` → `Lettuce / Vegetables` (food, frontend:src/data/defaultFlashcards.ts:576) — not_found_in_local_dictionaries; none
 
 ## Phase 1 interpretation
 

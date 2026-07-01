@@ -122,7 +122,13 @@ def validate_vocabulary(api_root: Path, vocabulary_path: Path) -> list[str]:
                     errors.append(f"{citation_prefix}: source, headword, and definition are required")
                     continue
                 if source not in dictionary_indexes:
-                    errors.append(f"{citation_prefix}: source file {source!r} not found in dictionary_data")
+                    url = str(citation.get("url", ""))
+                    if url.startswith(("http://", "https://")):
+                        continue
+                    errors.append(
+                        f"{citation_prefix}: source file {source!r} not found in dictionary_data; "
+                        "external citations must include an http(s) url"
+                    )
                     continue
                 normalized_headword = normalize_text(str(headword))
                 if normalized_headword not in dictionary_indexes[source]:

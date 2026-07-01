@@ -42,13 +42,13 @@ Each entry includes:
 - `variants`: legitimate or possible alternate spellings/forms.
 - `deprecated_app_terms`: terms currently or historically in the app that should not be taught.
 - `needs_review_terms`: terms that may be valid but need human/source review before teaching.
-- `source_citations`: dictionary headwords, definitions, and evidence.
+- `source_citations`: dictionary or verified external-reference headwords/forms, definitions, URLs when external, and evidence.
 - `notes`: implementation/review notes.
 
 ## Review status definitions
 
 - `verified`: confirmed by a trusted human reviewer and source-backed.
-- `source_backed`: backed by local dictionary sources but not necessarily human-reviewed.
+- `source_backed`: backed by local dictionary sources or a verified external language reference when bundled local data is missing/conflicting; not necessarily human-reviewed.
 - `variant`: alternate form of a canonical entry.
 - `needs_review`: plausible but not safe to teach as canonical yet.
 - `deprecated`: old app term that should be replaced.
@@ -87,7 +87,8 @@ The validator checks:
 - canonical and recommended teaching terms match after normalization, with alternate spellings recorded as variants,
 - valid review/confidence values,
 - dictionary citation source files,
-- cited headwords exist in local dictionary files after normalization.
+- cited headwords exist in local dictionary files after normalization,
+- external citations include an `http(s)` URL and are structurally recorded without requiring network access during validation.
 
 The usage checker reports where deprecated terms, review-needed terms, and app-legacy variants still appear in the current code/audio content.
 
@@ -99,4 +100,4 @@ The usage checker reports where deprecated terms, review-needed terms, and app-l
 4. Keep regression checks so deprecated app terms like `Såksan`, `Lalala` as Orange, and `Å'tot` as Black cannot reappear in beginner teaching content.
 5. Expand canonical entries category by category: greetings, numbers, family, body, food, verbs, and common phrases.
 
-The first source-backed color corrections are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`. The numbers/greetings correction pass is documented in `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`.
+The first source-backed color corrections are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`. The numbers/greetings correction pass is documented in `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`. The family correction pass is documented in `documentation/LANGUAGE_CONTENT_FAMILY_CORRECTIONS.md`.

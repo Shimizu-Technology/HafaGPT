@@ -119,6 +119,45 @@ def test_validator_reports_invalid_optional_array_shapes_without_crashing(tmp_pa
     assert "entries[0].needs_review_terms[0]: reason is required" in errors
 
 
+def test_validator_allows_external_citations_with_urls(tmp_path):
+    api_root = Path(__file__).resolve().parents[1]
+    vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
+    vocabulary["entries"] = [vocabulary["entries"][0]]
+    vocabulary["entries"][0]["source_citations"] = [
+        {
+            "source": "External language reference",
+            "url": "https://example.com/chamorro-entry",
+            "headword": vocabulary["entries"][0]["canonical_chamorro"],
+            "definition": vocabulary["entries"][0]["english"],
+        }
+    ]
+    vocabulary_path = tmp_path / "canonical_vocabulary.external.json"
+    vocabulary_path.write_text(json.dumps(vocabulary), encoding="utf-8")
+
+    errors = validate_vocabulary(api_root, vocabulary_path)
+
+    assert errors == []
+
+
+def test_validator_rejects_external_citations_without_urls(tmp_path):
+    api_root = Path(__file__).resolve().parents[1]
+    vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
+    vocabulary["entries"] = [vocabulary["entries"][0]]
+    vocabulary["entries"][0]["source_citations"] = [
+        {
+            "source": "External language reference",
+            "headword": vocabulary["entries"][0]["canonical_chamorro"],
+            "definition": vocabulary["entries"][0]["english"],
+        }
+    ]
+    vocabulary_path = tmp_path / "canonical_vocabulary.external.invalid.json"
+    vocabulary_path.write_text(json.dumps(vocabulary), encoding="utf-8")
+
+    errors = validate_vocabulary(api_root, vocabulary_path)
+
+    assert any("external citations must include an http(s) url" in error for error in errors)
+
+
 def test_static_audio_manifest_does_not_map_stale_teaching_terms():
     api_root = Path(__file__).resolve().parents[1]
     vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")

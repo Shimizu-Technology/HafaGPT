@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -49,7 +50,15 @@ def normalized_contains(haystack: str, needle: str) -> bool:
 
 
 def exact_contains(haystack: str, needle: str) -> bool:
-    return needle.strip().casefold() in haystack.casefold()
+    needle = needle.strip()
+    if not needle:
+        return False
+    # Use token-ish boundaries so app-specific exact matches like `Tata` do not
+    # fire on longer words such as `Tata'ao` or possessed forms such as
+    # `tata-hu`. Exact mode is primarily for diacritic-only replacement pairs.
+    boundary_chars = r"\w'’\-"
+    pattern = rf"(?<![{boundary_chars}]){re.escape(needle)}(?![{boundary_chars}])"
+    return re.search(pattern, haystack, flags=re.IGNORECASE) is not None
 
 
 def choose_match_mode(term: str, recommended_teaching_term: str) -> str:
@@ -62,6 +71,11 @@ def rule_matches_text(haystack: str, rule: TermRule) -> bool:
     if rule.match_mode == "exact":
         return exact_contains(haystack, rule.term)
     return normalized_contains(haystack, rule.term)
+
+
+def is_manifest_asset_reference_line(line: str) -> bool:
+    stripped = line.strip()
+    return stripped.startswith('"file":') or stripped.startswith('"url":')
 
 
 def iter_scan_files(root: Path):
@@ -194,6 +208,8 @@ def scan_content_roots(scan_roots: list[Path], rules: list[TermRule]) -> list[di
                 normalized_term = normalize_text(rule.term)
                 for line_number, line in enumerate(text.splitlines(), start=1):
                     if not rule_matches_text(line, rule):
+                        continue
+                    if rule.match_mode == "exact" and is_manifest_asset_reference_line(line):
                         continue
                     if line_contains_preferred_or_longer_rule(line, rule, rules):
                         continue

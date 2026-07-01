@@ -120,6 +120,8 @@
       "additionalProperties": false,
       "properties": {
         "source": { "type": "string" },
+        "url": { "type": "string" },
+        "accessed_at": { "type": "string" },
         "headword": { "type": "string" },
         "definition": { "type": "string" },
         "part_of_speech": { "type": "string" },

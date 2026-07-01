@@ -1,14 +1,15 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers and core greetings/basics.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, and family terms.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
       "revised_and_updated_chamorro_dictionary.json",
       "chamoru_info_dictionary.json",
       "chamorro_english_dictionary_TOD.json",
-      "human/native-speaker review"
+      "human/native-speaker review",
+      "verified external language references when local dictionary data is missing or conflicting"
     ]
   },
   "entries": [
@@ -1548,6 +1549,788 @@
         }
       ],
       "notes": "Core beginner response term."
+    },
+    {
+      "id": "family.family",
+      "category": "family",
+      "english": "Family",
+      "canonical_chamorro": "Familia",
+      "recommended_teaching_term": "Familia",
+      "normalized_key": "familia",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "fah-MEE-lee-ah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Fåmilia",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Chamoru.info bundled source spelling."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "familia",
+          "definition": "family",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "fåmilia",
+          "definition": "Family; tribe; clan; folk; category of plants or animals."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "familia",
+          "definition": "family, tribe, clan, folk, category of plants or animals"
+        }
+      ],
+      "notes": "Strongly source-backed family/clan term."
+    },
+    {
+      "id": "family.mother",
+      "category": "family",
+      "english": "Mother / mom",
+      "canonical_chamorro": "Nåna",
+      "recommended_teaching_term": "Nåna",
+      "normalized_key": "nana",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "NAW-nah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Nana",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Post Guam: Si Nana gi familia",
+          "notes": "Common unaccented form; keep for recognition/search, but teach with the app's diacritic form."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Nanå",
+          "reason": "Accent placement appears only in older app Wordle content; standardize beginner display on Nåna pending native-speaker review.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "Chamoru.info online dictionary",
+          "url": "http://www.chamoru.info/dictionary/display.php?action=view&id=9348",
+          "headword": "nåna",
+          "definition": "noun. Mother; a female parent.",
+          "accessed_at": "2026-07-01",
+          "notes": "External source used because bundled local Chamoru.info JSON has a conflicting/older nåna plant entry."
+        },
+        {
+          "source": "Post Guam - Si Nana gi familia",
+          "url": "https://www.postguam.com/forum/featured_columnists/si-nana-gi-familia/article_0fb1e084-54e6-11e8-a78d-cbca071992f8.html",
+          "headword": "nana",
+          "definition": "In CHamoru, nana is often used to refer to mother as well as grandmother or a mother-figure.",
+          "accessed_at": "2026-07-01"
+        }
+      ],
+      "notes": "Bundled local dictionaries currently conflict/omit this common family term, so this entry relies on current external references and still needs native-speaker/educator review."
+    },
+    {
+      "id": "family.father",
+      "category": "family",
+      "english": "Father / dad",
+      "canonical_chamorro": "Tåta",
+      "recommended_teaching_term": "Tåta",
+      "normalized_key": "tata",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TAW-tah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Tåtå",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Tata",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tåta",
+          "definition": "father",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tåtå",
+          "definition": "Father; dad; papa; daddy; male parent."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tata",
+          "definition": "father, dad, papa, daddy, male parent"
+        }
+      ],
+      "notes": "Teaching display follows the revised dictionary spelling already used by daily words."
+    },
+    {
+      "id": "family.sibling",
+      "category": "family",
+      "english": "Sibling / brother / sister",
+      "canonical_chamorro": "Che'lu",
+      "recommended_teaching_term": "Che'lu",
+      "normalized_key": "chelu",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "CHEH-loo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "che'lu",
+          "definition": "sibling, brother, sister",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "che'lu",
+          "definition": "noun. sibling; brother; sister."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "che'lu",
+          "definition": "sibling, brother, sister"
+        }
+      ],
+      "notes": "Source-backed gender-neutral sibling term."
+    },
+    {
+      "id": "family.son_boy",
+      "category": "family",
+      "english": "Son / boy / male",
+      "canonical_chamorro": "Låhi",
+      "recommended_teaching_term": "Låhi",
+      "normalized_key": "lahi",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "LAW-hee",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Lahi",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "låhi",
+          "definition": "male, man, boy",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "låhi",
+          "definition": "noun. man; male; boy; son. Also used in direct address among friends in the same way that lai is used."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "lahi",
+          "definition": "man, male, boy; also used in direct address among friends in the same way that lai is used"
+        }
+      ],
+      "notes": "Teaching display uses Låhi; unaccented Lahi remains a source-backed variant."
+    },
+    {
+      "id": "family.daughter",
+      "category": "family",
+      "english": "Daughter",
+      "canonical_chamorro": "Håga",
+      "recommended_teaching_term": "Håga",
+      "normalized_key": "haga",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "HAW-gah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Haga",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "håga",
+          "definition": "daughter",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "håga",
+          "definition": "noun. daughter."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "haga",
+          "definition": "daughter"
+        }
+      ],
+      "notes": "Do not confuse with håga' (blood). Beginner display uses Håga for daughter."
+    },
+    {
+      "id": "family.grandmother_biha",
+      "category": "family",
+      "english": "Grandmother / old woman",
+      "canonical_chamorro": "Biha",
+      "recommended_teaching_term": "Biha",
+      "normalized_key": "biha",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BEE-hah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "biha",
+          "definition": "old woman, grandmother",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "biha",
+          "definition": "noun. grandmother; old woman."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "biha",
+          "definition": "grandmother, old woman"
+        }
+      ],
+      "notes": "Source-backed but overlaps with 'old woman'; use contextually and review tone/register with native speaker."
+    },
+    {
+      "id": "family.grandfather_bihu",
+      "category": "family",
+      "english": "Grandfather / old man",
+      "canonical_chamorro": "Bihu",
+      "recommended_teaching_term": "Bihu",
+      "normalized_key": "bihu",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BEE-hoo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "bihu",
+          "definition": "old man, grandfather",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "bihu",
+          "definition": "Grandfather; old man; ancient; old person; not young; aged."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "bihu",
+          "definition": "grandfather, old man, ancient, old person, not young, aged"
+        }
+      ],
+      "notes": "Source-backed but overlaps with 'old man/old'; use contextually and review tone/register with native speaker."
+    },
+    {
+      "id": "family.spouse",
+      "category": "family",
+      "english": "Spouse / husband / wife",
+      "canonical_chamorro": "Asagua",
+      "recommended_teaching_term": "Asagua",
+      "normalized_key": "asagua",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-SAH-gwah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "asagua",
+          "definition": "spouse, husband, wife",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "asagua",
+          "definition": "noun. spouse; husband; wife; mate."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "asagua",
+          "definition": "spouse, husband, wife, mate"
+        }
+      ],
+      "notes": "Keep separate from ásagua verb 'to marry'."
+    },
+    {
+      "id": "family.cousin_female",
+      "category": "family",
+      "english": "Female cousin",
+      "canonical_chamorro": "Prima",
+      "recommended_teaching_term": "Prima",
+      "normalized_key": "prima",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "PREE-mah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "prima",
+          "definition": "female cousin",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "prima",
+          "definition": "noun. Cousin (female). Used also in form of direct address."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "prima",
+          "definition": "cousin (f); used also as form of direct address"
+        }
+      ],
+      "notes": "Split from the old combined Prima / Primu card for clearer audio and quiz behavior."
+    },
+    {
+      "id": "family.cousin_male",
+      "category": "family",
+      "english": "Male cousin",
+      "canonical_chamorro": "Primu",
+      "recommended_teaching_term": "Primu",
+      "normalized_key": "primu",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "PREE-moo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "primu",
+          "definition": "male cousin",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "primu",
+          "definition": "noun. Cousin (male)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "primu",
+          "definition": "cousin (m)"
+        }
+      ],
+      "notes": "Split from the old combined Prima / Primu card for clearer audio and quiz behavior."
+    },
+    {
+      "id": "family.child",
+      "category": "family",
+      "english": "Child / infant / kid / baby",
+      "canonical_chamorro": "Påtgon",
+      "recommended_teaching_term": "Påtgon",
+      "normalized_key": "patgon",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "PAWT-gohn",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Patgon",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "påtgon",
+          "definition": "noun. child; infant; kid; baby."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "patgon",
+          "definition": "child, infant, kid, baby"
+        }
+      ],
+      "notes": "Teaching display keeps Påtgon; unaccented Patgon remains a source-backed variant."
+    },
+    {
+      "id": "family.children",
+      "category": "family",
+      "english": "Children / kids",
+      "canonical_chamorro": "Famagu'on",
+      "recommended_teaching_term": "Famagu'on",
+      "normalized_key": "famaguon",
+      "part_of_speech": "n.pl.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "fah-mah-GOO-ohn",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Famagu",
+          "reason": "Truncated app Wordle form; local dictionaries give Famagu'on as the plural of påtgon.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "famagu'on",
+          "definition": "Children; kids; infants; babies. Plural of påtgon."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "famagu'on",
+          "definition": "children, kids, infants, babies; plural of patgon"
+        }
+      ],
+      "notes": "Do not truncate to Famagu in beginner games."
+    },
+    {
+      "id": "family.uncle",
+      "category": "family",
+      "english": "Uncle",
+      "canonical_chamorro": "Tihu",
+      "recommended_teaching_term": "Tihu",
+      "normalized_key": "tihu",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TEE-hoo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Tiu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Listed as an alternate form in bundled Chamoru.info/TOD dictionaries."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tihu",
+          "definition": "uncle",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tihu",
+          "definition": "Uncle. Also tiu."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tihu",
+          "definition": "uncle\nal   tiu"
+        }
+      ],
+      "notes": "Teaching display uses dictionary headword Tihu while preserving Tiu as a source-backed variant."
+    },
+    {
+      "id": "family.aunt",
+      "category": "family",
+      "english": "Aunt",
+      "canonical_chamorro": "Tiha",
+      "recommended_teaching_term": "Tiha",
+      "normalized_key": "tiha",
+      "part_of_speech": "n.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TEE-hah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Tia",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Listed as an alternate form in bundled Chamoru.info/TOD dictionaries."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tiha",
+          "definition": "aunt",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tiha",
+          "definition": "Aunt. Also tia."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tiha",
+          "definition": "aunt\nal   tia"
+        }
+      ],
+      "notes": "Teaching display uses dictionary headword Tiha while preserving Tia as a source-backed variant."
+    },
+    {
+      "id": "family.parents_elders",
+      "category": "family",
+      "english": "Parents / elders",
+      "canonical_chamorro": "Mañaina",
+      "recommended_teaching_term": "Mañaina",
+      "normalized_key": "manaina",
+      "part_of_speech": "n.pl.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "mah-NYAI-nah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Mañaina'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "mañaina",
+          "definition": "parents",
+          "part_of_speech": "n.pl."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "mañaina'",
+          "definition": "Parents; elders (plural)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "mañaina",
+          "definition": "parents, elders (pl)"
+        }
+      ],
+      "notes": "Keep as intermediate because it can mean parents or elders depending on context."
+    },
+    {
+      "id": "family.grandmother_guella",
+      "category": "family",
+      "english": "Grandmother / female ancestor",
+      "canonical_chamorro": "Guella",
+      "recommended_teaching_term": "Guella",
+      "normalized_key": "guella",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "GWEH-lah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Guela'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Nånan biha",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Chamorro Language & Culture: Familia - Family",
+          "notes": "External learning source lists nanan biha pat guella for grandmother; preserve pending native review."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "guella",
+          "definition": "grandmother, female  ancestor",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "guella",
+          "definition": "noun. Grandmother."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "guella",
+          "definition": "grandmother\nal   guela'"
+        }
+      ],
+      "notes": "Biha and Guella are both source-backed grandmother terms. Nånan biha is preserved as an externally attested variant pending educator review."
+    },
+    {
+      "id": "family.grandfather_guello",
+      "category": "family",
+      "english": "Grandfather",
+      "canonical_chamorro": "Guello",
+      "recommended_teaching_term": "Guello",
+      "normalized_key": "guello",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "GWEH-loh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Guelo'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Tåtan bihu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Chamorro Language & Culture: Familia - Family",
+          "notes": "External learning source lists tatan bihu pat guello for grandfather; preserve pending native review."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "guello",
+          "definition": "Grandfather. (Guam)"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "guello",
+          "definition": "grandfather\nal   guelo'"
+        }
+      ],
+      "notes": "No revised-dictionary exact headword found, but Chamoru.info and TOD both back Guello. Tåtan bihu is preserved as an externally attested variant pending educator review."
     }
   ]
 }
