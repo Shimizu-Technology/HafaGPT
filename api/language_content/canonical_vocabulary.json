@@ -1313,7 +1313,17 @@
           "notes": "Unaccented spelling appears in TOD source; use diacritic form for teaching."
         }
       ],
-      "deprecated_app_terms": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Buenas tatdes",
+          "reason": "Source-backed unaccented spelling, but HåfaGPT teaching/audio display should use the diacritic form Buenas tåtdes.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+          ]
+        }
+      ],
       "needs_review_terms": [],
       "source_citations": [
         {

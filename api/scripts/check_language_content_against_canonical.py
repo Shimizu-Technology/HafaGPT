@@ -37,6 +37,7 @@ class TermRule:
     action: str
     reason: str
     known_paths: tuple[str, ...] = ()
+    match_mode: str = "normalized"
 
 
 def normalized_contains(haystack: str, needle: str) -> bool:
@@ -45,6 +46,22 @@ def normalized_contains(haystack: str, needle: str) -> bool:
     if not normalized_needle:
         return False
     return f" {normalized_needle} " in normalized_haystack
+
+
+def exact_contains(haystack: str, needle: str) -> bool:
+    return needle.strip().casefold() in haystack.casefold()
+
+
+def choose_match_mode(term: str, recommended_teaching_term: str) -> str:
+    if normalize_text(term) == normalize_text(recommended_teaching_term):
+        return "exact"
+    return "normalized"
+
+
+def rule_matches_text(haystack: str, rule: TermRule) -> bool:
+    if rule.match_mode == "exact":
+        return exact_contains(haystack, rule.term)
+    return normalized_contains(haystack, rule.term)
 
 
 def iter_scan_files(root: Path):
@@ -80,6 +97,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                         term=variant["term"],
                         action="review_variant_before_teaching",
                         reason=variant.get("notes", "Variant needs review before beginner teaching"),
+                        match_mode=choose_match_mode(variant["term"], entry["recommended_teaching_term"]),
                     )
                 )
             elif status in {"deprecated", "do_not_teach"}:
@@ -89,6 +107,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                         term=variant["term"],
                         action="replace_deprecated_variant",
                         reason=variant.get("notes", "Variant should not be taught as canonical"),
+                        match_mode=choose_match_mode(variant["term"], entry["recommended_teaching_term"]),
                     )
                 )
         for item in entry.get("deprecated_app_terms", []) or []:
@@ -99,6 +118,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                     action="replace_deprecated_term",
                     reason=item.get("reason", "Deprecated app term"),
                     known_paths=tuple(item.get("found_in", []) or []),
+                    match_mode=choose_match_mode(item["term"], entry["recommended_teaching_term"]),
                 )
             )
         for item in entry.get("needs_review_terms", []) or []:
@@ -109,6 +129,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                     action="review_before_teaching",
                     reason=item.get("reason", "Term needs review"),
                     known_paths=tuple(item.get("found_in", []) or []),
+                    match_mode=choose_match_mode(item["term"], entry["recommended_teaching_term"]),
                 )
             )
     return rules
@@ -127,6 +148,9 @@ def path_matches_known_paths(path: Path, known_paths: tuple[str, ...]) -> bool:
 
 
 def line_contains_preferred_or_longer_rule(line: str, current_rule: TermRule, rules: list[TermRule]) -> bool:
+    if current_rule.match_mode == "exact":
+        return False
+
     current_normalized = normalize_text(current_rule.term)
     recommended_normalized = normalize_text(current_rule.recommended_teaching_term)
     if (
@@ -165,11 +189,11 @@ def scan_content_roots(scan_roots: list[Path], rules: list[TermRule]) -> list[di
             for rule in rules:
                 if not path_matches_known_paths(path, rule.known_paths):
                     continue
-                if not normalized_contains(text, rule.term):
+                if not rule_matches_text(text, rule):
                     continue
                 normalized_term = normalize_text(rule.term)
                 for line_number, line in enumerate(text.splitlines(), start=1):
-                    if not normalized_contains(line, rule.term):
+                    if not rule_matches_text(line, rule):
                         continue
                     if line_contains_preferred_or_longer_rule(line, rule, rules):
                         continue
