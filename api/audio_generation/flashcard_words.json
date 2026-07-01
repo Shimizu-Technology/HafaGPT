@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 139,
+  "total": 140,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -27,24 +27,24 @@
           "phonetic_hint": "Noo-eh-bee"
         },
         {
-          "chamorro": "Nana",
+          "chamorro": "Nåna",
           "english": "Mother / Mom",
-          "phonetic_hint": null
+          "phonetic_hint": "Naw-nah"
         },
         {
-          "chamorro": "Tata",
+          "chamorro": "Tåta",
           "english": "Father / Dad",
-          "phonetic_hint": null
+          "phonetic_hint": "Taw-tah"
         },
         {
-          "chamorro": "Lahi",
-          "english": "Son / Boy",
-          "phonetic_hint": null
+          "chamorro": "Låhi",
+          "english": "Son / Boy / Male",
+          "phonetic_hint": "Law-hee"
         },
         {
-          "chamorro": "Haga",
-          "english": "Daughter / Girl",
-          "phonetic_hint": null
+          "chamorro": "Håga",
+          "english": "Daughter",
+          "phonetic_hint": "Haw-gah"
         },
         {
           "chamorro": "Biha",
@@ -62,9 +62,14 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Prima / Primu",
-          "english": "Cousin (female/male)",
-          "phonetic_hint": null
+          "chamorro": "Prima",
+          "english": "Female cousin",
+          "phonetic_hint": "Pree-mah"
+        },
+        {
+          "chamorro": "Primu",
+          "english": "Male cousin",
+          "phonetic_hint": "Pree-moo"
         },
         {
           "chamorro": "Påtgon",
@@ -72,14 +77,14 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Tiu",
+          "chamorro": "Tihu",
           "english": "Uncle",
-          "phonetic_hint": null
+          "phonetic_hint": "Tee-hoo"
         },
         {
-          "chamorro": "Tia",
+          "chamorro": "Tiha",
           "english": "Aunt",
-          "phonetic_hint": null
+          "phonetic_hint": "Tee-hah"
         },
         {
           "chamorro": "Ayuyu",

@@ -119,6 +119,45 @@ def test_validator_reports_invalid_optional_array_shapes_without_crashing(tmp_pa
     assert "entries[0].needs_review_terms[0]: reason is required" in errors
 
 
+def test_validator_allows_external_citations_with_urls(tmp_path):
+    api_root = Path(__file__).resolve().parents[1]
+    vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
+    vocabulary["entries"] = [vocabulary["entries"][0]]
+    vocabulary["entries"][0]["source_citations"] = [
+        {
+            "source": "External language reference",
+            "url": "https://example.com/chamorro-entry",
+            "headword": vocabulary["entries"][0]["canonical_chamorro"],
+            "definition": vocabulary["entries"][0]["english"],
+        }
+    ]
+    vocabulary_path = tmp_path / "canonical_vocabulary.external.json"
+    vocabulary_path.write_text(json.dumps(vocabulary), encoding="utf-8")
+
+    errors = validate_vocabulary(api_root, vocabulary_path)
+
+    assert errors == []
+
+
+def test_validator_rejects_external_citations_without_urls(tmp_path):
+    api_root = Path(__file__).resolve().parents[1]
+    vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
+    vocabulary["entries"] = [vocabulary["entries"][0]]
+    vocabulary["entries"][0]["source_citations"] = [
+        {
+            "source": "External language reference",
+            "headword": vocabulary["entries"][0]["canonical_chamorro"],
+            "definition": vocabulary["entries"][0]["english"],
+        }
+    ]
+    vocabulary_path = tmp_path / "canonical_vocabulary.external.invalid.json"
+    vocabulary_path.write_text(json.dumps(vocabulary), encoding="utf-8")
+
+    errors = validate_vocabulary(api_root, vocabulary_path)
+
+    assert any("external citations must include an http(s) url" in error for error in errors)
+
+
 def test_static_audio_manifest_does_not_map_stale_teaching_terms():
     api_root = Path(__file__).resolve().parents[1]
     vocabulary = load_json(api_root / "language_content" / "canonical_vocabulary.json")
@@ -130,3 +169,54 @@ def test_static_audio_manifest_does_not_map_stale_teaching_terms():
 
     assert manifest_exact_terms.isdisjoint(disallowed_exact_terms)
     assert manifest_normalized_terms.isdisjoint(disallowed_normalized_terms)
+
+
+def test_static_audio_manifest_aliases_resolve_to_existing_canonical_entries():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    for word, info in words.items():
+        alias_of = info.get("alias_of")
+        if not alias_of:
+            continue
+        assert alias_of != word
+        assert alias_of in words
+        assert info.get("compatibility_note")
+
+
+def test_family_manifest_promotes_tihu_tiha_without_broken_alias_metadata():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    expected_phonetics = {
+        "Tihu": "Tee-hoo",
+        "Tiha": "Tee-hah",
+    }
+    for word, phonetic in expected_phonetics.items():
+        assert word in words
+        assert "alias_of" not in words[word]
+        assert words[word]["phonetic_used"] == phonetic
+
+    expected_aliases = {
+        "Tiu": "Tihu",
+        "Tia": "Tiha",
+    }
+    for alias, canonical in expected_aliases.items():
+        assert alias in words
+        assert words[alias]["alias_of"] == canonical
+        assert words[alias]["phonetic_used"] == words[canonical]["phonetic_used"]
+        assert words[alias].get("compatibility_note")
+
+
+def test_family_manifest_marks_split_cousin_card_as_compatibility_alias():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    legacy_key = "Prima / Primu"
+    assert legacy_key in words
+    assert words[legacy_key]["alias_of"] == "Prima"
+    assert words[legacy_key]["compatibility_note"]
+    assert words[legacy_key]["phonetic_used"] == "Pree-mah / Pree-moo"
