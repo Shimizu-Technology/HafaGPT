@@ -887,9 +887,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Adjectives for size, quality, and feelings',
     cards: [
       {
-        front: 'Maolek',
+        front: 'Måolik',
         back: 'Good / Fine / Well',
-        pronunciation: 'mah-OH-lehk',
+        pronunciation: 'MAW-leek',
         example: 'Måolik ha\' yu\'. — I\'m fine.'
       },
       {
