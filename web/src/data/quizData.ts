@@ -310,9 +310,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('food', 6),
         type: 'multiple_choice',
         question: 'What does "Kelaguen" refer to?',
-        options: ['A soup', 'A grilled dish with lemon', 'A dessert', 'A drink'],
-        correctAnswer: 'A grilled dish with lemon',
-        explanation: 'Kelaguen is a traditional Chamorro dish made with grilled meat and lemon.'
+        options: ['A soup', 'A citrus-cured meat dish', 'A dessert', 'A drink'],
+        correctAnswer: 'A citrus-cured meat dish',
+        explanation: 'Kelaguen is a traditional Chamorro dish made with meat, red pepper, and lemon juice.'
       },
       {
         id: id('food', 7),

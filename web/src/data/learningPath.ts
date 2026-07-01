@@ -107,7 +107,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     quizCategory: 'food',
     intro: {
       culturalContext: 'Chamorro cuisine reflects the island\'s history — a blend of indigenous, Spanish, Filipino, and American influences. Rice (hineksa\') is a staple at every meal, and fresh seafood from the Pacific is treasured.',
-      keyPhrases: ['Hineksa\' — Rice', 'Guihan — Fish', 'Niyok — Coconut'],
+      keyPhrases: ['Hineksa\' — Cooked rice', 'Guihan — Fish', 'Niyok — Coconut palm'],
       tip: 'Try ordering at a local restaurant in Chamorro! "Kao guaha hineksa\'?" means "Do you have rice?"',
     },
     suggestedGames: ['memory', 'sound-match'],

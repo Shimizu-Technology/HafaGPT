@@ -257,8 +257,8 @@ export const DAILY_WORDS: DailyWord[] = [
   },
   {
     chamorro: 'Niyok',
-    english: 'Coconut',
-    pronunciation: 'NEE-yok',
+    english: 'Coconut / coconut palm',
+    pronunciation: 'NEE-dzok',
     example: {
       chamorro: 'I niyok mames.',
       english: 'The coconut is sweet.'
@@ -268,7 +268,7 @@ export const DAILY_WORDS: DailyWord[] = [
   },
   {
     chamorro: 'Kelaguen',
-    english: 'Grilled meat dish with lemon',
+    english: 'Citrus-cured meat dish',
     pronunciation: 'keh-lah-GWEN',
     example: {
       chamorro: 'Hu cho\'gue kelaguen mannok.',
@@ -289,8 +289,8 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'intermediate'
   },
   {
-    chamorro: 'Mannok',
-    english: 'Chicken',
+    chamorro: 'Månnok',
+    english: 'Chicken / poultry',
     pronunciation: 'MAHN-nok',
     category: 'Food',
     difficulty: 'beginner'
@@ -308,8 +308,8 @@ export const DAILY_WORDS: DailyWord[] = [
   },
   {
     chamorro: 'Chotda',
-    english: 'Banana',
-    pronunciation: 'CHOHT-dah',
+    english: 'Green banana / banana tree',
+    pronunciation: 'TSOHT-dah',
     category: 'Food',
     difficulty: 'beginner'
   },

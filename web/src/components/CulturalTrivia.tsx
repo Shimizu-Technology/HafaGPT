@@ -166,9 +166,9 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   },
   {
     question: "What is the Chamorro word for 'water'?",
-    options: ["Hanom", "Tasi", "Uchan", "Aire"],
+    options: ["Hånom", "Tåsi", "Uchan", "Aire"],
     correctIndex: 0,
-    explanation: "'Hanom' means 'water'. 'Tasi' means 'sea/ocean', and 'Uchan' means 'rain'.",
+    explanation: "'Hånom' means 'water'. 'Tåsi' means 'sea/ocean', and 'Uchan' means 'rain'.",
     category: "language"
   },
   {
@@ -188,7 +188,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   
   // Food & Nature
   {
-    question: "What is 'kelaguen' (also spelled kelaguen)?",
+    question: "What is 'kelaguen'?",
     options: ["A dance", "A citrus-marinated meat dish", "A type of bread", "A fishing net"],
     correctIndex: 1,
     explanation: "Kelaguen is a traditional Chamorro dish of meat (usually chicken, beef, or seafood) marinated in lemon juice and coconut.",
@@ -210,9 +210,9 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   },
   {
     question: "What is the Chamorro name for coconut?",
-    options: ["Niyok", "Manha", "Dågu", "Lemmai"],
+    options: ["Niyok", "Månha", "Dågu", "Lemmai"],
     correctIndex: 0,
-    explanation: "'Niyok' is coconut in Chamorro, an essential plant in Chamorro culture and cuisine.",
+    explanation: "'Niyok' is coconut/coconut palm in Chamorro; 'månha' is green coconut with tender meat.",
     category: "nature"
   },
   {

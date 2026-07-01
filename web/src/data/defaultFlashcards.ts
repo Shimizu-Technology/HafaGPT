@@ -412,10 +412,10 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Useful expressions for daily life',
     cards: [
       {
-        front: 'Buen prubechu',
-        back: 'Enjoy your meal / Bon appetit',
-        pronunciation: 'BWEN proh-BEH-choo',
-        example: 'Said before eating or to someone dining'
+        front: 'Buen prubetchu',
+        back: 'You\'re welcome',
+        pronunciation: 'BWEN proo-BEHT-choo',
+        example: 'Response to Si Yu\'os Ma\'åse\''
       },
       {
         front: 'Kao siña un tulaika?',
@@ -543,9 +543,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Meals, ingredients, cooking terms',
     cards: [
       {
-        front: 'Kånno\'',
-        back: 'Food',
-        pronunciation: 'KAHN-noh'
+        front: 'Nengkånno\'',
+        back: 'Food / Nourishment',
+        pronunciation: 'neng-KAHN-noh'
       },
       {
         front: 'Hineksa\'',
@@ -563,19 +563,19 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'KAHT-neh'
       },
       {
-        front: 'Månha',
-        back: 'Chicken',
-        pronunciation: 'MAHN-hah'
+        front: 'Månnok',
+        back: 'Chicken / Poultry',
+        pronunciation: 'MAHN-nok'
       },
       {
-        front: 'Kådu',
-        back: 'Soup / Stew',
-        pronunciation: 'KAH-doo'
+        front: 'Kåddo',
+        back: 'Soup / Broth / Stew',
+        pronunciation: 'KAH-doh'
       },
       {
-        front: 'Lechuga',
-        back: 'Lettuce / Vegetables',
-        pronunciation: 'leh-CHOO-gah'
+        front: 'Gollai',
+        back: 'Vegetables',
+        pronunciation: 'GOHL-lai'
       },
       {
         front: 'Hånom',
@@ -589,12 +589,12 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       },
       {
         front: 'Niyok',
-        back: 'Coconut',
+        back: 'Coconut / Coconut palm',
         pronunciation: 'nee-DZOHK'
       },
       {
         front: 'Kelaguen',
-        back: 'Grilled dish with lemon',
+        back: 'Citrus-cured meat dish',
         pronunciation: 'keh-lah-GWEN'
       },
       {
@@ -950,7 +950,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Nahong',
         back: 'Enough / Sufficient',
         pronunciation: 'nah-HONG',
-        example: 'Nahong i kånno\'. — The food is enough.'
+        example: 'Nahong i nengkånno\'. — The food is enough.'
       },
       {
         front: 'Chaddek',
@@ -976,7 +976,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Malago\' yu\'',
         back: 'I want',
         pronunciation: 'mah-LAH-goh dzoo',
-        example: 'Malago\' yu\' kånno\'. — I want food.'
+        example: 'Malago\' yu\' nengkånno\'. — I want food.'
       },
       {
         front: 'Ti malago\' yu\'',
