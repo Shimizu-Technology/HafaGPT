@@ -653,7 +653,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         question: 'What does "Åtadok" mean?',
         options: ['Mouth', 'Nose', 'Eye/Eyes', 'Ear'],
         correctAnswer: 'Eye/Eyes',
-        explanation: '"Åtadok" means "eye" or "eyeball".'
+        explanation: '"Åtadok" means "eye" or "eyes".'
       },
       {
         id: id('body', 3),
