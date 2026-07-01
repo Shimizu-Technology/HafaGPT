@@ -220,3 +220,70 @@ def test_family_manifest_marks_split_cousin_card_as_compatibility_alias():
     assert words[legacy_key]["alias_of"] == "Prima"
     assert words[legacy_key]["compatibility_note"]
     assert words[legacy_key]["phonetic_used"] == "Pree-mah / Pree-moo"
+
+
+def test_static_audio_manifest_total_words_matches_word_count():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+
+    assert manifest["total_words"] == len(manifest["words"])
+
+
+def test_body_parts_manifest_uses_corrected_simon_says_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    stale_terms = {
+        "Ulo",
+        "Mata",
+        "Kanai",
+        "Tata'ao",
+        "Påtti i ulo-mu!",
+        "Påtti i mata-mu!",
+        "Na'fåna i kanai-mu!",
+        "Påtti i tata'ao-mu!",
+    }
+    assert words.keys().isdisjoint(stale_terms)
+
+    corrected_terms = {
+        "Ulu",
+        "Åtadok",
+        "Kannai",
+        "Tuyan",
+        "Påtti i ulu-mu!",
+        "Påtti i åtadok-mu!",
+        "Na'fåna i kannai-mu!",
+        "Påtti i tuyan-mu!",
+    }
+    assert corrected_terms.issubset(words.keys())
+
+
+def test_tier1_body_parts_source_list_uses_corrected_simon_says_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    tier1_words = load_json(api_root / "audio_generation" / "tier1_words.json")
+    exact_terms, _ = collect_chamorro_terms_from_word_list(tier1_words)
+
+    stale_terms = {
+        exact_key("Ulo"),
+        exact_key("Mata"),
+        exact_key("Kanai"),
+        exact_key("Tata'ao"),
+        exact_key("Påtti i ulo-mu!"),
+        exact_key("Påtti i mata-mu!"),
+        exact_key("Na'fåna i kanai-mu!"),
+        exact_key("Påtti i tata'ao-mu!"),
+    }
+    assert exact_terms.isdisjoint(stale_terms)
+
+    corrected_terms = {
+        exact_key("Ulu"),
+        exact_key("Åtadok"),
+        exact_key("Kannai"),
+        exact_key("Tuyan"),
+        exact_key("Påtti i ulu-mu!"),
+        exact_key("Påtti i åtadok-mu!"),
+        exact_key("Na'fåna i kannai-mu!"),
+        exact_key("Påtti i tuyan-mu!"),
+    }
+    assert corrected_terms.issubset(exact_terms)

@@ -14,11 +14,11 @@ Phase 1 inventories user-facing language content from:
 ## Summary counts
 
 - Dictionary normalized headwords indexed: 14984
-- Content items inventoried: 2161
-- By source repo: {'api': 1418, 'frontend': 743}
-- By source kind: {'api_json_language_content': 1418, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
-- By match status: {'exact_dictionary_key': 1843, 'near_dictionary_key': 45, 'not_found_in_local_dictionaries': 106, 'phrase_or_sentence_not_directly_indexed': 167}
-- By risk: {'low': 1787, 'medium': 207, 'review': 167}
+- Content items inventoried: 2159
+- By source repo: {'api': 1416, 'frontend': 743}
+- By source kind: {'api_json_language_content': 1416, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
+- By match status: {'exact_dictionary_key': 1847, 'near_dictionary_key': 42, 'not_found_in_local_dictionaries': 103, 'phrase_or_sentence_not_directly_indexed': 167}
+- By risk: {'low': 1797, 'medium': 195, 'review': 167}
 
 ## Immediate high-confidence concerns
 
@@ -31,12 +31,8 @@ No high-risk findings in the current generated inventory.
 Medium-risk findings need review, but many may be valid spelling variants, borrowed terms, inflected forms, or terms missing from one dictionary source.
 
 - `Bunitu` → `Beautiful / Handsome` (adjectives, frontend:src/data/defaultFlashcards.ts:902) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
-- `Mata` → `Eye / Eyes` (body, frontend:src/data/defaultFlashcards.ts:488) — exact_dictionary_key; måta (revised_and_updated_chamorro_dictionary.json): hole for  planting, area where a plant grows
-- `Kanai` → `Hand` (body_parts, api:audio_generation/manifest.json) — near_dictionary_key; close: kånnai, kana', anai
-- `Mata` → `Eyes` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; måta (revised_and_updated_chamorro_dictionary.json): hole for  planting, area where a plant grows
 - `Talanga` → `Ears` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; talanga (revised_and_updated_chamorro_dictionary.json): ear
-- `Tata'ao` → `Stomach` (body_parts, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
-- `Ulo` → `Head` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; ulo' (chamoru_info_dictionary.json): Worm, germ, bacteria, caterpillar, maggot.
+- `Åtadok` → `Eyes` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; åtadok (chamoru_info_dictionary.json): Eye; eyeball.
 - `Buen prubechu` → `Enjoy your meal / Bon appetit` (common_phrases, frontend:src/data/defaultFlashcards.ts:415) — near_dictionary_key; close: buen prubetchu
 - `Kao guåha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:457) — near_dictionary_key; close: káguaha
 - `Ti siña` → `Cannot / Not possible` (common_phrases, frontend:src/data/defaultFlashcards.ts:463) — not_found_in_local_dictionaries; none
@@ -80,20 +76,26 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Kådu` → `Soup / Stew` (food, frontend:src/data/defaultFlashcards.ts:571) — exact_dictionary_key; kadu' (revised_and_updated_chamorro_dictionary.json): pretend, make believe
 - `Kånno'` → `Food` (food, frontend:src/data/defaultFlashcards.ts:546) — exact_dictionary_key; kånno' (chamoru_info_dictionary.json): Eat something; devour something; consume something; gnaw on something. Must always take an object.
 - `Lechuga` → `Lettuce / Vegetables` (food, frontend:src/data/defaultFlashcards.ts:576) — not_found_in_local_dictionaries; none
+- `Månha` → `Chicken` (food, frontend:src/data/defaultFlashcards.ts:566) — exact_dictionary_key; månha (revised_and_updated_chamorro_dictionary.json): green coconut
+- `Asta agupa'` → `See you tomorrow` (greetings, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
+- `Asta agupa'` → `See you tomorrow` (greetings, frontend:src/data/defaultFlashcards.ts:52) — not_found_in_local_dictionaries; none
+- `Dispensa yu'` → `Excuse me / Sorry` (greetings, frontend:src/data/dailyWords.ts:95) — not_found_in_local_dictionaries; none
 
 ## Phase 1 interpretation
 
-The clearest initial content drift was in the color vocabulary. Follow-up passes have now updated source-backed colors, beginner numbers, and core greetings/basics across core frontend learning surfaces and API audio source lists from `language_content/canonical_vocabulary.json`.
+The clearest initial content drift was in the color vocabulary. Follow-up passes have now updated source-backed colors, beginner numbers, core greetings/basics, family terms, and body-part terms across core frontend learning surfaces and API audio source lists from `language_content/canonical_vocabulary.json`.
 
 The old high-risk beginner drift has now been removed from core beginner surfaces and from active static-audio lookup:
 
 - Color drift such as `Såksan` for brown, `Lalala` for orange, `Å'tot` for black, `Gris` for gray, and bare/review-needed pink/purple/brown/orange variants has been replaced by source-backed canonical terms.
 - Number drift such as `Uno`, `Kuåttro`, `Sinku`/`Singko`, `Siette`, and `Nuebe` has been replaced by source-backed terms: `Unu`, `Kuåtro`, `Sinko`, `Siete`, and `Nuebi`.
 - Greeting/basic drift such as `Bula` taught as goodbye, `Mañana si Yu'os` taught as good morning, and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces.
+- Family drift such as `Nana`/`Tata`/`Lahi`/`Haga`, combined `Prima / Primu`, and `Tiu`/`Tia` as primary beginner display has been replaced with reviewed canonical entries while source-backed variants remain documented.
+- Body-part drift such as `Ulo` for head, `Kanai` for hand, `Tata'ao` for stomach, and primary beginner `Mata` for eye has been replaced or deferred with source-backed canonical entries and review notes.
 
 ## Recommended next step
 
-Continue category by category, not by blind global replacement. Expand `language_content/canonical_vocabulary.json` for family, body, food, common verbs, and remaining common phrases with source citations, variants, pronunciation guidance, confidence, and review status.
+Continue category by category, not by blind global replacement. Expand `language_content/canonical_vocabulary.json` for food, common verbs, and remaining common phrases with source citations, variants, pronunciation guidance, confidence, and review status.
 
 Regenerate static audio from corrected source lists and keep regression tests/checkers in place so hardcoded terms cannot drift again.
 
