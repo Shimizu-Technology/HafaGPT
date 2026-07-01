@@ -75,27 +75,27 @@
     "body_parts": {
       "description": "Body part vocabulary from Simon Says game",
       "words": [
-        { "chamorro": "Ulo", "english": "Head", "phonetic_hint": "Oo-lo" },
-        { "chamorro": "Mata", "english": "Eyes", "phonetic_hint": "Mah-tah" },
+        { "chamorro": "Ulu", "english": "Head", "phonetic_hint": "Oo-loo" },
+        { "chamorro": "Åtadok", "english": "Eyes", "phonetic_hint": "Aw-tah-dok" },
         { "chamorro": "Talanga", "english": "Ears", "phonetic_hint": "Tah-lahng-ah" },
         { "chamorro": "Gui'eng", "english": "Nose", "phonetic_hint": "Gee-eng" },
         { "chamorro": "Pachot", "english": "Mouth", "phonetic_hint": "Pah-tsot" },
-        { "chamorro": "Kanai", "english": "Hand", "phonetic_hint": "Kah-nye" },
+        { "chamorro": "Kannai", "english": "Hand", "phonetic_hint": "Kahn-nye" },
         { "chamorro": "Addeng", "english": "Foot", "phonetic_hint": "Ahd-deng" },
-        { "chamorro": "Tata'ao", "english": "Stomach", "phonetic_hint": "Tah-tah-ow" }
+        { "chamorro": "Tuyan", "english": "Stomach", "phonetic_hint": "Too-dzahn" }
       ]
     },
     "simon_says_instructions": {
       "description": "Full instruction phrases from Simon Says game",
       "words": [
-        { "chamorro": "Påtti i ulo-mu!", "english": "Touch your head!", "phonetic_hint": "Pawt-tee ee oo-lo-moo" },
-        { "chamorro": "Påtti i mata-mu!", "english": "Touch your eyes!", "phonetic_hint": "Pawt-tee ee mah-tah-moo" },
+        { "chamorro": "Påtti i ulu-mu!", "english": "Touch your head!", "phonetic_hint": "Pawt-tee ee oo-loo-moo" },
+        { "chamorro": "Påtti i åtadok-mu!", "english": "Touch your eyes!", "phonetic_hint": "Pawt-tee ee aw-tah-dok-moo" },
         { "chamorro": "Påtti i talanga-mu!", "english": "Touch your ears!", "phonetic_hint": "Pawt-tee ee tah-lahng-ah-moo" },
         { "chamorro": "Påtti i gui'eng-mu!", "english": "Touch your nose!", "phonetic_hint": "Pawt-tee ee gee-eng-moo" },
         { "chamorro": "Påtti i pachot-mu!", "english": "Touch your mouth!", "phonetic_hint": "Pawt-tee ee pah-tsot-moo" },
-        { "chamorro": "Na'fåna i kanai-mu!", "english": "Show your hand!", "phonetic_hint": "Nah-faw-nah ee kah-nye-moo" },
+        { "chamorro": "Na'fåna i kannai-mu!", "english": "Show your hand!", "phonetic_hint": "Nah-faw-nah ee kahn-nye-moo" },
         { "chamorro": "Na'fåna i addeng-mu!", "english": "Show your foot!", "phonetic_hint": "Nah-faw-nah ee ahd-deng-moo" },
-        { "chamorro": "Påtti i tata'ao-mu!", "english": "Touch your stomach!", "phonetic_hint": "Pawt-tee ee tah-tah-ow-moo" }
+        { "chamorro": "Påtti i tuyan-mu!", "english": "Touch your stomach!", "phonetic_hint": "Pawt-tee ee too-dzahn-moo" }
       ]
     },
     "ui_feedback": {

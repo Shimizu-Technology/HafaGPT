@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-01T20:37:39.174746",
+  "last_updated": "2026-07-01T22:03:04.598875",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.amazonaws.com/audio/"
   },
-  "total_words": 709,
+  "total_words": 707,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -430,30 +430,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Ulo": {
-      "file": "ulo.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/ulo.mp3",
-      "english": "Head",
-      "category": "body_parts",
-      "tier": 1,
-      "phonetic_used": "Oo-lo",
-      "size_bytes": 13837,
-      "generated_at": "2026-01-10T18:05:27.218321",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Mata": {
-      "file": "mata.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/mata.mp3",
-      "english": "Eyes",
-      "category": "body_parts",
-      "tier": 1,
-      "phonetic_used": "Mah-tah",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:05:28.222024",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Talanga": {
       "file": "talanga.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/talanga.mp3",
@@ -490,18 +466,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Kanai": {
-      "file": "kanai.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kanai.mp3",
-      "english": "Hand",
-      "category": "body_parts",
-      "tier": 1,
-      "phonetic_used": "Kah-nye",
-      "size_bytes": 17599,
-      "generated_at": "2026-01-10T18:05:32.423286",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Addeng": {
       "file": "addeng.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/addeng.mp3",
@@ -511,42 +475,6 @@
       "phonetic_used": "Ahd-deng",
       "size_bytes": 17599,
       "generated_at": "2026-01-10T18:05:33.438710",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Tata'ao": {
-      "file": "tataao.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tataao.mp3",
-      "english": "Stomach",
-      "category": "body_parts",
-      "tier": 1,
-      "phonetic_used": "Tah-tah-ow",
-      "size_bytes": 17181,
-      "generated_at": "2026-01-10T18:05:34.453934",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Påtti i ulo-mu!": {
-      "file": "patti_i_ulomu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_ulomu.mp3",
-      "english": "Touch your head!",
-      "category": "simon_says_instructions",
-      "tier": 1,
-      "phonetic_used": "Pawt-tee ee oo-lo-moo",
-      "size_bytes": 25958,
-      "generated_at": "2026-01-10T18:05:35.494745",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Påtti i mata-mu!": {
-      "file": "patti_i_matamu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_matamu.mp3",
-      "english": "Touch your eyes!",
-      "category": "simon_says_instructions",
-      "tier": 1,
-      "phonetic_used": "Pawt-tee ee mah-tah-moo",
-      "size_bytes": 24286,
-      "generated_at": "2026-01-10T18:05:36.540432",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
@@ -586,18 +514,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Na'fåna i kanai-mu!": {
-      "file": "nafana_i_kanaimu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nafana_i_kanaimu.mp3",
-      "english": "Show your hand!",
-      "category": "simon_says_instructions",
-      "tier": 1,
-      "phonetic_used": "Nah-faw-nah ee kah-nye-moo",
-      "size_bytes": 25958,
-      "generated_at": "2026-01-10T18:05:41.158448",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Na'fåna i addeng-mu!": {
       "file": "nafana_i_addengmu.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nafana_i_addengmu.mp3",
@@ -607,18 +523,6 @@
       "phonetic_used": "Nah-faw-nah ee ahd-deng-moo",
       "size_bytes": 29720,
       "generated_at": "2026-01-10T18:05:42.275445",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
-    "Påtti i tata'ao-mu!": {
-      "file": "patti_i_tataaomu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_tataaomu.mp3",
-      "english": "Touch your stomach!",
-      "category": "simon_says_instructions",
-      "tier": 1,
-      "phonetic_used": "Pawt-tee ee tah-tah-ow-moo",
-      "size_bytes": 31809,
-      "generated_at": "2026-01-10T18:05:43.471775",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
@@ -8318,6 +8222,78 @@
       "review_status": "needs_review",
       "alias_of": "Prima",
       "compatibility_note": "Legacy combined cousin card retained for saved decks and currently deployed clients; primary teaching display uses separate Prima and Primu entries."
+    },
+    "Ulu": {
+      "file": "ulu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/ulu.mp3",
+      "english": "Head",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Oo-loo",
+      "size_bytes": 14254,
+      "generated_at": "2026-07-01T22:02:59.784853",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Åtadok": {
+      "file": "atadok.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/atadok.mp3",
+      "english": "Eyes",
+      "category": "body_parts",
+      "tier": 1,
+      "phonetic_used": "Aw-tah-dok",
+      "size_bytes": 18852,
+      "generated_at": "2026-07-01T22:03:00.696740",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Påtti i ulu-mu!": {
+      "file": "patti_i_ulumu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_ulumu.mp3",
+      "english": "Touch your head!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee oo-loo-moo",
+      "size_bytes": 26375,
+      "generated_at": "2026-07-01T22:03:01.667130",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Påtti i åtadok-mu!": {
+      "file": "patti_i_atadokmu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_atadokmu.mp3",
+      "english": "Touch your eyes!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee aw-tah-dok-moo",
+      "size_bytes": 29301,
+      "generated_at": "2026-07-01T22:03:02.664131",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Na'fåna i kannai-mu!": {
+      "file": "nafana_i_kannaimu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nafana_i_kannaimu.mp3",
+      "english": "Show your hand!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Nah-faw-nah ee kahn-nye-moo",
+      "size_bytes": 27211,
+      "generated_at": "2026-07-01T22:03:03.654997",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Påtti i tuyan-mu!": {
+      "file": "patti_i_tuyanmu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/patti_i_tuyanmu.mp3",
+      "english": "Touch your stomach!",
+      "category": "simon_says_instructions",
+      "tier": 1,
+      "phonetic_used": "Pawt-tee ee too-dzahn-moo",
+      "size_bytes": 23449,
+      "generated_at": "2026-07-01T22:03:04.598854",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
     }
   }
 }

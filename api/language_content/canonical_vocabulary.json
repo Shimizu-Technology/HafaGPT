@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, and family terms.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, and body-part terms.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
@@ -2331,6 +2331,538 @@
         }
       ],
       "notes": "No revised-dictionary exact headword found, but Chamoru.info and TOD both back Guello. Tåtan bihu is preserved as an externally attested variant pending educator review."
+    },
+    {
+      "id": "body_parts.head",
+      "category": "body_parts",
+      "english": "Head",
+      "canonical_chamorro": "Ulu",
+      "recommended_teaching_term": "Ulu",
+      "normalized_key": "ulu",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "OO-loo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Ulo",
+          "reason": "Local dictionaries list Ulu as head; Ulo/ulo' is a separate worm/germ entry, so beginner body-part teaching should use Ulu.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/SimonSays.tsx",
+            "HafaGPT-frontend/src/data/storyData.ts",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "ulu",
+          "definition": "head",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "ulu",
+          "definition": "noun. head (anatomy)"
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "ulu",
+          "definition": "head"
+        }
+      ],
+      "notes": "Corrects older Simon Says/audio/story content that displayed Ulo for head."
+    },
+    {
+      "id": "body_parts.eye",
+      "category": "body_parts",
+      "english": "Eye / eyeball",
+      "canonical_chamorro": "Åtadok",
+      "recommended_teaching_term": "Åtadok",
+      "normalized_key": "atadok",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "AW-tah-dok",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Åtaduk",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary headword; definition notes eye/eyeball and says used mainly for animals."
+        },
+        {
+          "term": "Atadok",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "ASCII fallback without å; keep for search, not primary teaching display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [
+        {
+          "term": "Mata",
+          "reason": "Mata/måta appears as a Syn./cf. under Åtaduk/Atadok, but bundled standalone headwords also define måta/mata as unrelated meanings such as planting hole/raw. Use Åtadok for beginner eye teaching until a reviewer confirms how to present Mata.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/quizData.ts",
+            "HafaGPT-frontend/src/data/learningPath.ts",
+            "HafaGPT-frontend/src/components/SimonSays.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åtadok",
+          "definition": "Eye; eyeball."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "atadok",
+          "definition": "eye, eyeball",
+          "notes": "TOD includes cf: mata."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "åtaduk",
+          "definition": "eye, eyeball (used mainly for animals)",
+          "part_of_speech": "n.",
+          "notes": "Revised dictionary includes Syn: måta in the entry notes."
+        }
+      ],
+      "notes": "Teaching display uses the unambiguous Chamoru.info/TOD eye headword Åtadok. Mata is not erased from the language record, but it should not remain the primary beginner eye card without native-speaker/educator review."
+    },
+    {
+      "id": "body_parts.ear",
+      "category": "body_parts",
+      "english": "Ear",
+      "canonical_chamorro": "Talanga",
+      "recommended_teaching_term": "Talanga",
+      "normalized_key": "talanga",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "tah-LAHNG-gah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "talanga",
+          "definition": "ear",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "talanga",
+          "definition": "Ear."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "talanga",
+          "definition": "ear"
+        }
+      ],
+      "notes": "Existing learner-facing term is source-backed."
+    },
+    {
+      "id": "body_parts.nose",
+      "category": "body_parts",
+      "english": "Nose",
+      "canonical_chamorro": "Gui'eng",
+      "recommended_teaching_term": "Gui'eng",
+      "normalized_key": "guieng",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "GEE-eng",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Gui'ing",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "gui'eng",
+          "definition": "Nose."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "gui'eng",
+          "definition": "nose"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "gui'ing",
+          "definition": "nose",
+          "part_of_speech": "n."
+        }
+      ],
+      "notes": "Teaching display keeps the existing Gui'eng form backed by Chamoru.info and TOD while preserving revised-dictionary Gui'ing."
+    },
+    {
+      "id": "body_parts.mouth",
+      "category": "body_parts",
+      "english": "Mouth",
+      "canonical_chamorro": "Pachot",
+      "recommended_teaching_term": "Pachot",
+      "normalized_key": "pachot",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "pah-TSOHT",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Påchot",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Påchut",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "påchot",
+          "definition": "Mouth."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "pachot",
+          "definition": "mouth"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "påchut",
+          "definition": "mouth",
+          "part_of_speech": "n."
+        }
+      ],
+      "notes": "Existing app display Pachot is source-backed by TOD; source variants with å/u are preserved for review/search."
+    },
+    {
+      "id": "body_parts.hand",
+      "category": "body_parts",
+      "english": "Hand / arm up to shoulder",
+      "canonical_chamorro": "Kannai",
+      "recommended_teaching_term": "Kannai",
+      "normalized_key": "kannai",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KAHN-nigh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kånnai",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Kanai",
+          "reason": "Kanai was not found as a local dictionary headword; sources support Kannai/Kånnai for hand/arm.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/SimonSays.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kånnai",
+          "definition": "hand, arm (up to  shoulder)",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kånnai",
+          "definition": "Hand; arm (up to the shoulder); dial (of clock or watch)."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kannai",
+          "definition": "hand, arm (up to shoulder), dial (of clock or watch)"
+        }
+      ],
+      "notes": "Beginner display follows current flashcards/TOD-style Kannai and removes unsupported Kanai from Simon Says/audio."
+    },
+    {
+      "id": "body_parts.arm",
+      "category": "body_parts",
+      "english": "Arm / forearm",
+      "canonical_chamorro": "Bråsu",
+      "recommended_teaching_term": "Bråsu",
+      "normalized_key": "brasu",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "BRAW-soo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Brasu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "bråsu",
+          "definition": "arm, thoracic limb",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "bråsu",
+          "definition": "Arm; thoracic limb; forearm."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "brasu",
+          "definition": "arm, thoracic limb, forearm"
+        }
+      ],
+      "notes": "Existing app display is source-backed."
+    },
+    {
+      "id": "body_parts.foot",
+      "category": "body_parts",
+      "english": "Foot / feet / human leg",
+      "canonical_chamorro": "Addeng",
+      "recommended_teaching_term": "Addeng",
+      "normalized_key": "addeng",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ahd-DENG",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Ådding",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "addeng",
+          "definition": "Foot--human; feet; leg. Sole of foot."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "addeng",
+          "definition": "foot--human, feet, leg (human)"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "ådding",
+          "definition": "foot (of a human)",
+          "part_of_speech": "n."
+        }
+      ],
+      "notes": "Existing app display Addeng is backed by Chamoru.info/TOD; revised dictionary Ådding is preserved as a source variant."
+    },
+    {
+      "id": "body_parts.neck",
+      "category": "body_parts",
+      "english": "Neck / nape",
+      "canonical_chamorro": "Kueyu",
+      "recommended_teaching_term": "Kueyu",
+      "normalized_key": "kueyu",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "KWEH-dzoo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kueyu",
+          "definition": "neck, back of neck, nape",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kueyu",
+          "definition": "Neck, the back side; nape."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kueyu",
+          "definition": "neck, the back side, nape"
+        }
+      ],
+      "notes": "Existing app display is source-backed."
+    },
+    {
+      "id": "body_parts.heart",
+      "category": "body_parts",
+      "english": "Heart",
+      "canonical_chamorro": "Korason",
+      "recommended_teaching_term": "Korason",
+      "normalized_key": "korason",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "koh-rah-SOHN",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Koråson",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        },
+        {
+          "term": "Kurasón",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "koråson",
+          "definition": "Heart; darling; sweetheart; lover; core."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "korason",
+          "definition": "heart, darling, sweetheart, lover; core"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kurasón",
+          "definition": "heart, darling, sweetheart, lover, core",
+          "part_of_speech": "n."
+        }
+      ],
+      "notes": "Teaching display keeps current app/TOD Korason and records å/u/accented variants for reviewer visibility."
+    },
+    {
+      "id": "body_parts.stomach",
+      "category": "body_parts",
+      "english": "Stomach / belly / abdomen",
+      "canonical_chamorro": "Tuyan",
+      "recommended_teaching_term": "Tuyan",
+      "normalized_key": "tuyan",
+      "part_of_speech": "n.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "TOO-dzahn",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Tata'ao",
+          "reason": "Tata'ao was not found in the local dictionaries for stomach; Tuyan is source-backed for stomach/belly/abdomen.",
+          "found_in": [
+            "HafaGPT-frontend/src/components/SimonSays.tsx",
+            "HafaGPT-API/audio_generation/tier1_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tuyan",
+          "definition": "stomach, belly, abdomen",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tuyan",
+          "definition": "stomach; belly; abdomen."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tuyan",
+          "definition": "stomach, belly, abdomen"
+        }
+      ],
+      "notes": "Frontend flashcards/quizzes already used Tuyan; this pass aligns Simon Says and static audio source lists."
     }
   ]
 }

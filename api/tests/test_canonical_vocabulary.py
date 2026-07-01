@@ -220,3 +220,33 @@ def test_family_manifest_marks_split_cousin_card_as_compatibility_alias():
     assert words[legacy_key]["alias_of"] == "Prima"
     assert words[legacy_key]["compatibility_note"]
     assert words[legacy_key]["phonetic_used"] == "Pree-mah / Pree-moo"
+
+
+def test_body_parts_manifest_uses_corrected_simon_says_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    stale_terms = {
+        "Ulo",
+        "Mata",
+        "Kanai",
+        "Tata'ao",
+        "Påtti i ulo-mu!",
+        "Påtti i mata-mu!",
+        "Na'fåna i kanai-mu!",
+        "Påtti i tata'ao-mu!",
+    }
+    assert words.keys().isdisjoint(stale_terms)
+
+    corrected_terms = {
+        "Ulu",
+        "Åtadok",
+        "Kannai",
+        "Tuyan",
+        "Påtti i ulu-mu!",
+        "Påtti i åtadok-mu!",
+        "Na'fåna i kannai-mu!",
+        "Påtti i tuyan-mu!",
+    }
+    assert corrected_terms.issubset(words.keys())
