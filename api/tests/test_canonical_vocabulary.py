@@ -208,3 +208,15 @@ def test_family_manifest_promotes_tihu_tiha_without_broken_alias_metadata():
         assert words[alias]["alias_of"] == canonical
         assert words[alias]["phonetic_used"] == words[canonical]["phonetic_used"]
         assert words[alias].get("compatibility_note")
+
+
+def test_family_manifest_marks_split_cousin_card_as_compatibility_alias():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    legacy_key = "Prima / Primu"
+    assert legacy_key in words
+    assert words[legacy_key]["alias_of"] == "Prima"
+    assert words[legacy_key]["compatibility_note"]
+    assert words[legacy_key]["phonetic_used"] == "Pree-mah / Pree-moo"

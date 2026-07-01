@@ -91,7 +91,7 @@ Generated new static audio for:
 - `Prima`
 - `Primu`
 
-The existing `tihu.mp3` and `tiha.mp3` audio files are reused directly by canonical `Tihu` and `Tiha` manifest entries. The older `Tiu` and `Tia` keys remain as compatibility aliases pointing to `Tihu` and `Tiha`.
+The existing `tihu.mp3` and `tiha.mp3` audio files are reused directly by canonical `Tihu` and `Tiha` manifest entries. The older `Tiu` and `Tia` keys remain as compatibility aliases pointing to `Tihu` and `Tiha`. The old combined `Prima / Primu` key remains as a compatibility alias for saved decks/deployed clients while beginner teaching now uses separate `Prima` and `Primu` cards.
 
 ## Variants intentionally preserved
 
