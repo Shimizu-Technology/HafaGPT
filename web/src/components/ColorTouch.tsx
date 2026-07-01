@@ -22,12 +22,12 @@ const COLORS: ColorItem[] = [
   { chamorro: 'Asut', english: 'Blue', hex: '#3B82F6', emoji: '🔵' },
   { chamorro: 'Betde', english: 'Green', hex: '#22C55E', emoji: '🟢' },
   { chamorro: 'Amariyu', english: 'Yellow', hex: '#EAB308', emoji: '🟡' },
-  { chamorro: 'Kulot kahel', english: 'Orange', hex: '#F97316', emoji: '🟠' },
-  { chamorro: 'Lila', english: 'Purple', hex: '#A855F7', emoji: '🟣' },
+  { chamorro: 'Kulot kåhet', english: 'Orange', hex: '#F97316', emoji: '🟠' },
+  { chamorro: 'Kulot lila', english: 'Purple', hex: '#A855F7', emoji: '🟣' },
   { chamorro: "Å'paka'", english: 'White', hex: '#F8FAFC', emoji: '⚪' },
-  { chamorro: 'Åttelong', english: 'Black', hex: '#1E293B', emoji: '⚫' },
-  { chamorro: 'Kulot rosa', english: 'Pink', hex: '#EC4899', emoji: '🩷' },
-  { chamorro: 'Kulot kafe', english: 'Brown', hex: '#92400E', emoji: '🟤' },
+  { chamorro: 'Åttilung', english: 'Black', hex: '#1E293B', emoji: '⚫' },
+  { chamorro: 'Kulot di rosa', english: 'Pink', hex: '#EC4899', emoji: '🩷' },
+  { chamorro: 'Kulot chukulåti', english: 'Brown', hex: '#92400E', emoji: '🟤' },
 ];
 
 const ROUNDS_PER_GAME = 10;

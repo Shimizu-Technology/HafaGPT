@@ -451,23 +451,23 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Attelong',
+    chamorro: 'Åttilung',
     english: 'Black',
-    pronunciation: 'ah-TEH-long',
+    pronunciation: 'ah-TEE-loong',
     category: 'Colors',
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Kulot kahel',
+    chamorro: 'Kulot kåhet',
     english: 'Orange (color)',
-    pronunciation: 'KOO-lot KAH-hel',
+    pronunciation: 'KOO-loht KAH-het',
     category: 'Colors',
     difficulty: 'intermediate'
   },
   {
-    chamorro: 'Rosa',
+    chamorro: 'Kulot di rosa',
     english: 'Pink',
-    pronunciation: 'ROH-sah',
+    pronunciation: 'KOO-loht dee ROH-sah',
     category: 'Colors',
     difficulty: 'beginner'
   },
