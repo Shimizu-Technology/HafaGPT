@@ -167,6 +167,8 @@ def validate_vocabulary(api_root: Path, vocabulary_path: Path) -> list[str]:
                     errors.append(f"{term_prefix}: term is required")
                 if not term.get("reason"):
                     errors.append(f"{term_prefix}: reason is required")
+                if "match" in term and term.get("match") not in {"exact", "normalized"}:
+                    errors.append(f"{term_prefix}: invalid match {term.get('match')!r}")
 
     return errors
 

@@ -59,11 +59,11 @@ Updated phrase/sentence teaching surfaces:
 Updated static audio source metadata:
 
 - `audio_generation/flashcard_words.json`
-  - Added `Måolik ha' yu'`.
+  - Added `Måolik ha' yu'` and standalone `Måolik` static audio for the adjective flashcard display.
   - Replaced `Kao siña un tulaika?` with `Atgun sumångan ennåo`.
   - Replaced `Fan hånao hit` with `Nihi ta hånåo`.
   - Replaced `Kao guåha?` with `Kao guaha?`.
-  - Replaced `Hafa bidå-mu?` with `Håfa bidåda-mu?`.
+  - Replaced exact stale audio/flashcard key `Hafa bidå-mu?` with `Håfa bidåda-mu?`; tracked this stale key as exact-only because source-backed `Håfa bidå-mu?` may still be valid in past-tense contexts.
   - Fixed truncated English glosses for `Ti hu komprende` and the old `Fan hånao hit` replacement.
 - `audio_generation/manifest.json`
   - Removed stale unsupported/wrong phrase keys for learner-facing teaching.
@@ -72,6 +72,7 @@ Updated static audio source metadata:
 
 Generated and uploaded static audio for:
 
+- `Måolik`
 - `Måolik ha' yu'`
 - `Atgun sumångan ennåo`
 - `Nihi ta hånåo`

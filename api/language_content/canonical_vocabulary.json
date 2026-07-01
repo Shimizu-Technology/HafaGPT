@@ -4794,6 +4794,16 @@
       "variants": [],
       "deprecated_app_terms": [
         {
+          "term": "Hafa bidå-mu?",
+          "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+          ],
+          "match": "exact"
+        },
+        {
           "term": "Håfa na bidå-mu?",
           "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
           "found_in": [

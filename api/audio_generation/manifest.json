@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02T01:52:06.953084",
+  "last_updated": "2026-07-02T02:19:27.809185",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
   },
-  "total_words": 714,
+  "total_words": 715,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -8397,6 +8397,18 @@
       "phonetic_used": "Haw-fah bee-daw-dah-moo",
       "size_bytes": 24703,
       "generated_at": "2026-07-02T01:51:40.585444",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Måolik": {
+      "file": "maolik.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/maolik.mp3",
+      "english": "Good / Fine / Well",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Maw-leek",
+      "size_bytes": 18016,
+      "generated_at": "2026-07-02T02:19:27.809159",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

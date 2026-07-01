@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 142,
+  "total": 143,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -15,6 +15,11 @@
           "chamorro": "Måolik ha' yu'",
           "english": "I'm fine / I'm good",
           "phonetic_hint": "Maw-leek hah yoo"
+        },
+        {
+          "chamorro": "Måolik",
+          "english": "Good / Fine / Well",
+          "phonetic_hint": "Maw-leek"
         },
         {
           "chamorro": "Sinko",
