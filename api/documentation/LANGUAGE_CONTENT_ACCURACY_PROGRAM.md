@@ -155,3 +155,4 @@ This program also does not require all content to be perfect before any improvem
 - `documentation/CANONICAL_LANGUAGE_CONTENT_SCHEMA.md`: schema and workflow notes.
 - `documentation/language_content_audit/canonical_usage_report.md`: generated report of remaining color-content cleanup targets.
 - `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`: source-backed Phase 3 color corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`: source-backed numbers/greetings corrections and remaining review work.

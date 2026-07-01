@@ -60,13 +60,13 @@
     "numbers": {
       "description": "Number vocabulary from Sound Match and Number Tap games (1-10)",
       "words": [
-        { "chamorro": "Uno", "english": "One", "phonetic_hint": "Oo-no" },
+        { "chamorro": "Unu", "english": "One", "phonetic_hint": "Oo-noo" },
         { "chamorro": "Dos", "english": "Two", "phonetic_hint": "Dohs" },
         { "chamorro": "Tres", "english": "Three", "phonetic_hint": "Trehs" },
-        { "chamorro": "Kuåttro", "english": "Four", "phonetic_hint": "Kwaw-tro" },
-        { "chamorro": "Singko", "english": "Five", "phonetic_hint": "Seeng-ko" },
+        { "chamorro": "Kuåtro", "english": "Four", "phonetic_hint": "Kwaw-tro" },
+        { "chamorro": "Sinko", "english": "Five", "phonetic_hint": "Seen-ko" },
         { "chamorro": "Sais", "english": "Six", "phonetic_hint": "Sah-ees" },
-        { "chamorro": "Siette", "english": "Seven", "phonetic_hint": "See-eh-teh" },
+        { "chamorro": "Siete", "english": "Seven", "phonetic_hint": "See-eh-teh" },
         { "chamorro": "Ocho", "english": "Eight", "phonetic_hint": "Oh-tso" },
         { "chamorro": "Nuebi", "english": "Nine", "phonetic_hint": "Noo-eh-bee" },
         { "chamorro": "Dies", "english": "Ten", "phonetic_hint": "Dee-ehs" }

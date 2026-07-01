@@ -11,58 +11,43 @@
     "NG is a single sound, not 'n' + 'g' separately",
     "Glottal stop (') is a brief pause"
   ],
-  
   "Håfa Adai!": "Hawfa day",
   "Håfa Adai": "Hawfa day",
-  
   "Si Yu'os Ma'åse'!": "See Dzoo-os Mah-aw-seh",
   "Si Yu'os Ma'åse'": "See Dzoo-os Mah-aw-seh",
-  
   "Hayi": "Hah-dzee",
   "Guiya": "Goo-ee-dzah",
   "Siña": "See-nyah",
   "Tåta": "Taw-tah",
   "Nåna": "Naw-nah",
-  
   "Chocho": "Tso-tso",
   "Chotda": "Tsot-dah",
   "Chåda": "Tsaw-dah",
-  
   "Amariyu": "Ah-mah-ree-dzoo",
   "Niyok": "Nee-dzok",
   "Manglo'": "Mahng-lo",
   "Agaga'": "Ah-gah-gah",
   "Guma'": "Goo-mah",
-  
   "Håfa tatatmånu hao?": "Haw-fa tah-taht-maw-noo how",
   "Håfa bidå-mu?": "Haw-fa bee-daw-moo",
-  
-  "Uno": "Oo-no",
   "Dos": "Dohs",
   "Tres": "Trehs",
-  "Kuåttro": "Kwaw-tro",
-  "Singko": "Seeng-ko",
   "Sais": "Sah-ees",
-  "Siette": "See-eh-teh",
   "Ocho": "Oh-tso",
   "Nuebi": "Noo-eh-bee",
   "Dies": "Dee-ehs",
-  
   "Bunitu": "Boo-nee-too",
   "Maolek": "Mow-lek",
   "Tåya'": "Taw-dzah",
-  
   "Paluma": "Pah-loo-mah",
   "Ga'lågu": "Gah-law-goo",
   "Mannok": "Mahn-nok",
   "Guihan": "Gee-hahn",
   "Haggan": "Hahg-gahn",
-  
   "Atdao": "Aht-dow",
   "Pilan": "Pee-lahn",
   "Tåsi": "Taw-see",
   "Uchan": "Oo-tsahn",
-  
   "Åttilung": "Awt-tee-loong",
   "Å'paka'": "Aw-pah-kah",
   "Asut": "Ah-soot",
@@ -71,5 +56,9 @@
   "Kulot lila": "Koo-lot lee-lah",
   "Kulot di rosa": "Koo-lot dee roh-sah",
   "Kulot chukulåti": "Koo-lot choo-koo-lah-tee",
-  "Kulot åpu": "Koo-lot ah-poo"
+  "Kulot åpu": "Koo-lot ah-poo",
+  "Unu": "Oo-noo",
+  "Kuåtro": "Kwaw-tro",
+  "Sinko": "Seen-ko",
+  "Siete": "See-eh-teh"
 }

@@ -56,14 +56,14 @@ Each entry includes:
 
 ## Phase 2 seed scope
 
-The first canonical seed covers the `colors` category because Phase 1 found clear user-facing drift:
+The canonical seed started with the `colors` category because Phase 1 found clear user-facing drift:
 
 - `Såksan` taught as Brown without local dictionary support.
 - `Lalala` taught as Orange while normalized dictionary evidence points to a living/existing meaning.
 - `Å'tot` taught as Black while local dictionary evidence points to unrelated meanings.
 - Inconsistent color phrases across flashcards, quizzes, games, daily words, and audio manifests.
 
-This seed is intentionally source-backed but still conservative. It records variants and review notes instead of pretending every spelling choice is final.
+The canonical vocabulary now also includes beginner `numbers`, core `greetings`, and basic yes/no response terms. These entries follow the same source-backed but conservative pattern: record variants and review notes instead of pretending every spelling or phrase choice is final.
 
 ## Validation
 
@@ -99,4 +99,4 @@ The usage checker reports where deprecated terms, review-needed terms, and app-l
 4. Keep regression checks so deprecated app terms like `Såksan`, `Lalala` as Orange, and `Å'tot` as Black cannot reappear in beginner teaching content.
 5. Expand canonical entries category by category: greetings, numbers, family, body, food, verbs, and common phrases.
 
-The first source-backed color corrections are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`.
+The first source-backed color corrections are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`. The numbers/greetings correction pass is documented in `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`.
