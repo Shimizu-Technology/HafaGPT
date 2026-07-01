@@ -91,7 +91,7 @@ Generated new static audio for:
 - `Prima`
 - `Primu`
 
-The existing `tihu.mp3` and `tiha.mp3` audio files are reused through manifest aliases for `Tihu` and `Tiha`.
+The existing `tihu.mp3` and `tiha.mp3` audio files are reused directly by canonical `Tihu` and `Tiha` manifest entries. The older `Tiu` and `Tia` keys remain as compatibility aliases pointing to `Tihu` and `Tiha`.
 
 ## Variants intentionally preserved
 

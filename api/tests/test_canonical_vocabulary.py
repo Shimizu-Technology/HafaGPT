@@ -169,3 +169,42 @@ def test_static_audio_manifest_does_not_map_stale_teaching_terms():
 
     assert manifest_exact_terms.isdisjoint(disallowed_exact_terms)
     assert manifest_normalized_terms.isdisjoint(disallowed_normalized_terms)
+
+
+def test_static_audio_manifest_aliases_resolve_to_existing_canonical_entries():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    for word, info in words.items():
+        alias_of = info.get("alias_of")
+        if not alias_of:
+            continue
+        assert alias_of != word
+        assert alias_of in words
+        assert info.get("compatibility_note")
+
+
+def test_family_manifest_promotes_tihu_tiha_without_broken_alias_metadata():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    expected_phonetics = {
+        "Tihu": "Tee-hoo",
+        "Tiha": "Tee-hah",
+    }
+    for word, phonetic in expected_phonetics.items():
+        assert word in words
+        assert "alias_of" not in words[word]
+        assert words[word]["phonetic_used"] == phonetic
+
+    expected_aliases = {
+        "Tiu": "Tihu",
+        "Tia": "Tiha",
+    }
+    for alias, canonical in expected_aliases.items():
+        assert alias in words
+        assert words[alias]["alias_of"] == canonical
+        assert words[alias]["phonetic_used"] == words[canonical]["phonetic_used"]
+        assert words[alias].get("compatibility_note")

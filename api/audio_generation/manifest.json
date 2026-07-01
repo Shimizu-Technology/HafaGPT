@@ -1206,7 +1206,7 @@
       "english": "aunt",
       "category": "family",
       "tier": 2,
-      "phonetic_used": "tiha",
+      "phonetic_used": "Tee-hah",
       "size_bytes": 16345,
       "generated_at": "2026-01-10T18:23:39.631656",
       "tts_provider": "elevenlabs",
@@ -1218,7 +1218,7 @@
       "english": "uncle",
       "category": "family",
       "tier": 2,
-      "phonetic_used": "tihu",
+      "phonetic_used": "Tee-hoo",
       "size_bytes": 15509,
       "generated_at": "2026-01-10T18:23:40.746532",
       "tts_provider": "elevenlabs",
@@ -8131,12 +8131,11 @@
       "english": "Uncle",
       "category": "flashcards",
       "tier": "flashcards",
-      "phonetic_used": "tihu",
+      "phonetic_used": "Tee-hoo",
       "size_bytes": 15509,
       "generated_at": "2026-01-10T18:23:40.746532",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review",
-      "alias_of": "tihu"
+      "review_status": "needs_review"
     },
     "Tiha": {
       "file": "tiha.mp3",
@@ -8144,12 +8143,11 @@
       "english": "Aunt",
       "category": "flashcards",
       "tier": "flashcards",
-      "phonetic_used": "tiha",
+      "phonetic_used": "Tee-hah",
       "size_bytes": 16345,
       "generated_at": "2026-01-10T18:23:39.631656",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review",
-      "alias_of": "tiha"
+      "review_status": "needs_review"
     },
     "Nåna": {
       "file": "nana.mp3",
@@ -8280,28 +8278,32 @@
       "compatibility_note": "Source-backed variant retained for saved decks and currently deployed clients; primary teaching display uses alias_of."
     },
     "Tiu": {
-      "file": "tiu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tiu.mp3",
+      "file": "tihu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tihu.mp3",
       "english": "Uncle",
       "category": "flashcards",
       "tier": "flashcards",
-      "phonetic_used": "Tiu",
-      "size_bytes": 14673,
-      "generated_at": "2026-01-10T18:22:24.320537",
+      "phonetic_used": "Tee-hoo",
+      "size_bytes": 15509,
+      "generated_at": "2026-01-10T18:23:40.746532",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
+      "review_status": "needs_review",
+      "alias_of": "Tihu",
+      "compatibility_note": "Source-backed variant retained for saved decks and currently deployed clients; primary teaching display uses alias_of."
     },
     "Tia": {
-      "file": "tia.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tia.mp3",
+      "file": "tiha.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/tiha.mp3",
       "english": "Aunt",
       "category": "flashcards",
       "tier": "flashcards",
-      "phonetic_used": "Tia",
+      "phonetic_used": "Tee-hah",
       "size_bytes": 16345,
-      "generated_at": "2026-01-10T18:22:25.485312",
+      "generated_at": "2026-01-10T18:23:39.631656",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
+      "review_status": "needs_review",
+      "alias_of": "Tiha",
+      "compatibility_note": "Source-backed variant retained for saved decks and currently deployed clients; primary teaching display uses alias_of."
     },
     "Prima / Primu": {
       "file": "prima__primu.mp3",
