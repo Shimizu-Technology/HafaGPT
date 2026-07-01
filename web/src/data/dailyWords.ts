@@ -453,7 +453,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Åttilung',
     english: 'Black',
-    pronunciation: 'ah-TEE-loong',
+    pronunciation: 'Awt-tee-loong',
     category: 'Colors',
     difficulty: 'beginner'
   },

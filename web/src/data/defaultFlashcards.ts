@@ -293,7 +293,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Åttilung',
         back: 'Black',
-        pronunciation: 'ah-TEE-loong'
+        pronunciation: 'Awt-tee-loong'
       },
       {
         front: 'Agaga\'',
