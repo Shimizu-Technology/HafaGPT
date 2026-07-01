@@ -220,8 +220,8 @@ export const conversationScenarios: ConversationScenario[] = [
     description: 'Practice a phone conversation with a family member',
     difficulty: 'advanced',
     icon: '📞',
-    setting: 'Your aunt (Tia Rosa) calls you on the phone to check in and invite you to a family gathering.',
-    characterName: 'Tia Rosa',
+    setting: 'Your aunt (Tiha Rosa) calls you on the phone to check in and invite you to a family gathering.',
+    characterName: 'Tiha Rosa',
     characterRole: 'Your aunt calling on the phone',
     objectives: [
       'Answer the phone properly',
@@ -239,7 +239,7 @@ export const conversationScenarios: ConversationScenario[] = [
       { chamorro: 'Adios', english: 'Goodbye', pronunciation: 'ah-DYOHS' },
     ],
     openingLine: {
-      chamorro: 'Hålu? Hågu guihi? Este si Tia Rosa. Kao maolek hao, neni?',
+      chamorro: 'Hålu? Hågu guihi? Este si Tiha Rosa. Kao maolek hao, neni?',
       english: 'Hello? Is that you? This is Aunt Rosa. Are you well, dear?'
     },
     estimatedTurns: 7

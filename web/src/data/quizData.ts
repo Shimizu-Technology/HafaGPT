@@ -115,17 +115,17 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('fam', 1),
         type: 'multiple_choice',
         question: 'What is "mother" in Chamorro?',
-        options: ['Tata', 'Nåna', 'Che\'lu', 'Abuelo'],
+        options: ['Tåta', 'Nåna', 'Che\'lu', 'Abuelo'],
         correctAnswer: 'Nåna',
-        explanation: '"Nåna" (or "Nana") means mother in Chamorro.'
+        explanation: '"Nåna" means mother in Chamorro.'
       },
       {
         id: id('fam', 2),
         type: 'multiple_choice',
         question: 'What is "father" in Chamorro?',
-        options: ['Nåna', 'Tata', 'Bihu', 'Påtgon'],
-        correctAnswer: 'Tata',
-        explanation: '"Tata" means father in Chamorro.'
+        options: ['Nåna', 'Tåta', 'Bihu', 'Påtgon'],
+        correctAnswer: 'Tåta',
+        explanation: '"Tåta" means father in Chamorro.'
       },
       {
         id: id('fam', 3),
@@ -157,7 +157,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('fam', 6),
         type: 'multiple_choice',
         question: 'What is "child" in Chamorro?',
-        options: ['Tata', 'Påtgon', 'Che\'lu', 'Tiu'],
+        options: ['Tåta', 'Påtgon', 'Che\'lu', 'Tihu'],
         correctAnswer: 'Påtgon',
         explanation: '"Påtgon" means child in Chamorro.'
       },
@@ -165,18 +165,18 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('fam', 7),
         type: 'type_answer',
         question: 'How do you say "uncle" in Chamorro?',
-        correctAnswer: 'Tiu',
-        acceptableAnswers: ['Tiu', 'tiu', 'TIU'],
-        hint: 'Similar to Spanish',
-        explanation: '"Tiu" means uncle, borrowed from Spanish "tío".'
+        correctAnswer: 'Tihu',
+        acceptableAnswers: ['Tihu', 'tihu', 'TIHU', 'Tiu', 'tiu', 'TIU'],
+        hint: 'The dictionary headword is "Tihu"; "Tiu" is also listed as a variant.',
+        explanation: '"Tihu" means uncle in Chamorro; "Tiu" is a source-backed variant.'
       },
       {
         id: id('fam', 8),
         type: 'multiple_choice',
-        question: 'What does "Tia" mean?',
+        question: 'What does "Tiha" mean?',
         options: ['Grandmother', 'Mother', 'Aunt', 'Sister'],
         correctAnswer: 'Aunt',
-        explanation: '"Tia" means aunt, borrowed from Spanish "tía".'
+        explanation: '"Tiha" means aunt in Chamorro; "Tia" is a source-backed variant.'
       }
     ]
   },

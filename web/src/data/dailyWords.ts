@@ -178,16 +178,16 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Tiu',
+    chamorro: 'Tihu',
     english: 'Uncle',
-    pronunciation: 'TEE-oo',
+    pronunciation: 'TEE-hoo',
     category: 'Family',
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Tia',
+    chamorro: 'Tiha',
     english: 'Aunt',
-    pronunciation: 'TEE-ah',
+    pronunciation: 'TEE-hah',
     category: 'Family',
     difficulty: 'beginner'
   },

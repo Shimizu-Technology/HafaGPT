@@ -156,14 +156,14 @@ const beginnerStories: Story[] = [
       },
       {
         id: 'p2',
-        chamorro: 'I tata-hu si Pedro. I nana-hu si Rosa.',
+        chamorro: 'I tåta-hu si Pedro. I nåna-hu si Rosa.',
         english: 'My father is Pedro. My mother is Rosa.',
         words: [
           { chamorro: 'I', english: 'the', pronunciation: 'ee' },
-          { chamorro: 'tata-hu', english: 'my father', pronunciation: 'TAH-tah-hoo' },
+          { chamorro: 'tåta-hu', english: 'my father', pronunciation: 'TAW-tah-hoo' },
           { chamorro: 'si', english: '(name marker)', pronunciation: 'see' },
           { chamorro: 'Pedro', english: 'Pedro (name)', pronunciation: 'PEH-droh' },
-          { chamorro: 'nana-hu', english: 'my mother', pronunciation: 'NAH-nah-hoo' },
+          { chamorro: 'nåna-hu', english: 'my mother', pronunciation: 'NAW-nah-hoo' },
           { chamorro: 'Rosa', english: 'Rosa (name)', pronunciation: 'ROH-sah' },
         ]
       },
@@ -196,9 +196,9 @@ const beginnerStories: Story[] = [
       {
         id: 'q1',
         question: 'How do you say "my father" in Chamorro?',
-        options: ['nana-hu', 'tata-hu', 'che\'lu-hu', 'familia-hu'],
+        options: ['nåna-hu', 'tåta-hu', 'che\'lu-hu', 'familia-hu'],
         correctAnswer: 1,
-        explanation: '"Tata-hu" means "my father." "Tata" is father, and "-hu" is the possessive suffix meaning "my."'
+        explanation: '"Tåta-hu" means "my father." "Tåta" is father, and "-hu" is the possessive suffix meaning "my."'
       },
       {
         id: 'q2',
