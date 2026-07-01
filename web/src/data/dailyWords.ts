@@ -85,9 +85,9 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Maolek ha\' yu\'',
+    chamorro: 'Måolik ha\' yu\'',
     english: 'I\'m fine / I\'m good',
-    pronunciation: 'mah-OH-lek hah yoo',
+    pronunciation: 'MAW-leek hah yoo',
     category: 'Greetings',
     difficulty: 'beginner'
   },
@@ -576,11 +576,11 @@ export const DAILY_WORDS: DailyWord[] = [
 
   // === INTERMEDIATE & ADVANCED (Days 61-75) ===
   {
-    chamorro: 'Håfa na bidå-mu?',
+    chamorro: 'Håfa bidåda-mu?',
     english: 'What are you doing?',
-    pronunciation: 'HAH-fah nah bee-DAH-moo',
+    pronunciation: 'HAW-fah bee-DAW-dah-moo',
     example: {
-      chamorro: 'Håfa na bidå-mu på\'go?',
+      chamorro: 'Håfa bidåda-mu på\'go?',
       english: 'What are you doing now?'
     },
     category: 'Phrases',

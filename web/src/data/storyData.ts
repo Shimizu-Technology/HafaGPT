@@ -64,7 +64,7 @@ const beginnerStories: Story[] = [
     readingTime: 2,
     wordCount: 28,
     icon: '👋',
-    culturalNote: '"Håfa Adai" is the traditional Chamorro greeting, similar to "Aloha" in Hawaiian. It literally means "What\'s up?" but is used as a friendly hello.',
+    culturalNote: '"Håfa Adai" is the traditional Chamorro greeting, similar to "Aloha" in Hawaiian, and is used as a friendly hello or hi.',
     paragraphs: [
       {
         id: 'p1',

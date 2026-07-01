@@ -48,7 +48,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         question: 'How do you say "Thank you" in Chamorro?',
         options: ['Håfa Adai', 'Adios', 'Si Yu\'os Ma\'åse\'', 'Buenas'],
         correctAnswer: 'Si Yu\'os Ma\'åse\'',
-        explanation: '"Si Yu\'os Ma\'åse\'" literally means "God repay you" and is used to say thank you.'
+        explanation: '"Si Yu\'os Ma\'åse\'" is used to say thank you; local sources gloss related variants literally as "God have mercy."'
       },
       {
         id: id('greet', 3),
@@ -80,9 +80,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('greet', 6),
         type: 'multiple_choice',
         question: 'How would you respond "I\'m fine" in Chamorro?',
-        options: ['Si Yu\'os Ma\'åse\'', 'Maolek ha\' yu\'', 'Håfa Adai', 'Adios'],
-        correctAnswer: 'Maolek ha\' yu\'',
-        explanation: '"Maolek" means "good" or "fine", so "Maolek ha\' yu\'" means "I\'m fine".'
+        options: ['Si Yu\'os Ma\'åse\'', 'Måolik ha\' yu\'', 'Håfa Adai', 'Adios'],
+        correctAnswer: 'Måolik ha\' yu\'',
+        explanation: '"Måolik" means "good" or "fine", so "Måolik ha\' yu\'" means "I\'m fine".'
       },
       {
         id: id('greet', 7),

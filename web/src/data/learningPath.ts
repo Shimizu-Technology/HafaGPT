@@ -161,7 +161,7 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     intro: {
       culturalContext: 'Asking questions is essential for any conversation. In Chamorro, question words are placed at the beginning of sentences, similar to English. Mastering these opens up real dialogue!',
       keyPhrases: ['Håfa — What', 'Hayi — Who', 'Manu — Where'],
-      tip: 'Notice how "Håfa" appears in "Håfa Adai" (Hello) — it literally means "What\'s up!" or "What\'s happening!"',
+      tip: 'Notice how "Håfa" appears in "Håfa Adai" — the full phrase is the source-backed everyday greeting for hello/hi.',
     },
     suggestedGames: ['scramble', 'hangman'],
   },

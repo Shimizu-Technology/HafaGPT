@@ -29,9 +29,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'HAW-fah tah-taht-MAW-noo how'
       },
       {
-        front: 'Maolek ha\' yu\'',
+        front: 'Måolik ha\' yu\'',
         back: 'I\'m fine / I\'m good',
-        pronunciation: 'mah-oh-LEK hah dzoo'
+        pronunciation: 'MAW-leek hah dzoo'
       },
       {
         front: 'Si Yu\'os Ma\'åse\'',
@@ -418,9 +418,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Response to Si Yu\'os Ma\'åse\''
       },
       {
-        front: 'Kao siña un tulaika?',
-        back: 'Can you repeat that?',
-        pronunciation: 'kah-oh SEEN-yah oon too-lah-EE-kah',
+        front: 'Atgun sumångan ennåo',
+        back: 'Say that again / Repeat that',
+        pronunciation: 'AHT-goon soo-MAW-ngan en-NOW',
         example: 'When you didn\'t hear or understand'
       },
       {
@@ -442,9 +442,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Casual invitation to approach'
       },
       {
-        front: 'Fan hånao hit',
+        front: 'Nihi ta hånåo',
         back: 'Let\'s go',
-        pronunciation: 'fahn HAH-now heet',
+        pronunciation: 'NEE-hee tah HAW-now',
         example: 'When ready to leave or start something'
       },
       {
@@ -454,7 +454,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Used for emphasis: "It\'s me!"'
       },
       {
-        front: 'Kao guåha?',
+        front: 'Kao guaha?',
         back: 'Is there? / Do you have?',
         pronunciation: 'kah-oh GWAH-hah',
         example: 'Asking about availability'
@@ -725,9 +725,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Kao malago\' hao? — Do you want?'
       },
       {
-        front: 'Hafa bidå-mu?',
+        front: 'Håfa bidåda-mu?',
         back: 'What are you doing?',
-        pronunciation: 'HAH-fah bee-DAH-moo',
+        pronunciation: 'HAW-fah bee-DAW-dah-moo',
         example: 'Common way to ask what someone is up to'
       }
     ]
@@ -890,7 +890,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Maolek',
         back: 'Good / Fine / Well',
         pronunciation: 'mah-OH-lehk',
-        example: 'Maolek ha\' yu\'. — I\'m fine.'
+        example: 'Måolik ha\' yu\'. — I\'m fine.'
       },
       {
         front: 'Båba',
