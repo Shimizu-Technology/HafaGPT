@@ -234,7 +234,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         type: 'type_answer',
         question: 'How do you say "7" in Chamorro?',
         correctAnswer: 'Siete',
-        acceptableAnswers: ['Siete', 'siete', 'SIETE', 'Sietti', 'sietti'],
+        acceptableAnswers: ['Siete', 'siete', 'SIETE'],
         hint: 'Similar to Spanish "siete"',
         explanation: '"Siete" is seven in Chamorro.'
       },
