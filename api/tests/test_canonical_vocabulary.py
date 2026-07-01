@@ -229,6 +229,18 @@ def test_static_audio_manifest_total_words_matches_word_count():
     assert manifest["total_words"] == len(manifest["words"])
 
 
+def test_static_audio_manifest_urls_match_declared_public_base():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    public_url = manifest["storage"]["public_url"]
+
+    assert public_url == "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
+    for info in manifest["words"].values():
+        url = info.get("url")
+        if url:
+            assert url.startswith(public_url)
+
+
 def test_body_parts_manifest_uses_corrected_simon_says_terms():
     api_root = Path(__file__).resolve().parents[1]
     manifest = load_json(api_root / "audio_generation" / "manifest.json")
@@ -375,3 +387,31 @@ def test_food_audio_source_lists_use_corrected_teaching_terms():
         exact_key("Fina'denne'"),
     }
     assert corrected_flashcard_terms.issubset(flashcard_exact_terms)
+
+
+def test_common_verb_audio_source_list_uses_sangan_for_say_not_fahan():
+    api_root = Path(__file__).resolve().parents[1]
+    flashcard_words = load_json(api_root / "audio_generation" / "flashcard_words.json")
+    flashcard_exact_terms, _ = collect_chamorro_terms_from_word_list(flashcard_words)
+
+    assert exact_key("Hu sångan") in flashcard_exact_terms
+    assert exact_key("Hu fåhan") not in flashcard_exact_terms
+
+    for category in flashcard_words.get("categories", {}).values():
+        for word in category.get("words", []):
+            if exact_key(word.get("chamorro", "")) == exact_key("Hu fåhan"):
+                english = word.get("english", "").casefold()
+                assert "speak" not in english
+                assert "say" not in english
+
+
+def test_common_verb_static_manifest_has_sangan_and_correct_fahan_metadata():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    assert "Hu sångan" in words
+    fahan_english = words["Hu fåhan"].get("english", "").casefold()
+    assert "buy" in fahan_english or "purchase" in fahan_english
+    assert "speak" not in fahan_english
+    assert "say" not in fahan_english

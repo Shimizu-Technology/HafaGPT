@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, body-part terms, and food/drink terms.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, body-part terms, food/drink terms, and common verb terms.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
@@ -3650,6 +3650,774 @@
         }
       ],
       "notes": "This phrase appeared as a food-related “bon appetit” card; this pass corrects it to the source-backed response-to-thanks meaning instead of continuing an unsupported meal phrase."
+    },
+    {
+      "id": "verbs.see_i",
+      "category": "verbs",
+      "english": "I see / I saw",
+      "canonical_chamorro": "Hu li'e'",
+      "recommended_teaching_term": "Hu li'e'",
+      "normalized_key": "hu lie",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo LEE-eh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu li'i'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary headword is li'i'; Chamoru.info and TOD use li'e'."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "li'e'",
+          "definition": "see, look, behold, perceive, watch",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu li'e' i dos asagua. | I saw the two married ones"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "li'e'",
+          "definition": "See; look; behold; perceive; watch."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "li'i'",
+          "definition": "see, look, perceive, understand",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu li'i' i dos asagua gi lanchu"
+          ]
+        }
+      ],
+      "notes": "Current beginner card is source-backed by Chamoru.info/TOD spelling; revised dictionary preserves li'i' as a source variant."
+    },
+    {
+      "id": "verbs.hear_i",
+      "category": "verbs",
+      "english": "I hear / I heard",
+      "canonical_chamorro": "Hu hungok",
+      "recommended_teaching_term": "Hu hungok",
+      "normalized_key": "hu hungok",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo HOON-gohk",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "hungok",
+          "definition": "hear, heed, be informed, perceive by the ear, gain knowledge",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu hungok i rediu. | I heard the radio"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "hungok",
+          "definition": "verb. to hear; heed; be informed; perceive by the ear; gain knowledge."
+        }
+      ],
+      "notes": "Strong local-dictionary support for the current beginner phrase."
+    },
+    {
+      "id": "verbs.go_i_current",
+      "category": "verbs",
+      "english": "I go / I went",
+      "canonical_chamorro": "Hu hånao",
+      "recommended_teaching_term": "Hu hånao",
+      "normalized_key": "hu hanao",
+      "part_of_speech": "vi. phrase",
+      "teaching_level": "beginner",
+      "review_status": "needs_review",
+      "confidence": "low",
+      "pronunciation": {
+        "guide": "hoo HAW-now",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Humånåo yu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Bundled examples commonly use the -um- intransitive form plus independent pronoun for completed/nonfuture 'I went'."
+        },
+        {
+          "term": "Humånao yu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "data/extracted_stories.json",
+          "notes": "Story corpus uses this spelling; use only after educator review because it is outside dictionary_data validation."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hånåo",
+          "definition": "go, leave, depart",
+          "part_of_speech": "vi.",
+          "evidence": [
+            "Humånåo yu' para i fanpastuyan para bai chek i ga'ga' siha"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "hånao",
+          "definition": "to go; leave; depart."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "hanao",
+          "definition": "go, leave, depart",
+          "part_of_speech": "2",
+          "evidence": [
+            "Humanao gue' nigap. | He went yesterday"
+          ]
+        }
+      ],
+      "notes": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form."
+    },
+    {
+      "id": "verbs.do_make_i",
+      "category": "verbs",
+      "english": "I do / I make",
+      "canonical_chamorro": "Hu cho'gue",
+      "recommended_teaching_term": "Hu cho'gue",
+      "normalized_key": "hu chogue",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo CHOH-gweh",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "cho'gue",
+          "definition": "do, render, perform, work",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu cho'gue i leksion-hu. | I did my lesson"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "cho'gue",
+          "definition": "vt. to work on something; to perform work on something."
+        }
+      ],
+      "notes": "Prefer reviewed examples with an object for teaching because local sources show cho'gue as transitive."
+    },
+    {
+      "id": "verbs.eat_i_current",
+      "category": "verbs",
+      "english": "I eat",
+      "canonical_chamorro": "Hu kånno'",
+      "recommended_teaching_term": "Hu kånno'",
+      "normalized_key": "hu kanno",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "needs_review",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "hoo KAHN-noh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu kanno' i mansana",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD example includes an object: 'I ate the apple.'"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "kånno'",
+          "definition": "Eat something; devour something; consume something; gnaw on something. Must always take an object."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kanno'",
+          "definition": "eat something, devour something, consume something, gnaw on something; must always take an object",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu kanno' i mansana. | I ate the apple"
+          ]
+        }
+      ],
+      "notes": "Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly."
+    },
+    {
+      "id": "verbs.drink_i",
+      "category": "verbs",
+      "english": "I drink",
+      "canonical_chamorro": "Hu gimen",
+      "recommended_teaching_term": "Hu gimen",
+      "normalized_key": "hu gimen",
+      "part_of_speech": "verb phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "hoo GEE-men",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu gimin",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary headword/example use gimin; current app/audio use gimen."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "gimin",
+          "definition": "drink, beverage",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Ha gimin i maipi na gimin — She drank the drink that is hot"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "gimen",
+          "definition": "noun. beverage; drink."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "gimen",
+          "definition": "beverage, drink"
+        }
+      ],
+      "notes": "Local sources primarily list gimin/gimen as drink/beverage, while examples show verbal use. Keep current app term but verify preferred beginner display with a speaker."
+    },
+    {
+      "id": "verbs.sleep_i_current",
+      "category": "verbs",
+      "english": "I sleep",
+      "canonical_chamorro": "Hu maigo'",
+      "recommended_teaching_term": "Hu maigo'",
+      "normalized_key": "hu maigo",
+      "part_of_speech": "vi. phrase",
+      "teaching_level": "beginner",
+      "review_status": "needs_review",
+      "confidence": "low",
+      "pronunciation": {
+        "guide": "hoo my-GOH",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Maigu' yu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised examples include maigu' with independent pronoun; choose final beginner form with educator review."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "maigu'",
+          "definition": "sleep, slumber, hibernate, spin so quickly and smoothly that the motion is imperceptible",
+          "part_of_speech": "vi.",
+          "evidence": [
+            "Maigu' si Pedro gi hilu' lamasa ni bulachu-ña — Pedro slept on the table due to his drunkenness"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "maigo'",
+          "definition": "Sleep; slumber; hibernate; spin so quickly and smoothly that its motion is imperceptible."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "maigo'",
+          "definition": "sleep, slumber, hibernate, spin so quickly and smoothly that its motion is imperceptible",
+          "part_of_speech": "2"
+        }
+      ],
+      "notes": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review."
+    },
+    {
+      "id": "verbs.say_tell_i",
+      "category": "verbs",
+      "english": "I say / I tell / I speak",
+      "canonical_chamorro": "Hu sångan",
+      "recommended_teaching_term": "Hu sångan",
+      "normalized_key": "hu sangan",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo SAW-ngan",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu sangan",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD spelling omits å."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "sångan",
+          "definition": "say, tell (something)",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu sångan håfa bidå-hu siha gi duråntin bakasion — I told what I did during vacation"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "sångan",
+          "definition": "verb. 1.) to say; to speak; to utter. 2.) Fig. to talk about someone; to gossip about someone."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "sangan",
+          "definition": "say, tell (something), speak, utter",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu sangan i estoria. | I told the story"
+          ]
+        }
+      ],
+      "notes": "Replaces the old common-verb card that incorrectly paired Hu fåhan with 'I speak / I say'."
+    },
+    {
+      "id": "verbs.buy_i",
+      "category": "verbs",
+      "english": "I buy / I purchase",
+      "canonical_chamorro": "Hu fåhan",
+      "recommended_teaching_term": "Hu fåhan",
+      "normalized_key": "hu fahan",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo FAW-hahn",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu fåhån",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Chamoru.info headword uses fåhån."
+        },
+        {
+          "term": "Hu fahan",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD spelling omits å."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "fåhan",
+          "definition": "buy, purchase",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Bai fåhan i gimin — I will buy the drink"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "fåhån",
+          "definition": "Buy; purchase; bribe."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "fahan",
+          "definition": "buy, purchase, bribe",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Hu fåhan is valid for buying/purchasing, not for saying/speaking. Static audio keeps this key as a safe compatibility entry with corrected English metadata."
+    },
+    {
+      "id": "verbs.love_i",
+      "category": "verbs",
+      "english": "I love",
+      "canonical_chamorro": "Hu guaiya",
+      "recommended_teaching_term": "Hu guaiya",
+      "normalized_key": "hu guaiya",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo gwah-EE-dzah",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "guaiya",
+          "definition": "love, be fond of, like",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu sen guaiya i asaguå-hu para todu i tiempu — I love my husband dearly forever"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "guaiya",
+          "definition": "verb. to love; to show an intense affection for someone or something."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "guaiya",
+          "definition": "love, fond of, to like dearly",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Source-backed across local dictionaries. Phrase-level uses such as Hu guaiya hao still benefit from speaker review for register/context."
+    },
+    {
+      "id": "verbs.know_i",
+      "category": "verbs",
+      "english": "I know / I understand",
+      "canonical_chamorro": "Hu tungo'",
+      "recommended_teaching_term": "Hu tungo'",
+      "normalized_key": "hu tungo",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo TOON-goh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu tungu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary headword is tungu'."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "tungu'",
+          "definition": "know, acquainted with, have knowledge of, recognize",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Kåo un tungu' håyi para maestråm-mu? — Do you know who will be your teacher?"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "tungo'",
+          "definition": "Know; be acquainted with; have knowledge of; recognize; distinguish; have knowledge."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "tungo'",
+          "definition": "know, be acquainted with, have knowledge of, recognize, distinguish, have knowledge",
+          "part_of_speech": "1",
+          "evidence": [
+            "Hu tungo' fuma'tinas i balensiana. | I know how to cook the Spanish rice"
+          ]
+        }
+      ],
+      "notes": "Current quiz gloss 'I know / I understand' is acceptable for beginner use; komprende is a separate source-backed understand/comprehend verb."
+    },
+    {
+      "id": "verbs.need_i",
+      "category": "verbs",
+      "english": "I need",
+      "canonical_chamorro": "Hu nisisita",
+      "recommended_teaching_term": "Hu nisisita",
+      "normalized_key": "hu nisisita",
+      "part_of_speech": "vt. phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "hoo nee-see-SEE-tah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Hu na'sisita",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary lists na'sisita as a variant."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "nisisita",
+          "definition": "need, necessary",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu nisisita para bai hu hånåo para Luta — I need to go to Rota"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "nisisita",
+          "definition": "Need; necessitous; poor; destitute; in need."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "nisisita",
+          "definition": "need, require, want, necessary",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Shopping deck phrase is source-backed. Object/complement choices in examples should still be reviewed."
+    },
+    {
+      "id": "verbs.help",
+      "category": "verbs",
+      "english": "Help / aid / assist",
+      "canonical_chamorro": "Ayuda",
+      "recommended_teaching_term": "Ayuda",
+      "normalized_key": "ayuda",
+      "part_of_speech": "vt.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "ah-DZOO-dah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Åyuda",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamoru_info_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "ayuda",
+          "definition": "help, aid, assist, succor, be of service to, give aid to",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu ayuda si Laura ni flores-ña — I helped Laura with her flowers"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åyuda",
+          "definition": "Help; aid; assist; succor; be of service; give aid."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "ayuda",
+          "definition": "help, aid, assist, succor, be of service, give aid",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Root is source-backed. Sentence-level help requests such as Kao siña un ayuda yu'? remain pending phrase review."
+    },
+    {
+      "id": "verbs.pay_buy",
+      "category": "verbs",
+      "english": "Pay / purchase / buy",
+      "canonical_chamorro": "Åbona",
+      "recommended_teaching_term": "Åbona",
+      "normalized_key": "abona",
+      "part_of_speech": "vt.",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "AH-boh-nah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Abona",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "abona",
+          "definition": "pay, purchase, buy",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Hu abona i rilos che'lu-hu — I bought my brother's watch"
+          ]
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "åbona",
+          "definition": "Pay; purchase; buy."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "abona",
+          "definition": "pay, purchase, buy",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Shopping deck display is source-backed. Distinguish from Fåhan in final curriculum copy with teacher input."
+    },
+    {
+      "id": "verbs.teach",
+      "category": "verbs",
+      "english": "Teach / educate / instruct",
+      "canonical_chamorro": "Fa'nå'gue",
+      "recommended_teaching_term": "Fa'nå'gue",
+      "normalized_key": "fanague",
+      "part_of_speech": "vt.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "fah-NAH-gweh",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Fa'na'gue",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Fanague",
+          "type": "orthographic",
+          "status": "needs_review",
+          "notes": "Legacy app spelling without glottal stops/å; keep for search only, not primary display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "fa'nå'gue",
+          "definition": "Teach; educate; instruct; impart knowledge."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "fa'na'gue",
+          "definition": "teach, educate, instruct, impart knowledge",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Daily-word display corrected from Fanague to Fa'nå'gue."
+    },
+    {
+      "id": "verbs.laugh_laughter",
+      "category": "verbs",
+      "english": "Laugh / laughter / smile",
+      "canonical_chamorro": "Chålek",
+      "recommended_teaching_term": "Chålek",
+      "normalized_key": "chalek",
+      "part_of_speech": "n./v.",
+      "teaching_level": "intermediate",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "CHAH-lek",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Chalek",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json"
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "chalek",
+          "definition": "laughter, laugh, smile",
+          "part_of_speech": "2"
+        },
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "chålek",
+          "definition": "Stubborn; coarse.",
+          "notes": "Conflicting local source; review before expanding beginner teaching."
+        }
+      ],
+      "notes": "Existing daily-word gloss is TOD-backed but conflicts with Chamoru.info; keep confidence medium and request educator review before expanding usage."
     }
   ]
 }
