@@ -316,7 +316,7 @@ export const DAILY_WORDS: DailyWord[] = [
 
   // === NUMBERS (Days 31-40) ===
   {
-    chamorro: 'Uno',
+    chamorro: 'Unu',
     english: 'One (1)',
     pronunciation: 'OO-noo',
     example: {
@@ -349,18 +349,18 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Kuåttro',
+    chamorro: 'Kuåtro',
     english: 'Four (4)',
     pronunciation: 'KWAH-troh',
     category: 'Numbers',
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Singko',
+    chamorro: 'Sinko',
     english: 'Five (5)',
-    pronunciation: 'SING-koh',
+    pronunciation: 'SEEN-koh',
     example: {
-      chamorro: 'Singko minutos.',
+      chamorro: 'Sinko minutos.',
       english: 'Five minutes.'
     },
     category: 'Numbers',
@@ -374,7 +374,7 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Siette',
+    chamorro: 'Siete',
     english: 'Seven (7)',
     pronunciation: 'see-EH-teh',
     category: 'Numbers',
@@ -388,9 +388,9 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Nuebe',
+    chamorro: 'Nuebi',
     english: 'Nine (9)',
-    pronunciation: 'NWEH-beh',
+    pronunciation: 'NOO-eh-bee',
     category: 'Numbers',
     difficulty: 'beginner'
   },

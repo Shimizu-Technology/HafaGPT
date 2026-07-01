@@ -17,13 +17,13 @@ interface NumberItem {
 }
 
 const NUMBERS: NumberItem[] = [
-  { chamorro: 'Uno', english: 'One', value: 1 },
+  { chamorro: 'Unu', english: 'One', value: 1 },
   { chamorro: 'Dos', english: 'Two', value: 2 },
   { chamorro: 'Tres', english: 'Three', value: 3 },
-  { chamorro: 'Kuåttro', english: 'Four', value: 4 },
-  { chamorro: 'Singko', english: 'Five', value: 5 },
+  { chamorro: 'Kuåtro', english: 'Four', value: 4 },
+  { chamorro: 'Sinko', english: 'Five', value: 5 },
   { chamorro: 'Sais', english: 'Six', value: 6 },
-  { chamorro: 'Siette', english: 'Seven', value: 7 },
+  { chamorro: 'Siete', english: 'Seven', value: 7 },
   { chamorro: 'Ocho', english: 'Eight', value: 8 },
   { chamorro: 'Nuebi', english: 'Nine', value: 9 },
   { chamorro: 'Dies', english: 'Ten', value: 10 },

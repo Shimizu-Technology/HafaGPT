@@ -55,9 +55,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         type: 'type_answer',
         question: 'Type the Chamorro word for "Goodbye"',
         correctAnswer: 'Adios',
-        acceptableAnswers: ['adios', 'Adios', 'ADIOS', 'Bula', 'bula'],
+        acceptableAnswers: ['adios', 'Adios', 'ADIOS'],
         hint: 'It\'s similar to the Spanish word',
-        explanation: '"Adios" is the formal goodbye, while "Bula" is more informal.'
+        explanation: '"Adios" means goodbye or farewell in Chamorro.'
       },
       {
         id: id('greet', 4),
@@ -191,9 +191,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('num', 1),
         type: 'multiple_choice',
         question: 'What is "1" in Chamorro?',
-        options: ['Dos', 'Uno', 'Tres', 'Kuåttro'],
-        correctAnswer: 'Uno',
-        explanation: '"Uno" is the Chamorro word for one.'
+        options: ['Dos', 'Unu', 'Tres', 'Kuåtro'],
+        correctAnswer: 'Unu',
+        explanation: '"Unu" is the Chamorro word for one.'
       },
       {
         id: id('num', 2),
@@ -207,10 +207,10 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
       {
         id: id('num', 3),
         type: 'multiple_choice',
-        question: 'What number is "Sinku"?',
+        question: 'What number is "Sinko"?',
         options: ['4', '5', '6', '7'],
         correctAnswer: '5',
-        explanation: '"Sinku" is five in Chamorro.'
+        explanation: '"Sinko" is five in Chamorro.'
       },
       {
         id: id('num', 4),
@@ -225,7 +225,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('num', 5),
         type: 'multiple_choice',
         question: 'What is "10" in Chamorro?',
-        options: ['Nuebe', 'Dies', 'Ocho', 'Siette'],
+        options: ['Nuebi', 'Dies', 'Ocho', 'Siete'],
         correctAnswer: 'Dies',
         explanation: '"Dies" is ten in Chamorro.'
       },
@@ -234,26 +234,26 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         type: 'type_answer',
         question: 'How do you say "7" in Chamorro?',
         correctAnswer: 'Siete',
-        acceptableAnswers: ['Siete', 'siete', 'SIETE', 'Siette', 'siette'],
+        acceptableAnswers: ['Siete', 'siete', 'SIETE', 'Sietti', 'sietti'],
         hint: 'Similar to Spanish "siete"',
         explanation: '"Siete" is seven in Chamorro.'
       },
       {
         id: id('num', 7),
         type: 'multiple_choice',
-        question: 'What number is "Kuåttro"?',
+        question: 'What number is "Kuåtro"?',
         options: ['3', '4', '5', '6'],
         correctAnswer: '4',
-        explanation: '"Kuåttro" is four in Chamorro.'
+        explanation: '"Kuåtro" is four in Chamorro.'
       },
       {
         id: id('num', 8),
         type: 'fill_blank',
-        question: 'Complete: Ocho, Nuebe, ___',
+        question: 'Complete: Ocho, Nuebi, ___',
         correctAnswer: 'Dies',
         acceptableAnswers: ['Dies', 'dies', 'DIES'],
         hint: 'Similar to Spanish "diez" (ten)',
-        explanation: 'After 8 (Ocho) and 9 (Nuebe) comes 10 (Dies).'
+        explanation: 'After 8 (Ocho) and 9 (Nuebi) comes 10 (Dies).'
       }
     ]
   },

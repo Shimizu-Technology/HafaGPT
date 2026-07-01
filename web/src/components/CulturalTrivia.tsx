@@ -173,9 +173,9 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
   },
   {
     question: "How do you say 'Good morning' in Chamorro?",
-    options: ["Buenas tatdes", "Buenas noches", "Mañana si Yu'os", "Adios"],
+    options: ["Buenas tåtdes", "Buenas noches", "Buenas dias", "Adios"],
     correctIndex: 2,
-    explanation: "'Mañana si Yu'os' means 'Good morning' in Chamorro, literally 'Morning with God'.",
+    explanation: "'Buenas dias' means 'Good morning' or 'Good day' in Chamorro.",
     category: "language"
   },
   {

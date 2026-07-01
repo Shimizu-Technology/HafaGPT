@@ -39,9 +39,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'see DZOO-ohs mah-AW-seh'
       },
       {
-        front: 'Buenas yan hågu',
-        back: 'Good (day) to you / Hello',
-        pronunciation: 'BWAY-nahs dzahn HAH-goo'
+        front: 'Buenas dias',
+        back: 'Good morning / Hello',
+        pronunciation: 'BWAY-nahs DEE-ahs'
       },
       {
         front: 'Adios',
@@ -49,9 +49,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'ah-dee-OHS'
       },
       {
-        front: 'Bula',
-        back: 'Goodbye (informal)',
-        pronunciation: 'BOO-lah'
+        front: 'Asta agupa\'',
+        back: 'See you tomorrow',
+        pronunciation: 'AHS-tah ah-GOO-pah'
       },
       {
         front: 'Håyi na\'ån-mu?',
@@ -69,12 +69,12 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'kah-oh SEEN-yah oon ah-DZOO-dah dzoo'
       },
       {
-        front: 'Mañana si Yu\'os',
-        back: 'Good morning',
-        pronunciation: 'mah-NYAH-nah see DZOO-ohs'
+        front: 'Hunggan',
+        back: 'Yes',
+        pronunciation: 'HOONG-gahn'
       },
       {
-        front: 'Buenas tatdes',
+        front: 'Buenas tåtdes',
         back: 'Good afternoon',
         pronunciation: 'BWAY-nahs TAHT-dehs'
       },
@@ -84,9 +84,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'BWAY-nahs NOH-chehs'
       },
       {
-        front: 'Buenas dias',
-        back: 'Good morning',
-        pronunciation: 'BWAY-nahs DEE-ahs'
+        front: 'Åhe\'',
+        back: 'No',
+        pronunciation: 'AH-heh'
       }
     ]
   },
@@ -97,7 +97,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Learn to count from 1 to 10 in Chamorro',
     cards: [
       {
-        front: 'Uno',
+        front: 'Unu',
         back: 'One (1)',
         pronunciation: 'OO-noo'
       },
@@ -112,14 +112,14 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'TREHS'
       },
       {
-        front: 'Kuåttro',
+        front: 'Kuåtro',
         back: 'Four (4)',
         pronunciation: 'KWAH-troh'
       },
       {
-        front: 'Sinku',
+        front: 'Sinko',
         back: 'Five (5)',
-        pronunciation: 'SEEN-koo'
+        pronunciation: 'SEEN-koh'
       },
       {
         front: 'Sais',
@@ -137,9 +137,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'OH-choh'
       },
       {
-        front: 'Nuebe',
+        front: 'Nuebi',
         back: 'Nine (9)',
-        pronunciation: 'NWEH-beh'
+        pronunciation: 'NOO-eh-bee'
       },
       {
         front: 'Dies',
