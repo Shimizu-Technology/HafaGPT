@@ -28,7 +28,8 @@
         { "chamorro": "Å'paka'", "english": "White", "phonetic_hint": "Aw-pah-kah" },
         { "chamorro": "Åttilung", "english": "Black", "phonetic_hint": "Awt-tee-loong" },
         { "chamorro": "Kulot di rosa", "english": "Pink", "phonetic_hint": "Koo-lot dee roh-sah" },
-        { "chamorro": "Kulot chukulåti", "english": "Brown", "phonetic_hint": "Koo-lot choo-koo-lah-tee" }
+        { "chamorro": "Kulot chukulåti", "english": "Brown", "phonetic_hint": "Koo-lot choo-koo-lah-tee" },
+        { "chamorro": "Kulot åpu", "english": "Gray", "phonetic_hint": "Koo-lot ah-poo" }
       ]
     },
     "food": {

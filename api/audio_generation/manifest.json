@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02T22:03:02.865406",
+  "last_updated": "2026-07-02T22:33:27.615760",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -7898,8 +7898,8 @@
       "file": "kulot_apu.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kulot_apu.mp3",
       "english": "Gray",
-      "category": "flashcards",
-      "tier": "flashcards",
+      "category": "colors",
+      "tier": 1,
       "phonetic_used": "Koo-lot ah-poo",
       "size_bytes": 19688,
       "generated_at": "2026-07-01T08:23:23.579419",
@@ -8266,7 +8266,8 @@
       "size_bytes": 19688,
       "generated_at": "2026-07-01T22:54:11.656902",
       "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
+      "review_status": "needs_review",
+      "source_note": "RUCD local dictionary defines buen prubetchu as 'you are welcome'; the old app-only meal phrase was removed as unsupported."
     },
     "Kåddo": {
       "file": "kaddo.mp3",

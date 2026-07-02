@@ -39,6 +39,8 @@ python3 scripts/verify_static_audio_manifest.py --skip-frontend
 - Fixed a malformed Tier 2 audio key/file/URL containing embedded CRLF: `kåtnin\r\nguaka` → `kåtnin guaka`, `katnin\r\nguaka.mp3` → `katnin_guaka.mp3`.
 - Updated `sanitize_filename` so future generated filenames collapse all whitespace to `_`, not only literal spaces.
 - Reconciled `size_bytes` values against the actual remote S3 objects.
+- Corrected `Kulot åpu` manifest metadata to the color category/tier and added it to the Tier 1 color audio source list.
+- Kept `Buen prubetchu` as `You're welcome` with manifest source-note metadata because RUCD locally defines `buen prubetchu` as “you are welcome”; the old app-only meal phrase was removed as unsupported.
 - Verified the remote S3 manifest and every unique remote audio file by HEAD request.
 
 Current manifest status after cleanup:

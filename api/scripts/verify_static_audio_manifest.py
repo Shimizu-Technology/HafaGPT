@@ -248,7 +248,15 @@ def head_audio(url: str, expected_size: int | None, *, timeout: float, retries: 
         return Finding("error", f"{url}: HTTP {status}")
     if content_type and content_type not in AUDIO_CONTENT_TYPES:
         return Finding("error", f"{url}: unexpected content type {content_type!r}")
-    if expected_size is not None and content_length and int(content_length) != expected_size:
+
+    parsed_content_length: int | None = None
+    if content_length:
+        try:
+            parsed_content_length = int(content_length)
+        except ValueError:
+            return Finding("error", f"{url}: invalid Content-Length {content_length!r}")
+
+    if expected_size is not None and parsed_content_length is not None and parsed_content_length != expected_size:
         return Finding("error", f"{url}: Content-Length {content_length} differs from manifest size_bytes {expected_size}")
     return None
 
