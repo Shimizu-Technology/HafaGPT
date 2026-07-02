@@ -80,9 +80,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('greet', 6),
         type: 'multiple_choice',
         question: 'How would you respond "I\'m fine" in Chamorro?',
-        options: ['Si Yu\'os Ma\'åse\'', 'Måolik ha\' yu\'', 'Håfa Adai', 'Adios'],
-        correctAnswer: 'Måolik ha\' yu\'',
-        explanation: '"Måolik" means "good" or "fine", so "Måolik ha\' yu\'" means "I\'m fine".'
+        options: ['Si Yu\'os Ma\'åse\'', 'Maolek ha\' yu\'', 'Håfa Adai', 'Adios'],
+        correctAnswer: 'Maolek ha\' yu\'',
+        explanation: '"Maolek" means "good" or "fine", so "Maolek ha\' yu\'" means "I\'m fine".'
       },
       {
         id: id('greet', 7),

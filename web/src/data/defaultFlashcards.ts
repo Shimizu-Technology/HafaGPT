@@ -29,9 +29,9 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'HAW-fah tah-taht-MAW-noo how'
       },
       {
-        front: 'Måolik ha\' yu\'',
+        front: 'Maolek ha\' yu\'',
         back: 'I\'m fine / I\'m good',
-        pronunciation: 'MAW-leek hah dzoo'
+        pronunciation: 'MOW-lek hah dzoo'
       },
       {
         front: 'Si Yu\'os Ma\'åse\'',
@@ -887,10 +887,10 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Adjectives for size, quality, and feelings',
     cards: [
       {
-        front: 'Måolik',
+        front: 'Maolek',
         back: 'Good / Fine / Well',
-        pronunciation: 'MAW-leek',
-        example: 'Måolik ha\' yu\'. — I\'m fine.'
+        pronunciation: 'MOW-lek',
+        example: 'Maolek ha\' yu\'. — I\'m fine.'
       },
       {
         front: 'Båba',

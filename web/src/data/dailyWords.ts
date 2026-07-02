@@ -85,9 +85,9 @@ export const DAILY_WORDS: DailyWord[] = [
     difficulty: 'beginner'
   },
   {
-    chamorro: 'Måolik ha\' yu\'',
+    chamorro: 'Maolek ha\' yu\'',
     english: 'I\'m fine / I\'m good',
-    pronunciation: 'MAW-leek hah yoo',
+    pronunciation: 'MOW-lek hah yoo',
     category: 'Greetings',
     difficulty: 'beginner'
   },
