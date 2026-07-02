@@ -148,7 +148,7 @@ def sanitize_filename(text: str) -> str:
     filename = filename.replace("å", "a")
     filename = filename.replace("ñ", "n")
     filename = re.sub(r'[^a-z0-9\s]', '', filename)
-    filename = filename.replace(" ", "_")
+    filename = re.sub(r'\s+', '_', filename).strip('_')
     return filename + ".mp3"
 
 

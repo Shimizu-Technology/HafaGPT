@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 142,
+  "total": 143,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -130,6 +130,11 @@
           "chamorro": "Hunggan",
           "english": "Yes",
           "phonetic_hint": null
+        },
+        {
+          "chamorro": "Åhe'",
+          "english": "No",
+          "phonetic_hint": "AH-heh"
         },
         {
           "chamorro": "Hu guaiya hao",
