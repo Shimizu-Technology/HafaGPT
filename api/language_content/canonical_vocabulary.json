@@ -259,19 +259,27 @@
           "term": "Åttilong",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamoru_info_dictionary.json"
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Chamoru.info/Learning-family spelling for black; preserve as valid variant."
         },
         {
           "term": "Attilong",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamorro_english_dictionary_TOD.json"
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD unaccented spelling for black; preserve as valid variant."
         },
         {
           "term": "Åttelong",
           "type": "app_legacy",
-          "status": "needs_review",
-          "notes": "Used by games/audio, but local dictionaries found åttilung/åttilong/attilong instead."
+          "status": "deprecated",
+          "notes": "Legacy app spelling; exact local sources found Åttilung/Åttilong/Attilong instead."
+        },
+        {
+          "term": "Attelong",
+          "type": "app_legacy",
+          "status": "deprecated",
+          "notes": "Legacy app spelling; exact local sources found Åttilung/Åttilong/Attilong instead."
         }
       ],
       "deprecated_app_terms": [
@@ -306,7 +314,7 @@
           "definition": "black"
         }
       ],
-      "notes": "Correct app drift by removing Å'tot from color teaching content."
+      "notes": "Primary display keeps RUCD/Finder 2024 Åttilung while preserving Chamoru.info/TOD Åttilong/Attilong as source-backed variants. Exact Attelong/Åttelong app spellings remain deprecated."
     },
     {
       "id": "colors.brown",
@@ -533,6 +541,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "revised_and_updated_chamorro_dictionary.json"
+        },
+        {
+          "term": "Kulot kahet",
+          "type": "orthographic",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "Unaccented TOD/Learning-style fallback for source-backed Kulot kåhet."
         }
       ],
       "deprecated_app_terms": [
@@ -585,7 +600,7 @@
           "notes": "TOD source is unaccented in normalized JSON."
         }
       ],
-      "notes": "Use a source-backed kulot kåhet/kåhit form instead of Lalala. Reviewer should decide final display spelling."
+      "notes": "Use source-backed Kulot kåhet as the primary app display while preserving RUCD/Finder Kulót kåhit and unaccented Kulot kahet as valid variants; Lalala remains unsupported for orange."
     },
     {
       "id": "colors.purple",
@@ -605,9 +620,10 @@
       "variants": [
         {
           "term": "Lila",
-          "type": "app_legacy",
-          "status": "needs_review",
-          "notes": "Used by games/story content; local color entries use full kulot lila phrase."
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD and LearningCHamoru support bare lila as the adjective purple; Kulot lila remains the beginner noun phrase."
         }
       ],
       "deprecated_app_terms": [],
@@ -623,6 +639,15 @@
           ]
         },
         {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "lila",
+          "definition": "purple (color)",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Ha gåga'um kurason-hu esti i lila na kulot — Purple color touches my heart"
+          ]
+        },
+        {
           "source": "chamoru_info_dictionary.json",
           "headword": "kulot lila",
           "definition": "Purple (color)."
@@ -633,7 +658,7 @@
           "definition": "purple (color)"
         }
       ],
-      "notes": "Use full source-backed color phrase for beginner teaching; bare Lila may still be valid but needs review."
+      "notes": "Kulot lila remains the beginner color phrase, but bare Lila is source-backed as an adjective/color word and should not be treated as deprecated."
     },
     {
       "id": "numbers.one",
@@ -1264,18 +1289,17 @@
         "guide": "BWAY-nahs DEE-ahs",
         "status": "needs_native_review"
       },
-      "variants": [],
-      "deprecated_app_terms": [],
-      "needs_review_terms": [
+      "variants": [
         {
           "term": "Mañana si Yu'os",
-          "reason": "Used as Good morning in legacy content, but no local dictionary source was found for this phrase/meaning.",
-          "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/components/CulturalTrivia.tsx"
-          ]
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "notes": "Externally attested as Good Morning on Visit Guam; keep as a common-phrase variant pending teacher review, not the primary dictionary-backed beginner display."
         }
       ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
       "source_citations": [
         {
           "source": "chamoru_info_dictionary.json",
@@ -1286,9 +1310,16 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "buenas dias",
           "definition": "good morning, good day, hello"
+        },
+        {
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
+          "headword": "Manana Si Yu'os",
+          "definition": "Good Morning",
+          "notes": "Tourism/common-phrase source; not selected over dictionary-backed Buenas dias as beginner primary display."
         }
       ],
-      "notes": "Use the source-backed greeting instead of unsupported Mañana si Yu'os."
+      "notes": "Use dictionary-backed Buenas dias as the primary beginner display. Mañana si Yu'os is externally attested as a common/tourism greeting variant and should be reviewed before being reintroduced as core teaching content."
     },
     {
       "id": "greetings.good_afternoon",
@@ -1312,6 +1343,20 @@
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json",
           "notes": "Unaccented spelling appears in TOD source; use diacritic form for teaching."
+        },
+        {
+          "term": "Ha'anen Maolek",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "notes": "Externally attested as Good Afternoon on Visit Guam; keep as a phrase variant pending teacher review."
+        },
+        {
+          "term": "Buenas tåtdis",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "english_chamorro_finder_list_2024.pdf",
+          "notes": "Finder 2024 lists buenas tåtdis for good afternoon; preserve as a documented variant pending reviewer policy."
         }
       ],
       "deprecated_app_terms": [
@@ -1336,9 +1381,16 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "buenas tatdes",
           "definition": "good afternoon"
+        },
+        {
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
+          "headword": "Ha'anen Maolek",
+          "definition": "Good Afternoon",
+          "notes": "Tourism/common-phrase source; not selected over dictionary-backed Buenas tåtdes as beginner primary display."
         }
       ],
-      "notes": "Normalize teaching display to the diacritic form."
+      "notes": "Normalize core teaching display to dictionary-backed Buenas tåtdes while preserving TOD Buenas tatdes, Finder Buenas tåtdis, and Visit Guam Ha'anen Maolek as variants for review/context."
     },
     {
       "id": "greetings.good_evening_night",
@@ -2868,8 +2920,8 @@
       "id": "food.food_noun",
       "category": "food",
       "english": "Food / nourishment",
-      "canonical_chamorro": "Nengkånno'",
-      "recommended_teaching_term": "Nengkånno'",
+      "canonical_chamorro": "Nengkanno'",
+      "recommended_teaching_term": "Nengkanno'",
       "normalized_key": "nengkanno",
       "part_of_speech": "n.",
       "teaching_level": "beginner",
@@ -2881,16 +2933,18 @@
       },
       "variants": [
         {
-          "term": "Nengkanno'",
-          "type": "orthographic",
-          "status": "needs_review",
-          "notes": "Bundled Chamoru.info spelling omits å; keep for search, not primary teaching display."
-        },
-        {
           "term": "Nenkanno'",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamorro_english_dictionary_TOD.json"
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD and LearningCHamoru-supported food/nourishment spelling."
+        },
+        {
+          "term": "Néngkanu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD spelling for food/nourishment."
         },
         {
           "term": "Boka",
@@ -2900,7 +2954,21 @@
           "notes": "Source-backed word for food/eat/eaten; not selected as the beginner food-noun display in this pass."
         }
       ],
-      "deprecated_app_terms": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Nengkånno'",
+          "reason": "Mixed å spelling was used by the app, but reviewed sources support Nengkanno', Nenkanno', and Néngkanu' instead.",
+          "match": "exact",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/storyData.ts",
+            "HafaGPT-frontend/src/data/conversationScenarios.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/chamorro_pronunciations.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
       "needs_review_terms": [],
       "source_citations": [
         {
@@ -2915,12 +2983,18 @@
         },
         {
           "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "néngkanu'",
+          "definition": "food, aliment, nutriment, nourishment, sustenance, what is eaten",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
           "headword": "boka",
           "definition": "food",
           "part_of_speech": "n."
         }
       ],
-      "notes": "Replaces beginner food-noun teaching that used Kånno', which local sources define as the transitive verb 'eat something'. Kånno' remains valid in verb contexts such as Hu kånno'."
+      "notes": "Replaces beginner food-noun teaching that used Kånno', which local sources define as the transitive verb 'eat something'. Primary spelling is Nengkanno' (no å); Nenkanno' and Néngkanu' are source-backed variants."
     },
     {
       "id": "food.cooked_rice",
@@ -3026,6 +3100,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Kåtni",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for meat/flesh."
         }
       ],
       "deprecated_app_terms": [],
@@ -3040,9 +3121,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "katne",
           "definition": "meat, flesh, (esp. refers to mammal's flesh)"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåtni",
+          "definition": "meat, flesh (esp. of mammals)",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "No revised-dictionary exact food headword found in local data, but Chamoru.info and TOD support the term."
+      "notes": "Primary display follows Chamoru.info/Learning Kåtne; RUCD/Finder Kåtni and TOD Katne are source-backed variants."
     },
     {
       "id": "food.chicken",
@@ -3065,6 +3152,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Månnuk",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for chicken/poultry."
         }
       ],
       "deprecated_app_terms": [],
@@ -3079,9 +3173,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "mannok",
           "definition": "chicken, poultry. (Generic term)"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "månnuk",
+          "definition": "chicken, poultry (generic)",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Preserves unaccented Mannok as a source-backed variant while teaching Månnok as the primary display form. Older app food content incorrectly paired Månha with “Chicken”; this was corrected to Månnok, while Månha remains a valid green-coconut term in its own entry."
+      "notes": "Primary display follows Chamoru.info/Learning Månnok; RUCD/Finder Månnuk and unaccented Mannok are source-backed variants. Older app food content incorrectly paired Månha with “Chicken”; this was corrected to Månnok, while Månha remains a valid green-coconut term in its own entry."
     },
     {
       "id": "food.green_coconut",
@@ -3149,19 +3249,30 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamoru_info_dictionary.json"
-        }
-      ],
-      "deprecated_app_terms": [
+        },
+        {
+          "term": "Kåddu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 soup/broth spelling."
+        },
+        {
+          "term": "Kåtdu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD alternate soup/broth spelling."
+        },
         {
           "term": "Kådu",
-          "reason": "Local dictionaries support Kåddo/Kaddo for soup/broth; Kådu normalizes to revised-dictionary kadu' meaning pretend/make believe.",
-          "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
-          ]
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "LearningCHamoru dictionary search",
+          "notes": "LearningCHamoru lists Kådu as the liquid part of soup/broth; not primary because local JSON also has unrelated kadu' normalized neighbor."
         }
       ],
+      "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
         {
@@ -3173,9 +3284,21 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "kaddo",
           "definition": "boil--type of cooking meat or soup, sauce, broth, soup"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåddu",
+          "definition": "soup, broth",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåtdu",
+          "definition": "soup, broth",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Teaching display uses Kåddo to distinguish it from kadu' / pretend."
+      "notes": "Primary display uses Learning/Chamoru.info-friendly Kåddo. Kaddo, Kåddu, Kåtdu, and narrower Kådu broth/liquid usage are documented variants; do not teach Kådu as wrong, but avoid it as the main beginner soup card until reviewed."
     },
     {
       "id": "food.vegetable",
@@ -3243,9 +3366,17 @@
       "variants": [
         {
           "term": "Hanom",
-          "type": "orthographic",
-          "status": "needs_review",
-          "notes": "ASCII fallback without å; keep for typed-answer acceptance, not primary teaching display."
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD unaccented spelling for water/liquid; acceptable typed-answer fallback."
+        },
+        {
+          "term": "Hånum",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for water/liquid."
         }
       ],
       "deprecated_app_terms": [],
@@ -3260,9 +3391,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "hanom",
           "definition": "water, liquid"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hånum",
+          "definition": "water, liquid",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Existing flashcards and quiz already use Hånom; trivia display is aligned in this pass."
+      "notes": "Primary display follows Chamoru.info/Learning Hånom; TOD Hanom and RUCD/Finder Hånum are source-backed variants."
     },
     {
       "id": "food.coffee",
@@ -3330,7 +3467,15 @@
         "guide": "NEE-dzok",
         "status": "needs_native_review"
       },
-      "variants": [],
+      "variants": [
+        {
+          "term": "Niyuk",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for coconut palm / ripe or husked coconut contexts."
+        }
+      ],
       "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
@@ -3343,9 +3488,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "niyok",
           "definition": "type of plant-cocos nucifera; coconut palm"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "niyuk",
+          "definition": "type of plant: coconut palm; husked coconut, meat of ripe coconut",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Beginner app can gloss as coconut/coconut palm; Månha is specifically green coconut with tender meat."
+      "notes": "Beginner app can gloss Niyok as coconut/coconut palm; RUCD/Finder Niyuk is source-backed. Månha is specifically green coconut with tender meat."
     },
     {
       "id": "food.kelaguen",
@@ -3517,6 +3668,13 @@
           "type": "orthographic",
           "status": "needs_review",
           "notes": "Older app/game display without final glottal stop; keep as compatibility alias, not primary display."
+        },
+        {
+          "term": "Månngi'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for delicious."
         }
       ],
       "deprecated_app_terms": [],
@@ -3531,9 +3689,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "mannge'",
           "definition": "delicious, exquisite, highly pleasing to the senses, taste, or mind"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "månngi'",
+          "definition": "delicious, exquisite, highly pleasing to the senses, taste, or mind",
+          "part_of_speech": "adj."
         }
       ],
-      "notes": "Used in food/restaurant teaching contexts."
+      "notes": "Primary display follows Chamoru.info/Learning Månnge'; RUCD/Finder Månngi' is a source-backed variant."
     },
     {
       "id": "food.egg",

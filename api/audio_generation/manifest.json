@@ -8280,18 +8280,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Nengkånno'": {
-      "file": "nengkanno.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nengkanno.mp3",
-      "english": "Food / Nourishment",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Neng-kahn-noh",
-      "size_bytes": 20524,
-      "generated_at": "2026-07-01T22:54:12.594494",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Kåddo": {
       "file": "kaddo.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kaddo.mp3",
@@ -8397,6 +8385,18 @@
       "phonetic_used": "Mow-lek hah yoo",
       "size_bytes": 22613,
       "generated_at": "2026-07-02T11:30:42.473527",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Nengkanno'": {
+      "file": "nengkanno.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/nengkanno.mp3",
+      "english": "Food / Nourishment",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "Neng-kahn-noh",
+      "size_bytes": 20524,
+      "generated_at": "2026-07-01T22:54:12.594494",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

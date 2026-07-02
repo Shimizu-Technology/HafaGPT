@@ -87,9 +87,9 @@ The clearest initial content drift was in the color vocabulary. Follow-up passes
 
 The old high-risk beginner drift has now been removed from core beginner surfaces and from active static-audio lookup:
 
-- Color drift such as `Såksan` for brown, `Lalala` for orange, `Å'tot` for black, `Gris` for gray, and bare/review-needed pink/purple/brown/orange variants has been replaced by source-backed canonical terms.
+- Color drift such as `Såksan` for brown, `Lalala` for orange, `Å'tot` for black, `Gris` for gray, and unsupported pink/brown/orange display variants has been replaced by source-backed canonical terms; bare `Lila` is now documented as source-backed while `Kulot lila` remains the beginner color phrase.
 - Number drift such as `Uno`, `Kuåttro`, `Sinku`/`Singko`, `Siette`, and `Nuebe` has been replaced by source-backed terms: `Unu`, `Kuåtro`, `Sinko`, `Siete`, and `Nuebi`.
-- Greeting/basic drift such as `Bula` taught as goodbye, `Mañana si Yu'os` taught as good morning, and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces.
+- Greeting/basic drift such as `Bula` taught as goodbye and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces. `Mañana si Yu'os` is no longer treated as wrong; it is externally attested by Visit Guam as a Good Morning phrase and is documented as a common/tourism variant pending teacher review.
 - Family drift such as `Nana`/`Tata`/`Lahi`/`Haga`, combined `Prima / Primu`, and `Tiu`/`Tia` as primary beginner display has been replaced with reviewed canonical entries while source-backed variants remain documented.
 - Body-part drift such as `Ulo` for head, `Kanai` for hand, `Tata'ao` for stomach, and primary beginner `Mata` for eye has been replaced or deferred with source-backed canonical entries and review notes.
 - Food/drink drift such as `Kånno'` taught as the food noun, `Månha` taught as chicken, `Kådu` taught as soup, `Lechuga` taught as vegetables, unsupported `Buen prubechu` as a meal phrase, and truncated Wordle food forms has been corrected or documented with source-backed terms.

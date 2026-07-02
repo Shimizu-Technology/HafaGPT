@@ -314,6 +314,7 @@ def test_food_manifest_uses_corrected_teaching_terms_and_safe_aliases():
 
     stale_terms = {
         "Buen prubechu",
+        "Nengkånno'",
         "Kådu",
         "Lechuga",
     }
@@ -323,7 +324,7 @@ def test_food_manifest_uses_corrected_teaching_terms_and_safe_aliases():
 
     corrected_terms = {
         "Buen prubetchu",
-        "Nengkånno'",
+        "Nengkanno'",
         "Kåddo",
         "Gollai",
         "Fina'denne'",
@@ -376,6 +377,7 @@ def test_food_audio_source_lists_use_corrected_teaching_terms():
 
     stale_flashcard_terms = {
         exact_key("Buen prubechu"),
+        exact_key("Nengkånno'"),
         exact_key("Kådu"),
         exact_key("Lechuga"),
     }
@@ -387,7 +389,7 @@ def test_food_audio_source_lists_use_corrected_teaching_terms():
 
     corrected_flashcard_terms = {
         exact_key("Buen prubetchu"),
-        exact_key("Nengkånno'"),
+        exact_key("Nengkanno'"),
         exact_key("Kåddo"),
         exact_key("Gollai"),
         exact_key("Fina'denne'"),

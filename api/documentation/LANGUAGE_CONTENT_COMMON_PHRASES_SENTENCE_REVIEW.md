@@ -100,4 +100,4 @@ Still do not rewrite blindly:
 
 ## Validation target
 
-After this pass, the canonical usage checker should still report only the existing bare `Lila` story findings until a color/story sentence review pass addresses that text.
+After the follow-up source review, the canonical usage checker should report no current deprecated/review-needed language-content findings. Bare `Lila` is now treated as a source-backed purple adjective rather than an accuracy defect.

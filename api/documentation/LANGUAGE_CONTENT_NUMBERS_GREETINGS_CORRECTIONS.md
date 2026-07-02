@@ -34,8 +34,8 @@ No changes were needed for `Dos`, `Tres`, `Sais`, `Ocho`, or `Dies` beyond addin
 | English | Previous app term(s) | Source-backed teaching term now used | Notes |
 |---|---|---|---|
 | Hello / Hi | `Buenas yan hågu` as Hello | `Håfa Adai`; `Buenas dias` for good morning/hello contexts | No local dictionary headword was found for teaching `Buenas yan hågu` as Hello. |
-| Good morning | `Mañana si Yu'os` | `Buenas dias` | Local sources support `buenas dias`; no local dictionary source was found for the old phrase as Good morning. |
-| Good afternoon | `Buenas tatdes` | `Buenas tåtdes` | Diacritic teaching form is backed by `chamoru_info`; TOD has the unaccented spelling. |
+| Good morning | `Mañana si Yu'os` as the old core beginner card | `Buenas dias` | Local dictionaries support `buenas dias`; Visit Guam externally attests `Manana Si Yu'os` as Good Morning. Keep `Mañana si Yu'os` as a common/tourism phrase variant pending teacher review, not as a deprecated/wrong form. |
+| Good afternoon | `Buenas tatdes` | `Buenas tåtdes` | Diacritic teaching form is backed by `chamoru_info`; TOD has the unaccented spelling. Finder 2024 also lists `Buenas tåtdis`, and Visit Guam externally attests `Ha'anen Maolek` as Good Afternoon; preserve these as variants pending review. |
 | Goodbye | `Bula` as informal Goodbye | `Adios`; `Asta agupa'` for See you tomorrow | Local sources define `bula` as much/plenty/lots, not goodbye. `Bula` remains valid in non-goodbye contexts. |
 | Yes / No | existing `Hunggan`, `Åhe'` | `Hunggan`, `Åhe'` | Added canonical citations and used these as source-backed basics in the greetings deck. |
 
