@@ -146,7 +146,7 @@ export const conversationScenarios: ConversationScenario[] = [
       { chamorro: 'Hu guaiya hao', english: 'I love you', pronunciation: 'hoo GWAI-dzah how' },
     ],
     openingLine: {
-      chamorro: 'Ai, hågu guihi! Håfa Adai, neni! Måtto hao! Kao ñålang hao? Guaha nengkånno\'.',
+      chamorro: 'Ai, hågu guihi! Håfa Adai, neni! Måtto hao! Kao ñålang hao? Guaha nengkanno\'.',
       english: 'Oh, there you are! Hello, dear! You came! Are you hungry? There\'s food.'
     },
     estimatedTurns: 7

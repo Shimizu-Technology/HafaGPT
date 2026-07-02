@@ -87,7 +87,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Maolek ha\' yu\'',
     english: 'I\'m fine / I\'m good',
-    pronunciation: 'mah-OH-lek hah yoo',
+    pronunciation: 'MOW-lek hah yoo',
     category: 'Greetings',
     difficulty: 'beginner'
   },
@@ -576,11 +576,11 @@ export const DAILY_WORDS: DailyWord[] = [
 
   // === INTERMEDIATE & ADVANCED (Days 61-75) ===
   {
-    chamorro: 'Håfa na bidå-mu?',
+    chamorro: 'Håfa bidåda-mu?',
     english: 'What are you doing?',
-    pronunciation: 'HAH-fah nah bee-DAH-moo',
+    pronunciation: 'HAW-fah bee-DAW-dah-moo',
     example: {
-      chamorro: 'Håfa na bidå-mu på\'go?',
+      chamorro: 'Håfa bidåda-mu på\'go?',
       english: 'What are you doing now?'
     },
     category: 'Phrases',
@@ -614,7 +614,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Gof maolek',
     english: 'Very good / Excellent',
-    pronunciation: 'gohf mah-OH-lek',
+    pronunciation: 'gohf MOW-lek',
     example: {
       chamorro: 'Gof maolek i cho\'cho\'-mu!',
       english: 'Your work is excellent!'
@@ -679,7 +679,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Inafa\'maolek',
     english: 'To make peace / Interdependence',
-    pronunciation: 'ee-nah-fah-mah-OH-lek',
+    pronunciation: 'ee-nah-fah-MOW-lek',
     example: {
       chamorro: 'I inafa\'maolek importånte gi kuttura-ta.',
       english: 'Interdependence is important in our culture.'

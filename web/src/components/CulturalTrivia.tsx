@@ -22,7 +22,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     question: "What is the traditional Chamorro greeting?",
     options: ["Aloha", "Håfa Adai", "Konnichiwa", "Buenos Días"],
     correctIndex: 1,
-    explanation: "'Håfa Adai' is the traditional Chamorro greeting, meaning 'Hello' or 'What's up?'",
+    explanation: "'Håfa Adai' is the traditional Chamorro greeting, used to mean 'Hello' or 'Hi'.",
     category: "culture"
   },
   {

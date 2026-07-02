@@ -48,7 +48,7 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         question: 'How do you say "Thank you" in Chamorro?',
         options: ['Håfa Adai', 'Adios', 'Si Yu\'os Ma\'åse\'', 'Buenas'],
         correctAnswer: 'Si Yu\'os Ma\'åse\'',
-        explanation: '"Si Yu\'os Ma\'åse\'" literally means "God repay you" and is used to say thank you.'
+        explanation: '"Si Yu\'os Ma\'åse\'" is used to say thank you; local sources gloss related variants literally as "God have mercy."'
       },
       {
         id: id('greet', 3),

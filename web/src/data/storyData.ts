@@ -64,7 +64,7 @@ const beginnerStories: Story[] = [
     readingTime: 2,
     wordCount: 28,
     icon: '👋',
-    culturalNote: '"Håfa Adai" is the traditional Chamorro greeting, similar to "Aloha" in Hawaiian. It literally means "What\'s up?" but is used as a friendly hello.',
+    culturalNote: '"Håfa Adai" is the traditional Chamorro greeting, similar to "Aloha" in Hawaiian, and is used as a friendly hello or hi.',
     paragraphs: [
       {
         id: 'p1',
@@ -436,7 +436,7 @@ const intermediateStories: Story[] = [
       },
       {
         id: 'p3',
-        chamorro: 'Gi fiesta, guaha meggai na nengkånno\': kelaguen, hineksa\' agaga\', yan kåddo.',
+        chamorro: 'Gi fiesta, guaha meggai na nengkanno\': kelaguen, hineksa\' agaga\', yan kåddo.',
         english: 'At the fiesta, there is a lot of food: kelaguen, red rice, and soup.',
         words: [
           { chamorro: 'Gi', english: 'at/in', pronunciation: 'gee' },
@@ -444,7 +444,7 @@ const intermediateStories: Story[] = [
           { chamorro: 'guaha', english: 'there is', pronunciation: 'GWAH-hah' },
           { chamorro: 'meggai', english: 'many/a lot', pronunciation: 'MEG-gai' },
           { chamorro: 'na', english: '(linking)', pronunciation: 'nah' },
-          { chamorro: 'nengkånno\'', english: 'food', pronunciation: 'neng-KAHN-noh' },
+          { chamorro: 'nengkanno\'', english: 'food', pronunciation: 'neng-KAHN-noh' },
           { chamorro: 'kelaguen', english: 'kelaguen (citrus-cured meat)', pronunciation: 'keh-lah-GWEN' },
           { chamorro: 'hineksa\' agaga\'', english: 'red rice', pronunciation: 'hee-NEHK-sah ah-GAH-gah' },
           { chamorro: 'yan', english: 'and', pronunciation: 'dzahn' },
