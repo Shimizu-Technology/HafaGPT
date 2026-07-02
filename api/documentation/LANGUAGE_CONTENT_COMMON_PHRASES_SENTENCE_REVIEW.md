@@ -18,11 +18,17 @@ Primary evidence remains the bundled local dictionaries:
 
 AI output was not used as authority. Where local sources only support components or where a phrase remains register-sensitive, the canonical entry uses medium confidence or defers the item.
 
+## Maolek spelling policy
+
+Use `Maolek` as the default beginner spelling for “good / fine / well.” Two bundled dictionaries (`chamoru_info_dictionary.json` and `chamorro_english_dictionary_TOD.json`) use `maolek`, and existing learner/story content also predominantly uses `Maolek`.
+
+The revised dictionary's `måolik` form and exact `måolik ha' yu'` example are source-backed and preserved as variants, but this pass does not promote `Måolik` as the default learner-facing display.
+
 ## Canonical entries added
 
 Added common-phrase/sentence-level entries for:
 
-- `Måolik ha' yu'` — I'm fine / I'm good
+- `Maolek ha' yu'` — I'm fine / I'm good
 - `Dispensa yu'` — excuse me / pardon me / forgive me
 - `Pot fabot` — please
 - `Ti hu komprende` — I don't understand
@@ -39,17 +45,17 @@ Added common-phrase/sentence-level entries for:
 Updated phrase/sentence teaching surfaces:
 
 - `src/data/defaultFlashcards.ts`
-  - `Maolek ha' yu'` → `Måolik ha' yu'` for the source-cited “I'm fine” phrase.
+  - Kept `Maolek ha' yu'` as the primary “I'm fine” phrase and documented `Måolik ha' yu'` as a source-backed variant instead of the default.
   - `Kao siña un tulaika?` as “Can you repeat that?” → `Atgun sumångan ennåo` as “Say that again / Repeat that”. Local sources define `tulaika` as exchange/trade/replace/substitute/change, not “repeat”.
   - `Fan hånao hit` as “Let's go” → `Nihi ta hånåo`.
   - `Kao guåha?` → `Kao guaha?`.
   - `Hafa bidå-mu?` as “What are you doing?” → `Håfa bidåda-mu?`.
-  - Updated the adjective example to `Måolik ha' yu'. — I'm fine.`
+  - Kept the standalone adjective card as `Maolek` and aligned its example to `Maolek ha' yu'. — I'm fine.`
 - `src/data/dailyWords.ts`
-  - `Maolek ha' yu'` → `Måolik ha' yu'`.
+  - Kept `Maolek ha' yu'` for “I'm fine / I'm good”.
   - `Håfa na bidå-mu?` → `Håfa bidåda-mu?`.
 - `src/data/quizData.ts`
-  - Updated the “I'm fine” quiz option/answer/explanation to `Måolik ha' yu'`.
+  - Kept the “I'm fine” quiz option/answer/explanation on `Maolek ha' yu'`.
   - Replaced the unsupported `Si Yu'os Ma'åse'` explanation “God repay you” with local-source wording around “God have mercy.”
 - `src/data/storyData.ts`, `src/data/learningPath.ts`, `src/components/CulturalTrivia.tsx`
   - Removed unsupported “Håfa Adai literally means What's up” learner-facing wording; local sources support `Håfa Adai` as hello/hi.
@@ -59,7 +65,7 @@ Updated phrase/sentence teaching surfaces:
 Updated static audio source metadata:
 
 - `audio_generation/flashcard_words.json`
-  - Added `Måolik ha' yu'` and standalone `Måolik` static audio for the adjective flashcard display.
+  - Added/generated `Maolek ha' yu'` static audio for the “I'm fine” phrase.
   - Replaced `Kao siña un tulaika?` with `Atgun sumångan ennåo`.
   - Replaced `Fan hånao hit` with `Nihi ta hånåo`.
   - Replaced `Kao guåha?` with `Kao guaha?`.
@@ -72,8 +78,7 @@ Updated static audio source metadata:
 
 Generated and uploaded static audio for:
 
-- `Måolik`
-- `Måolik ha' yu'`
+- `Maolek ha' yu'`
 - `Atgun sumångan ennåo`
 - `Nihi ta hånåo`
 - `Kao guaha?`

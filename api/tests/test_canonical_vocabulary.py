@@ -429,7 +429,6 @@ def test_common_phrase_audio_source_list_uses_corrected_sentence_terms():
     flashcard_exact_terms, _ = collect_chamorro_terms_from_word_list(flashcard_words)
 
     stale_terms = {
-        exact_key("Maolek ha' yu'"),
         exact_key("Kao siña un tulaika?"),
         exact_key("Fan hånao hit"),
         exact_key("Kao guåha?"),
@@ -439,8 +438,7 @@ def test_common_phrase_audio_source_list_uses_corrected_sentence_terms():
     assert flashcard_exact_terms.isdisjoint(stale_terms)
 
     corrected_terms = {
-        exact_key("Måolik"),
-        exact_key("Måolik ha' yu'"),
+        exact_key("Maolek ha' yu'"),
         exact_key("Atgun sumångan ennåo"),
         exact_key("Nihi ta hånåo"),
         exact_key("Kao guaha?"),
@@ -460,7 +458,6 @@ def test_common_phrase_static_manifest_uses_corrected_sentence_terms():
     words = manifest["words"]
 
     stale_terms = {
-        "Maolek ha' yu'",
         "Kao siña un tulaika?",
         "Fan hånao hit",
         "Kao guåha?",
@@ -470,8 +467,7 @@ def test_common_phrase_static_manifest_uses_corrected_sentence_terms():
     assert words.keys().isdisjoint(stale_terms)
 
     corrected_terms = {
-        "Måolik",
-        "Måolik ha' yu'",
+        "Maolek ha' yu'",
         "Atgun sumångan ennåo",
         "Nihi ta hånåo",
         "Kao guaha?",

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02T02:19:27.809185",
+  "last_updated": "2026-07-02T11:30:59.952248",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
   },
-  "total_words": 715,
+  "total_words": 714,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -8340,18 +8340,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Måolik ha' yu'": {
-      "file": "maolik_ha_yu.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/maolik_ha_yu.mp3",
-      "english": "I'm fine / I'm good",
-      "category": "flashcards",
-      "tier": "flashcards",
-      "phonetic_used": "Maw-leek hah yoo",
-      "size_bytes": 21777,
-      "generated_at": "2026-07-02T01:51:36.885985",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "Atgun sumångan ennåo": {
       "file": "atgun_sumangan_ennao.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/atgun_sumangan_ennao.mp3",
@@ -8400,15 +8388,15 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "Måolik": {
-      "file": "maolik.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/maolik.mp3",
-      "english": "Good / Fine / Well",
+    "Maolek ha' yu'": {
+      "file": "maolek_ha_yu.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/maolek_ha_yu.mp3",
+      "english": "I'm fine / I'm good",
       "category": "flashcards",
       "tier": "flashcards",
-      "phonetic_used": "Maw-leek",
-      "size_bytes": 18016,
-      "generated_at": "2026-07-02T02:19:27.809159",
+      "phonetic_used": "Mow-lek hah yoo",
+      "size_bytes": 22613,
+      "generated_at": "2026-07-02T11:30:42.473527",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }

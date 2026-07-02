@@ -4423,47 +4423,29 @@
       "id": "common_phrases.im_fine",
       "category": "common_phrases",
       "english": "I'm fine / I'm good",
-      "canonical_chamorro": "Måolik ha' yu'",
-      "recommended_teaching_term": "Måolik ha' yu'",
-      "normalized_key": "maolik ha yu",
+      "canonical_chamorro": "Maolek ha' yu'",
+      "recommended_teaching_term": "Maolek ha' yu'",
+      "normalized_key": "maolek ha yu",
       "part_of_speech": "phrase",
       "teaching_level": "beginner",
       "review_status": "source_backed",
       "confidence": "high",
       "pronunciation": {
-        "guide": "MAW-leek hah dzoo",
+        "guide": "MOW-lek hah dzoo",
         "status": "needs_native_review"
       },
       "variants": [
         {
-          "term": "Maolek ha' yu'",
-          "type": "orthographic",
-          "status": "needs_review",
-          "notes": "Legacy app spelling follows source-backed maolek headwords, but the exact revised-dictionary phrase uses Måolik."
+          "term": "Måolik ha' yu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Exact revised-dictionary example spelling; retained as a source-backed variant, not the default learner display."
         }
       ],
-      "deprecated_app_terms": [
-        {
-          "term": "Maolek ha' yu'",
-          "reason": "Exact source phrase uses Måolik ha' yu'; update beginner display to the cited form.",
-          "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts"
-          ]
-        }
-      ],
+      "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
-        {
-          "source": "revised_and_updated_chamorro_dictionary.json",
-          "headword": "måolik",
-          "definition": "good, fine, well",
-          "part_of_speech": "adj.",
-          "evidence": [
-            "Kåo todu måolik håo? Hunggan, todu måolik ha' yu' — Are you fine? Yes, I am fine"
-          ]
-        },
         {
           "source": "chamoru_info_dictionary.json",
           "headword": "maolek",
@@ -4473,9 +4455,18 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "maolek",
           "definition": "good, fine, well"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "måolik",
+          "definition": "good, fine, well",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Kåo todu måolik håo? Hunggan, todu måolik ha' yu' — Are you fine? Yes, I am fine"
+          ]
         }
       ],
-      "notes": "Low-risk correction from the legacy unaccented phrase to the exact revised-dictionary example."
+      "notes": "Primary beginner display uses Maolek because two bundled dictionaries and existing learner/corpus content use maolek. The revised dictionary's Måolik phrase is source-backed and preserved as a variant."
     },
     {
       "id": "common_phrases.excuse_me",
