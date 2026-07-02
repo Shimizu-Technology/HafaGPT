@@ -160,3 +160,4 @@ This program also does not require all content to be perfect before any improvem
 - `documentation/LANGUAGE_CONTENT_BODY_PARTS_CORRECTIONS.md`: source-backed body-part corrections and remaining review work.
 - `documentation/LANGUAGE_CONTENT_FOOD_CORRECTIONS.md`: source-backed food/drink corrections and remaining review work.
 - `documentation/LANGUAGE_CONTENT_COMMON_VERBS_CORRECTIONS.md`: source-backed common-verb corrections and remaining review work.
+- `documentation/LANGUAGE_CONTENT_COMMON_PHRASES_SENTENCE_REVIEW.md`: source-backed common-phrase/sentence-level corrections and remaining review work.

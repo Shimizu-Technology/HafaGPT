@@ -132,7 +132,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                     action="replace_deprecated_term",
                     reason=item.get("reason", "Deprecated app term"),
                     known_paths=tuple(item.get("found_in", []) or []),
-                    match_mode=choose_match_mode(item["term"], entry["recommended_teaching_term"]),
+                    match_mode=item.get("match") or choose_match_mode(item["term"], entry["recommended_teaching_term"]),
                 )
             )
         for item in entry.get("needs_review_terms", []) or []:
@@ -143,7 +143,7 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
                     action="review_before_teaching",
                     reason=item.get("reason", "Term needs review"),
                     known_paths=tuple(item.get("found_in", []) or []),
-                    match_mode=choose_match_mode(item["term"], entry["recommended_teaching_term"]),
+                    match_mode=item.get("match") or choose_match_mode(item["term"], entry["recommended_teaching_term"]),
                 )
             )
     return rules

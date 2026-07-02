@@ -40,8 +40,8 @@ Each entry includes:
 - `confidence`: `high`, `medium`, `low`, or `unknown`.
 - `pronunciation`: provisional pronunciation guide plus review status.
 - `variants`: legitimate or possible alternate spellings/forms.
-- `deprecated_app_terms`: terms currently or historically in the app that should not be taught.
-- `needs_review_terms`: terms that may be valid but need human/source review before teaching.
+- `deprecated_app_terms`: terms currently or historically in the app that should not be taught. Term records may set `match: "exact"` when only the exact stale display/audio key should be blocked and a normalized-neighbor phrase remains valid in another context; otherwise checks use normalized matching.
+- `needs_review_terms`: terms that may be valid but need human/source review before teaching. Term records may also set `match: "exact"` for exact-only review blockers.
 - `source_citations`: dictionary or verified external-reference headwords/forms, definitions, URLs when external, and evidence.
 - `notes`: implementation/review notes.
 
@@ -100,4 +100,4 @@ The usage checker reports where deprecated terms, review-needed terms, and app-l
 4. Keep regression checks so deprecated app terms like `Såksan`, `Lalala` as Orange, and `Å'tot` as Black cannot reappear in beginner teaching content.
 5. Expand canonical entries category by category: greetings, numbers, family, body, food, verbs, and common phrases.
 
-The source-backed correction passes are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_FAMILY_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_BODY_PARTS_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_FOOD_CORRECTIONS.md`, and `documentation/LANGUAGE_CONTENT_COMMON_VERBS_CORRECTIONS.md`.
+The source-backed correction passes are documented in `documentation/LANGUAGE_CONTENT_COLOR_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_NUMBERS_GREETINGS_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_FAMILY_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_BODY_PARTS_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_FOOD_CORRECTIONS.md`, `documentation/LANGUAGE_CONTENT_COMMON_VERBS_CORRECTIONS.md`, and `documentation/LANGUAGE_CONTENT_COMMON_PHRASES_SENTENCE_REVIEW.md`.

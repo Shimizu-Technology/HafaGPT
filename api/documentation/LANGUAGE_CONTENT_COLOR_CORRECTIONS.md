@@ -23,12 +23,12 @@ Corrected surfaces:
 
 | English | Previous app term(s) | Source-backed teaching term now used | Notes |
 |---|---|---|---|
-| Black | `Å'tot`, `Åttelong`, `Attelong` | `Åttilung` | Local sources support `åttilung` / `åttilong` / `attilong`; `Å'tot` was not supported as black. |
+| Black | `Å'tot`, `Åttelong`, `Attelong` | `Åttilung` | RUCD/Finder support `åttilung`; Chamoru.info/TOD support `åttilong` / `attilong`. Exact `Åttelong` / `Attelong` app spellings are deprecated because the sourced forms are `Åttilung`, `Åttilong`, and `Attilong`. |
 | Brown | `Såksan`, `Kulot kafe` | `Kulot chukulåti` | Local sources support chocolate-color forms such as `kulót chukulåti`, `kulot chikolåti`, `kulot chokolåti`. |
-| Orange | `Lalala`, `Kulot kahel` | `Kulot kåhet` | `Kulot kåhet` is the canonical teaching/audio form; local sources also support the source variant `kulót kåhit`. `Lalala` was not supported as orange. |
+| Orange | `Lalala`, `Kulot kahel` | `Kulot kåhet` | `Kulot kåhet` is the canonical teaching/audio form; local sources also support `kulót kåhit` and unaccented `kulot kahet` variants. `Lalala` was not supported as orange. |
 | Pink | `Rosa`, `Kulot rosa` | `Kulot di rosa` | Local sources support the full phrase `kulot di rosa` for pink. |
 | Gray | `Gris` | `Kulot åpu` | Local sources support `kulot åpu`. |
-| Purple | `Lila` in game/audio word lists | `Kulot lila` | Local color entries use the full phrase `kulot lila`; one story sentence still needs native-speaker review before rewriting. |
+| Purple | bare `Lila` in beginner game/audio word lists | `Kulot lila` for the beginner phrase; `Lila` remains valid | Local sources support both `kulot lila` as the color phrase and bare `lila` as purple. Do not treat story/adjective uses of `Lila` as wrong. |
 | Yellow | `Åmariyu` in some places, including the old flashcard audio word list | `Amariyu` | This spelling normalization is intentional: the revised dictionary and TOD source use `Amariyu`; `Åmariyu` remains recorded as a source-backed variant pending reviewer sign-off. |
 
 ## Audio correction
@@ -42,14 +42,10 @@ Static audio was regenerated for the corrected color terms:
 - `Kulot lila`
 - `Åttilung`
 
-The local and S3 static audio manifests now map those corrected terms and no longer map the old color-teaching entries: `Såksan`, `Lalala`, `Gris`, `Rosa`, `Kulot kafe`, `Kulot kahel`, `Kulot rosa`, `Åttelong`, or bare `Lila`.
+The local and S3 static audio manifests now map those corrected beginner color terms and no longer map the old unsupported color-teaching entries: `Såksan`, `Lalala`, `Gris`, `Rosa`, `Kulot kafe`, `Kulot kahel`, `Kulot rosa`, or `Åttelong`. Bare `Lila` is source-backed, but the beginner audio/game color key uses `Kulot lila` for clarity.
 
 ## Remaining work
 
-One story sentence still needs review before correction:
-
-- `HafaGPT-frontend/src/data/storyData.ts`: `Lila i kulot-ña.`
-
-This may be acceptable usage, but the local dictionary entries found in Phase 2 cite the full color phrase `kulot lila`. Do not rewrite the sentence blindly without a speaker/teacher review of natural grammar.
+No correction is currently required for the story's bare `Lila` color vocabulary because RUCD and LearningCHamoru support `lila` as purple. A later story/style review may still decide whether the sentence should use `kulot lila` for pedagogy, but it should not be treated as an accuracy defect.
 
 Pronunciation guides and phonetic hints remain provisional and should be reviewed by a fluent speaker/teacher. The `Åttilung` guide is aligned to the project pronunciation note that `Å` sounds like `aw` in `saw`, while still marked as needing native-speaker review.

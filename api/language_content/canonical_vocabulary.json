@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "metadata": {
-    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, body-part terms, food/drink terms, and common verb terms.",
+    "purpose": "Canonical source-backed vocabulary for HåfaGPT teaching content. Phase 2 started with colors and now includes beginner numbers, core greetings/basics, family terms, body-part terms, food/drink terms, common verb terms, and source-backed common phrase/sentence-level review entries.",
     "created_at": "2026-06-30",
     "review_policy": "Entries marked source_backed are backed by local dictionary sources but still benefit from native speaker/educator review before broad app rewrites. AI output alone must never be used as a final source.",
     "source_priority": [
@@ -259,19 +259,27 @@
           "term": "Åttilong",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamoru_info_dictionary.json"
+          "source": "chamoru_info_dictionary.json",
+          "notes": "Chamoru.info/Learning-family spelling for black; preserve as valid variant."
         },
         {
           "term": "Attilong",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamorro_english_dictionary_TOD.json"
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD unaccented spelling for black; preserve as valid variant."
         },
         {
           "term": "Åttelong",
           "type": "app_legacy",
-          "status": "needs_review",
-          "notes": "Used by games/audio, but local dictionaries found åttilung/åttilong/attilong instead."
+          "status": "deprecated",
+          "notes": "Legacy app spelling; exact local sources found Åttilung/Åttilong/Attilong instead."
+        },
+        {
+          "term": "Attelong",
+          "type": "app_legacy",
+          "status": "deprecated",
+          "notes": "Legacy app spelling; exact local sources found Åttilung/Åttilong/Attilong instead."
         }
       ],
       "deprecated_app_terms": [
@@ -306,7 +314,7 @@
           "definition": "black"
         }
       ],
-      "notes": "Correct app drift by removing Å'tot from color teaching content."
+      "notes": "Primary display keeps RUCD/Finder 2024 Åttilung while preserving Chamoru.info/TOD Åttilong/Attilong as source-backed variants. Exact Attelong/Åttelong app spellings remain deprecated."
     },
     {
       "id": "colors.brown",
@@ -533,6 +541,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "revised_and_updated_chamorro_dictionary.json"
+        },
+        {
+          "term": "Kulot kahet",
+          "type": "orthographic",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "Unaccented TOD/Learning-style fallback for source-backed Kulot kåhet."
         }
       ],
       "deprecated_app_terms": [
@@ -585,7 +600,7 @@
           "notes": "TOD source is unaccented in normalized JSON."
         }
       ],
-      "notes": "Use a source-backed kulot kåhet/kåhit form instead of Lalala. Reviewer should decide final display spelling."
+      "notes": "Use source-backed Kulot kåhet as the primary app display while preserving RUCD/Finder Kulót kåhit and unaccented Kulot kahet as valid variants; Lalala remains unsupported for orange."
     },
     {
       "id": "colors.purple",
@@ -605,9 +620,10 @@
       "variants": [
         {
           "term": "Lila",
-          "type": "app_legacy",
-          "status": "needs_review",
-          "notes": "Used by games/story content; local color entries use full kulot lila phrase."
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD and LearningCHamoru support bare lila as the adjective purple; Kulot lila remains the beginner noun phrase."
         }
       ],
       "deprecated_app_terms": [],
@@ -623,6 +639,15 @@
           ]
         },
         {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "lila",
+          "definition": "purple (color)",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Ha gåga'um kurason-hu esti i lila na kulot — Purple color touches my heart"
+          ]
+        },
+        {
           "source": "chamoru_info_dictionary.json",
           "headword": "kulot lila",
           "definition": "Purple (color)."
@@ -633,7 +658,7 @@
           "definition": "purple (color)"
         }
       ],
-      "notes": "Use full source-backed color phrase for beginner teaching; bare Lila may still be valid but needs review."
+      "notes": "Kulot lila remains the beginner color phrase, but bare Lila is source-backed as an adjective/color word and should not be treated as deprecated."
     },
     {
       "id": "numbers.one",
@@ -1264,18 +1289,17 @@
         "guide": "BWAY-nahs DEE-ahs",
         "status": "needs_native_review"
       },
-      "variants": [],
-      "deprecated_app_terms": [],
-      "needs_review_terms": [
+      "variants": [
         {
           "term": "Mañana si Yu'os",
-          "reason": "Used as Good morning in legacy content, but no local dictionary source was found for this phrase/meaning.",
-          "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/components/CulturalTrivia.tsx"
-          ]
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "notes": "Externally attested as Good Morning on Visit Guam; keep as a common-phrase variant pending teacher review, not the primary dictionary-backed beginner display."
         }
       ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
       "source_citations": [
         {
           "source": "chamoru_info_dictionary.json",
@@ -1286,9 +1310,16 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "buenas dias",
           "definition": "good morning, good day, hello"
+        },
+        {
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
+          "headword": "Manana Si Yu'os",
+          "definition": "Good Morning",
+          "notes": "Tourism/common-phrase source; not selected over dictionary-backed Buenas dias as beginner primary display."
         }
       ],
-      "notes": "Use the source-backed greeting instead of unsupported Mañana si Yu'os."
+      "notes": "Use dictionary-backed Buenas dias as the primary beginner display. Mañana si Yu'os is externally attested as a common/tourism greeting variant and should be reviewed before being reintroduced as core teaching content."
     },
     {
       "id": "greetings.good_afternoon",
@@ -1312,6 +1343,20 @@
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json",
           "notes": "Unaccented spelling appears in TOD source; use diacritic form for teaching."
+        },
+        {
+          "term": "Ha'anen Maolek",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "notes": "Externally attested as Good Afternoon on Visit Guam; keep as a phrase variant pending teacher review."
+        },
+        {
+          "term": "Buenas tåtdis",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "english_chamorro_finder_list_2024.pdf",
+          "notes": "Finder 2024 lists buenas tåtdis for good afternoon; preserve as a documented variant pending reviewer policy."
         }
       ],
       "deprecated_app_terms": [
@@ -1336,9 +1381,16 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "buenas tatdes",
           "definition": "good afternoon"
+        },
+        {
+          "source": "Visit Guam Simple CHamoru Greetings",
+          "url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
+          "headword": "Ha'anen Maolek",
+          "definition": "Good Afternoon",
+          "notes": "Tourism/common-phrase source; not selected over dictionary-backed Buenas tåtdes as beginner primary display."
         }
       ],
-      "notes": "Normalize teaching display to the diacritic form."
+      "notes": "Normalize core teaching display to dictionary-backed Buenas tåtdes while preserving TOD Buenas tatdes, Finder Buenas tåtdis, and Visit Guam Ha'anen Maolek as variants for review/context."
     },
     {
       "id": "greetings.good_evening_night",
@@ -2868,8 +2920,8 @@
       "id": "food.food_noun",
       "category": "food",
       "english": "Food / nourishment",
-      "canonical_chamorro": "Nengkånno'",
-      "recommended_teaching_term": "Nengkånno'",
+      "canonical_chamorro": "Nengkanno'",
+      "recommended_teaching_term": "Nengkanno'",
       "normalized_key": "nengkanno",
       "part_of_speech": "n.",
       "teaching_level": "beginner",
@@ -2881,16 +2933,18 @@
       },
       "variants": [
         {
-          "term": "Nengkanno'",
-          "type": "orthographic",
-          "status": "needs_review",
-          "notes": "Bundled Chamoru.info spelling omits å; keep for search, not primary teaching display."
-        },
-        {
           "term": "Nenkanno'",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "chamorro_english_dictionary_TOD.json"
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD and LearningCHamoru-supported food/nourishment spelling."
+        },
+        {
+          "term": "Néngkanu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD spelling for food/nourishment."
         },
         {
           "term": "Boka",
@@ -2900,7 +2954,21 @@
           "notes": "Source-backed word for food/eat/eaten; not selected as the beginner food-noun display in this pass."
         }
       ],
-      "deprecated_app_terms": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Nengkånno'",
+          "reason": "Mixed å spelling was used by the app, but reviewed sources support Nengkanno', Nenkanno', and Néngkanu' instead.",
+          "match": "exact",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-frontend/src/data/storyData.ts",
+            "HafaGPT-frontend/src/data/conversationScenarios.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/chamorro_pronunciations.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
       "needs_review_terms": [],
       "source_citations": [
         {
@@ -2915,12 +2983,18 @@
         },
         {
           "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "néngkanu'",
+          "definition": "food, aliment, nutriment, nourishment, sustenance, what is eaten",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
           "headword": "boka",
           "definition": "food",
           "part_of_speech": "n."
         }
       ],
-      "notes": "Replaces beginner food-noun teaching that used Kånno', which local sources define as the transitive verb 'eat something'. Kånno' remains valid in verb contexts such as Hu kånno'."
+      "notes": "Replaces beginner food-noun teaching that used Kånno', which local sources define as the transitive verb 'eat something'. Primary spelling is Nengkanno' (no å); Nenkanno' and Néngkanu' are source-backed variants."
     },
     {
       "id": "food.cooked_rice",
@@ -3026,6 +3100,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Kåtni",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for meat/flesh."
         }
       ],
       "deprecated_app_terms": [],
@@ -3040,9 +3121,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "katne",
           "definition": "meat, flesh, (esp. refers to mammal's flesh)"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåtni",
+          "definition": "meat, flesh (esp. of mammals)",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "No revised-dictionary exact food headword found in local data, but Chamoru.info and TOD support the term."
+      "notes": "Primary display follows Chamoru.info/Learning Kåtne; RUCD/Finder Kåtni and TOD Katne are source-backed variants."
     },
     {
       "id": "food.chicken",
@@ -3065,6 +3152,13 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamorro_english_dictionary_TOD.json"
+        },
+        {
+          "term": "Månnuk",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for chicken/poultry."
         }
       ],
       "deprecated_app_terms": [],
@@ -3079,9 +3173,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "mannok",
           "definition": "chicken, poultry. (Generic term)"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "månnuk",
+          "definition": "chicken, poultry (generic)",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Preserves unaccented Mannok as a source-backed variant while teaching Månnok as the primary display form. Older app food content incorrectly paired Månha with “Chicken”; this was corrected to Månnok, while Månha remains a valid green-coconut term in its own entry."
+      "notes": "Primary display follows Chamoru.info/Learning Månnok; RUCD/Finder Månnuk and unaccented Mannok are source-backed variants. Older app food content incorrectly paired Månha with “Chicken”; this was corrected to Månnok, while Månha remains a valid green-coconut term in its own entry."
     },
     {
       "id": "food.green_coconut",
@@ -3149,19 +3249,30 @@
           "type": "source_variant",
           "status": "source_backed",
           "source": "chamoru_info_dictionary.json"
-        }
-      ],
-      "deprecated_app_terms": [
+        },
+        {
+          "term": "Kåddu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 soup/broth spelling."
+        },
+        {
+          "term": "Kåtdu",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD alternate soup/broth spelling."
+        },
         {
           "term": "Kådu",
-          "reason": "Local dictionaries support Kåddo/Kaddo for soup/broth; Kådu normalizes to revised-dictionary kadu' meaning pretend/make believe.",
-          "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
-          ]
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "LearningCHamoru dictionary search",
+          "notes": "LearningCHamoru lists Kådu as the liquid part of soup/broth; not primary because local JSON also has unrelated kadu' normalized neighbor."
         }
       ],
+      "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
         {
@@ -3173,9 +3284,21 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "kaddo",
           "definition": "boil--type of cooking meat or soup, sauce, broth, soup"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåddu",
+          "definition": "soup, broth",
+          "part_of_speech": "n."
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "kåtdu",
+          "definition": "soup, broth",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Teaching display uses Kåddo to distinguish it from kadu' / pretend."
+      "notes": "Primary display uses Learning/Chamoru.info-friendly Kåddo. Kaddo, Kåddu, Kåtdu, and narrower Kådu broth/liquid usage are documented variants; do not teach Kådu as wrong, but avoid it as the main beginner soup card until reviewed."
     },
     {
       "id": "food.vegetable",
@@ -3243,9 +3366,17 @@
       "variants": [
         {
           "term": "Hanom",
-          "type": "orthographic",
-          "status": "needs_review",
-          "notes": "ASCII fallback without å; keep for typed-answer acceptance, not primary teaching display."
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "chamorro_english_dictionary_TOD.json",
+          "notes": "TOD unaccented spelling for water/liquid; acceptable typed-answer fallback."
+        },
+        {
+          "term": "Hånum",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for water/liquid."
         }
       ],
       "deprecated_app_terms": [],
@@ -3260,9 +3391,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "hanom",
           "definition": "water, liquid"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hånum",
+          "definition": "water, liquid",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Existing flashcards and quiz already use Hånom; trivia display is aligned in this pass."
+      "notes": "Primary display follows Chamoru.info/Learning Hånom; TOD Hanom and RUCD/Finder Hånum are source-backed variants."
     },
     {
       "id": "food.coffee",
@@ -3330,7 +3467,15 @@
         "guide": "NEE-dzok",
         "status": "needs_native_review"
       },
-      "variants": [],
+      "variants": [
+        {
+          "term": "Niyuk",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for coconut palm / ripe or husked coconut contexts."
+        }
+      ],
       "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
@@ -3343,9 +3488,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "niyok",
           "definition": "type of plant-cocos nucifera; coconut palm"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "niyuk",
+          "definition": "type of plant: coconut palm; husked coconut, meat of ripe coconut",
+          "part_of_speech": "n."
         }
       ],
-      "notes": "Beginner app can gloss as coconut/coconut palm; Månha is specifically green coconut with tender meat."
+      "notes": "Beginner app can gloss Niyok as coconut/coconut palm; RUCD/Finder Niyuk is source-backed. Månha is specifically green coconut with tender meat."
     },
     {
       "id": "food.kelaguen",
@@ -3517,6 +3668,13 @@
           "type": "orthographic",
           "status": "needs_review",
           "notes": "Older app/game display without final glottal stop; keep as compatibility alias, not primary display."
+        },
+        {
+          "term": "Månngi'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "RUCD/Finder 2024 spelling for delicious."
         }
       ],
       "deprecated_app_terms": [],
@@ -3531,9 +3689,15 @@
           "source": "chamorro_english_dictionary_TOD.json",
           "headword": "mannge'",
           "definition": "delicious, exquisite, highly pleasing to the senses, taste, or mind"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "månngi'",
+          "definition": "delicious, exquisite, highly pleasing to the senses, taste, or mind",
+          "part_of_speech": "adj."
         }
       ],
-      "notes": "Used in food/restaurant teaching contexts."
+      "notes": "Primary display follows Chamoru.info/Learning Månnge'; RUCD/Finder Månngi' is a source-backed variant."
     },
     {
       "id": "food.egg",
@@ -4418,6 +4582,403 @@
         }
       ],
       "notes": "Existing daily-word gloss is TOD-backed but conflicts with Chamoru.info; keep confidence medium and request educator review before expanding usage."
+    },
+    {
+      "id": "common_phrases.im_fine",
+      "category": "common_phrases",
+      "english": "I'm fine / I'm good",
+      "canonical_chamorro": "Maolek ha' yu'",
+      "recommended_teaching_term": "Maolek ha' yu'",
+      "normalized_key": "maolek ha yu",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "MOW-lek hah dzoo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Måolik ha' yu'",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Exact revised-dictionary example spelling; retained as a source-backed variant, not the default learner display."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "maolek",
+          "definition": "Good; fine; well."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "maolek",
+          "definition": "good, fine, well"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "måolik",
+          "definition": "good, fine, well",
+          "part_of_speech": "adj.",
+          "evidence": [
+            "Kåo todu måolik håo? Hunggan, todu måolik ha' yu' — Are you fine? Yes, I am fine"
+          ]
+        }
+      ],
+      "notes": "Primary beginner display uses Maolek because two bundled dictionaries and existing learner/corpus content use maolek. The revised dictionary's Måolik phrase is source-backed and preserved as a variant."
+    },
+    {
+      "id": "common_phrases.excuse_me",
+      "category": "common_phrases",
+      "english": "Excuse me / pardon me / forgive me",
+      "canonical_chamorro": "Dispensa yu'",
+      "recommended_teaching_term": "Dispensa yu'",
+      "normalized_key": "dispensa yu",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "dees-PEN-sah dzoo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "dispensa",
+          "definition": "forgive, pardon, excuse",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Dispensa yu' — Excuse me; Also: pardon me, forgive me"
+          ]
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "dispensa",
+          "definition": "excuse, pardon, dispensation",
+          "part_of_speech": "1,2",
+          "evidence": [
+            "Dispensa yo'. | Excuse me"
+          ]
+        }
+      ],
+      "notes": "Current app phrase is source-backed; keep while pronunciation/register gets native review."
+    },
+    {
+      "id": "common_phrases.please",
+      "category": "common_phrases",
+      "english": "Please",
+      "canonical_chamorro": "Pot fabot",
+      "recommended_teaching_term": "Pot fabot",
+      "normalized_key": "pot fabot",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "poht fah-BOHT",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "pot fabot",
+          "definition": "Please."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "pot fabot",
+          "definition": "please"
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "fabót",
+          "definition": "favor, kindness, courtesy",
+          "part_of_speech": "n.",
+          "evidence": [
+            "Nå'i yu' fabot ya bai kuentus — Please kindly let me talk"
+          ]
+        }
+      ],
+      "notes": "Current app phrase is source-backed."
+    },
+    {
+      "id": "common_phrases.i_dont_understand",
+      "category": "common_phrases",
+      "english": "I don't understand",
+      "canonical_chamorro": "Ti hu komprende",
+      "recommended_teaching_term": "Ti hu komprende",
+      "normalized_key": "ti hu komprende",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "tee hoo kohm-PREN-deh",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamoru_info_dictionary.json",
+          "headword": "komprende",
+          "definition": "Understand; comprehend; know; learn."
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "komprende",
+          "definition": "understand, comprehend, know, learn"
+        }
+      ],
+      "notes": "Negative phrase is compositionally source-backed by ti + hu + komprende; keep medium confidence pending sentence-level review. Audio metadata had a truncated English gloss and was corrected in this pass."
+    },
+    {
+      "id": "common_phrases.can_you_help_me",
+      "category": "common_phrases",
+      "english": "Can you help me?",
+      "canonical_chamorro": "Kao siña un ayuda yu'?",
+      "recommended_teaching_term": "Kao siña un ayuda yu'?",
+      "normalized_key": "kao sina un ayuda yu",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "medium",
+      "pronunciation": {
+        "guide": "kah-oh SEEN-yah oon ah-DZOO-dah dzoo",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kåo siña un ayuda yu'?",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised dictionary examples use Kåo; app currently uses Kao."
+        }
+      ],
+      "deprecated_app_terms": [],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "ayuda",
+          "definition": "help, aid, assist, succor, be of service to, give aid to",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Kåo siña un ayuda yu' umaronsa i lamasa ya u guaha mås kåmpu gi kuåttu? — Can you help me move the table so that there will be more space in the room?",
+            "Siñoritu, kåo siña un ayuda yu' sumodda' i chalån-hu? — Young man, would you please help me find my way?"
+          ]
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "ayuda",
+          "definition": "help, aid, assist, succor, be of service, give aid",
+          "part_of_speech": "1"
+        }
+      ],
+      "notes": "Phrase is source-backed in longer revised-dictionary sentences. Keep app's Kao spelling for now because broader Kao/Kåo display policy needs reviewer input."
+    },
+    {
+      "id": "common_phrases.say_that_again",
+      "category": "common_phrases",
+      "english": "Say that again / repeat that",
+      "canonical_chamorro": "Atgun sumångan ennåo",
+      "recommended_teaching_term": "Atgun sumångan ennåo",
+      "normalized_key": "atgun sumangan ennao",
+      "part_of_speech": "imperative phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "AHT-goon soo-MAW-ngan en-NOW",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Kao siña un tulaika?",
+          "reason": "Tulaika is source-backed as exchange/trade/replace/substitute/change, not as repeat/say again. Use the revised-dictionary repeat/say-again example instead.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "atgun",
+          "definition": "do again, do over",
+          "part_of_speech": "vt.",
+          "evidence": [
+            "Atgun sumångan ennåo, sa' ti ha hunguk — Say that over again, because he did not hear it"
+          ]
+        }
+      ],
+      "notes": "Replaces unsupported 'Kao siña un tulaika?' for repeat-that teaching."
+    },
+    {
+      "id": "common_phrases.lets_go",
+      "category": "common_phrases",
+      "english": "Let's go",
+      "canonical_chamorro": "Nihi ta hånåo",
+      "recommended_teaching_term": "Nihi ta hånåo",
+      "normalized_key": "nihi ta hanao",
+      "part_of_speech": "phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "NEE-hee tah HAW-now",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Fan hånao hit",
+          "reason": "No local dictionary support was found for teaching this phrase as 'Let's go'; revised sources use Nihi ta hånåo in let's-go contexts.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "hånåo",
+          "definition": "go, leave, depart",
+          "part_of_speech": "vi.",
+          "evidence": [
+            "Nihi ta hånåo ume'ayuyu lamu'na — Let's go coconut crab hunting tonight"
+          ]
+        }
+      ],
+      "notes": "Use source-backed Nihi ta hånåo for the beginner 'Let's go' card."
+    },
+    {
+      "id": "common_phrases.is_there_do_you_have",
+      "category": "common_phrases",
+      "english": "Is there? / Do you have?",
+      "canonical_chamorro": "Kao guaha?",
+      "recommended_teaching_term": "Kao guaha?",
+      "normalized_key": "kao guaha",
+      "part_of_speech": "question phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "kah-oh GWAH-hah",
+        "status": "needs_native_review"
+      },
+      "variants": [
+        {
+          "term": "Kåo guaha?",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "Revised examples often use Kåo."
+        }
+      ],
+      "deprecated_app_terms": [
+        {
+          "term": "Kao guåha?",
+          "reason": "Local sources support guaha for have/there is; remove the unsupported å in guåha for this teaching phrase.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "guaha",
+          "definition": "have, there is, there exists",
+          "part_of_speech": "2",
+          "evidence": [
+            "Kao guaha chipa-mu. | Do you have a cigarette?",
+            "Guaha meggai na kareta giya Garapan. | There are many cars in Garapan."
+          ]
+        },
+        {
+          "source": "chamorro_english_dictionary_TOD.json",
+          "headword": "kao",
+          "definition": "question marker (general)",
+          "evidence": [
+            "Kao guaha gima'-mu? | Do you have a house?"
+          ]
+        }
+      ],
+      "notes": "Corrects the old mixed spelling Kao guåha? to source-backed Kao guaha?."
+    },
+    {
+      "id": "common_phrases.what_are_you_doing",
+      "category": "common_phrases",
+      "english": "What are you doing?",
+      "canonical_chamorro": "Håfa bidåda-mu?",
+      "recommended_teaching_term": "Håfa bidåda-mu?",
+      "normalized_key": "hafa bidada mu",
+      "part_of_speech": "question phrase",
+      "teaching_level": "beginner",
+      "review_status": "source_backed",
+      "confidence": "high",
+      "pronunciation": {
+        "guide": "HAW-fah bee-DAW-dah-moo",
+        "status": "needs_native_review"
+      },
+      "variants": [],
+      "deprecated_app_terms": [
+        {
+          "term": "Hafa bidå-mu?",
+          "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
+          "found_in": [
+            "HafaGPT-API/audio_generation/flashcard_words.json",
+            "HafaGPT-API/audio_generation/manifest.json",
+            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+          ],
+          "match": "exact"
+        },
+        {
+          "term": "Håfa na bidå-mu?",
+          "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
+          "found_in": [
+            "HafaGPT-frontend/src/data/dailyWords.ts"
+          ]
+        }
+      ],
+      "needs_review_terms": [],
+      "source_citations": [
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "håfa",
+          "definition": "what? (interrogative pronoun)",
+          "part_of_speech": "pro.",
+          "evidence": [
+            "Håfa bidåda-mu? — What are you doing?"
+          ]
+        }
+      ],
+      "notes": "Corrects the daily-word phrase and question-word card for present 'What are you doing?' while leaving past-tense examples such as Håfa bidå-mu nigap? for later sentence review."
     }
   ]
 }

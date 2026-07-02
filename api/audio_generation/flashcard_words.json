@@ -1,7 +1,7 @@
 {
   "description": "Curated flashcard words missing from audio manifest",
   "version": 1,
-  "total": 141,
+  "total": 142,
   "categories": {
     "flashcards": {
       "description": "Curated flashcard vocabulary",
@@ -10,6 +10,11 @@
           "chamorro": "Håfa tatatmånu hao?",
           "english": "How are you?",
           "phonetic_hint": null
+        },
+        {
+          "chamorro": "Maolek ha' yu'",
+          "english": "I'm fine / I'm good",
+          "phonetic_hint": "Mow-lek hah yoo"
         },
         {
           "chamorro": "Sinko",
@@ -133,7 +138,7 @@
         },
         {
           "chamorro": "Ti hu komprende",
-          "english": "I don\\",
+          "english": "I don't understand",
           "phonetic_hint": null
         },
         {
@@ -152,14 +157,14 @@
           "phonetic_hint": "Bwen proo-beht-choo"
         },
         {
-          "chamorro": "Kao siña un tulaika?",
-          "english": "Can you repeat that?",
-          "phonetic_hint": null
+          "chamorro": "Atgun sumångan ennåo",
+          "english": "Say that again / Repeat that",
+          "phonetic_hint": "Aht-goon soo-maw-ngan en-now"
         },
         {
-          "chamorro": "Fan hånao hit",
-          "english": "Let\\",
-          "phonetic_hint": null
+          "chamorro": "Nihi ta hånåo",
+          "english": "Let's go",
+          "phonetic_hint": "Nee-hee tah haw-now"
         },
         {
           "chamorro": "Guahu",
@@ -167,9 +172,9 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Kao guåha?",
+          "chamorro": "Kao guaha?",
           "english": "Is there? / Do you have?",
-          "phonetic_hint": null
+          "phonetic_hint": "Kah-oh gwah-hah"
         },
         {
           "chamorro": "Ti siña",
@@ -207,7 +212,7 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Nengkånno'",
+          "chamorro": "Nengkanno'",
           "english": "Food / Nourishment",
           "phonetic_hint": "Neng-kahn-noh"
         },
@@ -302,9 +307,9 @@
           "phonetic_hint": null
         },
         {
-          "chamorro": "Hafa bidå-mu?",
+          "chamorro": "Håfa bidåda-mu?",
           "english": "What are you doing?",
-          "phonetic_hint": null
+          "phonetic_hint": "Haw-fah bee-daw-dah-moo"
         },
         {
           "chamorro": "Dåmenggo",

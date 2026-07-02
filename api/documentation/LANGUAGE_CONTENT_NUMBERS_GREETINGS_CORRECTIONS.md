@@ -34,8 +34,8 @@ No changes were needed for `Dos`, `Tres`, `Sais`, `Ocho`, or `Dies` beyond addin
 | English | Previous app term(s) | Source-backed teaching term now used | Notes |
 |---|---|---|---|
 | Hello / Hi | `Buenas yan hågu` as Hello | `Håfa Adai`; `Buenas dias` for good morning/hello contexts | No local dictionary headword was found for teaching `Buenas yan hågu` as Hello. |
-| Good morning | `Mañana si Yu'os` | `Buenas dias` | Local sources support `buenas dias`; no local dictionary source was found for the old phrase as Good morning. |
-| Good afternoon | `Buenas tatdes` | `Buenas tåtdes` | Diacritic teaching form is backed by `chamoru_info`; TOD has the unaccented spelling. |
+| Good morning | `Mañana si Yu'os` as the old core beginner card | `Buenas dias` | Local dictionaries support `buenas dias`; Visit Guam externally attests `Manana Si Yu'os` as Good Morning. Keep `Mañana si Yu'os` as a common/tourism phrase variant pending teacher review, not as a deprecated/wrong form. |
+| Good afternoon | `Buenas tatdes` | `Buenas tåtdes` | Diacritic teaching form is backed by `chamoru_info`; TOD has the unaccented spelling. Finder 2024 also lists `Buenas tåtdis`, and Visit Guam externally attests `Ha'anen Maolek` as Good Afternoon; preserve these as variants pending review. |
 | Goodbye | `Bula` as informal Goodbye | `Adios`; `Asta agupa'` for See you tomorrow | Local sources define `bula` as much/plenty/lots, not goodbye. `Bula` remains valid in non-goodbye contexts. |
 | Yes / No | existing `Hunggan`, `Åhe'` | `Hunggan`, `Åhe'` | Added canonical citations and used these as source-backed basics in the greetings deck. |
 
@@ -55,13 +55,14 @@ The local and S3 static audio manifests now map corrected terms and no longer ma
 
 ## Remaining work
 
-Some greeting/introductory phrases remain useful but need phrase-level review before deeper correction, especially:
+A later common-phrases pass reviewed some of these items; see `documentation/LANGUAGE_CONTENT_COMMON_PHRASES_SENTENCE_REVIEW.md` for the current status.
 
-- `Maolek ha' yu'`
+Phrase-level items that still need reviewer confirmation include:
+
 - `Håyi na'ån-mu?`
 - `I na'ån-hu si...`
-- `Kao siña un ayuda yu'?`
+- broader/help-request uses around `Kao siña un ayuda yu'?`
 - sentence-level uses of `Buenas yan hågu` in conversation scenarios
 - spelling variants around `Si Yu'os Ma'åse'` vs local-source `Si Yu'us ...` forms
 
-Those were not rewritten blindly because phrase grammar and common usage should be confirmed by a fluent speaker/teacher.
+These should not be rewritten blindly because phrase grammar and common usage should be confirmed by a fluent speaker/teacher.

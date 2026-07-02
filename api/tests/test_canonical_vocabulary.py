@@ -37,17 +37,19 @@ def load_json(path: Path):
 
 
 def add_disallowed_term(
-    entry: dict[str, Any], term: str, exact_terms: set[str], normalized_terms: set[str]
+    entry: dict[str, Any], term: str, exact_terms: set[str], normalized_terms: set[str], match: str | None = None
 ) -> None:
-    """Track stale terms without conflating diacritic-only teaching replacements.
+    """Track stale terms without conflating valid normalized-neighbor terms.
 
     Most stale terms should be compared with the same normalization used by the
     audit scripts. If a stale app term normalizes to the recommended teaching
     term (for example `Buenas tatdes` vs `Buenas tåtdes`), compare exact text so
     the source-backed diacritic form remains allowed while the legacy display
-    spelling is still guarded.
+    spelling is still guarded. Entries may also opt into exact matching when a
+    deprecated phrase is a bad teaching key but a normalized-neighbor phrase is
+    still valid in another grammar context.
     """
-    if normalize_text(term) == normalize_text(str(entry.get("recommended_teaching_term", ""))):
+    if match == "exact" or normalize_text(term) == normalize_text(str(entry.get("recommended_teaching_term", ""))):
         exact_terms.add(exact_key(term))
     else:
         normalized_terms.add(normalize_text(term))
@@ -58,7 +60,7 @@ def disallowed_audio_terms(vocabulary: dict[str, Any]) -> tuple[set[str], set[st
     normalized_terms: set[str] = set()
     for entry in vocabulary["entries"]:
         for item in entry.get("deprecated_app_terms", []) + entry.get("needs_review_terms", []):
-            add_disallowed_term(entry, item["term"], exact_terms, normalized_terms)
+            add_disallowed_term(entry, item["term"], exact_terms, normalized_terms, item.get("match"))
         for variant in entry.get("variants", []):
             if variant.get("type") == "app_legacy" and variant.get("status") != "source_backed":
                 add_disallowed_term(entry, variant["term"], exact_terms, normalized_terms)
@@ -109,6 +111,9 @@ def test_validator_reports_invalid_optional_array_shapes_without_crashing(tmp_pa
     vocabulary["entries"][0]["variants"] = None
     vocabulary["entries"][0]["deprecated_app_terms"] = ["not an object"]
     vocabulary["entries"][0]["needs_review_terms"] = [{"term": "Maybe"}]
+    vocabulary["entries"][1]["deprecated_app_terms"] = [
+        {"term": "Legacy", "reason": "Test invalid match", "match": "fuzzy"}
+    ]
     vocabulary_path = tmp_path / "canonical_vocabulary.invalid.json"
     vocabulary_path.write_text(json.dumps(vocabulary), encoding="utf-8")
 
@@ -117,6 +122,7 @@ def test_validator_reports_invalid_optional_array_shapes_without_crashing(tmp_pa
     assert "entries[0].variants: must be an array" in errors
     assert "entries[0].deprecated_app_terms[0]: term record must be an object" in errors
     assert "entries[0].needs_review_terms[0]: reason is required" in errors
+    assert "entries[1].deprecated_app_terms[0]: invalid match 'fuzzy'" in errors
 
 
 def test_validator_allows_external_citations_with_urls(tmp_path):
@@ -308,6 +314,7 @@ def test_food_manifest_uses_corrected_teaching_terms_and_safe_aliases():
 
     stale_terms = {
         "Buen prubechu",
+        "Nengkånno'",
         "Kådu",
         "Lechuga",
     }
@@ -317,7 +324,7 @@ def test_food_manifest_uses_corrected_teaching_terms_and_safe_aliases():
 
     corrected_terms = {
         "Buen prubetchu",
-        "Nengkånno'",
+        "Nengkanno'",
         "Kåddo",
         "Gollai",
         "Fina'denne'",
@@ -370,6 +377,7 @@ def test_food_audio_source_lists_use_corrected_teaching_terms():
 
     stale_flashcard_terms = {
         exact_key("Buen prubechu"),
+        exact_key("Nengkånno'"),
         exact_key("Kådu"),
         exact_key("Lechuga"),
     }
@@ -381,7 +389,7 @@ def test_food_audio_source_lists_use_corrected_teaching_terms():
 
     corrected_flashcard_terms = {
         exact_key("Buen prubetchu"),
-        exact_key("Nengkånno'"),
+        exact_key("Nengkanno'"),
         exact_key("Kåddo"),
         exact_key("Gollai"),
         exact_key("Fina'denne'"),
@@ -415,3 +423,57 @@ def test_common_verb_static_manifest_has_sangan_and_correct_fahan_metadata():
     assert "buy" in fahan_english or "purchase" in fahan_english
     assert "speak" not in fahan_english
     assert "say" not in fahan_english
+
+
+def test_common_phrase_audio_source_list_uses_corrected_sentence_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    flashcard_words = load_json(api_root / "audio_generation" / "flashcard_words.json")
+    flashcard_exact_terms, _ = collect_chamorro_terms_from_word_list(flashcard_words)
+
+    stale_terms = {
+        exact_key("Kao siña un tulaika?"),
+        exact_key("Fan hånao hit"),
+        exact_key("Kao guåha?"),
+        exact_key("Hafa bidå-mu?"),
+        exact_key("Håfa na bidå-mu?"),
+    }
+    assert flashcard_exact_terms.isdisjoint(stale_terms)
+
+    corrected_terms = {
+        exact_key("Maolek ha' yu'"),
+        exact_key("Atgun sumångan ennåo"),
+        exact_key("Nihi ta hånåo"),
+        exact_key("Kao guaha?"),
+        exact_key("Håfa bidåda-mu?"),
+    }
+    assert corrected_terms.issubset(flashcard_exact_terms)
+
+    for category in flashcard_words.get("categories", {}).values():
+        for word in category.get("words", []):
+            if exact_key(word.get("chamorro", "")) == exact_key("Ti hu komprende"):
+                assert word.get("english") == "I don't understand"
+
+
+def test_common_phrase_static_manifest_uses_corrected_sentence_terms():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_json(api_root / "audio_generation" / "manifest.json")
+    words = manifest["words"]
+
+    stale_terms = {
+        "Kao siña un tulaika?",
+        "Fan hånao hit",
+        "Kao guåha?",
+        "Hafa bidå-mu?",
+        "Håfa na bidå-mu?",
+    }
+    assert words.keys().isdisjoint(stale_terms)
+
+    corrected_terms = {
+        "Maolek ha' yu'",
+        "Atgun sumångan ennåo",
+        "Nihi ta hånåo",
+        "Kao guaha?",
+        "Håfa bidåda-mu?",
+    }
+    assert corrected_terms.issubset(words.keys())
+    assert words["Ti hu komprende"].get("english") == "I don't understand"

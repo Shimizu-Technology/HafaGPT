@@ -101,7 +101,8 @@
       "properties": {
         "term": { "type": "string" },
         "reason": { "type": "string" },
-        "found_in": { "type": "array", "items": { "type": "string" } }
+        "found_in": { "type": "array", "items": { "type": "string" } },
+        "match": { "type": "string", "enum": ["exact", "normalized"] }
       }
     },
     "reviewTerm": {
@@ -111,7 +112,8 @@
       "properties": {
         "term": { "type": "string" },
         "reason": { "type": "string" },
-        "found_in": { "type": "array", "items": { "type": "string" } }
+        "found_in": { "type": "array", "items": { "type": "string" } },
+        "match": { "type": "string", "enum": ["exact", "normalized"] }
       }
     },
     "sourceCitation": {

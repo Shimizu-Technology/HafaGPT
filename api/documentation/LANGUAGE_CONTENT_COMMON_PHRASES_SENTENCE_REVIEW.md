@@ -1,0 +1,103 @@
+# Language Content Common Phrases & Sentence-Level Review
+
+Date: 2026-07-01
+
+## Scope
+
+This pass reviews high-visibility common phrases and short sentence-level teaching content used by greeting cards, common-phrase flashcards, quizzes, daily words, story notes, learning-path copy, static audio source lists, and static audio manifests.
+
+The goal is not to solve every phrase/grammar question in one pass. Phrase-level Chamorro content is more grammar- and register-sensitive than single vocabulary items, so this pass only changes items with clear local-source support and documents the rest for native-speaker/teacher review.
+
+## Source policy
+
+Primary evidence remains the bundled local dictionaries:
+
+- `dictionary_data/revised_and_updated_chamorro_dictionary.json`
+- `dictionary_data/chamoru_info_dictionary.json`
+- `dictionary_data/chamorro_english_dictionary_TOD.json`
+
+AI output was not used as authority. Where local sources only support components or where a phrase remains register-sensitive, the canonical entry uses medium confidence or defers the item.
+
+## Maolek spelling policy
+
+Use `Maolek` as the default beginner spelling for “good / fine / well.” Two bundled dictionaries (`chamoru_info_dictionary.json` and `chamorro_english_dictionary_TOD.json`) use `maolek`, and existing learner/story content also predominantly uses `Maolek`.
+
+The revised dictionary's `måolik` form and exact `måolik ha' yu'` example are source-backed and preserved as variants, but this pass does not promote `Måolik` as the default learner-facing display.
+
+## Canonical entries added
+
+Added common-phrase/sentence-level entries for:
+
+- `Maolek ha' yu'` — I'm fine / I'm good
+- `Dispensa yu'` — excuse me / pardon me / forgive me
+- `Pot fabot` — please
+- `Ti hu komprende` — I don't understand
+- `Kao siña un ayuda yu'?` — Can you help me?
+- `Atgun sumångan ennåo` — Say that again / repeat that
+- `Nihi ta hånåo` — Let's go
+- `Kao guaha?` — Is there? / Do you have?
+- `Håfa bidåda-mu?` — What are you doing?
+
+## Learner-facing corrections
+
+### Frontend
+
+Updated phrase/sentence teaching surfaces:
+
+- `src/data/defaultFlashcards.ts`
+  - Kept `Maolek ha' yu'` as the primary “I'm fine” phrase and documented `Måolik ha' yu'` as a source-backed variant instead of the default.
+  - `Kao siña un tulaika?` as “Can you repeat that?” → `Atgun sumångan ennåo` as “Say that again / Repeat that”. Local sources define `tulaika` as exchange/trade/replace/substitute/change, not “repeat”.
+  - `Fan hånao hit` as “Let's go” → `Nihi ta hånåo`.
+  - `Kao guåha?` → `Kao guaha?`.
+  - `Hafa bidå-mu?` as “What are you doing?” → `Håfa bidåda-mu?`.
+  - Kept the standalone adjective card as `Maolek` and aligned its example to `Maolek ha' yu'. — I'm fine.`
+- `src/data/dailyWords.ts`
+  - Kept `Maolek ha' yu'` for “I'm fine / I'm good”.
+  - `Håfa na bidå-mu?` → `Håfa bidåda-mu?`.
+- `src/data/quizData.ts`
+  - Kept the “I'm fine” quiz option/answer/explanation on `Maolek ha' yu'`.
+  - Replaced the unsupported `Si Yu'os Ma'åse'` explanation “God repay you” with local-source wording around “God have mercy.”
+- `src/data/storyData.ts`, `src/data/learningPath.ts`, `src/components/CulturalTrivia.tsx`
+  - Removed unsupported “Håfa Adai literally means What's up” learner-facing wording; local sources support `Håfa Adai` as hello/hi.
+
+### API/audio source lists
+
+Updated static audio source metadata:
+
+- `audio_generation/flashcard_words.json`
+  - Added/generated `Maolek ha' yu'` static audio for the “I'm fine” phrase.
+  - Replaced `Kao siña un tulaika?` with `Atgun sumångan ennåo`.
+  - Replaced `Fan hånao hit` with `Nihi ta hånåo`.
+  - Replaced `Kao guåha?` with `Kao guaha?`.
+  - Replaced exact stale audio/flashcard key `Hafa bidå-mu?` with `Håfa bidåda-mu?`; tracked this stale key as exact-only because source-backed `Håfa bidå-mu?` may still be valid in past-tense contexts.
+  - Fixed truncated English glosses for `Ti hu komprende` and the old `Fan hånao hit` replacement.
+- `audio_generation/manifest.json`
+  - Removed stale unsupported/wrong phrase keys for learner-facing teaching.
+  - Added/generated static audio entries for corrected phrase keys.
+  - Fixed `Ti hu komprende` English metadata.
+
+Generated and uploaded static audio for:
+
+- `Maolek ha' yu'`
+- `Atgun sumångan ennåo`
+- `Nihi ta hånåo`
+- `Kao guaha?`
+- `Håfa bidåda-mu?`
+
+Verified the remote S3 manifest has `total_words == 714`, includes the corrected phrase keys, omits the stale phrase keys, and returns HTTP 200 for each new MP3.
+
+## Deferred for native-speaker/teacher review
+
+Still do not rewrite blindly:
+
+- `Mångge ginen hao?` versus `Ginen månu hao?` for “Where are you from?”
+- `I na'ån-hu si...` and broader self-introduction patterns
+- best app-wide display policy for `Kao` versus `Kåo`
+- `Si Yu'os Ma'åse'` versus local-source `Si Yu'us ...` variants
+- conversation-scenario restaurant/order sentences such as `Håfa tatatmånu?` as “What do you have?”
+- full direction-giving and phone-call scenario sentences
+- body-command grammar and family-register questions already deferred in previous passes
+
+## Validation target
+
+After the follow-up source review, the canonical usage checker should report no current deprecated/review-needed language-content findings. Bare `Lila` is now treated as a source-backed purple adjective rather than an accuracy defect.

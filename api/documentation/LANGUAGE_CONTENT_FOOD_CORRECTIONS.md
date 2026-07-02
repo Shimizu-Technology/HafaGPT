@@ -20,22 +20,22 @@ AI output was not used as authority. Where sources conflict or a term is valid b
 
 Added source-backed food/drink entries for:
 
-- `Nengkånno'` — food / nourishment, with `Nenkanno'` and `Boka` preserved as source-backed variants
+- `Nengkanno'` — food / nourishment, with `Nenkanno'`, `Néngkanu'`, and `Boka` preserved as source-backed variants
 - `Hineksa'` — cooked rice
 - `Guihan` — fish
-- `Kåtne` — meat / flesh
-- `Månnok` — chicken / poultry, with `Mannok` preserved as a source-backed variant
+- `Kåtne` — meat / flesh, with `Kåtni` preserved as a source-backed variant
+- `Månnok` — chicken / poultry, with `Månnuk` and `Mannok` preserved as source-backed variants
 - `Månha` — green coconut, preserved as a valid term but removed from chicken teaching
-- `Kåddo` — soup / broth / stew
+- `Kåddo` — soup / broth / stew, with `Kaddo`, `Kåddu`, `Kåtdu`, and narrower `Kådu` broth/liquid usage preserved as variants
 - `Gollai` — vegetable(s)
-- `Hånom` — water / liquid
+- `Hånom` — water / liquid, with `Hånum` and `Hanom` preserved as source-backed variants
 - `Kafé` — coffee, with `Kåfe` / `Kafe` preserved as variants
-- `Niyok` — coconut / coconut palm
+- `Niyok` — coconut / coconut palm, with `Niyuk` preserved as a source-backed variant
 - `Kelaguen` — citrus-cured meat dish
 - `Fina'denne'` — hot sauce / condiment
 - `Chotda` — green banana / banana tree
 - `Mångga` — mango, with `Mangga` preserved as a source-backed variant
-- `Månnge'` — delicious
+- `Månnge'` — delicious, with `Månngi'` preserved as a source-backed variant
 - `Chåda'` — egg
 - `Babui` — pig / swine
 - `Buen prubetchu` — you're welcome, correcting the unsupported old meal-phrase card
@@ -47,14 +47,14 @@ Added source-backed food/drink entries for:
 Updated food and drink teaching surfaces:
 
 - `src/data/defaultFlashcards.ts`
-  - `Kånno'` as “Food” → `Nengkånno'` as “Food / Nourishment”
+  - `Kånno'` as “Food” → `Nengkanno'` as “Food / Nourishment”
   - `Månha` as “Chicken” → `Månnok` as “Chicken / Poultry”
-  - `Kådu` as “Soup / Stew” → `Kåddo` as “Soup / Broth / Stew”
+  - `Kådu` as the broad “Soup / Stew” beginner card → `Kåddo` as “Soup / Broth / Stew”; `Kådu` remains documented for narrower broth/liquid usage pending review
   - `Lechuga` as “Lettuce / Vegetables” → `Gollai` as “Vegetables”
   - `Kelaguen` → “Citrus-cured meat dish” instead of requiring “grilled”
   - `Niyok` gloss clarified to “Coconut / Coconut palm”
   - unsupported `Buen prubechu` “Enjoy your meal / Bon appetit” card → source-backed `Buen prubetchu` “You're welcome”
-  - sentence examples now use `nengkånno'` for the food noun while leaving `Hu kånno'` intact as the eat verb
+  - sentence examples now use `nengkanno'` for the food noun while leaving `Hu kånno'` intact as the eat verb
 - `src/data/quizData.ts`
   - Kelaguen answer/explanation now says “citrus-cured meat dish” rather than “grilled dish with lemon”
 - `src/data/learningPath.ts`
@@ -94,7 +94,7 @@ Updated audio source lists:
   - clarified English glosses for `Niyok`, `Chotda`, and `Hineksa'`
 - `audio_generation/flashcard_words.json`
   - `Buen prubechu` → `Buen prubetchu`
-  - `Månha` as chicken → `Nengkånno'` food noun entry, while chicken teaching uses existing/new `Månnok`
+  - `Månha` as chicken → `Nengkanno'` food noun entry, while chicken teaching uses existing/new `Månnok`
   - `Kådu` → `Kåddo`
   - `Lechuga` → `Gollai`
   - added `Fina'denne'`
@@ -107,7 +107,7 @@ Generated and uploaded static audio for:
 - `Månnge'`
 - `Chåda'`
 - `Buen prubetchu`
-- `Nengkånno'`
+- `Nengkanno'`
 - `Kåddo`
 - `Gollai`
 - `Fina'denne'`
@@ -116,7 +116,7 @@ Removed stale unsupported/wrong static audio manifest mappings for:
 
 - `Buen prubechu`
 - `Månha` as chicken
-- `Kådu` as soup/stew
+- `Kådu` as the broad primary soup/stew teaching key
 - `Lechuga` as vegetables
 
 Kept compatibility manifest aliases for deployed clients / saved content where the old key is source-backed or a harmless orthographic fallback:
@@ -130,13 +130,14 @@ Kept compatibility manifest aliases for deployed clients / saved content where t
 ## Variants intentionally preserved
 
 - `Månha` is valid, but means green coconut with tender meat; it should not be taught as chicken.
-- `Mannok`, `Mangga`, and `Kafe` are source-backed unaccented/TOD-style variants.
-- `Boka` is source-backed as food/eat/eaten but was not selected as the beginner food-noun display because `Nengkånno'` is the clearer noun for food/nourishment in this app context.
+- `Månnuk` / `Mannok`, `Kåtni`, `Hånum` / `Hanom`, `Niyuk`, `Månngi'`, `Mangga`, and `Kafe` are source-backed variants from different local dictionaries / orthographic conventions.
+- `Boka` is source-backed as food/eat/eaten but was not selected as the beginner food-noun display because `Nengkanno'` is the clearer noun for food/nourishment in this app context.
+- `Nengkånno'` with `å` was removed because the reviewed sources support `Nengkanno'`, `Nenkanno'`, and `Néngkanu'`, not the mixed `å` spelling.
 - `Hineksa`, `Månnge`, and `Chåda` are retained only as compatibility/search fallbacks where they omit source-backed glottal stops.
 
 ## Deferred for native-speaker/educator review
 
-- Best beginner display for `Nengkånno'` versus `Nengkanno'`, `Nenkanno'`, and `Boka`.
+- Best long-term beginner display for `Nengkanno'` versus `Nenkanno'`, `Néngkanu'`, and `Boka` if a teacher/native speaker prefers another source-backed variant.
 - Whether `Niyok` should be glossed as “coconut palm” only, or “coconut / coconut palm” for beginner food contexts.
 - Best way to teach `Månha` (green coconut) alongside `Niyok` without confusing beginners.
-- Phrase-level food/restaurant sentences such as `Kao malago' hao hånom?`, `Malago' yu' nengkånno'`, and `Håfa tatatmånu?`; this pass only corrected noun stems and obvious unsupported phrase meaning.
+- Phrase-level food/restaurant sentences such as `Kao malago' hao hånom?`, `Malago' yu' nengkanno'`, and `Håfa tatatmånu?`; this pass only corrected noun stems and obvious unsupported phrase meaning.
