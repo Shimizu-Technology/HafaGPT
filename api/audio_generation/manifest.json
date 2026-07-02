@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-07-02T11:30:59.952248",
+  "last_updated": "2026-07-02T22:03:02.865406",
   "generated_by": "generate_audio.py",
   "storage": {
     "type": "s3",
@@ -8,7 +8,7 @@
     "prefix": "audio/",
     "public_url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/"
   },
-  "total_words": 714,
+  "total_words": 715,
   "words": {
     "Ga'lågu": {
       "file": "galagu.mp3",
@@ -151,7 +151,7 @@
       "category": "colors",
       "tier": 1,
       "phonetic_used": "Ah-mah-ree-dzoo",
-      "size_bytes": 19271,
+      "size_bytes": 17599,
       "generated_at": "2026-01-10T18:04:52.424596",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -315,7 +315,7 @@
       "category": "nature",
       "tier": 1,
       "phonetic_used": "Aht-dow",
-      "size_bytes": 14673,
+      "size_bytes": 16345,
       "generated_at": "2026-01-10T18:05:11.543453",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -629,7 +629,7 @@
       "category": "greetings",
       "tier": 1,
       "phonetic_used": "Bweh-nahs tawt-dehs",
-      "size_bytes": 23868,
+      "size_bytes": 20525,
       "generated_at": "2026-01-10T18:05:52.270114",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -989,7 +989,7 @@
       "category": "body",
       "tier": 2,
       "phonetic_used": "ulu",
-      "size_bytes": 16345,
+      "size_bytes": 14254,
       "generated_at": "2026-01-10T18:23:26.486406",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -1457,7 +1457,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "épapa'",
-      "size_bytes": 15509,
+      "size_bytes": 16345,
       "generated_at": "2026-01-10T18:24:13.391777",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -2602,18 +2602,6 @@
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     },
-    "kåtnin\r\nguaka": {
-      "file": "katnin\r\nguaka.mp3",
-      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/katnin\r\nguaka.mp3",
-      "english": "beef",
-      "category": "general",
-      "tier": 2,
-      "phonetic_used": "kåtnin\r\nguaka",
-      "size_bytes": 20525,
-      "generated_at": "2026-01-10T18:26:17.841223",
-      "tts_provider": "elevenlabs",
-      "review_status": "needs_review"
-    },
     "kek": {
       "file": "kek.mp3",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/kek.mp3",
@@ -3497,7 +3485,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "åttilung",
-      "size_bytes": 17181,
+      "size_bytes": 15090,
       "generated_at": "2026-01-10T18:27:46.461522",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -4073,7 +4061,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "gåpi",
-      "size_bytes": 18435,
+      "size_bytes": 9600,
       "generated_at": "2026-01-10T18:28:40.026597",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -4169,7 +4157,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "håga'",
-      "size_bytes": 17181,
+      "size_bytes": 16762,
       "generated_at": "2026-01-10T18:28:48.902853",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -4685,7 +4673,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "makalatun",
-      "size_bytes": 18435,
+      "size_bytes": 11520,
       "generated_at": "2026-01-10T18:29:37.280060",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -5321,7 +5309,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "yungki",
-      "size_bytes": 17181,
+      "size_bytes": 9600,
       "generated_at": "2026-01-10T18:30:36.420697",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -5453,7 +5441,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "arendatåriu",
-      "size_bytes": 20107,
+      "size_bytes": 14400,
       "generated_at": "2026-01-10T18:30:48.754371",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -5753,7 +5741,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "brin",
-      "size_bytes": 12583,
+      "size_bytes": 10560,
       "generated_at": "2026-01-10T18:31:15.723422",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -5837,7 +5825,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "dibinu",
-      "size_bytes": 17181,
+      "size_bytes": 10560,
       "generated_at": "2026-01-10T18:31:23.233767",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -6221,7 +6209,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "inihu'",
-      "size_bytes": 17181,
+      "size_bytes": 9600,
       "generated_at": "2026-01-10T18:31:58.492321",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -6269,7 +6257,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "istretchu",
-      "size_bytes": 18435,
+      "size_bytes": 11520,
       "generated_at": "2026-01-10T18:32:02.837230",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -6293,7 +6281,7 @@
       "category": "general",
       "tier": 2,
       "phonetic_used": "káhaga'",
-      "size_bytes": 17181,
+      "size_bytes": 9120,
       "generated_at": "2026-01-10T18:32:05.156182",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
@@ -6784,7 +6772,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Hunggan",
-      "size_bytes": 9600,
+      "size_bytes": 17181,
       "generated_at": "2026-01-09T09:04:29.387955",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hunggan.mp3"
     },
@@ -6974,7 +6962,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Hahfa",
-      "size_bytes": 17181,
+      "size_bytes": 10560,
       "generated_at": "2026-01-10T17:57:49.392635",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hafa.mp3",
       "needs_regeneration": false,
@@ -6989,7 +6977,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Hadzi",
-      "size_bytes": 10080,
+      "size_bytes": 10560,
       "generated_at": "2026-01-09T09:05:05.274478",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hayi.mp3"
     },
@@ -7229,7 +7217,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Bunitu",
-      "size_bytes": 9120,
+      "size_bytes": 18435,
       "generated_at": "2026-01-09T09:05:37.926278",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/bunitu.mp3"
     },
@@ -7569,7 +7557,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Akagwe",
-      "size_bytes": 10080,
+      "size_bytes": 9600,
       "generated_at": "2026-01-10T14:32:38.408031",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/akague.mp3",
       "needs_regeneration": false,
@@ -7772,7 +7760,7 @@
       "category": "flashcards",
       "tier": "flashcards",
       "phonetic_used": "Batkada",
-      "size_bytes": 9120,
+      "size_bytes": 17599,
       "generated_at": "2026-01-09T09:06:51.101921",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/batkada.mp3"
     },
@@ -8397,6 +8385,30 @@
       "phonetic_used": "Neng-kahn-noh",
       "size_bytes": 20524,
       "generated_at": "2026-07-01T22:54:12.594494",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "Åhe'": {
+      "file": "ahe.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/ahe.mp3",
+      "english": "No",
+      "category": "flashcards",
+      "tier": "flashcards",
+      "phonetic_used": "AH-heh",
+      "size_bytes": 14254,
+      "generated_at": "2026-07-02T21:39:30.068131",
+      "tts_provider": "elevenlabs",
+      "review_status": "needs_review"
+    },
+    "kåtnin guaka": {
+      "file": "katnin_guaka.mp3",
+      "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/katnin_guaka.mp3",
+      "english": "beef",
+      "category": "general",
+      "tier": 2,
+      "phonetic_used": "kåtnin guaka",
+      "size_bytes": 20525,
+      "generated_at": "2026-01-10T18:26:17.841223",
       "tts_provider": "elevenlabs",
       "review_status": "needs_review"
     }
