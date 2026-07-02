@@ -35,6 +35,10 @@ def test_static_audio_manifest_has_required_basics_and_no_stale_teaching_keys():
     assert words["Kulot åpu"]["english"] == "Gray"
     assert words["Kulot åpu"]["category"] == "colors"
     assert words["Kulot åpu"]["tier"] == 1
+    assert words["Siete"]["english"] == "Seven"
+    assert words["Siete"]["category"] == "numbers"
+    assert words["Siete"]["tier"] == 1
+    assert words["Siete"]["phonetic_used"] == "See-eh-teh"
     assert words["Buen prubetchu"]["english"] == "You're welcome"
     assert "you are welcome" in words["Buen prubetchu"].get("source_note", "")
 
@@ -78,6 +82,22 @@ def test_manifest_validation_rejects_control_whitespace_in_terms_and_urls():
     assert "term contains control whitespace" in messages
     assert "invalid file name" in messages
     assert "url contains control whitespace" in messages
+
+
+def test_fetch_remote_manifest_reports_network_failures_without_crashing(monkeypatch):
+    def fake_fetch_json(url, timeout):
+        raise TimeoutError("timed out")
+
+    monkeypatch.setattr(verify_static_audio_manifest, "fetch_json", fake_fetch_json)
+
+    manifest, finding = verify_static_audio_manifest.fetch_remote_manifest(
+        "https://example.com/audio/manifest.json",
+        timeout=1,
+    )
+
+    assert manifest is None
+    assert finding is not None
+    assert "failed to fetch remote manifest" in finding.message
 
 
 def test_head_audio_reports_malformed_content_length_without_crashing(monkeypatch):

@@ -223,6 +223,13 @@ def fetch_json(url: str, *, timeout: float) -> dict[str, Any]:
     return data
 
 
+def fetch_remote_manifest(url: str, *, timeout: float) -> tuple[dict[str, Any] | None, Finding | None]:
+    try:
+        return fetch_json(url, timeout=timeout), None
+    except Exception as exc:
+        return None, Finding("error", f"{url}: failed to fetch remote manifest: {exc}")
+
+
 def head_audio(url: str, expected_size: int | None, *, timeout: float, retries: int = 2) -> Finding | None:
     last_error: Finding | None = None
     for _attempt in range(retries + 1):
@@ -321,16 +328,22 @@ def main() -> int:
             print(f"ℹ️  Frontend manifest not found; skipped: {args.frontend_manifest}")
 
     if args.remote_manifest:
-        remote_manifest = fetch_json(args.remote_manifest_url, timeout=args.timeout)
-        findings.extend(validate_manifest(remote_manifest, label=args.remote_manifest_url))
-        findings.extend(
-            compare_manifests(
-                manifest,
-                remote_manifest,
-                primary_label=str(args.manifest),
-                secondary_label=args.remote_manifest_url,
-            )
+        remote_manifest, remote_manifest_finding = fetch_remote_manifest(
+            args.remote_manifest_url,
+            timeout=args.timeout,
         )
+        if remote_manifest_finding:
+            findings.append(remote_manifest_finding)
+        elif remote_manifest is not None:
+            findings.extend(validate_manifest(remote_manifest, label=args.remote_manifest_url))
+            findings.extend(
+                compare_manifests(
+                    manifest,
+                    remote_manifest,
+                    primary_label=str(args.manifest),
+                    secondary_label=args.remote_manifest_url,
+                )
+            )
 
     if args.remote_audio:
         findings.extend(verify_remote_audio_files(manifest, timeout=args.timeout, workers=args.workers))
