@@ -543,7 +543,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Meals, ingredients, cooking terms',
     cards: [
       {
-        front: 'Nengkånno\'',
+        front: 'Nengkanno\'',
         back: 'Food / Nourishment',
         pronunciation: 'neng-KAHN-noh'
       },
@@ -950,7 +950,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Nahong',
         back: 'Enough / Sufficient',
         pronunciation: 'nah-HONG',
-        example: 'Nahong i nengkånno\'. — The food is enough.'
+        example: 'Nahong i nengkanno\'. — The food is enough.'
       },
       {
         front: 'Chaddek',
@@ -976,7 +976,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Malago\' yu\'',
         back: 'I want',
         pronunciation: 'mah-LAH-goh dzoo',
-        example: 'Malago\' yu\' nengkånno\'. — I want food.'
+        example: 'Malago\' yu\' nengkanno\'. — I want food.'
       },
       {
         front: 'Ti malago\' yu\'',
@@ -1176,7 +1176,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         front: 'Kusina',
         back: 'Kitchen',
         pronunciation: 'koo-SEE-nah',
-        example: 'Gaige i nengkånno\' gi kusina. — The food is in the kitchen.'
+        example: 'Gaige i nengkanno\' gi kusina. — The food is in the kitchen.'
       },
       {
         front: 'Åpusento',
