@@ -614,7 +614,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Gof maolek',
     english: 'Very good / Excellent',
-    pronunciation: 'gohf mah-OH-lek',
+    pronunciation: 'gohf MOW-lek',
     example: {
       chamorro: 'Gof maolek i cho\'cho\'-mu!',
       english: 'Your work is excellent!'
@@ -679,7 +679,7 @@ export const DAILY_WORDS: DailyWord[] = [
   {
     chamorro: 'Inafa\'maolek',
     english: 'To make peace / Interdependence',
-    pronunciation: 'ee-nah-fah-mah-OH-lek',
+    pronunciation: 'ee-nah-fah-MOW-lek',
     example: {
       chamorro: 'I inafa\'maolek importånte gi kuttura-ta.',
       english: 'Interdependence is important in our culture.'

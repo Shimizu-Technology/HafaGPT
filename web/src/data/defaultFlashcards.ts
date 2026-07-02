@@ -1477,7 +1477,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
       {
         front: 'Inafa\'maolek',
         back: 'Harmony / Getting along',
-        pronunciation: 'ee-nah-fah-mah-OH-lehk',
+        pronunciation: 'ee-nah-fah-MOW-lek',
         example: 'I inafa\'maolek impottånte gi familia. — Harmony is important in family.'
       },
       {
