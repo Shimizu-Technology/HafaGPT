@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: HafaGPT-API
+    runtime: python
+    rootDir: api
+    region: singapore
+    plan: standard
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && alembic upgrade head
+    startCommand: gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
+    healthCheckPath: /api/health

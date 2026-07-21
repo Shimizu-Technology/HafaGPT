@@ -1,24 +1,24 @@
 [build]
+  base = "web"
   command = "npm run build"
   publish = "dist"
 
-# Redirect netlify subdomain to primary domain
+[build.environment]
+  NODE_VERSION = "20"
+
+# Redirect the Netlify subdomain to the canonical domain.
 [[redirects]]
   from = "https://hafagpt.netlify.app/*"
   to = "https://hafagpt.com/:splat"
   status = 301
   force = true
 
-# SPA fallback - must come after domain redirect
+# SPA fallback must remain after the domain redirect.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[build.environment]
-  NODE_VERSION = "20"
-
-# PWA Headers
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
@@ -35,7 +35,6 @@
   for = "/*.png"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
 [[headers]]
   for = "/*.ico"
   [headers.values]

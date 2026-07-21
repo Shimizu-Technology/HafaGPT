@@ -175,7 +175,7 @@ def validate_vocabulary(api_root: Path, vocabulary_path: Path) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate canonical HåfaGPT vocabulary")
-    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to HafaGPT-API repo root")
+    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to api repo root")
     parser.add_argument(
         "--vocabulary",
         type=Path,

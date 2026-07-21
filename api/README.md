@@ -6,7 +6,7 @@ A comprehensive Chamorro language learning platform with AI tutoring, flashcards
 
 > 📚 **New to the team?** Start with the **[Developer Setup Guide](documentation/SETUP_GUIDE.md)** for step-by-step onboarding.
 
-**Live:** [hafagpt.com](https://hafagpt.com) | **Frontend:** [chamorro-chatbot-frontend](https://github.com/Shimizu-Technology/chamorro-chatbot-frontend)
+**Live:** [hafagpt.com](https://hafagpt.com) | **Repository:** [Shimizu-Technology/HafaGPT](https://github.com/Shimizu-Technology/HafaGPT)
 
 ---
 
@@ -30,16 +30,18 @@ A comprehensive Chamorro language learning platform with AI tutoring, flashcards
 
 ```bash
 # 1. Clone & install
-git clone https://github.com/Shimizu-Technology/HafaGPT-API.git
-cd HafaGPT-API
-uv sync
+git clone https://github.com/Shimizu-Technology/HafaGPT.git
+cd HafaGPT
+cd api
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt pytest
 
 # 2. Set up environment
 cp .env.example .env
 # Edit .env with your API keys (see documentation/SETUP_GUIDE.md)
 
 # 3. Run the server
-uv run uvicorn api.main:app --reload --port 8000
+.venv/bin/python -m uvicorn api.main:app --reload --port 8000
 
 # 4. Test it
 curl http://localhost:8000/api/health
@@ -67,7 +69,7 @@ curl http://localhost:8000/api/health
 ## 📁 Project Structure
 
 ```
-HafaGPT-API/
+api/
 ├── api/                    # FastAPI endpoints
 │   ├── main.py             # Main application
 │   ├── models.py           # Pydantic models

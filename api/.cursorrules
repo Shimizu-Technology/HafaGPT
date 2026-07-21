@@ -1,8 +1,8 @@
 # HåfaGPT Project Rules
 
 ## Project Structure
-- **Frontend**: React + TypeScript + Vite (HafaGPT-frontend/)
-- **Backend**: FastAPI + Python 3.12+ (HafaGPT-API/)
+- **Frontend**: React + TypeScript + Vite (`web/`)
+- **Backend**: FastAPI + Python 3.12+ (`api/`)
 - **Database**: PostgreSQL + PGVector
 
 ## Python Dependency Management (Backend)
@@ -10,9 +10,9 @@
 ⚠️ **CRITICAL: This project uses TWO dependency management systems**
 
 ### When adding a Python dependency:
-1. Add to `HafaGPT-API/pyproject.toml` under `[project.dependencies]`
-2. Run `cd HafaGPT-API && uv sync` (installs for local development)
-3. Run `cd HafaGPT-API && uv pip compile pyproject.toml --universal -o requirements.txt` (updates for Render deployment)
+1. Add to `api/pyproject.toml` under `[project.dependencies]`
+2. Run `cd api && uv sync` (installs for local development)
+3. Run `cd api && uv pip compile pyproject.toml --universal -o requirements.txt` (updates for Render deployment)
 4. Commit BOTH `pyproject.toml` AND `requirements.txt`
 
 ### Why both?
@@ -39,7 +39,7 @@
 ## Frontend Dependency Management
 
 ### When adding a Node dependency:
-1. Run `cd HafaGPT-frontend && npm install <package>`
+1. Run `cd web && npm install <package>`
 2. Commit `package.json` AND `package-lock.json`
 
 ## Git Workflow
@@ -71,7 +71,7 @@
 
 ### Migrations:
 - Use Alembic for schema changes
-- Run locally: `cd HafaGPT-API && alembic upgrade head`
+- Run locally: `cd api && alembic upgrade head`
 - Render auto-runs migrations via `render.yaml` buildCommand
 
 ### Queries:
@@ -140,4 +140,3 @@
 - Modal sizes should be fixed, not content-dependent
 - Frontend auto-deploys on GitHub push to Netlify
 - Backend auto-deploys on GitHub push to Render
-

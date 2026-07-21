@@ -6,8 +6,8 @@ Date: 2026-07-02
 
 HåfaGPT uses pre-generated static audio from S3 for many learner-facing words and phrases. The audio manifest can drift across three places:
 
-- API source manifest: `HafaGPT-API/audio_generation/manifest.json`
-- Frontend fallback/public manifest: `HafaGPT-frontend/public/audio_manifest.json`
+- API source manifest: `api/audio_generation/manifest.json`
+- Frontend fallback/public manifest: `web/public/audio_manifest.json`
 - Remote S3 manifest: `https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/manifest.json`
 
 Use `scripts/verify_static_audio_manifest.py` to catch stale teaching keys, missing required audio, manifest count drift, malformed filenames/URLs, frontend/API manifest drift, remote manifest drift, and missing/mismatched S3 audio files.
@@ -35,7 +35,7 @@ python3 scripts/verify_static_audio_manifest.py --skip-frontend
 ## Current cleanup results
 
 - Added missing static audio for `Åhe'` (`ahe.mp3`) and registered it as the source-backed `No` flashcard/basic term.
-- Synced `HafaGPT-frontend/public/audio_manifest.json` to the API manifest.
+- Synced `web/public/audio_manifest.json` to the API manifest.
 - Fixed a malformed Tier 2 audio key/file/URL containing embedded CRLF: `kåtnin\r\nguaka` → `kåtnin guaka`, `katnin\r\nguaka.mp3` → `katnin_guaka.mp3`.
 - Updated `sanitize_filename` so future generated filenames collapse all whitespace to `_`, not only literal spaces.
 - Reconciled `size_bytes` values against the actual remote S3 objects.

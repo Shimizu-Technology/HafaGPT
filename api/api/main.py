@@ -8498,7 +8498,7 @@ async def update_audio_status(
             json.dump(manifest, f, indent=2, ensure_ascii=False)
         
         # Also update frontend manifest
-        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "web" / "public" / "audio_manifest.json"
         if frontend_manifest_path.exists():
             with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
                 json.dump(manifest, f, indent=2, ensure_ascii=False)
@@ -8662,7 +8662,7 @@ async def regenerate_audio(
             json.dump(manifest, f, indent=2, ensure_ascii=False)
         
         # Also update frontend manifest
-        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "web" / "public" / "audio_manifest.json"
         if frontend_manifest_path.exists():
             with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
                 json.dump(manifest, f, indent=2, ensure_ascii=False)
@@ -8825,7 +8825,7 @@ async def upload_audio_recording(
             json.dump(manifest, f, indent=2, ensure_ascii=False)
         
         # Also update frontend manifest
-        frontend_manifest_path = Path(__file__).parent.parent.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+        frontend_manifest_path = Path(__file__).parent.parent.parent / "web" / "public" / "audio_manifest.json"
         if frontend_manifest_path.exists():
             with open(frontend_manifest_path, 'w', encoding='utf-8') as f:
                 json.dump(manifest, f, indent=2, ensure_ascii=False)

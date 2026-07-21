@@ -105,7 +105,7 @@ The evaluation system tests HåfaGPT's chatbot against a suite of predefined que
 
 1. **Local server running:**
    ```bash
-   cd HafaGPT-API
+   cd api
    uv run uvicorn api.main:app --reload --port 8000
    ```
 
@@ -114,7 +114,7 @@ The evaluation system tests HåfaGPT's chatbot against a suite of predefined que
 ### Quick Single Run (~15-30 min)
 
 ```bash
-cd HafaGPT-API
+cd api
 source .venv/bin/activate
 
 # Full comprehensive test (240 queries)
@@ -140,7 +140,7 @@ python -m evaluation.test_evaluation \
 ### Background Execution (Recommended for Long Tests)
 
 ```bash
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 PYTHONUNBUFFERED=1 python -m evaluation.test_evaluation \
   --test-file test_queries_comprehensive.json > evaluation/test_output.txt 2>&1 &
 
@@ -316,7 +316,7 @@ In addition to single-query tests, we also test multi-turn conversations.
 ### Running Context Tests
 
 ```bash
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 
 # Run all context tests
 python -m evaluation.test_conversation_context

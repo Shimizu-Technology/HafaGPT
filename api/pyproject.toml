@@ -1,7 +1,7 @@
 [project]
-name = "llm-project"
+name = "hafagpt-api"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI and RAG backend for the HåfaGPT Chamorro learning platform"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -44,6 +44,11 @@ dependencies = [
 model-comparison = [
     "anthropic>=0.39.0",  # Direct Claude API
     "google-generativeai>=0.8.0",  # Direct Gemini API
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
 ]
 
 [build-system]

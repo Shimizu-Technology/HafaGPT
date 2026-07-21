@@ -14,7 +14,7 @@ Automated testing framework to measure and track HafaGPT's performance over time
 ### 1. Start your backend server
 
 ```bash
-cd /Users/leonshimizu/Desktop/ShimizuTechnology/HafaGPT/HafaGPT-API
+cd /Users/leonshimizu/Desktop/ShimizuTechnology/HafaGPT/api
 python -m uvicorn api.main:app --reload
 ```
 
@@ -154,7 +154,7 @@ python evaluation/test_evaluation.py
 **Error: Could not connect to API**
 ```bash
 # Make sure backend is running
-cd /Users/leonshimizu/Desktop/ShimizuTechnology/HafaGPT/HafaGPT-API
+cd /Users/leonshimizu/Desktop/ShimizuTechnology/HafaGPT/api
 python -m uvicorn api.main:app --reload
 ```
 

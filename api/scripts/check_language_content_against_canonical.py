@@ -21,7 +21,7 @@ try:
 except ModuleNotFoundError:  # Allows direct execution: python scripts/check_language_content_against_canonical.py
     from chamorro_utils import normalize_text
 
-DEFAULT_FRONTEND_RELATIVE = "../HafaGPT-frontend"
+DEFAULT_FRONTEND_RELATIVE = "../web"
 DEFAULT_OUTPUT_JSON = "documentation/language_content_audit/canonical_usage_report.json"
 DEFAULT_OUTPUT_MD = "documentation/language_content_audit/canonical_usage_report.md"
 SCAN_SUFFIXES = {".json", ".ts", ".tsx", ".md", ".txt"}
@@ -239,9 +239,9 @@ def make_display_path(path_text: str, api_root: Path, frontend_root: Path) -> st
     path = Path(path_text)
     try:
         if path.is_relative_to(api_root):
-            return str(Path("HafaGPT-API") / path.relative_to(api_root))
+            return str(Path("api") / path.relative_to(api_root))
         if path.is_relative_to(frontend_root):
-            return str(Path("HafaGPT-frontend") / path.relative_to(frontend_root))
+            return str(Path("web") / path.relative_to(frontend_root))
     except ValueError:
         pass
     return path_text
@@ -335,7 +335,7 @@ def render_markdown(findings: list[dict[str, Any]], scan_roots: list[str]) -> st
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Scan app/API files against canonical vocabulary rules")
-    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to HafaGPT-API repo root")
+    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to api repo root")
     parser.add_argument("--frontend-root", type=Path, default=None, help="Path to HafaGPT frontend repo root")
     parser.add_argument("--output-json", type=Path, default=None, help="Path for JSON report")
     parser.add_argument("--output-md", type=Path, default=None, help="Path for Markdown report")
@@ -351,7 +351,7 @@ def main() -> int:
     scan_roots = [api_root / "audio_generation", frontend_root / "src"]
     findings = scan_content_roots(scan_roots, rules)
     display_findings = make_display_findings(findings, api_root, frontend_root)
-    scope_labels = ["HafaGPT-API/audio_generation", "HafaGPT-frontend/src"]
+    scope_labels = ["api/audio_generation", "web/src"]
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_md.parent.mkdir(parents=True, exist_ok=True)

@@ -6,17 +6,17 @@ This document records the first Phase 3 language-content corrections made from t
 
 Corrected surfaces:
 
-- `HafaGPT-frontend/src/data/defaultFlashcards.ts`
-- `HafaGPT-frontend/src/data/quizData.ts`
-- `HafaGPT-frontend/src/data/dailyWords.ts`
-- `HafaGPT-frontend/src/data/learningPath.ts`
-- `HafaGPT-frontend/src/components/ColorTouch.tsx`
-- `HafaGPT-frontend/src/components/PicturePairs.tsx`
-- `HafaGPT-frontend/src/components/SoundMatch.tsx`
-- `HafaGPT-API/audio_generation/flashcard_words.json`
-- `HafaGPT-API/audio_generation/tier1_words.json`
-- `HafaGPT-API/audio_generation/chamorro_pronunciations.json`
-- `HafaGPT-API/audio_generation/manifest.json`
+- `web/src/data/defaultFlashcards.ts`
+- `web/src/data/quizData.ts`
+- `web/src/data/dailyWords.ts`
+- `web/src/data/learningPath.ts`
+- `web/src/components/ColorTouch.tsx`
+- `web/src/components/PicturePairs.tsx`
+- `web/src/components/SoundMatch.tsx`
+- `api/audio_generation/flashcard_words.json`
+- `api/audio_generation/tier1_words.json`
+- `api/audio_generation/chamorro_pronunciations.json`
+- `api/audio_generation/manifest.json`
 - generated static audio files for corrected color terms
 
 ## Corrections applied

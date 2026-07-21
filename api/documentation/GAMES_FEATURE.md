@@ -260,7 +260,7 @@ These games prioritize **fun gameplay** - learning happens naturally through pla
 ## 📁 File Structure
 
 ```
-HafaGPT-frontend/src/
+web/src/
 ├── components/
 │   ├── Games.tsx                     # Game hub
 │   ├── MemoryMatch.tsx               # Memory Match game
@@ -277,7 +277,7 @@ HafaGPT-frontend/src/
 └── data/
     └── defaultFlashcards.ts          # Curated flashcard data (beginner mode)
 
-HafaGPT-API/
+api/
 ├── api/
 │   ├── main.py                       # Game result endpoints
 │   └── models.py                     # GameResultCreate, GameStatsResponse

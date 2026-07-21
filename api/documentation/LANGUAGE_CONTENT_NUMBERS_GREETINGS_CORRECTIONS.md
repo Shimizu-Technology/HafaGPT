@@ -6,16 +6,16 @@ This document records the second canonical language-content correction pass afte
 
 Corrected surfaces:
 
-- `HafaGPT-frontend/src/data/defaultFlashcards.ts`
-- `HafaGPT-frontend/src/data/dailyWords.ts`
-- `HafaGPT-frontend/src/data/quizData.ts`
-- `HafaGPT-frontend/src/components/SoundMatch.tsx`
-- `HafaGPT-frontend/src/components/NumberTap.tsx`
-- `HafaGPT-frontend/src/components/CulturalTrivia.tsx`
-- `HafaGPT-API/audio_generation/flashcard_words.json`
-- `HafaGPT-API/audio_generation/tier1_words.json`
-- `HafaGPT-API/audio_generation/chamorro_pronunciations.json`
-- `HafaGPT-API/audio_generation/manifest.json`
+- `web/src/data/defaultFlashcards.ts`
+- `web/src/data/dailyWords.ts`
+- `web/src/data/quizData.ts`
+- `web/src/components/SoundMatch.tsx`
+- `web/src/components/NumberTap.tsx`
+- `web/src/components/CulturalTrivia.tsx`
+- `api/audio_generation/flashcard_words.json`
+- `api/audio_generation/tier1_words.json`
+- `api/audio_generation/chamorro_pronunciations.json`
+- `api/audio_generation/manifest.json`
 
 ## Number corrections applied
 

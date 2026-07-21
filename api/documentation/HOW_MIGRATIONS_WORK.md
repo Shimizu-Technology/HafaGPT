@@ -32,7 +32,7 @@
 ### Run All Migrations
 
 ```bash
-cd HafaGPT-API
+cd api
 uv run alembic upgrade head
 ```
 
@@ -157,7 +157,7 @@ uv run alembic revision --autogenerate -m "add new column"
 ## Project Structure
 
 ```
-HafaGPT-API/
+api/
 ├── alembic/
 │   ├── env.py          # Configuration (reads DATABASE_URL)
 │   ├── script.py.mako  # Template for new migrations

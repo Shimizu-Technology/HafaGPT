@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 # Paths
-FRONTEND_PATH = Path(__file__).parent.parent.parent / "HafaGPT-frontend"
+FRONTEND_PATH = Path(__file__).parent.parent.parent / "web"
 FLASHCARDS_PATH = FRONTEND_PATH / "src" / "data" / "defaultFlashcards.ts"
 MANIFEST_PATH = Path(__file__).parent / "manifest.json"
 OUTPUT_PATH = Path(__file__).parent / "flashcard_words.json"

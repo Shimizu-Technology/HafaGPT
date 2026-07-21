@@ -448,7 +448,7 @@ async def ingest_website(url, source_name):
 ### 1. Crawl a Website
 
 ```bash
-cd HafaGPT-API
+cd api
 
 # Test mode (preview only, doesn't add to database)
 uv run python crawlers/pacific_daily_news.py --test "https://www.guampdn.com/..."
@@ -460,7 +460,7 @@ uv run python crawlers/pacific_daily_news.py "https://www.guampdn.com/..."
 ### 2. Process a PDF
 
 ```bash
-cd HafaGPT-API
+cd api
 uv run python -c "
 from src.utils.improved_chunker import DoclingPDFProcessor
 
@@ -473,7 +473,7 @@ print(content[:1000])  # First 1000 chars
 ### 3. Chunk Some Text
 
 ```bash
-cd HafaGPT-API
+cd api
 uv run python -c "
 from src.utils.improved_chunker import ImprovedChunker
 

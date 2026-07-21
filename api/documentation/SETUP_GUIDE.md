@@ -90,26 +90,21 @@ Make sure you have these installed:
 
 ---
 
-## Step 1: Clone the Repositories
+## Step 1: Clone the Repository
 
 Open your terminal and run:
 
 ```bash
-# Create a workspace folder
-mkdir HafaGPT && cd HafaGPT
-
-# Clone backend
-git clone https://github.com/Shimizu-Technology/HafaGPT-API.git
-
-# Clone frontend
-git clone https://github.com/Shimizu-Technology/chamorro-chatbot-frontend.git HafaGPT-frontend
+# Clone the monorepo
+git clone https://github.com/Shimizu-Technology/HafaGPT.git
+cd HafaGPT
 ```
 
 You should now have:
 ```
 HafaGPT/
-├── HafaGPT-API/        # Backend
-└── HafaGPT-frontend/   # Frontend
+├── api/        # Backend
+└── web/   # Frontend
 ```
 
 ---
@@ -119,7 +114,7 @@ HafaGPT/
 ### 2.1 Install Python dependencies
 
 ```bash
-cd HafaGPT-API
+cd api
 
 # Install uv (Python package manager) - only needed once
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -169,7 +164,7 @@ Open a **new terminal** (keep the backend running).
 ### 3.1 Install Node dependencies
 
 ```bash
-cd HafaGPT-frontend
+cd web
 npm install
 ```
 
@@ -247,11 +242,11 @@ Your local development environment is ready. Here's what you have:
 
 ```bash
 # Terminal 1: Start backend
-cd HafaGPT-API
+cd api
 uv run uvicorn api.main:app --reload --port 8000
 
 # Terminal 2: Start frontend
-cd HafaGPT-frontend
+cd web
 npm run dev
 ```
 
@@ -262,7 +257,7 @@ npm run dev
 ### "Module not found" (Backend)
 
 ```bash
-cd HafaGPT-API
+cd api
 uv sync  # Reinstall dependencies
 ```
 
@@ -311,11 +306,11 @@ Make sure you completed Step 5 (setting `"role": "admin"` in Clerk).
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
 │  1. Get credentials from team lead                      │
-│  2. Clone repos: HafaGPT-API + chamorro-chatbot-frontend│
-│  3. Backend: cd HafaGPT-API && uv sync                  │
+│  2. Clone Shimizu-Technology/HafaGPT                 │
+│  3. Backend: cd api && uv sync                  │
 │             cp .env.example .env (fill in keys)         │
 │             uv run uvicorn api.main:app --reload        │
-│  4. Frontend: cd HafaGPT-frontend && npm install        │
+│  4. Frontend: cd web && npm install        │
 │              cp .env.example .env.local (fill in keys)  │
 │              npm run dev                                │
 │                                                         │

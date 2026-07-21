@@ -287,8 +287,8 @@
           "term": "Å'tot",
           "reason": "Local dictionary normalization points to atot, a fish entry, not black.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/quizData.ts"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/quizData.ts"
           ]
         }
       ],
@@ -356,9 +356,9 @@
           "term": "Såksan",
           "reason": "No local dictionary headword found for Brown; flagged by Phase 1 audit.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts"
           ]
         }
       ],
@@ -367,9 +367,9 @@
           "term": "Kulot kafe",
           "reason": "Used in color games/audio but not found as a local dictionary headword for brown; may be a modern/common borrowing and needs reviewer decision.",
           "found_in": [
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-frontend/src/components/ColorTouch.tsx"
+            "api/audio_generation/manifest.json",
+            "api/audio_generation/tier1_words.json",
+            "web/src/components/ColorTouch.tsx"
           ]
         }
       ],
@@ -420,20 +420,20 @@
           "term": "Rosa",
           "reason": "Rosa appears as a flower headword; color sources use kulot di rosa for pink.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/dailyWords.ts",
+            "web/src/data/quizData.ts"
           ]
         },
         {
           "term": "Kulot rosa",
           "reason": "Used in audio/game content; local color sources found kulot di rosa.",
           "found_in": [
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-frontend/src/components/ColorTouch.tsx"
+            "api/audio_generation/manifest.json",
+            "api/audio_generation/tier1_words.json",
+            "web/src/components/ColorTouch.tsx"
           ]
         }
       ],
@@ -489,9 +489,9 @@
           "term": "Gris",
           "reason": "Used in flashcards/audio but not found as a local dictionary headword for gray; local color sources use kulot åpu.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts"
           ]
         }
       ],
@@ -555,10 +555,10 @@
           "term": "Lalala",
           "reason": "Normalized local dictionary hit points to lalå'lå' meaning live/alive/exist, not orange.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/quizData.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/quizData.ts"
           ]
         }
       ],
@@ -567,14 +567,14 @@
           "term": "Kulot kahel",
           "reason": "Close to source-backed kulot kåhet but local sources use å/e or å/i spellings. Treat as legacy spelling until reviewed.",
           "found_in": [
-            "HafaGPT-API/audio_generation/chamorro_pronunciations.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-frontend/src/components/ColorTouch.tsx",
-            "HafaGPT-frontend/src/components/PicturePairs.tsx",
-            "HafaGPT-frontend/src/components/SoundMatch.tsx",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/learningPath.ts"
+            "api/audio_generation/chamorro_pronunciations.json",
+            "api/audio_generation/manifest.json",
+            "api/audio_generation/tier1_words.json",
+            "web/src/components/ColorTouch.tsx",
+            "web/src/components/PicturePairs.tsx",
+            "web/src/components/SoundMatch.tsx",
+            "web/src/data/dailyWords.ts",
+            "web/src/data/learningPath.ts"
           ]
         }
       ],
@@ -681,13 +681,13 @@
           "term": "Uno",
           "reason": "Local dictionary sources for the Chamorro number one support Unu; Uno was a legacy app spelling.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-frontend/src/components/SoundMatch.tsx",
-            "HafaGPT-frontend/src/components/NumberTap.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/dailyWords.ts",
+            "web/src/data/quizData.ts",
+            "web/src/components/SoundMatch.tsx",
+            "web/src/components/NumberTap.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -819,13 +819,13 @@
           "term": "Kuåttro",
           "reason": "Legacy app spelling; local source forms found are Kuåtro/Kuatro and Kuåttru.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-frontend/src/components/SoundMatch.tsx",
-            "HafaGPT-frontend/src/components/NumberTap.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/dailyWords.ts",
+            "web/src/data/quizData.ts",
+            "web/src/components/SoundMatch.tsx",
+            "web/src/components/NumberTap.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -879,19 +879,19 @@
           "term": "Sinku",
           "reason": "Legacy app spelling; local source forms found are Sinko and Singku.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json"
           ]
         },
         {
           "term": "Singko",
           "reason": "Legacy app spelling; local source forms found are Sinko and Singku.",
           "found_in": [
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/components/SoundMatch.tsx",
-            "HafaGPT-frontend/src/components/NumberTap.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/dailyWords.ts",
+            "web/src/components/SoundMatch.tsx",
+            "web/src/components/NumberTap.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -983,12 +983,12 @@
           "term": "Siette",
           "reason": "Legacy app spelling; local source forms found are Siete and Sietti.",
           "found_in": [
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-frontend/src/components/SoundMatch.tsx",
-            "HafaGPT-frontend/src/components/NumberTap.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/dailyWords.ts",
+            "web/src/data/quizData.ts",
+            "web/src/components/SoundMatch.tsx",
+            "web/src/components/NumberTap.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -1066,11 +1066,11 @@
           "term": "Nuebe",
           "reason": "Legacy app spelling; local dictionary sources support Nuebi for nine.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/dailyWords.ts",
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/dailyWords.ts",
+            "web/src/data/quizData.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -1162,9 +1162,9 @@
           "term": "Buenas yan hågu",
           "reason": "Used as a greeting in legacy flashcards/audio but no local dictionary headword was found for this teaching meaning.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -1364,9 +1364,9 @@
           "term": "Buenas tatdes",
           "reason": "Source-backed unaccented spelling, but HåfaGPT teaching/audio display should use the diacritic form Buenas tåtdes.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts"
           ]
         }
       ],
@@ -1458,9 +1458,9 @@
           "term": "Bula",
           "reason": "Local dictionary sources define Bula as much/plenty/lots, not goodbye.",
           "found_in": [
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/quizData.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -1678,7 +1678,7 @@
           "term": "Nanå",
           "reason": "Accent placement appears only in older app Wordle content; standardize beginner display on Nåna pending native-speaker review.",
           "found_in": [
-            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+            "web/src/components/ChamorroWordle.tsx"
           ]
         }
       ],
@@ -2131,7 +2131,7 @@
           "term": "Famagu",
           "reason": "Truncated app Wordle form; local dictionaries give Famagu'on as the plural of påtgon.",
           "found_in": [
-            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+            "web/src/components/ChamorroWordle.tsx"
           ]
         }
       ],
@@ -2405,10 +2405,10 @@
           "term": "Ulo",
           "reason": "Local dictionaries list Ulu as head; Ulo/ulo' is a separate worm/germ entry, so beginner body-part teaching should use Ulu.",
           "found_in": [
-            "HafaGPT-frontend/src/components/SimonSays.tsx",
-            "HafaGPT-frontend/src/data/storyData.ts",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/components/SimonSays.tsx",
+            "web/src/data/storyData.ts",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -2469,12 +2469,12 @@
           "term": "Mata",
           "reason": "Mata/måta appears as a Syn./cf. under Åtaduk/Atadok, but bundled standalone headwords also define måta/mata as unrelated meanings such as planting hole/raw. Use Åtadok for beginner eye teaching until a reviewer confirms how to present Mata.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/quizData.ts",
-            "HafaGPT-frontend/src/data/learningPath.ts",
-            "HafaGPT-frontend/src/components/SimonSays.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/quizData.ts",
+            "web/src/data/learningPath.ts",
+            "web/src/components/SimonSays.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -2662,9 +2662,9 @@
           "term": "Kanai",
           "reason": "Kanai was not found as a local dictionary headword; sources support Kannai/Kånnai for hand/arm.",
           "found_in": [
-            "HafaGPT-frontend/src/components/SimonSays.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/components/SimonSays.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -2889,9 +2889,9 @@
           "term": "Tata'ao",
           "reason": "Tata'ao was not found in the local dictionaries for stomach; Tuyan is source-backed for stomach/belly/abdomen.",
           "found_in": [
-            "HafaGPT-frontend/src/components/SimonSays.tsx",
-            "HafaGPT-API/audio_generation/tier1_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/components/SimonSays.tsx",
+            "api/audio_generation/tier1_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -2960,12 +2960,12 @@
           "reason": "Mixed å spelling was used by the app, but reviewed sources support Nengkanno', Nenkanno', and Néngkanu' instead.",
           "match": "exact",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-frontend/src/data/storyData.ts",
-            "HafaGPT-frontend/src/data/conversationScenarios.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/chamorro_pronunciations.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "web/src/data/storyData.ts",
+            "web/src/data/conversationScenarios.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/chamorro_pronunciations.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -3321,9 +3321,9 @@
           "term": "Lechuga",
           "reason": "Lechuga was not found in bundled local dictionaries; use source-backed Gollai for generic vegetables.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -3629,7 +3629,7 @@
           "term": "Mangå",
           "reason": "Appears to be a truncated app Wordle form for mango; local source-backed forms are Mångga/Mangga.",
           "found_in": [
-            "HafaGPT-frontend/src/components/ChamorroWordle.tsx"
+            "web/src/components/ChamorroWordle.tsx"
           ]
         }
       ],
@@ -3798,9 +3798,9 @@
           "term": "Buen prubechu",
           "reason": "Local source backs Buen prubetchu as “you are welcome”; app spelling/meaning as “Enjoy your meal / Bon appetit” was not source-backed.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -4812,9 +4812,9 @@
           "term": "Kao siña un tulaika?",
           "reason": "Tulaika is source-backed as exchange/trade/replace/substitute/change, not as repeat/say again. Use the revised-dictionary repeat/say-again example instead.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -4853,9 +4853,9 @@
           "term": "Fan hånao hit",
           "reason": "No local dictionary support was found for teaching this phrase as 'Let's go'; revised sources use Nihi ta hånåo in let's-go contexts.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -4902,9 +4902,9 @@
           "term": "Kao guåha?",
           "reason": "Local sources support guaha for have/there is; remove the unsupported å in guåha for this teaching phrase.",
           "found_in": [
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts",
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json"
+            "web/src/data/defaultFlashcards.ts",
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json"
           ]
         }
       ],
@@ -4952,9 +4952,9 @@
           "term": "Hafa bidå-mu?",
           "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
           "found_in": [
-            "HafaGPT-API/audio_generation/flashcard_words.json",
-            "HafaGPT-API/audio_generation/manifest.json",
-            "HafaGPT-frontend/src/data/defaultFlashcards.ts"
+            "api/audio_generation/flashcard_words.json",
+            "api/audio_generation/manifest.json",
+            "web/src/data/defaultFlashcards.ts"
           ],
           "match": "exact"
         },
@@ -4962,7 +4962,7 @@
           "term": "Håfa na bidå-mu?",
           "reason": "No local source was found for this phrase as 'What are you doing?'; revised dictionary gives Håfa bidåda-mu? for that meaning.",
           "found_in": [
-            "HafaGPT-frontend/src/data/dailyWords.ts"
+            "web/src/data/dailyWords.ts"
           ]
         }
       ],

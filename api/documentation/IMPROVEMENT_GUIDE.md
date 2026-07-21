@@ -397,9 +397,9 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 | **Loading UX** | Sections appeared one-by-one | All sections load together with coordinated skeletons |
 
 **Files Changed:**
-- `HafaGPT-API/api/main.py` - Added `GET /api/homepage/data` endpoint
-- `HafaGPT-frontend/src/hooks/useHomepageData.ts` - New unified hook
-- `HafaGPT-frontend/src/components/HomePage.tsx` - Uses unified hook
+- `api/api/main.py` - Added `GET /api/homepage/data` endpoint
+- `web/src/hooks/useHomepageData.ts` - New unified hook
+- `web/src/components/HomePage.tsx` - Uses unified hook
 - `XPDisplay.tsx`, `WeakAreasWidget.tsx`, `DueCardsWidget.tsx`, `RecommendedLearning.tsx` - Accept data via props (with fallback hooks)
 
 **Future Optimizations (Not Yet Implemented):**
@@ -1087,7 +1087,7 @@ Generate audio files ONCE for core vocabulary, store in S3, serve statically for
 
 **Architecture:**
 ```
-HafaGPT-API/
+api/
 ├── audio_generation/
 │   ├── manifest.json           # Master list of all pre-generated words
 │   ├── generate_audio.py       # Script to generate MP3s
@@ -1173,7 +1173,7 @@ const speak = async (text: string) => {
 - `audio_generation/flashcard_words.json` - Curated flashcard vocabulary
 - `audio_generation/extract_tier2_words.py` - Script to extract dictionary words
 - `audio_generation/extract_flashcard_words.py` - Script to extract flashcard words
-- `HafaGPT-frontend/public/audio_manifest.json` - Frontend manifest copy
+- `web/public/audio_manifest.json` - Frontend manifest copy
 
 ---
 

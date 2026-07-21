@@ -9,7 +9,7 @@ Tests that the token management system properly handles:
 
 Usage:
     # Requires server running at localhost:8000
-    cd HafaGPT-API
+    cd api
     source .venv/bin/activate
     
     # Run all stress tests

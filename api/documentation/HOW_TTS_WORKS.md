@@ -123,7 +123,7 @@ utterance.rate = 0.85;  // Slower for clarity
 All TTS functionality is centralized in `useSpeech.ts`:
 
 ```typescript
-// HafaGPT-frontend/src/hooks/useSpeech.ts
+// web/src/hooks/useSpeech.ts
 
 const { speak, preload, isSpeaking, clearCache } = useSpeech();
 
@@ -166,7 +166,7 @@ await speakFresh('Håfa Adai');
 ### Adding New Words
 
 ```bash
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 
 # Generate single word
 python -m audio_generation.generate_audio --word "Bunitu"
@@ -204,7 +204,7 @@ python -m audio_generation.generate_audio --flashcards --dry-run
 
 ### After Adding Words
 
-1. Copy manifest to frontend: `cp audio_generation/manifest.json ../HafaGPT-frontend/public/audio_manifest.json`
+1. Copy manifest to frontend: `cp audio_generation/manifest.json ../web/public/audio_manifest.json`
 2. Commit both repos
 3. Push to deploy
 

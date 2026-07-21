@@ -20,7 +20,7 @@ from typing import Any
 
 API_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = API_ROOT / "audio_generation" / "manifest.json"
-DEFAULT_FRONTEND_MANIFEST = API_ROOT.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+DEFAULT_FRONTEND_MANIFEST = API_ROOT.parent / "web" / "public" / "audio_manifest.json"
 DEFAULT_REMOTE_MANIFEST_URL = "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/manifest.json"
 DEFAULT_AUDIO_BASE_URL = "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio"
 

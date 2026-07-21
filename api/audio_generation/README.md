@@ -32,7 +32,7 @@ audio_generation/
 ### 1. Preview what will be generated (dry run)
 
 ```bash
-cd HafaGPT-API
+cd api
 source .venv/bin/activate
 python -m audio_generation.generate_audio --tier 1 --dry-run
 ```

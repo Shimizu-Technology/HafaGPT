@@ -157,7 +157,7 @@ def test_manifest_comparison_detects_frontend_or_remote_drift():
 
 def test_frontend_public_manifest_is_exact_copy_when_available():
     api_root = Path(__file__).resolve().parents[1]
-    frontend_manifest_path = api_root.parent / "HafaGPT-frontend" / "public" / "audio_manifest.json"
+    frontend_manifest_path = api_root.parent / "web" / "public" / "audio_manifest.json"
     if not frontend_manifest_path.exists():
         pytest.skip(f"Frontend manifest not found at {frontend_manifest_path}")
 

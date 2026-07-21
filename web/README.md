@@ -4,21 +4,22 @@
 
 React + TypeScript web interface for the HåfaGPT Chamorro language learning platform.
 
-> 📚 **New to the team?** Start with the **[Developer Setup Guide](https://github.com/Shimizu-Technology/HafaGPT-API/blob/main/documentation/SETUP_GUIDE.md)** in the backend repo for complete onboarding instructions.
+> 📚 **New to the team?** Start with the **[Developer Setup Guide](https://github.com/Shimizu-Technology/HafaGPT/blob/main/api/documentation/SETUP_GUIDE.md)** in the backend repo for complete onboarding instructions.
 
-**Live:** [hafagpt.com](https://hafagpt.com) | **Backend:** [HafaGPT-API](https://github.com/Shimizu-Technology/HafaGPT-API)
+**Live:** [hafagpt.com](https://hafagpt.com) | **Repository:** [Shimizu-Technology/HafaGPT](https://github.com/Shimizu-Technology/HafaGPT)
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/Shimizu-Technology/chamorro-chatbot-frontend.git HafaGPT-frontend
-cd HafaGPT-frontend
+# 1. Clone the monorepo
+git clone https://github.com/Shimizu-Technology/HafaGPT.git
+cd HafaGPT
+cd web
 
 # 2. Install dependencies
-npm install
+npm ci
 
 # 3. Set up environment
 cp .env.example .env.local
@@ -30,7 +31,7 @@ npm run dev
 
 Open http://localhost:5173
 
-> **Note:** Backend must be running on port 8000. See [HafaGPT-API](https://github.com/Shimizu-Technology/HafaGPT-API) for setup.
+> **Note:** The backend in `../api` must be running on port 8000.
 
 ---
 
@@ -98,6 +99,7 @@ npm run lint     # Run linter
 Auto-deploys to Netlify on push to `main`.
 
 **Netlify Settings:**
+- Base directory: `web`
 - Build command: `npm run build`
 - Publish directory: `dist`
 - Set env vars in Netlify dashboard
@@ -116,7 +118,7 @@ Auto-deploys to Netlify on push to `main`.
 
 ## 📚 Full Documentation
 
-See **[HafaGPT-API/documentation/](https://github.com/Shimizu-Technology/HafaGPT-API/tree/main/documentation)** for:
+See **[api/documentation/](https://github.com/Shimizu-Technology/HafaGPT/tree/main/api/documentation)** for:
 - Setup Guide (employee onboarding)
 - How Auth Works (Clerk vs bcrypt/JWT)
 - How Migrations Work (Alembic vs Rails)

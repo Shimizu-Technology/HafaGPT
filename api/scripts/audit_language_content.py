@@ -639,13 +639,13 @@ def write_markdown_report(path: Path, findings: list[AuditFinding], dictionary_c
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Audit HafaGPT language content against local dictionary sources.")
-    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to HafaGPT-API repo root")
-    parser.add_argument("--frontend-root", type=Path, default=None, help="Path to HafaGPT-frontend repo root")
+    parser.add_argument("--api-root", type=Path, default=Path.cwd(), help="Path to api repo root")
+    parser.add_argument("--frontend-root", type=Path, default=None, help="Path to web repo root")
     parser.add_argument("--out-dir", type=Path, default=None, help="Output directory for audit artifacts")
     args = parser.parse_args()
 
     api_root = args.api_root.resolve()
-    frontend_root = (args.frontend_root or api_root.parent / "HafaGPT-frontend").resolve()
+    frontend_root = (args.frontend_root or api_root.parent / "web").resolve()
     out_dir = (args.out_dir or api_root / "documentation" / "language_content_audit").resolve()
 
     dictionary_index = load_dictionary_entries(api_root)

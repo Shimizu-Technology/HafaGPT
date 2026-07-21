@@ -155,7 +155,7 @@
 
 ```bash
 # Against local server
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 uvicorn api.main:app --host 0.0.0.0 --port 8000  # Terminal 1
 
 # Run comprehensive tests (240 queries, ~30-40 min)
@@ -183,7 +183,7 @@ python -m evaluation.test_evaluation \
 Runs all 4 skill levels × 3 runs each = 12 test runs (1,800 API calls):
 
 ```bash
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 PYTHONUNBUFFERED=1 nohup python -m evaluation.run_comparison > evaluation/tmp/comparison_output.txt 2>&1 &
 
 # Monitor progress
@@ -248,7 +248,7 @@ evaluation/tmp/
 
 ### Running Context Tests
 ```bash
-cd HafaGPT-API && source .venv/bin/activate
+cd api && source .venv/bin/activate
 
 # Run all tests
 python -m evaluation.test_conversation_context
