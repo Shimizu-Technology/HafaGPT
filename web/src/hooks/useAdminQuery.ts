@@ -1,0 +1,527 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@clerk/clerk-react';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+// Types
+export interface StatComparison {
+  current: number;
+  previous: number;
+  change: number;
+  change_percent: number | null;
+}
+
+export interface AdminStats {
+  total_users: number;
+  premium_users: number;
+  free_users: number;
+  whitelisted_users: number;
+  active_today: number;
+  total_conversations: number;
+  total_messages: number;
+  total_quiz_attempts: number;
+  total_game_plays: number;
+  // Weekly comparison data
+  messages_this_week?: StatComparison | null;
+  quizzes_this_week?: StatComparison | null;
+  games_this_week?: StatComparison | null;
+  new_users_this_week?: StatComparison | null;
+  active_users_this_week?: StatComparison | null;
+  // Engagement metrics
+  avg_messages_per_user?: number | null;
+  avg_quiz_score?: number | null;
+  avg_games_per_user?: number | null;
+  avg_quizzes_per_user?: number | null;
+  users_with_messages?: number | null;
+  users_with_games?: number | null;
+  users_with_quizzes?: number | null;
+  // Feature adoption
+  chat_adoption_pct?: number | null;
+  games_adoption_pct?: number | null;
+  quizzes_adoption_pct?: number | null;
+  learning_path_adoption_pct?: number | null;
+  users_with_lessons?: number | null;
+  // Top users
+  top_users?: Array<{
+    user_id: string;
+    name: string;
+    email: string | null;
+    image_url: string | null;
+    messages: number;
+    quizzes: number;
+    games: number;
+    total_activity: number;
+  }> | null;
+  // Retention metrics
+  dau?: number | null;
+  wau?: number | null;
+  mau?: number | null;
+  dau_mau_ratio?: number | null;
+  returning_users_pct?: number | null;
+}
+
+export interface AdminUser {
+  user_id: string;
+  email: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  image_url: string | null;
+  is_premium: boolean;
+  is_whitelisted: boolean;
+  is_banned: boolean;
+  role: string | null;
+  plan_name: string | null;
+  subscription_status: string | null;
+  created_at: string | null;
+  last_sign_in: string | null;
+  last_activity: string | null;
+  total_conversations: number;
+  total_messages: number;
+  total_quizzes: number;
+  total_games: number;
+  today_chat: number;
+  today_games: number;
+  today_quizzes: number;
+  // Learning preferences
+  skill_level: string | null;
+  learning_goal: string | null;
+  onboarding_completed: boolean;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+export interface UserUpdateRequest {
+  is_premium?: boolean;
+  is_whitelisted?: boolean;
+  is_banned?: boolean;
+  role?: string;  // Use empty string '' to clear role
+  plan_name?: string;
+}
+
+export interface UserUpdateResponse {
+  success: boolean;
+  user: AdminUser;
+  message: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  type: 'chat' | 'quiz' | 'game' | 'lesson';
+  user_id: string;
+  user_name: string;
+  user_image: string | null;
+  description: string;
+  detail: string | null;
+  timestamp: string;
+}
+
+// Hooks
+export function useAdminActivity(limit: number = 15) {
+  const { getToken } = useAuth();
+  
+  return useQuery<{ activities: ActivityItem[] }>({
+    queryKey: ['admin', 'activity', limit],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/activity?limit=${limit}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch activity');
+      }
+      
+      return response.json();
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+}
+
+export function useAdminStats() {
+  const { getToken } = useAuth();
+  
+  return useQuery<AdminStats>({
+    queryKey: ['admin', 'stats'],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch admin stats');
+      }
+      
+      return response.json();
+    },
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useAdminUsers(page: number = 1, perPage: number = 20, search?: string) {
+  const { getToken } = useAuth();
+  
+  return useQuery<AdminUsersResponse>({
+    queryKey: ['admin', 'users', page, perPage, search],
+    queryFn: async () => {
+      const token = await getToken();
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: perPage.toString(),
+      });
+      if (search) {
+        params.append('search', search);
+      }
+      
+      const response = await fetch(`${API_URL}/api/admin/users?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch users');
+      }
+      
+      return response.json();
+    },
+    staleTime: 1000 * 30, // 30 seconds
+  });
+}
+
+export function useAdminUser(userId: string) {
+  const { getToken } = useAuth();
+  
+  return useQuery<AdminUser>({
+    queryKey: ['admin', 'user', userId],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch user');
+      }
+      
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+}
+
+export function useUpdateUser() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation<UserUpdateResponse, Error, { userId: string; data: UserUpdateRequest }>({
+    mutationFn: async ({ userId, data }) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update user');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
+    },
+  });
+}
+
+export function useResetOnboarding() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation<{ success: boolean; message: string }, Error, string>({
+    mutationFn: async (userId: string) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/reset-onboarding`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to reset onboarding');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_data, userId) => {
+      // Invalidate user query to refresh preferences
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId] });
+    },
+  });
+}
+
+export function useUpdateUserPreferences() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation<{ success: boolean; preferences: Record<string, unknown> }, Error, { userId: string; data: { skill_level?: string; learning_goal?: string; onboarding_completed?: boolean } }>({
+    mutationFn: async ({ userId, data }) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/preferences`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update preferences');
+      }
+      
+      return response.json();
+    },
+    onSuccess: (_data, variables) => {
+      // Invalidate user query to refresh preferences
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.userId] });
+    },
+  });
+}
+
+// --- Analytics Types ---
+
+export interface DailyUsagePoint {
+  date: string;
+  chat_count: number;
+  game_count: number;
+  quiz_count: number;
+  active_users: number;
+}
+
+export interface UsageTrendsResponse {
+  period: string;
+  data: DailyUsagePoint[];
+  totals: {
+    chat: number;
+    games: number;
+    quizzes: number;
+  };
+}
+
+export interface UserGrowthPoint {
+  date: string;
+  total_users: number;
+  new_users: number;
+  premium_users: number;
+}
+
+export interface UserGrowthResponse {
+  period: string;
+  data: UserGrowthPoint[];
+}
+
+export interface FeatureUsageResponse {
+  chat_total: number;
+  games_total: number;
+  quizzes_total: number;
+  conversations_total: number;
+  game_breakdown: Record<string, number>;
+  quiz_breakdown: Record<string, number>;
+}
+
+// --- Analytics Hooks ---
+
+export function useUsageTrends(period: '7d' | '30d' | '90d' = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<UsageTrendsResponse>({
+    queryKey: ['admin', 'analytics', 'usage', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/usage?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch usage trends');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+export function useUserGrowth(period: '7d' | '30d' | '90d' = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<UserGrowthResponse>({
+    queryKey: ['admin', 'analytics', 'growth', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/growth?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch user growth');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useFeatureUsage() {
+  const { getToken } = useAuth();
+  
+  return useQuery<FeatureUsageResponse>({
+    queryKey: ['admin', 'analytics', 'features'],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/features`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch feature usage');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// Advanced Analytics Types
+export interface QuizPassRate {
+  category: string;
+  attempts: number;
+  avg_score: number;
+  pass_rate: number;
+}
+
+export interface LearningPathProgress {
+  topic_id: string;
+  topic_name: string;
+  started: number;
+  completed: number;
+  completion_rate: number;
+}
+
+export interface UserFunnel {
+  total_users: number;
+  chatted: number;
+  played_game: number;
+  took_quiz: number;
+  returned: number;
+}
+
+export interface AdvancedAnalyticsResponse {
+  quiz_pass_rates: QuizPassRate[];
+  learning_path_progress: LearningPathProgress[];
+  peak_hours: number[][];  // 7x24 grid
+  peak_hours_max: number;
+  user_funnel: UserFunnel;
+}
+
+export function useAdvancedAnalytics(period: string = '30d') {
+  const { getToken } = useAuth();
+  
+  return useQuery<AdvancedAnalyticsResponse>({
+    queryKey: ['admin', 'analytics', 'advanced', period],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/analytics/advanced?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error('Failed to fetch advanced analytics');
+      return response.json();
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// Site Settings Types
+export interface SiteSetting {
+  value: string;
+  description: string | null;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+export interface SiteSettings {
+  [key: string]: SiteSetting;
+}
+
+export interface SiteSettingsResponse {
+  settings: SiteSettings;
+}
+
+// Site Settings Hooks
+export function useAdminSettings() {
+  const { getToken } = useAuth();
+  
+  return useQuery<SiteSettingsResponse>({
+    queryKey: ['admin', 'settings'],
+    queryFn: async () => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch settings');
+      }
+      return response.json();
+    },
+    staleTime: 1000 * 60, // 1 minute
+  });
+}
+
+export function useUpdateAdminSettings() {
+  const { getToken } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (updates: Record<string, string>) => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to update settings');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate settings and promo status queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
+      queryClient.invalidateQueries({ queryKey: ['promo-status'] });
+    },
+  });
+}
+

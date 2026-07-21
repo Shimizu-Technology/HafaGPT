@@ -1,0 +1,635 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:focus-visible:ring-ocean-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  /* iOS Safe Area Support */
+.safe-area-top {
+  /* Use max() to ensure minimum 1rem padding on web, or safe-area on iOS */
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Spacer that accounts for safe area - adds margin on top of its height */
+  .safe-area-spacer {
+    margin-top: env(safe-area-inset-top);
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-cream-100 dark:bg-gray-900;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-cream-300 dark:bg-gray-700 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-cream-400 dark:bg-gray-600;
+  }
+
+  /* Smooth transitions for theme switching */
+  * {
+    transition-property: background-color, border-color, color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  /* Prevent transition on initial load */
+  .no-transition {
+    transition: none !important;
+  }
+
+  /* Safe area for iOS devices with notch */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Position element above bottom nav (64px) + safe area - for mobile only */
+  .above-bottom-nav {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  
+  @media (min-width: 640px) {
+    .above-bottom-nav {
+      bottom: 0;
+    }
+  }
+
+  /* Improved touch targets for mobile */
+  @media (hover: none) and (pointer: coarse) {
+    button, a, input[type="button"], input[type="submit"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Enhanced animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes slide-down {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -20px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.4s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out forwards;
+  }
+
+  /* Scale up animation for modals */
+  @keyframes scale-up {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scale-up {
+    animation: scale-up 0.2s ease-out forwards;
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out forwards;
+  }
+
+  /* Fast fade-in for streaming text transition */
+  @keyframes fade-in-fast {
+    from {
+      opacity: 0.5;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in-fast {
+    animation: fade-in-fast 0.15s ease-out forwards;
+  }
+
+  /* 3D Flip Animation for Flashcards */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+
+  /* Page enter animation - smooth fade + slight slide up */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-page-enter {
+    animation: page-enter 0.25s ease-out forwards;
+  }
+
+  /* Button press feedback - subtle scale down on click */
+  .btn-press {
+    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+  }
+
+  .btn-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Card hover lift effect */
+  .card-hover {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .card-hover:active {
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   Christmas Theme - Snowfall Animation
+   ========================================================================== */
+
+/* Snowfall container - positioned fixed to cover viewport */
+.snowfall-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+/* Individual snowflake styling */
+.snowflake {
+  position: absolute;
+  top: -2rem;
+  color: #fff;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+  animation: snowfall linear infinite;
+  will-change: transform;
+}
+
+/* Dark mode snowflakes - slightly more visible */
+.dark .snowflake {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 8px rgba(200, 220, 255, 0.5);
+}
+
+/* Light mode snowflakes - subtle blue tint */
+:root:not(.dark) .snowflake {
+  color: rgba(180, 210, 255, 0.8);
+  text-shadow: 0 0 5px rgba(150, 190, 255, 0.4);
+}
+
+/* Snowfall animation - falls and sways */
+@keyframes snowfall {
+  0% {
+    transform: translateY(-10px) rotate(0deg) translateX(0);
+  }
+  25% {
+    transform: translateY(25vh) rotate(90deg) translateX(15px);
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg) translateX(-10px);
+  }
+  75% {
+    transform: translateY(75vh) rotate(270deg) translateX(20px);
+  }
+  100% {
+    transform: translateY(105vh) rotate(360deg) translateX(0);
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .snowfall-container {
+    display: none;
+  }
+}
+
+/* Hide snowfall on very small screens to avoid clutter */
+@media (max-width: 480px) {
+  .snowfall-container .snowflake:nth-child(n+15) {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   New Year's Fireworks Animation
+   ========================================================================== */
+
+/* Container for fireworks effect */
+.fireworks-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+/* Individual floating sparkle */
+.firework {
+  position: absolute;
+  top: -2rem;
+  animation: sparkle-drift linear infinite, sparkle-twinkle ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Dark mode sparkles - golden/amber glow */
+.dark .firework {
+  color: #ffd700;
+  text-shadow: 
+    0 0 4px rgba(255, 215, 0, 0.8),
+    0 0 8px rgba(255, 215, 0, 0.5),
+    0 0 12px rgba(255, 180, 0, 0.3);
+}
+
+/* Light mode sparkles - purple/magenta with good contrast */
+:root:not(.dark) .firework {
+  color: #9333ea;
+  text-shadow: 
+    0 0 4px rgba(147, 51, 234, 0.6),
+    0 0 8px rgba(147, 51, 234, 0.4),
+    0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+/* Sparkle drift animation - gentle fall like snowflakes */
+@keyframes sparkle-drift {
+  0% {
+    transform: translateY(-10px) translateX(0);
+  }
+  25% {
+    transform: translateY(25vh) translateX(12px);
+  }
+  50% {
+    transform: translateY(50vh) translateX(-8px);
+  }
+  75% {
+    transform: translateY(75vh) translateX(10px);
+  }
+  100% {
+    transform: translateY(105vh) translateX(-5px);
+  }
+}
+
+/* Twinkle animation - pulsing glow effect (opacity only, to not conflict with drift transform) */
+@keyframes sparkle-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    filter: brightness(0.6);
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+}
+
+/* Firework burst container */
+.firework-burst {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Individual burst particle - small, subtle */
+.firework-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  animation: burst-explode 1s ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+/* Light mode particles - purple */
+:root:not(.dark) .firework-particle {
+  background: #9333ea;
+  box-shadow: 0 0 4px #9333ea, 0 0 8px rgba(147, 51, 234, 0.5);
+}
+
+/* Dark mode particles - golden */
+.dark .firework-particle {
+  background: #ffd700;
+  box-shadow: 0 0 4px #ffd700, 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* Burst explosion animation */
+@keyframes burst-explode {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: 
+      translate(
+        calc(cos(var(--angle)) * var(--distance)),
+        calc(sin(var(--angle)) * var(--distance))
+      ) 
+      scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .fireworks-container {
+    display: none;
+  }
+}
+
+/* Hide some sparkles on very small screens to avoid clutter */
+@media (max-width: 480px) {
+  .fireworks-container .firework:nth-child(n+12) {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Christmas Theme - Festive Color Overrides
+   ========================================================================== */
+
+/* Christmas accent colors - applied via data attribute on body */
+[data-theme="christmas"] {
+  /* Light mode Christmas colors */
+  --christmas-primary: #c41e3a; /* Christmas red */
+  --christmas-secondary: #228b22; /* Forest green */
+  --christmas-accent: #ffd700; /* Gold */
+  --christmas-bg-gradient-from: #fef9f3; /* Warm cream */
+  --christmas-bg-gradient-to: #f8f0e8;
+}
+
+.dark[data-theme="christmas"] {
+  /* Dark mode Christmas colors */
+  --christmas-primary: #ff6b6b; /* Lighter red for dark mode */
+  --christmas-secondary: #4ade80; /* Brighter green */
+  --christmas-accent: #fbbf24; /* Amber gold */
+  --christmas-bg-gradient-from: #1e1b18; /* Warm dark */
+  --christmas-bg-gradient-to: #151310;
+}
+
+/* Christmas gradient background for cards and buttons */
+.christmas-gradient {
+  background: linear-gradient(135deg, var(--christmas-primary), var(--christmas-secondary));
+}
+
+/* Festive glow effect */
+.christmas-glow {
+  box-shadow: 0 0 20px rgba(196, 30, 58, 0.2), 0 0 40px rgba(34, 139, 34, 0.1);
+}
+
+.dark .christmas-glow {
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.15), 0 0 40px rgba(74, 222, 128, 0.1);
+}
+
+/* Christmas border accent */
+.christmas-border {
+  border-image: linear-gradient(135deg, var(--christmas-primary), var(--christmas-secondary)) 1;
+}
+
+/* Subtle Christmas tint for backgrounds - uses pseudo-element to overlay without replacing bg */
+.christmas-tint {
+  position: relative;
+}
+
+.christmas-tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(196, 30, 58, 0.02),
+    rgba(34, 139, 34, 0.02)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .christmas-tint::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 107, 107, 0.03),
+    rgba(74, 222, 128, 0.03)
+  );
+}
+
+/* ==========================================================================
+   New Year's Theme - Festive Color Overrides
+   ========================================================================== */
+
+/* New Year's accent colors - applied via data attribute on body */
+[data-theme="newyear"] {
+  /* Light mode New Year's colors */
+  --newyear-primary: #9B59B6; /* Purple */
+  --newyear-secondary: #FFD700; /* Gold */
+  --newyear-accent: #3498DB; /* Blue */
+  --newyear-bg-gradient-from: #faf8fc; /* Light purple tint */
+  --newyear-bg-gradient-to: #f5f0fa;
+}
+
+.dark[data-theme="newyear"] {
+  /* Dark mode New Year's colors */
+  --newyear-primary: #A855F7; /* Lighter purple for dark mode */
+  --newyear-secondary: #FBBF24; /* Amber gold */
+  --newyear-accent: #60A5FA; /* Brighter blue */
+  --newyear-bg-gradient-from: #1a1625; /* Deep purple-black */
+  --newyear-bg-gradient-to: #12101a;
+}
+
+/* New Year gradient background for cards and buttons */
+.newyear-gradient {
+  background: linear-gradient(135deg, var(--newyear-primary), var(--newyear-secondary));
+}
+
+/* Festive glow effect */
+.newyear-glow {
+  box-shadow: 0 0 20px rgba(155, 89, 182, 0.2), 0 0 40px rgba(255, 215, 0, 0.1);
+}
+
+.dark .newyear-glow {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), 0 0 40px rgba(251, 191, 36, 0.1);
+}
+
+/* New Year border accent */
+.newyear-border {
+  border-image: linear-gradient(135deg, var(--newyear-primary), var(--newyear-secondary)) 1;
+}
+
+/* Subtle New Year tint for backgrounds */
+.newyear-tint {
+  position: relative;
+}
+
+.newyear-tint::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(155, 89, 182, 0.02),
+    rgba(255, 215, 0, 0.02)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark .newyear-tint::before {
+  background: linear-gradient(
+    135deg,
+    rgba(168, 85, 247, 0.03),
+    rgba(251, 191, 36, 0.03)
+  );
+}
+
+/* ==========================================================================
+   Confetti Animation - For Celebrations
+   ========================================================================== */
+
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-out forwards;
+  font-size: 1.5rem;
+}

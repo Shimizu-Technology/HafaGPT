@@ -1,0 +1,835 @@
+import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw } from 'lucide-react';
+import { useState, memo, useMemo } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { SourceCitation } from './SourceCitation';
+import { useSpeech } from '../hooks/useSpeech';
+
+/**
+ * Clean markdown content to prevent unwanted code blocks.
+ * 
+ * The LLM sometimes starts responses with leading spaces/tabs which
+ * markdown interprets as code blocks (4+ spaces = pre/code).
+ * 
+ * This function:
+ * 1. Trims leading/trailing whitespace from the entire content
+ * 2. Removes leading spaces/tabs from the first line that would trigger code blocks
+ * 3. Preserves intentional code blocks (```)
+ */
+function cleanMarkdownContent(content: string): string {
+  if (!content) return content;
+  
+  // Trim overall content
+  const cleaned = content.trim();
+  
+  // If the content starts with actual code block markers, leave it alone
+  if (cleaned.startsWith('```')) return cleaned;
+  
+  // Split into lines
+  const lines = cleaned.split('\n');
+  
+  // Clean leading whitespace from lines that could trigger unintended code blocks
+  // (lines starting with 4+ spaces or tabs, but NOT inside intentional code blocks)
+  let inCodeBlock = false;
+  const cleanedLines = lines.map((line, index) => {
+    // Track code block state
+    if (line.trim().startsWith('```')) {
+      inCodeBlock = !inCodeBlock;
+      return line;
+    }
+    
+    // Don't modify lines inside code blocks
+    if (inCodeBlock) return line;
+    
+    // For the first line, always trim leading whitespace
+    // For other lines, only trim if it would create an unwanted code block
+    if (index === 0) {
+      return line.trimStart();
+    }
+    
+    // Check if line starts with 4+ spaces or a tab (code block trigger)
+    // But only fix it if the previous line is empty or a paragraph
+    // (preserving intentional indentation in lists, etc.)
+    const leadingSpaces = line.match(/^(\s*)/)?.[1] || '';
+    if (leadingSpaces.length >= 4 || leadingSpaces.includes('\t')) {
+      // Check if this looks like an intentional code block (following blank line)
+      const prevLine = index > 0 ? lines[index - 1].trim() : '';
+      if (prevLine === '') {
+        // This might be intentional code, but if the next line is also indented
+        // and doesn't look like code, clean it
+        // For now, be conservative and just fix first-line issues
+        return line;
+      }
+    }
+    
+    return line;
+  });
+  
+  return cleanedLines.join('\n');
+}
+
+// Helper to determine file type from URL
+function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'unknown' {
+  const lowerUrl = url.toLowerCase();
+  if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/)) return 'image';
+  if (lowerUrl.match(/\.pdf(\?|$)/)) return 'pdf';
+  if (lowerUrl.match(/\.(docx|doc)(\?|$)/)) return 'docx';
+  if (lowerUrl.match(/\.txt(\?|$)/)) return 'txt';
+  return 'unknown';
+}
+
+// Helper to get filename from URL
+function getFilenameFromUrl(url: string): string {
+  const parts = url.split('/');
+  const filename = parts[parts.length - 1].split('?')[0];
+  // Remove timestamp prefix if present (format: YYYYMMDD_HHMMSS_)
+  const cleanName = filename.replace(/^\d{8}_\d{6}_/, '');
+  return cleanName || 'document';
+}
+
+interface FileInfo {
+  url: string;
+  filename: string;
+  type: 'image' | 'document';
+  content_type?: string;
+}
+
+interface MessageProps {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  imageUrl?: string; // Legacy: For displaying uploaded files
+  file_urls?: FileInfo[]; // New: All uploaded files
+  sources?: Array<{ name: string; page: number | null }>;
+  used_rag?: boolean;
+  used_web_search?: boolean;
+  response_time?: number;
+  timestamp?: number;
+  systemType?: 'mode_change' | 'cancelled';
+  mode?: 'english' | 'chamorro' | 'learn';
+  onImageClick?: (imageUrl: string) => void; // Callback for image clicks
+  messageId?: string; // Message UUID for feedback
+  conversationId?: string; // Conversation UUID for feedback
+  cancelled?: boolean; // Whether this message was cancelled
+  isStreaming?: boolean; // Whether this message is currently streaming
+  // Edit & Regenerate props
+  canEdit?: boolean; // Whether this message can be edited
+  onEdit?: (newContent: string) => void; // Callback when user saves edited message
+}
+
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit }: MessageProps) {
+  const isUser = role === 'user';
+  const isSystem = role === 'system';
+  const { getToken } = useAuth();
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(content);
+  const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
+  
+  // Clean content to prevent unwanted code blocks from leading whitespace
+  const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
+
+  // Handle edit submission
+  const handleEditSubmit = () => {
+    if (editContent.trim() && editContent !== content && onEdit) {
+      onEdit(editContent.trim());
+      setIsEditing(false);
+    }
+  };
+
+  // Handle edit cancel
+  const handleEditCancel = () => {
+    setEditContent(content);
+    setIsEditing(false);
+  };
+
+  const handleCopy = async () => {
+    console.log('🔵 Copy button clicked!'); // Debug log
+    
+    try {
+      // Method 1: Try modern clipboard API first (works on desktop and some mobile)
+      if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(content);
+        console.log('✅ Text copied via Clipboard API');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+    } catch (err) {
+      console.warn('⚠️ Clipboard API failed, trying fallback...', err);
+    }
+    
+    // Method 2: Fallback for iOS Safari and older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      
+      // Make it invisible but accessible
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      textArea.style.opacity = '0';
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      // For iOS
+      textArea.setSelectionRange(0, 99999);
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        console.log('✅ Text copied via fallback method');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (err) {
+      console.error('❌ All copy methods failed:', err);
+      // Still show feedback even if copy failed
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleFeedback = async (type: 'up' | 'down') => {
+    // If already submitted this feedback, ignore
+    if (feedback === type || feedbackSubmitting) return;
+
+    setFeedbackSubmitting(true);
+    setFeedback(type);
+
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const token = await getToken();
+      
+      const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && {
+            'Authorization': `Bearer ${token}`
+          })
+        },
+        body: JSON.stringify({
+          message_id: messageId,
+          conversation_id: conversationId,
+          feedback_type: type,
+          bot_response: content
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      console.log(`✅ Feedback submitted: ${type}`);
+      
+      // Track in PostHog (if available)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ph = (window as any).posthog;
+      if (ph) {
+        ph.capture('message_feedback', {
+          feedback_type: type,
+          message_id: messageId,
+          conversation_id: conversationId,
+          has_sources: sources && sources.length > 0,
+          used_rag,
+          used_web_search,
+          response_time
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to submit feedback:', error);
+      // Reset feedback state on error
+      setFeedback(null);
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
+
+  const getRelativeTime = (ts: number) => {
+    const seconds = Math.floor((Date.now() - ts) / 1000);
+    if (seconds < 60) return 'Just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const getModeDetails = (modeName: string) => {
+    const modes = {
+      english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
+      chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
+      learn: { icon: '📚', label: 'Learn', description: 'Detailed learning explanations' },
+    };
+    return modes[modeName as keyof typeof modes] || modes.english;
+  };
+
+  // System message (mode change indicator)
+  if (isSystem && systemType === 'mode_change' && mode) {
+    const modeDetails = getModeDetails(mode);
+    return (
+      <div className="flex justify-center mb-4 sm:mb-6 animate-fade-in">
+        <div className="bg-cream-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-cream-300 dark:border-gray-700 rounded-xl px-4 py-2 shadow-sm max-w-md">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <span className="text-lg">{modeDetails.icon}</span>
+            <span className="font-semibold text-brown-800 dark:text-white">
+              Switched to {modeDetails.label} mode
+            </span>
+          </div>
+          <p className="text-xs text-brown-600 dark:text-gray-400 text-center mt-1">
+            {modeDetails.description}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Cancelled message indicator (works for both system and assistant messages)
+  if ((isSystem && systemType === 'cancelled') || cancelled) {
+    return (
+      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+        <div className="max-w-[85%] sm:max-w-[75%]">
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center text-xs sm:text-sm shadow-sm">
+              🤖
+            </div>
+            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
+          </div>
+          <div className="bg-cream-100 dark:bg-gray-800/50 border border-cream-300 dark:border-gray-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2 text-brown-500 dark:text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-sm italic">Message cancelled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 animate-fade-in`}>
+      <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] ${isUser ? 'order-2' : 'order-1'}`}>
+        {/* Bot Header */}
+        {!isUser && (
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 px-1 flex-wrap relative">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
+              🤖
+            </div>
+            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
+            {timestamp && (
+              <span className="text-[10px] text-brown-600 dark:text-gray-400">
+                {getRelativeTime(timestamp)}
+              </span>
+            )}
+            {used_rag && !isStreaming && (
+              <span className="text-[10px] sm:text-xs font-medium bg-teal-500 dark:bg-ocean-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
+                <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <span className="hidden sm:inline">Knowledge Base</span>
+                <span className="sm:hidden">KB</span>
+              </span>
+            )}
+            {used_web_search && !isStreaming && (
+              <span className="text-[10px] sm:text-xs font-medium bg-hibiscus-500 dark:bg-purple-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
+                <Search className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                <span className="hidden sm:inline">Web Search</span>
+                <span className="sm:hidden">Web</span>
+              </span>
+            )}
+            {/* Copy button - only show when not streaming */}
+            {!isStreaming && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+                className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation relative z-10 cursor-pointer animate-fade-in"
+                title="Copy message"
+                aria-label="Copy message"
+                style={{ WebkitTapHighlightColor: 'rgba(20, 184, 166, 0.3)', userSelect: 'none' }}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
+                    <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span className="hidden sm:inline">Copy</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+        
+        {/* Message Bubble */}
+        <div
+          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
+            isUser
+              ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-tr-md'
+              : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
+          }`}
+        >
+          {isUser ? (
+            <div className="space-y-2">
+              {/* Multiple Files Display */}
+              {file_urls && file_urls.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {file_urls.map((file, index) => (
+                    <div key={index}>
+                      {file.type === 'image' ? (
+                        // Image preview
+                        <img 
+                          src={file.url} 
+                          alt={file.filename}
+                          className="max-h-32 max-w-[150px] rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200 object-cover"
+                          onClick={() => onImageClick?.(file.url)}
+                          title={`Click to enlarge: ${file.filename}`}
+                        />
+                      ) : (
+                        // Document preview (PDF, Word, Text)
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 bg-white/20 dark:bg-black/20 rounded-lg hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+                        >
+                          {file.content_type?.includes('pdf') && <FileText className="w-4 h-4" />}
+                          {file.content_type?.includes('word') && <FileText className="w-4 h-4" />}
+                          {file.content_type?.includes('text') && <File className="w-4 h-4" />}
+                          {!file.content_type?.match(/pdf|word|text/) && <File className="w-4 h-4" />}
+                          <div className="flex flex-col">
+                            <span className="text-[10px] opacity-80 uppercase">
+                              {file.content_type?.includes('pdf') ? 'PDF' : 
+                               file.content_type?.includes('word') ? 'DOC' :
+                               file.content_type?.includes('text') ? 'TXT' : 'FILE'}
+                            </span>
+                            <span className="text-xs font-medium max-w-[120px] truncate">
+                              {file.filename}
+                            </span>
+                          </div>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Legacy: Single file display (fallback for old messages) */}
+              {!file_urls && imageUrl && (
+                <div className="mb-2">
+                  {getFileTypeFromUrl(imageUrl) === 'image' ? (
+                    // Image preview
+                    <img 
+                      src={imageUrl} 
+                      alt="Uploaded content" 
+                      className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                      onClick={() => onImageClick?.(imageUrl)}
+                      title="Click to enlarge"
+                    />
+                  ) : (
+                    // Document preview (PDF, Word, Text)
+                    <a
+                      href={imageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-3 py-2 bg-white/20 dark:bg-black/20 rounded-lg hover:bg-white/30 dark:hover:bg-black/30 transition-colors max-w-fit"
+                    >
+                      {getFileTypeFromUrl(imageUrl) === 'pdf' && <FileText className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'docx' && <FileText className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'txt' && <File className="w-5 h-5" />}
+                      {getFileTypeFromUrl(imageUrl) === 'unknown' && <File className="w-5 h-5" />}
+                      <div className="flex flex-col">
+                        <span className="text-xs opacity-80">
+                          {getFileTypeFromUrl(imageUrl).toUpperCase()}
+                        </span>
+                        <span className="text-sm font-medium max-w-[200px] truncate">
+                          {getFilenameFromUrl(imageUrl)}
+                        </span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 opacity-60" />
+                    </a>
+                  )}
+                </div>
+              )}
+              {/* Text Content - Show edit mode or regular content */}
+              {isEditing ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full min-h-[60px] p-2 rounded-lg bg-white/20 dark:bg-black/20 border border-white/30 dark:border-white/20 text-white placeholder-white/60 text-sm sm:text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleEditSubmit();
+                      } else if (e.key === 'Escape') {
+                        handleEditCancel();
+                      }
+                    }}
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={handleEditCancel}
+                      className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleEditSubmit}
+                      disabled={!editContent.trim() || editContent === content}
+                      className="px-3 py-1.5 text-xs font-medium text-coral-900 dark:text-ocean-900 bg-white hover:bg-white/90 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Save & Regenerate
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
+                  {content}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-all duration-300 ${
+              isStreaming && content && content.length > 0 ? 'animate-fade-in-fast' : ''
+            }`}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  // Paragraphs
+                  p: ({ children }) => (
+                    <p className="text-sm sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
+                      {children}
+                    </p>
+                  ),
+                  // Headers - styled prominently
+                  h1: ({ children }) => (
+                    <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-gray-600">
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0">
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-sm sm:text-base font-semibold text-brown-800 dark:text-white mt-3 mb-1.5 first:mt-0">
+                      {children}
+                    </h3>
+                  ),
+                  // Text formatting
+                  strong: ({ children }) => (
+                    <strong className="font-bold text-brown-900 dark:text-white">
+                      {children}
+                    </strong>
+                  ),
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  // Lists
+                  ul: ({ children }) => (
+                    <ul className="list-disc ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+                      {children}
+                    </ul>
+                  ),
+                  ol: ({ children }) => (
+                    <ol className="list-decimal ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+                      {children}
+                    </ol>
+                  ),
+                  li: ({ children }) => (
+                    <li className="leading-relaxed">{children}</li>
+                  ),
+                  // Code blocks (multi-line)
+                  pre: ({ children }) => (
+                    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
+                      {children}
+                    </pre>
+                  ),
+                  // Inline code and code within pre
+                  code: ({ className, children }) => {
+                    // Check if it's inside a pre block (multi-line code)
+                    const isInline = !className;
+                    
+                    if (isInline) {
+                      // Inline code (single backticks)
+                      return (
+                        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
+                          {children}
+                        </code>
+                      );
+                    }
+                    
+                    // Code block content (triple backticks) - use pre-wrap to wrap long lines
+                    return (
+                      <code className="text-xs sm:text-sm font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-gray-100">
+                        {children}
+                      </code>
+                    );
+                  },
+                  // Blockquotes
+                  blockquote: ({ children }) => (
+                    <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-gray-300">
+                      {children}
+                    </blockquote>
+                  ),
+                  // Horizontal rule
+                  hr: () => (
+                    <hr className="my-4 border-cream-300 dark:border-gray-600" />
+                  ),
+                  // Tables - responsive and styled
+                  table: ({ children }) => (
+                    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
+                      <table className="min-w-full text-sm">
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ children }) => (
+                    <thead className="bg-cream-100 dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700">
+                      {children}
+                    </thead>
+                  ),
+                  tbody: ({ children }) => (
+                    <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
+                      {children}
+                    </tbody>
+                  ),
+                  tr: ({ children }) => (
+                    <tr className="hover:bg-cream-50 dark:hover:bg-gray-800/50 transition-colors">
+                      {children}
+                    </tr>
+                  ),
+                  th: ({ children }) => (
+                    <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-white text-xs sm:text-sm">
+                      {children}
+                    </th>
+                  ),
+                  td: ({ children }) => (
+                    <td className="px-3 py-2 text-brown-700 dark:text-gray-300 text-xs sm:text-sm">
+                      {children}
+                    </td>
+                  ),
+                }}
+              >
+                {/* Only render content if it's not the thinking placeholder */}
+                {content !== '...' ? cleanedContent : ''}
+              </ReactMarkdown>
+              {/* Streaming cursor - always rendered, uses CSS to fade in/out */}
+              {content && content.length > 0 && (
+                <span 
+                  className={`inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 rounded-sm transition-opacity duration-300 ${
+                    isStreaming ? 'opacity-100 animate-pulse' : 'opacity-0'
+                  }`}
+                />
+              )}
+              {/* Thinking indicator - show animated dots while waiting for first chunk */}
+              {isStreaming && (!content || content.length === 0) && (
+                <div className="flex items-center gap-2 py-1 min-h-[1.5rem]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
+                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
+                  </div>
+                  <span className="text-sm text-brown-500 dark:text-gray-400 animate-pulse">Thinking...</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Response Time - with subtle fade-in */}
+          {!isUser && response_time && !isStreaming && (
+            <div 
+              className="flex items-center gap-1 text-xs text-brown-600 dark:text-gray-400 mt-3 pt-2 border-t border-cream-300 dark:border-gray-700 opacity-0 animate-fade-in"
+              style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}
+            >
+              <Clock className="w-3 h-3" />
+              <span className="font-medium">{response_time.toFixed(2)}s</span>
+            </div>
+          )}
+        </div>
+        
+        {/* Sources - Only show when streaming is complete (with staggered delay) */}
+        {!isUser && sources && sources.length > 0 && !isStreaming && (
+          <div 
+            className="opacity-0 animate-fade-in"
+            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
+          >
+            <SourceCitation sources={sources} />
+          </div>
+        )}
+        
+        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete (with staggered delay) */}
+        {!isUser && !isSystem && !isStreaming && (
+          <div 
+            className="flex items-center gap-2 mt-2 opacity-0 animate-fade-in"
+            style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
+          >
+            {/* Copy Button */}
+            <button
+              onClick={handleCopy}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleCopy();
+              }}
+              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              title="Copy message"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
+                  <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </button>
+
+            {/* Listen Button (Speech) */}
+            {isSupported && (
+              <button
+                onClick={() => {
+                  if (isSpeaking) {
+                    stop();
+                  } else {
+                    // Try to extract Chamorro text, fallback to full content
+                    const textToSpeak = extractChamorroText(content);
+                    speak(textToSpeak);
+                  }
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  if (isSpeaking) {
+                    stop();
+                  } else {
+                    const textToSpeak = extractChamorroText(content);
+                    speak(textToSpeak);
+                  }
+                }}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  isSpeaking 
+                    ? 'text-coral-600 dark:text-coral-400 bg-coral-100 dark:bg-coral-900/30' 
+                    : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                }`}
+                title={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
+              >
+                {isSpeaking ? (
+                  <>
+                    <VolumeX className="w-3 h-3 animate-pulse" />
+                    <span className="hidden sm:inline font-medium">Stop</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3 h-3" />
+                    <span className="hidden sm:inline">Listen</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Feedback Buttons */}
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-cream-300 dark:border-gray-600">
+              {/* Thumbs Up */}
+              <button
+                onClick={() => handleFeedback('up')}
+                disabled={feedbackSubmitting || feedback === 'up'}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  feedback === 'up'
+                    ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                title="This was helpful"
+              >
+                <ThumbsUp className={`w-3 h-3 ${feedback === 'up' ? 'fill-current' : ''}`} />
+              </button>
+
+              {/* Thumbs Down */}
+              <button
+                onClick={() => handleFeedback('down')}
+                disabled={feedbackSubmitting || feedback === 'down'}
+                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                  feedback === 'down'
+                    ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                title="This wasn't helpful"
+              >
+                <ThumbsDown className={`w-3 h-3 ${feedback === 'down' ? 'fill-current' : ''}`} />
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {/* User Avatar and Actions */}
+        {isUser && !isEditing && (
+          <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 px-1 justify-end">
+            {timestamp && (
+              <span className="text-[10px] text-brown-600 dark:text-gray-400">
+                {getRelativeTime(timestamp)}
+              </span>
+            )}
+            {/* Copy Button */}
+            <button
+              onClick={handleCopy}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleCopy();
+              }}
+              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              title="Copy message"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-coral-600 dark:text-green-400" />
+                  <span className="hidden sm:inline text-coral-600 dark:text-green-400 font-medium">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span className="hidden sm:inline">Copy</span>
+                </>
+              )}
+            </button>
+            {/* Edit Button - Only show if editing is allowed */}
+            {canEdit && onEdit && (
+              <button
+                onClick={() => {
+                  setEditContent(content);
+                  setIsEditing(true);
+                }}
+                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+                title="Edit message"
+              >
+                <Pencil className="w-3 h-3" />
+                <span className="hidden sm:inline">Edit</span>
+              </button>
+            )}
+            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">You</span>
+            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
+              👤
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
