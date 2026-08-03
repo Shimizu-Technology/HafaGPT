@@ -150,8 +150,11 @@ uv run uvicorn api.main:app --reload --port 8000
 
 Open http://localhost:8000/api/health in your browser. You should see:
 ```json
-{"status": "healthy"}
+{"status": "healthy", "database": "not_checked", "chunks": null}
 ```
+
+This is intentionally a process-level liveness check. It does not contact the
+database or AI providers.
 
 ✅ **Backend is running!** Keep this terminal open.
 

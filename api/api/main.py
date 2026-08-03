@@ -789,73 +789,9 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-# ============================================================================
-# DATABASE WARMUP - Prevents cold start latency from Neon auto-suspend
-# ============================================================================
-# Neon serverless PostgreSQL suspends compute after ~5 minutes of inactivity.
-# This causes 500ms-2s latency on the first query after suspension.
-# Solution: Warm up the database at startup and keep it alive with periodic pings.
-
-# Keep-alive interval (4 minutes = 240 seconds, before Neon's 5-minute auto-suspend)
-DATABASE_KEEPALIVE_INTERVAL = 240
-
-# Flag to track if keep-alive task is running (avoid multiple tasks)
-_keepalive_task = None
-
-
-def warmup_database():
-    """
-    Warm up the database connection by running a lightweight query.
-    
-    This forces the RAG system to establish a connection to Neon,
-    waking up any suspended compute and reducing latency for the first real user query.
-    """
-    if not RAG_ENABLED or rag is None:
-        logger.warning("⚠️  RAG not enabled, skipping database warmup")
-        return False
-    
-    try:
-        start_time = time.time()
-        
-        # Run a simple search to force database connection
-        # Using a common word that will definitely have results
-        results = rag.search("hello", k=1)
-        
-        elapsed = time.time() - start_time
-        logger.info(f"✅ Database warmup complete in {elapsed:.2f}s (found {len(results)} chunks)")
-        return True
-        
-    except Exception as e:
-        logger.error(f"⚠️  Database warmup failed: {e}")
-        return False
-
-
-async def database_keepalive_loop():
-    """
-    Background task that periodically pings the database to prevent Neon auto-suspend.
-    
-    Runs every 4 minutes (before Neon's 5-minute auto-suspend threshold).
-    This ensures the first user message after idle is fast.
-    """
-    logger.info(f"🔄 Database keep-alive task started (interval: {DATABASE_KEEPALIVE_INTERVAL}s)")
-    
-    while True:
-        await asyncio.sleep(DATABASE_KEEPALIVE_INTERVAL)
-        
-        try:
-            # Run in a thread to avoid blocking the async loop
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(None, warmup_database)
-            
-        except Exception as e:
-            logger.error(f"⚠️  Keep-alive ping failed: {e}")
-
-
 @app.on_event("startup")
 async def startup_event():
-    """Log startup information and warm up database connections"""
-    global _keepalive_task
-    
+    """Log startup information without waking external dependencies."""
     logger.info("="*80)
     logger.info("🚀 Chamorro Chatbot API Starting Up")
     logger.info("="*80)
@@ -865,38 +801,6 @@ async def startup_event():
     if FREE_PROMO_ACTIVE:
         logger.info(f"🎄 FREE PROMO PERIOD ACTIVE until {FREE_PROMO_END_DATE}")
     logger.info("="*80)
-    
-    # Warm up the database connection at startup
-    # This runs in a background thread to not block the startup
-    logger.info("🔥 Warming up database connections...")
-    loop = asyncio.get_event_loop()
-    warmup_success = await loop.run_in_executor(None, warmup_database)
-    
-    if warmup_success:
-        logger.info("✅ Database warmup successful - first user message will be fast!")
-    else:
-        logger.warning("⚠️  Database warmup failed - first message may be slow")
-    
-    # Start the keep-alive background task (only if not already running)
-    if _keepalive_task is None:
-        _keepalive_task = asyncio.create_task(database_keepalive_loop())
-        logger.info("🔄 Database keep-alive task scheduled")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up background tasks on shutdown"""
-    global _keepalive_task
-    
-    if _keepalive_task is not None:
-        logger.info("🛑 Stopping database keep-alive task...")
-        _keepalive_task.cancel()
-        try:
-            await _keepalive_task
-        except asyncio.CancelledError:
-            pass
-        _keepalive_task = None
-        logger.info("✅ Keep-alive task stopped")
 
 
 @app.get("/", tags=["Root"])
@@ -916,43 +820,17 @@ async def root():
 @app.get("/api/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """
-    Health check endpoint
-    
-    Returns service status and database information.
-    Also warms up the database connection to prevent cold starts.
+    Cheap process-level liveness check for Render.
+
+    External dependencies are intentionally excluded. A health probe must not
+    create OpenAI usage, keep Neon compute active, or make a healthy API
+    instance fail because a downstream service is slow.
     """
-    try:
-        # Use the actual RAG singleton to warm up the database connection
-        # This ensures the health check keeps the database alive
-        if RAG_ENABLED and rag is not None:
-            try:
-                # Run a quick search to keep the connection warm
-                # This also validates the database is responsive
-                loop = asyncio.get_event_loop()
-                results = await loop.run_in_executor(None, lambda: rag.search("test", k=1))
-                chunk_count = len(results) if results else 0
-                db_status = "connected"
-            except Exception as e:
-                logger.warning(f"Health check RAG query failed: {e}")
-                chunk_count = 0
-                db_status = "reconnecting"
-        else:
-            chunk_count = 0
-            db_status = "rag_disabled"
-        
-        logger.info(f"Health check successful (db: {db_status})")
-        return HealthResponse(
-            status="healthy",
-            database=db_status,
-            chunks=chunk_count
-        )
-    except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return HealthResponse(
-            status="degraded",
-            database=f"error: {str(e)}",
-            chunks=None
-        )
+    return HealthResponse(
+        status="healthy",
+        database="not_checked",
+        chunks=None,
+    )
 
 
 @app.post("/api/chat", response_model=ChatResponse, tags=["Chat"])
@@ -1665,6 +1543,7 @@ async def init_user_data(
     eliminating the waterfall effect and reducing total latency by ~50%.
     """
     try:
+        init_started_at = time.perf_counter()
         # Verify authentication
         user_id = await verify_user(authorization)
         
@@ -1696,9 +1575,13 @@ async def init_user_data(
             # Return empty messages and null conversation ID
             logger.info("🆕 No active conversation provided - returning empty state for new chat")
         
+        elapsed_ms = (time.perf_counter() - init_started_at) * 1000
         logger.info(
-            f"🚀 Init complete: {len(conversation_list.conversations)} conversations, "
-            f"{len(messages_list)} messages, active_id={validated_conversation_id}"
+            "🚀 Init complete in %.0fms: %s conversations, %s messages, active_id=%s",
+            elapsed_ms,
+            len(conversation_list.conversations),
+            len(messages_list),
+            validated_conversation_id,
         )
         
         return InitResponse(
@@ -4287,12 +4170,8 @@ async def get_user_streak(
 # Unified Homepage Data Endpoint
 # ==========================================
 
-def _fetch_streak_data(user_id: str, db_url: str):
-    """Fetch streak data for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_streak_data(user_id: str, cursor):
+    """Fetch streak data using the homepage request's shared cursor."""
     today = get_guam_date()
     
     # Get all activity days for this user
@@ -4358,9 +4237,6 @@ def _fetch_streak_data(user_id: str, db_url: str):
     today_learning = learning_row[0] or 0 if learning_row else 0
     is_today_active = (today_chat + today_games + today_quizzes + today_learning) > 0
     
-    cursor.close()
-    conn.close()
-    
     return {
         "current_streak": current_streak,
         "longest_streak": current_streak,  # Simplified for homepage
@@ -4375,12 +4251,8 @@ def _fetch_streak_data(user_id: str, db_url: str):
     }
 
 
-def _fetch_xp_data(user_id: str, db_url: str):
-    """Fetch XP data for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_xp_data(user_id: str, cursor):
+    """Fetch XP data using the homepage request's shared cursor."""
     today = get_guam_date()
     
     cursor.execute("""
@@ -4396,9 +4268,6 @@ def _fetch_xp_data(user_id: str, db_url: str):
             today_minutes = 0
     else:
         total_xp, level, daily_goal_minutes, today_minutes = 0, 1, 10, 0
-    
-    cursor.close()
-    conn.close()
     
     level = calculate_level(total_xp)
     xp_for_current = LEVEL_THRESHOLDS[level - 1] if level > 1 else 0
@@ -4420,12 +4289,8 @@ def _fetch_xp_data(user_id: str, db_url: str):
     }
 
 
-def _fetch_quiz_stats(user_id: str, db_url: str):
-    """Fetch quiz stats for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_quiz_stats(user_id: str, cursor):
+    """Fetch quiz stats using the homepage request's shared cursor."""
     cursor.execute("""
         SELECT COUNT(*) as total_quizzes, COALESCE(AVG(percentage), 0) as average_score
         FROM quiz_results WHERE user_id = %s
@@ -4435,21 +4300,14 @@ def _fetch_quiz_stats(user_id: str, db_url: str):
     total_quizzes = stats[0]
     average_score = float(stats[1])
     
-    cursor.close()
-    conn.close()
-    
     return {
         "total_quizzes": total_quizzes,
         "average_score": round(average_score, 1)
     }
 
 
-def _fetch_game_stats(user_id: str, db_url: str):
-    """Fetch game stats for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_game_stats(user_id: str, cursor):
+    """Fetch game stats using the homepage request's shared cursor."""
     cursor.execute("""
         SELECT COUNT(*) as total_games, COALESCE(AVG(score), 0) as average_score
         FROM game_results WHERE user_id = %s
@@ -4457,21 +4315,14 @@ def _fetch_game_stats(user_id: str, db_url: str):
     
     stats = cursor.fetchone()
     
-    cursor.close()
-    conn.close()
-    
     return {
         "total_games": stats[0],
         "average_score": round(float(stats[1]), 1)
     }
 
 
-def _fetch_weak_areas(user_id: str, db_url: str):
-    """Fetch weak areas for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_weak_areas(user_id: str, cursor):
+    """Fetch weak areas using the homepage request's shared cursor."""
     cursor.execute("""
         SELECT category_id, category_title, AVG(percentage) as avg_score, COUNT(*) as attempt_count
         FROM quiz_results
@@ -4481,9 +4332,6 @@ def _fetch_weak_areas(user_id: str, db_url: str):
     """, (user_id,))
     
     rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
     weak_areas = []
     for row in rows:
         category_id, category_title, avg_score, attempt_count = row
@@ -4503,12 +4351,8 @@ def _fetch_weak_areas(user_id: str, db_url: str):
     }
 
 
-def _fetch_sr_summary(user_id: str, db_url: str):
-    """Fetch spaced repetition summary for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_sr_summary(user_id: str, cursor):
+    """Fetch spaced-repetition data using the shared cursor."""
     cursor.execute("""
         SELECT 
             COUNT(*) as total_cards,
@@ -4520,9 +4364,6 @@ def _fetch_sr_summary(user_id: str, db_url: str):
     """, (user_id,))
     
     row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    
     if row:
         return {
             "total_cards": row[0],
@@ -4535,25 +4376,17 @@ def _fetch_sr_summary(user_id: str, db_url: str):
     return {"total_cards": 0, "due_today": 0, "mastered": 0, "learning": 0, "has_cards": False}
 
 
-def _fetch_learning_recommended(user_id: str, db_url: str):
-    """Fetch recommended topic for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
+def _fetch_learning_progress(user_id: str, cursor) -> dict:
+    """Fetch and normalize learning progress once for all homepage widgets."""
     cursor.execute("""
         SELECT topic_id, started_at, completed_at, best_quiz_score, flashcards_viewed, last_activity_at
         FROM user_topic_progress WHERE user_id = %s
     """, (user_id,))
     
     progress_rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    # Build progress map
-    progress_map = {}
-    for row in progress_rows:
-        progress_map[row[0]] = {
+
+    return {
+        row[0]: {
             "topic_id": row[0],
             "started_at": row[1].isoformat() if row[1] else None,
             "completed_at": row[2].isoformat() if row[2] else None,
@@ -4561,7 +4394,12 @@ def _fetch_learning_recommended(user_id: str, db_url: str):
             "flashcards_viewed": row[4] or 0,
             "last_activity_at": row[5].isoformat() if row[5] else None,
         }
-    
+        for row in progress_rows
+    }
+
+
+def _build_learning_recommended(progress_map: dict):
+    """Build the recommended-learning payload from normalized progress."""
     # Count completions per level
     beginner_completed = sum(1 for t in BEGINNER_PATH if progress_map.get(t["id"], {}).get("completed_at"))
     intermediate_completed = sum(1 for t in INTERMEDIATE_PATH if progress_map.get(t["id"], {}).get("completed_at"))
@@ -4619,32 +4457,8 @@ def _fetch_learning_recommended(user_id: str, db_url: str):
     }
 
 
-def _fetch_all_progress(user_id: str, db_url: str):
-    """Fetch all learning progress for user (runs in thread pool)."""
-    import psycopg2
-    conn = psycopg2.connect(db_url)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT topic_id, started_at, completed_at, best_quiz_score, flashcards_viewed, last_activity_at
-        FROM user_topic_progress WHERE user_id = %s
-    """, (user_id,))
-    
-    progress_rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    progress_map = {}
-    for row in progress_rows:
-        progress_map[row[0]] = {
-            "topic_id": row[0],
-            "started_at": row[1].isoformat() if row[1] else None,
-            "completed_at": row[2].isoformat() if row[2] else None,
-            "best_quiz_score": row[3],
-            "flashcards_viewed": row[4] or 0,
-            "last_activity_at": row[5].isoformat() if row[5] else None,
-        }
-    
+def _build_all_progress(progress_map: dict):
+    """Build the complete learning-path payload from normalized progress."""
     topics_with_progress = []
     for topic in ALL_TOPICS:
         topic_id = topic["id"]
@@ -4670,6 +4484,60 @@ def _fetch_all_progress(user_id: str, db_url: str):
     }
 
 
+def _fetch_homepage_data(user_id: str, db_url: str) -> dict:
+    """Load all homepage data through one database connection.
+
+    The previous implementation opened eight simultaneous connections for one
+    page view and queried ``user_topic_progress`` twice. Keeping a single
+    connection bounds Neon connection fan-out while preserving partial results
+    if an optional dashboard section fails.
+    """
+    from contextlib import closing
+    import psycopg2
+
+    started_at = time.perf_counter()
+    payload = {
+        "streak": None,
+        "xp": None,
+        "quiz_stats": None,
+        "game_stats": None,
+        "weak_areas": None,
+        "sr_summary": None,
+        "recommended": None,
+        "all_progress": None,
+    }
+
+    with closing(psycopg2.connect(db_url)) as conn:
+        with closing(conn.cursor()) as cursor:
+            sections = (
+                ("streak", _fetch_streak_data),
+                ("xp", _fetch_xp_data),
+                ("quiz_stats", _fetch_quiz_stats),
+                ("game_stats", _fetch_game_stats),
+                ("weak_areas", _fetch_weak_areas),
+                ("sr_summary", _fetch_sr_summary),
+            )
+
+            for section_name, fetch_section in sections:
+                try:
+                    payload[section_name] = fetch_section(user_id, cursor)
+                except Exception as exc:
+                    conn.rollback()
+                    logger.error("❌ [HOMEPAGE] %s failed: %s", section_name, exc)
+
+            try:
+                progress_map = _fetch_learning_progress(user_id, cursor)
+                payload["recommended"] = _build_learning_recommended(progress_map)
+                payload["all_progress"] = _build_all_progress(progress_map)
+            except Exception as exc:
+                conn.rollback()
+                logger.error("❌ [HOMEPAGE] learning progress failed: %s", exc)
+
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
+    logger.info("✅ [HOMEPAGE] Loaded through one DB connection in %.0fms", elapsed_ms)
+    return payload
+
+
 @app.get("/api/homepage/data", tags=["Homepage"])
 async def get_homepage_data(
     authorization: Optional[str] = Header(None)
@@ -4677,8 +4545,8 @@ async def get_homepage_data(
     """
     Unified endpoint that fetches all data needed for the homepage in one call.
     
-    This runs all queries in parallel for maximum performance, reducing
-    homepage load from 8+ API calls down to 1.
+    Queries share one bounded database connection, reducing both HTTP and
+    database connection fan-out.
     
     Returns: streak, xp, quiz_stats, game_stats, weak_areas, sr_summary, 
              recommended_topic, all_progress
@@ -4687,40 +4555,13 @@ async def get_homepage_data(
         user_id = await verify_user(authorization)
         db_url = os.getenv("DATABASE_URL")
         
-        # Run all data fetching in parallel using asyncio.gather
-        # Each function runs its DB queries synchronously but we run them concurrently in thread pool
-        loop = asyncio.get_event_loop()
-        
-        results = await asyncio.gather(
-            loop.run_in_executor(None, _fetch_streak_data, user_id, db_url),
-            loop.run_in_executor(None, _fetch_xp_data, user_id, db_url),
-            loop.run_in_executor(None, _fetch_quiz_stats, user_id, db_url),
-            loop.run_in_executor(None, _fetch_game_stats, user_id, db_url),
-            loop.run_in_executor(None, _fetch_weak_areas, user_id, db_url),
-            loop.run_in_executor(None, _fetch_sr_summary, user_id, db_url),
-            loop.run_in_executor(None, _fetch_learning_recommended, user_id, db_url),
-            loop.run_in_executor(None, _fetch_all_progress, user_id, db_url),
-            return_exceptions=True
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            _fetch_homepage_data,
+            user_id,
+            db_url,
         )
-        
-        # Handle any exceptions
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logger.error(f"❌ [HOMEPAGE] Task {i} failed: {result}")
-                results[i] = None
-        
-        streak, xp, quiz_stats, game_stats, weak_areas, sr_summary, recommended, all_progress = results
-        
-        return {
-            "streak": streak,
-            "xp": xp,
-            "quiz_stats": quiz_stats,
-            "game_stats": game_stats,
-            "weak_areas": weak_areas,
-            "sr_summary": sr_summary,
-            "recommended": recommended,
-            "all_progress": all_progress
-        }
         
     except HTTPException:
         raise

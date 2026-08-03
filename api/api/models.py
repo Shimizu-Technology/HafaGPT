@@ -77,7 +77,7 @@ class ChatResponse(BaseModel):
 class HealthResponse(BaseModel):
     """Health check response"""
     status: str = Field(..., description="Service status")
-    database: str = Field(..., description="Database status")
+    database: str = Field(..., description="Database status, or not_checked for liveness probes")
     chunks: Optional[int] = Field(None, description="Total chunks in database")
 
 
@@ -661,5 +661,4 @@ class TopicProgressResponse(BaseModel):
     progress: TopicProgress = Field(..., description="Updated progress")
     is_completed: bool = Field(..., description="Whether topic is now complete")
     next_topic: Optional[LearningTopic] = Field(None, description="Next topic to do (if completed)")
-
 
