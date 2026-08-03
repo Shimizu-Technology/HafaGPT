@@ -8,7 +8,7 @@
 
 - **Hosting**: Render Standard ($25/month, 2GB RAM)
 - **Server**: Gunicorn with 3 Uvicorn workers
-- **Database**: Neon PostgreSQL with connection pooling
+- **Database**: Neon PostgreSQL with connection pooling and idle scale-to-zero
 - **Auto-deploy**: Push to `main` → deploys automatically
 
 ---
@@ -75,6 +75,27 @@ Set in the Render dashboard:
 | **Instance Type** | Standard ($25/month) |
 | **Auto-Deploy** | Yes (on push to main) |
 
+## Health Checks and Idle Database Compute
+
+Render uses `/api/health` as a process-level liveness check. That endpoint must
+remain independent of Neon, OpenAI, Clerk, S3, and other downstream services.
+Render probes it frequently, so dependency checks there would create synthetic
+usage and could mark a healthy API instance unhealthy during a downstream
+timeout.
+
+HåfaGPT does not run a periodic database keepalive. Neon should be configured
+to scale the production compute to zero after five minutes of inactivity. Real
+signed-in navigation wakes the database before chat submission:
+
+- the homepage loads `/api/homepage/data`;
+- the chat page loads `/api/init`;
+- the quick-chat flow waits for initialization before sending its message.
+
+This keeps the paid Render process responsive while limiting Neon compute to
+real user sessions. Apply scale-to-zero to both the existing production compute
+and the project defaults in Neon; changing only the defaults does not update an
+existing compute.
+
 ---
 
 ## Monthly Costs
@@ -82,9 +103,9 @@ Set in the Render dashboard:
 | Service | Cost |
 |---------|------|
 | Render Standard (API) | $25 |
-| Neon PostgreSQL | $0 (free tier) |
+| Neon PostgreSQL | Usage-based; scales to zero while idle |
 | DeepSeek V3 (LLM) | $0.50-2 |
 | OpenAI Embeddings | $0.30 |
 | OpenAI TTS | $0.50-2 |
 | AWS S3 | $0.05 |
-| **Total** | **~$26-30** |
+| **Total** | **$25 Render base + actual database/API usage** |

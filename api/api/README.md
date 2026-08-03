@@ -212,14 +212,15 @@ Soft delete a conversation (hides from user, preserves data for training).
 
 ### GET /api/health
 
-Health check endpoint.
+Process-level liveness endpoint. It intentionally does not contact the
+database or AI providers.
 
 **Response:**
 ```json
 {
   "status": "healthy",
-  "database": "connected",
-  "chunks": 43000
+  "database": "not_checked",
+  "chunks": null
 }
 ```
 
@@ -655,4 +656,3 @@ Both CLI and API use the same core logic! 🎉
 - [ ] Add rate limiting
 - [ ] Add caching
 - [ ] Deploy to Render/Heroku
-
