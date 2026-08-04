@@ -23,6 +23,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import json
 
+from .time_utils import get_guam_date
+
 from .models import (
     ChatRequest,
     ChatResponse,
@@ -3767,14 +3769,6 @@ async def get_game_history(
 # ==========================================
 
 from .models import UsageResponse, UsageIncrementResponse, SubscriptionStatusResponse
-from datetime import date, timezone, timedelta
-
-# Guam timezone (ChST = UTC+10)
-GUAM_TIMEZONE = timezone(timedelta(hours=10))
-
-def get_guam_date() -> date:
-    """Get the current date in Guam timezone (ChST, UTC+10)."""
-    return datetime.now(GUAM_TIMEZONE).date()
 
 # Default daily limits for free users
 FREE_TIER_LIMITS = {

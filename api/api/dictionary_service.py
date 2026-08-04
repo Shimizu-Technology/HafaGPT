@@ -13,6 +13,8 @@ import re
 from typing import Optional
 from pathlib import Path
 
+from .time_utils import get_guam_date
+
 logger = logging.getLogger(__name__)
 
 
@@ -783,13 +785,12 @@ class DictionaryService:
         sees the same word on the same day. ONLY picks from words with
         pre-generated audio for consistent TTS playback.
         """
-        import datetime
         import hashlib
         import json
         from pathlib import Path
         
         # Get day of year (1-365/366)
-        today = datetime.date.today()
+        today = get_guam_date()
         day_of_year = today.timetuple().tm_yday
         year = today.year
         
@@ -993,4 +994,3 @@ def get_dictionary_service() -> DictionaryService:
     if _dictionary_service is None:
         _dictionary_service = DictionaryService()
     return _dictionary_service
-
