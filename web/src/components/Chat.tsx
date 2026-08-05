@@ -578,21 +578,36 @@ export function Chat() {
           onError: (errorMsg) => {
             console.error('Streaming error:', errorMsg);
             setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: `Error: ${errorMsg}` }
-                  : msg
-              )
+              prev.map((msg) => {
+                if (msg.id === assistantMessageId) {
+                  return { ...msg, id: undefined, content: `Error: ${errorMsg}` };
+                }
+                if (msg.id === userMessageId) {
+                  return { ...msg, id: undefined };
+                }
+                return msg;
+              })
             );
             isSendingMessageRef.current = false;
           },
           onCancelled: () => {
             setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: 'Message cancelled', systemType: 'cancelled', cancelled: true, role: 'system' as const }
-                  : msg
-              )
+              prev.map((msg) => {
+                if (msg.id === assistantMessageId) {
+                  return {
+                    ...msg,
+                    id: undefined,
+                    content: 'Message cancelled',
+                    systemType: 'cancelled',
+                    cancelled: true,
+                    role: 'system' as const,
+                  };
+                }
+                if (msg.id === userMessageId) {
+                  return { ...msg, id: undefined };
+                }
+                return msg;
+              })
             );
             isSendingMessageRef.current = false;
           },

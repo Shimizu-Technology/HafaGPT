@@ -171,6 +171,24 @@ RETRYABLE_LLM_ERROR_PATTERNS = (
 DEFAULT_MAX_LLM_RETRIES = 2
 DEFAULT_LLM_RETRY_BASE_DELAY_SECONDS = 0.75
 
+CONTEXT_LENGTH_ERROR_PATTERNS = (
+    "context_length_exceeded",
+    "context length",
+    "context window",
+    "maximum context",
+    "prompt is too long",
+    "input is too long",
+    "too many input tokens",
+)
+
+PROVIDER_CREDIT_ERROR_PATTERNS = (
+    "payment required",
+    "insufficient credits",
+    "more credits",
+    "openrouter_credits",
+    "payment_required",
+)
+
 
 def _get_max_llm_retries() -> int:
     """Read retry count from env safely (supports values loaded via .env)."""
@@ -204,6 +222,21 @@ def _is_retryable_llm_error(error: Exception) -> bool:
     """Return True if this looks like a transient provider/network failure."""
     error_str = str(error).lower()
     return any(pattern in error_str for pattern in RETRYABLE_LLM_ERROR_PATTERNS)
+
+
+def _is_context_length_error(error: Exception) -> bool:
+    """Return True only for genuine prompt/context-window overflows."""
+    error_str = str(error).lower()
+    return any(pattern in error_str for pattern in CONTEXT_LENGTH_ERROR_PATTERNS)
+
+
+def _is_provider_credit_error(error: Exception) -> bool:
+    """Return True when an upstream provider rejects a request for billing."""
+    if getattr(error, "status_code", None) == 402:
+        return True
+
+    error_str = str(error).lower()
+    return any(pattern in error_str for pattern in PROVIDER_CREDIT_ERROR_PATTERNS)
 
 
 def _retry_sleep_seconds(attempt_index: int) -> float:
@@ -1242,7 +1275,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                 response = request_client.chat.completions.create(
                     model=request_model,
                     temperature=0.7,
-                    messages=history
+                    messages=history,
+                    max_tokens=token_manager.budget.response_buffer,
                 )
                 response_text = _extract_non_stream_response_text(response)
                 if not response_text:
@@ -1263,17 +1297,12 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             raise RuntimeError("LLM response text was not generated")
 
     except Exception as e:
-        error_str = str(e).lower()
-        
-        # Check for token overflow errors
-        is_token_error = any(phrase in error_str for phrase in [
-            'token', 'context length', 'max_tokens', 'prompt length', 
-            'too long', 'exceeds', 'maximum', 'limit'
-        ])
-        
-        if is_token_error:
+        if _is_context_length_error(e):
             logger.error(f"Token overflow error: {e}")
             response_text = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue. Si Yu'os Ma'åse! 🙏"
+        elif _is_provider_credit_error(e):
+            logger.error(f"LLM provider credit error: {e}")
+            response_text = "HåfaGPT's AI service is temporarily unavailable. Please try again shortly."
         else:
             logger.error(f"LLM error: {e}")
             response_text = "Error: I encountered an issue processing your message. Please try again."
@@ -1642,6 +1671,7 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
                     model=request_model,
                     temperature=0.7,
                     messages=history,
+                    max_tokens=token_manager.budget.response_buffer,
                     stream=True  # Enable streaming!
                 )
 
@@ -1719,18 +1749,13 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             raise RuntimeError("Streaming response did not complete")
 
     except Exception as e:
-        error_str = str(e).lower()
-        
-        # Check for token overflow errors (different providers phrase it differently)
-        is_token_error = any(phrase in error_str for phrase in [
-            'token', 'context length', 'max_tokens', 'prompt length', 
-            'too long', 'exceeds', 'maximum', 'limit'
-        ])
-        
-        if is_token_error:
+        if _is_context_length_error(e):
             logger.error(f"Token overflow error: {e}")
             error_message = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue chatting. Si Yu'os Ma'åse for your patience! 🙏"
             logger.error(f"Full token error details: input_tokens={total_input_tokens}, model={request_model}, error={e}")
+        elif _is_provider_credit_error(e):
+            logger.error(f"LLM provider credit error: {e}")
+            error_message = "HåfaGPT's AI service is temporarily unavailable. Please try again shortly."
         else:
             logger.error(f"LLM error: {e}")
             if streamed_any_content:
