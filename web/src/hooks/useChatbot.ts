@@ -19,6 +19,13 @@ export class CancelledError extends Error {
   }
 }
 
+class StreamResponseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'StreamResponseError';
+  }
+}
+
 export interface FileInfo {
   url: string;
   filename: string;
@@ -348,6 +355,7 @@ export function useChatbot() {
       const decoder = new TextDecoder();
       let fullContent = '';
       let buffer = '';
+      let receivedTerminalEvent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -365,8 +373,10 @@ export function useChatbot() {
             const data = line.slice(6); // Remove 'data: ' prefix
             
             if (data === '[DONE]') {
-              // Stream complete
-              continue;
+              if (!receivedTerminalEvent) {
+                throw new StreamResponseError('The response ended unexpectedly. Please try again.');
+              }
+              return;
             }
             
             try {
@@ -387,6 +397,7 @@ export function useChatbot() {
                   break;
                   
                 case 'done':
+                  receivedTerminalEvent = true;
                   callbacks.onDone(event.response_time);
                   break;
                   
@@ -395,16 +406,24 @@ export function useChatbot() {
                   throw new CancelledError();
                   
                 case 'error':
-                  callbacks.onError(event.content);
-                  throw new Error(event.content);
+                  throw new StreamResponseError(event.content);
               }
             } catch (parseError) {
               // Skip invalid JSON (might be partial)
-              if (parseError instanceof CancelledError) throw parseError;
+              if (
+                parseError instanceof CancelledError ||
+                parseError instanceof StreamResponseError
+              ) {
+                throw parseError;
+              }
               console.warn('Failed to parse SSE event:', data);
             }
           }
         }
+      }
+
+      if (!receivedTerminalEvent) {
+        throw new StreamResponseError('The response ended unexpectedly. Please try again.');
       }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
