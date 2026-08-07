@@ -1,4 +1,32 @@
-# 🧪 HafaGPT Evaluation Suite
+# HåfaGPT Evaluation Suite
+
+> **2026 status:** The older API/keyword scripts below are retained as historical
+> regression tools. Their percentages must not be used to select a model or claim
+> Chamorro accuracy. Use `model_benchmark.py` and the blinded native-review process
+> in `../documentation/MODEL_EVALUATION_2026.md` for current model decisions.
+
+## Current model-selection workflow
+
+```bash
+cd api
+.venv/bin/python evaluation/model_benchmark.py --validate-only --check-catalog
+
+# Requires OPENROUTER_API_KEY in ignored api/.env or the local environment
+.venv/bin/python evaluation/model_benchmark.py --limit 3 --check-catalog
+.venv/bin/python evaluation/model_benchmark.py --check-catalog
+
+# Controlled GPT-5.6 lower-effort treatment; keep separate from the baseline
+.venv/bin/python evaluation/model_benchmark.py \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --reasoning-effort low
+```
+
+The runner captures complete responses, returned model/provider, timing, tokens,
+cost, source/orthography/format checks, input hashes, and a blinded review packet.
+Automated scores are regression signals only; native-speaker/educator review is a
+required release gate.
+
+## Legacy evaluation suite
 
 Automated testing framework to measure and track HafaGPT's performance over time.
 
@@ -175,4 +203,3 @@ Edit `test_queries.json` and add entries following the same format.
 **Created:** November 22, 2025  
 **Part of:** Phase 1 - Evaluation Framework  
 **Goal:** Measure → Improve → Measure → Repeat
-

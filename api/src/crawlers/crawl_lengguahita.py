@@ -337,7 +337,7 @@ def add_to_database(url, markdown_content, metadata, manager):
     )
     
     # Add to database
-    manager.vectorstore.add_documents([doc])
+    manager.add_governed_documents([doc])
     
     # Force commit
     manager.vectorstore._engine.dispose()
@@ -477,4 +477,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

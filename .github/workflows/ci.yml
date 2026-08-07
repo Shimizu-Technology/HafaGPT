@@ -29,7 +29,7 @@ jobs:
       - name: Run backend tests
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-        run: python -m pytest -q tests --ignore=tests/test_system.py
+        run: python -m pytest -q tests
 
       - name: Validate canonical vocabulary
         run: python scripts/validate_canonical_vocabulary.py --api-root .

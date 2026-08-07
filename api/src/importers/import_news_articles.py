@@ -78,7 +78,7 @@ def format_news_article(article):
         "title": title,
         "author": author,
         "date": date,
-        "era_priority": 110,  # Modern Chamorro content - high priority!
+        "era_priority": 110,  # Legacy metadata; source registry controls eligibility.
     }
     
     return formatted_content, metadata
@@ -97,7 +97,7 @@ def import_news_articles(file_path, manager):
     
     print(f"\n📝 Processing {len(articles)} news articles...")
     print(f"   Source: {source_name}")
-    print(f"   Priority: 110 (modern Chamorro - high priority!)")
+    print("   Retrieval role and rights are enforced by the source registry")
     print("")
     
     documents = []
@@ -152,7 +152,8 @@ def import_news_articles(file_path, manager):
         
         print(f"   Batch {batch_num}/{total_batches}: {len(batch)} articles...", end=" ")
         
-        chunk_count = manager.add_documents(batch)
+        manager.add_governed_documents(batch)
+        chunk_count = len(batch)
         total_chunks += chunk_count
         
         # Force commit
@@ -211,4 +212,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

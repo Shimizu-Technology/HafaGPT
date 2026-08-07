@@ -18,6 +18,11 @@ from openai import OpenAI
 # Add parent directory to path for root-level imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Application entry points own environment-file loading. This must happen before
+# importing the singleton RAG service below; the RAG library itself intentionally
+# has no import-time dotenv side effect so unit tests remain credential-free.
+load_dotenv()
+
 # Thread-safe tracking for pending/cancelled messages
 _pending_lock = threading.Lock()
 _cancelled_messages: set[str] = set()
@@ -355,18 +360,13 @@ def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5
     
     raise last_error
 
-# Load environment
-load_dotenv()
-
 # ============================================================================
 # MODEL CONFIGURATION - Change CHAT_MODEL in .env to switch models!
 # ============================================================================
-# Supported models:
-#   - gpt-4o           (OpenAI - current default, 80% accuracy, $0.002/query)
-#   - gpt-4o-mini      (OpenAI - faster, cheaper, slightly less accurate)
-#   - gemini-2.5-flash (OpenRouter - 93% accuracy, fastest, $0.0002/query) ⭐ RECOMMENDED
-#   - deepseek-v3      (OpenRouter - 93% accuracy, cheapest, $0.00008/query)
-#   - claude-sonnet-4.5 (OpenRouter - 93% accuracy, most verbose, $0.005/query)
+# This legacy registry is the production runtime boundary, not evidence that every
+# listed model is approved. Benchmark candidates live in
+# evaluation/model_catalog_2026.json and are promoted here only after blind review,
+# integrated RAG testing, and a documented rollback plan.
 #
 # To switch models, set CHAT_MODEL in your .env file:
 #   CHAT_MODEL=gemini-2.5-flash

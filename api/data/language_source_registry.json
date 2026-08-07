@@ -1,0 +1,376 @@
+{
+  "schema_version": 1,
+  "policy_version": "2026-08-07-phase-0",
+  "default_policy": {
+    "retrieval_allowed": false,
+    "reason": "Unknown sources fail closed until provenance, rights, role, and review status are registered."
+  },
+  "sources": [
+    {
+      "id": "supplemental_dictionary_unreviewed",
+      "name": "HåfaGPT supplemental dictionary",
+      "match": {
+        "source_contains": ["supplemental_dictionary", "supplemental"]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "unspecified",
+      "rights_status": "internal_unresolved",
+      "review_status": "quarantined",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Quarantined because the file has no citations or review history and contains suspect examples."
+    },
+    {
+      "id": "local_abbreviations_unreviewed",
+      "name": "Local Chamorro abbreviation entries",
+      "match": {
+        "source_contains": ["chamorro_abbreviations_"]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "unspecified",
+      "rights_status": "internal_unresolved",
+      "review_status": "quarantined",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Blocked until every abbreviation has an appropriate citation, regional scope, and human review."
+    },
+    {
+      "id": "guampedia",
+      "name": "Guampedia",
+      "canonical_url": "https://www.guampedia.com/",
+      "match": {
+        "source_contains": ["guampedia.com"],
+        "source_types": ["guampedia"]
+      },
+      "content_role": "cultural_context",
+      "region": "Guam",
+      "orthography": "varied",
+      "rights_status": "permission_required_storage_restricted",
+      "review_status": "blocked_pending_permission",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Blocked from retrieval unless written electronic-storage and product-use permission is recorded."
+    },
+    {
+      "id": "swarthmore_student_wiki",
+      "name": "Swarthmore LING 073 Chamorro course wiki",
+      "canonical_url": "https://wikis.swarthmore.edu/ling073/Chamorro/Grammar",
+      "match": {
+        "source_contains": ["wikis.swarthmore.edu"]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "unspecified",
+      "rights_status": "unresolved",
+      "review_status": "not_authoritative",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Course-wiki material may locate better sources but must not be returned as teaching authority."
+    },
+    {
+      "id": "lengguahita",
+      "name": "Lengguahi-ta",
+      "canonical_url": "https://lengguahita.com/resources/",
+      "match": {
+        "source_contains": ["lengguahita.com", "extracted_stories.json"],
+        "source_types": ["lengguahita"]
+      },
+      "content_role": "pedagogy",
+      "region": "Guam",
+      "orthography": "author_usage",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "display": {
+        "allowed": false,
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Link to the source while copied stories and full-text retrieval remain disabled pending a written agreement."
+    },
+    {
+      "id": "pacific_daily_news",
+      "name": "Pacific Daily News Chamorro columns",
+      "match": {
+        "source_contains": ["guampdn.com"],
+        "source_types": ["pacific_daily_news"]
+      },
+      "content_role": "authentic_usage",
+      "region": "Guam",
+      "orthography": "author_usage",
+      "rights_status": "permission_required",
+      "review_status": "transitional_context_only",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["usage", "cultural"],
+        "weight": 0.8
+      },
+      "decision": "May illustrate attributable usage during containment; it cannot decide canonical spelling or translation."
+    },
+    {
+      "id": "visit_guam_greetings",
+      "name": "Visit Guam greetings",
+      "canonical_url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
+      "match": {
+        "source_contains": ["visitguam.com"]
+      },
+      "content_role": "authentic_usage",
+      "region": "Guam",
+      "orthography": "public_facing_usage",
+      "rights_status": "permission_required",
+      "review_status": "transitional_attestation_only",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["usage", "cultural"],
+        "weight": 0.65
+      },
+      "decision": "May attest public-facing usage but cannot determine normative language."
+    },
+    {
+      "id": "chamoru_info_dictionary",
+      "name": "Chamoru.info dictionary",
+      "canonical_url": "https://www.chamoru.info/dictionary/",
+      "match": {
+        "source_contains": ["chamoru.info/dictionary", "chamoru_info_dictionary"]
+      },
+      "content_role": "lexical_reference",
+      "region": "Guam",
+      "orthography": "mixed_source_lineage",
+      "rights_status": "permission_required",
+      "review_status": "transitional_reference",
+      "derivative_of": ["topping_ogo_dungca_1975", "von_preissig_1918"],
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["lookup", "usage", "educational"],
+        "weight": 0.85
+      },
+      "decision": "Useful learner reference, but not an independent vote or normative source."
+    },
+    {
+      "id": "chamoru_info_lessons",
+      "name": "Chamoru.info language lessons",
+      "canonical_url": "https://www.chamoru.info/language-lessons/",
+      "match": {
+        "source_contains": [
+          "chamoru.info/language-lessons",
+          "chamoru.info/category/language-lessons"
+        ]
+      },
+      "content_role": "pedagogy",
+      "region": "Guam",
+      "orthography": "site_usage",
+      "rights_status": "permission_required",
+      "review_status": "transitional_reference",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["educational", "usage"],
+        "weight": 0.9
+      },
+      "decision": "Eligible for learner explanation during containment, not canonical adjudication."
+    },
+    {
+      "id": "chung_grammar_2020",
+      "name": "Chamorro Grammar by Sandra Chung",
+      "canonical_url": "https://escholarship.org/uc/item/2sx7w4h5",
+      "match": {
+        "source_contains": ["chamorro_grammar_dr._sandra_chung", "chamorro grammar"]
+      },
+      "content_role": "reviewed_grammar",
+      "region": "Guam_and_CNMI",
+      "orthography": "Guam_and_CNMI",
+      "rights_status": "permission_required_for_full_text_rag",
+      "review_status": "transitional_reference",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["educational", "usage"],
+        "weight": 1.15
+      },
+      "decision": "Strong grammar evidence; replace full-text retrieval with permitted or expert-authored summaries if permission is unavailable."
+    },
+    {
+      "id": "local_revised_dictionary_snapshot",
+      "name": "Local Revised Chamorro Dictionary snapshot",
+      "match": {
+        "source_contains": ["revised-chamorro-dictionary", "revised_and_updated_chamorro_dictionary"]
+      },
+      "content_role": "reviewed_lexicon",
+      "region": "CNMI",
+      "orthography": "CNMI_2010",
+      "rights_status": "permission_and_snapshot_provenance_required",
+      "review_status": "transitional_reference",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["lookup", "usage", "educational"],
+        "weight": 1.1
+      },
+      "decision": "Best current CNMI lexical candidate, but exact local version and reuse permission must be resolved."
+    },
+    {
+      "id": "topping_ogo_dungca_1975",
+      "name": "Chamorro-English Dictionary by Topping, Ogo, and Dungca",
+      "canonical_url": "https://catalog.paradisec.org.au/collections/CHA1/items/originaldictionary?files_per_page=10",
+      "match": {
+        "source_contains": ["chamorro_english_dictionary_tod", "topping", "originaldictionary"]
+      },
+      "content_role": "historical_lexicon",
+      "region": "Guam",
+      "orthography": "legacy",
+      "rights_status": "depositor_permission_required",
+      "review_status": "transitional_reference",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["lookup", "historical"],
+        "weight": 0.7
+      },
+      "decision": "Foundational reference with legacy orthography; it cannot silently override current regional standards."
+    },
+    {
+      "id": "rosetta_project_vocabulary",
+      "name": "Rosetta Project Chamorro vocabulary",
+      "match": {
+        "source_contains": ["rosettaproject_chamorro_vocab", "rosetta project"]
+      },
+      "content_role": "historical",
+      "region": "unspecified",
+      "orthography": "legacy_or_unspecified",
+      "rights_status": "unresolved",
+      "review_status": "historical_only",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["historical"],
+        "weight": 0.55
+      },
+      "decision": "Kept out of modern teaching answers; eligible only for explicit historical research."
+    },
+    {
+      "id": "historic_dictionary_grammar_1865",
+      "name": "Dictionary and Grammar of the Chamorro Language (historic)",
+      "match": {
+        "source_contains": ["dictionary_and_grammar_of_the_chamorro_language", "cu31924026914501", "1865"]
+      },
+      "content_role": "historical",
+      "region": "Guam",
+      "orthography": "historical",
+      "rights_status": "public_domain_candidate_needs_confirmation",
+      "review_status": "historical_only",
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["historical"],
+        "weight": 0.5
+      },
+      "decision": "Separated from current teaching and exposed only for explicit historical questions."
+    },
+    {
+      "id": "kumision_guam_orthography_2024",
+      "name": "Utugrafihan CHamoru, Guåhan, third edition (2024)",
+      "canonical_url": "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/02/Utugrafihan-CHamoru-GuA%C2%A5han-3rd-Ed-2024_KumisiA%C2%B3n-i-Fino-CHamoru_Digital.pdf",
+      "match": {
+        "source_contains": ["utugrafihan-chamoru", "utugrafihan_chamoru"]
+      },
+      "content_role": "normative_orthography",
+      "region": "Guam",
+      "orthography": "Guam_2024",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Highest-priority Guam orthography candidate after permission, versioning, and page-level ingestion."
+    },
+    {
+      "id": "natibu_marianas_living_dictionary",
+      "name": "Natibu Marianas Revised Chamorro-English Dictionary",
+      "canonical_url": "https://natibunmarianas.org/dictionary-introduction/",
+      "match": {
+        "source_contains": ["natibunmarianas.org"]
+      },
+      "content_role": "reviewed_lexicon",
+      "region": "CNMI",
+      "orthography": "CNMI_2010",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Primary CNMI partnership candidate; ingest only an approved, dated living-dictionary snapshot."
+    },
+    {
+      "id": "chachalani_archive",
+      "name": "CHachalåni documentation project",
+      "canonical_url": "https://chachalani.com/",
+      "match": {
+        "source_contains": ["chachalani.com", "kaipuleohone"]
+      },
+      "content_role": "authentic_usage",
+      "region": "Guam_and_CNMI",
+      "orthography": "speaker_usage",
+      "rights_status": "item_level_consent_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Strong native-speech candidate; honor recording-level access, consent, speaker, and attribution terms."
+    },
+    {
+      "id": "learning_chamoru",
+      "name": "LearningCHamoru",
+      "canonical_url": "https://learningchamoru.com/",
+      "match": {
+        "source_contains": ["learningchamoru.com"]
+      },
+      "content_role": "pedagogy",
+      "region": "Guam",
+      "orthography": "Guam",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Preferred curriculum and multimedia collaboration candidate; do not scrape."
+    },
+    {
+      "id": "gdoe_chamoru_program",
+      "name": "GDOE CHamoru Language and Culture Program",
+      "canonical_url": "https://ocpes.gdoe.net/programs/chamoru-language-and-culture",
+      "match": {
+        "source_contains": ["ocpes.gdoe.net", "gdoe.net"]
+      },
+      "content_role": "curriculum_standard",
+      "region": "Guam",
+      "orthography": "Guam",
+      "rights_status": "permission_required_for_content_reuse",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Use approved standards to structure learning outcomes; request permission for reusable lesson content."
+    }
+  ]
+}

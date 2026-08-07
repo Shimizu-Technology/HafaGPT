@@ -128,6 +128,17 @@ def validate_manifest(
 ) -> list[Finding]:
     """Return validation findings for a static audio manifest."""
     findings: list[Finding] = []
+    disclosure = manifest.get("audio_disclosure")
+    if not isinstance(disclosure, dict):
+        add_error(findings, f"{label}: missing audio_disclosure policy")
+        disclosure = {}
+    if disclosure.get("default_origin") != "synthetic_ai":
+        add_error(findings, f"{label}: audio_disclosure.default_origin must be 'synthetic_ai'")
+    if disclosure.get("default_review_status") != "needs_native_review":
+        add_error(findings, f"{label}: audio_disclosure.default_review_status must be 'needs_native_review'")
+    if not disclosure.get("learner_notice"):
+        add_error(findings, f"{label}: audio_disclosure requires learner_notice")
+
     words = manifest.get("words")
     if not isinstance(words, dict):
         return [Finding("error", f"{label}: missing object field 'words'")]
@@ -183,6 +194,19 @@ def validate_manifest(
             elif entry.get("file") != words[alias_of].get("file") and not entry.get("compatibility_note"):
                 add_error(findings, f"{label}: alias {term!r} has its own file but no compatibility_note explaining why")
 
+        review_status = entry.get("review_status", disclosure.get("default_review_status"))
+        if review_status not in {"needs_review", "needs_native_review", "approved"}:
+            add_error(findings, f"{label}: entry for {term!r} has invalid review_status: {review_status!r}")
+        if review_status == "approved":
+            missing_review_fields = [
+                field for field in disclosure.get("approved_requires", []) if not entry.get(field)
+            ]
+            if missing_review_fields:
+                add_error(
+                    findings,
+                    f"{label}: approved entry for {term!r} is missing reviewer evidence: {', '.join(missing_review_fields)}",
+                )
+
     return findings
 
 
@@ -209,6 +233,10 @@ def compare_manifests(primary: dict[str, Any], secondary: dict[str, Any], *, pri
 
     if primary.get("total_words") != secondary.get("total_words"):
         add_error(findings, f"{secondary_label}: total_words={secondary.get('total_words')!r} differs from {primary_label} total_words={primary.get('total_words')!r}")
+
+    for field in ("version", "audio_disclosure"):
+        if primary.get(field) != secondary.get(field):
+            add_error(findings, f"{secondary_label}: {field} differs from {primary_label}")
 
     return findings
 

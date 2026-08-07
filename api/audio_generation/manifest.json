@@ -1,7 +1,16 @@
 {
-  "version": 1,
-  "last_updated": "2026-07-02T22:52:12.652154",
+  "version": 2,
+  "last_updated": "2026-08-07T00:00:00+10:00",
   "generated_by": "generate_audio.py",
+  "audio_disclosure": {
+    "default_origin": "synthetic_ai",
+    "default_review_status": "needs_native_review",
+    "approved_requires": [
+      "reviewed_by",
+      "reviewed_at"
+    ],
+    "learner_notice": "Most HåfaGPT audio is synthetic AI speech and is pending review by a named native Chamorro reviewer."
+  },
   "storage": {
     "type": "s3",
     "bucket": "hafagpt",
@@ -6966,7 +6975,7 @@
       "generated_at": "2026-01-10T17:57:49.392635",
       "url": "https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/hafa.mp3",
       "needs_regeneration": false,
-      "review_status": "approved",
+      "review_status": "needs_native_review",
       "tts_provider": "elevenlabs",
       "phonetic_hint": "Hahfa",
       "reviewed_at": "2026-01-10T17:57:54.465491"

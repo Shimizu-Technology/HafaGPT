@@ -2,6 +2,20 @@
 
 This document tracks all sources that have been added to the HåfaGPT RAG knowledge base.
 
+> **Audit warning (August 7, 2026):** The inventory and priority claims below were
+> written in December 2024 and do not match the current local database. The current
+> collection has 44,865 rows but 30,010 are redundant exact duplicates; 40,501 rows
+> come from Chamoru.info, and no current `natibunmarianas.org` rows are present.
+> Source rights and provenance are also incomplete. Do not use this file as evidence
+> that a source is licensed, current, independent, or approved for teaching. See
+> [LANGUAGE_RESOURCE_AUDIT_2026-08-07.md](../documentation/LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
+> before crawling, importing, or changing retrieval priorities.
+>
+> The enforceable inventory and runtime decisions now live in
+> [`data/language_source_registry.json`](../data/language_source_registry.json),
+> with the complete implementation sequence in
+> [LANGUAGE_RESOURCE_PROGRAM_2026.md](../documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md).
+
 ---
 
 ## 📊 Current Stats

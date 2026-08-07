@@ -432,7 +432,7 @@ def add_to_database(url, markdown_content, manager):
         documents.append(doc)
     
     # Add to PostgreSQL database
-    manager.vectorstore.add_documents(documents)
+    manager.add_governed_documents(documents)
     
     # Force commit by disposing the engine connection pool
     # This ensures all transactions are flushed to the database
@@ -603,4 +603,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
