@@ -12,34 +12,55 @@
     {
       "role": "fast_practice",
       "primary_candidate": "gpt-5.6-luna",
-      "comparators": ["current-deepseek-v3", "deepseek-v4-flash"],
-      "reason": "Luna was contract-clean, fast, and lowest-cost while reaching 100 automated mean in both baseline provider paths."
+      "comparators": ["llama-4-maverick", "glm-5.2", "deepseek-v4-flash", "current-deepseek-v3"],
+      "reason": "Luna remains contract-clean, very fast, and inexpensive with a direct provider path. Llama 4 Maverick and GLM 5.2 were the strongest clean open-weight screens, but require blind review and a separate self-hosting study."
     },
     {
       "role": "core_tutor",
       "primary_candidate": "gpt-5.6-terra",
-      "comparators": ["gpt-5.6-luna", "current-deepseek-v3", "claude-sonnet-5"],
-      "reason": "Terra had the best OpenRouter latency tail, but did not beat Luna's automated signal; reviewer teaching-quality preference is required."
+      "comparators": ["gpt-5.6-luna", "claude-sonnet-5", "grok-4.5", "glm-5.2", "llama-4-maverick", "current-deepseek-v3"],
+      "reason": "Terra had the strongest earlier latency tail but did not beat Luna's automated signal. Grok, GLM, and Llama were clean in the expanded suite. Only blind teaching-quality review can justify a winner."
+    },
+    {
+      "role": "open_weight_hosted_screen",
+      "primary_candidate": "llama-4-maverick",
+      "comparators": ["glm-5.2", "minimax-m3", "deepseek-v4-flash", "nemotron-3-ultra", "mistral-small-4", "gpt-oss-120b"],
+      "reason": "Llama was clean with a 2.912-second p50 and low routed cost. GLM and MiniMax were also clean. This does not select a self-hosted deployment; total infrastructure, license, privacy, quantization, and reliability must be tested separately."
     },
     {
       "role": "premium_explanation",
       "primary_candidate": "claude-sonnet-5",
-      "comparators": ["gpt-5.6-terra", "gpt-5.6-sol"],
-      "reason": "Claude was contract-clean but slower and more expensive; use only if blind review establishes a material quality advantage."
+      "comparators": ["gpt-5.6-terra", "grok-4.5", "claude-opus-5", "claude-fable-5", "kimi-k3", "qwen-3.8-max"],
+      "reason": "The newer premium systems produced no better deterministic signal than Sonnet, Luna, Grok, GLM, Llama, or MiniMax. Advance them only if sampled blind review establishes a material naturalness or teaching gain worth their latency and cost."
     },
     {
       "role": "vision_document",
       "primary_candidate": "gemini-3.6-flash",
-      "comparators": [],
-      "reason": "Text RAG passed, but one completion hit the length contract and no multimodal suite has run; a dedicated vision evaluation is required."
+      "comparators": ["gemini-3.1-pro-preview", "kimi-k3"],
+      "reason": "All three passed the text-grounding screen or automated answer checks, but the Flash and Qwen-style reasoning budgets exposed length risks and no multimodal suite has run. Preview status also prevents Gemini Pro from being the only route."
     },
     {
       "role": "quality_ceiling_offline",
       "primary_candidate": "gpt-5.6-sol",
-      "comparators": ["claude-sonnet-5"],
-      "reason": "Sol did not justify roughly 45 times Luna's measured baseline cost for the bounded tutor workload; never auto-publish offline content."
+      "comparators": ["claude-sonnet-5", "claude-opus-5", "claude-fable-5", "kimi-k3", "qwen-3.8-max"],
+      "reason": "None of the expensive ceiling models improved the corrected deterministic signal on this bounded workload. Keep only a small blind-review sample unless a harder suite establishes a real advantage; never auto-publish offline content."
     }
   ],
+  "expanded_screen_decisions": {
+    "advance_to_full_blind_finalist_review": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "claude-sonnet-5",
+      "grok-4.5",
+      "llama-4-maverick",
+      "glm-5.2"
+    ],
+    "retain_as_open_weight_backups": ["minimax-m3", "deepseek-v4-flash", "nemotron-3-ultra", "mistral-small-4"],
+    "vision_suite_only": ["gemini-3.6-flash", "gemini-3.1-pro-preview", "kimi-k3"],
+    "sample_review_only_unless_harder_suite_justifies": ["gpt-5.6-sol", "claude-opus-5", "claude-fable-5", "qwen-3.8-max"],
+    "do_not_advance_on_current_contract": ["qwen-3.7-plus", "qwen-3.7-flash", "qwen-3.6-35b-a3b", "gpt-oss-120b"],
+    "notes": "Qwen 3.7 Flash and Qwen 3.6 became usable at a 4,000-token budget, but the added reasoning latency/token use removed their expected efficiency advantage. Qwen 3.7 Plus had 11 length finishes at the common 1,200-token contract."
+  },
   "reasoning_effort_decision": {
     "setting": "preserve_default_for_promotion_comparison",
     "reason": "The separate low-effort treatment did not improve Luna or Terra and had worse p95 latency in this run."
@@ -63,6 +84,21 @@
       "name": "openrouter_gpt_low_reasoning_treatment",
       "calls": 72,
       "sha256": "2526073c9fd78b5eb230ad9294aa448706f53532961b5d738fb248e9bbf01e93"
+    },
+    {
+      "name": "openrouter_fourteen_model_frontier_expansion_rescored",
+      "calls": 336,
+      "sha256": "128124e427b128be348cd673c5d1e6b8c8cbc56ecf1c57aa47b8557fc9cb1180"
+    },
+    {
+      "name": "openrouter_qwen_3_7_plus_common_budget",
+      "calls": 24,
+      "sha256": "abc337193a89af2470f01ec879038a9af1257eca113e4f45eb4162e7d4fec829"
+    },
+    {
+      "name": "openrouter_qwen_flash_and_open_weight_4000_token_treatment",
+      "calls": 48,
+      "sha256": "20f8746c11913efe5142da9de94ce87f305bca509681a02855fd75f53dd58010"
     }
   ],
   "required_before_runtime_registry_change": [

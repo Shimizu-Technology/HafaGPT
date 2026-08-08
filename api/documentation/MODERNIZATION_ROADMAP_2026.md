@@ -85,16 +85,24 @@ reviews. No production model promotion or external corpus grant is claimed.
    provider path, and run one lower GPT-5.6 reasoning effort.~~ Completed: 192/192
    OpenRouter baseline calls and 72/72 direct-OpenAI calls; the low-effort artifact
    is recorded separately.
-4. Complete blind review with two reviewers and adjudicate critical errors.
-5. Expand the purpose-locked 101-entry evaluation corpus and retrieval traces to
+4. ~~Recheck the current frontier/open-weight landscape rather than treating the
+   original shortlist as exhaustive.~~ Completed: 23 live catalog models, a
+   336-call 14-model expansion, a 24-call Qwen Plus run, and a 48-call Qwen budget
+   diagnostic. The decision ledger now contains 744 comparable calls.
+5. Complete blind review of the qualified shortlist with two reviewers and
+   adjudicate critical errors. Full-review finalists are Luna, Terra, Claude
+   Sonnet 5, Grok 4.5, Llama 4 Maverick, GLM 5.2, and the current control; expensive
+   ceilings receive a smaller screening sample unless reviewers find a real gain.
+6. Expand the purpose-locked 101-entry evaluation corpus and retrieval traces to
    at least 100 representative, independently authored/adjudicated integrated RAG
-   cases, then rerun the control, Terra, Luna, and Claude finalists. The completed
-   24-case run is a valid calibration round, not the final promotion suite.
-6. Run Gemini separately on images/documents with an explicit reasoning/output budget.
-7. Calculate cost at realistic low/base/high monthly usage, including reasoning tokens and retries.
-8. Decide whether one model or role-based routing is justified.
-9. Add data-driven model configuration, startup ID validation, returned-provider logging, feature flags, and rollback.
-10. Shadow, then canary, then promote only after gates pass.
+   cases, then rerun the adjudicated hosted/open-weight finalists. The completed
+   24-case runs are a valid calibration round, not the final promotion suite.
+7. Run Gemini Flash/Pro and Kimi separately on images/documents with explicit
+   reasoning/output budgets.
+8. Calculate cost at realistic low/base/high monthly usage, including reasoning tokens and retries.
+9. Decide whether one model or role-based routing is justified.
+10. Add data-driven model configuration, startup ID validation, returned-provider logging, feature flags, and rollback.
+11. Shadow, then canary, then promote only after gates pass.
 
 **Exit criteria:**
 

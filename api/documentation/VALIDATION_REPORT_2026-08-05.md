@@ -204,10 +204,33 @@ a red live retrieval gate are both accurate; neither result should hide the othe
   the general semantic pool. The lane still applies source rights, evidence-role,
   deduplication, and ranking policy. For the PDN integration question, all five
   returned references were PDN sources rather than dictionary fallbacks.
-- The final repository-wide check passed with 84 tests and 3 expected live-service
+- The final repository-wide check passed with 108 tests and 3 expected live-service
   skips, plus canonical content checks, synchronized 715-entry audio manifests,
   lint with zero errors, type checking, and the production web build.
 - OpenRouter credit and adapter health were already verified by the complete
   benchmark and the August 7 fresh smoke. The model-quality decision remains gated
   on corpus cleanup and blind native-speaker/educator review; restored credits do
   not change that evidence standard.
+
+## August 8 frontier/resource revalidation addendum
+
+- The live model catalog now validates 24 cases against 23 currently available
+  OpenRouter IDs: the original eight plus 15 frontier or representative
+  open-weight candidates.
+- A 14-model smoke completed 14/14 calls. The full expansion completed 336 calls;
+  Qwen 3.7 Plus added 24; the controlled 4,000-token Qwen treatment added 48.
+  Together with the earlier provider/reasoning runs, the decision ledger contains
+  744 comparable calls.
+- Preserved-answer rescoring corrected valid Claude abstention wording without
+  changing any model output. Regression tests cover the new wording.
+- Common-budget contract failures were not hidden: Qwen 3.8 Max had one, Qwen 3.7
+  Flash had eight plus two HTTP 429s, Qwen 3.7 Plus had eleven, and Qwen 3.6 35B
+  A3B had twelve. The 4,000-token diagnostic removed empty-output failures for
+  Flash/3.6 at materially higher reasoning-token and latency cost.
+- The source registry now contains 25 families: three internal and 22 external.
+  Every external source has a permission/outreach record, `0/22` is production
+  cleared, and the five newly added candidate URLs returned HTTP 200 during
+  revalidation.
+- Focused benchmark/source-policy validation passed with 32 tests after the scorer,
+  catalog, registry, and permission-ledger changes. The final repository-wide
+  result is recorded in the branch handoff after `./scripts/check.sh`.

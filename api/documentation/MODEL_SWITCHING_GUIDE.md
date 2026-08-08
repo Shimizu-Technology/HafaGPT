@@ -3,12 +3,13 @@
 ## Current rule
 
 Do not change production by copying a model name into Render. The August 2026
-direct-model benchmark produced a shortlist, but production remains on the
+integrated 23-model landscape screen produced a shortlist, but production remains on the
 `deepseek-v3` control until blinded Chamorro review and integrated RAG gates pass.
 
 See:
 
 - [Model evaluation method](MODEL_EVALUATION_2026.md)
+- [Frontier and open-weight research/results](FRONTIER_MODEL_RESEARCH_2026-08-08.md)
 - [August 2026 benchmark results](MODEL_BENCHMARK_RESULTS_2026-08-05.md)
 - [Modernization roadmap](MODERNIZATION_ROADMAP_2026.md)
 
@@ -73,17 +74,20 @@ After a candidate clears its documented gates:
 
 ## Provisional roles from the August run
 
-| Role to validate | Candidate | Why it advanced | Still required |
+| Role to validate | Candidate(s) | Why advanced | Still required |
 |---|---|---|---|
-| Main tutor | GPT-5.6 Terra | fast, all contracts, practical batch cost | blind review + 100-case RAG suite |
-| High-volume drills | GPT-5.6 Luna | fastest/cheapest, all contracts | blind review + drill-specific RAG suite |
-| Premium explanation | Claude Sonnet 5 | strongest citation/variant auto signal | prove human benefit justifies latency/cost |
-| Images/documents | Gemini 3.6 Flash | multimodal candidate | real vision suite and reasoning budget |
+| Main tutor | Terra, Luna, Sonnet 5, Grok 4.5, GLM 5.2, Llama 4 Maverick | strongest combination of clean contracts, latency/cost diversity, and provider/deployment options | blind review + 100-case RAG suite |
+| High-volume drills | GPT-5.6 Luna; Llama/GLM as open-weight screens | clean, fast, low measured routed cost | blind review + drill-specific RAG suite + self-hosting study for open weights |
+| Premium explanation | Claude Sonnet 5 | newer ceiling models showed no deterministic advantage | prove human benefit justifies latency/cost |
+| Images/documents | Gemini 3.6 Flash, Gemini 3.1 Pro Preview, Kimi K3 | credible multimodal candidates | real vision suite, version stability, and reasoning budget |
 | Control | DeepSeek V3 | current rollback baseline | integrated head-to-head comparison |
 
-GPT-5.6 Sol and both DeepSeek V4 candidates did not show an engineering advantage
-for the tested text workload. They should not consume additional rollout work unless
-new human or workload-specific evidence changes that conclusion.
+GPT-5.6 Sol, Claude Opus/Fable, Kimi K3, and Qwen 3.8 Max did not show a text
+advantage that justified their cost/latency. Qwen Plus/Flash/3.6 were not reliable
+at the common output budget; a separate 4,000-token treatment fixed empty answers
+for Flash/3.6 but removed their expected efficiency advantage. They should not
+consume additional default-route work unless human or workload evidence changes
+that conclusion.
 
 ## Secrets and cost controls
 

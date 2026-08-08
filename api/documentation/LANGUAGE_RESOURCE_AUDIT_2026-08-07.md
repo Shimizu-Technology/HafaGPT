@@ -47,6 +47,34 @@ deduplicated corpus with source roles and complete provenance, align canonical
 teaching with the learner's selected Guam or CNMI orthography profile, and obtain
 two qualified Chamorro reviewers. Then rerun the integrated model evaluation.
 
+## August 8 revalidation and gap check
+
+The follow-up review rechecked the registry against current official, university,
+archive, and source-owner pages. The original conclusions remain actionable: the
+legacy corpus is not production-ready, current containment is necessary, and no
+external source has a recorded production grant. The revalidation also corrected
+five omissions:
+
+1. The **CNMI Chamorro-Carolinian Language Policy Commission** is the institutional
+   route for CNMI grammar, usage, dictionary, and school-orthography policy. It is a
+   higher-value partner than treating an isolated PDF as self-authorizing.
+2. The **December 2024 English-Chamorro Finder List** now has a stable CNMI
+   government-hosted copy. It is derived from the revised dictionary and therefore
+   cannot count as an independent confirming source.
+3. The **University of Guam CHamoru Studies program** is a strong curriculum and
+   qualified-reviewer partner. Its catalog is evidence of an active program, not a
+   content license.
+4. The **UCLA Phonetics Lab Chamorro archive** is useful for historical
+   pronunciation comparison, but incomplete speaker/date/consent metadata makes it
+   research-only until item-level terms are resolved.
+5. The **Kumisión learning-tools collection** adds official flashcards and
+   syllabary materials. These are a high-priority partnership opportunity, not
+   assets HåfaGPT may copy merely because they are publicly downloadable.
+
+All five now exist in both the source registry and permission ledger. Retrieval and
+ingestion remain disabled. The governed inventory is 25 families: three internal
+and 22 external, with 0/22 external grants ready for production.
+
 ## Scope and intended use
 
 This audit evaluates resources used to:
@@ -344,7 +372,9 @@ but no model result can repair bad retrieval or settle a source conflict.
 
 | Candidate | Why it is strong | Recommended use | Rights/action |
 |---|---|---|---|
+| CNMI Chamorro-Carolinian Language Policy Commission | Statutory CNMI body charged with studying grammar, prescribing usage, preparing a modern dictionary, and recommending school orthography | CNMI policy authority, reviewer network, and standards partnership | Establish a formal relationship; version and license every resulting artifact separately |
 | Kumisión 2024 third-edition *Utugrafihan CHamoru, Guåhan* | Current official Guam spelling rules | Normative Guam orthography | Request machine-use/embedding permission; version and page citations |
+| Kumisión learning tools | Official set of 400 flashcards and syllabary materials | Core beginner vocabulary, orthography, and teacher-aligned practice | Request an asset/adaptation agreement; do not copy public downloads by assumption |
 | Kumisión Fañodda'an Fino' digital dictionary | Official current Guam word-search project with expert contributors and documented source lineage | Primary Guam lexical lookup | Seek API/data partnership; do not scrape blindly |
 | Kumisión 2025 specialized lists | Current official terminology for months, kinship, weather, titles, places, and more | Canonical specialized vocabulary | Download/reference now; request reuse permission |
 | Kumisión cultural dictionary volumes (2022, 2024) | Community/official context for sayings, values, metaphors, and cultural meanings | Cultural explanations and advanced learning | Request permission; preserve entry-level attribution |
@@ -354,6 +384,7 @@ but no model result can repair bad retrieval or settle a source conflict.
 | CHachalåni / Kaipuleohone archive | Community-consented native-speaker interviews, transcripts, and cultural expertise | Listening, pronunciation research, authentic usage | Respect item-level access/consent; partner before product reuse |
 | LearningCHamoru | UOG-supported multimedia lessons, dictionary, grammar, dialogues, and media | Pedagogy, curriculum mapping, learner exercises | Seek collaboration/data agreement |
 | GDOE standards and CHamoru program materials | Official school learning goals and grade-oriented outcomes | Curriculum sequence and assessment design | Use standards as structure; request reuse for lesson content |
+| UOG CHamoru Studies program | Current university curriculum plus a practical route to qualified teachers, reviewers, and community partners | Reviewer recruitment, curriculum alignment, and expert-authored material | Partner first; negotiate item-level rights for course content |
 | UOG *Finu' Chamorro for Beginners* | Expert-panel post-secondary curriculum | Curriculum comparison and licensed lesson design | Purchase/reference; negotiate license rather than copy |
 | UCLA Phonetics Lab Chamorro word list | Archival audio with word list and recording details | Pronunciation research/control | Check recording-level rights and speaker metadata before reuse |
 
@@ -418,8 +449,9 @@ Ingestion must fail closed if rights status or required provenance is missing.
 
 ### Phase 1 — source agreements and registry (one to three weeks)
 
-1. Contact the Kumisión, Natibu Marianas, UOG/CHachalåni, LearningCHamoru,
-   Lengguahi-ta, Guampedia, and relevant publishers/data owners.
+1. Contact the Kumisión, CNMI Chamorro-Carolinian Language Policy Commission,
+   Natibu Marianas, UOG/CHachalåni, LearningCHamoru, Lengguahi-ta, Guampedia,
+   and relevant publishers/data owners.
 2. Agree on allowed uses: lookup, short citation, embedding, display, audio, model
    evaluation, commercial/public access, and attribution.
 3. Create a versioned source registry and import contract.
@@ -489,13 +521,17 @@ The following need correction or stronger wording:
 The repository-wide validation completed successfully on August 7, 2026, and
 the August 8 live-RAG follow-up produced the final branch totals:
 
-- `./scripts/check.sh`: 84 API tests passed, three intentionally skipped;
+- `./scripts/check.sh`: 108 API/content tests passed, three intentionally skipped;
 - canonical vocabulary validation passed with zero app-to-canonical usage findings;
 - the API and web audio manifests matched at 715 entries;
 - frontend type-check and production build passed;
 - frontend lint completed with zero errors and ten pre-existing warnings;
-- `model_benchmark.py --validate-only --check-catalog` confirmed all eight frozen
-  model IDs were available and validated all 24 cases and eight model definitions;
+- `model_benchmark.py --validate-only --check-catalog` originally confirmed all
+  eight frozen models; the August 8 expansion confirmed all 23 catalog IDs and
+  validated all 24 cases and 23 model definitions;
+- the governed source registry now records 25 source families (three internal and
+  22 external); all 22 external families have permission/outreach records and none
+  is marked granted;
 - the governed corpus audit resolved all 44,865 rows to registered sources, with
   83 legacy rows blocked and zero unregistered;
 - `git diff --check` passed.
@@ -516,6 +552,10 @@ rights, and corpus-quality release gates above.
 - [PARADISEC Topping dictionary-file record and access conditions](https://catalog.paradisec.org.au/collections/CHA1/items/originaldictionary?files_per_page=10)
 - [CHachalåni documentation project and archive](https://chachalani.com/)
 - [LearningCHamoru, supported by UOG and the Kumisión](https://learningchamoru.com/)
+- [CNMI Chamorro-Carolinian Language Policy Commission](https://cnmidcca.org/default.asp?secID=14)
+- [CNMI government copy of the December 2024 English-Chamorro Finder List](https://www.cnmilicensing.gov.mp/wp-content/uploads/2025/01/Title-English-Chamorro.pdf)
+- [Kumisión official learning tools](https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/)
+- [University of Guam CHamoru Studies program](https://catalog.uog.edu/current/programs/college-of-liberal-arts-and-social-sciences/chamoru-studies)
 - [University of Guam CHamoru course sequence](https://catalog.uog.edu/current/courses/cm)
 - [UOG announcement for *Finu' Chamorro for Beginners*](https://www.uog.edu/news-announcements/2024-2025/2024-uog-press-and-proa-publications-launch-their-second-title-finu-chamorro-for-beginners.php)
 - [Chamoru.info dictionary sources](https://www.chamoru.info/dictionary/)

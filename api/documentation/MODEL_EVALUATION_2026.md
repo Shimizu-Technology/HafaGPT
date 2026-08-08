@@ -7,18 +7,21 @@
 > [LANGUAGE_RESOURCE_AUDIT_2026-08-07.md](LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
 > before treating an integrated model result as production evidence.
 
-**Status:** corrected integrated calibration complete; blind native review and 100-case promotion suite pending
+**Status:** corrected 23-model integrated landscape screen complete; blind native review and 100-case promotion suite pending
 **Last updated:** August 8, 2026 (Guam)
 
 ## Decision statement
 
-There is not yet a legitimate production winner. The corrected August 8 run
-completed all 192 integrated OpenRouter calls, 72 direct-OpenAI provider-path
-calls, and 72 GPT low-reasoning treatment calls against the purpose-locked clean
-evaluation corpus. The review order is GPT-5.6 Luna for fast practice, Terra versus
-Luna/control for the main tutor, Claude Sonnet 5 for premium explanations, and
-Gemini 3.6 Flash for a separate vision suite. The versioned recommendation remains
-explicitly non-production in
+There is not yet a legitimate production winner. The August 8 decision ledger now
+contains 744 comparable integrated/provider/treatment calls across 23 current
+model IDs: the original 336 calls plus a 336-call frontier/open-weight expansion,
+a 24-call Qwen Plus run, and a 48-call Qwen budget treatment. A separate 14-call
+smoke proved availability/adapters and is not counted as decision evidence.
+
+The expanded review order is GPT-5.6 Luna for fast practice; Terra, Luna, Claude
+Sonnet 5, Grok 4.5, GLM 5.2, Llama 4 Maverick, and the current control for the core
+tutor; and Gemini Flash, Gemini Pro Preview, and Kimi K3 for a separate vision
+suite. The versioned recommendation remains explicitly non-production in
 `evaluation/model_routing_recommendation_2026-08-08.json`.
 
 The old reported accuracy percentages remain insufficient evidence because the
@@ -37,7 +40,11 @@ Whether routing beats one model must be established by the process below.
 
 ## Candidate set
 
-The catalog was checked against OpenRouter's public model endpoint on August 5, 2026. All eight IDs were available.
+The original catalog was checked on August 5. On August 8 it was expanded and all
+23 IDs were confirmed against OpenRouter's public model endpoint. The table below
+preserves the original comparison; the 15 added candidates, official-source
+research, prices, results, and selection rationale are documented in
+[FRONTIER_MODEL_RESEARCH_2026-08-08.md](FRONTIER_MODEL_RESEARCH_2026-08-08.md).
 
 | Alias | Model ID | Evaluation role | Catalog input/output per 1M tokens |
 |---|---|---|---:|
@@ -52,7 +59,7 @@ The catalog was checked against OpenRouter's public model endpoint on August 5, 
 
 Prices are a frozen comparison input, not a billing guarantee. The runner also records OpenRouter-reported usage/cost when returned.
 
-## Why these models
+## Why the original models remain in the comparison
 
 - **Control:** a change must beat or complement the model currently deployed.
 - **DeepSeek V4 Flash/Pro:** direct successors in the same provider family, with favorable cost for high-volume use.
@@ -140,10 +147,10 @@ cd api
 # Confirm all catalog IDs are still offered by OpenRouter
 .venv/bin/python evaluation/model_benchmark.py --validate-only --check-catalog
 
-# Three-case smoke run across all eight models
+# Three-case smoke run across the current catalog
 .venv/bin/python evaluation/model_benchmark.py --limit 3 --check-catalog
 
-# Full 24-case integrated run across all eight models
+# Full 24-case integrated run across the current catalog
 .venv/bin/python evaluation/model_benchmark.py \
   --rag-collection hafagpt_eval_canonical_v1 --check-catalog
 
@@ -207,13 +214,16 @@ This table is a test order, not a routing decision.
 
 | Check | Result |
 |---|---|
-| Benchmark case/catalog validation | Passed: 24 cases, 8 models |
-| Live OpenRouter catalog availability | Passed: all 8 IDs present |
-| Model API calls | Passed: 192/192 integrated OpenRouter, 72/72 direct-OpenAI, and 72/72 GPT-5.6 low-effort calls; one Gemini completion hit the length contract after providing the scored answer |
+| Benchmark case/catalog validation | Passed: 24 cases, 23 models |
+| Live OpenRouter catalog availability | Passed: all 23 IDs present on August 8 |
+| Original model API calls | Passed: 192/192 integrated OpenRouter, 72/72 direct-OpenAI, and 72/72 GPT-5.6 low-effort calls; one Gemini completion hit the length contract after providing the scored answer |
+| Frontier/open-weight expansion | Completed: 336 common-budget calls across 14 additions, 24 Qwen Plus calls, and 48 higher-budget Qwen treatment calls |
+| Expanded common-budget leaders | 100 automated signal and zero contract failures for Llama 4 Maverick, Grok 4.5, GLM 5.2, MiniMax M3, Gemini 3.1 Pro Preview, Claude Opus 5, Claude Fable 5, and Kimi K3; automated signal is not language accuracy |
+| Qwen compatibility finding | Max scored 100 but had one length contract failure; Plus had 11; Flash/3.6 required a separate 4,000-token treatment to eliminate empty length-finished answers |
 | Local RAG infrastructure | 44,865 chunks; ordinary retrieval passed after pgvector repair |
 | Source-aware RAG policy | Deterministic policy/retrieval tests pass; Guampedia and Swarthmore blocked, historical intent separated, PDN/Visit Guam role-limited |
 | Live semantic RAG gate | Passed August 8: database connectivity, ordinary semantic retrieval, and the PDN-specific source lane; all five returned references for the explicit PDN question were PDN sources |
-| August 7 provider smoke | Passed: 1/1 grounded case on all 8 catalog models; availability/adapter evidence only |
+| August 8 expanded provider smoke | Passed: 1/1 grounded case on all 14 initial additions; availability/adapter evidence only |
 | Clean evaluation corpus | Passed: 101 source-backed entries, 101 unique hashes, evaluation-only purpose lock |
 | Integrated per-model RAG comparison | Passed calibration: 192/192 OpenRouter calls, 72/72 direct-OpenAI calls, and 72/72 low-effort calls |
 | Blind native review | Packet generated; two-reviewer scoring pending |

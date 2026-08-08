@@ -28,6 +28,13 @@ def test_registry_is_valid_and_source_ids_are_unique() -> None:
     assert len(registered_source_ids()) == len(registry["sources"])
     assert "kumision_guam_orthography_2024" in registered_source_ids()
     assert "natibu_marianas_living_dictionary" in registered_source_ids()
+    assert {
+        "cnmi_language_policy_commission",
+        "cnmi_english_chamorro_finder_2024",
+        "uog_chamoru_studies_program",
+        "ucla_chamorro_phonetics_archive",
+        "kumision_learning_tools",
+    } <= registered_source_ids()
     for source in registry["sources"]:
         if source["retrieval"]["allowed"]:
             assert source["retrieval"]["weight"] > 0
@@ -54,6 +61,12 @@ def test_every_external_source_has_a_permission_or_outreach_record() -> None:
         ("https://wikis.swarthmore.edu/ling073/Chamorro/Grammar", "website"),
         ("supplemental_dictionary.json", "dictionary"),
         ("https://lengguahita.com/chamorro-stories/example", "lengguahita"),
+        ("https://cnmidcca.org/default.asp?secID=14", "website"),
+        ("https://archive.phonetics.ucla.edu/Language/CHA/cha.html", "audio_archive"),
+        (
+            "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
+            "website",
+        ),
     ],
 )
 def test_phase_zero_blocked_sources_are_never_retrieved(source: str, source_type: str) -> None:

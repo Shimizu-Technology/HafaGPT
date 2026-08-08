@@ -12,6 +12,8 @@ language facts. Model evaluation uses a separate 101-entry purpose-locked corpus
 > licensed for production reuse. See the
 > [resource program](documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md) and
 > [August 8 execution record](documentation/PHASE_1_2_EXECUTION_2026-08-08.md).
+> The current 23-model landscape is tracked in
+> [FRONTIER_MODEL_RESEARCH_2026-08-08.md](documentation/FRONTIER_MODEL_RESEARCH_2026-08-08.md).
 
 > 📚 **New to the team?** Start with the **[Developer Setup Guide](documentation/SETUP_GUIDE.md)** for step-by-step onboarding.
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-07-phase-0",
+  "policy_version": "2026-08-08-phase-0-expanded",
   "default_policy": {
     "retrieval_allowed": false,
     "reason": "Unknown sources fail closed until provenance, rights, role, and review status are registered."
@@ -396,6 +396,102 @@
         "weight": 0.0
       },
       "decision": "Use approved standards to structure learning outcomes; request permission for reusable lesson content."
+    },
+    {
+      "id": "cnmi_language_policy_commission",
+      "name": "CNMI Chamorro-Carolinian Language Policy Commission",
+      "canonical_url": "https://cnmidcca.org/default.asp?secID=14",
+      "match": {
+        "source_contains": ["cnmidcca.org", "chamorro-carolinian-language-policy-commission"]
+      },
+      "content_role": "normative_language_policy",
+      "region": "CNMI",
+      "orthography": "CNMI",
+      "rights_status": "permission_required_for_content_reuse",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Treat as the CNMI institutional authority and partnership route; do not ingest commission materials without item-level rights and version records."
+    },
+    {
+      "id": "cnmi_english_chamorro_finder_2024",
+      "name": "English-Chamorro Finder List (December 2024)",
+      "canonical_url": "https://www.cnmilicensing.gov.mp/wp-content/uploads/2025/01/Title-English-Chamorro.pdf",
+      "match": {
+        "source_contains": ["title-english-chamorro.pdf", "english-chamorro-finder"]
+      },
+      "content_role": "reviewed_lexicon_index",
+      "region": "CNMI",
+      "orthography": "CNMI_2010",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "derivative_of": ["natibu_marianas_living_dictionary"],
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "High-value dated finder index compiled for the revised dictionary; preserve derivative lineage and never count it as independent corroboration."
+    },
+    {
+      "id": "uog_chamoru_studies_program",
+      "name": "University of Guam CHamoru Studies program",
+      "canonical_url": "https://catalog.uog.edu/current/programs/college-of-liberal-arts-and-social-sciences/chamoru-studies",
+      "match": {
+        "source_contains": ["catalog.uog.edu/current/programs/college-of-liberal-arts-and-social-sciences/chamoru-studies", "catalog.uog.edu/current/courses/cm"]
+      },
+      "content_role": "academic_curriculum_and_review_partner",
+      "region": "Guam",
+      "orthography": "Guam",
+      "rights_status": "permission_required_for_content_reuse",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Use as a reviewer, curriculum-alignment, and partnership route; public catalog pages are not a license to ingest course materials."
+    },
+    {
+      "id": "ucla_chamorro_phonetics_archive",
+      "name": "UCLA Phonetics Lab Chamorro archive",
+      "canonical_url": "https://archive.phonetics.ucla.edu/Language/CHA/cha.html",
+      "match": {
+        "source_contains": ["archive.phonetics.ucla.edu/language/cha", "ucla_chamorro_phonetics"]
+      },
+      "content_role": "historical_pronunciation_reference",
+      "region": "unspecified",
+      "orthography": "archive_transcription",
+      "rights_status": "item_level_permission_and_speaker_metadata_required",
+      "review_status": "research_only_pending_review",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Useful historical pronunciation evidence; do not serve, train on, or teach from recordings until speaker metadata, recording date, consent, and reuse terms are resolved."
+    },
+    {
+      "id": "kumision_learning_tools",
+      "name": "Kumisión i Fino' CHamoru learning tools",
+      "canonical_url": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
+      "match": {
+        "source_contains": ["kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools", "materiat-ineyak-siha-learning-tools"]
+      },
+      "content_role": "official_learning_material",
+      "region": "Guam",
+      "orthography": "Guam_2024",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Priority partnership candidate for official flashcards and syllabary materials; do not copy assets or derive exercises without written terms."
     }
   ]
 }

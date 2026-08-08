@@ -88,7 +88,7 @@ review.
 
 ### Phase 0 verification record
 
-- Repository check: 84 tests passed and 3 credential-dependent tests skipped;
+- Repository check: 108 tests passed and 3 credential-dependent tests skipped;
   canonical content checks, synchronized audio checks, lint, type check, and the
   production build passed.
 - Corpus audit: all 44,865 chunks resolve to a registered source; 83 legacy chunks

@@ -3,8 +3,8 @@
 **Branch:** `codex/phase-1-2-modernization`
 **Scope:** local auth/database recovery, resource governance, clean evaluation
 corpus, integrated model testing, and a review-gated recommendation
-**Decision status:** engineering shortlist ready; production promotion blocked on
-two independent qualified Chamorro reviews
+**Decision status:** 23-model engineering shortlist ready; production promotion
+blocked on two independent qualified Chamorro reviews
 
 ## Outcome first
 
@@ -14,9 +14,11 @@ purpose-locked evaluation corpus. All eight candidate models completed a valid
 24-case integrated retrieval run (192/192 calls), and the three GPT-5.6 tiers also
 completed a 72-call direct-OpenAI provider comparison.
 
-No production model or corpus was changed. That is deliberate: automated results
-are too close to establish Chamorro superiority, no external source has a recorded
-production grant, and two qualified human reviews are still required.
+The subsequent frontier/open-weight revalidation expanded the live catalog to 23
+models and the comparable decision ledger to 744 calls. No production model or
+corpus was changed. That is deliberate: automated results cannot establish
+Chamorro superiority, no external source has a recorded production grant, and two
+qualified human reviews are still required.
 
 ## What was re-audited and corrected
 
@@ -66,11 +68,11 @@ The legacy corpus remains unsuitable for a production trust claim:
 - 44,865 rows, but only 14,855 unique documents;
 - 30,010 exact redundant rows (66.89%);
 - all 44,865 rows lack required permission and retrieval-date metadata;
-- none of the 17 external source families has a recorded production grant.
+- none of the 22 external source families has a recorded production grant.
 
 The new permission ledger records the owner/steward, current status, intended
 uses, evidence reference, restrictions, and next action for every external source.
-The readiness command currently reports `0/17` production-ready sources. It takes
+The readiness command currently reports `0/22` production-ready sources. It takes
 both a granted evidence record and an explicit `production_rag` registry grant to
 clear a source; neither system can enable ingestion by itself.
 
@@ -82,6 +84,11 @@ The strongest partnership priorities remain:
 4. LearningCHamoru and GDOE for pedagogy/curriculum alignment;
 5. Lengguahi-ta, Guampedia, publishers, authors, archives, and speakers for
    source-specific reuse agreements.
+
+The August 8 gap check also registered the CNMI Chamorro-Carolinian Language
+Policy Commission, the December 2024 English-Chamorro Finder, UOG CHamoru Studies,
+the UCLA phonetics archive, and Kumisión learning tools. All five remain blocked
+pending the source-specific permission/provenance gates recorded in the ledger.
 
 Until those agreements exist, the correct product behavior is linking,
 quarantining, or using narrowly allowed transitional context—not silently
@@ -176,6 +183,23 @@ Low reasoning did not improve Luna or Terra and worsened their p95 latency in th
 run. Preserve the default setting for the next comparison. Artifact SHA-256:
 `2526073c9fd78b5eb230ad9294aa448706f53532961b5d738fb248e9bbf01e93`.
 
+### Frontier and open-weight expansion
+
+The follow-up reviewed 15 additional current candidates rather than assuming the
+original eight covered the market. The common 1,200-token contract produced clean
+100 automated signals for Llama 4 Maverick, Grok 4.5, GLM 5.2, MiniMax M3, Gemini
+3.1 Pro Preview, Claude Opus 5, Claude Fable 5, and Kimi K3. Qwen 3.8 Max also
+scored 100 but had one length contract failure. Full results, prices, source links,
+Qwen budget diagnostics, and artifact hashes are in
+[FRONTIER_MODEL_RESEARCH_2026-08-08.md](FRONTIER_MODEL_RESEARCH_2026-08-08.md).
+
+Llama, GLM, and MiniMax are the strongest open-weight screens. Grok earns a
+core-tutor review slot. The newer premium ceiling models showed no deterministic
+advantage worth their added latency/cost. Qwen Flash and 3.6 became usable at a
+4,000-token budget, but the extra reasoning tokens and latency removed their
+expected efficiency advantage; Qwen Plus had 11 length finishes at the common
+budget.
+
 ## Actionable recommendation
 
 Do not switch production yet. The evidence supports this review order:
@@ -186,14 +210,17 @@ Do not switch production yet. The evidence supports this review order:
 2. **Main tutor challenger:** GPT-5.6 Terra versus Luna and the current DeepSeek
    control. Terra had the best OpenRouter p50/p95 but did not beat Luna's automated
    signal; native teaching-quality review must decide whether its output is better.
-3. **Premium explanation comparator:** Claude Sonnet 5. It was contract-clean but
+3. **Core/open-weight comparators:** Grok 4.5, Llama 4 Maverick, and GLM 5.2 now
+   join the qualified blind-review shortlist. MiniMax M3 remains the next
+   open-weight backup.
+4. **Premium explanation comparator:** Claude Sonnet 5. It was contract-clean but
    slower and much more expensive; promotion needs a clear reviewer preference.
-4. **Quality ceiling only:** GPT-5.6 Sol. It did not justify roughly 45 times Luna's
-   measured cost on this bounded workload.
-5. **Vision/document track:** Gemini 3.6 Flash only after a dedicated multimodal
-   suite. Text retrieval results do not validate image transcription or document
-   behavior, and the one truncation requires a budget/contract test.
-6. **Control:** retain current DeepSeek V3 until review and canary gates pass. A
+5. **Quality ceiling only:** GPT-5.6 Sol, Claude Opus/Fable, Kimi K3, and Qwen Max.
+   None justified default routing on this bounded workload.
+6. **Vision/document track:** Gemini 3.6 Flash versus Gemini 3.1 Pro Preview and
+   Kimi K3 in a dedicated multimodal suite. Text retrieval does not validate image
+   transcription or document behavior.
+7. **Control:** retain current DeepSeek V3 until review and canary gates pass. A
    rollback must remain available even if Luna or Terra is selected.
 
 The likely architecture is role-based routing, but this is still a hypothesis.
@@ -229,7 +256,7 @@ make the engineering work legitimate.
 
 ## Verification commands
 
-The final repository-wide run passed 103 API/content tests with three intentional
+The final repository-wide run passed 108 API/content tests with three intentional
 credential-dependent skips, canonical content validation, synchronized 715-entry
 audio manifests, frontend lint with 10 pre-existing warnings and zero errors,
 TypeScript checking, and the production web build. The build still reports the

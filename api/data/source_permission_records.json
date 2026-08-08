@@ -172,6 +172,56 @@
       "expires_at": null,
       "restrictions": "Standards may guide scope; reusable lesson content requires separate approval.",
       "next_action": "Request standards alignment and content-reuse guidance from the program."
+    },
+    {
+      "source_id": "cnmi_language_policy_commission",
+      "owner_or_steward": "CNMI Chamorro-Carolinian Language Policy Commission",
+      "status": "not_requested",
+      "requested_uses": ["language_policy_alignment", "retain_approved_material", "derive_expert_summaries", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Institutional authority does not grant blanket reuse rights for commission publications.",
+      "next_action": "Request a CNMI language-policy and content partnership with named contacts, allowed uses, versions, and revocation terms."
+    },
+    {
+      "source_id": "cnmi_english_chamorro_finder_2024",
+      "owner_or_steward": "Compiler, CNMI government publisher, and revised-dictionary rights holders",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_dictionary_entries", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "The finder is derivative of the revised dictionary and must not be treated as independent corroboration.",
+      "next_action": "Confirm compiler/publisher authority, dictionary lineage, dated-version terms, attribution, and update policy."
+    },
+    {
+      "source_id": "uog_chamoru_studies_program",
+      "owner_or_steward": "University of Guam CHamoru Studies program and individual course-material authors",
+      "status": "not_requested",
+      "requested_uses": ["curriculum_alignment", "expert_review", "retain_approved_material", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Program and course descriptions may guide partnerships; individual teaching materials require author- and item-specific permission.",
+      "next_action": "Request reviewer and curriculum collaboration before requesting any specific course artifacts."
+    },
+    {
+      "source_id": "ucla_chamorro_phonetics_archive",
+      "owner_or_steward": "UCLA Phonetics Lab, recordists, speakers, and item-level rights holders",
+      "status": "provenance_unresolved",
+      "requested_uses": ["historical_research", "retain_approved_items", "serve_audio", "derive_pronunciation_notes", "model_evaluation"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Recording access does not establish speaker consent or product reuse rights; speaker, date, dialect, and recording context are incomplete.",
+      "next_action": "Obtain item-level metadata and written audio/transcript terms before any retained or learner-facing use."
+    },
+    {
+      "source_id": "kumision_learning_tools",
+      "owner_or_steward": "Kumisión i Fino' CHamoru and item creators",
+      "status": "not_requested",
+      "requested_uses": ["retain_approved_material", "display_flashcards", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Official public access does not authorize copying flashcards, artwork, or syllabary assets into HåfaGPT.",
+      "next_action": "Request a learning-material partnership covering assets, attribution, adaptations, updates, and revocation."
     }
   ]
 }

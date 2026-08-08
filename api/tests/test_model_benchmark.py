@@ -33,7 +33,7 @@ def test_benchmark_inputs_reference_existing_canonical_entries() -> None:
     catalog, cases, vocabulary = benchmark_documents()
     validate_inputs(catalog, cases, vocabulary)
 
-    assert len(catalog["models"]) == 8
+    assert len(catalog["models"]) == 23
     assert len(cases["cases"]) == 24
 
 
@@ -147,6 +147,8 @@ def test_unknown_case_accepts_normalized_contraction() -> None:
     "answer",
     (
         "The translation cannot be verified from the supplied references.",
+        "The invented word cannot be translated from the supplied reference.",
+        "I can't provide a translation because the reference has no entry.",
         "That fictional festival is not verified in the supplied material.",
         "The supplied references do not mention that claim.",
     ),
