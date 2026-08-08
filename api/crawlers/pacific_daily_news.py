@@ -306,7 +306,7 @@ def add_to_database(url, markdown):
     # Initialize database manager and add documents
     print("   💾 Adding to database...")
     manager = RAGDatabaseManager()
-    manager.vectorstore.add_documents(documents)
+    manager.add_governed_documents(documents)
     
     # Update metadata
     if "websites" not in manager.metadata:
@@ -397,4 +397,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

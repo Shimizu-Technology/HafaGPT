@@ -1,297 +1,97 @@
-# 🔄 Model Configuration Guide
+# HåfaGPT Model Configuration Guide — 2026
 
-## Quick Switch Between Local and Cloud Models
+## Current rule
 
-Your chatbot is **already compatible** with OpenAI's API! Here's how to switch:
+Do not change production by copying a model name into Render. The August 2026
+direct-model benchmark produced a shortlist, but production remains on the
+`deepseek-v3` control until blinded Chamorro review and integrated RAG gates pass.
 
----
+See:
 
-## 🚀 Quick Start
+- [Model evaluation method](MODEL_EVALUATION_2026.md)
+- [August 2026 benchmark results](MODEL_BENCHMARK_RESULTS_2026-08-05.md)
+- [Modernization roadmap](MODERNIZATION_ROADMAP_2026.md)
 
-### **Option A: Use OpenAI Cloud (Recommended for Testing)**
+## Runtime configuration today
 
-1. **Edit your `.env` file:**
-```bash
-cd /Users/leonshimizu/Actualize/practice/llm-project
-nano .env
-```
+`api/api/chatbot_service.py` owns the `MODEL_CONFIG` registry. `CHAT_MODEL` in
+`api/.env` selects an alias from that registry when the process starts.
 
-2. **Update it to:**
 ```env
-# Comment out local LM Studio
-# OPENAI_API_BASE=http://localhost:1234/v1
-# OPENAI_API_KEY=lm-studio
-
-# Add your OpenAI API key
-OPENAI_API_KEY=sk-your-actual-openai-key-here
+CHAT_MODEL=deepseek-v3
 ```
 
-3. **Edit `chamorro-chatbot-3.0.py` line 426:**
-```python
-model="gpt-4o-mini",  # Fast & cheap (~2-3 seconds, $0.001 per query)
-```
+The current control resolves to `deepseek/deepseek-chat` through OpenRouter. The
+August benchmark catalog is intentionally separate from the runtime registry: it
+allows candidates to be evaluated without silently making them production options.
 
-4. **Run the chatbot:**
-```bash
-uv run python chamorro-chatbot-3.0.py
-```
+An unknown runtime alias falls back to `gpt-4o`. That behavior should be replaced
+with fail-fast startup validation before model routing is expanded; a typo must not
+cause an unplanned provider/cost change.
 
-**Done!** You're now using OpenAI! ✅
+## Safe local benchmark
 
----
-
-### **Option B: Use Local LM Studio (Current Setup)**
-
-1. **Edit `.env`:**
-```env
-# Use local LM Studio
-OPENAI_API_BASE=http://localhost:1234/v1
-OPENAI_API_KEY=lm-studio
-```
-
-2. **Edit `chamorro-chatbot-3.0.py` line 426:**
-```python
-model="qwen2.5-coder-32b-instruct-mlx",  # Or whatever model is loaded
-```
-
-3. **Make sure LM Studio is running with your model loaded**
-
-4. **Run the chatbot:**
-```bash
-uv run python chamorro-chatbot-3.0.py
-```
-
----
-
-## 🤖 Recommended OpenAI Models
-
-### **For Daily Use: GPT-4o-mini** ⭐ BEST VALUE
-```python
-model="gpt-4o-mini"
-```
-- Speed: 2-3 seconds ⚡⚡⚡
-- Quality: 95-97% accurate
-- Cost: ~$0.001 per translation
-- Best for: Daily practice, quick translations
-
----
-
-### **For Important Translations: GPT-4o**
-```python
-model="gpt-4o"
-```
-- Speed: 3-5 seconds ⚡⚡
-- Quality: 99%+ accurate
-- Cost: ~$0.01-0.03 per translation
-- Best for: School messages, important documents
-
----
-
-### **For Maximum Quality: GPT-4-turbo**
-```python
-model="gpt-4-turbo"
-```
-- Speed: 5-10 seconds ⚡
-- Quality: 99.5%+ accurate
-- Cost: ~$0.05-0.10 per translation
-- Best for: Critical translations, legal documents
-
----
-
-## 💰 Cost Estimates
-
-### **Daily Usage Example:**
-- 10 translations per day
-- Average 200 tokens per translation
-- Model: GPT-4o-mini
-
-**Cost per day:** ~$0.01-0.02 (1-2 cents)  
-**Cost per month:** ~$0.30-0.60 (30-60 cents)
-
-### **Heavy Usage Example:**
-- 50 translations per day
-- Average 300 tokens per translation
-- Model: GPT-4o
-
-**Cost per day:** ~$0.50-1.00  
-**Cost per month:** ~$15-30
-
----
-
-## 🎯 Hybrid Strategy (Recommended)
-
-### **Best Approach: Use BOTH**
-
-#### **Local (Free, Private):**
-- Daily conversation practice
-- Learning modes
-- Vocabulary building
-- When offline
-- 95% accuracy is good enough
-
-#### **Cloud (Fast, Highest Quality):**
-- Important school messages
-- Official documents
-- When you need 99%+ accuracy
-- When you need instant responses (2-3 seconds)
-
-### **How to Switch Quickly:**
-
-Create two terminal aliases in your `~/.zshrc`:
+Keep the OpenRouter key only in ignored `api/.env` and run:
 
 ```bash
-# Add to ~/.zshrc:
-alias chatbot-local='cd ~/Actualize/practice/llm-project && OPENAI_API_BASE=http://localhost:1234/v1 OPENAI_API_KEY=lm-studio uv run python chamorro-chatbot-3.0.py'
-alias chatbot-cloud='cd ~/Actualize/practice/llm-project && uv run python chamorro-chatbot-3.0.py'
+cd api
+
+# Validate cases and current OpenRouter availability without model calls
+.venv/bin/python evaluation/model_benchmark.py --validate-only --check-catalog
+
+# Small adapter smoke
+.venv/bin/python evaluation/model_benchmark.py --limit 3 --check-catalog
+
+# Complete private matrix
+.venv/bin/python evaluation/model_benchmark.py --check-catalog
 ```
 
-Then:
+Select a subset by stable benchmark alias:
+
 ```bash
-# Use local
-chatbot-local
-
-# Use OpenAI
-chatbot-cloud
+.venv/bin/python evaluation/model_benchmark.py \
+  --models current-deepseek-v3,gpt-5.6-luna,gpt-5.6-terra,claude-sonnet-5
 ```
 
----
+Private results and the blind-review key live under ignored `evaluation/tmp/`.
 
-## 🔍 Testing OpenAI vs Local
+## Adding a production-capable candidate
 
-### **Test with the school message:**
+After a candidate clears its documented gates:
 
-1. **First, test with Local (Qwen 32B):**
-```bash
-# Make sure .env has LM Studio settings
-uv run python chamorro-chatbot-3.0.py
-```
+1. Add a stable internal alias to `MODEL_CONFIG`; do not scatter provider IDs.
+2. Record provider, exact model ID, modality support, context/output limits, data
+   handling, timeout, and cost assumptions in a decision record.
+3. Validate the configured model ID against the provider at startup and fail closed.
+4. Log the requested alias, returned model, returned provider, prompt/config hash,
+   latency, token use, finish reason, retry/fallback, and provider-reported cost—no
+   private prompt contents.
+5. Add an administrator/evaluation-only model override for integrated testing. Do
+   not accept arbitrary client-supplied provider IDs.
+6. Put selection behind a server-side feature flag with a tested control rollback.
+7. Shadow, canary, review, and only then change the default.
 
-Ask: "What does this mean? Familia, mampos uma'atdet i manglo'. Para sinafu, TA KANSELA I ESKUELAN MANAINA para lamo'na."
+## Provisional roles from the August run
 
-Note: Speed and accuracy
+| Role to validate | Candidate | Why it advanced | Still required |
+|---|---|---|---|
+| Main tutor | GPT-5.6 Terra | fast, all contracts, practical batch cost | blind review + 100-case RAG suite |
+| High-volume drills | GPT-5.6 Luna | fastest/cheapest, all contracts | blind review + drill-specific RAG suite |
+| Premium explanation | Claude Sonnet 5 | strongest citation/variant auto signal | prove human benefit justifies latency/cost |
+| Images/documents | Gemini 3.6 Flash | multimodal candidate | real vision suite and reasoning budget |
+| Control | DeepSeek V3 | current rollback baseline | integrated head-to-head comparison |
 
-2. **Then, test with OpenAI (GPT-4o-mini):**
-```bash
-# Update .env with OpenAI key
-# Change model to "gpt-4o-mini" in line 426
-uv run python chamorro-chatbot-3.0.py
-```
+GPT-5.6 Sol and both DeepSeek V4 candidates did not show an engineering advantage
+for the tested text workload. They should not consume additional rollout work unless
+new human or workload-specific evidence changes that conclusion.
 
-Ask the same question.
+## Secrets and cost controls
 
-3. **Compare:**
-- Speed difference?
-- Quality difference?
-- Worth the cost?
-
----
-
-## 📊 Expected Results
-
-### **Local (Qwen 32B):**
-```
-Response time: 37 seconds
-Translation: "Family, the wind is very strong. For safety, school is canceled..."
-Accuracy: 95%
-Cost: FREE
-```
-
-### **GPT-4o-mini:**
-```
-Response time: 2-3 seconds
-Translation: "Family, the wind is very strong. For safety, school is canceled tomorrow for now. You can still come to the office. We will inform you more and let you know what's happening. Take care. Stay safe!"
-Accuracy: 97-99%
-Cost: ~$0.001
-```
-
-### **GPT-4o:**
-```
-Response time: 3-5 seconds
-Translation: [Similar to above but potentially more nuanced]
-Accuracy: 99%+
-Cost: ~$0.01
-```
-
----
-
-## 🛠️ Troubleshooting
-
-### **Error: "Invalid API key"**
-- Check your `.env` file has the correct OpenAI key
-- Make sure it starts with `sk-`
-- Verify the key is active in your OpenAI dashboard
-
-### **Error: "Connection refused"**
-- You're trying to use local but LM Studio isn't running
-- Either start LM Studio or switch to OpenAI
-
-### **Slow responses with OpenAI**
-- Check your internet connection
-- Try switching to gpt-4o-mini (faster)
-
-### **High costs**
-- Use gpt-4o-mini instead of gpt-4o
-- Reduce max_tokens in the API call
-- Use local for practice, cloud only for important stuff
-
----
-
-## 🎯 Recommendation
-
-**Start with this test:**
-
-1. **Try GPT-4o-mini** for a day
-   - Super fast (2-3 seconds)
-   - Very cheap (~$0.001 per translation)
-   - Good quality (95-97%)
-
-2. **Compare to your Local Qwen 32B**
-   - Is the speed worth $0.001?
-   - Is the quality better?
-   - Do you prefer instant responses?
-
-3. **Decide your strategy:**
-   - **Option A:** Use GPT-4o-mini for everything (cheap, fast, good)
-   - **Option B:** Use local for practice, GPT-4o-mini for important stuff (hybrid)
-   - **Option C:** Stick with local only (free, private, good enough)
-
----
-
-## 💡 My Personal Recommendation
-
-**Use GPT-4o-mini for important translations!**
-
-**Why:**
-- 10-15x faster than local (3s vs 37s)
-- Slightly better accuracy (97% vs 95%)
-- Negligible cost ($0.30/month for daily use)
-- Instant gratification!
-
-**Keep local for:**
-- Practice and learning
-- When offline
-- Sensitive/private content
-- Long conversations (cost adds up)
-
----
-
-## 🚀 Next Steps
-
-1. **Get your OpenAI API key** from https://platform.openai.com/api-keys
-2. **Add it to `.env`**
-3. **Change model to `gpt-4o-mini` in line 426**
-4. **Test with a school message**
-5. **Compare speed and quality**
-6. **Decide your strategy!**
-
----
-
-**Questions?**
-- Check OpenAI pricing: https://openai.com/api/pricing/
-- Monitor usage: https://platform.openai.com/usage
-- Read OpenAI docs: https://platform.openai.com/docs/
-
----
-
-**Happy translating!** 🌺
-
+- Use development/provider-scoped keys with spend limits when available.
+- Never commit `.env`, paste keys into reports, or expose server keys through Vite.
+- `VITE_*` values are public by design; only publishable Clerk and public analytics
+  project values belong there.
+- Prefer OpenRouter-reported cost over catalog multiplication. DeepSeek reported
+  cost in the August run was 1.50–2.91 times the frozen catalog calculation because
+  requests were routed across many providers.
+- Never use model output as canonical Chamorro content without human approval.

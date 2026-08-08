@@ -2,6 +2,14 @@
 
 This folder contains **site-specific crawlers** for adding content to the Chamorro RAG database.
 
+> **Phase 0 containment (August 2026):** Test/preview modes remain available,
+> but database writes are denied unless a source has an explicit ingestion
+> approval and permission reference in
+> [`data/language_source_registry.json`](../data/language_source_registry.json).
+> A successful extraction is not approval to store or teach from the content.
+> See the [language resource program](../documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md)
+> before using these tools.
+
 Each website has unique formatting, navigation, and content structure. These crawlers are **custom-built** to extract clean, high-quality content from specific sites.
 
 ---
@@ -39,11 +47,11 @@ uv run python crawlers/pacific_daily_news.py "<URL>"
 
 ## 📁 Available Crawlers
 
-| Crawler | Site | Content Type | Priority |
-|---------|------|--------------|----------|
-| `pacific_daily_news.py` | guampdn.com | Bilingual opinion columns | 110 (Highest) |
-| `iknm_kam_dictionary.py` | natibunmarianas.org | Revised Chamorro-English Dictionary (2025) | 105 |
-| *(Generic)* | Any site | `../src/crawlers/crawl_website.py` | Varies |
+| Crawler | Site | Content Type | Current ingestion status |
+|---------|------|--------------|--------------------------|
+| `pacific_daily_news.py` | guampdn.com | Bilingual opinion columns | Blocked pending permission |
+| `iknm_kam_dictionary.py` | natibunmarianas.org | Revised Chamorro-English Dictionary | Blocked pending agreement |
+| *(Generic)* | Any site | `../src/crawlers/crawl_website.py` | Denied unless registered and approved |
 
 ### IKNM/KAM Dictionary Crawler
 
@@ -254,4 +262,3 @@ uv run python crawlers/pacific_daily_news.py "<URL>"
 **Happy crawling!** 🌺
 
 For questions or improvements, update this README or `SOURCES.md`.
-

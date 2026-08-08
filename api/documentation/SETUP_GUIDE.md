@@ -4,77 +4,29 @@
 
 ---
 
-## 🔑 Step 0: Get Credentials From Your Team Lead
+## 🔑 Step 0: Get Development Credentials Securely
 
-**Before you start**, ask your team lead for these credentials:
+Use the team's password manager or provider access. Do not move secrets through
+chat, email, screenshots, documentation, or Git.
 
 | Credential | What It's For |
 |------------|---------------|
-| `DATABASE_URL` | PostgreSQL database connection |
-| `CLERK_SECRET_KEY` | Backend authentication |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Frontend authentication |
+| `DATABASE_URL` | Local PostgreSQL + pgvector (`postgresql://localhost/chamorro_rag`) |
+| `CLERK_SECRET_KEY` | HåfaGPT **Development** instance backend authentication |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Matching HåfaGPT **Development** publishable key |
 | `OPENAI_API_KEY` | AI embeddings |
-| `OPENROUTER_API_KEY` | AI chat (DeepSeek) |
+| `OPENROUTER_API_KEY` | AI chat and private model evaluation |
 
-> 💡 **Tip:** Your team lead will share these via Slack DM or a secure password manager. Keep them private!
+Production Clerk credentials and the production database are not needed for normal
+development or model testing.
 
-### ❓ Do I Need to Create My Own Accounts?
+### Development boundaries
 
-**No!** You'll use the team's shared credentials for development:
-
-| Service | Create your own? | Why |
-|---------|------------------|-----|
-| OpenAI | ❌ No | Uses team's API key (costs money) |
-| OpenRouter | ❌ No | Uses team's API key |
-| Clerk | ❌ No | Uses team's project (you'll be added) |
-| AWS S3 | ❌ No | Optional, uses team's bucket |
-
-The only account you'll create is a **user account in the app itself** (like any normal user would).
-
-### 🌐 Understanding the Shared Development Environment
-
-Unlike Rails where each developer runs `rails db:create` for their own local database, we use a **shared cloud-based development environment**:
-
-```
-┌─────────────────────────────────────────┐
-│     Shared Clerk (Authentication)       │
-│  • All devs see the same user accounts  │
-│  • Your test account = visible to team  │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│   Shared Neon PostgreSQL (Dev Branch)   │
-│  • Separate from production database    │
-│  • All devs see the same conversations  │
-│  • Quiz results, game scores, etc.      │
-│  • Includes RAG knowledge base (45K+)   │
-└─────────────────────────────────────────┘
-```
-
-**How it differs from Rails:**
-
-| Rails (what you know) | HåfaGPT (what we do) |
-|-----------------------|----------------------|
-| `rails db:create` locally | Shared cloud database |
-| Each dev has own users | All devs share users |
-| `rails db:seed` for test data | RAG data already in shared DB |
-| Complete isolation | Shared development environment |
-
-**What this means for you:**
-- ✅ You can see other developers' test data (and they can see yours)
-- ✅ Your team lead can help debug your issues
-- ✅ No complex setup - everyone uses the same credentials
-- ✅ RAG/AI features work immediately (no need to seed 45,000+ chunks)
-- ⚠️ Don't put sensitive personal info in test data
-- ⚠️ The dev database is **separate from production** - you can't break real users
-
-**Why it's set up this way:**
-- Simpler onboarding (no per-developer infrastructure)
-- RAG knowledge base is huge (~45,000 chunks) - impractical to seed locally
-- Easier collaboration and debugging
-- Consistent test environment for the whole team
-
-> 📋 **Future:** We plan to add a local PostgreSQL option for developers who want full isolation. See IMPROVEMENT_GUIDE.md.
+- Use the Clerk Development instance; local test accounts are not production users.
+- Use the local `chamorro_rag` database for conversations, progress, and retrieval.
+- Do not copy production user data into the local database.
+- Treat AI, S3, and analytics keys as billable credentials even in development.
+- Use separate provider keys with spend limits when the provider supports them.
 
 ---
 
@@ -84,9 +36,11 @@ Make sure you have these installed:
 
 | Tool | Version | Check Command | Install Guide |
 |------|---------|---------------|---------------|
-| **Node.js** | 18+ | `node --version` | [nodejs.org](https://nodejs.org) |
+| **Node.js** | 20+ | `node --version` | [nodejs.org](https://nodejs.org) |
 | **Python** | 3.12+ | `python --version` | [python.org](https://python.org) |
 | **Git** | Any | `git --version` | [git-scm.com](https://git-scm.com) |
+| **PostgreSQL** | 16+ | `psql --version` | [postgresql.org](https://postgresql.org) |
+| **pgvector** | database-compatible | `SELECT extversion FROM pg_extension WHERE extname='vector';` | [pgvector](https://github.com/pgvector/pgvector) |
 
 ---
 
@@ -132,7 +86,7 @@ cp .env.example .env
 Now open `.env` in your editor and fill in the credentials from Step 0:
 
 ```env
-DATABASE_URL=<paste from team lead>
+DATABASE_URL=postgresql://localhost/chamorro_rag
 OPENAI_API_KEY=<paste from team lead>
 OPENROUTER_API_KEY=<paste from team lead>
 CLERK_SECRET_KEY=<paste from team lead>
@@ -142,7 +96,19 @@ CHAT_MODEL=deepseek-v3
 EMBEDDING_MODE=openai
 ```
 
-### 2.3 Test the backend
+### 2.3 Verify the local RAG database
+
+```bash
+psql -d chamorro_rag -c "SELECT COUNT(*) FROM langchain_pg_embedding;"
+psql -d chamorro_rag -c "SELECT '[1,2,3]'::vector <=> '[1,2,4]'::vector;"
+```
+
+If PostgreSQL reports that `$libdir/vector` is missing, the installed pgvector
+bottle was built for a different PostgreSQL major version. Install/build pgvector
+against the `pg_config` belonging to the running server; do not point local testing
+at production as a workaround.
+
+### 2.4 Test the backend
 
 ```bash
 uv run uvicorn api.main:app --reload --port 8000
@@ -279,8 +245,10 @@ VITE_API_URL=http://localhost:8000
 
 ### Backend won't start / Database error
 
-1. Verify your `DATABASE_URL` is correct
-2. Ask team lead if the database is up
+1. Verify `DATABASE_URL=postgresql://localhost/chamorro_rag`.
+2. Confirm the PostgreSQL service is running.
+3. Run both verification queries from Step 2.3.
+4. Confirm pgvector was built for the same PostgreSQL major version.
 
 ### "Admin access denied"
 

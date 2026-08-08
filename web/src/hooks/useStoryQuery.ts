@@ -49,6 +49,13 @@ export interface AvailableStoriesResponse {
   stories: AvailableStory[];
   total: number;
   by_category: Record<string, AvailableStory[]>;
+  availability: {
+    status: 'available' | 'permission_required';
+    enabled: boolean;
+    sourceName: string;
+    sourceUrl: string;
+    message: string;
+  };
 }
 
 // Hook to get list of available stories (pre-extracted)

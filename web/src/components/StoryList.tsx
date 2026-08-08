@@ -1,20 +1,45 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Clock, FileText, Sparkles, Loader2, ExternalLink, CheckCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  Clock,
+  ExternalLink,
+  FileText,
+  HelpCircle,
+  Landmark,
+  Library,
+  Loader2,
+  LockKeyhole,
+  Music2,
+  ShieldCheck,
+  Sparkles,
+  Theater,
+  Waves,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { STORY_CATEGORIES, getStoryCount } from '../data/storyData';
 import { useAvailableStories, AvailableStory } from '../hooks/useStoryQuery';
 
 type StoryMode = 'curated' | 'lengguahita';
 
 // Category icons
-const CATEGORY_ICONS: Record<string, string> = {
-  story: '📖',
-  lesson: '📚',
-  legend: '👻',
-  folklore: '🌺',
-  cultural: '🎭',
-  song: '🎵',
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  story: BookOpen,
+  lesson: Library,
+  legend: Landmark,
+  folklore: Waves,
+  cultural: Theater,
+  song: Music2,
+  beginner: BookOpen,
+  intermediate: Library,
+  advanced: Landmark,
 };
+
+function StoryCategoryIcon({ category, className = 'w-5 h-5' }: { category: string; className?: string }) {
+  const Icon = CATEGORY_ICONS[category] || BookOpen;
+  return <Icon className={className} aria-hidden="true" />;
+}
 
 // Category labels
 const CATEGORY_LABELS: Record<string, string> = {
@@ -39,8 +64,8 @@ export function StoryList() {
   
   // Fetch pre-extracted stories from Lengguahi-ta
   const { data: lengguahitaData, isLoading } = useAvailableStories();
-  const lengguahitaStories = lengguahitaData?.stories || [];
   const byCategory = lengguahitaData?.by_category || {};
+  const externalAvailability = lengguahitaData?.availability;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
@@ -62,7 +87,7 @@ export function StoryList() {
                 Chamorro Stories
               </h1>
               <p className="text-xs text-brown-500 dark:text-gray-400">
-                {mode === 'curated' ? totalCuratedStories : lengguahitaStories.length} stories • Tap words to translate
+                {mode === 'curated' ? `${totalCuratedStories} stories • Tap words to translate` : 'Original source access'}
               </p>
             </div>
           </div>
@@ -93,7 +118,7 @@ export function StoryList() {
             }`}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Lengguahi-ta ({lengguahitaStories.length})</span>
+            <span>External source</span>
           </button>
         </div>
 
@@ -104,7 +129,13 @@ export function StoryList() {
             : 'bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border-teal-200/50 dark:border-teal-700/30'
         }`}>
           <div className="flex items-start gap-4">
-            <div className="text-4xl">{mode === 'curated' ? '📖' : '🌊'}</div>
+            <div className={`p-2.5 rounded-xl ${mode === 'curated' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-teal-100 dark:bg-teal-900/30'}`}>
+              {mode === 'curated' ? (
+                <BookOpen className="w-6 h-6 text-amber-700 dark:text-amber-300" aria-hidden="true" />
+              ) : (
+                <LockKeyhole className="w-6 h-6 text-teal-700 dark:text-teal-300" aria-hidden="true" />
+              )}
+            </div>
             <div>
               <h2 className="font-bold text-brown-800 dark:text-white mb-1">
                 {mode === 'curated' ? 'Learn by Reading' : 'Stories from Lengguahi-ta'}
@@ -117,10 +148,8 @@ export function StoryList() {
                   </>
                 ) : (
                   <>
-                    Full stories from <span className="font-semibold text-teal-600 dark:text-teal-400">Lengguahi-ta</span> with 
-                    Chamorro text and English translations. <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
-                      <CheckCircle className="w-3 h-3" /> Instant loading!
-                    </span>
+                    <span className="font-semibold text-teal-600 dark:text-teal-400">Lengguahi-ta</span> is an independent Chamorro learning resource.
+                    HåfaGPT links to the original while copied stories are disabled pending written reuse permission and attribution review.
                   </>
                 )}
               </p>
@@ -135,7 +164,9 @@ export function StoryList() {
               <div key={category.id} className="space-y-3">
                 {/* Category Header */}
                 <div className="flex items-center gap-2 px-1">
-                  <span className="text-2xl">{category.icon}</span>
+                  <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300">
+                    <StoryCategoryIcon category={category.id} />
+                  </div>
                   <div>
                     <h3 className="font-bold text-brown-800 dark:text-white">
                       {category.title}
@@ -157,7 +188,7 @@ export function StoryList() {
                       <div className="flex items-start gap-4">
                         {/* Story Icon */}
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
-                          {story.icon}
+                          <StoryCategoryIcon category={category.id} className="w-6 h-6 text-amber-700 dark:text-amber-300" />
                         </div>
 
                         {/* Story Info */}
@@ -193,7 +224,8 @@ export function StoryList() {
                               {story.wordCount} words
                             </span>
                             <span className="flex items-center gap-1">
-                              ❓ {story.questions.length} questions
+                              <HelpCircle className="w-3 h-3" aria-hidden="true" />
+                              {story.questions.length} questions
                             </span>
                           </div>
                         </div>
@@ -214,12 +246,14 @@ export function StoryList() {
                 <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
                 <span className="ml-3 text-brown-600 dark:text-gray-400">Loading stories...</span>
               </div>
-            ) : Object.keys(byCategory).length > 0 ? (
+            ) : externalAvailability?.enabled && Object.keys(byCategory).length > 0 ? (
               Object.entries(byCategory).map(([category, stories]) => (
                 <div key={category} className="space-y-3">
                   {/* Category Header */}
                   <div className="flex items-center gap-2 px-1">
-                    <span className="text-2xl">{CATEGORY_ICONS[category] || '📖'}</span>
+                    <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
+                      <StoryCategoryIcon category={category} />
+                    </div>
                     <div>
                       <h3 className="font-bold text-brown-800 dark:text-white">
                         {CATEGORY_LABELS[category] || category}
@@ -241,7 +275,7 @@ export function StoryList() {
                         <div className="flex items-start gap-4">
                           {/* Story Icon */}
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
-                            {CATEGORY_ICONS[story.category] || '📖'}
+                            <StoryCategoryIcon category={story.category} className="w-6 h-6 text-teal-700 dark:text-teal-300" />
                           </div>
 
                           {/* Story Info */}
@@ -289,8 +323,21 @@ export function StoryList() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-12">
-                <p className="text-brown-600 dark:text-gray-400">No stories available</p>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-teal-200 dark:border-teal-800 p-6 text-center">
+                <LockKeyhole className="w-8 h-8 mx-auto mb-3 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                <h3 className="font-semibold text-brown-800 dark:text-white mb-2">Original stories are available on Lengguahi-ta</h3>
+                <p className="text-sm text-brown-600 dark:text-gray-400 max-w-xl mx-auto mb-4">
+                  {externalAvailability?.message || 'Copied story content is unavailable while HåfaGPT confirms reuse permission and attribution.'}
+                </p>
+                <a
+                  href={externalAvailability?.sourceUrl || 'https://lengguahita.com/resources/'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 rounded-full bg-teal-700 text-white font-medium hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 transition-colors"
+                >
+                  Visit Lengguahi-ta
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                </a>
               </div>
             )}
           </>
@@ -299,7 +346,11 @@ export function StoryList() {
         {/* Info Card */}
         <div className="bg-gradient-to-r from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-700 rounded-xl p-5 border border-cream-300 dark:border-slate-600">
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-xl">{mode === 'curated' ? '✨' : '🌺'}</span>
+            {mode === 'curated' ? (
+              <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            ) : (
+              <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            )}
             <h3 className="font-semibold text-brown-800 dark:text-white">
               {mode === 'curated' ? 'More Stories Coming!' : 'About Lengguahi-ta Stories'}
             </h3>
@@ -309,8 +360,7 @@ export function StoryList() {
               'We\'re adding more Chamorro legends, cultural stories, and beginner-friendly tales. Check back soon for new content!'
             ) : (
               <>
-                These stories are sourced from <a href="https://lengguahita.com" target="_blank" rel="noopener noreferrer" className="text-teal-600 dark:text-teal-400 hover:underline">Lengguahi-ta</a>, 
-                an excellent resource for Chamorro language learning. Please visit their website to support their work!
+                HåfaGPT currently links to <a href="https://lengguahita.com/resources/" target="_blank" rel="noopener noreferrer" className="text-teal-600 dark:text-teal-400 hover:underline">Lengguahi-ta</a> instead of reproducing its stories. Full-text access can return after written permission and attribution review are recorded.
               </>
             )}
           </p>

@@ -14,11 +14,11 @@ Phase 1 inventories user-facing language content from:
 ## Summary counts
 
 - Dictionary normalized headwords indexed: 14984
-- Content items inventoried: 2165
-- By source repo: {'api': 1422, 'frontend': 743}
-- By source kind: {'api_json_language_content': 1422, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 100}
-- By match status: {'exact_dictionary_key': 1860, 'near_dictionary_key': 39, 'not_found_in_local_dictionaries': 99, 'phrase_or_sentence_not_directly_indexed': 167}
-- By risk: {'low': 1815, 'medium': 183, 'review': 167}
+- Content items inventoried: 2172
+- By source repo: {'api': 1428, 'frontend': 744}
+- By source kind: {'api_json_language_content': 1428, 'chamorro_english_object': 416, 'flashcard_front_back': 227, 'quiz_question_answer': 101}
+- By match status: {'exact_dictionary_key': 1863, 'near_dictionary_key': 39, 'not_found_in_local_dictionaries': 101, 'phrase_or_sentence_not_directly_indexed': 169}
+- By risk: {'low': 1818, 'medium': 185, 'review': 169}
 
 ## Immediate high-confidence concerns
 
@@ -33,7 +33,7 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Bunitu` → `Beautiful / Handsome` (adjectives, frontend:src/data/defaultFlashcards.ts:902) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
 - `Talanga` → `Ears` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; talanga (revised_and_updated_chamorro_dictionary.json): ear
 - `Åtadok` → `Eyes` (body_parts, api:audio_generation/manifest.json) — exact_dictionary_key; åtadok (chamoru_info_dictionary.json): Eye; eyeball.
-- `Kao guåha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:457) — near_dictionary_key; close: káguaha
+- `Kao guaha?` → `Is there? / Do you have?` (common_phrases, frontend:src/data/defaultFlashcards.ts:457) — near_dictionary_key; close: káguaha
 - `Ti siña` → `Cannot / Not possible` (common_phrases, frontend:src/data/defaultFlashcards.ts:463) — not_found_in_local_dictionaries; none
 - `Inafa'maolek` → `To make peace / Interdependence` (culture, frontend:src/data/dailyWords.ts:680) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
 - `Inafa'maolek` → `Harmony / Getting along` (culture, frontend:src/data/defaultFlashcards.ts:1478) — near_dictionary_key; close: na'afa'maolek, ináfa'måolik, afa'maolek
@@ -47,14 +47,15 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Bunitu` → `Beautiful / Handsome` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; bunitu (revised_and_updated_chamorro_dictionary.json): type of fish: bonito, white tuna
 - `Eskåpa` → `Leave / Get out` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; eskåpa (revised_and_updated_chamorro_dictionary.json): escape, avoid, evade, elude
 - `Gollai` → `Vegetables` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; gollai (revised_and_updated_chamorro_dictionary.json): vegetable  (generic)
-- `Hu fåhan` → `I speak / I say` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
+- `Hu fåhan` → `I buy / I purchase` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu gimen` → `I drink` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu guaiya` → `I love` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu hungok` → `I hear / I heard` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu hånao` → `I go / I went` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Hu nisisita` → `I need` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
+- `Hu sångan` → `I say / I tell / I speak` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Håyi` → `Whose` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; håyi (revised_and_updated_chamorro_dictionary.json): who?  (interrogative pronoun)
-- `Kao guåha?` → `Is there? / Do you have?` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: káguaha
+- `Kao guaha?` → `Is there? / Do you have?` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: káguaha
 - `Kåmbiyu` → `Change (money)` (flashcards, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 - `Mårso` → `March` (flashcards, api:audio_generation/manifest.json) — near_dictionary_key; close: måso'
 - `Nana` → `Mother / Mom` (flashcards, api:audio_generation/manifest.json) — exact_dictionary_key; nå'na' (revised_and_updated_chamorro_dictionary.json): hide (something)
@@ -79,7 +80,6 @@ Medium-risk findings need review, but many may be valid spelling variants, borro
 - `Mårso` → `March` (months, frontend:src/data/defaultFlashcards.ts:822) — near_dictionary_key; close: måso'
 - `Septiembre` → `September` (months, frontend:src/data/defaultFlashcards.ts:858) — near_dictionary_key; close: Septembre
 - `Pilan` → `Moon` (nature, api:audio_generation/manifest.json) — near_dictionary_key; close: pila
-- `Trongkon niyok` → `Palm tree` (nature, api:audio_generation/manifest.json) — not_found_in_local_dictionaries; none
 
 ## Phase 1 interpretation
 
@@ -87,9 +87,9 @@ The clearest initial content drift was in the color vocabulary. Follow-up passes
 
 The old high-risk beginner drift has now been removed from core beginner surfaces and from active static-audio lookup:
 
-- Color drift such as `Såksan` for brown, `Lalala` for orange, `Å'tot` for black, `Gris` for gray, and unsupported pink/brown/orange display variants has been replaced by source-backed canonical terms; bare `Lila` is now documented as source-backed while `Kulot lila` remains the beginner color phrase.
+- Color drift such as `Såksan` for brown, `Lalala` for orange, `Å'tot` for black, `Gris` for gray, and bare/review-needed pink/purple/brown/orange variants has been replaced by source-backed canonical terms.
 - Number drift such as `Uno`, `Kuåttro`, `Sinku`/`Singko`, `Siette`, and `Nuebe` has been replaced by source-backed terms: `Unu`, `Kuåtro`, `Sinko`, `Siete`, and `Nuebi`.
-- Greeting/basic drift such as `Bula` taught as goodbye and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces. `Mañana si Yu'os` is no longer treated as wrong; it is externally attested by Visit Guam as a Good Morning phrase and is documented as a common/tourism variant pending teacher review.
+- Greeting/basic drift such as `Bula` taught as goodbye, `Mañana si Yu'os` taught as good morning, and `Buenas yan hågu` taught as hello has been removed from core teaching/audio surfaces.
 - Family drift such as `Nana`/`Tata`/`Lahi`/`Haga`, combined `Prima / Primu`, and `Tiu`/`Tia` as primary beginner display has been replaced with reviewed canonical entries while source-backed variants remain documented.
 - Body-part drift such as `Ulo` for head, `Kanai` for hand, `Tata'ao` for stomach, and primary beginner `Mata` for eye has been replaced or deferred with source-backed canonical entries and review notes.
 - Food/drink drift such as `Kånno'` taught as the food noun, `Månha` taught as chicken, `Kådu` taught as soup, `Lechuga` taught as vegetables, unsupported `Buen prubechu` as a meal phrase, and truncated Wordle food forms has been corrected or documented with source-backed terms.

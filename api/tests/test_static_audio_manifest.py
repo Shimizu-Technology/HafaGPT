@@ -22,6 +22,19 @@ def test_current_static_audio_manifest_is_internally_valid():
     assert findings == []
 
 
+def test_manifest_defaults_unreviewed_audio_to_synthetic_native_review_pending():
+    api_root = Path(__file__).resolve().parents[1]
+    manifest = load_manifest(api_root / "audio_generation" / "manifest.json")
+    disclosure = manifest["audio_disclosure"]
+
+    assert disclosure["default_origin"] == "synthetic_ai"
+    assert disclosure["default_review_status"] == "needs_native_review"
+    assert not any(
+        entry.get("review_status") == "approved"
+        for entry in manifest["words"].values()
+    )
+
+
 def test_static_audio_manifest_has_required_basics_and_no_stale_teaching_keys():
     api_root = Path(__file__).resolve().parents[1]
     manifest = load_manifest(api_root / "audio_generation" / "manifest.json")

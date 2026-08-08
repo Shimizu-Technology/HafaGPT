@@ -9,6 +9,14 @@ import time
 from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 
+from src.rag.source_policy import (
+    annotate_metadata,
+    get_registered_source,
+    is_retrieval_allowed,
+    sources_explicitly_mentioned,
+    source_weight,
+)
+
 
 def normalize_chamorro_text(text: str) -> str:
     """
@@ -56,19 +64,41 @@ def normalize_chamorro_text(text: str) -> str:
 
 def detect_query_type(query: str) -> str:
     """
-    Detect if query is educational (wants to learn) or lookup (wants definition).
-    
-    Educational queries benefit from lessons, stories, and contextual examples.
-    Lookup queries are best served by dictionary definitions.
+    Classify the evidence role needed for a query.
+
+    The source registry uses this value to decide whether a source may be
+    retrieved. Lookup and educational questions favor governed language
+    references; usage, cultural, and historical questions may opt into the
+    narrower sources registered for those roles.
     
     Args:
         query: User's question
         
     Returns:
-        'educational': User wants to learn/understand (prioritize lessons)
-        'lookup': User wants definition/translation (allow dictionary)
+        One of: lookup, educational, usage, cultural, or historical.
     """
     query_lower = query.lower()
+
+    historical_keywords = [
+        'historical', 'historically', 'old chamorro', 'older chamorro',
+        'etymology', 'etymological', 'word origin', 'in 1865',
+    ]
+    if any(keyword in query_lower for keyword in historical_keywords):
+        return 'historical'
+
+    cultural_keywords = [
+        'culture', 'cultural', 'custom', 'tradition', 'traditional',
+        'history of guam', 'legend', 'folklore', 'values',
+    ]
+    if any(keyword in query_lower for keyword in cultural_keywords):
+        return 'cultural'
+
+    usage_keywords = [
+        'use in a sentence', 'used in a sentence', 'example sentence',
+        'in context', 'who writes', 'newspaper', 'article', 'real-world use',
+    ]
+    if any(keyword in query_lower for keyword in usage_keywords):
+        return 'usage'
     
     # PRIORITY 1: Translation/lookup patterns take precedence
     # These are lookups even if they contain "how do i"
@@ -94,7 +124,7 @@ def detect_query_type(query: str) -> str:
         'teach me', 'show me', 'explain', 'learn',
         'lesson', 'grammar', 'conjugate', 'conjugation',
         'story', 'stories', 'tell me a', 'tell me about',
-        'example', 'examples', 'use in a sentence',
+        'example', 'examples',
         'practice', 'exercise', 'form sentences',
         'word order', 'sentence structure',
         'speak', 'conversation', 'talk about'
@@ -196,9 +226,6 @@ class ChamorroRAG:
         
         # Get database URL from environment
         import os
-        from dotenv import load_dotenv
-        load_dotenv()
-        
         connection = os.getenv("DATABASE_URL", connection)
         
         # Store connection string for reconnection
@@ -356,8 +383,8 @@ class ChamorroRAG:
                         END as priority
                     FROM langchain_pg_embedding 
                     WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
-                           OR cmetadata->>'source' LIKE '%%TOD%%'
-                           OR cmetadata->>'source' LIKE '%%supplemental%%')
+                           OR cmetadata->>'source' LIKE '%%TOD%%')
+                    AND cmetadata->>'source' NOT ILIKE '%%supplemental%%'
                     AND (
                         document ILIKE %s
                         OR document ILIKE %s
@@ -397,7 +424,12 @@ class ChamorroRAG:
                         # Word must appear in first few lines (headword/definition area, not examples)
                         if target_lower in first_lines:
                             seen_content.add(content)
-                            docs.append(Document(page_content=content, metadata=metadata))
+                            if not is_retrieval_allowed(metadata, "lookup"):
+                                continue
+                            docs.append(Document(
+                                page_content=content,
+                                metadata=annotate_metadata(metadata),
+                            ))
                             
                             if len(docs) >= k:
                                 break
@@ -429,11 +461,15 @@ class ChamorroRAG:
                 content = doc.page_content.lower()
                 
                 # Must be from a dictionary
-                if not any(dict_name in source for dict_name in ['dictionary', 'TOD', 'chamoru_info', 'supplemental']):
+                if not any(dict_name in source for dict_name in ['dictionary', 'tod', 'chamoru_info']):
+                    continue
+
+                if not is_retrieval_allowed(doc.metadata, "lookup"):
                     continue
                 
                 # Must contain the target word
                 if target_lower in content:
+                    doc.metadata = annotate_metadata(doc.metadata)
                     dict_results.append(doc)
                     if len(dict_results) >= k:
                         break
@@ -507,8 +543,8 @@ class ChamorroRAG:
                     FROM langchain_pg_embedding 
                     WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
                            OR cmetadata->>'source' LIKE '%%TOD%%'
-                           OR cmetadata->>'source' LIKE '%%chamoru_info%%'
-                           OR cmetadata->>'source' LIKE '%%supplemental%%')
+                           OR cmetadata->>'source' LIKE '%%chamoru_info%%')
+                    AND cmetadata->>'source' NOT ILIKE '%%supplemental%%'
                     AND document ~* %s
                     ORDER BY priority ASC, LENGTH(document) ASC
                     LIMIT %s
@@ -554,7 +590,12 @@ class ChamorroRAG:
                             # Check for word boundary match in definition
                             if re.search(rf'(^|[^a-z]){target_lower}([^a-z]|$)', definition_area):
                                 seen_words.add(chamorro_word)
-                                docs.append(Document(page_content=content, metadata=metadata))
+                                if not is_retrieval_allowed(metadata, "lookup"):
+                                    continue
+                                docs.append(Document(
+                                    page_content=content,
+                                    metadata=annotate_metadata(metadata),
+                                ))
                                 
                                 if len(docs) >= k:
                                     break
@@ -610,11 +651,14 @@ class ChamorroRAG:
         for word in contaminating_words:
             clean_query = clean_query.replace(word, '').strip()
         
-        # Normalize query for better matching (handles accents, glottal stops, etc.)
-        normalized_query = normalize_chamorro_text(query)
-        
         # Stage 0: PHASE 3 - Try keyword search for word translations first!
         query_type = detect_query_type(query)
+        if card_type == 'words':
+            query_type = 'lookup'
+        elif card_type in ['phrases', 'common-phrases', 'numbers']:
+            query_type = 'educational'
+        elif card_type == 'cultural':
+            query_type = 'cultural'
         
         if query_type == 'lookup':
             # Try to extract the target word
@@ -651,150 +695,39 @@ class ChamorroRAG:
                         # Found Chamorro translations! Return them directly
                         return [(doc.page_content, doc.metadata) for doc in eng_to_cham_results]
         
-        # Stage 1: Keyword-based retrieval for specific content (greetings, etc.)
-        keyword_results = []
-        
-        # Common greetings - retrieve greeting table
-        # Include normalized versions so "manana si yuos" matches "Mañana si Yu'os"
-        greeting_keywords = [
-            # All variations normalized for matching
-            normalize_chamorro_text('mañana'), 
-            normalize_chamorro_text('manana'),
-            normalize_chamorro_text('håfa adai'), 
-            normalize_chamorro_text('hafa adai'),
-            normalize_chamorro_text('si yuos'), 
-            normalize_chamorro_text("si yu'os"),
-            'good morning', 
-            'good afternoon', 
-            'goodbye', 
-            'thank you', 
-            'greeting', 
-            'greet'
-        ]
-        
-        # Use normalized query for keyword matching
-        if any(keyword in normalized_query for keyword in greeting_keywords):
-            # Search specifically for Visit Guam greetings page
-            greeting_results = self.vectorstore.similarity_search(
-                "Chamorro greetings good morning Manana Si Yu'os table", 
-                k=20
-            )
-            # Filter for Visit Guam
-            for doc in greeting_results:
-                if 'visitguam.com' in doc.metadata.get('source', '').lower():
-                    keyword_results.append(doc)
-                    break  # Only need one chunk from greetings table
-        
-        # Stage 2: Semantic search with expanded results for filtering
-        # PHASE 1 FIX: Use clean_query (without "Chamorro") and increase k
-        # Search with clean query to avoid contamination, get more candidates for better ranking
+        # A named source gets its own candidate lane. This prevents a small source
+        # family from disappearing behind the much larger dictionary crawl while
+        # still enforcing the registry's query-role restrictions.
         search_query = clean_query if clean_query else query
-        results = self.vectorstore.similarity_search(search_query, k=k*10)  # Get more candidates
+        targeted_results = []
+        for source_entry in sources_explicitly_mentioned(query, query_type):
+            for source_pattern in source_entry["match"].get("source_contains", []):
+                targeted_results.extend(
+                    self.vectorstore.similarity_search(
+                        search_query,
+                        k=max(k * 2, 10),
+                        filter={"source": {"$ilike": f"%{source_pattern}%"}},
+                    )
+                )
+
+        # Semantic search gets extra candidates because blocked, role-ineligible,
+        # and exact-duplicate chunks are removed before ranking.
+        results = targeted_results + self.vectorstore.similarity_search(search_query, k=k*20)
         
-        # Score and rerank
+        # The source registry replaces the old global era-priority boosts. A
+        # newspaper, tourism page, or cultural source can no longer outrank a
+        # dictionary merely because it was assigned a larger integer.
         scored_results = []
-        
-        # Add keyword results first with highest scores
-        for doc in keyword_results:
-            scored_results.append((doc, 1000))  # Very high score for keyword matches
-        
-        # Add semantic search results with SMART BOOSTING (Option A + B)
-        for doc in results:
-            # Skip if already added from keyword search
-            if doc in keyword_results:
+        seen_content: set[str] = set()
+        for index, doc in enumerate(results):
+            if doc.page_content in seen_content:
                 continue
-                
-            source = doc.metadata.get('source', '').lower()
-            source_type = doc.metadata.get('source_type', '')
-            
-            # Base score (similarity is already factored in by order)
-            score = 100 - len(scored_results)
-            
-            # PRIMARY BOOST: Use era metadata if available
-            era_priority = doc.metadata.get('era_priority', 0)
-            if era_priority > 0:
-                # OPTION A: Exponential boost for educational content
-                if era_priority >= 110:  # Lengguahi-ta lessons/stories (priority 110-115)
-                    score = score * 3 + era_priority  # 3x multiplier + priority bonus
-                elif era_priority >= 100:  # Guampedia, grammar books (priority 100-105)
-                    score = score * 2 + era_priority  # 2x multiplier + priority bonus
-                else:
-                    score += era_priority  # Normal additive boost for lower priorities
-            else:
-                # Fallback to source-based boosting if era not set
-                if 'guampdn.com' in source:
-                    score += 110  # Pacific Daily News - bilingual modern articles (HIGHEST PRIORITY!)
-                elif 'chamoru.info/language-lessons' in source:
-                    score += 100  # Modern lessons
-                elif 'visitguam.com' in source:
-                    score += 95  # Visit Guam
-                elif 'chamoru.info/dictionary' in source and 'action=view' in source:
-                    score += 50  # Modern dictionary
-                elif 'chamorro_grammar_dr._sandra_chung' in source:
-                    score += 15  # Contemporary
-                elif 'revised-chamorro-dictionary' in source:
-                    score += 5  # Contemporary
-                elif 'rosettaproject' in source:
-                    score -= 40  # Archival
-                elif '1865' in source or 'cu31924026914501' in source:
-                    score -= 50  # Archival
-            
-            # OPTION B: Query-based additional boosting/filtering
-            if query_type == 'lookup':
-                # WORD TRANSLATION QUERY → Massively boost dictionaries!
-                # PHASE 1 FIX: Increased boost from 5x to 10x for English→Chamorro lookups
-                if 'dictionary' in source or 'TOD' in source or 'Revised' in source or 'chamoru_info' in source:
-                    score = score * 10.0  # 10x boost for dictionaries on word lookups!
-                # Penalize blogs/articles for single-word translations
-                elif 'lengguahita.com' in source or 'guampedia.com' in source or 'visitguam.com' in source:
-                    score = score * 0.2  # 80% penalty - these are contextual, not definitional
-            elif query_type == 'educational':
-                # Further boost educational sources for educational queries
-                if source_type in ['lengguahita', 'guampedia'] or era_priority >= 100:
-                    score = score * 1.5  # Additional 50% boost for educational queries
-                # Penalize pure dictionary for "how to" questions
-                elif era_priority < 100 and 'dictionary' in source:
-                    score = score * 0.5  # 50% penalty - user wants to learn, not just look up
-            
-            # FLASHCARD PRIORITIZATION: Card-type specific source boost
-            if card_type:
-                if card_type == 'words':
-                    # Word flashcards → Prioritize dictionaries
-                    if 'dictionary' in source or 'TOD' in source or 'Revised' in source:
-                        score = score * 2.0  # 2x boost for dictionaries
-                    # Penalize lessons for word-only queries
-                    elif era_priority >= 110:  # Lengguahi-ta lessons
-                        score = score * 0.7
-                
-                elif card_type in ['phrases', 'common-phrases']:
-                    # Phrase flashcards → Prioritize lessons and conversational content
-                    if era_priority >= 110 or source_type == 'lengguahita':  # Lessons
-                        score = score * 2.5  # 2.5x boost for lessons
-                    elif 'Blog' in source:  # Blog conversational content
-                        score = score * 2.0
-                    # Penalize dictionary definitions for phrases
-                    elif 'dictionary' in source:
-                        score = score * 0.5
-                
-                elif card_type == 'numbers':
-                    # Numbers → Prioritize lessons (they teach counting)
-                    if era_priority >= 110 or source_type == 'lengguahita':
-                        score = score * 2.5
-                    elif 'Blog' in source:
-                        score = score * 1.8
-                
-                elif card_type == 'cultural':
-                    # Cultural → Prioritize Guampedia and blogs
-                    if source_type == 'guampedia' or 'guampedia' in source:
-                        score = score * 2.5
-                    elif 'Blog' in source:
-                        score = score * 2.0
-                    elif era_priority >= 110:  # Stories/legends
-                        score = score * 1.8
-                    # Heavily penalize dictionary for cultural content
-                    elif 'dictionary' in source:
-                        score = score * 0.3
-            
+            if not is_retrieval_allowed(doc.metadata, query_type):
+                continue
+
+            seen_content.add(doc.page_content)
+            doc.metadata = annotate_metadata(doc.metadata)
+            score = max(1.0, 100.0 - index) * source_weight(doc.metadata, query_type)
             scored_results.append((doc, score))
         
         # Sort by score and take top k
@@ -824,128 +757,41 @@ class ChamorroRAG:
         # Track sources with page numbers
         source_info = []
         
-        context = "=== AUTHORITATIVE CHAMORRO LANGUAGE REFERENCES ===\n"
-        context += "USE THIS INFORMATION TO ANSWER THE USER'S QUESTION.\n"
-        context += "DO NOT make up answers. If the answer is below, use it.\n\n"
-        
-        context += "IMPORTANT CONTEXT:\n"
-        context += "- Chamorro uses many set phrases and greetings that have cultural meanings beyond literal translations\n"
-        context += "- 'Mañana si Yu'os' is a common greeting meaning 'Good morning' (literally 'God's morning')\n"
-        context += "- Consider the conversational and cultural context when interpreting phrases\n"
-        context += "- If you see a phrase that looks like a greeting or common expression, consider that it may be idiomatic\n\n"
-        
-        context += "NAMES AND CONTEXT:\n"
-        context += "- 'si [word]' often introduces a person's name (like 'si Juan', 'si Maria', 'si Hineksa')\n"
-        context += "- Many Chamorro names have other meanings (like 'Hineksa' = rice, but in 'si Hineksa' it's a person)\n"
-        context += "- Use sentence context to determine if a word is a name or a common noun\n"
-        context += "- In greetings or apologies, assume 'si [word]' is a person's name unless clearly not\n\n"
-        
-        context += "HANDLING MISSING WORDS:\n"
-        context += "- The dictionary may not have EVERY Chamorro word\n"
-        context += "- If an exact word is not in the references, look for:\n"
-        context += "  * Related words with similar spelling or roots\n"
-        context += "  * Context clues from the sentence structure\n"
-        context += "  * Spanish loan words (Chamorro uses many: 'sinafu' from 'sin afuera', 'kansela' from 'cancelar')\n"
-        context += "- Common words that may not be in references:\n"
-        context += "  * 'manglo'' (wind) - related to 'bendabat' (western wind)\n"
-        context += "  * 'uma'atdet' (strong/intense) - related to 'metgut' (strong)\n"
-        context += "  * 'sinafu' (safety/secure) - Spanish loan, may mean 'for safety' in context\n"
-        context += "  * 'malångu' (sick/illness) - related to 'hamlångu' (sickly person)\n"
-        context += "- IMPORTANT: School announcements about weather often use 'manglo'' for wind/storm\n"
-        context += "- IMPORTANT: 'Para sinafu' in school context usually means 'For safety' (to cancel/close)\n\n"
-        
-        context += "SOURCE PRIORITY:\n"
-        context += "- PREFER modern sources (Chamoru.info, Visit Guam) over historical dictionaries (1800s)\n"
-        context += "- Modern conversational Chamorro is different from archaic/historical Chamorro\n"
-        context += "- When multiple sources conflict, trust modern conversational usage\n\n"
+        context = "=== GOVERNED CHAMORRO REFERENCE MATERIAL ===\n"
+        context += "Use each reference only for its stated evidence role.\n"
+        context += "Do not guess when the references are incomplete or conflicting.\n"
+        context += "Do not let authentic usage, tourism copy, cultural context, or historical material decide canonical spelling or translation.\n"
+        context += "Preserve Guam/CNMI or author-specific differences and explain them when relevant.\n\n"
         
         for i, (content, metadata) in enumerate(chunks, 1):
             # Extract source information
-            source_file = metadata.get('source', 'Unknown source')
-            source_type = metadata.get('source_type', '')
+            source_file = str(metadata.get('source', 'Unknown source'))
             page = metadata.get('page', 0)
-            era_priority = metadata.get('era_priority', 0)  # Extract era_priority from metadata
-            
-            # Create friendly source name based on type
-            if 'guampdn.com' in source_file:
-                # Pacific Daily News articles
-                if 'onedera-mungnga' in source_file:
-                    source_name = "Pacific Daily News: Don't Stop Being CHamoru (Peter Onedera)"
-                elif 'mamfifino-chamoru' in source_file:
-                    source_name = "Pacific Daily News: Chamorro Vegetables (Peter Onedera)"
-                elif 'lapida' in source_file:
-                    source_name = "Pacific Daily News: Grave Markers (Peter Onedera)"
-                else:
-                    source_name = "Pacific Daily News (Chamorro Opinion Column)"
+            content_role = metadata.get('content_role', 'unregistered')
+            source_region = metadata.get('source_region', 'unspecified')
+
+            source_record = get_registered_source(str(metadata.get('source_id', '')))
+            source_name = (
+                source_record.get('name')
+                if source_record
+                else source_file.split('/')[-1].replace('.pdf', '')
+            )
+            if source_file.startswith(('http://', 'https://')):
                 page = None
-            elif source_type == 'lengguahita':
-                # Lengguahi-ta educational content
-                if '/chamorro-lessons-beginner/' in source_file or '/category/chamorro-lessons-beginner' in source_file:
-                    source_name = "Lengguahi-ta: Beginner Chamorro Lessons (Schyuler Lujan)"
-                elif '/chamorro-lessons-intermediate/' in source_file or '/category/chamorro-lessons-intermediate' in source_file:
-                    source_name = "Lengguahi-ta: Intermediate Chamorro Lessons (Schyuler Lujan)"
-                elif '/chamorro-stories/' in source_file or '/category/chamorro-stories' in source_file:
-                    source_name = "Lengguahi-ta: Chamorro Stories (Schyuler Lujan)"
-                elif '/chamorro-legends/' in source_file or '/category/chamorro-legends' in source_file:
-                    source_name = "Lengguahi-ta: Chamorro Legends (Schyuler Lujan)"
-                elif '/chamorro-songs/' in source_file or '/category/chamorro-songs' in source_file:
-                    source_name = "Lengguahi-ta: Chamorro Songs (Schyuler Lujan)"
-                else:
-                    source_name = "Lengguahi-ta (Schyuler Lujan)"
-                page = None
-            elif source_type == 'guampedia':
-                # Guampedia encyclopedia
-                source_name = "Guampedia: Guam Encyclopedia"
-                page = None
-            elif source_type in ['website', 'website_entry']:
-                # Website source - check if it's chamoru.info
-                if 'chamoru.info' in source_file.lower():
-                    # Differentiate between dictionary and language lessons
-                    if '/language-lessons/' in source_file or era_priority >= 100:
-                        source_name = "Chamoru.info: Language Lessons"
-                    else:
-                        source_name = "Chamoru.info Dictionary"
-                elif 'guampedia.com' in source_file.lower():
-                    source_name = "Guampedia: Guam Encyclopedia"
-                elif 'lengguahita.com' in source_file.lower():
-                    source_name = "Lengguahi-ta (Schyuler Lujan)"
-                else:
-                    # Generic website
-                    source_name = "Online Resource"
-                # Website sources don't have page numbers
-                page = None
-            elif 'chamorro_grammar_dr._sandra_chung' in source_file:
-                source_name = "Chamorro Grammar (Dr. Sandra Chung)"
-            elif 'Revised-Chamorro-Dictionary' in source_file:
-                source_name = "Revised Chamorro Dictionary"
-            elif 'Dictionary_and_grammar_of_the_Chamorro_language' in source_file:
-                source_name = "Dictionary and Grammar of Chamorro (1865)"
-            # NEW: IKNM/KAM Revised Dictionary (2025)
-            elif 'natibunmarianas.org' in source_file:
-                source_name = "IKNM/KAM Revised Dictionary (2025)"
-            # NEW: Two Chamorro Orthographies (Sandra Chung)
-            elif 'two_chamorro_orthographies' in source_file or 'orthog_differences' in source_file:
-                source_name = "Two Chamorro Orthographies (Dr. Sandra Chung)"
-            # NEW: English-Chamorro Finder List (2024)
-            elif 'english_chamorro_finder_list' in source_file or 'finder_list' in source_file:
-                source_name = "English-Chamorro Finder List (2024)"
-            else:
-                source_name = source_file.split('/')[-1].replace('.pdf', '')
             
             # Add to context with source info
             if page and page > 0:
-                context += f"[Reference {i}: {source_name}, Page {page}]:\n{content}\n\n"
+                context += f"[Reference {i}: {source_name}, role={content_role}, region={source_region}, Page {page}]:\n{content}\n\n"
                 source_info.append((source_name, page))
             else:
-                context += f"[Reference {i}: {source_name}]:\n{content}\n\n"
+                context += f"[Reference {i}: {source_name}, role={content_role}, region={source_region}]:\n{content}\n\n"
                 source_info.append((source_name, None))
         
         context += "\n" + "="*60 + "\n"
         context += "CRITICAL INSTRUCTION:\n"
-        context += "The references above contain the CORRECT answer to the user's question.\n"
-        context += "You MUST use this information to answer. Do NOT guess or make up answers.\n"
-        context += "If a word or phrase is defined in the references, USE THAT DEFINITION.\n"
-        context += "Answer naturally and conversationally, but base your answer on the references above.\n"
+        context += "Base supported claims on the eligible references above and cite their role.\n"
+        context += "If the evidence does not answer the question, say that it is not verified.\n"
+        context += "If sources conflict, describe the conflict instead of inventing a single answer.\n"
         context += "="*60
         
         return context, source_info
@@ -959,4 +805,3 @@ except Exception as e:
     print("   Chatbot will work without grammar book context.")
     rag = None
     RAG_ENABLED = False
-
