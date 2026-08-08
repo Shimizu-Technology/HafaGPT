@@ -143,6 +143,22 @@ def build_task_text(case: dict[str, Any], entry: dict[str, Any] | None) -> str:
     return task_text
 
 
+def validate_retrieval_contract(
+    reference_text: str,
+    source_rows: list[tuple[str, str]],
+    entry: dict[str, Any] | None,
+    case_id: str,
+) -> bool:
+    """Reject integrated evidence when retrieval is empty or misses the target."""
+    if not reference_text.strip() or not source_rows:
+        raise ValueError(f"No governed retrieval evidence found for benchmark case {case_id}")
+    expected_term = normalize(entry["recommended_teaching_term"]) if entry else None
+    expected_entry_present = expected_term is None or expected_term in normalize(reference_text)
+    if not expected_entry_present:
+        raise ValueError(f"Governed retrieval missed the target entry for benchmark case {case_id}")
+    return expected_entry_present
+
+
 def score_response(case: dict[str, Any], entry: dict[str, Any] | None, content: str) -> dict[str, Any]:
     normalized_content = normalize(content)
     checks: dict[str, bool | None] = {
@@ -566,6 +582,12 @@ def main() -> int:
                         if case["workload"] == "structured_output" and entry is not None:
                             retrieval_query += f" Target entry English: {entry['english']}"
                         reference_text, source_rows = rag.create_context(retrieval_query, k=5)
+                        expected_entry_present = validate_retrieval_contract(
+                            reference_text,
+                            source_rows,
+                            entry,
+                            case["id"],
+                        )
                         retrieved_sources = [
                             {"name": name, "page": page}
                             for name, page in source_rows
@@ -575,6 +597,7 @@ def main() -> int:
                             "query": retrieval_query,
                             "context_sha256": hashlib.sha256(reference_text.encode("utf-8")).hexdigest(),
                             "context_present": bool(reference_text),
+                            "expected_entry_present": expected_entry_present,
                             "sources": retrieved_sources,
                         }
                     response = request_model(

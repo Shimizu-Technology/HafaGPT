@@ -12,6 +12,7 @@ from evaluation.model_benchmark import (
     percentile,
     score_response,
     summarize,
+    validate_retrieval_contract,
     validate_inputs,
 )
 
@@ -88,6 +89,28 @@ def test_structured_task_names_the_target_entry() -> None:
     entry = next(item for item in vocabulary["entries"] if item["id"] == case["entry_id"])
 
     assert build_task_text(case, entry).endswith("Target entry English: Red")
+
+
+def test_integrated_retrieval_requires_sources_and_the_target_entry() -> None:
+    _catalog, cases, vocabulary = benchmark_documents()
+    case = next(item for item in cases["cases"] if item["id"] == "structured_red")
+    entry = next(item for item in vocabulary["entries"] if item["id"] == case["entry_id"])
+
+    assert validate_retrieval_contract(
+        "Recommended teaching term: Agaga'",
+        [("reviewed_lexicon", "colors.red")],
+        entry,
+        case["id"],
+    )
+    with pytest.raises(ValueError, match="No governed retrieval evidence"):
+        validate_retrieval_contract("instructions only", [], entry, case["id"])
+    with pytest.raises(ValueError, match="missed the target entry"):
+        validate_retrieval_contract(
+            "Recommended teaching term: Hånom",
+            [("reviewed_lexicon", "food.water")],
+            entry,
+            case["id"],
+        )
 
 
 def test_unknown_case_requires_explicit_uncertainty() -> None:
