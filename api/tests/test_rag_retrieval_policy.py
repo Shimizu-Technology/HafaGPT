@@ -9,8 +9,22 @@ class FakeVectorStore:
     def __init__(self, documents: list[Document]) -> None:
         self.documents = documents
 
-    def similarity_search(self, _query: str, *, k: int) -> list[Document]:
-        return self.documents[:k]
+    def similarity_search(
+        self,
+        _query: str,
+        *,
+        k: int,
+        filter: dict | None = None,
+    ) -> list[Document]:
+        documents = self.documents
+        if filter:
+            pattern = filter["source"]["$ilike"].strip("%").casefold()
+            documents = [
+                item
+                for item in documents
+                if pattern in str(item.metadata.get("source", "")).casefold()
+            ]
+        return documents[:k]
 
 
 def rag_with_documents(documents: list[Document]) -> ChamorroRAG:
@@ -63,3 +77,26 @@ def test_exact_duplicate_chunks_do_not_fill_the_result_set() -> None:
     results = rag.search("Teach me a Chamorro lesson", k=5)
 
     assert len(results) == 1
+
+
+def test_explicit_small_source_mention_gets_a_filtered_candidate_lane() -> None:
+    rag = rag_with_documents(
+        [
+            document("Dictionary entry", "https://www.chamoru.info/dictionary/example"),
+            document(
+                "Peter Onedera, Pacific Daily News",
+                "https://www.guampdn.com/opinion/example",
+                "pacific_daily_news",
+            ),
+        ]
+    )
+
+    results = rag.search(
+        "Who writes Chamorro language content in the Pacific Daily News?",
+        k=2,
+    )
+
+    assert any(
+        metadata["source_id"] == "pacific_daily_news"
+        for _content, metadata in results
+    )

@@ -85,7 +85,7 @@ review.
 
 ### Phase 0 verification record
 
-- Repository check: 82 tests passed and 3 credential-dependent tests skipped;
+- Repository check: 84 tests passed and 3 credential-dependent tests skipped;
   canonical content checks, synchronized audio checks, lint, type check, and the
   production build passed.
 - Corpus audit: all 44,865 chunks resolve to a registered source; 83 legacy chunks
@@ -94,9 +94,11 @@ review.
 - OpenRouter smoke: the current control and all seven candidates completed one
   grounded case; this proves current availability/adapter health only, not model
   superiority.
-- Live semantic RAG is currently blocked by exhausted OpenAI embedding credits.
-  Policy behavior is covered with deterministic retrieval tests, but the protected
-  live integration gate must be rerun after embedding service access is restored.
+- Live semantic RAG passed all 3 protected integration gates on August 8 after
+  embedding service access was restored: database connectivity, ordinary semantic
+  retrieval, and the PDN-specific source lane. The PDN question returned five
+  governed PDN references. This validates runtime containment and source targeting
+  on the legacy corpus; it is not a clean-corpus or model-quality claim.
 - Authenticated browser validation is currently blocked by Clerk failing to
   initialize even though the local publishable key exactly matches the active
   development instance. Do not substitute production keys for localhost; diagnose

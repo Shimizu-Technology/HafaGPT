@@ -486,9 +486,10 @@ The following need correction or stronger wording:
 
 ## Validation completed after this audit
 
-The repository-wide validation completed successfully on August 7, 2026:
+The repository-wide validation completed successfully on August 7, 2026, and
+the August 8 live-RAG follow-up produced the final branch totals:
 
-- `./scripts/check.sh`: 82 API tests passed, three intentionally skipped;
+- `./scripts/check.sh`: 84 API tests passed, three intentionally skipped;
 - canonical vocabulary validation passed with zero app-to-canonical usage findings;
 - the API and web audio manifests matched at 715 entries;
 - frontend type-check and production build passed;

@@ -194,3 +194,20 @@ a red live retrieval gate are both accurate; neither result should hide the othe
   `j4k5l6m7n8o9`. The attempted upgrade rolled back on duplicate objects. Reconcile
   and back up this local database before stamping or rebuilding; do not copy this
   state into production.
+
+## August 8 credit-restoration follow-up
+
+- OpenAI embedding access was restored and all three protected live integration
+  tests passed: local database connectivity, ordinary semantic retrieval, and the
+  PDN-specific retrieval gate.
+- Explicit source mentions now receive a registry-governed candidate lane before
+  the general semantic pool. The lane still applies source rights, evidence-role,
+  deduplication, and ranking policy. For the PDN integration question, all five
+  returned references were PDN sources rather than dictionary fallbacks.
+- The final repository-wide check passed with 84 tests and 3 expected live-service
+  skips, plus canonical content checks, synchronized 715-entry audio manifests,
+  lint with zero errors, type checking, and the production web build.
+- OpenRouter credit and adapter health were already verified by the complete
+  benchmark and the August 7 fresh smoke. The model-quality decision remains gated
+  on corpus cleanup and blind native-speaker/educator review; restored credits do
+  not change that evidence standard.

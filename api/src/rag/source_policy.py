@@ -8,6 +8,7 @@ corpus can later persist the same fields on every chunk.
 from __future__ import annotations
 
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -64,6 +65,12 @@ def validate_source_registry(registry: dict[str, Any]) -> None:
         match = source["match"]
         if not isinstance(match, dict) or not any(match.get(key) for key in ("source_contains", "source_types")):
             raise ValueError(f"source {source_id} requires at least one match rule")
+
+        aliases = source.get("query_aliases", [])
+        if not isinstance(aliases, list) or not all(
+            isinstance(alias, str) and alias.strip() for alias in aliases
+        ):
+            raise ValueError(f"source {source_id} query_aliases must be non-empty strings")
 
         retrieval = source["retrieval"]
         if not isinstance(retrieval.get("allowed"), bool):
@@ -158,6 +165,32 @@ def get_registered_source(source_id: str) -> dict[str, Any] | None:
         (entry for entry in load_source_registry()["sources"] if entry["id"] == source_id),
         None,
     )
+
+
+def sources_explicitly_mentioned(query: str, query_type: str) -> list[dict[str, Any]]:
+    """Return eligible registry sources explicitly named in a user's query.
+
+    Semantic nearest-neighbor search can miss a small source family when a much
+    larger corpus dominates the candidate pool. Registry aliases enable a narrow
+    source-filtered candidate search without granting that source authority for
+    an incompatible query role.
+    """
+
+    if query_type not in SUPPORTED_QUERY_TYPES:
+        return []
+
+    query_text = query.casefold()
+    matches: list[dict[str, Any]] = []
+    for entry in load_source_registry()["sources"]:
+        retrieval = entry["retrieval"]
+        if not retrieval["allowed"] or query_type not in retrieval["allowed_query_types"]:
+            continue
+        for alias in entry.get("query_aliases", []):
+            alias_pattern = rf"(?<!\w){re.escape(alias.casefold())}(?!\w)"
+            if re.search(alias_pattern, query_text):
+                matches.append(entry)
+                break
+    return matches
 
 
 class SourceIngestionBlocked(RuntimeError):

@@ -11,6 +11,7 @@ from src.rag.source_policy import (
     registered_source_ids,
     resolve_source,
     source_weight,
+    sources_explicitly_mentioned,
 )
 
 
@@ -87,6 +88,16 @@ def test_generic_news_article_type_does_not_impersonate_pdn() -> None:
 
     assert resolve_source(unknown_news) is None
     assert not is_retrieval_allowed(unknown_news, "usage")
+
+
+def test_explicit_source_alias_respects_query_role() -> None:
+    usage_matches = sources_explicitly_mentioned(
+        "Who writes for the Pacific Daily News?",
+        "usage",
+    )
+
+    assert [source["id"] for source in usage_matches] == ["pacific_daily_news"]
+    assert sources_explicitly_mentioned("Define a PDN word", "lookup") == []
 
 
 def test_ingestion_requires_explicit_registry_permission() -> None:

@@ -112,6 +112,7 @@
         "source_contains": ["guampdn.com"],
         "source_types": ["pacific_daily_news"]
       },
+      "query_aliases": ["Pacific Daily News", "Guam PDN", "PDN"],
       "content_role": "authentic_usage",
       "region": "Guam",
       "orthography": "author_usage",

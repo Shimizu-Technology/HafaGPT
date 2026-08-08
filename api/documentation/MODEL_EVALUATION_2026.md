@@ -201,9 +201,9 @@ This table is a test order, not a routing decision.
 | Model API calls | Passed: 192/192 primary calls plus 72/72 GPT-5.6 low-effort calls; one primary Gemini response contract failed by truncation |
 | Local RAG infrastructure | 44,865 chunks; ordinary retrieval passed after pgvector repair |
 | Source-aware RAG policy | Deterministic policy/retrieval tests pass; Guampedia and Swarthmore blocked, historical intent separated, PDN/Visit Guam role-limited |
-| Live semantic RAG gate | Pending rerun: configured OpenAI embedding account returned insufficient quota on August 7 |
+| Live semantic RAG gate | Passed August 8: database connectivity, ordinary semantic retrieval, and the PDN-specific source lane; all five returned references for the explicit PDN question were PDN sources |
 | August 7 provider smoke | Passed: 1/1 grounded case on all 8 catalog models; availability/adapter evidence only |
-| Integrated per-model RAG comparison | Pending retrieval repair and a safe model-override mechanism |
+| Integrated per-model RAG comparison | Retrieval gate repaired and passed; a safe model-override mechanism and clean evaluation corpus remain pending |
 | Blind native review | Packet generated; two-reviewer scoring pending |
 | Production model decision | Pending |
 

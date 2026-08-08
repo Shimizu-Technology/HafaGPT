@@ -13,6 +13,7 @@ from src.rag.source_policy import (
     annotate_metadata,
     get_registered_source,
     is_retrieval_allowed,
+    sources_explicitly_mentioned,
     source_weight,
 )
 
@@ -694,10 +695,24 @@ class ChamorroRAG:
                         # Found Chamorro translations! Return them directly
                         return [(doc.page_content, doc.metadata) for doc in eng_to_cham_results]
         
+        # A named source gets its own candidate lane. This prevents a small source
+        # family from disappearing behind the much larger dictionary crawl while
+        # still enforcing the registry's query-role restrictions.
+        search_query = clean_query if clean_query else query
+        targeted_results = []
+        for source_entry in sources_explicitly_mentioned(query, query_type):
+            for source_pattern in source_entry["match"].get("source_contains", []):
+                targeted_results.extend(
+                    self.vectorstore.similarity_search(
+                        search_query,
+                        k=max(k * 2, 10),
+                        filter={"source": {"$ilike": f"%{source_pattern}%"}},
+                    )
+                )
+
         # Semantic search gets extra candidates because blocked, role-ineligible,
         # and exact-duplicate chunks are removed before ranking.
-        search_query = clean_query if clean_query else query
-        results = self.vectorstore.similarity_search(search_query, k=k*20)
+        results = targeted_results + self.vectorstore.similarity_search(search_query, k=k*20)
         
         # The source registry replaces the old global era-priority boosts. A
         # newspaper, tourism page, or cultural source can no longer outrank a
