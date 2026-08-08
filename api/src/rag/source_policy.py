@@ -91,6 +91,22 @@ def validate_source_registry(registry: dict[str, Any]) -> None:
         if not retrieval["allowed"] and weight != 0:
             raise ValueError(f"source {source_id} is blocked but has a nonzero retrieval weight")
 
+        ingestion = source.get("ingestion")
+        if ingestion is not None:
+            if not isinstance(ingestion.get("allowed"), bool):
+                raise ValueError(f"source {source_id} ingestion.allowed must be boolean")
+            allowed_uses = ingestion.get("allowed_uses", [])
+            if not isinstance(allowed_uses, list) or not all(
+                isinstance(value, str) and value.strip() for value in allowed_uses
+            ):
+                raise ValueError(f"source {source_id} ingestion.allowed_uses must be non-empty strings")
+            if ingestion["allowed"] and (
+                not allowed_uses or not ingestion.get("permission_reference")
+            ):
+                raise ValueError(
+                    f"source {source_id} allowed ingestion requires uses and a permission reference"
+                )
+
 
 def _normalized_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
     metadata = metadata or {}
@@ -197,7 +213,18 @@ class SourceIngestionBlocked(RuntimeError):
     """Raised when a source has not passed the ingestion permission gate."""
 
 
-def assert_ingestion_allowed(metadata: dict[str, Any] | None) -> dict[str, Any]:
+def assert_collection_use_allowed(collection_name: str, intended_use: str) -> None:
+    """Prevent private evaluation collections from becoming production evidence."""
+    if collection_name.startswith("hafagpt_eval_") and intended_use != "model_evaluation":
+        raise ValueError(
+            "evaluation-only RAG collections require intended_use='model_evaluation'"
+        )
+
+
+def assert_ingestion_allowed(
+    metadata: dict[str, Any] | None,
+    intended_use: str = "production_rag",
+) -> dict[str, Any]:
     """Return governed metadata or stop ingestion until approval is recorded.
 
     Phase 0 deliberately treats the absence of an explicit ``ingestion.allowed``
@@ -217,5 +244,9 @@ def assert_ingestion_allowed(metadata: dict[str, Any] | None) -> dict[str, Any]:
     if not ingestion.get("permission_reference"):
         raise SourceIngestionBlocked(
             f"Source {entry['id']} is missing an ingestion permission reference"
+        )
+    if intended_use not in ingestion.get("allowed_uses", []):
+        raise SourceIngestionBlocked(
+            f"Source {entry['id']} is not approved for ingestion use: {intended_use}"
         )
     return annotate_metadata(metadata)

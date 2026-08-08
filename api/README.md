@@ -2,7 +2,16 @@
 
 > **Currently in Beta** - Free for all users while we test and improve. Paid plans coming to help cover AI costs.
 
-A comprehensive Chamorro language learning platform with AI tutoring, flashcards, quizzes, games, stories, and conversation practice. Built with **RAG** using 45,000+ chunks from Chamorro dictionaries and educational resources.
+A comprehensive Chamorro language learning platform with AI tutoring, flashcards,
+quizzes, games, stories, and conversation practice. The production RAG path is
+currently governed around a legacy 44,865-row corpus; its duplication, provenance,
+and permission gaps are documented and must not be described as 45,000 verified
+language facts. Model evaluation uses a separate 101-entry purpose-locked corpus.
+
+> **Language trust status:** source-backed is not the same as native-reviewed or
+> licensed for production reuse. See the
+> [resource program](documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md) and
+> [August 8 execution record](documentation/PHASE_1_2_EXECUTION_2026-08-08.md).
 
 > 📚 **New to the team?** Start with the **[Developer Setup Guide](documentation/SETUP_GUIDE.md)** for step-by-step onboarding.
 
@@ -16,7 +25,7 @@ A comprehensive Chamorro language learning platform with AI tutoring, flashcards
 |---------|-------------|
 | 🤖 **AI Chat** | RAG-enhanced chatbot with 3 modes (English, Chamorro, Learn) |
 | 💬 **Conversation Practice** | 7 role-play scenarios with AI characters |
-| 📖 **Story Mode** | 24 bilingual stories with tap-to-translate |
+| 📖 **Story Mode** | Permission-gated story catalog with tap-to-translate UI |
 | 🎴 **Flashcards** | Curated decks + dictionary-based (10,350+ words) |
 | 📝 **Quizzes** | Multiple choice, fill-in-blank, type answer |
 | 📚 **Vocabulary Browser** | Searchable dictionary with 12 categories |

@@ -65,8 +65,10 @@ protected staging workflow rather than storing production credentials in CI.
 - [Project review](api/documentation/PROJECT_REVIEW_2026.md)
 - [Language resource and corpus audit](api/documentation/LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
 - [Language resource implementation program](api/documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md)
+- [Source permission and native-review playbook](api/documentation/SOURCE_PERMISSION_AND_REVIEW_PLAYBOOK.md)
+- [Phase 1–2 execution record](api/documentation/PHASE_1_2_EXECUTION_2026-08-08.md)
 - [Model evaluation method and status](api/documentation/MODEL_EVALUATION_2026.md)
-- [August 2026 model benchmark results](api/documentation/MODEL_BENCHMARK_RESULTS_2026-08-05.md)
+- [Historical August 5 direct-reference benchmark](api/documentation/MODEL_BENCHMARK_RESULTS_2026-08-05.md)
 - [Modernization roadmap](api/documentation/MODERNIZATION_ROADMAP_2026.md)
 - [Validation evidence](api/documentation/VALIDATION_REPORT_2026-08-05.md)
 

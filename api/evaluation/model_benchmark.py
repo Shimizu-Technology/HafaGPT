@@ -30,6 +30,8 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parents[1]
 EVALUATION_DIR = Path(__file__).resolve().parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 DEFAULT_CATALOG = EVALUATION_DIR / "model_catalog_2026.json"
 DEFAULT_CASES = EVALUATION_DIR / "model_benchmark_cases.json"
 DEFAULT_VOCABULARY = ROOT / "language_content" / "canonical_vocabulary.json"
@@ -44,11 +46,16 @@ from the supplied reference. Be concise, respectful, and useful to a learner."""
 
 UNCERTAINTY_PHRASES = (
     "cannot verify",
+    "cannot be verified",
     "can't verify",
+    "can't be verified",
     "do not have",
     "don't have",
     "not provided",
     "not in the supplied",
+    "not verified",
+    "do not mention",
+    "does not mention",
     "no supplied reference",
     "insufficient information",
 )
@@ -129,6 +136,13 @@ def strip_json_fence(content: str) -> str:
     return match.group(1) if match else content.strip()
 
 
+def build_task_text(case: dict[str, Any], entry: dict[str, Any] | None) -> str:
+    task_text = case["question"]
+    if case["workload"] == "structured_output" and entry is not None:
+        task_text += f"\nTarget entry English: {entry['english']}"
+    return task_text
+
+
 def score_response(case: dict[str, Any], entry: dict[str, Any] | None, content: str) -> dict[str, Any]:
     normalized_content = normalize(content)
     checks: dict[str, bool | None] = {
@@ -193,31 +207,48 @@ def request_model(
     entry: dict[str, Any] | None,
     max_tokens: int,
     reasoning_effort: str | None = None,
+    reference_text: str | None = None,
+    transport: str = "openrouter",
 ) -> dict[str, Any]:
+    task_text = build_task_text(case, entry)
+    direct_openai = transport == "openai"
     payload: dict[str, Any] = {
-        "model": model["model_id"],
+        "model": model["model_id"].removeprefix("openai/") if direct_openai else model["model_id"],
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"{build_reference(entry)}\n\nTASK\n{case['question']}"},
+            {
+                "role": "user",
+                "content": f"{reference_text if reference_text is not None else build_reference(entry)}\n\nTASK\n{task_text}",
+            },
         ],
-        "max_tokens": max_tokens,
-        "usage": {"include": True},
     }
+    if direct_openai:
+        payload["max_completion_tokens"] = max_tokens
+    else:
+        payload["max_tokens"] = max_tokens
+        payload["usage"] = {"include": True}
     if model.get("supports_temperature"):
         payload["temperature"] = 0
     if reasoning_effort:
         payload["reasoning_effort"] = reasoning_effort
 
     started = time.perf_counter()
-    response = client.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
+    endpoint = (
+        "https://api.openai.com/v1/chat/completions"
+        if direct_openai
+        else "https://openrouter.ai/api/v1/chat/completions"
+    )
+    headers = {"Authorization": f"Bearer {api_key}"}
+    if not direct_openai:
+        headers.update({
             "HTTP-Referer": "https://hafagpt.com",
             # HTTP header values must remain ASCII even though the product name
             # normally preserves the Chamorro å in user-facing text.
             "X-Title": "HafaGPT Model Benchmark",
-        },
+        })
+    response = client.post(
+        endpoint,
+        headers=headers,
         json=payload,
     )
     elapsed = time.perf_counter() - started
@@ -234,7 +265,7 @@ def request_model(
     return {
         "content": content,
         "returned_model": data.get("model"),
-        "provider": data.get("provider"),
+        "provider": data.get("provider") or ("openai-direct" if direct_openai else None),
         "finish_reason": data["choices"][0].get("finish_reason"),
         "latency_seconds": round(elapsed, 3),
         "prompt_tokens": prompt_tokens,
@@ -339,6 +370,10 @@ def write_blind_review(results: list[dict[str, Any]], output_dir: Path, seed: in
         for index, row in enumerate(rows):
             label = f"{case_id}-{chr(65 + index)}"
             review_rows.append({
+                "reviewer_id": "",
+                "reviewed_at": "",
+                "regional_expertise": "",
+                "conflict_of_interest_yes_no": "",
                 "case_id": case_id,
                 "workload": row["workload"],
                 "response_label": label,
@@ -386,6 +421,11 @@ def rescore_results(
     output_path = source_path.with_name("results_rescored.json")
     with output_path.open("w", encoding="utf-8") as handle:
         json.dump(artifact, handle, ensure_ascii=False, indent=2)
+    write_blind_review(
+        artifact["results"],
+        source_path.parent,
+        artifact.get("request_config", {}).get("seed", 20260805),
+    )
     return output_path
 
 
@@ -399,6 +439,13 @@ def check_openrouter_catalog(catalog: dict[str, Any]) -> list[str]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models", help="Comma-separated aliases; default is every catalog model")
+    parser.add_argument(
+        "--transport",
+        choices=("openrouter", "openai"),
+        default="openrouter",
+        help="Provider path. Direct OpenAI accepts only catalog entries whose IDs start with openai/.",
+    )
+    parser.add_argument("--case-ids", help="Comma-separated case IDs; default is every benchmark case")
     parser.add_argument("--limit", type=int, help="Limit cases for a smoke run")
     parser.add_argument("--max-tokens", type=int, default=1200)
     parser.add_argument(
@@ -416,6 +463,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--validate-only", action="store_true")
     parser.add_argument("--check-catalog", action="store_true")
+    parser.add_argument(
+        "--rag-collection",
+        help="Use governed live retrieval from this collection instead of supplying the canonical answer directly",
+    )
     return parser.parse_args()
 
 
@@ -440,26 +491,53 @@ def main() -> int:
         print(f"Catalog check passed: {len(catalog['models'])} models are currently available.")
 
     entries = {entry["id"]: entry for entry in vocabulary["entries"]}
-    cases = cases_document["cases"][: args.limit] if args.limit else cases_document["cases"]
+    cases = cases_document["cases"]
+    if args.case_ids:
+        requested_case_ids = {value.strip() for value in args.case_ids.split(",") if value.strip()}
+        cases = [case for case in cases if case["id"] in requested_case_ids]
+        missing_case_ids = requested_case_ids - {case["id"] for case in cases}
+        if missing_case_ids:
+            print(f"Unknown case IDs: {', '.join(sorted(missing_case_ids))}", file=sys.stderr)
+            return 2
+    if args.limit:
+        cases = cases[: args.limit]
     selected_aliases = args.models.split(",") if args.models else [model["alias"] for model in catalog["models"]]
     selected_models = [model for model in catalog["models"] if model["alias"] in selected_aliases]
     unknown_aliases = set(selected_aliases) - {model["alias"] for model in selected_models}
     if unknown_aliases:
         print(f"Unknown model aliases: {', '.join(sorted(unknown_aliases))}", file=sys.stderr)
         return 2
+    if args.transport == "openai":
+        incompatible = [model["alias"] for model in selected_models if not model["model_id"].startswith("openai/")]
+        if incompatible:
+            print(
+                "Direct OpenAI transport is incompatible with: " + ", ".join(incompatible),
+                file=sys.stderr,
+            )
+            return 2
 
     print(f"Validated {len(cases_document['cases'])} cases and {len(catalog['models'])} model definitions.")
     if args.validate_only:
         return 0
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key_name = "OPENAI_API_KEY" if args.transport == "openai" else "OPENROUTER_API_KEY"
+    api_key = os.getenv(api_key_name)
     if not api_key:
         print(
-            "OPENROUTER_API_KEY is not configured. Put it in api/.env or export it in your shell; "
+            f"{api_key_name} is not configured. Put it in api/.env or export it in your shell; "
             "do not add the key to source control.",
             file=sys.stderr,
         )
         return 3
+
+    rag = None
+    if args.rag_collection:
+        from src.rag.chamorro_rag import ChamorroRAG
+
+        rag = ChamorroRAG(
+            collection_name=args.rag_collection,
+            intended_use="model_evaluation",
+        )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     output_dir = args.output_dir or EVALUATION_DIR / "tmp" / f"model_benchmark_{timestamp}"
@@ -481,6 +559,24 @@ def main() -> int:
                     "entry_id": case.get("entry_id"),
                 }
                 try:
+                    reference_text = None
+                    retrieved_sources: list[dict[str, Any]] = []
+                    if rag is not None:
+                        retrieval_query = case["question"]
+                        if case["workload"] == "structured_output" and entry is not None:
+                            retrieval_query += f" Target entry English: {entry['english']}"
+                        reference_text, source_rows = rag.create_context(retrieval_query, k=5)
+                        retrieved_sources = [
+                            {"name": name, "page": page}
+                            for name, page in source_rows
+                        ]
+                        row["retrieval"] = {
+                            "collection": args.rag_collection,
+                            "query": retrieval_query,
+                            "context_sha256": hashlib.sha256(reference_text.encode("utf-8")).hexdigest(),
+                            "context_present": bool(reference_text),
+                            "sources": retrieved_sources,
+                        }
                     response = request_model(
                         client,
                         api_key,
@@ -489,6 +585,8 @@ def main() -> int:
                         entry,
                         args.max_tokens,
                         args.reasoning_effort,
+                        reference_text,
+                        args.transport,
                     )
                     row["response"] = response
                     row["evaluation"] = score_response(case, entry, response["content"])
@@ -511,6 +609,9 @@ def main() -> int:
         "request_config": {
             "max_tokens": args.max_tokens,
             "reasoning_effort": args.reasoning_effort,
+            "rag_collection": args.rag_collection,
+            "transport": args.transport,
+            "seed": args.seed,
         },
         "summaries": summarize(results),
         "results": results,

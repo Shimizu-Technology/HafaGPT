@@ -10,6 +10,7 @@ from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 
 from src.rag.source_policy import (
+    assert_collection_use_allowed,
     annotate_metadata,
     get_registered_source,
     is_retrieval_allowed,
@@ -219,14 +220,49 @@ def extract_target_word(query: str) -> str:
     return ""
 
 
+def _chamorro_keyword_query_params(target_lower: str, collection_name: str, k: int) -> tuple:
+    """Keep SQL placeholders aligned when collection scoping is changed."""
+    return (
+        f'**{target_lower}**\n%%',
+        f'**{target_lower}** %%',
+        f'%%\n{target_lower}%%',
+        collection_name,
+        f'**{target_lower}**\n%%',
+        f'**{target_lower}** %%',
+        f'%%\n{target_lower}%%',
+        k * 2,
+    )
+
+
+def _english_keyword_query_params(target_lower: str, collection_name: str, k: int) -> tuple:
+    """Keep ranking expressions, collection scope, and search filter in order."""
+    return (
+        f'\\n{target_lower}[,;.\\-\\(]|\\|{target_lower}[,;.\\-]',
+        f'[,;]\\s*{target_lower}[,;.\\s]',
+        f'\\({target_lower}\\)',
+        f'\\n{target_lower}\\s+[a-z]',
+        collection_name,
+        f'(^|[^a-z]){target_lower}([^a-z]|$)',
+        k * 3,
+    )
+
+
 class ChamorroRAG:
-    def __init__(self, connection="postgresql://localhost/chamorro_rag"):
+    def __init__(
+        self,
+        connection="postgresql://localhost/chamorro_rag",
+        collection_name: str | None = None,
+        intended_use: str = "production_rag",
+    ):
         """Initialize the RAG system with the Chamorro grammar database."""
         print("📚 Loading Chamorro grammar knowledge base...")
         
         # Get database URL from environment
         import os
         connection = os.getenv("DATABASE_URL", connection)
+        self.collection_name = collection_name or os.getenv("RAG_COLLECTION_NAME", "chamorro_grammar")
+        self.intended_use = intended_use
+        assert_collection_use_allowed(self.collection_name, intended_use)
         
         # Store connection string for reconnection
         self.connection = connection
@@ -269,7 +305,7 @@ class ChamorroRAG:
         # This helps with serverless databases (like Neon) that close idle connections
         self.vectorstore = PGVector(
             embeddings=self.embeddings,
-            collection_name="chamorro_grammar",
+            collection_name=self.collection_name,
             connection=self.connection,
             use_jsonb=True,
             embedding_length=384,  # Explicit embedding dimensions for PGVector
@@ -372,38 +408,30 @@ class ChamorroRAG:
                 # Priority: exact headword match > word in definition > word anywhere
                 cur.execute("""
                     SELECT 
-                        document,
-                        cmetadata,
+                        embedding.document,
+                        embedding.cmetadata,
                         CASE
                             -- Priority 1: Exact headword match (at start of entry)
-                            WHEN document ILIKE %s OR document ILIKE %s THEN 1
+                            WHEN embedding.document ILIKE %s OR embedding.document ILIKE %s THEN 1
                             -- Priority 2: Word in first few lines (definition area)
-                            WHEN document ILIKE %s THEN 2
+                            WHEN embedding.document ILIKE %s THEN 2
                             ELSE 3
                         END as priority
-                    FROM langchain_pg_embedding 
-                    WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
-                           OR cmetadata->>'source' LIKE '%%TOD%%')
-                    AND cmetadata->>'source' NOT ILIKE '%%supplemental%%'
+                    FROM langchain_pg_embedding AS embedding
+                    JOIN langchain_pg_collection AS collection
+                      ON collection.uuid = embedding.collection_id
+                    WHERE collection.name = %s
+                    AND (embedding.cmetadata->>'source' LIKE '%%dictionary%%'
+                         OR embedding.cmetadata->>'source' LIKE '%%TOD%%')
+                    AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
                     AND (
-                        document ILIKE %s
-                        OR document ILIKE %s
-                        OR document ILIKE %s
+                        embedding.document ILIKE %s
+                        OR embedding.document ILIKE %s
+                        OR embedding.document ILIKE %s
                     )
-                    ORDER BY priority ASC, LENGTH(document) ASC
+                    ORDER BY priority ASC, LENGTH(embedding.document) ASC
                     LIMIT %s
-                """, (
-                    # Priority 1: Headword patterns
-                    f'**{target_lower}**\n%%',  # Headword with newline
-                    f'**{target_lower}** %%',   # Headword with space
-                    # Priority 2: In definition
-                    f'%%\n{target_lower}%%',    # Word in definition (after newline)
-                    # Search patterns (repeated for WHERE clause)
-                    f'**{target_lower}**\n%%',
-                    f'**{target_lower}** %%',
-                    f'%%\n{target_lower}%%',
-                    k * 2  # Get extra results, we'll filter further
-                ))
+                """, _chamorro_keyword_query_params(target_lower, self.collection_name, k))
                 
                 results = cur.fetchall()
                 conn.close()
@@ -523,48 +551,35 @@ class ChamorroRAG:
                 # Compound phrase: "hand over" (word + space + another word)
                 cur.execute("""
                     SELECT 
-                        document,
-                        cmetadata,
+                        embedding.document,
+                        embedding.cmetadata,
                         CASE
                             -- Priority 1: DIRECT TRANSLATION - word followed by comma, semicolon, dash, or period
                             -- e.g., "hand, arm" or "fish--generic" or "angry."
-                            WHEN document ~* %s THEN 1
+                            WHEN embedding.document ~* %s THEN 1
                             -- Priority 2: Word as alternative meaning (after comma/semicolon)
                             -- e.g., ", angry" or "; mad"
-                            WHEN document ~* %s THEN 2
+                            WHEN embedding.document ~* %s THEN 2
                             -- Priority 3: Word in parenthetical - e.g., "(hand)" or "(fish)"
-                            WHEN document ~* %s THEN 3
+                            WHEN embedding.document ~* %s THEN 3
                             -- Priority 4 (LOWER): COMPOUND PHRASE - word followed by space + another word
                             -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
-                            WHEN document ~* %s THEN 5
+                            WHEN embedding.document ~* %s THEN 5
                             -- Priority 5: Word appears anywhere else
                             ELSE 4
                         END as priority
-                    FROM langchain_pg_embedding 
-                    WHERE (cmetadata->>'source' LIKE '%%dictionary%%' 
-                           OR cmetadata->>'source' LIKE '%%TOD%%'
-                           OR cmetadata->>'source' LIKE '%%chamoru_info%%')
-                    AND cmetadata->>'source' NOT ILIKE '%%supplemental%%'
-                    AND document ~* %s
-                    ORDER BY priority ASC, LENGTH(document) ASC
+                    FROM langchain_pg_embedding AS embedding
+                    JOIN langchain_pg_collection AS collection
+                      ON collection.uuid = embedding.collection_id
+                    WHERE collection.name = %s
+                    AND (embedding.cmetadata->>'source' LIKE '%%dictionary%%'
+                         OR embedding.cmetadata->>'source' LIKE '%%TOD%%'
+                         OR embedding.cmetadata->>'source' LIKE '%%chamoru_info%%')
+                    AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
+                    AND embedding.document ~* %s
+                    ORDER BY priority ASC, LENGTH(embedding.document) ASC
                     LIMIT %s
-                """, (
-                    # Priority 1: Direct translation - word followed by punctuation (not space+word)
-                    # Matches: "hand, arm" or "fish--generic" or "angry." or "No---"
-                    f'\\n{target_lower}[,;.\\-\\(]|\\|{target_lower}[,;.\\-]',
-                    # Priority 2: Alternative meaning after comma/semicolon
-                    # Matches: ", hand" or "; fish"
-                    f'[,;]\\s*{target_lower}[,;.\\s]',
-                    # Priority 3: Parenthetical
-                    # Matches: "(hand)" or "(fish)"
-                    f'\\({target_lower}\\)',
-                    # Priority 4 (DEPRIORITIZED): Compound phrase - word + space + another word
-                    # Matches: "hand over" or "fish by" - verbs/phrases, not direct translations
-                    f'\\n{target_lower}\\s+[a-z]',
-                    # Search pattern (WHERE clause) - any word boundary match
-                    f'(^|[^a-z]){target_lower}([^a-z]|$)',
-                    k * 3  # Get extra results for filtering
-                ))
+                """, _english_keyword_query_params(target_lower, self.collection_name, k))
                 
                 results = cur.fetchall()
                 conn.close()
@@ -790,6 +805,7 @@ class ChamorroRAG:
         context += "\n" + "="*60 + "\n"
         context += "CRITICAL INSTRUCTION:\n"
         context += "Base supported claims on the eligible references above and cite their role.\n"
+        context += "When a reference includes Citation locators, cite an underlying locator rather than only the container or index name.\n"
         context += "If the evidence does not answer the question, say that it is not verified.\n"
         context += "If sources conflict, describe the conflict instead of inventing a single answer.\n"
         context += "="*60

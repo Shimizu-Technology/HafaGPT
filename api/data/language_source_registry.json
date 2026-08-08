@@ -7,6 +7,30 @@
   },
   "sources": [
     {
+      "id": "hafagpt_canonical_evaluation",
+      "name": "HåfaGPT canonical evaluation index",
+      "match": {
+        "source_contains": ["internal://hafagpt_canonical_evaluation"],
+        "source_types": ["hafagpt_canonical_evaluation"]
+      },
+      "content_role": "reviewed_lexicon",
+      "region": "Guam_and_CNMI_source_lineage",
+      "orthography": "entry_specific",
+      "rights_status": "internal_evaluation_only",
+      "review_status": "source_backed_pending_native_review",
+      "ingestion": {
+        "allowed": true,
+        "allowed_uses": ["model_evaluation"],
+        "permission_reference": "internal://language-resource-program/canonical-evaluation-v1"
+      },
+      "retrieval": {
+        "allowed": true,
+        "allowed_query_types": ["lookup", "educational"],
+        "weight": 1.0
+      },
+      "decision": "May be embedded only in a private evaluation collection. It is not approved as native-reviewed production teaching authority."
+    },
+    {
       "id": "supplemental_dictionary_unreviewed",
       "name": "HåfaGPT supplemental dictionary",
       "match": {

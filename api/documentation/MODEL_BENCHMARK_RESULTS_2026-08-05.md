@@ -1,5 +1,11 @@
 # HåfaGPT Model Benchmark Results — August 5, 2026
 
+> **Superseded for model selection:** this direct-reference run remains useful as
+> historical evidence, but the corrected integrated retrieval and provider-path
+> results are in
+> [PHASE_1_2_EXECUTION_2026-08-08.md](PHASE_1_2_EXECUTION_2026-08-08.md).
+> Production selection still requires two independent qualified reviews.
+
 ## Decision summary
 
 The 192-call source-grounded matrix completed successfully: 24 cases across eight

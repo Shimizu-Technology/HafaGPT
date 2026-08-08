@@ -7,16 +7,19 @@
 > [LANGUAGE_RESOURCE_AUDIT_2026-08-07.md](LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
 > before treating an integrated model result as production evidence.
 
-**Status:** full direct-model matrix complete; blind native review and integrated finalist comparison pending
-**Last updated:** August 7, 2026 (Guam)
+**Status:** corrected integrated calibration complete; blind native review and 100-case promotion suite pending
+**Last updated:** August 8, 2026 (Guam)
 
 ## Decision statement
 
-There is not yet a legitimate production winner. The August 5 run completed all
-192 direct-model calls and produced a provisional engineering shortlist: GPT-5.6
-Terra for the main tutor, GPT-5.6 Luna for high-volume drills, Claude Sonnet 5 for
-blinded premium-explanation review, and Gemini 3.6 Flash for a separate vision
-track. See `MODEL_BENCHMARK_RESULTS_2026-08-05.md` for measurements and caveats.
+There is not yet a legitimate production winner. The corrected August 8 run
+completed all 192 integrated OpenRouter calls, 72 direct-OpenAI provider-path
+calls, and 72 GPT low-reasoning treatment calls against the purpose-locked clean
+evaluation corpus. The review order is GPT-5.6 Luna for fast practice, Terra versus
+Luna/control for the main tutor, Claude Sonnet 5 for premium explanations, and
+Gemini 3.6 Flash for a separate vision suite. The versioned recommendation remains
+explicitly non-production in
+`evaluation/model_routing_recommendation_2026-08-08.json`.
 
 The old reported accuracy percentages remain insufficient evidence because the
 comparison prompt differed from the application, scoring was permissive keyword
@@ -140,13 +143,21 @@ cd api
 # Three-case smoke run across all eight models
 .venv/bin/python evaluation/model_benchmark.py --limit 3 --check-catalog
 
-# Full 24-case run across all eight models
-.venv/bin/python evaluation/model_benchmark.py --check-catalog
+# Full 24-case integrated run across all eight models
+.venv/bin/python evaluation/model_benchmark.py \
+  --rag-collection hafagpt_eval_canonical_v1 --check-catalog
 
 # Separate GPT-5.6 lower-reasoning treatment; do not mix with baseline artifacts
 .venv/bin/python evaluation/model_benchmark.py \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
-  --reasoning-effort low
+  --reasoning-effort low \
+  --rag-collection hafagpt_eval_canonical_v1
+
+# Compare the GPT provider path directly (uses OPENAI_API_KEY)
+.venv/bin/python evaluation/model_benchmark.py \
+  --transport openai \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --rag-collection hafagpt_eval_canonical_v1
 ```
 
 Select models by alias when diagnosing failures:
@@ -198,12 +209,13 @@ This table is a test order, not a routing decision.
 |---|---|
 | Benchmark case/catalog validation | Passed: 24 cases, 8 models |
 | Live OpenRouter catalog availability | Passed: all 8 IDs present |
-| Model API calls | Passed: 192/192 primary calls plus 72/72 GPT-5.6 low-effort calls; one primary Gemini response contract failed by truncation |
+| Model API calls | Passed: 192/192 integrated OpenRouter, 72/72 direct-OpenAI, and 72/72 GPT-5.6 low-effort calls; one Gemini completion hit the length contract after providing the scored answer |
 | Local RAG infrastructure | 44,865 chunks; ordinary retrieval passed after pgvector repair |
 | Source-aware RAG policy | Deterministic policy/retrieval tests pass; Guampedia and Swarthmore blocked, historical intent separated, PDN/Visit Guam role-limited |
 | Live semantic RAG gate | Passed August 8: database connectivity, ordinary semantic retrieval, and the PDN-specific source lane; all five returned references for the explicit PDN question were PDN sources |
 | August 7 provider smoke | Passed: 1/1 grounded case on all 8 catalog models; availability/adapter evidence only |
-| Integrated per-model RAG comparison | Retrieval gate repaired and passed; a safe model-override mechanism and clean evaluation corpus remain pending |
+| Clean evaluation corpus | Passed: 101 source-backed entries, 101 unique hashes, evaluation-only purpose lock |
+| Integrated per-model RAG comparison | Passed calibration: 192/192 OpenRouter calls, 72/72 direct-OpenAI calls, and 72/72 low-effort calls |
 | Blind native review | Packet generated; two-reviewer scoring pending |
 | Production model decision | Pending |
 

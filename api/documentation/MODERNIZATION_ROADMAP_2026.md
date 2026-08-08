@@ -31,8 +31,17 @@ Completed after the initial review:
 - repaired PostgreSQL 16/pgvector 0.8.1 compatibility;
 - ran all 192 direct-model calls and preserved the blind-review artifacts;
 - exposed a failing PDN-specific retrieval gate.
+- diagnosed the local Clerk failure as a wrong-app port collision and verified the
+  real development sign-in modal in a browser;
+- backed up and reconciled the local Alembic drift, then proved an empty database
+  can upgrade from revision zero to head;
+- built a 101-entry, zero-duplicate, evaluation-only corpus with a production-use
+  purpose lock;
+- completed a corrected 192-call integrated eight-model matrix and a 72-call
+  direct-OpenAI provider-path comparison.
 
-Remaining transition item: schedule two native-speaker/educator reviewers.
+Remaining transition item: complete two independent native-speaker/educator
+reviews. No production model promotion or external corpus grant is claimed.
 
 ## Phase 1 — close immediate trust and security gaps
 
@@ -46,10 +55,12 @@ Remaining transition item: schedule two native-speaker/educator reviewers.
 5. End or rename the year-long Christmas promo; make theme activation bounded and independent from entitlements.
 6. Add timeouts to ElevenLabs and audit every outbound HTTP request.
 7. Split `requirements.txt` into production and tool-specific groups, then remove unused runtime packages.
-8. Reconcile Alembic history with actual local/production schemas using backups and
-   explicit schema diffs; stop application code from silently creating migration-owned tables.
-9. Repair the Clerk development initialization path without using production keys
-   on localhost, then add an authenticated browser smoke test.
+8. ~~Reconcile the local Alembic history using a backup, explicit schema proof,
+   and a fresh-database upgrade.~~ Completed locally; repeat the read-only
+   inventory and reviewed migration procedure for production only when authorized.
+9. ~~Repair the Clerk development initialization path without using production
+   keys on localhost.~~ Completed; the root cause was a wrong-app port collision.
+   Automating the authenticated smoke remains part of frontend critical-flow work.
 10. Add dependency scanning to CI with a documented review/exception process.
 11. Harden uploads: streaming limits, magic-byte validation, private objects, signed URLs, deletion, and redacted logging.
 
@@ -70,11 +81,15 @@ Remaining transition item: schedule two native-speaker/educator reviewers.
 
 1. ~~Run a three-case smoke across all eight models.~~ Completed.
 2. ~~Diagnose contract/adapter failures without changing first-comparison prompts.~~ Completed; fixed evaluator normalization and Gemini budget diagnosis.
-3. ~~Run all 24 grounded cases across all eight models and one lower GPT-5.6 reasoning effort.~~ Completed: 192/192 primary plus 72/72 treatment calls.
+3. ~~Run all 24 integrated retrieval cases across all eight models, compare the GPT
+   provider path, and run one lower GPT-5.6 reasoning effort.~~ Completed: 192/192
+   OpenRouter baseline calls and 72/72 direct-OpenAI calls; the low-effort artifact
+   is recorded separately.
 4. Complete blind review with two reviewers and adjudicate critical errors.
-5. Rebuild the corpus behind the now-enforced source registry, add retrieval traces
-   and at least 100 representative integrated RAG cases, then run the control,
-   Terra, Luna, and Claude finalists.
+5. Expand the purpose-locked 101-entry evaluation corpus and retrieval traces to
+   at least 100 representative, independently authored/adjudicated integrated RAG
+   cases, then rerun the control, Terra, Luna, and Claude finalists. The completed
+   24-case run is a valid calibration round, not the final promotion suite.
 6. Run Gemini separately on images/documents with an explicit reasoning/output budget.
 7. Calculate cost at realistic low/base/high monthly usage, including reasoning tokens and retries.
 8. Decide whether one model or role-based routing is justified.
@@ -172,8 +187,8 @@ Do not optimize only for chat messages, minutes, or streak length; those can ris
 | 5 | Update privacy/processor documentation | current policy mismatch | M + legal review |
 | 6 | Split Python runtime/tool dependencies | reduces 38-package advisory surface | M–L |
 | 7 | Complete blind native review | required language-quality gate; direct benchmark is complete | M |
-| 8 | Reconcile Alembic/schema drift | local upgrades currently stop on duplicate objects | M–L |
-| 9 | Repair Clerk local initialization and add an auth smoke | authenticated UI validation is currently blocked | M |
+| 8 | Inventory production schema before any authorized migration | local reconciliation is proven; production still requires read-only evidence and its own backup | M |
+| 9 | Automate the verified Clerk development browser smoke | manual local auth passed; CI needs the same wrong-app-resistant flow | M |
 | 10 | Rebuild the governed corpus and add retrieval traces | Phase 0 contains sources but the legacy corpus is 66.89% redundant | L |
 | 11 | Add integrated RAG finalist evaluation | measures the real application | L |
 | 12 | Add frontend critical-flow tests | enables safe cleanup/upgrades | M |

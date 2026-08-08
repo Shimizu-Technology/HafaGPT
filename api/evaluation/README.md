@@ -13,16 +13,26 @@ cd api
 
 # Requires OPENROUTER_API_KEY in ignored api/.env or the local environment
 .venv/bin/python evaluation/model_benchmark.py --limit 3 --check-catalog
-.venv/bin/python evaluation/model_benchmark.py --check-catalog
+.venv/bin/python evaluation/model_benchmark.py \
+  --rag-collection hafagpt_eval_canonical_v1 --check-catalog
 
 # Controlled GPT-5.6 lower-effort treatment; keep separate from the baseline
 .venv/bin/python evaluation/model_benchmark.py \
   --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
-  --reasoning-effort low
+  --reasoning-effort low \
+  --rag-collection hafagpt_eval_canonical_v1
+
+# Provider-path parity for the GPT tiers (uses OPENAI_API_KEY)
+.venv/bin/python evaluation/model_benchmark.py \
+  --transport openai \
+  --models gpt-5.6-luna,gpt-5.6-terra,gpt-5.6-sol \
+  --rag-collection hafagpt_eval_canonical_v1
 ```
 
 The runner captures complete responses, returned model/provider, timing, tokens,
-cost, source/orthography/format checks, input hashes, and a blinded review packet.
+cost, source/orthography/format checks, retrieval traces and hashes, provider path,
+and a blinded review packet. The private evaluation collection is purpose-locked
+and cannot be selected by the production runtime.
 Automated scores are regression signals only; native-speaker/educator review is a
 required release gate.
 

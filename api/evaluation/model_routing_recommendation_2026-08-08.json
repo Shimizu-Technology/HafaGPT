@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-08-08",
+  "status": "pending_two_independent_native_reviews_and_100_case_promotion_suite",
+  "production_change_authorized": false,
+  "control": {
+    "alias": "current-deepseek-v3",
+    "model_id": "deepseek/deepseek-chat",
+    "decision": "Retain as the rollback control until promotion gates pass."
+  },
+  "role_hypotheses": [
+    {
+      "role": "fast_practice",
+      "primary_candidate": "gpt-5.6-luna",
+      "comparators": ["current-deepseek-v3", "deepseek-v4-flash"],
+      "reason": "Luna was contract-clean, fast, and lowest-cost while reaching 100 automated mean in both baseline provider paths."
+    },
+    {
+      "role": "core_tutor",
+      "primary_candidate": "gpt-5.6-terra",
+      "comparators": ["gpt-5.6-luna", "current-deepseek-v3", "claude-sonnet-5"],
+      "reason": "Terra had the best OpenRouter latency tail, but did not beat Luna's automated signal; reviewer teaching-quality preference is required."
+    },
+    {
+      "role": "premium_explanation",
+      "primary_candidate": "claude-sonnet-5",
+      "comparators": ["gpt-5.6-terra", "gpt-5.6-sol"],
+      "reason": "Claude was contract-clean but slower and more expensive; use only if blind review establishes a material quality advantage."
+    },
+    {
+      "role": "vision_document",
+      "primary_candidate": "gemini-3.6-flash",
+      "comparators": [],
+      "reason": "Text RAG passed, but one completion hit the length contract and no multimodal suite has run; a dedicated vision evaluation is required."
+    },
+    {
+      "role": "quality_ceiling_offline",
+      "primary_candidate": "gpt-5.6-sol",
+      "comparators": ["claude-sonnet-5"],
+      "reason": "Sol did not justify roughly 45 times Luna's measured baseline cost for the bounded tutor workload; never auto-publish offline content."
+    }
+  ],
+  "reasoning_effort_decision": {
+    "setting": "preserve_default_for_promotion_comparison",
+    "reason": "The separate low-effort treatment did not improve Luna or Terra and had worse p95 latency in this run."
+  },
+  "provider_path_decision": {
+    "setting": "compare_openai_direct_and_openrouter_in_canary",
+    "reason": "Both paths were healthy; direct OpenAI had a tighter GPT latency tail in the 72-call calibration run."
+  },
+  "evidence": [
+    {
+      "name": "openrouter_eight_model_integrated_rescored",
+      "calls": 192,
+      "sha256": "149d7ee56bfba3ff93ca59b8955a26927dc214233a2249827026b2cfb578ff65"
+    },
+    {
+      "name": "openai_direct_gpt_integrated_rescored",
+      "calls": 72,
+      "sha256": "0377e11a9f72661fb012f91ceb1e75e50df458433f5d357b3d951a8a7336b346"
+    },
+    {
+      "name": "openrouter_gpt_low_reasoning_treatment",
+      "calls": 72,
+      "sha256": "2526073c9fd78b5eb230ad9294aa448706f53532961b5d738fb248e9bbf01e93"
+    }
+  ],
+  "required_before_runtime_registry_change": [
+    "two independent qualified Chamorro reviews and adjudication",
+    "at least 100 held-out independently authored integrated cases",
+    "dedicated multimodal evaluation for any vision route",
+    "privacy and provider-processing approval",
+    "startup model-ID validation and returned-provider logging",
+    "feature flag, shadow, canary, and tested control rollback"
+  ]
+}

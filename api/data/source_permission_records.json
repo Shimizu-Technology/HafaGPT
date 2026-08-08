@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "last_audited_at": "2026-08-08",
+  "policy": "A record documents outreach and scope; it does not enable ingestion. Production ingestion also requires an explicit allowed use and permission reference in language_source_registry.json.",
+  "records": [
+    {
+      "source_id": "guampedia",
+      "owner_or_steward": "Guampedia Foundation",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "derive_exercises", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Electronic storage and product reuse require written permission.",
+      "next_action": "Request a written, use-by-use grant from Guampedia."
+    },
+    {
+      "source_id": "swarthmore_student_wiki",
+      "owner_or_steward": "Swarthmore LING 073 course contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Student course material is discovery-only and is not an authority source.",
+      "next_action": "Use it only to locate authoritative primary references."
+    },
+    {
+      "source_id": "lengguahita",
+      "owner_or_steward": "Lengguahi-ta",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "display_complete_stories", "derive_exercises", "serve_audio", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Copied stories and full-text retrieval remain disabled.",
+      "next_action": "Request written terms for stories, lessons, translations, audio, attribution, and revocation."
+    },
+    {
+      "source_id": "pacific_daily_news",
+      "owner_or_steward": "Pacific Daily News / publisher",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Attribution alone does not authorize article storage or embedding.",
+      "next_action": "Request a limited authentic-usage and excerpt license."
+    },
+    {
+      "source_id": "visit_guam_greetings",
+      "owner_or_steward": "Guam Visitors Bureau",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Public-facing availability is not a reuse grant.",
+      "next_action": "Request a limited public-usage attestation license."
+    },
+    {
+      "source_id": "chamoru_info_dictionary",
+      "owner_or_steward": "Chamoru.info",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_dictionary_entries", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Derivative source lineage must remain visible and must not count as independent corroboration.",
+      "next_action": "Confirm ownership, upstream rights, snapshot terms, attribution, and update policy."
+    },
+    {
+      "source_id": "chamoru_info_lessons",
+      "owner_or_steward": "Chamoru.info",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "derive_exercises", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Lesson reuse requires permission separate from dictionary use.",
+      "next_action": "Request lesson-specific storage, excerpt, derivative, and attribution terms."
+    },
+    {
+      "source_id": "chung_grammar_2020",
+      "owner_or_steward": "Author and University of California eScholarship rights holders",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "derive_summaries", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Repository access does not establish full-text RAG rights.",
+      "next_action": "Confirm the work license and request any additional full-text RAG permission needed."
+    },
+    {
+      "source_id": "local_revised_dictionary_snapshot",
+      "owner_or_steward": "Natibu Marianas / dictionary rights holders",
+      "status": "provenance_unresolved",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_dictionary_entries", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "The exact local edition and acquisition lineage are unresolved.",
+      "next_action": "Identify and checksum the edition, then obtain a dated snapshot agreement."
+    },
+    {
+      "source_id": "topping_ogo_dungca_1975",
+      "owner_or_steward": "Authors, publisher, depositors, and archive rights holders",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "historical_research", "model_evaluation"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Archive access and depositor availability do not establish product reuse rights.",
+      "next_action": "Resolve copyright/depositor authority and request historical-reference scope."
+    },
+    {
+      "source_id": "rosetta_project_vocabulary",
+      "owner_or_steward": "Rosetta Project / Internet Archive and underlying contributors",
+      "status": "provenance_unresolved",
+      "requested_uses": ["historical_research", "model_evaluation"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Historical-only; upstream license and edition are unresolved.",
+      "next_action": "Trace the exact artifact and license before any retained corpus use."
+    },
+    {
+      "source_id": "historic_dictionary_grammar_1865",
+      "owner_or_steward": "Public-domain source repository",
+      "status": "public_domain_review_required",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "historical_research", "model_evaluation"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Public-domain status and scan-specific terms must be documented before ingestion.",
+      "next_action": "Record publication facts, jurisdiction analysis, scan terms, stable URL, and checksum."
+    },
+    {
+      "source_id": "kumision_guam_orthography_2024",
+      "owner_or_steward": "Kumisión i Fino' CHamoru",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Normative authority does not itself grant reproduction or embedding rights.",
+      "next_action": "Request partnership terms for the dated orthography edition and related lists."
+    },
+    {
+      "source_id": "natibu_marianas_living_dictionary",
+      "owner_or_steward": "Natibu Marianas / IKNM-KAM",
+      "status": "not_requested",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_dictionary_entries", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Use only an approved, dated living-dictionary snapshot with an update and revocation policy.",
+      "next_action": "Request a CNMI dictionary partnership and snapshot/update agreement."
+    },
+    {
+      "source_id": "chachalani_archive",
+      "owner_or_steward": "CHachalåni, archive, speakers, and item-level rights holders",
+      "status": "not_requested",
+      "requested_uses": ["retain_approved_items", "create_embeddings", "return_short_excerpts", "serve_audio", "serve_transcripts", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Every recording requires item-level access, speaker consent, attribution, and revocation terms.",
+      "next_action": "Pursue a partnership; never bulk-scrape the archive."
+    },
+    {
+      "source_id": "learning_chamoru",
+      "owner_or_steward": "LearningCHamoru",
+      "status": "not_requested",
+      "requested_uses": ["retain_approved_material", "create_embeddings", "return_short_excerpts", "derive_exercises", "serve_audio", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "No scraping; curriculum and multimedia require an explicit collaboration agreement.",
+      "next_action": "Request curriculum and multimedia collaboration terms."
+    },
+    {
+      "source_id": "gdoe_chamoru_program",
+      "owner_or_steward": "Guam Department of Education",
+      "status": "not_requested",
+      "requested_uses": ["structure_learning_outcomes", "retain_approved_material", "derive_exercises", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Standards may guide scope; reusable lesson content requires separate approval.",
+      "next_action": "Request standards alignment and content-reuse guidance from the program."
+    }
+  ]
+}

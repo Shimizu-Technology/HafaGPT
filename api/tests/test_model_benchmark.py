@@ -3,8 +3,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from evaluation.model_benchmark import (
     build_reference,
+    build_task_text,
     load_json,
     percentile,
     score_response,
@@ -79,6 +82,14 @@ def test_structured_output_requires_json_keys() -> None:
     assert evaluation["score"] == 100.0
 
 
+def test_structured_task_names_the_target_entry() -> None:
+    _catalog, cases, vocabulary = benchmark_documents()
+    case = next(item for item in cases["cases"] if item["id"] == "structured_red")
+    entry = next(item for item in vocabulary["entries"] if item["id"] == case["entry_id"])
+
+    assert build_task_text(case, entry).endswith("Target entry English: Red")
+
+
 def test_unknown_case_requires_explicit_uncertainty() -> None:
     _catalog, cases, _vocabulary = benchmark_documents()
     case = next(item for item in cases["cases"] if item["id"] == "unknown_word")
@@ -97,6 +108,21 @@ def test_unknown_case_accepts_normalized_contraction() -> None:
     evaluation = score_response(case, None, "I can’t verify that from the supplied reference.")
 
     assert evaluation["score"] == 100.0
+
+
+@pytest.mark.parametrize(
+    "answer",
+    (
+        "The translation cannot be verified from the supplied references.",
+        "That fictional festival is not verified in the supplied material.",
+        "The supplied references do not mention that claim.",
+    ),
+)
+def test_unknown_case_accepts_equivalent_abstention_language(answer: str) -> None:
+    _catalog, cases, _vocabulary = benchmark_documents()
+    case = next(item for item in cases["cases"] if item["id"] == "unknown_word")
+
+    assert score_response(case, None, answer)["score"] == 100.0
 
 
 def test_summary_uses_reported_cost_and_exposes_contract_metrics() -> None:

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import pytest
 
+from src.rag.permission_records import permission_records_by_source
 from src.rag.source_policy import (
     SourceIngestionBlocked,
     annotate_metadata,
+    assert_collection_use_allowed,
     assert_ingestion_allowed,
     is_retrieval_allowed,
     load_source_registry,
@@ -31,6 +33,18 @@ def test_registry_is_valid_and_source_ids_are_unique() -> None:
             assert source["retrieval"]["weight"] > 0
         else:
             assert source["retrieval"]["weight"] == 0
+
+
+def test_every_external_source_has_a_permission_or_outreach_record() -> None:
+    records = permission_records_by_source()
+    internal_ids = {
+        "hafagpt_canonical_evaluation",
+        "supplemental_dictionary_unreviewed",
+        "local_abbreviations_unreviewed",
+    }
+
+    assert registered_source_ids() - internal_ids == set(records)
+    assert all(record["status"] != "granted" for record in records.values())
 
 
 @pytest.mark.parametrize(
@@ -106,3 +120,23 @@ def test_ingestion_requires_explicit_registry_permission() -> None:
 
     with pytest.raises(SourceIngestionBlocked, match="Unregistered language source"):
         assert_ingestion_allowed(metadata("https://example.com/new-source"))
+
+
+def test_evaluation_source_cannot_enter_production_rag() -> None:
+    evaluation_metadata = metadata(
+        "internal://hafagpt_canonical_evaluation/v1",
+        "hafagpt_canonical_evaluation",
+    )
+
+    annotated = assert_ingestion_allowed(evaluation_metadata, "model_evaluation")
+
+    assert annotated["source_id"] == "hafagpt_canonical_evaluation"
+    with pytest.raises(SourceIngestionBlocked, match="production_rag"):
+        assert_ingestion_allowed(evaluation_metadata)
+
+
+def test_evaluation_collection_cannot_be_selected_as_production_rag() -> None:
+    with pytest.raises(ValueError, match="evaluation-only"):
+        assert_collection_use_allowed("hafagpt_eval_canonical_v1", "production_rag")
+
+    assert_collection_use_allowed("hafagpt_eval_canonical_v1", "model_evaluation")

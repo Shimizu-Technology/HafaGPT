@@ -61,6 +61,9 @@ unless the registry contains explicit permission evidence.
 The registry is a containment system, not a substitute for signed agreements,
 legal review, or community adjudication.
 
+The operational outreach ledger and two-reviewer workflow are documented in
+[SOURCE_PERMISSION_AND_REVIEW_PLAYBOOK.md](SOURCE_PERMISSION_AND_REVIEW_PLAYBOOK.md).
+
 ## Phase 0 — containment
 
 **Goal:** stop known questionable uses immediately without deleting evidence or
@@ -99,13 +102,17 @@ review.
   retrieval, and the PDN-specific source lane. The PDN question returned five
   governed PDN references. This validates runtime containment and source targeting
   on the legacy corpus; it is not a clean-corpus or model-quality claim.
-- Authenticated browser validation is currently blocked by Clerk failing to
-  initialize even though the local publishable key exactly matches the active
-  development instance. Do not substitute production keys for localhost; diagnose
-  the SDK/instance path in a focused authentication change.
-- The local database contains schema objects created outside its recorded Alembic
-  history. `alembic upgrade head` fails transactionally on duplicate objects. Do
-  not stamp or rebuild it without a reviewed reconciliation/backup procedure.
+- Authenticated browser validation passed against the actual HåfaGPT Vite server.
+  The earlier failure was an unrelated app occupying port 5173; strict-port local
+  startup now prevents that false target. Development Clerk credentials remain
+  isolated from production.
+- The local database was backed up, the exact duplicated schema prefix was proven
+  and adopted with a local-only reconciliation command, and normal migrations
+  upgraded it to head. A disposable empty database also upgraded from revision
+  zero to head. Production was not inspected or modified.
+- A private 101-entry evaluation-only collection now provides clean integrated
+  model evidence with zero exact duplicates. It is purpose-locked and is not a
+  production corpus or a substitute for permission/native review.
 
 ## Phase 1 — agreements, governance, and product scope
 
