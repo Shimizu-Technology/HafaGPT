@@ -5873,7 +5873,12 @@ async def generate_quiz_from_dictionary(
 # Story Mode Endpoints (Pre-extracted from Lengguahi-ta)
 # =====================================================
 
-from .story_service import get_available_stories as get_stories_list, get_story, get_story_categories
+from .story_service import (
+    get_available_stories as get_stories_list,
+    get_story,
+    get_story_availability,
+    get_story_categories,
+)
 
 @app.get("/api/stories/available", tags=["Stories"])
 async def list_available_stories(
@@ -5881,9 +5886,10 @@ async def list_available_stories(
     category: Optional[str] = None
 ):
     """
-    Get list of available pre-extracted Chamorro stories.
-    
-    Stories are pre-extracted from Lengguahi-ta for instant loading.
+    Get the governed story catalog and its current availability state.
+
+    The copied story catalog is empty unless the source registry and local
+    environment contain the same recorded permission reference.
     
     Args:
         limit: Maximum number of stories to return (default 50)
@@ -5913,10 +5919,25 @@ async def list_available_stories(
         return {
             "stories": stories,
             "total": len(stories),
-            "by_category": categories
+            "by_category": categories,
+            "availability": get_story_availability(),
         }
     except Exception as e:
         logger.error(f"❌ [STORIES] Failed to list stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stories/categories", tags=["Stories"])
+async def list_story_categories():
+    """Get governed story categories; empty while copied stories are disabled."""
+    try:
+        categories = get_story_categories()
+        return {
+            "categories": categories,
+            "availability": get_story_availability(),
+        }
+    except Exception as e:
+        logger.error(f"❌ [STORIES] Failed to list categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -5949,6 +5970,10 @@ async def get_story_endpoint(story_id: str):
     Note: This endpoint is instant - no AI generation required!
     """
     try:
+        availability = get_story_availability()
+        if not availability["enabled"]:
+            raise HTTPException(status_code=451, detail=availability["message"])
+
         logger.info(f"📖 [STORIES] Fetching story: {story_id}")
         story = get_story(story_id)
         
@@ -5963,18 +5988,6 @@ async def get_story_endpoint(story_id: str):
     except Exception as e:
         logger.error(f"❌ [STORIES] Failed to get story: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/stories/categories", tags=["Stories"])
-async def list_story_categories():
-    """Get list of story categories with counts."""
-    try:
-        categories = get_story_categories()
-        return {"categories": categories}
-    except Exception as e:
-        logger.error(f"❌ [STORIES] Failed to list categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 # =====================================================
 # CONVERSATION PRACTICE ENDPOINTS

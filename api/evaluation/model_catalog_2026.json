@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-08-08T13:45:00+10:00",
+  "catalog_source": "https://openrouter.ai/api/v1/models",
+  "notes": [
+    "Prices are OpenRouter catalog prices in USD per million tokens at checked_at and may change.",
+    "The current production control is the OpenRouter legacy ID deepseek/deepseek-chat; DeepSeek's temporary direct chat/reasoner mapping to V4 Flash was discontinued July 24, 2026.",
+    "The expanded catalog includes current hosted frontier systems and representative practical open-weight baselines; open-weight does not mean the selected OpenRouter endpoint is self-hosted.",
+    "A model is not approved for production until it passes automated gates and native-speaker/educator review."
+  ],
+  "models": [
+    {
+      "alias": "current-deepseek-v3",
+      "model_id": "deepseek/deepseek-chat",
+      "role": "production control",
+      "input_usd_per_million": 0.14,
+      "output_usd_per_million": 0.28,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary_legacy_control"
+    },
+    {
+      "alias": "deepseek-v4-flash",
+      "model_id": "deepseek/deepseek-v4-flash-0731",
+      "role": "lowest-cost tutor candidate",
+      "input_usd_per_million": 0.09,
+      "output_usd_per_million": 0.18,
+      "supports_temperature": true,
+      "candidate_class": "open_weight"
+    },
+    {
+      "alias": "deepseek-v4-pro",
+      "model_id": "deepseek/deepseek-v4-pro",
+      "role": "higher-quality DeepSeek candidate",
+      "input_usd_per_million": 0.435,
+      "output_usd_per_million": 0.87,
+      "supports_temperature": true,
+      "candidate_class": "open_weight"
+    },
+    {
+      "alias": "gemini-3.6-flash",
+      "model_id": "google/gemini-3.6-flash",
+      "role": "fast multimodal candidate",
+      "input_usd_per_million": 1.5,
+      "output_usd_per_million": 7.5,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "gpt-5.6-luna",
+      "model_id": "openai/gpt-5.6-luna",
+      "role": "high-volume low-cost candidate",
+      "input_usd_per_million": 0.1,
+      "output_usd_per_million": 0.6,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "gpt-5.6-terra",
+      "model_id": "openai/gpt-5.6-terra",
+      "role": "balanced core tutor candidate",
+      "input_usd_per_million": 1.0,
+      "output_usd_per_million": 6.0,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "claude-sonnet-5",
+      "model_id": "anthropic/claude-sonnet-5",
+      "role": "premium tutor and explanation candidate",
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 10.0,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "gpt-5.6-sol",
+      "model_id": "openai/gpt-5.6-sol",
+      "role": "quality ceiling and hard-case escalation candidate",
+      "input_usd_per_million": 5.0,
+      "output_usd_per_million": 30.0,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "kimi-k3",
+      "model_id": "moonshotai/kimi-k3",
+      "role": "frontier multimodal and long-context candidate",
+      "input_usd_per_million": 3.0,
+      "output_usd_per_million": 15.0,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_custom_license"
+    },
+    {
+      "alias": "qwen-3.8-max",
+      "model_id": "qwen/qwen3.8-max",
+      "role": "Qwen hosted quality ceiling",
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 6.0,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "qwen-3.7-flash",
+      "model_id": "qwen/qwen3.7-flash",
+      "role": "Qwen ultra-low-cost hosted candidate",
+      "input_usd_per_million": 0.03,
+      "output_usd_per_million": 0.13,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "qwen-3.7-plus",
+      "model_id": "qwen/qwen3.7-plus",
+      "role": "Qwen balanced-cost hosted candidate",
+      "input_usd_per_million": 0.32,
+      "output_usd_per_million": 1.28,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "qwen-3.6-35b-a3b",
+      "model_id": "qwen/qwen3.6-35b-a3b",
+      "role": "practical multilingual open-weight candidate",
+      "input_usd_per_million": 0.14,
+      "output_usd_per_million": 1.0,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_apache_2"
+    },
+    {
+      "alias": "claude-opus-5",
+      "model_id": "anthropic/claude-opus-5",
+      "role": "Anthropic premium quality candidate",
+      "input_usd_per_million": 5.0,
+      "output_usd_per_million": 25.0,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "claude-fable-5",
+      "model_id": "anthropic/claude-fable-5",
+      "role": "Anthropic maximum-capability ceiling",
+      "input_usd_per_million": 10.0,
+      "output_usd_per_million": 50.0,
+      "supports_temperature": false,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "gemini-3.1-pro-preview",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "role": "Google premium intelligence preview",
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 12.0,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary_preview"
+    },
+    {
+      "alias": "grok-4.5",
+      "model_id": "x-ai/grok-4.5",
+      "role": "xAI frontier comparator",
+      "input_usd_per_million": 2.0,
+      "output_usd_per_million": 6.0,
+      "supports_temperature": true,
+      "candidate_class": "hosted_proprietary"
+    },
+    {
+      "alias": "glm-5.2",
+      "model_id": "z-ai/glm-5.2",
+      "role": "long-context open-weight frontier candidate",
+      "input_usd_per_million": 0.4046,
+      "output_usd_per_million": 1.2716,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_mit"
+    },
+    {
+      "alias": "minimax-m3",
+      "model_id": "minimax/minimax-m3",
+      "role": "efficient multimodal open-weight candidate",
+      "input_usd_per_million": 0.3,
+      "output_usd_per_million": 1.2,
+      "supports_temperature": true,
+      "candidate_class": "open_weight"
+    },
+    {
+      "alias": "mistral-small-4",
+      "model_id": "mistralai/mistral-small-2603",
+      "role": "efficient multilingual open-weight candidate",
+      "input_usd_per_million": 0.15,
+      "output_usd_per_million": 0.6,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_apache_2"
+    },
+    {
+      "alias": "nemotron-3-ultra",
+      "model_id": "nvidia/nemotron-3-ultra-550b-a55b",
+      "role": "NVIDIA open-weight reasoning candidate",
+      "input_usd_per_million": 0.6,
+      "output_usd_per_million": 3.6,
+      "supports_temperature": true,
+      "candidate_class": "open_weight"
+    },
+    {
+      "alias": "gpt-oss-120b",
+      "model_id": "openai/gpt-oss-120b",
+      "role": "low-cost Apache-2 open-weight baseline",
+      "input_usd_per_million": 0.037,
+      "output_usd_per_million": 0.17,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_apache_2"
+    },
+    {
+      "alias": "llama-4-maverick",
+      "model_id": "meta-llama/llama-4-maverick",
+      "role": "widely deployable open-weight baseline",
+      "input_usd_per_million": 0.2,
+      "output_usd_per_million": 0.8,
+      "supports_temperature": true,
+      "candidate_class": "open_weight_community_license"
+    }
+  ]
+}

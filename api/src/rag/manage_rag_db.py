@@ -10,6 +10,7 @@ from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from src.utils.improved_chunker import create_improved_chunker, create_docling_processor
+from src.rag.source_policy import assert_ingestion_allowed
 import os
 import json
 import hashlib
@@ -84,6 +85,14 @@ class RAGDatabaseManager:
         self.metadata["last_updated"] = datetime.now().isoformat()
         with open(self.metadata_file, 'w') as f:
             json.dump(self.metadata, f, indent=2)
+
+    def add_governed_documents(self, documents):
+        """Add documents only after every source passes the registry gate."""
+        governed_documents = []
+        for document in documents:
+            document.metadata = assert_ingestion_allowed(document.metadata)
+            governed_documents.append(document)
+        return self.vectorstore.add_documents(governed_documents)
     
     def _get_chunk_count(self):
         """Get total count of chunks in PostgreSQL database."""
@@ -274,7 +283,7 @@ class RAGDatabaseManager:
                 print(f"   ⚠️  Re-indexing: Old chunks will remain in database")
             
             # Step 4: Add to ChromaDB
-            self.vectorstore.add_documents(documents)
+            self.add_governed_documents(documents)
             print(f"   ✅ Added to database!")
             
             # Calculate statistics
@@ -556,4 +565,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

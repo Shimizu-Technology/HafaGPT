@@ -358,7 +358,7 @@ class ChamorroBlogCrawler:
             
             # Add to vectorstore directly (like we do for dictionaries)
             try:
-                self.db_manager.vectorstore.add_documents([doc])
+                self.db_manager.add_governed_documents([doc])
                 saved_count += 1
                 print(f"   ✅ Saved: {post['title'][:60]}... (priority {post['priority']})")
             
@@ -454,4 +454,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

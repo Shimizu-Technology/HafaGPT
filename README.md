@@ -56,8 +56,22 @@ The repository-wide check runs backend tests, canonical language-content
 validation, static-audio synchronization checks, frontend linting, TypeScript
 validation, and a production frontend build.
 
-`api/tests/test_system.py` is an opt-in production smoke suite because it
-connects to live database, RAG, and web-search services; it is not run by CI.
+Credential-free system checks run in CI. Live database/RAG checks explicitly
+skip unless `DATABASE_URL` and `OPENAI_API_KEY` are available; run them in a
+protected staging workflow rather than storing production credentials in CI.
+
+## 2026 review and roadmap
+
+- [Project review](api/documentation/PROJECT_REVIEW_2026.md)
+- [Language resource and corpus audit](api/documentation/LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
+- [Language resource implementation program](api/documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md)
+- [Source permission and native-review playbook](api/documentation/SOURCE_PERMISSION_AND_REVIEW_PLAYBOOK.md)
+- [Phase 1–2 execution record](api/documentation/PHASE_1_2_EXECUTION_2026-08-08.md)
+- [Model evaluation method and status](api/documentation/MODEL_EVALUATION_2026.md)
+- [Current frontier and open-weight model research](api/documentation/FRONTIER_MODEL_RESEARCH_2026-08-08.md)
+- [Historical August 5 direct-reference benchmark](api/documentation/MODEL_BENCHMARK_RESULTS_2026-08-05.md)
+- [Modernization roadmap](api/documentation/MODERNIZATION_ROADMAP_2026.md)
+- [Validation evidence](api/documentation/VALIDATION_REPORT_2026-08-05.md)
 
 ## Deployment
 

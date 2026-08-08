@@ -1,4 +1,13 @@
-# 🧪 How HåfaGPT's Evaluation System Works
+# How HåfaGPT's Evaluation System Works
+
+> **Important 2026 update:** This document's historical keyword-evaluation sections
+> describe the original system and its old metrics. Those metrics are not reliable
+> enough for model selection or language-quality claims. The current process is in
+> [MODEL_EVALUATION_2026.md](MODEL_EVALUATION_2026.md), using source-grounded cases,
+> separate orthography/source/format checks, complete response capture, integrated
+> staging RAG tests, and blinded native-speaker/educator review.
+
+## Historical keyword evaluation reference
 
 > A guide to running tests, understanding accuracy metrics, and tracking quality over time.
 
