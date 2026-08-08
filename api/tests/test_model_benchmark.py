@@ -113,6 +113,17 @@ def test_integrated_retrieval_requires_sources_and_the_target_entry() -> None:
         )
 
 
+def test_integrated_uncertainty_case_allows_zero_eligible_sources() -> None:
+    assert validate_retrieval_contract(
+        "No eligible reference answered the query.",
+        [],
+        None,
+        "unknown_word",
+    ) is None
+    with pytest.raises(ValueError, match="No governed retrieval context"):
+        validate_retrieval_contract("", [], None, "unknown_word")
+
+
 def test_unknown_case_requires_explicit_uncertainty() -> None:
     _catalog, cases, _vocabulary = benchmark_documents()
     case = next(item for item in cases["cases"] if item["id"] == "unknown_word")
