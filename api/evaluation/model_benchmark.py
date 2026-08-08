@@ -149,13 +149,14 @@ def validate_retrieval_contract(
     entry: dict[str, Any] | None,
     case_id: str,
 ) -> bool | None:
-    """Reject integrated evidence when retrieval is empty or misses the target."""
-    if not reference_text.strip():
-        raise ValueError(f"No governed retrieval context found for benchmark case {case_id}")
+    """Reject unsupported answer evidence while preserving abstention cases."""
     # Uncertainty cases deliberately have no canonical target. Zero eligible
-    # sources is valid evidence that the model should abstain rather than guess.
+    # sources and an empty context are valid evidence that the model should
+    # abstain rather than guess.
     if entry is None:
         return None
+    if not reference_text.strip():
+        raise ValueError(f"No governed retrieval context found for benchmark case {case_id}")
     if not source_rows:
         raise ValueError(f"No governed retrieval evidence found for benchmark case {case_id}")
     expected_term = normalize(entry["recommended_teaching_term"])

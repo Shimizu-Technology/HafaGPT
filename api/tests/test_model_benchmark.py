@@ -120,8 +120,7 @@ def test_integrated_uncertainty_case_allows_zero_eligible_sources() -> None:
         None,
         "unknown_word",
     ) is None
-    with pytest.raises(ValueError, match="No governed retrieval context"):
-        validate_retrieval_contract("", [], None, "unknown_word")
+    assert validate_retrieval_contract("", [], None, "unknown_word") is None
 
 
 def test_unknown_case_requires_explicit_uncertainty() -> None:
