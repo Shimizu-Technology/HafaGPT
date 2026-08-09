@@ -94,13 +94,6 @@ def detect_query_type(query: str) -> str:
     if any(keyword in query_lower for keyword in cultural_keywords):
         return 'cultural'
 
-    usage_keywords = [
-        'use in a sentence', 'used in a sentence', 'example sentence',
-        'in context', 'who writes', 'newspaper', 'article', 'real-world use',
-    ]
-    if any(keyword in query_lower for keyword in usage_keywords):
-        return 'usage'
-    
     # PRIORITY 1: Translation/lookup patterns take precedence
     # These are lookups even if they contain "how do i"
     lookup_patterns = [
@@ -118,6 +111,13 @@ def detect_query_type(query: str) -> str:
     for pattern in lookup_patterns:
         if pattern in query_lower:
             return 'lookup'
+
+    usage_keywords = [
+        'use in a sentence', 'used in a sentence', 'example sentence',
+        'in context', 'who writes', 'newspaper', 'article', 'real-world use',
+    ]
+    if any(keyword in query_lower for keyword in usage_keywords):
+        return 'usage'
     
     # PRIORITY 2: Educational keywords (for grammar lessons, etc.)
     educational_keywords = [
@@ -236,15 +236,71 @@ def _chamorro_keyword_query_params(target_lower: str, collection_name: str, k: i
 
 def _english_keyword_query_params(target_lower: str, collection_name: str, k: int) -> tuple:
     """Keep ranking expressions, collection scope, and search filter in order."""
+    escaped_target = re.escape(target_lower)
     return (
-        f'\\n{target_lower}[,;.\\-\\(]|\\|{target_lower}[,;.\\-]',
-        f'[,;]\\s*{target_lower}[,;.\\s]',
-        f'\\({target_lower}\\)',
-        f'\\n{target_lower}\\s+[a-z]',
+        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}([,;.\-(]|$)',
+        rf'(^|[|\n])\s*{escaped_target}\s*\|',
+        rf'[,;]\s*{escaped_target}[,;.\s]',
+        rf'\({escaped_target}\)',
+        rf'\n{escaped_target}\s+[a-z]',
         collection_name,
-        f'(^|[^a-z]){target_lower}([^a-z]|$)',
+        rf'(^|[^a-z]){escaped_target}([^a-z]|$)',
         k * 3,
     )
+
+
+def _extract_english_lookup_candidate(content: str, target_word: str) -> str | None:
+    """Extract a Chamorro candidate from the dictionary chunk formats in use.
+
+    The production collection contains legacy ``**headword**`` chunks,
+    Chamoru.info ``entry | ...`` tables, and revised-dictionary rows shaped like
+    ``| English | Chamorro |``. Keeping format recognition here prevents ad/footer
+    text that merely mentions the English word from becoming translation evidence.
+    """
+    target_pattern = re.compile(
+        rf"(^|[^a-z]){re.escape(target_word.casefold())}([^a-z]|$)",
+        re.IGNORECASE,
+    )
+
+    entry_match = re.search(r"(?im)^\s*entry\s*\|\s*([^|\n]+)", content)
+    meaning_match = re.search(r"(?im)^\s*meaning\s*\|\s*([^\n]+)", content)
+    if entry_match and meaning_match and target_pattern.search(meaning_match.group(1).casefold()):
+        return entry_match.group(1).strip()
+
+    bold_headword = re.match(r"\s*\*\*([^*]+)\*\*", content)
+    if bold_headword:
+        definition_area = "\n".join(content.splitlines()[:4]).casefold()
+        if target_pattern.search(definition_area):
+            return bold_headword.group(1).strip()
+
+    if re.search(r"\|\s*[-:]{3,}", content):
+        table_mapping = re.search(
+            rf"(?im)(?:^|\|)\s*{re.escape(target_word)}\s*\|\s*([^|\n]+)",
+            content,
+        )
+        if table_mapping:
+            return table_mapping.group(1).strip()
+
+    return None
+
+
+def _clip_english_lookup_evidence(content: str, target_word: str, max_chars: int = 3000) -> str:
+    """Keep the matching dictionary row without injecting an entire PDF page."""
+    if len(content) <= max_chars:
+        return content
+
+    target_pattern = re.compile(
+        rf"(^|[^a-z]){re.escape(target_word)}([^a-z]|$)",
+        re.IGNORECASE,
+    )
+    lines = content.splitlines()
+    for index, line in enumerate(lines):
+        if target_pattern.search(line):
+            excerpt = "\n".join(lines[max(0, index - 2):index + 3]).strip()
+            if excerpt:
+                return excerpt[:max_chars]
+
+    return content[:max_chars]
 
 
 class ChamorroRAG:
@@ -421,8 +477,8 @@ class ChamorroRAG:
                     JOIN langchain_pg_collection AS collection
                       ON collection.uuid = embedding.collection_id
                     WHERE collection.name = %s
-                    AND (embedding.cmetadata->>'source' LIKE '%%dictionary%%'
-                         OR embedding.cmetadata->>'source' LIKE '%%TOD%%')
+                    AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
+                         OR embedding.cmetadata->>'source' ILIKE '%%TOD%%')
                     AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
                     AND (
                         embedding.document ILIKE %s
@@ -557,6 +613,9 @@ class ChamorroRAG:
                             -- Priority 1: DIRECT TRANSLATION - word followed by comma, semicolon, dash, or period
                             -- e.g., "hand, arm" or "fish--generic" or "angry."
                             WHEN embedding.document ~* %s THEN 1
+                            -- Current revised-dictionary tables use | English | Chamorro | rows.
+                            WHEN embedding.cmetadata->>'source' ILIKE '%%Revised-Chamorro-Dictionary%%'
+                                 AND embedding.document ~* %s THEN 1
                             -- Priority 2: Word as alternative meaning (after comma/semicolon)
                             -- e.g., ", angry" or "; mad"
                             WHEN embedding.document ~* %s THEN 2
@@ -572,9 +631,9 @@ class ChamorroRAG:
                     JOIN langchain_pg_collection AS collection
                       ON collection.uuid = embedding.collection_id
                     WHERE collection.name = %s
-                    AND (embedding.cmetadata->>'source' LIKE '%%dictionary%%'
-                         OR embedding.cmetadata->>'source' LIKE '%%TOD%%'
-                         OR embedding.cmetadata->>'source' LIKE '%%chamoru_info%%')
+                    AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
+                         OR embedding.cmetadata->>'source' ILIKE '%%TOD%%'
+                         OR embedding.cmetadata->>'source' ILIKE '%%chamoru_info%%')
                     AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
                     AND embedding.document ~* %s
                     ORDER BY priority ASC, LENGTH(embedding.document) ASC
@@ -586,34 +645,28 @@ class ChamorroRAG:
                 
                 if results:
                     docs = []
-                    seen_words = set()  # Deduplicate by Chamorro headword
+                    seen_words = set()  # Deduplicate by Chamorro headword/translation
                     
                     for content, metadata, priority in results:
-                        # Extract headword from content (format: **word**\ndefinition)
-                        headword_match = re.match(r'\*\*([^*]+)\*\*', content)
-                        if headword_match:
-                            chamorro_word = headword_match.group(1).lower()
-                            
-                            # Skip if we've already seen this Chamorro word
-                            if chamorro_word in seen_words:
-                                continue
-                            
-                            # Verify English word appears in definition area (not just examples)
-                            lines = content.split('\n')
-                            definition_area = '\n'.join(lines[:3]).lower()
-                            
-                            # Check for word boundary match in definition
-                            if re.search(rf'(^|[^a-z]){target_lower}([^a-z]|$)', definition_area):
-                                seen_words.add(chamorro_word)
-                                if not is_retrieval_allowed(metadata, "lookup"):
-                                    continue
-                                docs.append(Document(
-                                    page_content=content,
-                                    metadata=annotate_metadata(metadata),
-                                ))
-                                
-                                if len(docs) >= k:
-                                    break
+                        chamorro_candidate = _extract_english_lookup_candidate(content, target_lower)
+                        if not chamorro_candidate:
+                            continue
+
+                        candidate_key = normalize_chamorro_text(chamorro_candidate)
+                        if candidate_key in seen_words:
+                            continue
+
+                        if not is_retrieval_allowed(metadata, "lookup"):
+                            continue
+
+                        seen_words.add(candidate_key)
+                        docs.append(Document(
+                            page_content=_clip_english_lookup_evidence(content, target_lower),
+                            metadata=annotate_metadata(metadata),
+                        ))
+
+                        if len(docs) >= k:
+                            break
                     
                     if docs:
                         return docs

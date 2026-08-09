@@ -39,6 +39,9 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     assert "MODE_PROMPTS =" in chatbot_source
     assert "def get_rag_context(" in chatbot_source
     assert "from src.rag.web_search_tool import web_search" in chatbot_source
+    assert chatbot_source.count('if mode != "chamorro" and skill_level') == 2
+    assert chatbot_source.count("system_prompt += NO_REFERENCE_GUARD") == 2
+    assert "Do not add etymology, pronunciation, cultural-origin" in chatbot_source
 
 
 def test_crawler_inventory_is_present() -> None:
@@ -87,6 +90,24 @@ def test_live_rag_retrieves_context() -> None:
     rag = ChamorroRAG()
     context, sources = rag.create_context("Håfa Adai", k=3)
     assert len(context) > 100
+    assert sources
+
+
+@pytest.mark.integration
+def test_live_rag_retrieves_source_backed_water_variants() -> None:
+    if not os.getenv("DATABASE_URL") or not os.getenv("OPENAI_API_KEY"):
+        pytest.skip("DATABASE_URL and OPENAI_API_KEY are required for the live relevance check")
+
+    from src.rag.chamorro_rag import ChamorroRAG
+
+    rag = ChamorroRAG()
+    context, sources = rag.create_context(
+        "How do you say water in Chamorro? Include source-backed spelling variants.",
+        k=5,
+    )
+
+    assert "hånom" in context.casefold()
+    assert "hånum" in context.casefold()
     assert sources
 
 

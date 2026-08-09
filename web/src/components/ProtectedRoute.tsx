@@ -30,6 +30,15 @@ const getFeatureInfo = (pathname: string) => {
       benefits: ['Ask questions in English or Chamorro', 'Get instant translations', 'Learn grammar & pronunciation']
     };
   }
+  if (pathname.startsWith('/learning') || pathname.startsWith('/learn/')) {
+    return {
+      icon: BookOpen,
+      title: 'Learning Path',
+      description: 'Follow guided Chamorro lessons and save your progress',
+      color: 'teal',
+      benefits: ['21 guided lessons', 'Learn at your own pace', 'Save your progress']
+    };
+  }
   if (pathname.startsWith('/quiz')) {
     return {
       icon: Brain,
@@ -75,10 +84,19 @@ const getFeatureInfo = (pathname: string) => {
       benefits: ['View your stats', 'See quiz history', 'Track improvement over time']
     };
   }
+  if (pathname.startsWith('/settings')) {
+    return {
+      icon: Sparkles,
+      title: 'Settings',
+      description: 'Personalize your HåfaGPT learning experience',
+      color: 'coral',
+      benefits: ['Choose your learning level', 'Set language preferences', 'Manage your account']
+    };
+  }
   return {
     icon: Sparkles,
-    title: 'Premium Feature',
-    description: 'Sign up to unlock this feature',
+    title: 'Account Feature',
+    description: 'Sign in to save your progress and preferences',
     color: 'coral',
     benefits: ['Full access to all features', 'Save your progress', 'Track your learning']
   };

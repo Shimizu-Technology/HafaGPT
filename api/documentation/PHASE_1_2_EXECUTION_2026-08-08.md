@@ -1,5 +1,8 @@
 # HåfaGPT Phase 1–2 Execution Record — August 8, 2026
 
+Follow-up local application and live-infrastructure validation is recorded in
+[`LOCAL_VALIDATION_2026-08-09.md`](LOCAL_VALIDATION_2026-08-09.md).
+
 **Branch:** `codex/phase-1-2-modernization`
 **Scope:** local auth/database recovery, resource governance, clean evaluation
 corpus, integrated model testing, and a review-gated recommendation

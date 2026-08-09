@@ -497,6 +497,10 @@ MODE_PROMPTS = {
 Answer questions naturally in English, using Chamorro examples when relevant.
 Be conversational, encouraging, and informative.
 
+SOURCE FAITHFULNESS:
+- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
+- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
+
 IMPORTANT CAPABILITIES:
 - You have access to a Chamorro language knowledge base (grammar books, dictionaries, bilingual articles)
 - You may receive WEB SEARCH RESULTS for current information (weather, news, events)
@@ -577,6 +581,10 @@ If you receive web search results, use them but respond in Chamorro only."""
         "prompt": """You are a Chamorro language tutor. 
 Respond with Chamorro first, then provide English translation and breakdown.
 
+SOURCE FAITHFULNESS:
+- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
+- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
+
 If you receive web search results for current information, incorporate them into your response.
 
 🔴 CRITICAL: For single-word translations, ONLY use dictionary sources:
@@ -597,6 +605,14 @@ COMMON ABBREVIATIONS:
 - **HA** = Håfa Adai (Hello) """
     }
 }
+
+NO_REFERENCE_GUARD = """
+
+NO GOVERNED REFERENCE WAS RETRIEVED FOR THIS REQUEST:
+- Limit language-teaching claims to core terms explicitly stated in the base instructions above.
+- Do not add pronunciation, etymology, cultural/regional usage, or new example sentences.
+- For any other accuracy-sensitive detail, say that it could not be verified from the available references.
+"""
 
 # Skill level modifiers - adjust response style based on user's experience
 SKILL_LEVEL_MODIFIERS = {
@@ -1127,7 +1143,9 @@ def get_chatbot_response(
     system_prompt = mode_config["prompt"]
     
     # Add skill level modifier if provided (personalization based on user experience)
-    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+    # Generic level modifiers require English explanations at some levels, which
+    # conflicts with the explicit Chamorro-only immersion contract.
+    if mode != "chamorro" and skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
@@ -1190,6 +1208,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
+    else:
+        system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
     if web_context:
@@ -1478,7 +1498,8 @@ def get_chatbot_response_stream(
     system_prompt = mode_config["prompt"]
     
     # Add skill level modifier if provided (personalization based on user experience)
-    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+    # Keep streaming and non-streaming prompt construction behavior identical.
+    if mode != "chamorro" and skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
@@ -1541,6 +1562,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
+    else:
+        system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
     if web_context:
