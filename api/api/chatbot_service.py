@@ -372,7 +372,7 @@ def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5
 # integrated RAG testing, and a documented rollback plan.
 #
 # To switch models, set CHAT_MODEL in your .env file:
-#   CHAT_MODEL=gemini-2.5-flash
+#   CHAT_MODEL=gpt-5.6-luna
 # ============================================================================
 
 OPENROUTER_GEMINI_FLASH_MODEL_ID = "google/gemini-2.5-flash"
@@ -386,6 +386,12 @@ MODEL_CONFIG = {
     "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo", "supports_vision": True},
     
     # OpenRouter models (via OpenRouter API)
+    "gpt-5.6-luna": {
+        "provider": "openrouter",
+        "model_id": "openai/gpt-5.6-luna",
+        "supports_vision": True,
+        "supports_temperature": False,
+    },
     "gemini-2.5-flash": {"provider": "openrouter", "model_id": OPENROUTER_GEMINI_FLASH_MODEL_ID, "supports_vision": True},
     "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
     "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
@@ -405,8 +411,26 @@ def model_supports_vision() -> bool:
     config = MODEL_CONFIG.get(CHAT_MODEL, {})
     return config.get("supports_vision", False)
 
-# Get configured model (default to gpt-4o for backwards compatibility)
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o")
+
+def model_supports_temperature(model_id: str) -> bool:
+    """Return whether a configured runtime model accepts temperature."""
+
+    for config in MODEL_CONFIG.values():
+        if config["model_id"] == model_id:
+            return config.get("supports_temperature", True)
+    return True
+
+
+def optional_chat_completion_kwargs(model_id: str) -> dict:
+    """Return only optional arguments accepted by the selected model."""
+
+    if model_supports_temperature(model_id):
+        return {"temperature": 0.7}
+    return {}
+
+# GPT-5.6 Luna is the owner-approved default for high-volume tutoring. The
+# previous DeepSeek V3 route remains registered for immediate env-only rollback.
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5.6-luna")
 
 def get_llm_client():
     """
@@ -1283,9 +1307,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             try:
                 response = request_client.chat.completions.create(
                     model=request_model,
-                    temperature=0.7,
                     messages=history,
                     max_tokens=token_manager.budget.response_buffer,
+                    **optional_chat_completion_kwargs(request_model),
                 )
                 response_text = _extract_non_stream_response_text(response)
                 if not response_text:
@@ -1681,10 +1705,10 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             try:
                 stream = request_client.chat.completions.create(
                     model=request_model,
-                    temperature=0.7,
                     messages=history,
                     max_tokens=token_manager.budget.response_buffer,
-                    stream=True  # Enable streaming!
+                    stream=True,
+                    **optional_chat_completion_kwargs(request_model),
                 )
 
                 for chunk in stream:

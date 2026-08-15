@@ -123,7 +123,7 @@ CLERK_SECRET_KEY=sk_...         # For auth
 AWS_ACCESS_KEY_ID=...           # For file uploads
 AWS_SECRET_ACCESS_KEY=...
 AWS_S3_BUCKET=...
-CHAT_MODEL=deepseek-v3          # Model selection
+CHAT_MODEL=gpt-5.6-luna         # Main tutor; deepseek-v3 is the rollback control
 ```
 
 ---

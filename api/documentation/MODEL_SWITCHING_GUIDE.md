@@ -1,10 +1,17 @@
 # HåfaGPT Model Configuration Guide — 2026
 
-## Current rule
+## Current decision
 
-Do not change production by copying a model name into Render. The August 2026
-integrated 23-model landscape screen produced a shortlist, but production remains on the
-`deepseek-v3` control until blinded Chamorro review and integrated RAG gates pass.
+As of August 15, 2026, the owner approved GPT-5.6 Luna as HåfaGPT's primary
+high-volume tutor route after reviewing the automated landscape results and the
+remaining human-review caveat. The runtime alias is `gpt-5.6-luna`, which resolves
+to `openai/gpt-5.6-luna` through OpenRouter. `deepseek-v3` remains the immediate
+environment-only rollback control.
+
+This is a product rollout decision, not a claim that automated scoring proves
+Chamorro linguistic superiority. Canonical retrieval remains authoritative, model
+output remains non-canonical, and native-speaker/educator review is still required
+for curriculum changes and the next routing review.
 
 See:
 
@@ -19,14 +26,15 @@ See:
 `api/.env` selects an alias from that registry when the process starts.
 
 ```env
-CHAT_MODEL=deepseek-v3
+CHAT_MODEL=gpt-5.6-luna
 ```
 
-The current control resolves to `deepseek/deepseek-chat` through OpenRouter. The
-August benchmark catalog is intentionally separate from the runtime registry: it
-allows candidates to be evaluated without silently making them production options.
+The primary route resolves to `openai/gpt-5.6-luna` through OpenRouter. The
+rollback control resolves to `deepseek/deepseek-chat`. The August benchmark catalog
+remains separate from the runtime registry so research candidates cannot silently
+become production options.
 
-An unknown runtime alias falls back to `gpt-4o`. That behavior should be replaced
+An unknown runtime alias still falls back to `gpt-4o`. That behavior should be replaced
 with fail-fast startup validation before model routing is expanded; a typo must not
 cause an unplanned provider/cost change.
 
@@ -56,7 +64,22 @@ Select a subset by stable benchmark alias:
 
 Private results and the blind-review key live under ignored `evaluation/tmp/`.
 
-## Adding a production-capable candidate
+## Luna rollout and rollback
+
+Rollout order:
+
+1. Deploy code containing the `gpt-5.6-luna` runtime alias.
+2. Set `CHAT_MODEL=gpt-5.6-luna` in Render.
+3. Restart the API and confirm the startup log resolves the alias to
+   `openai/gpt-5.6-luna`.
+4. Run authenticated text, citation, conversation-persistence, and image smoke
+   tests.
+5. Monitor provider errors, latency, and user feedback during the canary window.
+
+Rollback requires only `CHAT_MODEL=deepseek-v3` followed by an API restart. Do not
+delete the control registry entry during the initial Luna rollout.
+
+## Adding another production-capable candidate
 
 After a candidate clears its documented gates:
 

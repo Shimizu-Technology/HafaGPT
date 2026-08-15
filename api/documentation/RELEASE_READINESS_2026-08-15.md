@@ -7,23 +7,30 @@ authenticated validation, and production read-only release inventory
 
 ## Decision
 
-The code is ready to return to pull-request review after CI and Greptile evaluate
-the final commit. It is **not yet ready for an unattended production rollout**.
-Two external operational items must be resolved first:
+The owner approved a controlled rollout of GPT-5.6 Luna and private upload
+storage. The repository is ready to return to pull-request review after CI and
+Greptile evaluate the final commit. Production configuration must remain on the
+current release until that merge gate is green.
 
-1. Netlify reports an overdue `$20.00` invoice, has restricted the team dashboard,
-   and warns that projects may be suspended in 11 days.
-2. Production has no `AWS_PRIVATE_UPLOADS_BUCKET`. The existing `AWS_S3_BUCKET`
-   is public, and the production database contains 41 legacy conversation rows
-   with public image URLs and 41 with public file URLs.
+The following reversible production safeguards were created before deployment:
+
+1. A new S3 bucket, `hafagpt-private-uploads`, with ACLs disabled, all four public
+   access blocks enabled, and SSE-S3 encryption.
+2. A dedicated non-console IAM user, `hafagpt-api`, with an inline policy limited
+   to object get/put/delete in that private bucket and audio writes under
+   `s3://hafagpt/audio/`.
+3. A permanent Neon child branch,
+   `pre-luna-private-storage-2026-08-15`, forked from production before rollout.
 
 The new code fails closed when private storage is absent: attachments can be used
 for the current AI request but are not persisted. This prevents new private family
 files from being written to the public bucket. It does not retroactively privatize
 or delete legacy objects.
 
-No production setting, record, deployment, payment method, snapshot, or branch was
-changed during this audit.
+Per owner direction, the existing public S3 bucket and every existing object,
+legacy upload reference, database record, IAM credential, and database branch were
+left in place. No migration, deletion, reset, credential deactivation, payment
+change, or Netlify billing action was performed.
 
 The existing language-resource permission program is also not complete: the
 governance ledger still records `0/22` external source families as approved for
@@ -76,12 +83,12 @@ are complete.
 
 ### Runtime
 
-- API: `127.0.0.1:8000`
-- Web: `127.0.0.1:5185`
+- API: `127.0.0.1:8011`
+- Web: `127.0.0.1:5191`
 - Database: local PostgreSQL only
 - Auth: Clerk development instance and the authorized
   `codeschoolofguam@gmail.com` Google account
-- Chat: current DeepSeek V3 control through OpenRouter; OpenAI embeddings
+- Chat: GPT-5.6 Luna through OpenRouter; OpenAI embeddings
 
 All selected ports were confirmed unused before startup. No existing local process
 was stopped or replaced.
@@ -116,9 +123,9 @@ semantic retrieval. A successful HTTP response is not an accuracy decision.
 
 ### Automated checks
 
-`./scripts/check.sh` on August 15:
+`./scripts/check.sh` on August 15 after the Luna runtime changes:
 
-- API: **143 passed, 4 skipped**.
+- API: **146 passed, 4 skipped**.
 - Canonical vocabulary: passed.
 - Canonical hardcoded-content audit: zero findings.
 - Audio manifests: synchronized, 715 entries.
@@ -131,6 +138,11 @@ semantic retrieval. A successful HTTP response is not an accuracy decision.
 - Netlify preview routes return 200 and now receive clickjacking, MIME-sniffing,
   referrer, browser-capability, and OAuth-compatible opener protections from the
   repository configuration.
+- The Luna alias resolves to `openai/gpt-5.6-luna`, suppresses unsupported
+  temperature parameters, and retains explicit token limits.
+- A direct three-case Luna smoke completed through OpenRouter, and the local
+  authenticated application completed chat streaming, citations, persistence,
+  reload, and representative Chamorro checks with the final runtime code.
 
 Known frontend debt remains: the primary JavaScript asset is about 1.99 MB
 minified / 504 KB gzip, route-level code splitting is not yet implemented, browser
@@ -140,7 +152,7 @@ Policy also remains separate work: capture Clerk, PostHog, API, audio, and optio
 payment connection requirements in a preview first, then deploy a least-privilege
 policy without breaking OAuth or speech features.
 
-## Production read-only inventory
+## Production inventory and pre-deployment safeguards
 
 ### Current availability
 
@@ -155,8 +167,7 @@ At audit time, all returned HTTP 200:
 
 - Service: `HafaGPT-API`, Singapore, Standard, branch `main`.
 - Production origins include the canonical domain, `www`, and Netlify domain.
-- `CLERK_AUTHORIZED_PARTIES`, `CLERK_ISSUER`, and
-  `AWS_PRIVATE_UPLOADS_BUCKET` are not explicitly configured today.
+- `AWS_PRIVATE_UPLOADS_BUCKET` is not configured on the running release yet.
 - The new auth code safely derives authorized parties from the restrictive
   production origins, but explicit values should still be added during the
   authorized release window.
@@ -173,7 +184,9 @@ At audit time, all returned HTTP 200:
 - `message_feedback` has one row and is approximately 80 KB, so the reviewed
   type reconciliation is low-volume.
 - `conversation_logs` has 8,272 rows.
-- Neon history retention is one day; there are zero manual snapshots.
+- Neon history retention is one day. A permanent child branch named
+  `pre-luna-private-storage-2026-08-15` now preserves the pre-rollout production
+  state without resetting or modifying production.
 
 The migration was not run. A rollback cannot reverse an already-used type change
 without handling new string identifiers, so database rollback should use Neon's
@@ -186,58 +199,54 @@ point-in-time restore/branch workflow rather than a blind downgrade.
 - An overdue invoice totals `$20.00` and the dashboard warns of suspension in 11
   days.
 
-Payment remediation is an owner action and was intentionally not performed.
+The owner accepted this notice as outside this rollout. Payment remediation was
+intentionally not performed and is not treated as a code or model release gate.
 
 ## Model decision
 
-Do **not** switch production to Luna merely as part of this release.
+GPT-5.6 Luna is the owner-approved main HåfaGPT model for this release.
 
-- Current production/default remains DeepSeek V3 as the control.
-- GPT-5.6 Luna is the leading fast/default engineering candidate from the completed
-  automated matrix.
-- Terra, Luna, Claude Sonnet 5, Grok 4.5, GLM 5.2, Llama 4 Maverick, and the
-  current control remain core-tutor blind-review finalists.
-- Gemini Flash/Pro and Kimi remain candidates for the separate vision/document
-  workload.
-- No role-based routing should ship until it demonstrates a material human-
-  reviewed quality benefit that justifies added cost and operational complexity.
+- The application alias `gpt-5.6-luna` resolves to the verified OpenRouter model
+  ID `openai/gpt-5.6-luna`.
+- DeepSeek V3 remains the immediate configuration-only rollback.
+- Luna handles the default tutor and supported vision requests for now. Additional
+  role-based routing is deliberately deferred until a second model demonstrates a
+  material, human-reviewed benefit that justifies the added complexity.
+- Terra, Claude Sonnet 5, Grok 4.5, GLM 5.2, Llama 4 Maverick, Gemini, Kimi, and
+  other frontier/open-weight candidates remain documented evaluation options,
+  not silently activated production routes.
 
-Promotion still requires two independent qualified Chamorro reviewers,
-adjudication of critical errors, the 100-case integrated RAG suite, realistic
-cost/latency analysis, and a tested shadow/canary/rollback path. Until then, Luna
-is a recommendation to evaluate—not a production fact.
+This is an engineering and owner promotion decision, not a claim that automated
+scores prove Chamorro correctness. Qualified native review, adjudication, and the
+larger integrated RAG suite remain required for stronger language-quality claims
+and future routing decisions.
 
 ## Authorized rollout sequence
 
-1. **Resolve Netlify billing** and verify the restriction banner is gone.
-2. **Create or approve a separate private uploads bucket** with all public access
-   blocked, least-privilege API credentials, encryption, CORS limited to the API
-   path actually needed, lifecycle/retention rules, and access logging as agreed.
-3. **Decide the legacy-upload remediation**: inventory object ownership, migrate
-   authorized objects privately, and delete public copies only after explicit
-   approval and recovery evidence.
-4. **At the deployment window, create a Neon timestamp restore branch or record an
-   exact PITR point** before the migration. This needs explicit production-write
-   authorization.
-5. **Set Render secrets/config**:
-   `CLERK_AUTHORIZED_PARTIES`, `CLERK_ISSUER`, and
-   `AWS_PRIVATE_UPLOADS_BUCKET`. Do not expose values in Git or logs.
-6. **Merge only after final CI and Greptile 5/5.** Render's pre-deploy command will
+1. **Create private storage and least-privilege credentials.** Complete; existing
+   public objects and credentials remain untouched.
+2. **Create the Neon pre-rollout branch.** Complete; it has no auto-delete.
+3. **Merge only after final CI and Greptile 5/5.** Render's pre-deploy command will
    migrate before starting the new API.
-7. **Smoke the API**: health, Clerk sign-in, authorized/unauthorized requests,
-   conversation load/create/delete, upload rejection and private signed retrieval,
-   chat streaming, RAG sources, usage, and admin denial.
-8. **Smoke the Netlify production build** across the authenticated routes and
+4. **Set Render configuration after merge**: the dedicated AWS access key,
+   `AWS_PRIVATE_UPLOADS_BUCKET=hafagpt-private-uploads`, and
+   `CHAT_MODEL=gpt-5.6-luna`. Keep the old credential active and retain the old
+   bucket as static audio storage. Never expose values in Git or logs.
+5. **Smoke the API**: health, Clerk sign-in, authorized/unauthorized requests,
+   conversation load/create, private upload and signed retrieval, chat streaming,
+   RAG sources, usage, and admin denial. Do not delete production data as part of
+   rollout testing.
+6. **Smoke the Netlify production build** across the authenticated routes and
    confirm PostHog has no session replay.
-9. **Observe for at least one normal usage window**: 5xx, auth failures, database
+7. **Observe for at least one normal usage window**: 5xx, auth failures, database
    connection errors, migration state, AI latency/cost, and upload access.
 
 ## Rollback
 
 - Web: restore the prior successful Netlify deploy.
 - API: restore the prior Render deploy/image and configuration.
-- Model: retain the current DeepSeek model value until a separate gated model
-  release; model rollback should be a configuration change with startup ID checks.
+- Model: set `CHAT_MODEL` back to `deepseek-v3`; startup validation resolves it
+  to the known OpenRouter provider ID.
 - Database: use the recorded Neon PITR point/branch if the migration must be
   reverted after writes. Do not assume `alembic downgrade` is lossless.
 - Uploads: unset the private bucket to fail closed; do not fall back to the public
@@ -255,11 +264,9 @@ is a recommendation to evaluate—not a production fact.
 ### Production gate
 
 - Merge gate complete.
-- Netlify account current and unrestricted.
-- Private upload decision complete, or persistence intentionally remains disabled
-  with the limitation communicated.
+- Private upload bucket and least-privilege credential configured.
 - Neon recovery point recorded.
-- Explicit Render auth/upload configuration entered and verified.
+- Explicit Render model/upload configuration entered and verified.
 - Named owner available for smoke testing and rollback.
 
 ### Separate model gate
