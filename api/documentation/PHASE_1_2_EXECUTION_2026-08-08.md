@@ -2,6 +2,8 @@
 
 Follow-up local application and live-infrastructure validation is recorded in
 [`LOCAL_VALIDATION_2026-08-09.md`](LOCAL_VALIDATION_2026-08-09.md).
+The final Phase 1 security and production read-only release inventory is recorded
+in [`RELEASE_READINESS_2026-08-15.md`](RELEASE_READINESS_2026-08-15.md).
 
 **Branch:** `codex/phase-1-2-modernization`
 **Scope:** local auth/database recovery, resource governance, clean evaluation

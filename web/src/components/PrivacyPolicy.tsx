@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
           
           {/* Last Updated */}
           <p className="text-sm text-brown-500 dark:text-gray-400 mb-6">
-            Last updated: December 24, 2025
+            Last updated: August 15, 2026
           </p>
 
           {/* Introduction */}
@@ -70,8 +70,9 @@ export default function PrivacyPolicy() {
               <div>
                 <h3 className="font-medium text-brown-800 dark:text-gray-200 mb-1">Usage Information</h3>
                 <p className="leading-relaxed">
-                  We collect anonymous usage statistics to improve our app, including which features 
-                  you use and how often.
+                  We collect limited product analytics, such as page visits and feature interactions,
+                  through PostHog. Session replay is disabled, and we do not intentionally send chat
+                  text, uploaded document contents, or form inputs as analytics events.
                 </p>
               </div>
             </div>
@@ -100,9 +101,11 @@ export default function PrivacyPolicy() {
               AI Chat & Conversations
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
-              Your chat conversations with HåfaGPT are stored to provide conversation history 
-              and improve our AI responses. We may use anonymized conversation data to improve 
-              our Chamorro language knowledge base. You can delete your conversations at any time.
+              Your prompts, relevant conversation context, and uploaded content are sent to the AI
+              provider needed to answer your request. Conversations are stored so you can revisit
+              them and continue learning. We do not use private family conversations to train a
+              public model or add them to the Chamorro knowledge base. You can remove conversations
+              from your account, and you may request permanent account-data deletion.
             </p>
           </section>
 
@@ -133,9 +136,16 @@ export default function PrivacyPolicy() {
             </p>
             <ul className="list-disc list-inside space-y-2 text-brown-700 dark:text-gray-300">
               <li><strong>Clerk</strong> - Authentication and user management</li>
-              <li><strong>OpenAI / DeepSeek</strong> - AI-powered chat and text-to-speech</li>
+              <li><strong>OpenRouter and selected model providers</strong> - AI-powered chat responses</li>
+              <li><strong>OpenAI</strong> - Search embeddings and selected AI processing</li>
+              <li><strong>ElevenLabs</strong> - Text-to-speech when that feature is used</li>
+              <li><strong>Brave Search</strong> - Web-search grounding when that feature is used</li>
               <li><strong>Stripe</strong> - Payment processing (for premium subscriptions)</li>
               <li><strong>AWS S3</strong> - File storage (for uploaded images/documents)</li>
+              <li><strong>Neon</strong> - Application database hosting</li>
+              <li><strong>Render and Netlify</strong> - Backend and website hosting</li>
+              <li><strong>PostHog</strong> - Limited product analytics; session replay is disabled</li>
+              <li><strong>Sentry</strong> - Error and reliability monitoring</li>
             </ul>
           </section>
 
@@ -153,6 +163,12 @@ export default function PrivacyPolicy() {
               <li>Export your learning data</li>
               <li>Opt out of non-essential communications</li>
             </ul>
+            <p className="text-brown-700 dark:text-gray-300 leading-relaxed mt-3">
+              We keep account and learning data while your account is active or as needed to operate
+              the service, meet security obligations, and honor deletion requests. Contact us if you
+              want a copy of your data or permanent deletion. Some limited records may remain briefly
+              in encrypted backups before normal backup expiration.
+            </p>
           </section>
 
           {/* Children's Privacy */}
@@ -161,9 +177,11 @@ export default function PrivacyPolicy() {
               Children's Privacy
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
-              HåfaGPT is designed to be family-friendly. We do not knowingly collect personal 
-              information from children under 13 without parental consent. If you believe we 
-              have collected information from a child, please contact us immediately.
+              HåfaGPT is designed for families, but a parent or guardian should create and supervise
+              accounts used by children under 13. Children should not upload documents containing
+              sensitive personal information. We do not knowingly collect personal information from
+              a child under 13 without verifiable parental consent. If you believe this has happened,
+              contact us so we can investigate and delete it.
             </p>
           </section>
 
@@ -211,4 +229,3 @@ export default function PrivacyPolicy() {
     </div>
   );
 }
-

@@ -48,21 +48,27 @@ reviews. No production model promotion or external corpus grant is claimed.
 **Target:** 1–2 focused weeks
 **Release style:** small independent pull requests with preview/staging validation
 
-1. Patch React Router/DOM to a non-vulnerable release and rerun the web suite.
-2. Validate Clerk `azp`/authorized parties, issuer, time claims, and audience policy; add forged/incorrect-origin token tests.
-3. Mask all chat/user/model text in PostHog replay or disable replay on sensitive routes; verify with an actual recording.
-4. Update the privacy policy and processor inventory; document retention/deletion and child/family handling.
+**August 15 implementation status:** the repository work below is complete and
+validated locally. Production rollout remains gated by Netlify's overdue invoice,
+private-upload infrastructure/legacy-object remediation, final CI/Greptile, and an
+authorized deployment window. See
+[`RELEASE_READINESS_2026-08-15.md`](RELEASE_READINESS_2026-08-15.md).
+
+1. ~~Patch React Router/DOM to a non-vulnerable release and rerun the web suite.~~ Completed; production npm audit is clear.
+2. ~~Validate Clerk `azp`/authorized parties, issuer, time claims, and audience policy; add forged/incorrect-origin token tests.~~ Completed in code/tests; add explicit production issuer/party settings during rollout.
+3. ~~Mask all chat/user/model text in PostHog replay or disable replay on sensitive routes; verify with an actual recording.~~ Replay is disabled in code; production analytics verification remains a rollout smoke.
+4. ~~Update the privacy policy and processor inventory; document retention/deletion and child/family handling.~~ Completed; legal/owner review remains appropriate.
 5. End or rename the year-long Christmas promo; make theme activation bounded and independent from entitlements.
-6. Add timeouts to ElevenLabs and audit every outbound HTTP request.
-7. Split `requirements.txt` into production and tool-specific groups, then remove unused runtime packages.
+6. ~~Add timeouts to ElevenLabs and audit every outbound HTTP request.~~ Completed for the remaining unbounded ElevenLabs call.
+7. ~~Split `requirements.txt` into production and tool-specific groups, then remove unused runtime packages.~~ Completed.
 8. ~~Reconcile the local Alembic history using a backup, explicit schema proof,
    and a fresh-database upgrade.~~ Completed locally; repeat the read-only
    inventory and reviewed migration procedure for production only when authorized.
 9. ~~Repair the Clerk development initialization path without using production
    keys on localhost.~~ Completed; the root cause was a wrong-app port collision.
    Automating the authenticated smoke remains part of frontend critical-flow work.
-10. Add dependency scanning to CI with a documented review/exception process.
-11. Harden uploads: streaming limits, magic-byte validation, private objects, signed URLs, deletion, and redacted logging.
+10. ~~Add dependency scanning to CI with a documented review/exception process.~~ Completed with a narrow RS256-relevant exception record.
+11. ~~Harden uploads: streaming limits, magic-byte validation, private objects, signed URLs, deletion, and redacted logging.~~ Completed in code; private bucket provisioning and legacy public-object remediation remain external rollout work.
 
 **Exit criteria:**
 

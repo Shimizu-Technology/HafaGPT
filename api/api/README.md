@@ -196,7 +196,8 @@ Update a conversation's title (rename).
 
 #### DELETE /api/conversations/{conversation_id}
 
-Soft delete a conversation (hides from user, preserves data for training).
+Permanently delete a conversation owned by the authenticated user, including
+its messages, share links, feedback, and approved private upload objects.
 
 **Response:**
 ```json
@@ -206,7 +207,9 @@ Soft delete a conversation (hides from user, preserves data for training).
 }
 ```
 
-**Note:** This is a soft delete - the conversation is marked as deleted but conversation logs are preserved for model training and analytics. The conversation will no longer appear in the user's conversation list.
+**Note:** This action cannot be undone. Legacy public upload URLs are not deleted
+automatically; only objects in the configured private uploads bucket are eligible
+for storage cleanup.
 
 ---
 
@@ -259,7 +262,7 @@ curl -X PATCH http://localhost:8000/api/conversations/uuid-here \
   -H "Authorization: Bearer YOUR_CLERK_JWT" \
   -d '{"title": "New Title"}'
 
-# Delete a conversation (soft delete)
+# Permanently delete a conversation
 curl -X DELETE http://localhost:8000/api/conversations/uuid-here \
   -H "Authorization: Bearer YOUR_CLERK_JWT"
 
@@ -361,7 +364,7 @@ Uses:
 └── .env                # Environment configuration
 
 Database:
-├── conversations       # User conversations (with soft delete)
+├── conversations       # User conversations and permanent deletion
 └── conversation_logs   # Message history for analytics
 ```
 

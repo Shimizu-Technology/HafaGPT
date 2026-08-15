@@ -33,13 +33,13 @@ For production, we use Gunicorn with Uvicorn workers:
 ## Production Start Command
 
 ```bash
-gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
+gunicorn api.main:app -w 3 -k uvicorn_worker.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
 ```
 
 | Flag | Purpose |
 |------|---------|
 | `-w 3` | 3 parallel worker processes |
-| `-k uvicorn.workers.UvicornWorker` | Use async Uvicorn under the hood |
+| `-k uvicorn_worker.UvicornWorker` | Use the supported standalone Uvicorn worker package |
 | `--timeout 120` | Kill stuck workers after 2 min |
 | `--keep-alive 300` | Keep connections open for streaming (5 min) |
 
@@ -59,7 +59,8 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
 ## What Works with Multiple Workers
 
 - ✅ **Freemium limits** - Stored in database, shared across workers
-- ✅ **All database queries** - Workers share the same DB connection pool
+- ✅ **Database concurrency** - Workers connect through the Neon pooled endpoint;
+  application-managed pooling is still roadmap work
 - ⚠️ **IP rate limiting** - In-memory, so ~3x more lenient with 3 workers (minor issue)
 
 ---
@@ -70,10 +71,16 @@ Set in the Render dashboard:
 
 | Setting | Value |
 |---------|-------|
-| **Build Command** | `pip install -r requirements.txt && alembic upgrade head` |
-| **Start Command** | `gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300` |
+| **Build Command** | `pip install --upgrade pip && pip install -r requirements.txt` |
+| **Pre-deploy Command** | `alembic upgrade head` |
+| **Start Command** | `gunicorn api.main:app -w 3 -k uvicorn_worker.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300` |
 | **Instance Type** | Standard ($25/month) |
 | **Auto-Deploy** | Yes (on push to main) |
+
+Migrations belong in Render's pre-deploy phase, not the image build. A failed
+migration therefore prevents the new service version from starting. Before a
+schema-changing release, inspect production read-only, confirm Neon point-in-time
+restore coverage, and record the exact Alembic revision.
 
 ## Health Checks and Idle Database Compute
 
@@ -104,8 +111,9 @@ existing compute.
 |---------|------|
 | Render Standard (API) | $25 |
 | Neon PostgreSQL | Usage-based; scales to zero while idle |
-| DeepSeek V3 (LLM) | $0.50-2 |
+| Selected OpenRouter model (currently DeepSeek V3 control) | Usage-based |
 | OpenAI Embeddings | $0.30 |
 | OpenAI TTS | $0.50-2 |
 | AWS S3 | $0.05 |
-| **Total** | **$25 Render base + actual database/API usage** |
+| Netlify web hosting | Plan/usage-based; account must remain current |
+| **Total** | **Hosting plan bases + actual database/API/model usage** |

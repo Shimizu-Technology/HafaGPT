@@ -24,10 +24,9 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   person_profiles: 'identified_only', // Only create profiles for logged-in users
   capture_pageview: true, // Automatically capture page views
   capture_pageleave: true, // Track when users leave
-  session_recording: {
-    maskAllInputs: true, // Mask all input fields (privacy)
-    maskTextSelector: '[data-private]', // Mask elements with data-private attribute
-  },
+  // Chat, learning progress, and family account pages contain sensitive text.
+  // Keep replay off entirely; aggregate product events are sufficient here.
+  disable_session_recording: true,
   autocapture: {
     dom_event_allowlist: ['click'], // Only auto-capture clicks
     url_allowlist: [window.location.origin], // Only track your domain

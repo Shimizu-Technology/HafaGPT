@@ -24,7 +24,12 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt pytest
+        run: python -m pip install -r requirements.txt pytest pip-audit
+
+      - name: Audit production dependencies
+        # python-jose installs ecdsa, but HåfaGPT accepts RS256 only; the ECDSA-only
+        # timing advisory is therefore not reachable. Keep the exception narrow.
+        run: pip-audit --local --ignore-vuln PYSEC-2026-1325
 
       - name: Run backend tests
         env:
@@ -60,6 +65,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Lint
         run: npm run lint

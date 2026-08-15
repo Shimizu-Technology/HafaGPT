@@ -179,6 +179,15 @@ def extract_target_word(query: str) -> str:
     match = re.search(r'(?:^|\s)"(.+?)"(?=\s|to|in|mean|\?|$)', query)
     if match:
         return match.group(1).strip().lower()
+
+    # Pattern 2b: Word between typographic quotes copied from phones or rich text
+    match = re.search(r'(?:^|\s)[“”]([^“”]+)[“”](?=\s|to|in|mean|\?|$)', query)
+    if match:
+        return match.group(1).strip().lower()
+
+    match = re.search(r"(?:^|\s)[‘’]([^‘’]+)[‘’](?=\s|to|in|mean|\?|$)", query)
+    if match:
+        return match.group(1).strip().lower()
     
     # Pattern 3: "what does X mean" (Chamorro→English, NO quotes)
     # Match word that can contain apostrophes

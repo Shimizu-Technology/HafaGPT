@@ -37,6 +37,7 @@ def _load_get_conversation_messages():
         "MessageResponse": FakeMessageResponse,
         "SourceInfo": FakeSourceInfo,
         "logger": FakeLogger(),
+        "resolve_private_upload_reference": lambda value: value,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_messages"]
