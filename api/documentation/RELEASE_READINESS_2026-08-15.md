@@ -3,14 +3,15 @@
 **Branch:** `codex/phase-1-2-modernization`
 **Pull request:** [#5](https://github.com/Shimizu-Technology/HafaGPT/pull/5)
 **Scope:** Phase 0 confirmation, immediate Phase 1 trust/security work, local
-authenticated validation, and production read-only release inventory
+authenticated validation, controlled production rollout, and rollback evidence
 
 ## Decision
 
-The owner approved a controlled rollout of GPT-5.6 Luna and private upload
-storage. The repository is ready to return to pull-request review after CI and
-Greptile evaluate the final commit. Production configuration must remain on the
-current release until that merge gate is green.
+The initial deployment of GPT-5.6 Luna and private upload storage completed on
+August 15, 2026; the remaining operating checks are recorded below. Pull request
+#5 merged at exact reviewed commit `1db0936` after GitHub CI passed, no review
+thread remained open, and Greptile reported 5/5. The resulting merge commit is
+`c7ab8dd`.
 
 The following reversible production safeguards were created before deployment:
 
@@ -29,8 +30,9 @@ or delete legacy objects.
 
 Per owner direction, the existing public S3 bucket and every existing object,
 legacy upload reference, database record, IAM credential, and database branch were
-left in place. No migration, deletion, reset, credential deactivation, payment
-change, or Netlify billing action was performed.
+left in place. The reviewed Alembic migration ran through Render's pre-deploy
+phase; no object or record migration, deletion, reset, credential deactivation,
+payment change, or Netlify billing action was performed.
 
 The existing language-resource permission program is also not complete: the
 governance ledger still records `0/22` external source families as approved for
@@ -152,11 +154,11 @@ Policy also remains separate work: capture Clerk, PostHog, API, audio, and optio
 payment connection requirements in a preview first, then deploy a least-privilege
 policy without breaking OAuth or speech features.
 
-## Production inventory and pre-deployment safeguards
+## Production rollout state
 
 ### Current availability
 
-At audit time, all returned HTTP 200:
+After rollout, all returned HTTP 200:
 
 - `https://hafagpt.com`
 - `https://www.hafagpt.com` (canonical redirect)
@@ -167,7 +169,13 @@ At audit time, all returned HTTP 200:
 
 - Service: `HafaGPT-API`, Singapore, Standard, branch `main`.
 - Production origins include the canonical domain, `www`, and Netlify domain.
-- `AWS_PRIVATE_UPLOADS_BUCKET` is not configured on the running release yet.
+- `CHAT_MODEL=gpt-5.6-luna` and
+  `AWS_PRIVATE_UPLOADS_BUCKET=hafagpt-private-uploads` are configured on the
+  running release.
+- The active AWS credential belongs to the dedicated `hafagpt-api` IAM user. The
+  previous credential remains active and was not deleted or disabled.
+- Startup logs resolve `gpt-5.6-luna` to `openai/gpt-5.6-luna`; the authenticated
+  production request log also records `model=openai/gpt-5.6-luna`.
 - The new auth code safely derives authorized parties from the restrictive
   production origins, but explicit values should still be added during the
   authorized release window.
@@ -175,8 +183,9 @@ At audit time, all returned HTTP 200:
 ### Neon
 
 - PostgreSQL 17 production branch.
-- Alembic revision: `j4k5l6m7n8o9`.
-- Pending head migration: `k5l6m7n8o9p0`.
+- Pre-rollout Alembic revision: `j4k5l6m7n8o9`.
+- Current application head: `k5l6m7n8o9p0`; Render logged the transactional
+  upgrade before starting the merged API.
 - `message_feedback` and `conversation_logs` exist.
 - `message_feedback.conversation_id`, `message_id`, and `user_id` are currently
   UUID/UUID/text as expected by the migration preconditions.
@@ -188,9 +197,48 @@ At audit time, all returned HTTP 200:
   `pre-luna-private-storage-2026-08-15` now preserves the pre-rollout production
   state without resetting or modifying production.
 
-The migration was not run. A rollback cannot reverse an already-used type change
-without handling new string identifiers, so database rollback should use Neon's
-point-in-time restore/branch workflow rather than a blind downgrade.
+The permanent pre-rollout branch is the database recovery point. A rollback
+cannot reverse an already-used type change without handling new string
+identifiers, so database rollback should use Neon's branch/restore workflow rather
+than a blind downgrade.
+
+### Production smoke evidence
+
+- Clerk Google sign-in succeeded with the authorized
+  `codeschoolofguam@gmail.com` account.
+- Authenticated chat streaming, usage accounting, RAG citations, conversation
+  persistence, and reload succeeded after the corrected configuration deploy.
+- The Luna response correctly defined `hånom` as water/liquid with governed
+  sources; Render recorded 1,218 input tokens on `openai/gpt-5.6-luna`.
+- A 104-byte non-personal text fixture was uploaded through the production UI.
+  The API processed it, Luna summarized it, the background task persisted it, and
+  the conversation stored the resulting private reference.
+- Render logged `Uploaded file to private object storage`; the S3 console shows
+  the object only under the authenticated user's `uploads/` prefix.
+- An unsigned public request to the exact object returned HTTP 403. Reloading the
+  conversation converted the internal reference into an expiring signed URL.
+- The fixture and its conversation remain in place because the owner instructed
+  that nothing be deleted. No legacy object was accessed, moved, or changed.
+
+### Durable evidence ledger
+
+No secret, signed URL, customer content, or production export is retained in this
+repository. The following non-secret identifiers let an authorized operator
+reconcile the observations with the provider audit trails:
+
+| Evidence | Durable reference | Observed result |
+| --- | --- | --- |
+| Reviewed code | [PR #5](https://github.com/Shimizu-Technology/HafaGPT/pull/5), commit `1db0936`, merge `c7ab8dd` | CI green, no unresolved thread, Greptile 5/5 |
+| Merged API deployment | [Render deploy `dep-da040e15efls73d2gqlg`](https://dashboard.render.com/web/srv-d4bk6gkhg0os73f0nnd0/deploys/dep-da040e15efls73d2gqlg) | Alembic upgraded `j4k5l6m7n8o9` to `k5l6m7n8o9p0`; health checks returned 200 |
+| Corrected runtime configuration | [Render deploy `dep-da041p8jo6nc73dme41g`](https://dashboard.render.com/web/srv-d4bk6gkhg0os73f0nnd0/deploys/dep-da041p8jo6nc73dme41g) | Service live at 20:42 ChST; startup and request logs identify `openai/gpt-5.6-luna` |
+| Database recovery point | [Neon branch `br-shiny-cherry-a1wmn9l1`](https://console.neon.tech/app/projects/hidden-dust-58082297/branches/br-shiny-cherry-a1wmn9l1/) | `pre-luna-private-storage-2026-08-15`, parent `production`, no auto-delete |
+| Private storage | [S3 bucket `hafagpt-private-uploads`](https://ap-southeast-2.console.aws.amazon.com/s3/buckets/hafagpt-private-uploads?region=ap-southeast-2) | Test object written at 20:45 ChST; exact unsigned request returned 403 |
+| Least-privilege identity | IAM user `hafagpt-api`, inline policy `HafaGPTApplicationStorage` | Private upload get/put/delete plus public-bucket `audio/*` put only |
+
+The production checks not yet recorded are an explicit unauthorized-API smoke, an
+admin-denial smoke, a fresh Netlify/PostHog no-session-replay confirmation, and a
+normal usage-window observation. These remain operating checks; they are not
+represented as completed by the initial deployment evidence above.
 
 ### Netlify
 
@@ -226,16 +274,17 @@ and future routing decisions.
 1. **Create private storage and least-privilege credentials.** Complete; existing
    public objects and credentials remain untouched.
 2. **Create the Neon pre-rollout branch.** Complete; it has no auto-delete.
-3. **Merge only after final CI and Greptile 5/5.** Render's pre-deploy command will
-   migrate before starting the new API.
+3. **Merge only after final CI and Greptile 5/5.** Complete; Render's pre-deploy
+   command migrated before starting the new API.
 4. **Set Render configuration after merge**: the dedicated AWS access key,
    `AWS_PRIVATE_UPLOADS_BUCKET=hafagpt-private-uploads`, and
    `CHAT_MODEL=gpt-5.6-luna`. Keep the old credential active and retain the old
-   bucket as static audio storage. Never expose values in Git or logs.
+   bucket as static audio storage. Never expose values in Git or logs. Complete.
 5. **Smoke the API**: health, Clerk sign-in, authorized/unauthorized requests,
    conversation load/create, private upload and signed retrieval, chat streaming,
    RAG sources, usage, and admin denial. Do not delete production data as part of
-   rollout testing.
+   rollout testing. Core authenticated chat/upload coverage complete; no
+   destructive endpoint was exercised.
 6. **Smoke the Netlify production build** across the authenticated routes and
    confirm PostHog has no session replay.
 7. **Observe for at least one normal usage window**: 5xx, auth failures, database
@@ -263,11 +312,17 @@ and future routing decisions.
 
 ### Production gate
 
-- Merge gate complete.
-- Private upload bucket and least-privilege credential configured.
-- Neon recovery point recorded.
-- Explicit Render model/upload configuration entered and verified.
-- Named owner available for smoke testing and rollback.
+The initial production gate is complete:
+
+- Merge gate passed on the exact Greptile 5/5 commit.
+- Private upload bucket and least-privilege credential are configured and proven
+  by a real application upload.
+- Permanent Neon recovery branch exists with no auto-delete.
+- Render model/upload configuration is entered and verified in runtime logs.
+- Authenticated production chat and private-upload smokes passed.
+
+Normal usage-window observation remains an operating task, not a reason to undo a
+healthy release.
 
 ### Separate model gate
 
