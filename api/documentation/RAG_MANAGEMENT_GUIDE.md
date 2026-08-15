@@ -2,6 +2,14 @@
 
 **Your Chamorro chatbot uses PostgreSQL + PGVector for scalable vector storage, Docling for advanced PDF processing, and Crawl4AI for web content extraction.**
 
+> **Governance update (August 2026):** The commands below describe the legacy
+> mechanics, not permission to ingest a source. All maintained write paths now
+> fail closed through [`data/language_source_registry.json`](../data/language_source_registry.json).
+> Review the [language resource program](LANGUAGE_RESOURCE_PROGRAM_2026.md) and
+> record explicit ingestion approval plus a permission reference before adding
+> any PDF or website. Guampedia and the existing copied Lengguahi-ta material
+> are specifically blocked.
+
 ---
 
 ## 🚀 Quick Start
@@ -75,8 +83,8 @@ uv run python crawlers/pacific_daily_news.py "<URL>"
 # Add a single webpage
 uv run python crawl_website.py http://www.chamoru.info/dictionary/
 
-# Crawl deeper (follow internal links)
-uv run python crawl_website.py https://guampedia.com --max-depth 2
+# Crawl deeper only after the source is registered and approved
+uv run python crawl_website.py https://approved.example --max-depth 2
 ```
 
 **What happens:**
@@ -89,7 +97,7 @@ uv run python crawl_website.py https://guampedia.com --max-depth 2
 **Use cases:**
 - Online Chamorro dictionaries
 - Language learning websites
-- Cultural resources (Guampedia, etc.)
+- Cultural resources with documented storage and product-use permission
 - Any website with Chamorro content
 
 **⚠️ Important:** For complex sites (news, blogs), create a site-specific crawler in `crawlers/` folder for better results!

@@ -45,7 +45,7 @@ the clipboard.
                     │                                        │                │
                     ▼                                        ▼                ▼
             ┌──────────────┐                        ┌──────────────┐  ┌──────────────┐
-            │   S3 Upload  │                        │  Text        │  │   Vision     │
+            │ Private S3   │                        │  Text        │  │   Vision     │
             │  (Background)│                        │  Extraction  │  │   Model      │
             │              │                        │  (PDF/DOCX)  │  │  (Images)    │
             │  Non-blocking│                        │              │  │              │
@@ -53,7 +53,7 @@ the clipboard.
                     │                                        │                │
                     ▼                                        ▼                ▼
             ┌──────────────┐                        ┌──────────────────────────────┐
-            │  file_urls   │                        │      LLM Context             │
+            │ s3:// refs   │                        │      LLM Context             │
             │  in DB       │                        │  "Here is the document..."   │
             └──────────────┘                        └──────────────────────────────┘
 ```
@@ -133,7 +133,14 @@ async def chat_stream(
     document_texts = []
     
     for uploaded_file in files:
-        file_data = await uploaded_file.read()
+        file_data = await read_upload_with_limit(uploaded_file)
+
+        # The API enforces the 20 MB limit while reading and verifies that the
+        # bytes match the declared MIME type before parsing or persistence.
+        # DOCX archives also have entry-count and uncompressed-size ceilings.
+        validate_uploaded_file_signature(
+            file_data, uploaded_file.content_type, uploaded_file.filename
+        )
         
         # Process based on file type
         file_result = process_uploaded_file(
@@ -164,7 +171,7 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str):
     """Extract content from uploaded file."""
     
     if content_type == 'application/pdf':
-        # Extract text from PDF using PyPDF2
+        # Extract text from PDF using pypdf
         return {'text_content': extract_text_from_pdf(file_data)}
     
     elif content_type == 'application/vnd.openxmlformats...':
@@ -183,7 +190,7 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str):
 **PDF Extraction:**
 ```python
 def extract_text_from_pdf(file_data: bytes) -> str:
-    """Extract text from PDF using PyPDF2."""
+    """Extract text from PDF using pypdf."""
     pdf_file = io.BytesIO(file_data)
     reader = PdfReader(pdf_file)
     
@@ -233,9 +240,12 @@ response = request_client.chat.completions.create(
 
 ---
 
-### Step 6: Background S3 Upload
+### Step 6: Background Private-Object Upload
 
-Files are uploaded to S3 **in the background** so users don't wait:
+Files are uploaded **only** when `AWS_PRIVATE_UPLOADS_BUCKET` names a separate,
+non-public S3 bucket. If it is unset, the attachment is processed for the current
+request but is not persisted. The public static-audio bucket must never be reused
+for family uploads.
 
 ```python
 # api/main.py
@@ -251,15 +261,17 @@ def upload_file_to_s3_background(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         s3_key = f"uploads/{user_id}/{timestamp}_{filename}"
         
-        # Upload to S3
+        safe_filename = safe_upload_filename(filename)
         s3_client.put_object(
-            Bucket=S3_BUCKET,
+            Bucket=PRIVATE_UPLOADS_BUCKET,
             Key=s3_key,
             Body=file_data,
-            ContentType=content_type
+            ContentType=content_type,
+            ServerSideEncryption="AES256",
         )
-        
-        file_url = f"https://{S3_BUCKET}.s3.amazonaws.com/{s3_key}"
+
+        # Store an internal reference, never a permanent public URL.
+        file_url = make_private_upload_reference(PRIVATE_UPLOADS_BUCKET, s3_key)
         
         # Update conversation_logs with file URL
         append_file_url_to_log(conversation_id, {
@@ -283,11 +295,17 @@ background_tasks.add_task(
 - S3 upload happens in parallel
 - Better UX (no waiting for upload to complete)
 
+When a client later loads conversation history, the API converts approved
+`s3://bucket/key` references into 15-minute signed URLs. References to any bucket
+other than the configured private bucket fail closed. Permanently deleting a
+conversation also deletes its approved private objects. Legacy public URLs are
+not trusted as private references and require a separate migration/cleanup.
+
 ---
 
 ### Step 7: Database Storage
 
-File URLs are stored in `conversation_logs.file_urls` (JSONB array):
+Private object references are stored in `conversation_logs.file_urls` (JSONB array):
 
 ```sql
 -- Database schema
@@ -303,13 +321,13 @@ conversation_logs (
 -- Example file_urls value:
 [
     {
-        "url": "https://bucket.s3.amazonaws.com/uploads/user123/20251214_pic.jpg",
+        "url": "s3://private-bucket/uploads/user123/20260815_pic.jpg",
         "filename": "pic.jpg",
         "type": "image",
         "content_type": "image/jpeg"
     },
     {
-        "url": "https://bucket.s3.amazonaws.com/uploads/user123/20251214_doc.pdf",
+        "url": "s3://private-bucket/uploads/user123/20260815_doc.pdf",
         "filename": "doc.pdf",
         "type": "document",
         "content_type": "application/pdf"
@@ -324,22 +342,26 @@ conversation_logs (
 | File | Purpose |
 |------|---------|
 | `api/main.py` | File processing, S3 upload, `/api/chat` endpoint |
+| `api/upload_storage.py` | Private references, signed URLs, and deletion |
 | `api/chatbot_service.py` | Vision model integration |
 | `api/models.py` | `FileInfo` Pydantic model |
-| `frontend/MessageInput.tsx` | File selection UI |
-| `frontend/useChatbot.ts` | FormData upload logic |
-| `frontend/Chat.tsx` | File display in messages |
+| `web/src/components/MessageInput.tsx` | File selection UI |
+| `web/src/hooks/useChatbot.ts` | FormData upload logic |
+| `web/src/components/Chat.tsx` | File display in messages |
 
 ---
 
 ## 🔧 Environment Variables
 
 ```bash
-# Required for file uploads
+# Required for persistent private chat uploads
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_S3_BUCKET=your-bucket-name
+AWS_PRIVATE_UPLOADS_BUCKET=your-private-bucket-name
 AWS_REGION=us-west-2
+
+# Separate public/static audio bucket; never use it for chat attachments.
+AWS_S3_BUCKET=your-static-audio-bucket
 ```
 
 ---
@@ -348,12 +370,14 @@ AWS_REGION=us-west-2
 
 | Service | Cost | Usage |
 |---------|------|-------|
-| S3 Storage | ~$0.023/GB/month | File storage |
-| S3 Transfer | ~$0.09/GB | Downloads |
-| Vision Model | ~$0.002/image | Image analysis |
-| Text Extraction | Free | PyPDF2/python-docx |
+| S3 Storage | Current AWS rate | File storage |
+| S3 Transfer | Current AWS rate | Signed downloads |
+| Vision Model | Provider/model rate | Image analysis |
+| Text Extraction | No per-call library fee | pypdf/python-docx |
 
-**Optimization:** Files are only uploaded if the user is authenticated (anonymous users get temporary processing only).
+**Privacy default:** Files are persisted only for authenticated conversations and
+only when the approved private bucket is configured. Otherwise processing is
+request-scoped.
 
 ---
 
@@ -367,9 +391,11 @@ AWS_REGION=us-west-2
 
 ### Issue: S3 upload fails silently
 
-**Cause:** AWS credentials not configured.
+**Cause:** AWS credentials or the separate private bucket are not configured.
 
-**Fix:** Check `.env` for `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_S3_BUCKET`.
+**Fix:** Check ignored environment configuration for `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY`, and `AWS_PRIVATE_UPLOADS_BUCKET`. Confirm all public
+access blocks before enabling persistence.
 
 ### Issue: PDF text extraction returns empty
 

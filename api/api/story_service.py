@@ -1,10 +1,9 @@
-"""
-Story Service - Serves pre-extracted Chamorro stories.
+"""Serve licensed story content and fail closed when permission is absent.
 
-Stories are pre-extracted from Lengguahi-ta and stored in data/extracted_stories.json.
-This provides instant loading without AI generation delays.
-
-For word translations, we use the dictionary API (10,350 words!).
+The legacy extracted Lengguahi-ta payload remains in the repository as audit
+evidence, but it is not loaded or returned unless an explicit permission record
+is configured. Phase 0 therefore contains the rights issue without deleting the
+source material before provenance and ownership can be resolved.
 """
 
 import os
@@ -12,19 +11,69 @@ import json
 import logging
 from typing import Optional, List
 
+from src.rag.source_policy import get_registered_source
+
 logger = logging.getLogger(__name__)
 
 # Load stories once at module import
 _stories_data: dict = {}
 _stories_by_id: dict = {}
+_loaded_permission_id: str | None = None
+
+
+def _is_enabled(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def get_story_availability() -> dict:
+    permission_id = os.getenv("LENGGUAHITA_STORIES_PERMISSION_ID", "").strip()
+    source = get_registered_source("lengguahita") or {}
+    display_policy = source.get("display", {})
+    registered_permission = display_policy.get("permission_reference")
+    enabled = bool(
+        _is_enabled(os.getenv("LENGGUAHITA_STORIES_ENABLED"))
+        and display_policy.get("allowed") is True
+        and registered_permission
+        and permission_id == registered_permission
+    )
+    return {
+        "status": "available" if enabled else "permission_required",
+        "enabled": enabled,
+        "sourceName": "Lengguahi-ta",
+        "sourceUrl": "https://lengguahita.com/resources/",
+        "message": (
+            "Licensed Lengguahi-ta stories are available."
+            if enabled
+            else "HåfaGPT links to Lengguahi-ta while copied story content is disabled pending written reuse permission and attribution review."
+        ),
+    }
+
+
+def reset_story_cache() -> None:
+    """Clear cached story data after a permission configuration change."""
+    global _stories_data, _stories_by_id, _loaded_permission_id
+    _stories_data = {}
+    _stories_by_id = {}
+    _loaded_permission_id = None
 
 
 def _load_stories():
     """Load pre-extracted stories from JSON file."""
-    global _stories_data, _stories_by_id
-    
-    if _stories_data:
+    global _stories_data, _stories_by_id, _loaded_permission_id
+
+    availability = get_story_availability()
+    permission_id = os.getenv("LENGGUAHITA_STORIES_PERMISSION_ID", "").strip()
+    if not availability["enabled"]:
+        _stories_data = {"stories": []}
+        _stories_by_id = {}
+        _loaded_permission_id = None
+        return
+
+    if _stories_data and _loaded_permission_id == permission_id:
         return  # Already loaded
+
+    _stories_data = {}
+    _stories_by_id = {}
     
     stories_path = os.path.join(
         os.path.dirname(__file__), 
@@ -36,12 +85,13 @@ def _load_stories():
     try:
         with open(stories_path, 'r', encoding='utf-8') as f:
             _stories_data = json.load(f)
+        _loaded_permission_id = permission_id
             
         # Index by ID for quick lookup
         for story in _stories_data.get('stories', []):
             _stories_by_id[story['id']] = story
             
-        logger.info(f"📚 Loaded {len(_stories_by_id)} pre-extracted stories")
+        logger.info("Loaded %s licensed pre-extracted stories", len(_stories_by_id))
         
     except FileNotFoundError:
         logger.warning(f"Stories file not found: {stories_path}")
@@ -151,7 +201,9 @@ def get_stories_by_difficulty(difficulty: str, limit: int = 20) -> List[dict]:
     _load_stories()
     
     stories = [s for s in _stories_data.get('stories', []) if s['difficulty'] == difficulty]
-    return get_available_stories(limit=limit)  # Use the main function for formatting
+    story_ids = {story['id'] for story in stories[:limit]}
+    all_formatted = get_available_stories(limit=len(_stories_data.get('stories', [])))
+    return [story for story in all_formatted if story['id'] in story_ids]
 
 
 # Quick test

@@ -1271,7 +1271,7 @@ End of Export
           <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
             <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Clear conversation?</h3>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
-              This will hide this conversation from your list. Your messages will be preserved for training purposes but won't be visible to you anymore.
+              This permanently deletes the conversation and its messages. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

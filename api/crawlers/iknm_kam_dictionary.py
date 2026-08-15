@@ -378,7 +378,7 @@ def add_to_database(url, markdown, letter=None):
     
     print("   💾 Adding to database...")
     manager = RAGDatabaseManager()
-    manager.vectorstore.add_documents(documents)
+    manager.add_governed_documents(documents)
     
     # Update metadata
     if "websites" not in manager.metadata:

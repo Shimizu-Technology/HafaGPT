@@ -251,8 +251,8 @@ def import_dictionary(file_path, manager):
         
         print(f"   Batch {batch_num}/{total_batches}: {len(batch)} entries...", end=" ", flush=True)
         
-        # Use vectorstore.add_documents directly (not manager.add_document which is for PDFs)
-        manager.vectorstore.add_documents(batch)
+        # Use the governed batch path (manager.add_document is for PDFs).
+        manager.add_governed_documents(batch)
         chunk_count = len(batch)  # Dictionary entries are 1:1 (no chunking needed)
         total_chunks += chunk_count
         
@@ -312,4 +312,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

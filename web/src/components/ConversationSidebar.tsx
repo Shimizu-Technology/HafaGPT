@@ -363,7 +363,7 @@ export function ConversationSidebar({
               Clear conversation?
             </h3>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-6">
-              This will hide this conversation from your list. Your messages will be preserved for training purposes but won't be visible to you anymore.
+              This permanently deletes the conversation and its messages. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -376,7 +376,7 @@ export function ConversationSidebar({
                 onClick={handleConfirmDelete}
                 className="flex-1 px-4 py-2.5 bg-hibiscus-600 dark:bg-red-600 text-white rounded-xl hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors font-medium"
               >
-                Clear
+                Delete
               </button>
             </div>
           </div>
@@ -385,4 +385,3 @@ export function ConversationSidebar({
     </>
   );
 }
-

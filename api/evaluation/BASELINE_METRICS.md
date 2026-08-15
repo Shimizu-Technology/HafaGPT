@@ -1,5 +1,12 @@
 # 📊 HåfaGPT Evaluation Results & Progress Tracking
 
+> **Historical results only.** These runs predate the August 2026 source-rights
+> and retrieval-governance audit. They include sources that are now blocked or
+> role-limited, so the percentages are not a valid release baseline for the
+> governed corpus. Re-establish a benchmark only after corpus cleanup and
+> human-reviewed gold answers described in
+> [`documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md`](../documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md).
+
 ---
 
 ## 📈 Progress Over Time
@@ -288,4 +295,3 @@ python -m evaluation.test_conversation_context --test cross_conversation_isolati
 ---
 
 **Bottom Line:** We went from 76.7% → 98.0%+ accuracy through model switching (DeepSeek V3) and RAG improvements. Added 45,000+ knowledge chunks from 9+ sources including IKNM/KAM Dictionary, orthography guides, and native speaker content. The chatbot now handles translations, grammar, cultural questions, orthography differences, and conversational scenarios with excellent accuracy across all major sources. 🎯
-

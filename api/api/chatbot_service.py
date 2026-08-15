@@ -12,11 +12,19 @@ import sys
 import threading
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 from dotenv import load_dotenv
 from openai import OpenAI
+from .canonical_context import get_canonical_tutor_context
+from .upload_storage import resolve_private_upload_reference
 
 # Add parent directory to path for root-level imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Application entry points own environment-file loading. This must happen before
+# importing the singleton RAG service below; the RAG library itself intentionally
+# has no import-time dotenv side effect so unit tests remain credential-free.
+load_dotenv()
 
 # Thread-safe tracking for pending/cancelled messages
 _pending_lock = threading.Lock()
@@ -355,21 +363,16 @@ def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5
     
     raise last_error
 
-# Load environment
-load_dotenv()
-
 # ============================================================================
 # MODEL CONFIGURATION - Change CHAT_MODEL in .env to switch models!
 # ============================================================================
-# Supported models:
-#   - gpt-4o           (OpenAI - current default, 80% accuracy, $0.002/query)
-#   - gpt-4o-mini      (OpenAI - faster, cheaper, slightly less accurate)
-#   - gemini-2.5-flash (OpenRouter - 93% accuracy, fastest, $0.0002/query) ⭐ RECOMMENDED
-#   - deepseek-v3      (OpenRouter - 93% accuracy, cheapest, $0.00008/query)
-#   - claude-sonnet-4.5 (OpenRouter - 93% accuracy, most verbose, $0.005/query)
+# This legacy registry is the production runtime boundary, not evidence that every
+# listed model is approved. Benchmark candidates live in
+# evaluation/model_catalog_2026.json and are promoted here only after blind review,
+# integrated RAG testing, and a documented rollback plan.
 #
 # To switch models, set CHAT_MODEL in your .env file:
-#   CHAT_MODEL=gemini-2.5-flash
+#   CHAT_MODEL=gpt-5.6-luna
 # ============================================================================
 
 OPENROUTER_GEMINI_FLASH_MODEL_ID = "google/gemini-2.5-flash"
@@ -383,6 +386,12 @@ MODEL_CONFIG = {
     "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo", "supports_vision": True},
     
     # OpenRouter models (via OpenRouter API)
+    "gpt-5.6-luna": {
+        "provider": "openrouter",
+        "model_id": "openai/gpt-5.6-luna",
+        "supports_vision": True,
+        "supports_temperature": False,
+    },
     "gemini-2.5-flash": {"provider": "openrouter", "model_id": OPENROUTER_GEMINI_FLASH_MODEL_ID, "supports_vision": True},
     "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
     "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
@@ -402,8 +411,26 @@ def model_supports_vision() -> bool:
     config = MODEL_CONFIG.get(CHAT_MODEL, {})
     return config.get("supports_vision", False)
 
-# Get configured model (default to gpt-4o for backwards compatibility)
-CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-4o")
+
+def model_supports_temperature(model_id: str) -> bool:
+    """Return whether a configured runtime model accepts temperature."""
+
+    for config in MODEL_CONFIG.values():
+        if config["model_id"] == model_id:
+            return config.get("supports_temperature", True)
+    return True
+
+
+def optional_chat_completion_kwargs(model_id: str) -> dict:
+    """Return only optional arguments accepted by the selected model."""
+
+    if model_supports_temperature(model_id):
+        return {"temperature": 0.7}
+    return {}
+
+# GPT-5.6 Luna is the owner-approved default for high-volume tutoring. The
+# previous DeepSeek V3 route remains registered for immediate env-only rollback.
+CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5.6-luna")
 
 def get_llm_client():
     """
@@ -497,6 +524,10 @@ MODE_PROMPTS = {
 Answer questions naturally in English, using Chamorro examples when relevant.
 Be conversational, encouraging, and informative.
 
+SOURCE FAITHFULNESS:
+- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
+- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
+
 IMPORTANT CAPABILITIES:
 - You have access to a Chamorro language knowledge base (grammar books, dictionaries, bilingual articles)
 - You may receive WEB SEARCH RESULTS for current information (weather, news, events)
@@ -526,28 +557,13 @@ When translating single words (e.g., "What is 'listen' in Chamorro?", "How do I 
    - You may use all sources (blogs, articles, cultural content)
    - Continue being conversational and helpful
 
-CRITICAL WORD DEFINITIONS (often confused):
-
-**siempre** = "surely" / "certainly" / "definitely" (future marker indicating strong determination)
-- Example: "Siempre bai hu hånao" = "I will surely go" / "I will definitely go"
-- NOT "always" (that's a common misconception from Spanish influence)
-- In context: Used to express certainty about future events or intentions
-
-**taigue** = "always" / "all the time"
-- This is the correct word for "always" in Chamorro
-- Example: "Taigue ha cho'gue" = "She/he always does it"
-
-COMMON CHAMORRO ABBREVIATIONS (used in schools, texts, social media):
-
-**MSY** = Mañana Si Yu'os (Good morning - literally "God's morning")
-**SYM** = Si Yu'os Ma'åse (Thank you / God bless)
-**BSY** = Buenas Si Yu'os (Good afternoon/evening - literally "God's afternoon")
-**HA** = Håfa Adai (Hello / How are you - the standard Chamorro greeting)
-
-These abbreviations are commonly used in Guam schools, text messages, and community announcements.
-When users ask about these, explain them clearly and mention they're common abbreviations.
-
-When users ask about "siempre," emphasize it means "surely/certainly/definitely" (future determination), NOT "always" """
+GOVERNED CONTENT POLICY:
+- Do not rely on hard-coded abbreviation expansions, literal translations, or
+  claims about how commonly a phrase is used. Retrieve a governed source first.
+- Prefer the canonical curriculum term when canonical context is supplied.
+- When sources disagree or a phrase is marked as needing review, name the
+  uncertainty instead of presenting one form as unquestionably standard.
+- Never turn an unverified explanation into a cultural or etymological fact."""
     },
     "chamorro": {
         "name": "Immersion Mode (Chamorro Only)",
@@ -560,15 +576,9 @@ IMPORTANTE: MUNGA un usa español o otro lengguahi. Ha' fino' Chamorro!
 - Usa HA' i diksionarion-måmi (dictionaries): revised_and_updated_chamorro_dictionary, chamoru_info_dictionary, chamorro_english_dictionary_TOD
 - MUNGA un adibina palåbra! (DO NOT guess words!)
 
-Use ONLY authentic Chamorro words and phrases:
-- Håfa Adai (NOT 'hola' or 'hello')
-- Håfa tatatmånu hao? (NOT 'como está' or 'how are you')
-- Kao maolek hao? (NOT '¿estás bien?' or 'are you well')
-- Mañana Si Yu'os (NOT 'buenos días' or 'good morning')
-- Si Yu'os Ma'åse (NOT 'gracias' or 'thank you')
-
-Spanish words like 'como está', 'hola', 'buenos días' are FORBIDDEN.
-Only respond in pure Chamorro language.
+Use governed Chamorro dictionary/canonical context for language claims. Munga un
+adibina pat un fa'tinas nuebu na tiningo'. Yanggen ti guaha sufisiente na prineba,
+na'fanmanungo' na ti siña un na'siguru.
 
 If you receive web search results, use them but respond in Chamorro only."""
     },
@@ -576,6 +586,10 @@ If you receive web search results, use them but respond in Chamorro only."""
         "name": "Learning Mode (Chamorro + Breakdown)",
         "prompt": """You are a Chamorro language tutor. 
 Respond with Chamorro first, then provide English translation and breakdown.
+
+SOURCE FAITHFULNESS:
+- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
+- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
 
 If you receive web search results for current information, incorporate them into your response.
 
@@ -586,17 +600,21 @@ If you receive web search results for current information, incorporate them into
 
 NEVER guess or make up Chamorro words. If unsure, say "I don't have that translation."
 
-CRITICAL WORD DEFINITIONS:
-- **siempre** = "surely" / "certainly" / "definitely" (NOT "always")
-- **taigue** = "always" / "all the time"
-
-COMMON ABBREVIATIONS:
-- **MSY** = Mañana Si Yu'os (Good morning)
-- **SYM** = Si Yu'os Ma'åse (Thank you)
-- **BSY** = Buenas Si Yu'os (Good afternoon/evening)
-- **HA** = Håfa Adai (Hello) """
+For abbreviations, literal translations, phrase variants, pronunciation, and
+usage claims, retrieve a governed source and state uncertainty when the evidence
+does not establish the requested detail. Prefer supplied canonical curriculum
+context over memorized variants."""
     }
 }
+
+NO_REFERENCE_GUARD = """
+
+NO GOVERNED REFERENCE WAS RETRIEVED FOR THIS REQUEST:
+- Do not add a translation, abbreviation expansion, pronunciation, etymology,
+  cultural/regional usage, or new example sentence from model memory.
+- Say that the requested accuracy-sensitive detail could not be verified from
+  the available references, and offer to help with a source-backed alternative.
+"""
 
 # Skill level modifiers - adjust response style based on user's experience
 SKILL_LEVEL_MODIFIERS = {
@@ -739,9 +757,14 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
         # Include images if they exist AND are valid image formats AND model supports vision
         history = []
         for user_msg, bot_msg, img_url, timestamp in rows:
+            img_url = resolve_private_upload_reference(img_url)
             # Build user message (with image if available AND is a valid image format)
             # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
-            is_valid_image = img_url and img_url.lower().endswith(VALID_IMAGE_EXTENSIONS)
+            # Signed private URLs include query parameters, so inspect only the
+            # URL path when deciding whether a historical upload is an image.
+            is_valid_image = bool(
+                img_url and urlsplit(img_url).path.lower().endswith(VALID_IMAGE_EXTENSIONS)
+            )
             has_user_text = bool(user_msg and user_msg.strip())
 
             # Defensive guard for malformed historical rows. If we have neither
@@ -997,6 +1020,10 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
         # Adjust retrieval size based on mode
         k = 1 if rag_mode == "light" else 3
         context, sources = rag.create_context(user_input, k=k)
+        canonical_context, canonical_sources = get_canonical_tutor_context(user_input)
+        if canonical_context:
+            context = f"{canonical_context}\n\n{context}" if context else canonical_context
+            sources = canonical_sources + sources
         
         # Apply token limit to RAG context
         context_tokens = count_tokens(context)
@@ -1007,7 +1034,9 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
         return context, sources
     except Exception as e:
         logger.error(f"RAG error: {e}")
-        return "", []
+        # Canonical lexical matching does not depend on the vector database, so
+        # retain it even when semantic retrieval is temporarily unavailable.
+        return get_canonical_tutor_context(user_input)
 
 
 def get_chatbot_response(
@@ -1127,7 +1156,9 @@ def get_chatbot_response(
     system_prompt = mode_config["prompt"]
     
     # Add skill level modifier if provided (personalization based on user experience)
-    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+    # Generic level modifiers require English explanations at some levels, which
+    # conflicts with the explicit Chamorro-only immersion contract.
+    if mode != "chamorro" and skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
@@ -1190,6 +1221,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
+    else:
+        system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
     if web_context:
@@ -1274,9 +1307,9 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             try:
                 response = request_client.chat.completions.create(
                     model=request_model,
-                    temperature=0.7,
                     messages=history,
                     max_tokens=token_manager.budget.response_buffer,
+                    **optional_chat_completion_kwargs(request_model),
                 )
                 response_text = _extract_non_stream_response_text(response)
                 if not response_text:
@@ -1478,7 +1511,8 @@ def get_chatbot_response_stream(
     system_prompt = mode_config["prompt"]
     
     # Add skill level modifier if provided (personalization based on user experience)
-    if skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
+    # Keep streaming and non-streaming prompt construction behavior identical.
+    if mode != "chamorro" and skill_level and skill_level in SKILL_LEVEL_MODIFIERS:
         system_prompt += SKILL_LEVEL_MODIFIERS[skill_level]
     
     # NOTE: Learning goal modifiers are defined but NOT applied to chat prompts.
@@ -1541,6 +1575,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
+    else:
+        system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
     if web_context:
@@ -1669,10 +1705,10 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
             try:
                 stream = request_client.chat.completions.create(
                     model=request_model,
-                    temperature=0.7,
                     messages=history,
                     max_tokens=token_manager.budget.response_buffer,
-                    stream=True  # Enable streaming!
+                    stream=True,
+                    **optional_chat_completion_kwargs(request_model),
                 )
 
                 for chunk in stream:

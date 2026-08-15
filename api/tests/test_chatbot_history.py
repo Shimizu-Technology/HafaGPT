@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from urllib.parse import urlsplit
 
 
 def _load_get_conversation_history():
@@ -13,6 +14,8 @@ def _load_get_conversation_history():
     isolated_module = ast.Module(body=[function_node], type_ignores=[])
     namespace = {
         "VALID_IMAGE_EXTENSIONS": (".jpg", ".jpeg", ".png", ".gif", ".webp"),
+        "resolve_private_upload_reference": lambda value: value,
+        "urlsplit": urlsplit,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_history"]
@@ -90,4 +93,28 @@ def test_get_conversation_history_skips_rows_without_user_text_or_image():
         {"role": "assistant", "content": "Image-only answer"},
         {"role": "user", "content": "Real question"},
         {"role": "assistant", "content": "Real answer"},
+    ]
+
+
+def test_get_conversation_history_accepts_signed_private_image_url():
+    get_conversation_history = _load_get_conversation_history()
+    signed_url = "https://signed.example/photo.png?X-Amz-Signature=secret"
+    rows = [(None, "Image answer", "s3://private-bucket/photo.png", None)]
+    fake_connection = FakeConnection(rows)
+
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+    get_conversation_history.__globals__["model_supports_vision"] = lambda: True
+    get_conversation_history.__globals__["resolve_private_upload_reference"] = lambda value: signed_url
+
+    history = get_conversation_history("conv-private-image", max_messages=10)
+
+    assert history == [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What does this say?"},
+                {"type": "image_url", "image_url": {"url": signed_url, "detail": "low"}},
+            ],
+        },
+        {"role": "assistant", "content": "Image answer"},
     ]

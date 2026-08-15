@@ -5,38 +5,36 @@ description = "FastAPI and RAG backend for the HåfaGPT Chamorro learning platfo
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic>=1.17.2",
-    "boto3>=1.40.74",
-    "chromadb>=1.3.4",
-    "clerk-backend-api>=4.0.0",
-    "crawl4ai>=0.4.0",
-    "fastapi>=0.115.0",
-    "langchain>=1.0.5",
-    "langchain-chroma>=1.0.0",
-    "langchain-community>=0.4.1",
+    "alembic>=1.19.1",
+    "boto3>=1.43.72",
+    "clerk-backend-api>=7.0.0",
+    "cryptography>=50.0.0",
+    "fastapi>=0.141.1",
     # REMOVED: langchain-huggingface (900MB+ with torch/transformers)
     # We use langchain-openai for cloud embeddings (tiny memory footprint)
-    "langchain-openai>=0.3.12",
-    "langchain-postgres>=0.0.16",
-    "openai>=2.7.1",
+    "langchain-openai>=1.5.1",
+    "langchain-postgres>=0.0.17",
+    "openai>=3.1.0",
     "psycopg2-binary>=2.9.11",
-    "psycopg[binary]>=3.2.3",
-    "pypdf>=5.0.0",  # PDF text extraction (lightweight, no Java)
-    "python-docx>=1.1.0",  # Word document parsing
-    "python-dotenv>=1.2.1",
+    "psycopg[binary]>=3.3.4",
+    "pypdf>=6.15.0",  # PDF text extraction (lightweight, no Java)
+    "python-docx>=1.2.0",  # Word document parsing
+    "python-dotenv>=1.2.2",
     "python-jose[cryptography]>=3.5.0",
-    "python-multipart>=0.0.20",
-    "requests>=2.32.3",
+    "python-multipart>=0.0.32",
+    "requests>=2.34.2",
     # REMOVED: sentence-transformers (500MB+, only needed for local embeddings)
-    "uvicorn>=0.34.0",
+    "uvicorn>=0.52.3",
     # Model comparison dependencies
     "httpx>=0.27.0",  # For OpenRouter API client
     # Webhook verification
-    "svix>=1.17.0",  # Clerk uses Svix for webhooks
-    "gunicorn>=23.0.0",
-    "pypdf2>=3.0.1",
-    "tiktoken>=0.12.0",
-    "sentry-sdk>=2.48.0",
+    "svix>=1.99.1",  # Clerk uses Svix for webhooks
+    "gunicorn>=26.0.0",
+    "uvicorn-worker>=0.4.0",
+    # Crawl tooling still requires the 3.x ABI; LangSmith accepts it too.
+    "xxhash>=3.5.0,<4",
+    "tiktoken>=0.13.0",
+    "sentry-sdk>=2.68.0",
 ]
 
 # Optional dependencies for direct API access (instead of OpenRouter)
@@ -44,6 +42,10 @@ dependencies = [
 model-comparison = [
     "anthropic>=0.39.0",  # Direct Claude API
     "google-generativeai>=0.8.0",  # Direct Gemini API
+]
+tools = [
+    "crawl4ai>=0.7.7",
+    "langchain-community>=0.4.1",
 ]
 
 [dependency-groups]

@@ -370,15 +370,8 @@ Para håo un maestro lengguahi Chamorro. Responde ha' gi fino' Chamorro.
 IMPORTANTE: MUNGA un usa español o otro lengguahi. Ha' fino' Chamorro!
 (IMPORTANT: NEVER use Spanish or other languages. ONLY Chamorro!)
 
-Use ONLY authentic Chamorro words and phrases:
-- Håfa Adai (NOT 'hola' or 'hello')
-- Håfa tatatmånu hao? (NOT 'como está' or 'how are you')
-- Kao maolek hao? (NOT '¿estás bien?' or 'are you well')
-- Mañana Si Yu'os (NOT 'buenos días' or 'good morning')
-- Si Yu'os Ma'åse (NOT 'gracias' or 'thank you')
-
-Spanish words like 'como está', 'hola', 'buenos días' are FORBIDDEN.
-Only respond in pure Chamorro language.
+Use the governed Chamorro dictionary context. Do not guess translations or force
+one phrase variant when the supplied sources do not establish it.
 
 - Answer all questions in Chamorro only
 - Use proper Chamorro grammar
@@ -490,17 +483,11 @@ When citing:
 ### YOUR KNOWLEDGE BASE (What You Actually Have):
 {source_details_text}
 
-### COMMON CHAMORRO ABBREVIATIONS:
+### GOVERNED PHRASE AND ABBREVIATION POLICY:
 
-When you see these abbreviations in user messages, recognize them immediately:
-
-- **MSY** = Mañana Si Yu'os (Good morning - literally "God's morning")
-- **SYM** = Si Yu'os Ma'åse (Thank you / God bless)
-- **BSY** = Buenas Si Yu'os (Good afternoon/evening - literally "God's afternoon")
-- **HA** = Håfa Adai (Hello / How are you - the standard Chamorro greeting)
-
-These are commonly used in Guam schools, text messages, and community announcements.
-When users ask about these, explain them clearly and mention they're common abbreviations.
+Retrieve a governed source before expanding an abbreviation or explaining a
+phrase's literal meaning, commonness, or regional usage. If the evidence does not
+establish the detail, say so instead of guessing.
 
 ### IMPORTANT - Source Attribution:
 {citation_examples_text}
@@ -1081,4 +1068,3 @@ if len(vocabulary_learned) > 0:
     print(f"You encountered {len(vocabulary_learned)} Chamorro words!")
 print("Keep practicing! Adios! 🌺")
 print("=" * 50 + "\n")
-

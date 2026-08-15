@@ -22,8 +22,16 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Optional, List
 import json
+import re
+import zipfile
 
 from .time_utils import get_guam_date
+from .auth_policy import (
+    configured_authorized_parties,
+    configured_clerk_issuer,
+    validate_clerk_session_claims,
+)
+from .upload_storage import make_private_upload_reference
 
 from .models import (
     ChatRequest,
@@ -133,6 +141,8 @@ else:
 CLERK_JWKS_TTL_SECONDS = 60 * 60
 _clerk_jwks_cache = {"keys": [], "expires_at": 0.0}
 _clerk_jwks_lock = threading.Lock()
+CLERK_AUTHORIZED_PARTIES = configured_authorized_parties()
+CLERK_ISSUER = configured_clerk_issuer()
 
 
 def _extract_bearer_token(authorization: Optional[str]) -> str:
@@ -215,12 +225,21 @@ def _decode_clerk_token(token: str, force_jwks_refresh: bool = False) -> dict:
             detail="Invalid authentication token. Please sign in again."
         )
 
-    return jwt.decode(
+    decode_kwargs = {
+        "algorithms": ["RS256"],
+        # Clerk session JWTs do not include an audience claim by default.
+        "options": {"verify_aud": False},
+    }
+    if CLERK_ISSUER:
+        decode_kwargs["issuer"] = CLERK_ISSUER
+
+    payload = jwt.decode(
         token,
         _key_to_dict(signing_key),
-        algorithms=["RS256"],
-        options={"verify_aud": False}
+        **decode_kwargs,
     )
+    validate_clerk_session_claims(payload, CLERK_AUTHORIZED_PARTIES)
+    return payload
 
 
 async def verify_user(authorization: Optional[str] = Header(None)) -> str:
@@ -307,18 +326,25 @@ try:
         region_name=os.getenv('AWS_REGION', 'us-west-2')
     )
     S3_BUCKET = os.getenv('AWS_S3_BUCKET')
+    PRIVATE_UPLOADS_BUCKET = os.getenv('AWS_PRIVATE_UPLOADS_BUCKET', '').strip()
     S3_AVAILABLE = bool(S3_BUCKET)
     if S3_AVAILABLE:
         logger.info(f"✅ S3 client initialized for bucket: {S3_BUCKET}")
     else:
         logger.warning("⚠️  AWS_S3_BUCKET not set. Image uploads will not be persisted.")
+    if not PRIVATE_UPLOADS_BUCKET:
+        logger.warning(
+            "⚠️  AWS_PRIVATE_UPLOADS_BUCKET not set. Chat uploads will be processed "
+            "for the current request but will not be persisted."
+        )
 except Exception as e:
     S3_AVAILABLE = False
+    PRIVATE_UPLOADS_BUCKET = ""
     logger.warning(f"⚠️  Failed to initialize S3 client: {e}")
 
 def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> Optional[str]:
     """
-    Upload image to S3 and return public URL.
+    Upload an image to private object storage and return an internal reference.
     
     Args:
         image_data: Binary image data
@@ -326,31 +352,30 @@ def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> O
         content_type: MIME type (e.g., 'image/jpeg')
     
     Returns:
-        S3 public URL or None if upload fails
+        Private object reference or None if persistence is unavailable
     """
-    if not S3_AVAILABLE:
-        logger.warning("S3 not available, skipping image upload")
+    if not PRIVATE_UPLOADS_BUCKET:
+        logger.warning("Private upload storage not available, skipping image persistence")
         return None
     
     try:
         # Generate unique filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_extension = filename.split('.')[-1] if '.' in filename else 'jpg'
-        s3_key = f"chamorro_uploads/{timestamp}_{filename}"
+        safe_filename = safe_upload_filename(filename)
+        s3_key = f"chamorro_uploads/{timestamp}_{safe_filename}"
         
         # Upload to S3 (without ACL - bucket policy handles public access)
         s3_client.put_object(
-            Bucket=S3_BUCKET,
+            Bucket=PRIVATE_UPLOADS_BUCKET,
             Key=s3_key,
             Body=image_data,
-            ContentType=content_type
-            # No ACL needed - bucket policy makes objects public
+            ContentType=content_type,
+            ServerSideEncryption="AES256",
         )
         
-        # Construct public URL
-        image_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
-        logger.info(f"✅ Image uploaded to S3: {image_url}")
-        return image_url
+        image_reference = make_private_upload_reference(PRIVATE_UPLOADS_BUCKET, s3_key)
+        logger.info("✅ Image uploaded to private object storage")
+        return image_reference
         
     except ClientError as e:
         logger.error(f"Failed to upload image to S3: {e}")
@@ -382,6 +407,28 @@ SUPPORTED_FILE_TYPES = {
 MAX_UPLOAD_FILES = 5
 MAX_UPLOAD_FILE_SIZE_MB = 20
 MAX_UPLOAD_FILE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024
+UPLOAD_READ_CHUNK_BYTES = 1024 * 1024
+MAX_DOCX_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
+MAX_DOCX_ARCHIVE_ENTRIES = 2000
+
+
+async def read_upload_with_limit(uploaded_file: UploadFile) -> bytes:
+    """Read a spooled upload incrementally and fail before it grows unbounded."""
+
+    chunks: list[bytes] = []
+    total_bytes = 0
+    while True:
+        chunk = await uploaded_file.read(UPLOAD_READ_CHUNK_BYTES)
+        if not chunk:
+            break
+        total_bytes += len(chunk)
+        if total_bytes > MAX_UPLOAD_FILE_BYTES:
+            display_name = uploaded_file.filename or "Uploaded file"
+            raise ValueError(
+                f"{display_name} exceeds the {MAX_UPLOAD_FILE_SIZE_MB}MB file size limit"
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
 
 
 def validate_uploaded_file_size(file_data: bytes, filename: str) -> None:
@@ -391,6 +438,66 @@ def validate_uploaded_file_size(file_data: bytes, filename: str) -> None:
         raise ValueError(
             f"{display_name} exceeds the {MAX_UPLOAD_FILE_SIZE_MB}MB file size limit"
         )
+
+
+def validate_uploaded_file_signature(file_data: bytes, content_type: str, filename: str) -> None:
+    """Ensure uploaded bytes match the declared allow-listed media type."""
+
+    if content_type not in SUPPORTED_FILE_TYPES:
+        raise ValueError(
+            "Unsupported file type. Supported: PDF, Word (.docx), Text (.txt), Images"
+        )
+
+    signatures = {
+        "application/pdf": file_data.startswith(b"%PDF-"),
+        "image/jpeg": file_data.startswith(b"\xff\xd8\xff"),
+        "image/png": file_data.startswith(b"\x89PNG\r\n\x1a\n"),
+        "image/gif": file_data.startswith((b"GIF87a", b"GIF89a")),
+        "image/webp": (
+            len(file_data) >= 12
+            and file_data.startswith(b"RIFF")
+            and file_data[8:12] == b"WEBP"
+        ),
+    }
+
+    if content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        try:
+            with zipfile.ZipFile(io.BytesIO(file_data)) as archive:
+                entries = archive.infolist()
+                names = {entry.filename for entry in entries}
+                uncompressed_bytes = sum(entry.file_size for entry in entries)
+                is_valid = (
+                    "[Content_Types].xml" in names
+                    and "word/document.xml" in names
+                    and len(entries) <= MAX_DOCX_ARCHIVE_ENTRIES
+                    and uncompressed_bytes <= MAX_DOCX_UNCOMPRESSED_BYTES
+                )
+        except (zipfile.BadZipFile, OSError):
+            is_valid = False
+    elif content_type == "text/plain":
+        is_valid = b"\x00" not in file_data
+        if is_valid:
+            try:
+                file_data.decode("utf-8")
+            except UnicodeDecodeError:
+                is_valid = False
+    elif content_type == "application/msword":
+        # Legacy binary .doc parsing is not supported and should fail before upload.
+        is_valid = False
+    else:
+        is_valid = signatures.get(content_type, False)
+
+    if not is_valid:
+        display_name = filename or "Uploaded file"
+        raise ValueError(f"{display_name} does not match its declared file type")
+
+
+def safe_upload_filename(filename: str) -> str:
+    """Remove path traversal and unsafe characters before constructing S3 keys."""
+
+    base_name = Path(filename or "upload").name
+    normalized = re.sub(r"[^A-Za-z0-9._-]+", "_", base_name).strip("._")
+    return normalized[:160] or "upload"
 
 def extract_text_from_pdf(file_data: bytes) -> str:
     """Extract text from PDF file."""
@@ -453,28 +560,28 @@ def extract_text_from_txt(file_data: bytes) -> str:
 
 def upload_file_to_s3(file_data: bytes, filename: str, content_type: str) -> Optional[str]:
     """
-    Upload file to S3 and return public URL.
-    Works for both images and documents.
+    Upload a file to private object storage and return an internal reference.
     """
-    if not S3_AVAILABLE:
-        logger.warning("S3 not available, skipping file upload")
+    if not PRIVATE_UPLOADS_BUCKET:
+        logger.warning("Private upload storage not available, skipping file persistence")
         return None
     
     try:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        file_extension = filename.split('.')[-1] if '.' in filename else 'bin'
-        s3_key = f"chamorro_uploads/{timestamp}_{filename}"
+        safe_filename = safe_upload_filename(filename)
+        s3_key = f"chamorro_uploads/{timestamp}_{safe_filename}"
         
         s3_client.put_object(
-            Bucket=S3_BUCKET,
+            Bucket=PRIVATE_UPLOADS_BUCKET,
             Key=s3_key,
             Body=file_data,
-            ContentType=content_type
+            ContentType=content_type,
+            ServerSideEncryption="AES256",
         )
         
-        file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
-        logger.info(f"✅ File uploaded to S3: {file_url}")
-        return file_url
+        file_reference = make_private_upload_reference(PRIVATE_UPLOADS_BUCKET, s3_key)
+        logger.info("✅ File uploaded to private object storage")
+        return file_reference
         
     except ClientError as e:
         logger.error(f"Failed to upload file to S3: {e}")
@@ -494,6 +601,7 @@ def process_uploaded_file(file_data: bytes, content_type: str, filename: str) ->
         - text_content: Extracted text (for documents) or None (for images)
         - image_base64: Base64 encoded image (for images) or None (for documents)
     """
+    validate_uploaded_file_signature(file_data, content_type, filename)
     file_type = SUPPORTED_FILE_TYPES.get(content_type)
     
     if not file_type:
@@ -623,28 +731,29 @@ def upload_file_to_s3_background(
         pending_id: Client-generated pending ID for matching the final DB row
     """
     try:
-        if not s3_client:
-            logger.warning("⚠️ S3 client not configured, skipping background upload")
+        if not s3_client or not PRIVATE_UPLOADS_BUCKET:
+            logger.warning("⚠️ Private upload storage not configured, skipping background upload")
             return
         uploaded_files: list[dict] = []
 
         for file_info in files_to_upload:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = file_info["filename"]
+            filename = safe_upload_filename(file_info["filename"])
             content_type = file_info["content_type"] or "application/octet-stream"
             file_index = file_info["index"]
             s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
 
             logger.info(f"📤 Background: Uploading {filename} to S3...")
             s3_client.put_object(
-                Bucket=S3_BUCKET,
+                Bucket=PRIVATE_UPLOADS_BUCKET,
                 Key=s3_key,
                 Body=file_info["data"],
-                ContentType=content_type
+                ContentType=content_type,
+                ServerSideEncryption="AES256",
             )
 
-            file_url = f"https://{S3_BUCKET}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{s3_key}"
-            logger.info(f"✅ Background: Uploaded {filename} → {file_url}")
+            file_url = make_private_upload_reference(PRIVATE_UPLOADS_BUCKET, s3_key)
+            logger.info("✅ Background: Uploaded file to private object storage")
 
             uploaded_files.append({
                 'url': file_url,
@@ -922,7 +1031,7 @@ async def chat(
             logger.info(f"📁 File received: filename={file.filename}, content_type={file.content_type}")
             
             try:
-                file_data = await file.read()
+                file_data = await read_upload_with_limit(file)
                 logger.info(f"📦 File data read: {len(file_data)} bytes")
                 validate_uploaded_file_size(file_data, file.filename or "uploaded_file")
                 
@@ -1197,7 +1306,7 @@ async def chat_stream(
             logger.info(f"📁 Stream: Processing file {idx+1}/{len(files)}: {uploaded_file.filename}")
             try:
                 # Read file data once (we'll need it for both processing and S3 upload)
-                file_data = await uploaded_file.read()
+                file_data = await read_upload_with_limit(uploaded_file)
                 validate_uploaded_file_size(file_data, uploaded_file.filename)
                 
                 # Store for background S3 upload
@@ -5873,7 +5982,12 @@ async def generate_quiz_from_dictionary(
 # Story Mode Endpoints (Pre-extracted from Lengguahi-ta)
 # =====================================================
 
-from .story_service import get_available_stories as get_stories_list, get_story, get_story_categories
+from .story_service import (
+    get_available_stories as get_stories_list,
+    get_story,
+    get_story_availability,
+    get_story_categories,
+)
 
 @app.get("/api/stories/available", tags=["Stories"])
 async def list_available_stories(
@@ -5881,9 +5995,10 @@ async def list_available_stories(
     category: Optional[str] = None
 ):
     """
-    Get list of available pre-extracted Chamorro stories.
-    
-    Stories are pre-extracted from Lengguahi-ta for instant loading.
+    Get the governed story catalog and its current availability state.
+
+    The copied story catalog is empty unless the source registry and local
+    environment contain the same recorded permission reference.
     
     Args:
         limit: Maximum number of stories to return (default 50)
@@ -5913,10 +6028,25 @@ async def list_available_stories(
         return {
             "stories": stories,
             "total": len(stories),
-            "by_category": categories
+            "by_category": categories,
+            "availability": get_story_availability(),
         }
     except Exception as e:
         logger.error(f"❌ [STORIES] Failed to list stories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/stories/categories", tags=["Stories"])
+async def list_story_categories():
+    """Get governed story categories; empty while copied stories are disabled."""
+    try:
+        categories = get_story_categories()
+        return {
+            "categories": categories,
+            "availability": get_story_availability(),
+        }
+    except Exception as e:
+        logger.error(f"❌ [STORIES] Failed to list categories: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -5949,6 +6079,10 @@ async def get_story_endpoint(story_id: str):
     Note: This endpoint is instant - no AI generation required!
     """
     try:
+        availability = get_story_availability()
+        if not availability["enabled"]:
+            raise HTTPException(status_code=451, detail=availability["message"])
+
         logger.info(f"📖 [STORIES] Fetching story: {story_id}")
         story = get_story(story_id)
         
@@ -5963,18 +6097,6 @@ async def get_story_endpoint(story_id: str):
     except Exception as e:
         logger.error(f"❌ [STORIES] Failed to get story: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/stories/categories", tags=["Stories"])
-async def list_story_categories():
-    """Get list of story categories with counts."""
-    try:
-        categories = get_story_categories()
-        return {"categories": categories}
-    except Exception as e:
-        logger.error(f"❌ [STORIES] Failed to list categories: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 # =====================================================
 # CONVERSATION PRACTICE ENDPOINTS
@@ -8440,7 +8562,7 @@ async def regenerate_audio(
                 }
             }
             
-            response = http_requests.post(url, json=data, headers=headers)
+            response = http_requests.post(url, json=data, headers=headers, timeout=(10, 60))
             
             if response.status_code != 200:
                 raise HTTPException(status_code=500, detail=f"ElevenLabs error: {response.text}")

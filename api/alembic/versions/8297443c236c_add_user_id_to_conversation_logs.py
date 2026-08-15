@@ -1,7 +1,7 @@
 """add_user_id_to_conversation_logs
 
 Revision ID: 8297443c236c
-Revises: 
+Revises: 000000000001
 Create Date: 2025-11-15 12:09:50.047510
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '8297443c236c'
-down_revision: Union[str, Sequence[str], None] = None
+down_revision: Union[str, Sequence[str], None] = '000000000001'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

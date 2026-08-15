@@ -20,6 +20,7 @@ from .models import (
     MessageResponse,
     SourceInfo
 )
+from .upload_storage import delete_private_upload_references, resolve_private_upload_reference
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +268,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 from .models import FileInfo
                 file_urls = [
                     FileInfo(
-                        url=f.get('url', ''),
+                        url=resolve_private_upload_reference(f.get('url', '')) or '',
                         filename=f.get('filename', 'file'),
                         type=f.get('type', 'document'),
                         content_type=f.get('content_type')
@@ -303,7 +304,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                     sources=[],
                     used_rag=False,
                     used_web_search=False,
-                    image_url=row[8],  # Legacy S3 image URL
+                    image_url=resolve_private_upload_reference(row[8]),
                     file_urls=file_urls,  # New: all file URLs
                     response_time=None  # User messages don't have response time
                 ))
@@ -344,10 +345,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
 
 def delete_conversation(conversation_id: str, user_id: Optional[str] = None) -> bool:
     """
-    Soft delete a conversation (sets deleted_at timestamp).
-    
-    This preserves conversation_logs for training/analytics while hiding
-    the conversation from the user's list.
+    Permanently delete an owned conversation, its messages, and private uploads.
     
     Args:
         conversation_id: Conversation ID to delete
@@ -356,36 +354,71 @@ def delete_conversation(conversation_id: str, user_id: Optional[str] = None) -> 
     Returns:
         True if deleted, False if not found
     """
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
-        # Soft delete with optional user_id check for security
-        if user_id:
-            cursor.execute("""
-                UPDATE conversations
-                SET deleted_at = NOW()
-                WHERE id = %s AND user_id = %s AND deleted_at IS NULL
-            """, (conversation_id, user_id))
-        else:
-            cursor.execute("""
-                UPDATE conversations
-                SET deleted_at = NOW()
-                WHERE id = %s AND user_id IS NULL AND deleted_at IS NULL
-            """, (conversation_id,))
-        
+        ownership_clause = "user_id = %s" if user_id else "user_id IS NULL"
+        ownership_params = (conversation_id, user_id) if user_id else (conversation_id,)
+        cursor.execute(
+            f"SELECT id FROM conversations WHERE id = %s AND {ownership_clause} AND deleted_at IS NULL",
+            ownership_params,
+        )
+        if cursor.fetchone() is None:
+            return False
+
+        cursor.execute(
+            "SELECT image_url, file_urls FROM conversation_logs WHERE conversation_id = %s",
+            (conversation_id,),
+        )
+        upload_references: list[str] = []
+        for image_url, file_urls in cursor.fetchall():
+            if image_url:
+                upload_references.append(image_url)
+            for file_info in file_urls or []:
+                if isinstance(file_info, dict) and file_info.get("url"):
+                    upload_references.append(file_info["url"])
+
+        # Delete children explicitly so the behavior is consistent across legacy
+        # schemas that predate cascade constraints.
+        cursor.execute("DELETE FROM shared_conversations WHERE conversation_id = %s", (conversation_id,))
+        cursor.execute("SELECT to_regclass('public.message_feedback')")
+        if cursor.fetchone()[0] is not None:
+            cursor.execute("DELETE FROM message_feedback WHERE conversation_id = %s", (conversation_id,))
+        cursor.execute("DELETE FROM conversation_logs WHERE conversation_id = %s", (conversation_id,))
+        cursor.execute("DELETE FROM conversations WHERE id = %s", (conversation_id,))
+
         deleted = cursor.rowcount > 0
         conn.commit()
-        cursor.close()
-        conn.close()
-        
+
         if deleted:
-            logger.info(f"Soft deleted conversation {conversation_id} (logs preserved for training)")
-        
+            try:
+                deleted_uploads = delete_private_upload_references(upload_references)
+                logger.info(
+                    f"Permanently deleted conversation {conversation_id} and "
+                    f"{deleted_uploads} private upload(s)"
+                )
+            except Exception as storage_error:
+                # The personal database content is already gone. Log the storage
+                # cleanup failure for operational follow-up without restoring it.
+                logger.error(
+                    f"Conversation {conversation_id} deleted, but private upload cleanup failed: "
+                    f"{storage_error}"
+                )
+
         return deleted
     except Exception as e:
+        if conn is not None:
+            conn.rollback()
         logger.error(f"Failed to delete conversation: {e}")
         raise
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 def update_conversation_title(conversation_id: str, title: str, user_id: Optional[str] = None) -> bool:

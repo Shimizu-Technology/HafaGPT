@@ -6,7 +6,8 @@
 
 - **Clerk replaces bcrypt + JWT** - You don't hash passwords or create tokens anymore
 - **Frontend:** Use `<SignIn />` component, `useUser()` hook, `getToken()` for API calls
-- **Backend:** Verify JWT with `jwt.decode(token, CLERK_JWKS)`, get user ID from `payload["sub"]`
+- **Backend:** Verify RS256 signature/time, optional exact issuer, and mandatory
+  Clerk `azp`/authorized-party claim before using `payload["sub"]`
 - **User data:** Auth stuff in Clerk, app data (conversations, quizzes) in our PostgreSQL
 
 That's it! Read below for details.
@@ -127,8 +128,11 @@ import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
 
 1. Frontend gets JWT from Clerk automatically
 2. Frontend sends it in `Authorization: Bearer <token>` header
-3. Backend verifies the JWT signature using Clerk's public keys
-4. If valid, extract user ID and proceed
+3. Backend verifies the JWT signature and time claims using Clerk's public keys
+4. Backend verifies the exact issuer when `CLERK_ISSUER` is configured
+5. Backend requires `azp` to match `CLERK_AUTHORIZED_PARTIES` (or the restrictive
+   `ALLOWED_ORIGINS` migration fallback)
+6. If all checks pass, extract the user ID and proceed
 
 ### The Code (Python/FastAPI)
 
@@ -138,10 +142,9 @@ import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
 from jose import jwt
 import httpx
 
-# Fetch Clerk's public keys (JWKS)
+# Fetch and cache Clerk's public keys (JWKS)
 def get_clerk_jwks():
-    response = httpx.get(f"https://{CLERK_DOMAIN}/.well-known/jwks.json")
-    return response.json()
+    return cached_clerk_jwks_with_one_forced_refresh_on_key_rotation()
 
 # Verify JWT and get user ID
 def get_current_user(authorization: str):
@@ -150,13 +153,22 @@ def get_current_user(authorization: str):
     # Decode and verify with Clerk's public key
     payload = jwt.decode(
         token,
-        get_clerk_jwks(),
-        algorithms=["RS256"]
+        matching_signing_key(get_clerk_jwks()),
+        algorithms=["RS256"],
+        issuer=CLERK_ISSUER,  # when configured
+        options={"verify_aud": False},
     )
+
+    # Clerk session JWTs do not have an audience claim by default. HåfaGPT
+    # instead requires the browser-origin-bound authorized-party claim.
+    validate_clerk_session_claims(payload, CLERK_AUTHORIZED_PARTIES)
     
     user_id = payload["sub"]  # "user_abc123"
     return user_id
 ```
+
+Production should set both values explicitly. Missing or mismatched `azp` is
+always rejected; a wildcard origin is never accepted as an authorization policy.
 
 ### Using in Endpoints
 

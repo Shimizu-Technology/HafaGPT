@@ -18,7 +18,8 @@ interface TTSDisclaimerProps {
 export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDisclaimerProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const shortText = "AI audio may differ from traditional pronunciation";
+  const shortText = "Synthetic AI audio — native-speaker review pending";
+  const disclosure = "Most HåfaGPT pronunciation audio is generated with AI and has not yet been approved by a named native Chamorro reviewer. Use it as a listening aid, not as the pronunciation authority.";
   
   if (variant === 'banner') {
     return (
@@ -32,10 +33,10 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
               About Audio Pronunciation
             </h4>
             <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed mb-2">
-              {shortText}. Chamorro has unique sounds like <strong>Y = "dz"</strong> and <strong>CH = "ts"</strong> that AI voice technology is still learning.
+              {disclosure}
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-500 italic">
-              💡 Tip: For authentic pronunciation, listen to native speakers or check the pronunciation guides in our lessons.
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              Prefer reviewed native-speaker recordings whenever they are available.
             </p>
           </div>
         </div>
@@ -60,6 +61,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
           className="p-1.5 rounded-lg bg-amber-100/80 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
           aria-label="Audio pronunciation note"
           title="Audio pronunciation note"
+          aria-expanded={showTooltip}
         >
           <Volume2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         </button>
@@ -89,15 +91,8 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                   </button>
                 </div>
                 <div className="text-xs text-brown-600 dark:text-gray-400 space-y-2">
-                  <p>{shortText}.</p>
-                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-2 space-y-1">
-                    <p className="font-medium text-amber-700 dark:text-amber-400">Chamorro sounds:</p>
-                    <ul className="space-y-0.5 text-amber-600 dark:text-amber-500">
-                      <li>• <strong>Y</strong> = "dz" (hayi → "ha-dzee")</li>
-                      <li>• <strong>CH</strong> = "ts" (chocho → "tso-tso")</li>
-                      <li>• <strong>Å</strong> = "aw" (håfa → "haw-fa")</li>
-                    </ul>
-                  </div>
+                  <p className="font-medium text-amber-700 dark:text-amber-400">{shortText}</p>
+                  <p>{disclosure}</p>
                 </div>
               </div>
             </div>
@@ -116,6 +111,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
         onMouseLeave={() => setShowTooltip(false)}
         className="p-1 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors group"
         aria-label="Audio quality note"
+        aria-expanded={showTooltip}
       >
         <Info className="w-4 h-4 text-amber-500 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300" />
       </button>
@@ -149,32 +145,11 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
               
               <div className="space-y-3">
                 <p className="text-xs text-brown-600 dark:text-gray-400 leading-relaxed">
-                  {shortText}. We use AI text-to-speech with phonetic hints, but Chamorro has unique sounds:
+                  {disclosure}
                 </p>
                 
-                <div className="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-1.5">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-amber-700 dark:text-amber-400">Y</span>
-                      <span className="text-amber-600 dark:text-amber-500">= "dz"</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-amber-700 dark:text-amber-400">CH</span>
-                      <span className="text-amber-600 dark:text-amber-500">= "ts"</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-amber-700 dark:text-amber-400">Å</span>
-                      <span className="text-amber-600 dark:text-amber-500">= "aw"</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-amber-700 dark:text-amber-400">Ñ</span>
-                      <span className="text-amber-600 dark:text-amber-500">= "ny"</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <p className="text-xs text-amber-600 dark:text-amber-500 italic">
-                  💡 For authentic pronunciation, listen to native speakers!
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  Prefer reviewed native-speaker recordings whenever they are available.
                 </p>
               </div>
             </div>

@@ -24,7 +24,7 @@ except ModuleNotFoundError:  # Allows direct execution: python scripts/check_lan
 DEFAULT_FRONTEND_RELATIVE = "../web"
 DEFAULT_OUTPUT_JSON = "documentation/language_content_audit/canonical_usage_report.json"
 DEFAULT_OUTPUT_MD = "documentation/language_content_audit/canonical_usage_report.md"
-SCAN_SUFFIXES = {".json", ".ts", ".tsx", ".md", ".txt"}
+SCAN_SUFFIXES = {".json", ".py", ".ts", ".tsx", ".md", ".txt"}
 SKIP_DIRS = {".git", "node_modules", "dist", "build", ".next", "__pycache__", ".venv", "venv"}
 
 
@@ -348,10 +348,10 @@ def main() -> int:
     output_md = (args.output_md or api_root / DEFAULT_OUTPUT_MD).resolve()
 
     rules = load_rules(vocabulary_path)
-    scan_roots = [api_root / "audio_generation", frontend_root / "src"]
+    scan_roots = [api_root / "api", api_root / "audio_generation", frontend_root / "src"]
     findings = scan_content_roots(scan_roots, rules)
     display_findings = make_display_findings(findings, api_root, frontend_root)
-    scope_labels = ["api/audio_generation", "web/src"]
+    scope_labels = ["api/api", "api/audio_generation", "web/src"]
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_md.parent.mkdir(parents=True, exist_ok=True)
