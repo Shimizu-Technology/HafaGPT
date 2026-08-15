@@ -20,6 +20,15 @@
   status = 200
 
 [[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), geolocation=(), microphone=(self), payment=()"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+[[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
     Content-Type = "application/manifest+json"

@@ -128,11 +128,17 @@ semantic retrieval. A successful HTTP response is not an accuracy decision.
 - npm production audit: zero vulnerabilities.
 - Python audit: zero known reachable vulnerabilities; one documented RS256-
   irrelevant ECDSA exception.
+- Netlify preview routes return 200 and now receive clickjacking, MIME-sniffing,
+  referrer, browser-capability, and OAuth-compatible opener protections from the
+  repository configuration.
 
 Known frontend debt remains: the primary JavaScript asset is about 1.99 MB
 minified / 504 KB gzip, route-level code splitting is not yet implemented, browser
 compatibility metadata is stale, and ten hook/fast-refresh warnings remain. These
-are modernization work, not hidden test failures.
+are modernization work, not hidden test failures. An enforced Content Security
+Policy also remains separate work: capture Clerk, PostHog, API, audio, and optional
+payment connection requirements in a preview first, then deploy a least-privilege
+policy without breaking OAuth or speech features.
 
 ## Production read-only inventory
 
