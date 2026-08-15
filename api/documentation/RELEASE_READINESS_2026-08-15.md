@@ -7,10 +7,11 @@ authenticated validation, controlled production rollout, and rollback evidence
 
 ## Decision
 
-The controlled rollout of GPT-5.6 Luna and private upload storage completed on
-August 15, 2026. Pull request #5 merged at exact reviewed commit `1db0936` after
-GitHub CI passed, no review thread remained open, and Greptile reported 5/5. The
-resulting merge commit is `c7ab8dd`.
+The initial deployment of GPT-5.6 Luna and private upload storage completed on
+August 15, 2026; the remaining operating checks are recorded below. Pull request
+#5 merged at exact reviewed commit `1db0936` after GitHub CI passed, no review
+thread remained open, and Greptile reported 5/5. The resulting merge commit is
+`c7ab8dd`.
 
 The following reversible production safeguards were created before deployment:
 
@@ -218,6 +219,26 @@ than a blind downgrade.
   conversation converted the internal reference into an expiring signed URL.
 - The fixture and its conversation remain in place because the owner instructed
   that nothing be deleted. No legacy object was accessed, moved, or changed.
+
+### Durable evidence ledger
+
+No secret, signed URL, customer content, or production export is retained in this
+repository. The following non-secret identifiers let an authorized operator
+reconcile the observations with the provider audit trails:
+
+| Evidence | Durable reference | Observed result |
+| --- | --- | --- |
+| Reviewed code | [PR #5](https://github.com/Shimizu-Technology/HafaGPT/pull/5), commit `1db0936`, merge `c7ab8dd` | CI green, no unresolved thread, Greptile 5/5 |
+| Merged API deployment | [Render deploy `dep-da040e15efls73d2gqlg`](https://dashboard.render.com/web/srv-d4bk6gkhg0os73f0nnd0/deploys/dep-da040e15efls73d2gqlg) | Alembic upgraded `j4k5l6m7n8o9` to `k5l6m7n8o9p0`; health checks returned 200 |
+| Corrected runtime configuration | [Render deploy `dep-da041p8jo6nc73dme41g`](https://dashboard.render.com/web/srv-d4bk6gkhg0os73f0nnd0/deploys/dep-da041p8jo6nc73dme41g) | Service live at 20:42 ChST; startup and request logs identify `openai/gpt-5.6-luna` |
+| Database recovery point | [Neon branch `br-shiny-cherry-a1wmn9l1`](https://console.neon.tech/app/projects/hidden-dust-58082297/branches/br-shiny-cherry-a1wmn9l1/) | `pre-luna-private-storage-2026-08-15`, parent `production`, no auto-delete |
+| Private storage | [S3 bucket `hafagpt-private-uploads`](https://ap-southeast-2.console.aws.amazon.com/s3/buckets/hafagpt-private-uploads?region=ap-southeast-2) | Test object written at 20:45 ChST; exact unsigned request returned 403 |
+| Least-privilege identity | IAM user `hafagpt-api`, inline policy `HafaGPTApplicationStorage` | Private upload get/put/delete plus public-bucket `audio/*` put only |
+
+The production checks not yet recorded are an explicit unauthorized-API smoke, an
+admin-denial smoke, a fresh Netlify/PostHog no-session-replay confirmation, and a
+normal usage-window observation. These remain operating checks; they are not
+represented as completed by the initial deployment evidence above.
 
 ### Netlify
 
