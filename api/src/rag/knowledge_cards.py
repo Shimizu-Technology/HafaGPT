@@ -54,6 +54,8 @@ CARD_FIELDS = {
 }
 CITATION_REQUIRED_FIELDS = {"source_id", "url", "locator", "accessed_at", "support"}
 CITATION_FIELDS = CITATION_REQUIRED_FIELDS | {"source_excerpt"}
+URI_CHARACTERS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+")
+INVALID_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 
 
 def _validate_exact_fields(
@@ -82,6 +84,11 @@ def _is_iso_date(value: Any) -> bool:
 
 def _is_public_http_url(value: Any) -> bool:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
+        return False
+    # Keep runtime validation aligned with the schema's RFC 3986 `uri` format.
+    # urlsplit() is deliberately permissive and otherwise accepts whitespace and
+    # other characters that must be percent-encoded in a URI.
+    if not URI_CHARACTERS.fullmatch(value) or INVALID_PERCENT_ESCAPE.search(value):
         return False
     parsed = urlsplit(value)
     if parsed.scheme not in {"https", "http"} or not parsed.netloc:
