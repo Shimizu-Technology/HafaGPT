@@ -53,6 +53,34 @@ def test_explicit_translation_stays_lookup_when_request_mentions_examples() -> N
     assert detect_query_type(query) == "lookup"
 
 
+def test_broad_guam_overview_uses_cultural_evidence_role() -> None:
+    assert detect_query_type("Tell me everything about Guam") == "cultural"
+
+
+def test_language_overview_remains_educational() -> None:
+    assert detect_query_type("Tell me about the Chamorro language") == "educational"
+
+
+def test_explicit_lookup_wins_over_broad_guam_phrase_in_mixed_prompt() -> None:
+    query = "Tell me everything about Guam and how do you say water in Chamorro?"
+
+    assert detect_query_type(query) == "lookup"
+
+
+def test_historical_meaning_question_stays_historical() -> None:
+    assert detect_query_type("What did this word mean in 1865?") == "historical"
+
+
+def test_cultural_meaning_question_stays_cultural() -> None:
+    query = "What does this tradition mean to Chamorro culture?"
+
+    assert detect_query_type(query) == "cultural"
+
+
+def test_unqualified_definition_question_remains_lookup() -> None:
+    assert detect_query_type("What does hånom mean?") == "lookup"
+
+
 def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:
     content = "\n".join(
         ["unrelated dictionary row"] * 200
