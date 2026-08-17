@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "purpose": "Original HåfaGPT explanations backed by traceable sources without copying restricted full text into production retrieval.",
+    "created_at": "2026-08-18",
+    "editorial_policy": "Every card must use original wording, label region and time period, preserve derivative lineage, cite each material claim, and stay within the quotation limit of every supporting source review."
+  },
+  "cards": [
+    {
+      "id": "lexicon.hanom.water",
+      "title": "Hånom",
+      "claim_type": "definition",
+      "answer_text": "Hånom is a Chamorro noun meaning water or liquid.",
+      "question_aliases": [
+        "What does hånom mean?",
+        "How do you say water in Chamorro?",
+        "Chamorro word for liquid"
+      ],
+      "region": "Guam_and_CNMI",
+      "temporal_scope": "living",
+      "confidence": "high",
+      "release_status": "draft",
+      "citations": [
+        {
+          "source_id": "local_revised_dictionary_snapshot",
+          "url": "https://natibunmarianas.org/dictionary-introduction/",
+          "locator": "Local revised-dictionary snapshot, headword hånom; exact snapshot version pending artifact inventory",
+          "accessed_at": "2026-08-18",
+          "support": "primary"
+        },
+        {
+          "source_id": "chamoru_info_dictionary",
+          "url": "https://www.chamoru.info/dictionary/",
+          "locator": "Dictionary entry hånom",
+          "accessed_at": "2026-08-18",
+          "support": "corroborating"
+        }
+      ],
+      "review_notes": "The wording is an original compact factual statement. The local Natibu-derived snapshot must receive a date and checksum before a production card build."
+    },
+    {
+      "id": "orthography.guam.current_reference",
+      "title": "Current Guam orthography reference",
+      "claim_type": "orthography_rule",
+      "answer_text": "For current Guam spelling questions, use the Kumisión’s 2024 Utugrafihan CHamoru, Guåhan as the normative reference and label CNMI forms separately instead of silently normalizing them to Guam conventions.",
+      "question_aliases": [
+        "What spelling system does Guam use?",
+        "What is the current Guam CHamoru orthography?",
+        "Are Guam and CNMI spellings the same?"
+      ],
+      "region": "Guam",
+      "temporal_scope": "modern",
+      "confidence": "high",
+      "release_status": "production_ready",
+      "citations": [
+        {
+          "source_id": "kumision_guam_orthography_2024",
+          "url": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/",
+          "locator": "Official 2024 Utugrafihan CHamoru, Guåhan publication page",
+          "accessed_at": "2026-08-18",
+          "support": "primary"
+        }
+      ],
+      "review_notes": "This card establishes source precedence and regional labeling; individual spelling rules require separate page-specific cards."
+    }
+  ]
+}
