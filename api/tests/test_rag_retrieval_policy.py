@@ -8,23 +8,42 @@ from src.rag.chamorro_rag import ChamorroRAG
 class FakeVectorStore:
     def __init__(self, documents: list[Document]) -> None:
         self.documents = documents
+        self.calls: list[dict] = []
 
-    def similarity_search(
+    @staticmethod
+    def _matches_filter(document: Document, filter_spec: dict | None) -> bool:
+        if not filter_spec:
+            return True
+        if "$or" in filter_spec:
+            return any(
+                FakeVectorStore._matches_filter(document, clause)
+                for clause in filter_spec["$or"]
+            )
+
+        field, condition = next(iter(filter_spec.items()))
+        operator, expected = next(iter(condition.items()))
+        actual = str(document.metadata.get(field, ""))
+        if operator == "$ilike":
+            return expected.strip("%").casefold() in actual.casefold()
+        if operator == "$eq":
+            return actual.casefold() == str(expected).casefold()
+        raise AssertionError(f"Unsupported fake filter operator: {operator}")
+
+    def similarity_search_with_score(
         self,
         _query: str,
         *,
         k: int,
         filter: dict | None = None,
-    ) -> list[Document]:
-        documents = self.documents
-        if filter:
-            pattern = filter["source"]["$ilike"].strip("%").casefold()
-            documents = [
-                item
-                for item in documents
-                if pattern in str(item.metadata.get("source", "")).casefold()
-            ]
-        return documents[:k]
+    ) -> list[tuple[Document, float]]:
+        self.calls.append({"k": k, "filter": filter})
+        documents = [
+            item for item in self.documents if self._matches_filter(item, filter)
+        ]
+        return [
+            (item, float(item.metadata.get("test_distance", index / 100)))
+            for index, item in enumerate(documents[:k])
+        ]
 
 
 def rag_with_documents(documents: list[Document]) -> ChamorroRAG:
@@ -33,10 +52,19 @@ def rag_with_documents(documents: list[Document]) -> ChamorroRAG:
     return rag
 
 
-def document(content: str, source: str, source_type: str = "website") -> Document:
+def document(
+    content: str,
+    source: str,
+    source_type: str = "website",
+    *,
+    distance: float | None = None,
+) -> Document:
+    metadata = {"source": source, "source_type": source_type}
+    if distance is not None:
+        metadata["test_distance"] = distance
     return Document(
         page_content=content,
-        metadata={"source": source, "source_type": source_type},
+        metadata=metadata,
     )
 
 
@@ -100,3 +128,47 @@ def test_explicit_small_source_mention_gets_a_filtered_candidate_lane() -> None:
         metadata["source_id"] == "pacific_daily_news"
         for _content, metadata in results
     )
+
+
+def test_blocked_candidates_cannot_exhaust_the_semantic_search_window() -> None:
+    blocked_documents = [
+        document(
+            f"Blocked candidate {index}",
+            f"https://natibunmarianas.org/entry/{index}",
+        )
+        for index in range(80)
+    ]
+    governed_document = document(
+        "Governed language overview",
+        "https://www.chamoru.info/language-lessons/chamorro-language",
+    )
+    rag = rag_with_documents(blocked_documents + [governed_document])
+
+    results = rag.search("Tell me about the Chamorro language", k=3)
+
+    assert [content for content, _metadata in results] == ["Governed language overview"]
+    assert rag.vectorstore.calls[-1]["filter"] is not None
+
+
+def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -> None:
+    rag = rag_with_documents(
+        [
+            document(
+                "Less relevant lesson",
+                "https://www.chamoru.info/language-lessons/one",
+                distance=0.9,
+            ),
+            document(
+                "More relevant lesson",
+                "https://www.chamoru.info/language-lessons/two",
+                distance=0.1,
+            ),
+        ]
+    )
+
+    results = rag.search("Teach me about Chamorro grammar", k=2)
+
+    assert [content for content, _metadata in results] == [
+        "More relevant lesson",
+        "Less relevant lesson",
+    ]

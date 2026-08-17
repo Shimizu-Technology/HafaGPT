@@ -12,6 +12,7 @@ from src.rag.source_policy import (
     load_source_registry,
     registered_source_ids,
     resolve_source,
+    retrieval_metadata_filter,
     source_weight,
     sources_explicitly_mentioned,
 )
@@ -108,6 +109,22 @@ def test_unknown_sources_fail_closed() -> None:
     assert resolve_source(unknown) is None
     assert not is_retrieval_allowed(unknown, "educational")
     assert annotate_metadata(unknown)["source_id"] == "unregistered"
+
+
+def test_vector_filter_includes_only_role_eligible_source_matchers() -> None:
+    educational_filter = retrieval_metadata_filter("educational")
+    clauses = educational_filter["$or"]
+
+    assert {"source": {"$ilike": "%chamoru.info/language-lessons%"}} in clauses
+    assert {"source": {"$ilike": "%chamorro_grammar_dr._sandra_chung%"}} in clauses
+    assert {"source": {"$ilike": "%natibunmarianas.org%"}} not in clauses
+    assert {"source": {"$ilike": "%guampedia.com%"}} not in clauses
+
+
+def test_vector_filter_fails_closed_for_unknown_query_role() -> None:
+    assert retrieval_metadata_filter("unsupported") == {
+        "source": {"$eq": "internal://hafagpt/no-eligible-source"}
+    }
 
 
 def test_generic_news_article_type_does_not_impersonate_pdn() -> None:

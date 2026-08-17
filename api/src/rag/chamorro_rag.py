@@ -14,6 +14,7 @@ from src.rag.source_policy import (
     annotate_metadata,
     get_registered_source,
     is_retrieval_allowed,
+    retrieval_metadata_filter,
     sources_explicitly_mentioned,
     source_weight,
 )
@@ -92,6 +93,14 @@ def detect_query_type(query: str) -> str:
         'history of guam', 'legend', 'folklore', 'values',
     ]
     if any(keyword in query_lower for keyword in cultural_keywords):
+        return 'cultural'
+
+    broad_guam_patterns = [
+        r'\btell me (?:all |everything )?about guam\b',
+        r'\b(?:overview|facts|information) (?:about|on) guam\b',
+        r'\bwhat is guam\b',
+    ]
+    if any(re.search(pattern, query_lower) for pattern in broad_guam_patterns):
         return 'cultural'
 
     # PRIORITY 1: Translation/lookup patterns take precedence
@@ -773,30 +782,37 @@ class ChamorroRAG:
                         return [(doc.page_content, doc.metadata) for doc in eng_to_cham_results]
         
         # A named source gets its own candidate lane. This prevents a small source
-        # family from disappearing behind the much larger dictionary crawl while
+        # family from disappearing behind a larger eligible source family while
         # still enforcing the registry's query-role restrictions.
         search_query = clean_query if clean_query else query
         targeted_results = []
         for source_entry in sources_explicitly_mentioned(query, query_type):
             for source_pattern in source_entry["match"].get("source_contains", []):
                 targeted_results.extend(
-                    self.vectorstore.similarity_search(
+                    self.vectorstore.similarity_search_with_score(
                         search_query,
                         k=max(k * 2, 10),
                         filter={"source": {"$ilike": f"%{source_pattern}%"}},
                     )
                 )
 
-        # Semantic search gets extra candidates because blocked, role-ineligible,
-        # and exact-duplicate chunks are removed before ranking.
-        results = targeted_results + self.vectorstore.similarity_search(search_query, k=k*20)
+        # Enforce source eligibility in PostgreSQL before nearest-neighbor ranking.
+        # The previous search-all-then-filter flow allowed blocked collections to
+        # consume the complete candidate window, producing an empty governed
+        # context even when eligible evidence existed deeper in the collection.
+        eligible_results = self.vectorstore.similarity_search_with_score(
+            search_query,
+            k=max(k * 8, 20),
+            filter=retrieval_metadata_filter(query_type),
+        )
+        results = targeted_results + eligible_results
         
         # The source registry replaces the old global era-priority boosts. A
         # newspaper, tourism page, or cultural source can no longer outrank a
         # dictionary merely because it was assigned a larger integer.
         scored_results = []
         seen_content: set[str] = set()
-        for index, doc in enumerate(results):
+        for doc, distance in results:
             if doc.page_content in seen_content:
                 continue
             if not is_retrieval_allowed(doc.metadata, query_type):
@@ -804,7 +820,11 @@ class ChamorroRAG:
 
             seen_content.add(doc.page_content)
             doc.metadata = annotate_metadata(doc.metadata)
-            score = max(1.0, 100.0 - index) * source_weight(doc.metadata, query_type)
+            # PGVector returns a distance, where smaller means more relevant.
+            # Convert it into a bounded relevance value before applying the
+            # registry's intentionally modest source-authority weight.
+            relevance = 1.0 / (1.0 + max(float(distance), 0.0))
+            score = relevance * source_weight(doc.metadata, query_type)
             scored_results.append((doc, score))
         
         # Sort by score and take top k
