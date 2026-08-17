@@ -10,7 +10,7 @@ from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from src.utils.improved_chunker import create_improved_chunker, create_docling_processor
-from src.rag.connection_safety import redact_database_url
+from src.rag.connection_safety import metadata_file_for_collection, redact_database_url
 from src.rag.source_policy import assert_ingestion_allowed
 import os
 import json
@@ -25,7 +25,7 @@ class RAGDatabaseManager:
     def __init__(
         self,
         connection="postgresql://localhost/chamorro_rag",
-        metadata_file="./rag_metadata.json",
+        metadata_file=None,
         collection_name=None,
     ):
         """Initialize the database manager with PostgreSQL and improved processing."""
@@ -35,10 +35,14 @@ class RAGDatabaseManager:
         load_dotenv()
         
         self.connection = os.getenv("DATABASE_URL", connection)
-        self.metadata_file = metadata_file
         self.collection_name = collection_name or os.getenv(
             "RAG_COLLECTION_NAME",
             "chamorro_grammar",
+        )
+        self.metadata_file = metadata_file_for_collection(
+            self.collection_name,
+            explicit_path=metadata_file,
+            configured_path=os.getenv("RAG_METADATA_FILE"),
         )
         
         # Load embeddings based on EMBEDDING_MODE

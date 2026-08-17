@@ -47,6 +47,26 @@ def validate_permission_records(document: dict[str, Any]) -> None:
             raise ValueError(f"requested_uses must be a list for {source_id}")
         if record["status"] == "granted" and not record.get("evidence_reference"):
             raise ValueError(f"granted permission requires evidence for {source_id}")
+        approved_artifacts = record.get("approved_artifacts", [])
+        if not isinstance(approved_artifacts, list):
+            raise ValueError(f"approved_artifacts must be a list for {source_id}")
+        if record["status"] == "granted" and not approved_artifacts:
+            raise ValueError(
+                f"granted permission requires versioned approved_artifacts for {source_id}"
+            )
+        for artifact in approved_artifacts:
+            if not isinstance(artifact, dict):
+                raise ValueError(f"approved artifact must be an object for {source_id}")
+            version = artifact.get("version")
+            sha256 = artifact.get("sha256")
+            if not isinstance(version, str) or not version.strip():
+                raise ValueError(f"approved artifact requires a version for {source_id}")
+            if (
+                not isinstance(sha256, str)
+                or len(sha256) != 64
+                or any(character not in "0123456789abcdefABCDEF" for character in sha256)
+            ):
+                raise ValueError(f"approved artifact requires a SHA-256 for {source_id}")
 
 
 def permission_records_by_source() -> dict[str, dict[str, Any]]:

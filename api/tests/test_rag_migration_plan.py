@@ -21,6 +21,20 @@ def audit_fixture(*, unregistered_chunks: int = 0) -> dict:
             "by_source_id": {"chung_grammar_2020": 8, "guampedia": 4},
             "blocked_chunks": 4,
             "unregistered_chunks": unregistered_chunks,
+            "artifacts": [
+                {
+                    "source_id": "chung_grammar_2020",
+                    "artifact_version": "2020-edition",
+                    "artifact_sha256": "a" * 64,
+                    "chunks": 8,
+                },
+                {
+                    "source_id": "guampedia",
+                    "artifact_version": None,
+                    "artifact_sha256": None,
+                    "chunks": 4,
+                },
+            ],
         },
     }
 
@@ -53,7 +67,7 @@ def test_plan_preserves_held_sources_and_refuses_build_without_permissions() -> 
     ]
     assert plan["preservation"]["source_collection_unchanged"] is True
     assert plan["preservation"]["delete_operations"] == 0
-    assert any("no held external source" in blocker for blocker in plan["blockers"])
+    assert any("version and SHA-256" in blocker for blocker in plan["blockers"])
 
 
 def test_plan_is_actionable_only_for_ready_sources_and_unused_target() -> None:
@@ -61,7 +75,13 @@ def test_plan_is_actionable_only_for_ready_sources_and_unused_target() -> None:
         audit_fixture(),
         "hafagpt_governed_v1",
         [
-            {"source_id": "chung_grammar_2020", "ready": True},
+            {
+                "source_id": "chung_grammar_2020",
+                "ready": True,
+                "approved_artifacts": [
+                    {"version": "2020-edition", "sha256": "a" * 64}
+                ],
+            },
             {"source_id": "guampedia", "ready": False},
         ],
         target_exists=False,
@@ -76,10 +96,39 @@ def test_existing_target_and_unregistered_chunks_block_the_plan() -> None:
     plan = build_migration_plan(
         audit_fixture(unregistered_chunks=2),
         "hafagpt_governed_v1",
-        [{"source_id": "chung_grammar_2020", "ready": True}],
+        [
+            {
+                "source_id": "chung_grammar_2020",
+                "ready": True,
+                "approved_artifacts": [
+                    {"version": "2020-edition", "sha256": "a" * 64}
+                ],
+            }
+        ],
         target_exists=True,
     )
 
     assert plan["can_build"] is False
     assert any("already exists" in blocker for blocker in plan["blockers"])
     assert any("unregistered" in blocker for blocker in plan["blockers"])
+
+
+def test_permission_for_a_different_artifact_version_does_not_clear_held_content() -> None:
+    plan = build_migration_plan(
+        audit_fixture(),
+        "hafagpt_governed_v1",
+        [
+            {
+                "source_id": "chung_grammar_2020",
+                "ready": True,
+                "approved_artifacts": [
+                    {"version": "different-edition", "sha256": "b" * 64}
+                ],
+            }
+        ],
+        target_exists=False,
+    )
+
+    assert plan["can_build"] is False
+    assert plan["eligible_artifacts"] == []
+    assert plan["held_not_reingested_artifacts"][0]["artifact_version"] == "2020-edition"

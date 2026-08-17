@@ -49,25 +49,55 @@ def collection_exists(database_url: str, collection_name: str) -> bool:
 def build_migration_plan(
     audit: dict[str, Any],
     target_collection: str,
-    readiness_rows: list[dict[str, str | bool]],
+    readiness_rows: list[dict[str, Any]],
     target_exists: bool,
 ) -> dict[str, Any]:
     readiness = {str(row["source_id"]): row for row in readiness_rows}
     present_source_ids = set(audit["policy"]["by_source_id"])
-    ready_source_ids = sorted(
-        source_id
-        for source_id in present_source_ids
-        if readiness.get(source_id, {}).get("ready") is True
+    approved_keys = {
+        source_id: {
+            (
+                str(artifact.get("version") or ""),
+                str(artifact.get("sha256") or "").casefold(),
+            )
+            for artifact in row.get("approved_artifacts", [])
+            if isinstance(artifact, dict)
+        }
+        for source_id, row in readiness.items()
+        if row.get("ready") is True
+    }
+    eligible_artifacts: list[dict[str, Any]] = []
+    held_artifacts: list[dict[str, Any]] = []
+    for artifact in audit["policy"].get("artifacts", []):
+        source_id = str(artifact["source_id"])
+        version = str(artifact.get("artifact_version") or "")
+        sha256 = str(artifact.get("artifact_sha256") or "").casefold()
+        summary = {
+            "source_id": source_id,
+            "artifact_version": version or None,
+            "artifact_sha256": sha256 or None,
+            "chunks": artifact["chunks"],
+        }
+        if version and sha256 and (version, sha256) in approved_keys.get(source_id, set()):
+            eligible_artifacts.append(summary)
+        else:
+            held_artifacts.append(summary)
+
+    ready_source_ids = sorted({item["source_id"] for item in eligible_artifacts})
+    held_source_ids = sorted(
+        {item["source_id"] for item in held_artifacts}
+        | (present_source_ids - set(ready_source_ids))
     )
-    held_source_ids = sorted(present_source_ids - set(ready_source_ids))
 
     blockers: list[str] = []
     if target_exists:
         blockers.append("target collection already exists; this planner never overwrites it")
     if audit["policy"]["unregistered_chunks"]:
         blockers.append("source collection still contains unregistered chunks")
-    if not ready_source_ids:
-        blockers.append("no held external source is cleared for new production ingestion")
+    if not eligible_artifacts:
+        blockers.append(
+            "no held artifact version and SHA-256 match a production ingestion grant"
+        )
 
     return {
         "mode": "read_only_preflight",
@@ -85,7 +115,9 @@ def build_migration_plan(
             "unregistered_chunks": audit["policy"]["unregistered_chunks"],
         },
         "eligible_source_ids": ready_source_ids,
+        "eligible_artifacts": eligible_artifacts,
         "held_not_reingested_source_ids": held_source_ids,
+        "held_not_reingested_artifacts": held_artifacts,
         "preservation": {
             "source_collection_unchanged": True,
             "delete_operations": 0,

@@ -66,6 +66,34 @@ def classify_source_counts(rows: Iterable[tuple[str | None, str | None, int]]) -
     }
 
 
+def classify_artifact_counts(
+    rows: Iterable[
+        tuple[str | None, str | None, str | None, str | None, int]
+    ],
+) -> list[dict[str, Any]]:
+    artifacts: Counter[tuple[str, str, str]] = Counter()
+    for source, source_type, version, checksum, chunks in rows:
+        annotated = annotate_metadata(
+            {"source": source or "", "source_type": source_type or ""}
+        )
+        key = (
+            annotated["source_id"],
+            str(version or ""),
+            str(checksum or "").casefold(),
+        )
+        artifacts[key] += chunks
+    return [
+        {
+            "source_id": source_id,
+            "artifact_version": version or None,
+            "artifact_sha256": checksum or None,
+            "provenance_complete": bool(version and checksum),
+            "chunks": chunks,
+        }
+        for (source_id, version, checksum), chunks in sorted(artifacts.items())
+    ]
+
+
 def _collection_id(cursor: Any, collection_name: str) -> Any:
     cursor.execute(
         "SELECT uuid FROM langchain_pg_collection WHERE name = %s",
@@ -116,6 +144,32 @@ def run_audit(
                 (collection_id,),
             )
             source_audit = classify_source_counts(cursor.fetchall())
+
+            cursor.execute(
+                """
+                SELECT
+                    cmetadata->>'source',
+                    cmetadata->>'source_type',
+                    COALESCE(
+                        NULLIF(cmetadata->>'artifact_version', ''),
+                        NULLIF(cmetadata->>'source_version', ''),
+                        NULLIF(cmetadata->>'version', '')
+                    ) AS artifact_version,
+                    COALESCE(
+                        NULLIF(cmetadata->>'artifact_sha256', ''),
+                        NULLIF(cmetadata->>'source_sha256', ''),
+                        NULLIF(cmetadata->>'checksum', ''),
+                        NULLIF(cmetadata->>'file_hash', '')
+                    ) AS artifact_sha256,
+                    COUNT(*)
+                FROM langchain_pg_embedding
+                WHERE collection_id = %s
+                GROUP BY 1, 2, 3, 4
+                ORDER BY 5 DESC
+                """,
+                (collection_id,),
+            )
+            source_audit["artifacts"] = classify_artifact_counts(cursor.fetchall())
 
             cursor.execute(
                 """

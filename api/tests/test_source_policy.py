@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.rag.permission_records import permission_records_by_source
+from src.rag.permission_records import permission_records_by_source, validate_permission_records
 from src.rag.source_policy import (
     SourceIngestionBlocked,
     annotate_metadata,
@@ -53,6 +53,23 @@ def test_every_external_source_has_a_permission_or_outreach_record() -> None:
 
     assert registered_source_ids() - internal_ids == set(records)
     assert all(record["status"] != "granted" for record in records.values())
+
+
+def test_granted_permission_requires_a_versioned_artifact() -> None:
+    with pytest.raises(ValueError, match="versioned approved_artifacts"):
+        validate_permission_records(
+            {
+                "schema_version": 1,
+                "records": [
+                    {
+                        "source_id": "example",
+                        "status": "granted",
+                        "requested_uses": ["production_rag"],
+                        "evidence_reference": "private://permission/example",
+                    }
+                ],
+            }
+        )
 
 
 @pytest.mark.parametrize(

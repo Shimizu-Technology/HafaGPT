@@ -50,6 +50,16 @@ class _FakeCursor:
             ]
             self.description = [SimpleNamespace(name=name) for name in names]
             self._result = [(3, 2, 1, 0, 0, 0, 0, 0, 0, 0)]
+        elif "AS artifact_version" in query:
+            self._result = [
+                (
+                    "https://www.guampedia.com/example",
+                    "guampedia",
+                    "2026-08-01",
+                    "a" * 64,
+                    3,
+                )
+            ]
         elif "cmetadata->>'source'" in query:
             self._result = [("https://www.guampedia.com/example", "guampedia", 3)]
         else:
@@ -92,6 +102,15 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
             "copies": 2,
             "document_fingerprint": "abc123",
             "document_characters": 80,
+        }
+    ]
+    assert audit["policy"]["artifacts"] == [
+        {
+            "source_id": "guampedia",
+            "artifact_version": "2026-08-01",
+            "artifact_sha256": "a" * 64,
+            "provenance_complete": True,
+            "chunks": 3,
         }
     ]
     assert cursor.executions[0][1] == ("collection-v2",)
