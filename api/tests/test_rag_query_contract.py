@@ -77,6 +77,10 @@ def test_cultural_meaning_question_stays_cultural() -> None:
     assert detect_query_type(query) == "cultural"
 
 
+def test_unqualified_definition_question_remains_lookup() -> None:
+    assert detect_query_type("What does hånom mean?") == "lookup"
+
+
 def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:
     content = "\n".join(
         ["unrelated dictionary row"] * 200
