@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from src.rag.permission_records import permission_records_by_source
+from src.rag.permission_records import permission_records_by_source, validate_permission_records
 from src.rag.source_policy import (
     SourceIngestionBlocked,
     annotate_metadata,
@@ -55,6 +55,23 @@ def test_every_external_source_has_a_permission_or_outreach_record() -> None:
     assert all(record["status"] != "granted" for record in records.values())
 
 
+def test_granted_permission_requires_a_versioned_artifact() -> None:
+    with pytest.raises(ValueError, match="versioned approved_artifacts"):
+        validate_permission_records(
+            {
+                "schema_version": 1,
+                "records": [
+                    {
+                        "source_id": "example",
+                        "status": "granted",
+                        "requested_uses": ["production_rag"],
+                        "evidence_reference": "private://permission/example",
+                    }
+                ],
+            }
+        )
+
+
 @pytest.mark.parametrize(
     "source,source_type",
     [
@@ -64,6 +81,9 @@ def test_every_external_source_has_a_permission_or_outreach_record() -> None:
         ("https://lengguahita.com/chamorro-stories/example", "lengguahita"),
         ("https://cnmidcca.org/default.asp?secID=14", "website"),
         ("https://archive.phonetics.ucla.edu/Language/CHA/cha.html", "audio_archive"),
+        ("/documents/two_chamorro_orthographies_sandra_chung.pdf", "pdf"),
+        ("Fino'Chamoru Blog", "blog"),
+        ("Chamorro Language & Culture Blog", "blog"),
         (
             "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
             "website",
@@ -89,6 +109,13 @@ def test_context_sources_cannot_answer_canonical_lookup_questions() -> None:
     assert not is_retrieval_allowed(visit_guam, "lookup")
     assert is_retrieval_allowed(pdn, "usage")
     assert is_retrieval_allowed(visit_guam, "cultural")
+
+
+def test_legacy_finder_filename_is_registered_but_remains_blocked() -> None:
+    finder = metadata("/documents/English_Chamorro_Finder_List.pdf")
+
+    assert resolve_source(finder)["id"] == "cnmi_english_chamorro_finder_2024"
+    assert not is_retrieval_allowed(finder, "lookup")
 
 
 def test_regional_dictionary_is_annotated_and_role_limited() -> None:

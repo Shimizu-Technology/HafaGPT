@@ -10,6 +10,7 @@ from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from src.utils.improved_chunker import create_improved_chunker, create_docling_processor
+from src.rag.connection_safety import metadata_file_for_collection, redact_database_url
 from src.rag.source_policy import assert_ingestion_allowed
 import os
 import json
@@ -21,7 +22,12 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 class RAGDatabaseManager:
-    def __init__(self, connection="postgresql://localhost/chamorro_rag", metadata_file="./rag_metadata.json"):
+    def __init__(
+        self,
+        connection="postgresql://localhost/chamorro_rag",
+        metadata_file=None,
+        collection_name=None,
+    ):
         """Initialize the database manager with PostgreSQL and improved processing."""
         # Get database URL from environment
         import os
@@ -29,7 +35,15 @@ class RAGDatabaseManager:
         load_dotenv()
         
         self.connection = os.getenv("DATABASE_URL", connection)
-        self.metadata_file = metadata_file
+        self.collection_name = collection_name or os.getenv(
+            "RAG_COLLECTION_NAME",
+            "chamorro_grammar",
+        )
+        self.metadata_file = metadata_file_for_collection(
+            self.collection_name,
+            explicit_path=metadata_file,
+            configured_path=os.getenv("RAG_METADATA_FILE"),
+        )
         
         # Load embeddings based on EMBEDDING_MODE
         embedding_mode = os.getenv("EMBEDDING_MODE", "openai").lower()
@@ -54,9 +68,10 @@ class RAGDatabaseManager:
         # Load PostgreSQL vector database
         self.vectorstore = PGVector(
             embeddings=self.embeddings,
-            collection_name="chamorro_grammar",
+            collection_name=self.collection_name,
             connection=self.connection,  # Use self.connection (from env) not the parameter!
-            use_jsonb=True
+            use_jsonb=True,
+            pre_delete_collection=False,
         )
         
         # Initialize new processors
@@ -102,7 +117,16 @@ class RAGDatabaseManager:
             import psycopg
             conn = psycopg.connect(self.connection)
             cursor = conn.cursor()
-            cursor.execute(f"SELECT COUNT(*) FROM langchain_pg_embedding WHERE collection_id = (SELECT uuid FROM langchain_pg_collection WHERE name = 'chamorro_grammar')")
+            cursor.execute(
+                """
+                SELECT COUNT(*)
+                FROM langchain_pg_embedding
+                WHERE collection_id = (
+                    SELECT uuid FROM langchain_pg_collection WHERE name = %s
+                )
+                """,
+                (self.collection_name,),
+            )
             count = cursor.fetchone()[0]
             cursor.close()
             conn.close()
@@ -458,7 +482,7 @@ class RAGDatabaseManager:
             if modified > 0:
                 print(f"⚠️  Warning: {modified} file(s) modified since indexing")
         
-        print(f"\nDatabase connection: {self.connection}")
+        print(f"\nDatabase connection: {redact_database_url(self.connection)}")
         print(f"Metadata file: {self.metadata_file}")
         print("=" * 80 + "\n")
 

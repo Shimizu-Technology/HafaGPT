@@ -106,6 +106,30 @@ def validate_source_registry(registry: dict[str, Any]) -> None:
                 raise ValueError(
                     f"source {source_id} allowed ingestion requires uses and a permission reference"
                 )
+            if "production_rag" in allowed_uses:
+                artifacts = ingestion.get("artifacts")
+                if not isinstance(artifacts, list) or not artifacts:
+                    raise ValueError(
+                        f"source {source_id} production ingestion requires versioned artifacts"
+                    )
+                for artifact in artifacts:
+                    version = artifact.get("version") if isinstance(artifact, dict) else None
+                    sha256 = artifact.get("sha256") if isinstance(artifact, dict) else None
+                    if not isinstance(version, str) or not version.strip():
+                        raise ValueError(
+                            f"source {source_id} production artifact requires a version"
+                        )
+                    if (
+                        not isinstance(sha256, str)
+                        or len(sha256) != 64
+                        or any(
+                            character not in "0123456789abcdefABCDEF"
+                            for character in sha256
+                        )
+                    ):
+                        raise ValueError(
+                            f"source {source_id} production artifact requires a SHA-256"
+                        )
 
 
 def _normalized_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
