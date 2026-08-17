@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from src.rag.source_reviews import get_source_review
 
@@ -34,6 +36,54 @@ CLAIM_QUERY_TYPES = {
     "historical_context": "historical",
 }
 CARD_ID = re.compile(r"^[a-z0-9_.-]+$")
+ROOT_FIELDS = {"schema_version", "metadata", "cards"}
+METADATA_FIELDS = {"purpose", "created_at", "editorial_policy"}
+CARD_FIELDS = {
+    "id",
+    "title",
+    "claim_type",
+    "answer_text",
+    "question_aliases",
+    "region",
+    "temporal_scope",
+    "confidence",
+    "release_status",
+    "citations",
+    "review_notes",
+}
+CITATION_REQUIRED_FIELDS = {"source_id", "url", "locator", "accessed_at", "support"}
+CITATION_FIELDS = CITATION_REQUIRED_FIELDS | {"source_excerpt"}
+
+
+def _validate_exact_fields(
+    value: dict[str, Any],
+    *,
+    required: set[str],
+    allowed: set[str],
+    label: str,
+) -> None:
+    missing = required - set(value)
+    extra = set(value) - allowed
+    if missing:
+        raise ValueError(f"{label} is missing fields: {sorted(missing)}")
+    if extra:
+        raise ValueError(f"{label} has undeclared fields: {sorted(extra)}")
+
+
+def _is_iso_date(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
+
+
+def _is_public_http_url(value: Any) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    parsed = urlsplit(value)
+    return parsed.scheme in {"https", "http"} and bool(parsed.netloc)
 
 
 @lru_cache(maxsize=1)
@@ -45,11 +95,30 @@ def load_knowledge_cards() -> dict[str, Any]:
 
 
 def validate_knowledge_cards(document: dict[str, Any]) -> None:
+    if not isinstance(document, dict):
+        raise ValueError("knowledge cards root must be an object")
+    _validate_exact_fields(
+        document,
+        required=ROOT_FIELDS,
+        allowed=ROOT_FIELDS,
+        label="knowledge cards root",
+    )
     if document.get("schema_version") != 1:
         raise ValueError("knowledge cards schema_version must be 1")
     metadata = document.get("metadata")
-    if not isinstance(metadata, dict) or not metadata.get("editorial_policy"):
-        raise ValueError("knowledge cards require an editorial policy")
+    if not isinstance(metadata, dict):
+        raise ValueError("knowledge cards metadata must be an object")
+    _validate_exact_fields(
+        metadata,
+        required=METADATA_FIELDS,
+        allowed=METADATA_FIELDS,
+        label="knowledge cards metadata",
+    )
+    for field in ("purpose", "editorial_policy"):
+        if not isinstance(metadata.get(field), str) or not metadata[field].strip():
+            raise ValueError(f"knowledge cards metadata requires {field}")
+    if not _is_iso_date(metadata.get("created_at")):
+        raise ValueError("knowledge cards metadata requires an ISO created_at date")
     cards = document.get("cards")
     if not isinstance(cards, list):
         raise ValueError("knowledge cards must be a list")
@@ -62,6 +131,12 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
         if not isinstance(card_id, str) or not CARD_ID.fullmatch(card_id) or card_id in seen:
             raise ValueError(f"invalid or duplicate knowledge card id: {card_id}")
         seen.add(card_id)
+        _validate_exact_fields(
+            card,
+            required=CARD_FIELDS,
+            allowed=CARD_FIELDS,
+            label=f"knowledge card {card_id}",
+        )
         for field in ("title", "answer_text", "review_notes"):
             if not isinstance(card.get(field), str) or not card[field].strip():
                 raise ValueError(f"knowledge card {card_id} requires {field}")
@@ -93,6 +168,12 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
         for citation in citations:
             if not isinstance(citation, dict):
                 raise ValueError(f"knowledge card citation must be an object: {card_id}")
+            _validate_exact_fields(
+                citation,
+                required=CITATION_REQUIRED_FIELDS,
+                allowed=CITATION_FIELDS,
+                label=f"knowledge card {card_id} citation",
+            )
             source_id = citation.get("source_id")
             review = get_source_review(str(source_id))
             if not review:
@@ -109,9 +190,12 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
                 raise ValueError(
                     f"production-ready card {card_id} cites incomplete source review: {source_id}"
                 )
-            for field in ("url", "locator", "accessed_at"):
-                if not isinstance(citation.get(field), str) or not citation[field].strip():
-                    raise ValueError(f"knowledge card {card_id} citation requires {field}")
+            if not _is_public_http_url(citation.get("url")):
+                raise ValueError(f"knowledge card {card_id} citation requires a public HTTP(S) URL")
+            if not isinstance(citation.get("locator"), str) or not citation["locator"].strip():
+                raise ValueError(f"knowledge card {card_id} citation requires locator")
+            if not _is_iso_date(citation.get("accessed_at")):
+                raise ValueError(f"knowledge card {card_id} citation requires an ISO accessed_at date")
             if citation.get("support") not in SUPPORT_TYPES:
                 raise ValueError(f"knowledge card {card_id} citation has invalid support")
             excerpt = citation.get("source_excerpt")

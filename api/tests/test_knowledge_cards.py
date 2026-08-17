@@ -72,3 +72,56 @@ def test_production_card_rejects_incomplete_source_review() -> None:
 
     with pytest.raises(ValueError, match="cites incomplete source review"):
         validate_knowledge_cards(document)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("url", "/private/imports/dictionary.json", "public HTTP"),
+        ("url", "not a url", "public HTTP"),
+        ("accessed_at", "2026-99-99", "ISO accessed_at date"),
+        ("accessed_at", "August 18, 2026", "ISO accessed_at date"),
+    ],
+)
+def test_knowledge_card_rejects_malformed_citation_fields(
+    field: str,
+    value: str,
+    message: str,
+) -> None:
+    document = deepcopy(load_knowledge_cards())
+    document["cards"][0]["citations"][0][field] = value
+
+    with pytest.raises(ValueError, match=message):
+        validate_knowledge_cards(document)
+
+
+@pytest.mark.parametrize(
+    ("target", "message"),
+    [
+        ("root", "root has undeclared fields"),
+        ("metadata", "metadata has undeclared fields"),
+        ("card", "knowledge card .* has undeclared fields"),
+        ("citation", "citation has undeclared fields"),
+    ],
+)
+def test_knowledge_card_rejects_undeclared_fields(target: str, message: str) -> None:
+    document = deepcopy(load_knowledge_cards())
+    if target == "root":
+        document["unexpected"] = True
+    elif target == "metadata":
+        document["metadata"]["unexpected"] = True
+    elif target == "card":
+        document["cards"][0]["unexpected"] = True
+    else:
+        document["cards"][0]["citations"][0]["unexpected"] = True
+
+    with pytest.raises(ValueError, match=message):
+        validate_knowledge_cards(document)
+
+
+def test_knowledge_card_requires_complete_metadata_contract() -> None:
+    document = deepcopy(load_knowledge_cards())
+    del document["metadata"]["purpose"]
+
+    with pytest.raises(ValueError, match="metadata is missing fields"):
+        validate_knowledge_cards(document)
