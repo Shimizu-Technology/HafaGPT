@@ -56,6 +56,8 @@ CITATION_REQUIRED_FIELDS = {"source_id", "url", "locator", "accessed_at", "suppo
 CITATION_FIELDS = CITATION_REQUIRED_FIELDS | {"source_excerpt"}
 URI_CHARACTERS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+")
 INVALID_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
+DOMAIN_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
+LEGACY_IP_LABEL = re.compile(r"(?:0[xX][0-9A-Fa-f]+|[0-9]+)")
 
 
 def _validate_exact_fields(
@@ -105,7 +107,18 @@ def _is_public_http_url(value: Any) -> bool:
     try:
         return ip_address(hostname).is_global
     except ValueError:
-        return "." in hostname
+        labels = hostname.split(".")
+        # Legacy IPv4 notations such as 127.1, 0177.0.0.1, and 0x7f.0.0.1
+        # are accepted by some clients even though ip_address() rejects them.
+        # Do not let those numeric forms fall through as apparent domain names.
+        if all(LEGACY_IP_LABEL.fullmatch(label) for label in labels):
+            return False
+        return (
+            len(hostname) <= 253
+            and len(labels) >= 2
+            and all(DOMAIN_LABEL.fullmatch(label) for label in labels)
+            and any(character.isalpha() for character in labels[-1])
+        )
 
 
 @lru_cache(maxsize=1)
