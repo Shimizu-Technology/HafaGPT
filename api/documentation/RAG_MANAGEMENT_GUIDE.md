@@ -113,15 +113,23 @@ uv run python manage_rag_db.py add --force knowledge_base/pdfs/grammar.pdf
 
 ### Start Fresh (Clean Database)
 ```bash
-# Delete metadata only (keeps PostgreSQL data)
-rm rag_metadata.json
+# Audit one collection without exposing source text
+uv run python scripts/audit_rag_sources.py \
+  --collection-name "${RAG_COLLECTION_NAME:-chamorro_grammar}"
 
-# Clear PostgreSQL database
-psql chamorro_rag -c "DELETE FROM langchain_pg_embedding WHERE collection_id = (SELECT uuid FROM langchain_pg_collection WHERE name = 'chamorro_grammar');"
-
-# Re-add all documents
-uv run python manage_rag_db.py add-all knowledge_base/pdfs/
+# Plan a new versioned collection. This command is read-only and exits with
+# blockers until the source permissions and provenance are genuinely ready.
+uv run python scripts/plan_rag_collection_migration.py \
+  --source-collection "${RAG_COLLECTION_NAME:-chamorro_grammar}" \
+  --target-collection hafagpt_governed_v1 \
+  --require-actionable
 ```
+
+Never clear or rebuild the live collection in place. Preserve it as the rollback
+source, create a database recovery branch first, and build into a brand-new
+`hafagpt_governed_*` collection. Cut over with `RAG_COLLECTION_NAME` only after
+source permission, provenance, deduplication, retrieval benchmarks, local QA, and
+review all pass.
 
 ---
 

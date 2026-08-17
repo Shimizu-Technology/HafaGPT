@@ -64,6 +64,9 @@ def test_every_external_source_has_a_permission_or_outreach_record() -> None:
         ("https://lengguahita.com/chamorro-stories/example", "lengguahita"),
         ("https://cnmidcca.org/default.asp?secID=14", "website"),
         ("https://archive.phonetics.ucla.edu/Language/CHA/cha.html", "audio_archive"),
+        ("/documents/two_chamorro_orthographies_sandra_chung.pdf", "pdf"),
+        ("Fino'Chamoru Blog", "blog"),
+        ("Chamorro Language & Culture Blog", "blog"),
         (
             "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
             "website",
@@ -89,6 +92,13 @@ def test_context_sources_cannot_answer_canonical_lookup_questions() -> None:
     assert not is_retrieval_allowed(visit_guam, "lookup")
     assert is_retrieval_allowed(pdn, "usage")
     assert is_retrieval_allowed(visit_guam, "cultural")
+
+
+def test_legacy_finder_filename_is_registered_but_remains_blocked() -> None:
+    finder = metadata("/documents/English_Chamorro_Finder_List.pdf")
+
+    assert resolve_source(finder)["id"] == "cnmi_english_chamorro_finder_2024"
+    assert not is_retrieval_allowed(finder, "lookup")
 
 
 def test_regional_dictionary_is_annotated_and_role_limited() -> None:

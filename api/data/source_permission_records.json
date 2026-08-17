@@ -4,6 +4,36 @@
   "policy": "A record documents outreach and scope; it does not enable ingestion. Production ingestion also requires an explicit allowed use and permission reference in language_source_registry.json.",
   "records": [
     {
+      "source_id": "chung_two_orthographies_2024",
+      "owner_or_steward": "Sandra Chung and the publication or repository rights holder",
+      "status": "provenance_unresolved",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "derive_summaries", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "The held filename does not establish the exact edition, acquisition lineage, or permission for full-text RAG use.",
+      "next_action": "Identify and checksum the exact artifact, document its publication record, and request any reuse permission required."
+    },
+    {
+      "source_id": "fino_chamoru_blog_snapshot",
+      "owner_or_steward": "Fino'Chamoru Blog publisher and individual contributors",
+      "status": "provenance_unresolved",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "A legacy database label is not sufficient provenance or a reuse grant; contributor rights may be item-specific.",
+      "next_action": "Resolve the canonical URL, publisher, contributors, capture date, item scope, and written terms before any reuse."
+    },
+    {
+      "source_id": "chamorro_language_culture_blog_snapshot",
+      "owner_or_steward": "Chamorro Language & Culture Blog publisher and individual contributors",
+      "status": "provenance_unresolved",
+      "requested_uses": ["retain_snapshot", "create_embeddings", "return_short_excerpts", "model_evaluation", "public_service"],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "A legacy database label is not sufficient provenance or a reuse grant; contributor rights may be item-specific.",
+      "next_action": "Resolve the canonical URL, publisher, contributors, capture date, item scope, and written terms before any reuse."
+    },
+    {
       "source_id": "guampedia",
       "owner_or_steward": "Guampedia Foundation",
       "status": "not_requested",

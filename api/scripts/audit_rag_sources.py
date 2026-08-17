@@ -20,6 +20,9 @@ if str(API_ROOT) not in sys.path:
 from src.rag.source_policy import annotate_metadata, resolve_source
 
 
+DEFAULT_COLLECTION_NAME = "chamorro_grammar"
+
+
 def classify_source_counts(rows: Iterable[tuple[str | None, str | None, int]]) -> dict[str, Any]:
     by_source_id: Counter[str] = Counter()
     blocked_chunks = 0
@@ -63,9 +66,24 @@ def classify_source_counts(rows: Iterable[tuple[str | None, str | None, int]]) -
     }
 
 
-def run_audit(database_url: str) -> dict[str, Any]:
+def _collection_id(cursor: Any, collection_name: str) -> Any:
+    cursor.execute(
+        "SELECT uuid FROM langchain_pg_collection WHERE name = %s",
+        (collection_name,),
+    )
+    row = cursor.fetchone()
+    if not row:
+        raise ValueError(f"RAG collection does not exist: {collection_name}")
+    return row[0]
+
+
+def run_audit(
+    database_url: str,
+    collection_name: str = DEFAULT_COLLECTION_NAME,
+) -> dict[str, Any]:
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
+            collection_id = _collection_id(cursor, collection_name)
             cursor.execute(
                 """
                 SELECT
@@ -80,7 +98,9 @@ def run_audit(database_url: str) -> dict[str, Any]:
                     COUNT(*) FILTER (WHERE COALESCE(cmetadata->>'license', '') = '') AS missing_license,
                     COUNT(*) FILTER (WHERE COALESCE(cmetadata->>'retrieved_at', '') = '') AS missing_retrieved_at
                 FROM langchain_pg_embedding
-                """
+                WHERE collection_id = %s
+                """,
+                (collection_id,),
             )
             columns = [column.name for column in cursor.description]
             summary = dict(zip(columns, cursor.fetchone()))
@@ -89,31 +109,46 @@ def run_audit(database_url: str) -> dict[str, Any]:
                 """
                 SELECT cmetadata->>'source', cmetadata->>'source_type', COUNT(*)
                 FROM langchain_pg_embedding
+                WHERE collection_id = %s
                 GROUP BY 1, 2
                 ORDER BY 3 DESC
-                """
+                """,
+                (collection_id,),
             )
             source_audit = classify_source_counts(cursor.fetchall())
 
             cursor.execute(
                 """
-                SELECT COUNT(*) AS copies, LEFT(document, 240) AS sample
+                SELECT
+                    COUNT(*) AS copies,
+                    MD5(document) AS document_fingerprint,
+                    LENGTH(document) AS document_characters
                 FROM langchain_pg_embedding
+                WHERE collection_id = %s
                 GROUP BY document
                 HAVING COUNT(*) > 1
                 ORDER BY copies DESC
                 LIMIT 10
-                """
+                """,
+                (collection_id,),
             )
             duplicate_samples = [
-                {"copies": copies, "sample": sample}
-                for copies, sample in cursor.fetchall()
+                {
+                    "copies": copies,
+                    "document_fingerprint": fingerprint,
+                    "document_characters": characters,
+                }
+                for copies, fingerprint, characters in cursor.fetchall()
             ]
 
     redundant = summary["redundant_exact_rows"]
     total = summary["total_rows"]
     summary["exact_redundancy_percent"] = round((redundant / total * 100) if total else 0, 2)
     return {
+        "collection": {
+            "name": collection_name,
+            "id": str(collection_id),
+        },
         "summary": summary,
         "policy": source_audit,
         "largest_exact_duplicate_groups": duplicate_samples,
@@ -124,6 +159,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
     parser.add_argument(
+        "--collection-name",
+        default=os.getenv("RAG_COLLECTION_NAME", DEFAULT_COLLECTION_NAME),
+        help="Audit only this PGVector collection (default: RAG_COLLECTION_NAME).",
+    )
+    parser.add_argument(
         "--enforce-clean-corpus-gates",
         action="store_true",
         help="Exit nonzero until the clean-corpus acceptance gates are met.",
@@ -132,7 +172,7 @@ def main() -> int:
     if not args.database_url:
         parser.error("DATABASE_URL or --database-url is required")
 
-    audit = run_audit(args.database_url)
+    audit = run_audit(args.database_url, args.collection_name)
     print(json.dumps(audit, ensure_ascii=False, indent=2, default=str))
 
     if args.enforce_clean_corpus_gates:

@@ -67,6 +67,60 @@
       "decision": "Blocked until every abbreviation has an appropriate citation, regional scope, and human review."
     },
     {
+      "id": "chung_two_orthographies_2024",
+      "name": "Two Chamorro Orthographies by Sandra Chung",
+      "match": {
+        "source_contains": ["two_chamorro_orthographies_sandra_chung"]
+      },
+      "content_role": "orthography_comparison",
+      "region": "Guam_and_CNMI",
+      "orthography": "comparative",
+      "rights_status": "permission_and_provenance_required",
+      "review_status": "quarantined_pending_permission",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Preserved but blocked until the exact edition, provenance, reuse permission, and expert review are recorded."
+    },
+    {
+      "id": "fino_chamoru_blog_snapshot",
+      "name": "Fino'Chamoru Blog snapshot",
+      "match": {
+        "source_contains": ["fino'chamoru blog"]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "author_usage",
+      "rights_status": "permission_and_provenance_required",
+      "review_status": "quarantined_pending_permission",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Preserved for provenance review but blocked from retrieval and new ingestion until ownership, scope, and expert review are resolved."
+    },
+    {
+      "id": "chamorro_language_culture_blog_snapshot",
+      "name": "Chamorro Language & Culture Blog snapshot",
+      "match": {
+        "source_contains": ["chamorro language & culture blog"]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "author_usage",
+      "rights_status": "permission_and_provenance_required",
+      "review_status": "quarantined_pending_permission",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Preserved for provenance review but blocked from retrieval and new ingestion until ownership, scope, and expert review are resolved."
+    },
+    {
       "id": "guampedia",
       "name": "Guampedia",
       "canonical_url": "https://www.guampedia.com/",
@@ -421,7 +475,11 @@
       "name": "English-Chamorro Finder List (December 2024)",
       "canonical_url": "https://www.cnmilicensing.gov.mp/wp-content/uploads/2025/01/Title-English-Chamorro.pdf",
       "match": {
-        "source_contains": ["title-english-chamorro.pdf", "english-chamorro-finder"]
+        "source_contains": [
+          "title-english-chamorro.pdf",
+          "english-chamorro-finder",
+          "english_chamorro_finder"
+        ]
       },
       "content_role": "reviewed_lexicon_index",
       "region": "CNMI",
