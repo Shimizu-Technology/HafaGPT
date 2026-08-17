@@ -81,20 +81,16 @@ def detect_query_type(query: str) -> str:
     """
     query_lower = query.lower()
 
-    # Explicit translation/definition intent takes precedence over broader
-    # historical or cultural phrases in a multi-part prompt.
-    lookup_patterns = [
-        'in chamorro',          # "What is X in Chamorro?"
-        'to chamorro',          # "Translate X to Chamorro"
-        'in english',           # "What is X in English?"
-        'to english',           # "Translate X to English"
-        'chamorro word for',    # "What is the Chamorro word for X?"
-        'mean',                 # "What does X mean?"
-        'translate',            # "Translate X"
-        'how do you say',       # "How do you say X?" - this is a lookup!
-        'how do i say',         # "How do I say X?" - this is a lookup!
+    # Explicit translation intent takes precedence over a broader cultural
+    # phrase in a multi-part prompt. Definition intent is evaluated after
+    # explicit historical/cultural roles so "mean in 1865" stays historical.
+    translation_lookup_patterns = [
+        r'\bchamorro word for\b',    # "What is the Chamorro word for X?"
+        r'\btranslate\b',            # "Translate X"
+        r'\bhow do you say\b',       # "How do you say X?" - this is a lookup!
+        r'\bhow do i say\b',         # "How do I say X?" - this is a lookup!
     ]
-    if any(pattern in query_lower for pattern in lookup_patterns):
+    if any(re.search(pattern, query_lower) for pattern in translation_lookup_patterns):
         return 'lookup'
 
     historical_keywords = [
@@ -118,6 +114,17 @@ def detect_query_type(query: str) -> str:
     ]
     if any(re.search(pattern, query_lower) for pattern in broad_guam_patterns):
         return 'cultural'
+
+    generic_lookup_patterns = [
+        r'\bin chamorro\b',
+        r'\bto chamorro\b',
+        r'\bin english\b',
+        r'\bto english\b',
+        r'\bwhat (?:does|do|did)\b.+\bmean\b',
+        r'\bmeaning of\b',
+    ]
+    if any(re.search(pattern, query_lower) for pattern in generic_lookup_patterns):
+        return 'lookup'
 
     usage_keywords = [
         'use in a sentence', 'used in a sentence', 'example sentence',

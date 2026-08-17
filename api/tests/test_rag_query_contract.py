@@ -67,6 +67,16 @@ def test_explicit_lookup_wins_over_broad_guam_phrase_in_mixed_prompt() -> None:
     assert detect_query_type(query) == "lookup"
 
 
+def test_historical_meaning_question_stays_historical() -> None:
+    assert detect_query_type("What did this word mean in 1865?") == "historical"
+
+
+def test_cultural_meaning_question_stays_cultural() -> None:
+    query = "What does this tradition mean to Chamorro culture?"
+
+    assert detect_query_type(query) == "cultural"
+
+
 def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:
     content = "\n".join(
         ["unrelated dictionary row"] * 200
