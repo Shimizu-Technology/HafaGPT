@@ -81,6 +81,22 @@ def detect_query_type(query: str) -> str:
     """
     query_lower = query.lower()
 
+    # Explicit translation/definition intent takes precedence over broader
+    # historical or cultural phrases in a multi-part prompt.
+    lookup_patterns = [
+        'in chamorro',          # "What is X in Chamorro?"
+        'to chamorro',          # "Translate X to Chamorro"
+        'in english',           # "What is X in English?"
+        'to english',           # "Translate X to English"
+        'chamorro word for',    # "What is the Chamorro word for X?"
+        'mean',                 # "What does X mean?"
+        'translate',            # "Translate X"
+        'how do you say',       # "How do you say X?" - this is a lookup!
+        'how do i say',         # "How do I say X?" - this is a lookup!
+    ]
+    if any(pattern in query_lower for pattern in lookup_patterns):
+        return 'lookup'
+
     historical_keywords = [
         'historical', 'historically', 'old chamorro', 'older chamorro',
         'etymology', 'etymological', 'word origin', 'in 1865',
@@ -102,24 +118,6 @@ def detect_query_type(query: str) -> str:
     ]
     if any(re.search(pattern, query_lower) for pattern in broad_guam_patterns):
         return 'cultural'
-
-    # PRIORITY 1: Translation/lookup patterns take precedence
-    # These are lookups even if they contain "how do i"
-    lookup_patterns = [
-        'in chamorro',          # "What is X in Chamorro?"
-        'to chamorro',          # "Translate X to Chamorro"
-        'in english',           # "What is X in English?"
-        'to english',           # "Translate X to English"
-        'chamorro word for',    # "What is the Chamorro word for X?"
-        'mean',                 # "What does X mean?"
-        'translate',            # "Translate X"
-        'how do you say',       # "How do you say X?" - this is a lookup!
-        'how do i say',         # "How do I say X?" - this is a lookup!
-    ]
-    
-    for pattern in lookup_patterns:
-        if pattern in query_lower:
-            return 'lookup'
 
     usage_keywords = [
         'use in a sentence', 'used in a sentence', 'example sentence',

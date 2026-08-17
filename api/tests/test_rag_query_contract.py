@@ -61,6 +61,12 @@ def test_language_overview_remains_educational() -> None:
     assert detect_query_type("Tell me about the Chamorro language") == "educational"
 
 
+def test_explicit_lookup_wins_over_broad_guam_phrase_in_mixed_prompt() -> None:
+    query = "Tell me everything about Guam and how do you say water in Chamorro?"
+
+    assert detect_query_type(query) == "lookup"
+
+
 def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:
     content = "\n".join(
         ["unrelated dictionary row"] * 200
