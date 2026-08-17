@@ -34,6 +34,7 @@
         "region",
         "temporal_scope",
         "confidence",
+        "release_status",
         "citations",
         "review_notes"
       ],
@@ -60,6 +61,7 @@
         "region": {"enum": ["Guam", "CNMI", "Guam_and_CNMI", "unspecified"]},
         "temporal_scope": {"enum": ["modern", "living", "historical", "mixed"]},
         "confidence": {"enum": ["high", "medium", "low"]},
+        "release_status": {"enum": ["draft", "reviewed", "production_ready"]},
         "citations": {
           "type": "array",
           "minItems": 1,

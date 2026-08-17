@@ -8,6 +8,7 @@ from src.rag.source_policy import registered_source_ids
 from src.rag.source_reviews import (
     build_citation_contract,
     can_create_knowledge_cards,
+    can_publish_knowledge_cards,
     can_vectorize_full_text,
     load_source_reviews,
     source_reviews_by_id,
@@ -28,6 +29,8 @@ def test_restricted_sources_are_not_approved_for_full_text_vectorization() -> No
     assert can_create_knowledge_cards("chung_grammar_2020")
     assert can_create_knowledge_cards("kumision_guam_orthography_2024")
     assert can_create_knowledge_cards("natibu_marianas_living_dictionary")
+    assert not can_publish_knowledge_cards("local_revised_dictionary_snapshot")
+    assert can_publish_knowledge_cards("kumision_guam_orthography_2024")
     assert not can_vectorize_full_text("chung_grammar_2020")
     assert not can_vectorize_full_text("guampedia")
     assert reviews["guampedia"]["usage"]["mode"] == "reference_only"

@@ -174,6 +174,15 @@ def can_create_knowledge_cards(source_id: str) -> bool:
     return bool(review and review["usage"]["mode"] in {"full_text", "knowledge_cards"})
 
 
+def can_publish_knowledge_cards(source_id: str) -> bool:
+    review = get_source_review(source_id)
+    return bool(
+        review
+        and review["review_status"] == "complete"
+        and review["usage"]["mode"] in {"full_text", "knowledge_cards"}
+    )
+
+
 def build_citation_contract(metadata: dict[str, Any] | None) -> dict[str, Any] | None:
     """Return stable public citation fields for a governed source result."""
 

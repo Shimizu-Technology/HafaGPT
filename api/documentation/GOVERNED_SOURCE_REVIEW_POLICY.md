@@ -50,6 +50,10 @@ A production knowledge card must:
 8. preserve derivative lineage instead of counting mirrors as corroboration;
 9. record editorial notes and confidence.
 
+Cards move through `draft`, `reviewed`, and `production_ready`. A production
+card may cite only sources whose editorial review is complete; provisional
+sources can support drafts without silently entering production.
+
 The validation layer rejects unknown sources, discovery-only sources, missing
 primary support, role mismatches, and excessive quotations.
 

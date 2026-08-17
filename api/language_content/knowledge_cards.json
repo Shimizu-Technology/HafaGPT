@@ -19,6 +19,7 @@
       "region": "Guam_and_CNMI",
       "temporal_scope": "living",
       "confidence": "high",
+      "release_status": "draft",
       "citations": [
         {
           "source_id": "local_revised_dictionary_snapshot",
@@ -50,6 +51,7 @@
       "region": "Guam",
       "temporal_scope": "modern",
       "confidence": "high",
+      "release_status": "production_ready",
       "citations": [
         {
           "source_id": "kumision_guam_orthography_2024",

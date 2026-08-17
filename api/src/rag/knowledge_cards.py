@@ -23,6 +23,7 @@ CLAIM_TYPES = {
 TEMPORAL_SCOPES = {"modern", "living", "historical", "mixed"}
 REGIONS = {"Guam", "CNMI", "Guam_and_CNMI", "unspecified"}
 CONFIDENCE_LEVELS = {"high", "medium", "low"}
+RELEASE_STATUSES = {"draft", "reviewed", "production_ready"}
 SUPPORT_TYPES = {"primary", "corroborating", "regional_variant", "historical", "usage"}
 CLAIM_QUERY_TYPES = {
     "definition": "lookup",
@@ -72,6 +73,8 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
             raise ValueError(f"unsupported region for knowledge card {card_id}")
         if card.get("confidence") not in CONFIDENCE_LEVELS:
             raise ValueError(f"unsupported confidence for knowledge card {card_id}")
+        if card.get("release_status") not in RELEASE_STATUSES:
+            raise ValueError(f"unsupported release_status for knowledge card {card_id}")
         aliases = card.get("question_aliases")
         if not isinstance(aliases, list) or not aliases or not all(
             isinstance(alias, str) and alias.strip() for alias in aliases
@@ -102,6 +105,10 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
                 raise ValueError(
                     f"knowledge card {card_id} uses {source_id} outside its reviewed query role"
                 )
+            if card["release_status"] == "production_ready" and review["review_status"] != "complete":
+                raise ValueError(
+                    f"production-ready card {card_id} cites incomplete source review: {source_id}"
+                )
             for field in ("url", "locator", "accessed_at"):
                 if not isinstance(citation.get(field), str) or not citation[field].strip():
                     raise ValueError(f"knowledge card {card_id} citation requires {field}")
@@ -120,3 +127,11 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
 
 def cards_by_id() -> dict[str, dict[str, Any]]:
     return {card["id"]: card for card in load_knowledge_cards()["cards"]}
+
+
+def production_cards() -> list[dict[str, Any]]:
+    return [
+        card
+        for card in load_knowledge_cards()["cards"]
+        if card["release_status"] == "production_ready"
+    ]

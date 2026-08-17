@@ -7,6 +7,7 @@ import pytest
 from src.rag.knowledge_cards import (
     cards_by_id,
     load_knowledge_cards,
+    production_cards,
     validate_knowledge_cards,
 )
 
@@ -18,6 +19,9 @@ def test_seed_knowledge_cards_are_valid_and_cited() -> None:
     assert "orthography.guam.current_reference" in cards
     assert all(card["citations"] for card in cards.values())
     assert all(card["review_notes"] for card in cards.values())
+    assert [card["id"] for card in production_cards()] == [
+        "orthography.guam.current_reference"
+    ]
 
 
 def test_knowledge_card_cannot_use_discovery_only_source() -> None:
@@ -59,4 +63,12 @@ def test_knowledge_card_requires_region_and_temporal_scope() -> None:
     document["cards"][0]["region"] = "global"
 
     with pytest.raises(ValueError, match="unsupported region"):
+        validate_knowledge_cards(document)
+
+
+def test_production_card_rejects_incomplete_source_review() -> None:
+    document = deepcopy(load_knowledge_cards())
+    document["cards"][0]["release_status"] = "production_ready"
+
+    with pytest.raises(ValueError, match="cites incomplete source review"):
         validate_knowledge_cards(document)
