@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hafagpt.com/schemas/knowledge-cards.schema.json",
+  "title": "HåfaGPT Governed Knowledge Cards",
+  "type": "object",
+  "required": ["schema_version", "metadata", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "metadata": {
+      "type": "object",
+      "required": ["purpose", "created_at", "editorial_policy"],
+      "additionalProperties": false,
+      "properties": {
+        "purpose": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "format": "date"},
+        "editorial_policy": {"type": "string", "minLength": 1}
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/card"}
+    }
+  },
+  "$defs": {
+    "card": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "claim_type",
+        "answer_text",
+        "question_aliases",
+        "region",
+        "temporal_scope",
+        "confidence",
+        "citations",
+        "review_notes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "title": {"type": "string", "minLength": 1},
+        "claim_type": {
+          "enum": [
+            "definition",
+            "grammar_rule",
+            "orthography_rule",
+            "usage",
+            "cultural_context",
+            "historical_context"
+          ]
+        },
+        "answer_text": {"type": "string", "minLength": 1},
+        "question_aliases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "region": {"enum": ["Guam", "CNMI", "Guam_and_CNMI", "unspecified"]},
+        "temporal_scope": {"enum": ["modern", "living", "historical", "mixed"]},
+        "confidence": {"enum": ["high", "medium", "low"]},
+        "citations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/citation"}
+        },
+        "review_notes": {"type": "string", "minLength": 1}
+      }
+    },
+    "citation": {
+      "type": "object",
+      "required": ["source_id", "url", "locator", "accessed_at", "support"],
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {"type": "string", "pattern": "^[a-z0-9_.-]+$"},
+        "url": {"type": "string", "format": "uri"},
+        "locator": {"type": "string", "minLength": 1},
+        "accessed_at": {"type": "string", "format": "date"},
+        "support": {"enum": ["primary", "corroborating", "regional_variant", "historical", "usage"]},
+        "source_excerpt": {"type": "string"}
+      }
+    }
+  }
+}

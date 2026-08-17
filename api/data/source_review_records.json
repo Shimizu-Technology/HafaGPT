@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "review_policy": "HåfaGPT independently scores authority, region, age, lineage, and extraction risk. Public access is not treated as an open license. Restricted sources may inform original knowledge cards or citations but are not copied wholesale into a new production vector collection.",
+  "records": [
+    {
+      "source_id": "hafagpt_canonical_evaluation",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam_and_CNMI"], "lineage": "internal", "extraction_risk": "low", "confidence": "medium"},
+      "usage": {"mode": "evaluation_only", "full_text_vectorization": true, "allowed_query_types": ["lookup", "educational"], "citation_required": true, "max_source_quote_words": 25},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://language-resource-program/canonical-evaluation-v1", "accessed_at": "2026-08-18", "supports": "Private evaluation index built from the repository canonical vocabulary; not production teaching authority."}],
+      "rationale": "Useful for regression evaluation while source-backed entries remain pending broader editorial review."
+    },
+    {
+      "source_id": "supplemental_dictionary_unreviewed",
+      "reviewed_at": "2026-08-18",
+      "review_status": "quarantined",
+      "quality": {"authority_score": 0, "temporal_scope": "unknown", "regions": ["unspecified"], "lineage": "internal", "extraction_risk": "high", "confidence": "high"},
+      "usage": {"mode": "quarantine", "full_text_vectorization": false, "allowed_query_types": [], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://language-source-registry/supplemental_dictionary_unreviewed", "accessed_at": "2026-08-18", "supports": "The file lacks citations and review history and contains suspect examples."}],
+      "rationale": "Preserve for forensic comparison only; never use it to answer learners."
+    },
+    {
+      "source_id": "local_abbreviations_unreviewed",
+      "reviewed_at": "2026-08-18",
+      "review_status": "quarantined",
+      "quality": {"authority_score": 0, "temporal_scope": "unknown", "regions": ["unspecified"], "lineage": "internal", "extraction_risk": "high", "confidence": "high"},
+      "usage": {"mode": "quarantine", "full_text_vectorization": false, "allowed_query_types": [], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://language-source-registry/local_abbreviations_unreviewed", "accessed_at": "2026-08-18", "supports": "Entries have no reliable citations, regional scope, or review history."}],
+      "rationale": "Do not teach abbreviations whose meaning and region cannot be traced."
+    },
+    {
+      "source_id": "chung_two_orthographies_2024",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam_and_CNMI"], "lineage": "independent", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage", "historical"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "artifact", "reference": "internal://held-artifact/two_chamorro_orthographies_sandra_chung", "accessed_at": "2026-08-18", "supports": "A recent scholarly comparison relevant to differences between Guam and CNMI orthographic practice."}],
+      "rationale": "High-value comparative authority; use original cards and explicit regional labels until exact publication provenance is complete."
+    },
+    {
+      "source_id": "fino_chamoru_blog_snapshot",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 1, "temporal_scope": "unknown", "regions": ["unspecified"], "lineage": "unknown", "extraction_risk": "high", "confidence": "medium"},
+      "usage": {"mode": "discovery_only", "full_text_vectorization": false, "allowed_query_types": [], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://held-artifact/fino_chamoru_blog_snapshot", "accessed_at": "2026-08-18", "supports": "Held snapshot has unresolved ownership, date, regional scope, and author qualifications."}],
+      "rationale": "May point to terms worth researching but cannot establish a learner-facing claim."
+    },
+    {
+      "source_id": "chamorro_language_culture_blog_snapshot",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 1, "temporal_scope": "unknown", "regions": ["unspecified"], "lineage": "unknown", "extraction_risk": "high", "confidence": "medium"},
+      "usage": {"mode": "discovery_only", "full_text_vectorization": false, "allowed_query_types": [], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://held-artifact/chamorro_language_culture_blog_snapshot", "accessed_at": "2026-08-18", "supports": "Held snapshot has unresolved authorship, provenance, and editorial method."}],
+      "rationale": "Preserve as a discovery lead, not an authority."
+    },
+    {
+      "source_id": "guampedia",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "mixed", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "reference_only", "full_text_vectorization": false, "allowed_query_types": ["cultural", "historical"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [
+        {"kind": "publisher", "reference": "https://www.guampedia.com/", "accessed_at": "2026-08-18", "supports": "Guampedia describes a large collection of fact-checked, islander-centered cultural and historical entries."},
+        {"kind": "terms", "reference": "https://www.guampedia.com/disclaimer/", "accessed_at": "2026-08-18", "supports": "Terms restrict reproduction and storage in an electronic retrieval system without permission."}
+      ],
+      "rationale": "Strong cultural reference with explicit storage restrictions; link and cite instead of copying full text."
+    },
+    {
+      "source_id": "swarthmore_student_wiki",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 1, "temporal_scope": "unknown", "regions": ["unspecified"], "lineage": "aggregator", "extraction_risk": "high", "confidence": "high"},
+      "usage": {"mode": "discovery_only", "full_text_vectorization": false, "allowed_query_types": [], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "institution", "reference": "https://wikis.swarthmore.edu/ling073/Chamorro/Grammar", "accessed_at": "2026-08-18", "supports": "A student course wiki rather than a peer-reviewed or community normative publication."}],
+      "rationale": "Use only to locate its cited primary sources."
+    },
+    {
+      "source_id": "lengguahita",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "medium", "confidence": "medium"},
+      "usage": {"mode": "reference_only", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://lengguahita.com/resources/", "accessed_at": "2026-08-18", "supports": "Public learner resources and stories are available from the authoring site."}],
+      "rationale": "Useful pedagogy and authentic text; link to stories rather than reproducing them."
+    },
+    {
+      "source_id": "pacific_daily_news",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "reference_only", "full_text_vectorization": false, "allowed_query_types": ["usage", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://www.guampdn.com/", "accessed_at": "2026-08-18", "supports": "Attributed newspaper columns can attest contemporary public usage but are not normative language references."}],
+      "rationale": "Useful for real-world usage and current cultural context only."
+    },
+    {
+      "source_id": "visit_guam_greetings",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "reference_only", "full_text_vectorization": false, "allowed_query_types": ["usage", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/", "accessed_at": "2026-08-18", "supports": "Official tourism material attests common public-facing greetings."}],
+      "rationale": "Good evidence that a greeting is publicly used; not a canonical grammar or dictionary authority."
+    },
+    {
+      "source_id": "chamoru_info_dictionary",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 3, "temporal_scope": "mixed", "regions": ["Guam"], "lineage": "derivative", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "usage", "educational"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://www.chamoru.info/dictionary/", "accessed_at": "2026-08-18", "supports": "Public learner dictionary derived in part from older lexicons."}],
+      "rationale": "Useful lookup evidence, but derivative lineage must be preserved and it cannot count as an independent vote."
+    },
+    {
+      "source_id": "chamoru_info_lessons",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "medium", "confidence": "medium"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://www.chamoru.info/language-lessons/", "accessed_at": "2026-08-18", "supports": "Publicly accessible learner explanations and examples."}],
+      "rationale": "Suitable for corroborating original learner explanations, not canonical adjudication."
+    },
+    {
+      "source_id": "chung_grammar_2020",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam_and_CNMI"], "lineage": "independent", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [
+        {"kind": "publisher", "reference": "https://escholarship.org/uc/item/2sx7w4h5", "accessed_at": "2026-08-18", "supports": "A 2020 scholarly reference grammar covering syntax, morphology, sounds, spelling, and usage."},
+        {"kind": "terms", "reference": "https://escholarship.org/content/qt2sx7w4h5/qt2sx7w4h5_noSplash_2703942f0dee545f57fd6f161cf52d15.pdf", "accessed_at": "2026-08-18", "supports": "The downloadable publication states copyright by Sandra Chung and all rights reserved."}
+      ],
+      "rationale": "Highest-quality grammar authority; create original, page-cited explanations rather than a copied full-text corpus."
+    },
+    {
+      "source_id": "local_revised_dictionary_snapshot",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 5, "temporal_scope": "living", "regions": ["CNMI"], "lineage": "derivative", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "usage", "educational"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://natibunmarianas.org/dictionary-introduction/", "accessed_at": "2026-08-18", "supports": "Community-edited revision of the 1975 dictionary with more than 10,500 headwords and continuing updates."}],
+      "rationale": "Strong modern CNMI lexical evidence; exact snapshot date and checksum must accompany every derived card."
+    },
+    {
+      "source_id": "topping_ogo_dungca_1975",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "historical", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "historical_only", "full_text_vectorization": false, "allowed_query_types": ["historical"], "citation_required": true, "max_source_quote_words": 25},
+      "evidence": [{"kind": "catalog", "reference": "https://catalog.paradisec.org.au/collections/CHA1/items/originaldictionary", "accessed_at": "2026-08-18", "supports": "Archived foundational 1975 dictionary with legacy orthography and depositor-controlled files."}],
+      "rationale": "Important historical lexicon that must never silently override current regional standards."
+    },
+    {
+      "source_id": "rosetta_project_vocabulary",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 2, "temporal_scope": "historical", "regions": ["unspecified"], "lineage": "aggregator", "extraction_risk": "high", "confidence": "medium"},
+      "usage": {"mode": "historical_only", "full_text_vectorization": false, "allowed_query_types": ["historical"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "local_inventory", "reference": "internal://held-artifact/rosettaproject_chamorro_vocab", "accessed_at": "2026-08-18", "supports": "Legacy vocabulary snapshot with unclear regional and source lineage."}],
+      "rationale": "Retain for historical comparison only and corroborate every claim elsewhere."
+    },
+    {
+      "source_id": "historic_dictionary_grammar_1865",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 3, "temporal_scope": "historical", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "high", "confidence": "high"},
+      "usage": {"mode": "historical_only", "full_text_vectorization": false, "allowed_query_types": ["historical"], "citation_required": true, "max_source_quote_words": 25},
+      "evidence": [{"kind": "catalog", "reference": "https://archive.org/details/cu31924026914501", "accessed_at": "2026-08-18", "supports": "Digitized nineteenth-century dictionary and grammar using historical language and orthography."}],
+      "rationale": "Valuable diachronic evidence; OCR and historical spelling require explicit labeling."
+    },
+    {
+      "source_id": "kumision_guam_orthography_2024",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/", "accessed_at": "2026-08-18", "supports": "The official language commission presents the 2024 guide as its current Guam orthography update."}],
+      "rationale": "Primary modern authority for Guam spelling; do not generalize its rules to CNMI without labeling."
+    },
+    {
+      "source_id": "natibu_marianas_living_dictionary",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "living", "regions": ["CNMI"], "lineage": "derivative", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "usage", "educational"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [
+        {"kind": "publisher", "reference": "https://natibunmarianas.org/dictionary-introduction/", "accessed_at": "2026-08-18", "supports": "Community revision led by Elizabeth Rechebei and editors with Sandra Chung and Kumisión involvement."},
+        {"kind": "publisher", "reference": "https://natibunmarianas.org/", "accessed_at": "2026-08-18", "supports": "The publisher identifies the online dictionary as a changing work-in-progress snapshot."}
+      ],
+      "rationale": "Primary modern CNMI lexical authority; every card must retain snapshot date and derivative lineage."
+    },
+    {
+      "source_id": "chachalani_archive",
+      "reviewed_at": "2026-08-18",
+      "review_status": "provisional",
+      "quality": {"authority_score": 4, "temporal_scope": "mixed", "regions": ["Guam_and_CNMI"], "lineage": "independent", "extraction_risk": "high", "confidence": "medium"},
+      "usage": {"mode": "reference_only", "full_text_vectorization": false, "allowed_query_types": ["usage", "historical"], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "publisher", "reference": "https://chachalani.com/", "accessed_at": "2026-08-18", "supports": "Community documentation project with recordings and speaker-centered language evidence."}],
+      "rationale": "Potentially excellent authentic usage, but recording-level consent and metadata control every item."
+    },
+    {
+      "source_id": "learning_chamoru",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "publisher", "reference": "https://learningchamoru.com/", "accessed_at": "2026-08-18", "supports": "Free learner platform supported through relationships with UOG and the language commission."}],
+      "rationale": "Strong pedagogy reference for original lesson cards; do not copy multimedia or complete exercises."
+    },
+    {
+      "source_id": "gdoe_chamoru_program",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://ocpes.gdoe.net/programs/chamoru-language-and-culture", "accessed_at": "2026-08-18", "supports": "GDOE program describes speaking, reading, writing, comprehension, culture, and performance goals."}],
+      "rationale": "Use to align learning outcomes, not as a standalone dictionary."
+    },
+    {
+      "source_id": "cnmi_language_policy_commission",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["CNMI"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://cnmidcca.org/default.asp?secID=14", "accessed_at": "2026-08-18", "supports": "Official CNMI Chamorro-Carolinian Language Policy Commission page."}],
+      "rationale": "Primary institutional authority for CNMI policy and regional standards."
+    },
+    {
+      "source_id": "cnmi_english_chamorro_finder_2024",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "modern", "regions": ["CNMI"], "lineage": "derivative", "extraction_risk": "medium", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://www.cnmilicensing.gov.mp/wp-content/uploads/2025/01/Title-English-Chamorro.pdf", "accessed_at": "2026-08-18", "supports": "Dated December 2024 English-Chamorro finder derived from the revised dictionary."}],
+      "rationale": "High-value search index, but it must not count as independent corroboration of its parent dictionary."
+    },
+    {
+      "source_id": "uog_chamoru_studies_program",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural", "historical"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://catalog.uog.edu/current/programs/college-of-liberal-arts-and-social-sciences/chamoru-studies", "accessed_at": "2026-08-18", "supports": "Current academic program covers oral competency, morphology, syntax, semantics, orthography, culture, and historical document analysis."}],
+      "rationale": "Excellent curriculum and disciplinary-scope authority; catalog descriptions are not direct lexical evidence."
+    },
+    {
+      "source_id": "ucla_chamorro_phonetics_archive",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 3, "temporal_scope": "historical", "regions": ["unspecified"], "lineage": "independent", "extraction_risk": "high", "confidence": "high"},
+      "usage": {"mode": "historical_only", "full_text_vectorization": false, "allowed_query_types": ["historical"], "citation_required": true, "max_source_quote_words": 0},
+      "evidence": [{"kind": "institution", "reference": "https://archive.phonetics.ucla.edu/Language/CHA/cha.html", "accessed_at": "2026-08-18", "supports": "1983 word-list recordings; the public index marks speaker fields unavailable for listed recordings."}],
+      "rationale": "Useful historical pronunciation evidence but unsuitable as a modern default without speaker, date, region, and consent metadata."
+    },
+    {
+      "source_id": "kumision_learning_tools",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/", "accessed_at": "2026-08-18", "supports": "Official learning materials published by the Guam language commission."}],
+      "rationale": "High-priority modern Guam teaching authority; create original linked cards rather than copying complete assets."
+    }
+  ]
+}
