@@ -79,6 +79,11 @@ def test_production_card_rejects_incomplete_source_review() -> None:
     [
         ("url", "/private/imports/dictionary.json", "public HTTP"),
         ("url", "not a url", "public HTTP"),
+        ("url", "http://localhost/dictionary.json", "public HTTP"),
+        ("url", "http://127.0.0.1/dictionary.json", "public HTTP"),
+        ("url", "https://user:secret@example.com/dictionary.json", "public HTTP"),
+        ("url", "https://internal/dictionary.json", "public HTTP"),
+        ("url", "https://example.com:bad/dictionary.json", "public HTTP"),
         ("accessed_at", "2026-99-99", "ISO accessed_at date"),
         ("accessed_at", "August 18, 2026", "ISO accessed_at date"),
     ],

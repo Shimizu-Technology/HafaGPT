@@ -6,6 +6,7 @@ import json
 import re
 from datetime import date
 from functools import lru_cache
+from ipaddress import ip_address
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -80,10 +81,24 @@ def _is_iso_date(value: Any) -> bool:
 
 
 def _is_public_http_url(value: Any) -> bool:
-    if not isinstance(value, str) or not value.strip():
+    if not isinstance(value, str) or not value.strip() or value != value.strip():
         return False
     parsed = urlsplit(value)
-    return parsed.scheme in {"https", "http"} and bool(parsed.netloc)
+    if parsed.scheme not in {"https", "http"} or not parsed.netloc:
+        return False
+    if parsed.username is not None or parsed.password is not None:
+        return False
+    try:
+        parsed.port
+    except ValueError:
+        return False
+    hostname = (parsed.hostname or "").casefold().rstrip(".")
+    if not hostname or hostname == "localhost" or hostname.endswith((".localhost", ".local")):
+        return False
+    try:
+        return ip_address(hostname).is_global
+    except ValueError:
+        return "." in hostname
 
 
 @lru_cache(maxsize=1)
