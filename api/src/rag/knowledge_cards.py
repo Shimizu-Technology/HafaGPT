@@ -274,7 +274,8 @@ def production_cards() -> list[dict[str, Any]]:
 
 
 def _normalize_match_text(value: str) -> str:
-    return " ".join(re.sub(r"[^a-z0-9åñ'’-]+", " ", value.casefold()).split())
+    normalized_apostrophes = value.casefold().replace("’", "'").replace("‘", "'")
+    return " ".join(re.sub(r"[^a-z0-9åñ'-]+", " ", normalized_apostrophes).split())
 
 
 def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, Any]]:
@@ -298,13 +299,10 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
             and card["temporal_scope"] not in {"historical", "mixed"}
         ):
             continue
-        # A region-specific reviewed answer must never win on generic wording
-        # alone. Requiring an explicit place marker prevents questions about a
-        # dictionary or an unspecified spelling system from silently inheriting
-        # Guam- or CNMI-specific guidance.
         region_markers = REGION_QUERY_MARKERS.get(card["region"])
-        if region_markers and query_tokens.isdisjoint(region_markers):
-            continue
+        missing_region_marker = bool(
+            region_markers and query_tokens.isdisjoint(region_markers)
+        )
         intent_markers = CARD_INTENT_MARKERS.get(card["claim_type"])
         if intent_markers and query_tokens.isdisjoint(intent_markers):
             continue
@@ -323,9 +321,21 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
                 best_score = max(best_score, 1.5)
                 continue
             alias_tokens = set(normalized_alias.split())
+            if len(alias_tokens) >= 3 and alias_tokens <= query_tokens:
+                # A concise reviewed alias can act as a deterministic set of
+                # required terms even when natural wording separates them.
+                best_score = max(best_score, 2.0)
+                continue
             overlap = len(query_tokens & alias_tokens)
             if overlap >= 3:
                 best_score = max(best_score, overlap / len(alias_tokens | query_tokens))
+        # Region-specific reviewed answers normally require an explicit place
+        # marker. A contained, editorially reviewed alias is the narrow escape
+        # hatch for context such as an image prompt where the regional marker is
+        # visible to the model but absent from the user's typed message. Generic
+        # token overlap can never bypass the regional guardrail.
+        if missing_region_marker and best_score < 2.0:
+            continue
         if best_score >= 0.5:
             scored.append((best_score, card))
 
@@ -333,10 +343,27 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     return [card for _score, card in scored[:limit]]
 
 
-def get_knowledge_card_context(query: str) -> tuple[str, list[dict[str, Any]]]:
-    """Build prompt context and public citations from matching approved cards."""
+def get_knowledge_card_context(
+    query: str,
+    *,
+    include_card_ids: tuple[str, ...] = (),
+) -> tuple[str, list[dict[str, Any]]]:
+    """Build prompt context and public citations from approved cards.
+
+    ``include_card_ids`` is for trusted application context that cannot be
+    represented in typed query text, such as a vision request whose visible
+    contents have not yet been transcribed. Only production-ready cards can be
+    included through this path.
+    """
 
     cards = matching_production_cards(query)
+    selected_ids = {card["id"] for card in cards}
+    production_by_id = {card["id"]: card for card in production_cards()}
+    for card_id in include_card_ids:
+        card = production_by_id.get(card_id)
+        if card and card_id not in selected_ids:
+            selected_ids.add(card_id)
+            cards.append(card)
     if not cards:
         return "", []
 

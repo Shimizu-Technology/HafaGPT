@@ -252,6 +252,16 @@
       "expires_at": null,
       "restrictions": "Official public access does not authorize copying flashcards, artwork, or syllabary assets into HåfaGPT.",
       "next_action": "Request a learning-material partnership covering assets, attribution, adaptations, updates, and revocation."
+    },
+    {
+      "source_id": "guam_legislature_committee_records",
+      "owner_or_steward": "Guam Legislature",
+      "status": "not_pursued",
+      "requested_uses": ["cite_public_record", "derive_original_usage_summary", "public_service"],
+      "evidence_reference": "https://www.guamlegislature.gov/38th_Guam_Legislature/Committee_Reports_38th/CR%20Appt%20Arriola%2C%20Frank%20P.%20-PAG.pdf",
+      "expires_at": null,
+      "restrictions": "Use links and original summaries only; do not retain or vectorize complete committee reports or expose personal data beyond what is necessary to identify the cited public record.",
+      "next_action": "Re-review if use expands beyond citation-backed knowledge cards."
     }
   ]
 }

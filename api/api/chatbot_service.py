@@ -33,6 +33,7 @@ _cancelled_messages: set[str] = set()
 
 # Valid image extensions for conversation history (prevents sending PDFs as images)
 VALID_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+IMAGE_CONTEXT_CARD_IDS = ("usage.guam.school.sym_signoff",)
 
 
 def cancel_pending_message(pending_id: str) -> bool:
@@ -929,7 +930,12 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
     return False, None
 
 
-def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: int = 4000) -> tuple[str, list]:
+def get_rag_context(
+    user_input: str,
+    conversation_length: int = 0,
+    max_tokens: int = 4000,
+    contextual_card_ids: tuple[str, ...] = (),
+) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
     
@@ -937,6 +943,7 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
         user_input: User's message
         conversation_length: Number of messages in conversation
         max_tokens: Maximum tokens for RAG context
+        contextual_card_ids: Production card ids supplied by trusted app context
     
     Returns:
         tuple: (context_string, sources_list)
@@ -944,6 +951,11 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     from src.rag.translation_policy import is_passage_translation
 
     use_rag, rag_mode = should_use_rag(user_input, conversation_length)
+    if contextual_card_ids and not use_rag:
+        # An image can contain the trigger text even when the typed message is
+        # empty or conversational. Trusted vision context still needs a prompt
+        # path, and full mode preserves any relevant corpus support.
+        use_rag, rag_mode = True, "full"
     
     if not use_rag:
         retrieval_event = build_retrieval_event(
@@ -967,7 +979,10 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
 
     card_context = ""
     try:
-        card_context, card_sources = get_knowledge_card_context(user_input)
+        card_context, card_sources = get_knowledge_card_context(
+            user_input,
+            include_card_ids=contextual_card_ids,
+        )
         if card_context:
             contexts.append(card_context)
             sources.extend(card_sources)
@@ -977,9 +992,14 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     try:
         # A deterministic production-ready card is the reviewed answer for its
         # matched question. Do not dilute it with broad semantic retrieval that
-        # can add older, regional, or merely incidental evidence. Queries that
-        # do not match a card continue through the complete legacy corpus.
-        if rag is not None and not card_context:
+        # can add older, regional, or merely incidental evidence. Passage
+        # translations are the exception: a scoped usage card can clarify one
+        # abbreviation while vector retrieval supports the rest of the passage.
+        if rag is not None and (
+            not card_context
+            or contextual_card_ids
+            or is_passage_translation(user_input)
+        ):
             k = 1 if rag_mode == "light" else 3
             vector_context, vector_sources = rag.create_context(user_input, k=k)
             if vector_context:
@@ -1130,7 +1150,11 @@ def get_chatbot_response(
         return early_cancelled_response()
     
     # Get RAG context
-    rag_context, sources = get_rag_context(message, conversation_length)
+    rag_context, sources = get_rag_context(
+        message,
+        conversation_length,
+        contextual_card_ids=(IMAGE_CONTEXT_CARD_IDS if normalized_image_inputs else ()),
+    )
     used_rag = bool(rag_context)
     
     # Build system prompt
@@ -1468,7 +1492,12 @@ def get_chatbot_response_stream(
         return
     
     # Get RAG context with token limit
-    rag_context, sources = get_rag_context(message, conversation_length, max_tokens=token_manager.budget.rag_context)
+    rag_context, sources = get_rag_context(
+        message,
+        conversation_length,
+        max_tokens=token_manager.budget.rag_context,
+        contextual_card_ids=(IMAGE_CONTEXT_CARD_IDS if normalized_image_inputs else ()),
+    )
     used_rag = bool(rag_context)
     
     # Build system prompt

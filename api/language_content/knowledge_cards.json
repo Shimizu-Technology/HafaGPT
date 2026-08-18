@@ -65,6 +65,42 @@
         }
       ],
       "review_notes": "This card establishes source precedence and regional labeling; individual spelling rules require separate page-specific cards."
+    },
+    {
+      "id": "usage.guam.school.sym_signoff",
+      "title": "SYM in a modern Guam school message",
+      "claim_type": "usage",
+      "answer_text": "In a Hurao Academy or similar modern Guam school or institutional message, SYM at the end is used as a compact sign-off for Si Yu'os Ma'åse'—‘thank you.’ Treat this as contextual Guam usage, not a universal expansion of SYM; if the institution or context differs, describe it as the likely reading rather than certain.",
+      "question_aliases": [
+        "What does SYM mean in a Guam school message?",
+        "What does SYM mean at Hurao Academy?",
+        "Hurao Academy SYM sign-off",
+        "Hurao Academy SYM",
+        "Guam school SYM",
+        "What does this say? It's from my daughter's school",
+        "This image is from my daughter's school"
+      ],
+      "region": "Guam",
+      "temporal_scope": "modern",
+      "confidence": "medium",
+      "release_status": "production_ready",
+      "citations": [
+        {
+          "source_id": "guam_legislature_committee_records",
+          "url": "https://www.guamlegislature.gov/38th_Guam_Legislature/Committee_Reports_38th/CR%20Appt%20Arriola%2C%20Frank%20P.%20-PAG.pdf",
+          "locator": "PDF page 38, May 13, 2026 e-vote email thread",
+          "accessed_at": "2026-08-18",
+          "support": "primary"
+        },
+        {
+          "source_id": "chamoru_info_dictionary",
+          "url": "https://www.chamoru.info/dictionary/",
+          "locator": "Dictionary entry si Yu'us ma'åse'",
+          "accessed_at": "2026-08-18",
+          "support": "corroborating"
+        }
+      ],
+      "review_notes": "Official Guam Legislature records document current institutional use of both SYM and the full Si Yu'us ma'åse' sign-off. Hurao Academy context is user-supplied firsthand evidence, so the approved explanation remains conditional and does not claim a formal school policy or universal abbreviation rule."
     }
   ]
 }

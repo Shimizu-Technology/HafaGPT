@@ -262,6 +262,15 @@
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
       "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/", "accessed_at": "2026-08-18", "supports": "Official learning materials published by the Guam language commission."}],
       "rationale": "High-priority modern Guam teaching authority; create original linked cards rather than copying complete assets."
+    },
+    {
+      "source_id": "guam_legislature_committee_records",
+      "reviewed_at": "2026-08-18",
+      "review_status": "complete",
+      "quality": {"authority_score": 4, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://www.guamlegislature.gov/38th_Guam_Legislature/Committee_Reports_38th/CR%20Appt%20Arriola%2C%20Frank%20P.%20-PAG.pdf", "accessed_at": "2026-08-18", "supports": "Official 2026 committee record PDF page 38 contains both SYM and full Si Yu'us ma'åse' sign-offs in the same institutional email thread."}],
+      "rationale": "Primary evidence for current Guam institutional sign-off usage; supports a scoped medium-confidence interpretation, not a universal abbreviation rule."
     }
   ]
 }

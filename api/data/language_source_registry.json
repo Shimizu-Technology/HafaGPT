@@ -550,6 +550,28 @@
         "weight": 0.0
       },
       "decision": "Priority partnership candidate for official flashcards and syllabary materials; do not copy assets or derive exercises without written terms."
+    },
+    {
+      "id": "guam_legislature_committee_records",
+      "name": "Guam Legislature committee records",
+      "canonical_url": "https://www.guamlegislature.gov/38th_Guam_Legislature/Committee_Reports_38th/CR%20Appt%20Arriola%2C%20Frank%20P.%20-PAG.pdf",
+      "match": {
+        "source_contains": [
+          "guamlegislature.gov",
+          "archives.guamlegislature.gov"
+        ]
+      },
+      "content_role": "official_institutional_usage",
+      "region": "Guam",
+      "orthography": "document_specific",
+      "rights_status": "public_record_reference_only",
+      "review_status": "complete_for_scoped_usage",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "May support original, citation-backed knowledge cards about documented institutional usage; do not vectorize complete committee reports or generalize individual sign-offs into universal language rules."
     }
   ]
 }
