@@ -152,6 +152,17 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
   useEffect(() => {
     if (!isOpen) return;
+    setStep(0);
+    setLearnerMode(DEFAULT_PREFERENCES.learner_mode);
+    setReadingSupport(DEFAULT_PREFERENCES.reading_support);
+    setSkillLevel(DEFAULT_PREFERENCES.skill_level);
+    setLearningGoal(DEFAULT_PREFERENCES.learning_goal);
+    setSessionMinutes(DEFAULT_PREFERENCES.daily_session_minutes);
+    setSaveError('');
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     contentRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
   }, [isOpen, step]);
 
