@@ -48,7 +48,10 @@ describe('AdminSettings seasonal theme controls', () => {
 
     await user.click(seasonalToggle);
     await user.clear(screen.getByLabelText('Seasonal Theme End Date'));
-    await user.type(screen.getByLabelText('Seasonal Theme End Date'), '2027-01-06');
+    expect(screen.getByRole('alert')).toHaveTextContent(/choose an end date/i);
+    expect(screen.getByRole('button', { name: 'Save Changes' })).toBeDisabled();
+
+    await user.type(screen.getByLabelText('Seasonal Theme End Date'), '2099-01-06');
     await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     await waitFor(() => {
@@ -57,7 +60,7 @@ describe('AdminSettings seasonal theme controls', () => {
           promo_enabled: 'true',
           theme: 'christmas',
           theme_enabled: 'true',
-          theme_end_date: '2027-01-06',
+          theme_end_date: '2099-01-06',
         }),
       );
     });
