@@ -31,13 +31,12 @@ def test_extracted_school_document_with_action_activates_school_mode() -> None:
         "Maga'låhen Hurao Academy Student Parent Handbook\n"
         "Please review and sign by Friday."
     )
-    assert is_school_announcement_context(message, has_attachment=True)
+    assert is_school_announcement_context(message)
 
 
 def test_trusted_image_signal_activates_school_mode_without_text_clues() -> None:
     assert is_school_announcement_context(
         "What does this say?",
-        has_attachment=True,
         image_school_signal=True,
     )
 
@@ -58,7 +57,12 @@ def test_generic_school_vocabulary_and_general_questions_stay_general() -> None:
 def test_generic_attachment_without_school_evidence_stays_general() -> None:
     assert not is_school_announcement_context(
         "Please analyze this restaurant menu.",
-        has_attachment=True,
+    )
+
+
+def test_school_worksheet_with_action_words_stays_general() -> None:
+    assert not is_school_announcement_context(
+        "Hurao Academy worksheet: review vocabulary and bring it on Friday."
     )
 
 

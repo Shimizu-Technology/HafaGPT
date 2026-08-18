@@ -70,26 +70,9 @@ _OPERATIONAL_PATTERNS = (
     ),
 )
 
-_ACTION_OR_TIME_PATTERNS = (
-    re.compile(r"\b(?:today|tomorrow|p[åa]['’]?go|agupa['’]?)\b", re.IGNORECASE),
-    re.compile(
-        r"\b(?:monday|tuesday|wednesday|thursday|friday|lunes|m[åa]ttes|"
-        r"metkoles|huebes|betnes)\b",
-        re.IGNORECASE,
-    ),
-    re.compile(r"\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)\b", re.IGNORECASE),
-    re.compile(
-        r"\b(?:bring|review|sign|submit|contact|call|email|imel|mens[åa]hi|"
-        r"put\s+fabot)\b",
-        re.IGNORECASE,
-    ),
-)
-
-
 def is_school_announcement_context(
     message: str,
     *,
-    has_attachment: bool = False,
     image_school_signal: bool = False,
 ) -> bool:
     """Return true only when operational school-message evidence is present.
@@ -107,14 +90,8 @@ def is_school_announcement_context(
 
     has_school_identity = any(pattern.search(text) for pattern in _SCHOOL_IDENTITY_PATTERNS)
     has_operational_content = any(pattern.search(text) for pattern in _OPERATIONAL_PATTERNS)
-    has_action_or_time = any(pattern.search(text) for pattern in _ACTION_OR_TIME_PATTERNS)
 
     if has_school_identity and has_operational_content:
-        return True
-
-    # Extracted documents and user-labeled uploads often omit conversational
-    # wrapper text, so an institution plus a concrete action/time is sufficient.
-    if has_attachment and has_school_identity and has_action_or_time:
         return True
 
     return False
@@ -227,7 +204,6 @@ def content_analysis_guidance(
     has_attachment = has_images or has_document_text
     school_announcement = is_school_announcement_context(
         message,
-        has_attachment=has_attachment,
         image_school_signal=image_school_signal,
     )
 
