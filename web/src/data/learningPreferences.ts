@@ -3,6 +3,13 @@ export type ReadingSupport = 'audio_pictures' | 'short_text_audio' | 'independen
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
 export type LearningGoal = 'conversation' | 'culture' | 'family' | 'travel' | 'all';
 export type DailySessionMinutes = 5 | 10 | 15 | 20;
+export const DEFAULT_DAILY_SESSION_MINUTES: DailySessionMinutes = 10;
+
+export function normalizeDailySessionMinutes(value: unknown): DailySessionMinutes {
+  return value === 5 || value === 10 || value === 15 || value === 20
+    ? value
+    : DEFAULT_DAILY_SESSION_MINUTES;
+}
 
 export interface LearningPreferenceOption<T extends string | number> {
   id: T;
@@ -78,4 +85,3 @@ export const DAILY_SESSION_OPTIONS: LearningPreferenceOption<DailySessionMinutes
   { id: 15, title: '15 minutes', description: 'More time for practice and review.' },
   { id: 20, title: '20 minutes', description: 'A deeper learning session.' },
 ];
-

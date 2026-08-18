@@ -5,6 +5,7 @@ import type {
   XPData,
 } from '../hooks/useHomepageData';
 import type { UserPreferences } from '../hooks/useUserPreferences';
+import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
 
 export type TodayActivityKind = 'review' | 'lesson' | 'listen' | 'practice' | 'play';
 
@@ -123,12 +124,11 @@ export function buildTodayPlan({
   weakAreas,
   xp,
 }: TodayPlanInput): TodayPlan {
-  // XP owns the minutes counter and completion reward, so its enabled goal is
-  // the canonical budget. The capability preference is the fallback for new
-  // accounts and legacy records where daily goals were disabled with zero.
+  // XP is the single source of truth for both the minutes counter and goal.
+  // New/legacy accounts with a disabled zero goal receive the safe default.
   const budgetMinutes = xp && xp.daily_goal_minutes > 0
     ? xp.daily_goal_minutes
-    : preferences.daily_session_minutes;
+    : DEFAULT_DAILY_SESSION_MINUTES;
   const minutesAlreadyLearned = Math.max(0, xp?.today_minutes ?? 0);
   const remainingMinutes = Math.max(0, budgetMinutes - minutesAlreadyLearned);
 

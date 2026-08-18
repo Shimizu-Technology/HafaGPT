@@ -39,10 +39,12 @@ import {
   LEARNING_GOAL_OPTIONS,
   READING_SUPPORT_OPTIONS,
   DailySessionMinutes,
+  DEFAULT_DAILY_SESSION_MINUTES,
   LearnerMode,
   LearningGoal,
   ReadingSupport,
   SkillLevel,
+  normalizeDailySessionMinutes,
 } from '../data/learningPreferences';
 
 const MODE_ICONS: Record<LearnerMode, LucideIcon> = { self: UserRound, with_child: UsersRound, helping_family: HandHeart };
@@ -89,12 +91,16 @@ export function SettingsPage() {
   const { isChristmasTheme, isNewYearTheme } = useSubscription();
   const { data: xpData, isLoading: isLoadingXP } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
+  const savedSessionMinutes = xpData && xpData.daily_goal_minutes > 0
+    ? normalizeDailySessionMinutes(xpData.daily_goal_minutes)
+    : DEFAULT_DAILY_SESSION_MINUTES;
+  const isSaving = isUpdating || updateDailyGoal.isPending;
   
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
   const [learnerMode, setLearnerMode] = useState<LearnerMode>(preferences.learner_mode);
   const [readingSupport, setReadingSupport] = useState<ReadingSupport>(preferences.reading_support);
-  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(preferences.daily_session_minutes);
+  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(savedSessionMinutes);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   
@@ -104,35 +110,37 @@ export function SettingsPage() {
     setLearningGoal(preferences.learning_goal);
     setLearnerMode(preferences.learner_mode);
     setReadingSupport(preferences.reading_support);
-    setSessionMinutes(preferences.daily_session_minutes);
+    setSessionMinutes(savedSessionMinutes);
   }, [
-    preferences.daily_session_minutes,
     preferences.learner_mode,
     preferences.learning_goal,
     preferences.reading_support,
     preferences.skill_level,
+    savedSessionMinutes,
   ]);
   
   // Track if there are unsaved changes
-  const hasChanges = skillLevel !== preferences.skill_level
+  const metadataHasChanges = skillLevel !== preferences.skill_level
     || learningGoal !== preferences.learning_goal
     || learnerMode !== preferences.learner_mode
-    || readingSupport !== preferences.reading_support
-    || sessionMinutes !== preferences.daily_session_minutes;
+    || readingSupport !== preferences.reading_support;
+  const goalHasChanges = sessionMinutes !== savedSessionMinutes;
+  const hasChanges = metadataHasChanges || goalHasChanges;
 
   const handleSave = async () => {
     try {
       setSaveError('');
-      if (!xpData || xpData.daily_goal_minutes !== sessionMinutes) {
+      if (goalHasChanges) {
         await updateDailyGoal.mutateAsync(sessionMinutes);
       }
-      await updatePreferencesAsync({
-        skill_level: skillLevel,
-        learning_goal: learningGoal,
-        learner_mode: learnerMode,
-        reading_support: readingSupport,
-        daily_session_minutes: sessionMinutes,
-      });
+      if (metadataHasChanges) {
+        await updatePreferencesAsync({
+          skill_level: skillLevel,
+          learning_goal: learningGoal,
+          learner_mode: learnerMode,
+          reading_support: readingSupport,
+        });
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
@@ -145,7 +153,7 @@ export function SettingsPage() {
     setLearningGoal(preferences.learning_goal);
     setLearnerMode(preferences.learner_mode);
     setReadingSupport(preferences.reading_support);
-    setSessionMinutes(preferences.daily_session_minutes);
+    setSessionMinutes(savedSessionMinutes);
     setSaveError('');
   };
 
@@ -311,10 +319,10 @@ export function SettingsPage() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={isUpdating}
+                disabled={isSaving || isLoadingXP}
                 className="flex min-h-11 max-w-xs flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400"
               >
-                {isUpdating ? (
+                {isSaving ? (
                   'Saving...'
                 ) : (
                   <>

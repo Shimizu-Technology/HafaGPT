@@ -15,7 +15,6 @@ vi.mock('../hooks/useUserPreferences', () => ({
       learning_goal: 'all',
       learner_mode: 'self',
       reading_support: 'short_text_audio',
-      daily_session_minutes: 10,
       onboarding_completed: true,
     },
     updatePreferencesAsync: settingsMocks.updatePreferencesAsync,
@@ -62,7 +61,6 @@ describe('learning preference settings', () => {
       learning_goal: 'culture',
       learner_mode: 'with_child',
       reading_support: 'audio_pictures',
-      daily_session_minutes: 15,
     }));
     expect(settingsMocks.updateDailyGoal).toHaveBeenCalledWith(15);
   });
@@ -75,6 +73,16 @@ describe('learning preference settings', () => {
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
+    expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
+  });
+
+  it('saves a session-only change without a second provider write', async () => {
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(settingsMocks.updateDailyGoal).toHaveBeenCalledWith(15));
     expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
   });
 });

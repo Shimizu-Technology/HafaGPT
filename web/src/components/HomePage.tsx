@@ -26,6 +26,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { buildTodayPlan } from '../lib/todayPlan';
+import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { TodayPlanCard } from './TodayPlanCard';
@@ -357,7 +358,7 @@ export function HomePage() {
             todayMinutes={xp?.today_minutes ?? 0}
             goalMinutes={xp && xp.daily_goal_minutes > 0
               ? xp.daily_goal_minutes
-              : preferences.daily_session_minutes}
+              : DEFAULT_DAILY_SESSION_MINUTES}
             completedTopics={allProgress?.summary.total_completed ?? 0}
             totalTopics={allProgress?.summary.total_topics ?? 21}
             dueCards={srSummary?.due_today ?? 0}

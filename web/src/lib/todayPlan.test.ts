@@ -51,7 +51,6 @@ describe('deterministic Today planner', () => {
         ...DEFAULT_PREFERENCES,
         onboarding_completed: true,
         reading_support: 'audio_pictures',
-        daily_session_minutes: 10,
       },
     }));
     const independent = buildTodayPlan(input({
@@ -59,7 +58,6 @@ describe('deterministic Today planner', () => {
         ...DEFAULT_PREFERENCES,
         onboarding_completed: true,
         reading_support: 'independent',
-        daily_session_minutes: 10,
       },
     }));
 
@@ -69,7 +67,7 @@ describe('deterministic Today planner', () => {
 
   it('uses the remaining daily budget and returns a useful completion state', () => {
     const partial = buildTodayPlan(input({
-      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 10 },
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true },
       xp: {
         total_xp: 100,
         level: 2,
@@ -102,7 +100,7 @@ describe('deterministic Today planner', () => {
 
   it('never truncates a full activity to fill a partial remaining minute', () => {
     const plan = buildTodayPlan(input({
-      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 10 },
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true },
       xp: {
         total_xp: 100,
         level: 2,
@@ -126,7 +124,7 @@ describe('deterministic Today planner', () => {
 
   it('uses the XP goal that owns tracked minutes when stored goals diverge', () => {
     const plan = buildTodayPlan(input({
-      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 20 },
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true },
       xp: {
         total_xp: 100,
         level: 2,
@@ -143,9 +141,9 @@ describe('deterministic Today planner', () => {
     expect(plan.goalComplete).toBe(true);
   });
 
-  it('falls back to the capability preference for a legacy disabled XP goal', () => {
+  it('falls back to the safe default for a legacy disabled XP goal', () => {
     const plan = buildTodayPlan(input({
-      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 15 },
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true },
       xp: {
         total_xp: 0,
         level: 1,
@@ -158,7 +156,7 @@ describe('deterministic Today planner', () => {
       },
     }));
 
-    expect(plan.budgetMinutes).toBe(15);
+    expect(plan.budgetMinutes).toBe(10);
     expect(plan.goalComplete).toBe(false);
   });
 });

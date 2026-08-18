@@ -27,6 +27,7 @@ import {
   LEARNING_GOAL_OPTIONS,
   READING_SUPPORT_OPTIONS,
   DailySessionMinutes,
+  DEFAULT_DAILY_SESSION_MINUTES,
   LearnerMode,
   LearningGoal,
   ReadingSupport,
@@ -146,7 +147,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   const [readingSupport, setReadingSupport] = useState<ReadingSupport>(DEFAULT_PREFERENCES.reading_support);
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(DEFAULT_PREFERENCES.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(DEFAULT_PREFERENCES.learning_goal);
-  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(DEFAULT_PREFERENCES.daily_session_minutes);
+  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(DEFAULT_DAILY_SESSION_MINUTES);
   const [saveError, setSaveError] = useState('');
   const dialogRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -172,7 +173,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
     setReadingSupport(DEFAULT_PREFERENCES.reading_support);
     setSkillLevel(DEFAULT_PREFERENCES.skill_level);
     setLearningGoal(DEFAULT_PREFERENCES.learning_goal);
-    setSessionMinutes(DEFAULT_PREFERENCES.daily_session_minutes);
+    setSessionMinutes(DEFAULT_DAILY_SESSION_MINUTES);
     setSaveError('');
   }, [accountKey, isOpen]);
 
@@ -225,7 +226,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
       reading_support: DEFAULT_PREFERENCES.reading_support,
       skill_level: DEFAULT_PREFERENCES.skill_level,
       learning_goal: DEFAULT_PREFERENCES.learning_goal,
-      daily_session_minutes: DEFAULT_PREFERENCES.daily_session_minutes,
+      daily_session_minutes: DEFAULT_DAILY_SESSION_MINUTES,
     });
   };
 
