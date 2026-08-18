@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { ADVANCED_PATH } from '../data/learningPath';
+import { ADVANCED_PATH, BEGINNER_PATH } from '../data/learningPath';
 import { LessonComplete } from './LessonComplete';
 
 describe('LessonComplete level copy', () => {
@@ -23,5 +23,27 @@ describe('LessonComplete level copy', () => {
     expect(screen.getByText('Advanced Path Progress')).toBeInTheDocument();
     expect(screen.getByText("You've completed all advanced topics!")).toBeInTheDocument();
     expect(screen.queryByText(/beginner/i)).not.toBeInTheDocument();
+  });
+
+  it('offers the configured game with stable lesson context', () => {
+    const topic = BEGINNER_PATH[0];
+
+    render(
+      <MemoryRouter>
+        <LessonComplete
+          topic={topic}
+          topicIndex={1}
+          totalTopics={BEGINNER_PATH.length}
+          quizScore={90}
+          onNextTopic={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Practice what you learned')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: `Practice ${topic.title}` })).toHaveAttribute(
+      'href',
+      '/games/memory?topic=greetings&category=greetings&source=lesson',
+    );
   });
 });

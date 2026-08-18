@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Star, ArrowRight, Home, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, Star, ArrowRight, Home, RotateCcw, Sparkles, Gamepad2 } from 'lucide-react';
 import { LearningTopic, getNextTopic } from '../data/learningPath';
+import { getLessonPractice } from '../lib/lessonPractice';
 
 interface LessonCompleteProps {
   topic: LearningTopic;
@@ -19,6 +20,7 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
   const isPerfect = quizScore === 100;
   const isLastTopic = topicIndex === totalTopics;
   const levelLabel = `${topic.level.charAt(0).toUpperCase()}${topic.level.slice(1)}`;
+  const practice = getLessonPractice(topic);
 
   // Calculate stars (1-3 based on score)
   const stars = quizScore >= 90 ? 3 : quizScore >= 70 ? 2 : 1;
@@ -163,6 +165,28 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
           <p className="text-purple-700 dark:text-purple-300 text-sm">
             Amazing work! You completed every topic in this level. Keep practicing with games, chat, and quizzes!
           </p>
+        </div>
+      )}
+
+      {isPassing && practice && (
+        <div className="rounded-2xl border border-coral-200 bg-coral-50 p-5 text-left dark:border-ocean-700/40 dark:bg-ocean-900/20">
+          <div className="mb-3 flex items-start gap-3">
+            <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-white text-coral-600 shadow-sm dark:bg-slate-800 dark:text-ocean-300">
+              <Gamepad2 className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-coral-700 dark:text-ocean-300">Practice what you learned</p>
+              <h3 className="font-semibold text-brown-900 dark:text-white">{practice.label}</h3>
+              <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{practice.description}</p>
+            </div>
+          </div>
+          <Link
+            to={practice.href}
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-coral-700 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus:ring-ocean-400 dark:focus:ring-offset-slate-900"
+          >
+            Practice {topic.title}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </div>
       )}
 

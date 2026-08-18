@@ -35,15 +35,25 @@ export const MemoryCard = memo(function MemoryCard({
   };
 
   return (
-    <div
+    <button
+      type="button"
       onClick={handleClick}
+      disabled={disabled || isFlipped || isMatched}
+      aria-label={
+        isFlipped || isMatched
+          ? `${type === 'chamorro' ? 'Chamorro' : 'English'} card: ${content}${isMatched ? ', matched' : ''}`
+          : 'Reveal memory card'
+      }
       className={`
-        relative w-full aspect-square cursor-pointer overflow-hidden
-        ${disabled || isFlipped || isMatched ? 'pointer-events-none' : ''}
+        relative w-full aspect-square cursor-pointer overflow-hidden border-0 bg-transparent p-0
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2
+        dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-slate-900
+        ${disabled || isFlipped || isMatched ? 'cursor-default' : ''}
       `}
       style={{ perspective: '1000px' }}
     >
       <div
+        aria-hidden="true"
         className="relative w-full h-full"
         style={{
           transformStyle: 'preserve-3d',
@@ -116,6 +126,6 @@ export const MemoryCard = memo(function MemoryCard({
           </p>
         </div>
       </div>
-    </div>
+    </button>
   );
 });

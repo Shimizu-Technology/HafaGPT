@@ -5,7 +5,7 @@ Request and response models for the FastAPI endpoints.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
@@ -380,6 +380,14 @@ class QuizStatsResponse(BaseModel):
 
 # --- Game Result Models ---
 
+class LearningContextCreate(BaseModel):
+    """Allowlisted learning context; never contains answers or learner-entered text."""
+    topic_id: str = Field(..., min_length=1, max_length=64)
+    source: Literal["lesson", "today"]
+
+    model_config = {"extra": "forbid"}
+
+
 class GameResultCreate(BaseModel):
     """Request to save a game result"""
     game_type: str = Field(..., description="Game type (e.g., 'memory_match')")
@@ -392,6 +400,10 @@ class GameResultCreate(BaseModel):
     pairs: Optional[int] = Field(None, description="Number of pairs matched")
     time_seconds: Optional[int] = Field(None, description="Time to complete in seconds")
     stars: Optional[int] = Field(None, ge=1, le=3, description="Star rating (1-3)")
+    learning_context: Optional[LearningContextCreate] = Field(
+        None,
+        description="Privacy-minimized lesson or Today context for concept progress",
+    )
 
 
 class GameResultResponse(BaseModel):

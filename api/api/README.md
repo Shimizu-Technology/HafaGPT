@@ -427,7 +427,8 @@ The API provides two-tier conversation tracking:
 
 ### 2. Message Logging (`conversation_logs` table)
 
-**All messages are automatically logged for analytics and model training:**
+**Messages are stored to provide conversation history, grounding diagnostics,
+and service reliability:**
 
 **Logged Data:**
 - User messages and bot responses
@@ -439,7 +440,10 @@ The API provides two-tier conversation tracking:
 - Response times
 - Timestamps
 
-**Key Point:** Even when a conversation is "deleted" by the user, the message logs are **preserved** for training data and analytics. This ensures valuable learning data is never lost.
+**Deletion behavior:** Removing a conversation hides it from the active history.
+Deleting the owning account triggers permanent database cleanup of its
+conversations and message logs. Private family conversations are not promoted
+into the Chamorro knowledge base or used to train a public model.
 
 **View Logs:**
 ```sql

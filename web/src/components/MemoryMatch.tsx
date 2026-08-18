@@ -10,6 +10,7 @@ import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
+import { readLearningGameContext } from '../lib/lessonPractice';
 
 interface Card {
   id: number;
@@ -77,11 +78,12 @@ export function MemoryMatch() {
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const learningContext = useMemo(() => readLearningGameContext(window.location.search), []);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
   const [settings, setSettings] = useState<GameSettings>({
-    category: 'greetings',
+    category: learningContext?.categoryId || 'greetings',
     difficulty: 'easy',
     pairsCount: DIFFICULTY_CONFIG.easy.pairs,
     mode: 'beginner',
@@ -450,6 +452,15 @@ export function MemoryMatch() {
                 Memory Match
               </h2>
             </div>
+
+            {learningContext && (
+              <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-ocean-700/40 dark:bg-ocean-900/20">
+                <BookOpen className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />
+                <p className="text-sm text-brown-700 dark:text-gray-200">
+                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from your lesson.
+                </p>
+              </div>
+            )}
 
             {/* Mode Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">

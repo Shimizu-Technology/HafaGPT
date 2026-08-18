@@ -91,6 +91,7 @@ from .spaced_repetition import (
     upsert_spaced_repetition_review,
 )
 from .site_theme import resolve_site_theme, validate_site_theme_configuration
+from .learning_attempts import build_game_learning_attempt, insert_learning_attempt
 
 # Clerk for authentication
 try:
@@ -3631,6 +3632,21 @@ async def save_game_result(
     try:
         # Verify user
         user_id = await verify_user(authorization)
+
+        learning_attempt = None
+        if request.learning_context:
+            try:
+                learning_attempt = build_game_learning_attempt(
+                    topic_id=request.learning_context.topic_id,
+                    category_id=request.category_id,
+                    source=request.learning_context.source,
+                    game_type=request.game_type,
+                    stars=request.stars,
+                    score=request.score,
+                    time_seconds=request.time_seconds,
+                )
+            except ValueError as error:
+                raise HTTPException(status_code=400, detail=str(error)) from error
         
         # Get database connection
         conn = conversations.get_db_connection_with_retry()
@@ -3661,6 +3677,14 @@ async def save_game_result(
         result = cursor.fetchone()
         result_id = result[0]
         created_at = result[1]
+
+        if learning_attempt:
+            insert_learning_attempt(
+                cursor,
+                user_id=user_id,
+                game_result_id=result_id,
+                attempt=learning_attempt,
+            )
         
         conn.commit()
         cursor.close()
