@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info } from 'lucide-react';
 import { getStoryById, StoryWord } from '../data/storyData';
+import { PronunciationButton } from './PronunciationButton';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 
@@ -21,16 +22,6 @@ export function StoryViewer() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [answers, setAnswers] = useState<{ questionId: string; correct: boolean }[]>([]);
-
-  // TTS function
-  const speak = useCallback((text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES'; // Spanish for better Chamorro pronunciation
-      utterance.rate = 0.8;
-      speechSynthesis.speak(utterance);
-    }
-  }, []);
 
   if (!story) {
     return (
@@ -204,12 +195,7 @@ export function StoryViewer() {
                 <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
                   {selectedWord.chamorro}
                 </span>
-                <button
-                  onClick={() => speak(selectedWord.chamorro)}
-                  className="p-1.5 rounded-lg bg-amber-200 dark:bg-amber-800 hover:bg-amber-300 dark:hover:bg-amber-700 transition-colors flex items-center justify-center"
-                >
-                  <Volume2 className="w-4 h-4 text-amber-800 dark:text-amber-200" />
-                </button>
+                <PronunciationButton text={selectedWord.chamorro} className="bg-amber-200 text-amber-800 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-200" />
               </div>
               {selectedWord.pronunciation && (
                 <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
@@ -505,13 +491,7 @@ export function StoryViewer() {
 
           {/* Listen to paragraph button */}
           {viewMode === 'reading' && (
-            <button
-              onClick={() => speak(paragraph.chamorro)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
-            >
-              <Volume2 className="w-4 h-4" />
-              <span className="text-sm font-medium hidden sm:inline">Listen</span>
-            </button>
+            <PronunciationButton text={paragraph.chamorro} showLabel className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
           )}
         </div>
       </div>
@@ -524,4 +504,3 @@ export function StoryViewer() {
     </div>
   );
 }
-

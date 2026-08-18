@@ -9,6 +9,7 @@ import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
+import { formatUsageSummary } from '../lib/usageDisplay';
 
 interface GameSettings {
   category: string;
@@ -473,7 +474,7 @@ export function Hangman() {
           
           {/* Daily limit indicator */}
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
-            Games today: {getCount('game')} / {getLimit('game') === Infinity ? '∞' : getLimit('game')}
+            {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
         

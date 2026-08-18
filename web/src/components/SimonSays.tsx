@@ -8,6 +8,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
+import { formatUsageSummary } from '../lib/usageDisplay';
 
 // Body parts with visual representations
 interface BodyPart {
@@ -249,7 +250,7 @@ export function SimonSays() {
             </button>
             
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
-              Games today: {getCount('game')}/{getLimit('game')}
+              {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
         )}

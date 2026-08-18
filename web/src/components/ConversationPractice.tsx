@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
+import { PronunciationButton } from './PronunciationButton';
 
 interface Message {
   id: string;
@@ -21,16 +22,6 @@ interface ConversationState {
   isComplete: boolean;
   finalScore?: number;
 }
-
-// Simple TTS function
-const speakText = (text: string) => {
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES'; // Spanish is closest to Chamorro pronunciation
-    utterance.rate = 0.85;
-    speechSynthesis.speak(utterance);
-  }
-};
 
 export function ConversationPractice() {
   const { scenarioId } = useParams<{ scenarioId: string }>();
@@ -533,13 +524,7 @@ function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
           </p>
         )}
       </div>
-      <button
-        onClick={() => speakText(phrase.chamorro)}
-        className="p-2 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
-        title="Listen"
-      >
-        🔊
-      </button>
+      <PronunciationButton text={phrase.chamorro} />
     </div>
   );
 }
@@ -619,15 +604,9 @@ function MessageBubble({
 
         {/* Listen button for character messages */}
         {!isUser && (
-          <button
-            onClick={() => speakText(message.chamorro)}
-            className="mt-1 text-xs text-slate-400 hover:text-coral-500 transition-colors"
-          >
-            🔊 Listen
-          </button>
+          <PronunciationButton text={message.chamorro} showLabel className="mt-1 px-2 text-slate-500 hover:text-coral-600" />
         )}
       </div>
     </div>
   );
 }
-

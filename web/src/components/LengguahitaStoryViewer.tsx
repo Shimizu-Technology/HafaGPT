@@ -1,18 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Volume2, ExternalLink, Loader2, BookOpen, X } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Loader2, BookOpen, X } from 'lucide-react';
 import { useStory } from '../hooks/useStoryQuery';
 import { useVocabularyWord } from '../hooks/useVocabularyQuery';
-
-// TTS function
-const speakText = (text: string) => {
-  if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-ES'; // Spanish approximates Chamorro pronunciation
-    utterance.rate = 0.8;
-    speechSynthesis.speak(utterance);
-  }
-};
+import { PronunciationButton } from './PronunciationButton';
 
 // Word popup component with enhanced morphology support
 function WordPopup({ 
@@ -50,12 +41,7 @@ function WordPopup({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => speakText(word)}
-              className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors flex items-center justify-center"
-            >
-              <Volume2 className="w-5 h-5" />
-            </button>
+            <PronunciationButton text={word} className="bg-teal-100 dark:bg-teal-900/30" />
             <button
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
@@ -368,13 +354,7 @@ export function LengguahitaStoryViewer() {
               <span className="text-xs font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide">
                 Chamorro
               </span>
-              <button
-                onClick={() => speakText(paragraph.chamorro)}
-                className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 hover:bg-teal-200 dark:hover:bg-teal-900/50 transition-colors flex items-center justify-center"
-                title="Listen to pronunciation"
-              >
-                <Volume2 className="w-4 h-4" />
-              </button>
+              <PronunciationButton text={paragraph.chamorro} className="bg-teal-100 dark:bg-teal-900/30" />
             </div>
             <p className="text-xl leading-relaxed text-brown-800 dark:text-white">
               <TappableText text={paragraph.chamorro} onWordTap={handleWordTap} />
@@ -498,4 +478,3 @@ export function LengguahitaStoryViewer() {
     </div>
   );
 }
-

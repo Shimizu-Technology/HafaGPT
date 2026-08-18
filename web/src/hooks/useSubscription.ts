@@ -11,6 +11,8 @@ export interface PromoStatus {
   end_date: string | null;
   message: string | null;
   theme: SiteTheme;
+  theme_active: boolean;
+  theme_end_date: string | null;
 }
 
 export interface UsageData {
@@ -51,12 +53,14 @@ export function usePromoStatus() {
     queryFn: async () => {
       const response = await fetch(`${API_URL}/api/promo/status`);
       if (!response.ok) {
-        return { active: false, end_date: null, message: null, theme: 'default' as SiteTheme };
+        return { active: false, end_date: null, message: null, theme: 'default' as SiteTheme, theme_active: false, theme_end_date: null };
       }
       const data = await response.json();
       return {
         ...data,
-        theme: data.theme || 'default',
+        theme: data.theme_active ? (data.theme || 'default') : 'default',
+        theme_active: Boolean(data.theme_active),
+        theme_end_date: data.theme_active ? data.theme_end_date : null,
       };
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -308,4 +312,3 @@ export function useSubscription() {
 }
 
 export default useSubscription;
-

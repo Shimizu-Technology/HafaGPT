@@ -4,7 +4,7 @@ import { ArrowLeft, BookOpen, Layers, Brain, CheckCircle, Moon, Sun } from 'luci
 import { useTheme } from '../hooks/useTheme';
 import { useUpdateProgress } from '../hooks/useLearningPath';
 import { useAwardXP } from '../hooks/useXP';
-import { getTopic, getTopicIndex, BEGINNER_PATH } from '../data/learningPath';
+import { getTopic, getTopicIndex, getNextTopic, getPath } from '../data/learningPath';
 import { LessonIntro } from './LessonIntro';
 import { LessonFlashcards } from './LessonFlashcards';
 import { LessonQuiz } from './LessonQuiz';
@@ -189,9 +189,8 @@ export function LessonPage() {
   };
 
   const handleNextTopic = () => {
-    const currentIndex = BEGINNER_PATH.findIndex(t => t.id === topicId);
-    if (currentIndex >= 0 && currentIndex < BEGINNER_PATH.length - 1) {
-      const nextTopic = BEGINNER_PATH[currentIndex + 1];
+    const nextTopic = topicId ? getNextTopic(topicId) : undefined;
+    if (nextTopic) {
       navigate(`/learn/${nextTopic.id}`);
       // Reset state for new topic
       setCurrentStep('intro');
@@ -316,7 +315,7 @@ export function LessonPage() {
           <LessonComplete
             topic={topic}
             topicIndex={topicIndex}
-            totalTopics={BEGINNER_PATH.length}
+            totalTopics={getPath(topic.level).length}
             quizScore={quizScore || 0}
             onNextTopic={handleNextTopic}
           />
@@ -335,4 +334,3 @@ export function LessonPage() {
     </div>
   );
 }
-

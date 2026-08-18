@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, ChevronDown, ChevronUp, Search, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
+import { PronunciationButton } from './PronunciationButton';
 
 const PAGE_SIZE = 50;
 
@@ -10,8 +11,6 @@ export function VocabularyCategory() {
   const navigate = useNavigate();
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [speakingIndex, setSpeakingIndex] = useState<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Pagination state - track additional words loaded beyond initial fetch
   const [additionalWords, setAdditionalWords] = useState<VocabularyWord[]>([]);
@@ -94,61 +93,6 @@ export function VocabularyCategory() {
     );
   }
 
-  // Speak word using OpenAI TTS with Spanish hint
-  const speakWord = async (word: VocabularyWord, index: number) => {
-    if (speakingIndex !== null) return; // Prevent multiple simultaneous plays
-    
-    setSpeakingIndex(index);
-    
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_URL}/api/tts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: word.chamorro })
-      });
-
-      if (response.ok) {
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        if (audioRef.current) {
-          audioRef.current.pause();
-        }
-        
-        audioRef.current = new Audio(audioUrl);
-        audioRef.current.onended = () => {
-          setSpeakingIndex(null);
-          URL.revokeObjectURL(audioUrl);
-        };
-        audioRef.current.onerror = () => {
-          setSpeakingIndex(null);
-          URL.revokeObjectURL(audioUrl);
-          fallbackSpeak(word.chamorro);
-        };
-        await audioRef.current.play();
-      } else {
-        fallbackSpeak(word.chamorro);
-      }
-    } catch {
-      fallbackSpeak(word.chamorro);
-    }
-  };
-
-  // Fallback to browser TTS
-  const fallbackSpeak = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES'; // Spanish for better Chamorro pronunciation
-      utterance.rate = 0.8;
-      utterance.onend = () => setSpeakingIndex(null);
-      utterance.onerror = () => setSpeakingIndex(null);
-      speechSynthesis.speak(utterance);
-    } else {
-      setSpeakingIndex(null);
-    }
-  };
-
   const toggleExpand = (index: number) => {
     setExpandedWord(expandedWord === index ? null : index);
   };
@@ -208,7 +152,6 @@ export function VocabularyCategory() {
         <div className="space-y-3">
           {filteredWords.map((word, index) => {
             const isExpanded = expandedWord === index;
-            const isSpeaking = speakingIndex === index;
             const hasExamples = word.examples && word.examples.length > 0;
             
             return (
@@ -223,24 +166,9 @@ export function VocabularyCategory() {
                 >
                   <div className="flex items-start gap-3">
                     {/* Speak Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        speakWord(word, index);
-                      }}
-                      disabled={speakingIndex !== null}
-                      className={`p-2 rounded-lg transition-colors flex-shrink-0 mt-0.5 flex items-center justify-center ${
-                        isSpeaking
-                          ? 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400'
-                          : 'bg-coral-50 dark:bg-ocean-900/30 text-coral-500 dark:text-ocean-400 hover:bg-coral-100 dark:hover:bg-ocean-900/50'
-                      }`}
-                    >
-                      {isSpeaking ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Volume2 className="w-4 h-4" />
-                      )}
-                    </button>
+                    <span className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                      <PronunciationButton text={word.chamorro} className="mt-0.5 bg-coral-50 text-coral-600 hover:bg-coral-100 dark:bg-ocean-900/30 dark:text-ocean-400" />
+                    </span>
 
                     {/* Word Content */}
                     <div className="flex-1 min-w-0">
