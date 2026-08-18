@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
+import { captureLearningActivity, buildLearningActivityProperties } from '../lib/learningAnalytics';
+import { readLearningGameContext } from '../lib/lessonPractice';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -62,6 +64,8 @@ export function useSaveGameResult() {
   return useMutation({
     mutationFn: async (params: GameResultCreate) => {
       const token = await getToken();
+      const learningContext = readLearningGameContext(window.location.search);
+      const shouldRecordLearning = learningContext?.categoryId === params.category_id;
       
       const response = await fetch(`${API_URL}/api/games/results`, {
         method: 'POST',
@@ -69,14 +73,26 @@ export function useSaveGameResult() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          ...params,
+          ...(shouldRecordLearning ? {
+            learning_context: {
+              topic_id: learningContext.topicId,
+              source: learningContext.source,
+            },
+          } : {}),
+        }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to save game result');
       }
 
-      return response.json();
+      const result = await response.json();
+      if (shouldRecordLearning) {
+        captureLearningActivity(buildLearningActivityProperties(learningContext, params));
+      }
+      return result;
     },
     onSuccess: () => {
       // Invalidate game stats to refetch
@@ -148,5 +164,4 @@ export function useGameHistory(
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
-
 

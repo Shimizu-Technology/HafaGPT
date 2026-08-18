@@ -114,6 +114,9 @@ compatible until a later cleanup migration is proven safe.
 - Session replay is disabled. New learning analytics must remain event-level
   and exclude chat text, translations, source passages, names, and school
   messages.
+- The release gate, data inventory, event allowlist, deletion behavior, and
+  unresolved legal/product checks are maintained in
+  [`CHILD_PRIVACY_PRODUCT_GATE_2026.md`](CHILD_PRIVACY_PRODUCT_GATE_2026.md).
 
 ## Evidence behind the learning design
 

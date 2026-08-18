@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
           
           {/* Last Updated */}
           <p className="text-sm text-brown-500 dark:text-gray-400 mb-6">
-            Last updated: August 15, 2026
+            Last updated: August 18, 2026
           </p>
 
           {/* Introduction */}
@@ -70,9 +70,10 @@ export default function PrivacyPolicy() {
               <div>
                 <h3 className="font-medium text-brown-800 dark:text-gray-200 mb-1">Usage Information</h3>
                 <p className="leading-relaxed">
-                  We collect limited product analytics, such as page visits and feature interactions,
-                  through PostHog. Session replay is disabled, and we do not intentionally send chat
-                  text, uploaded document contents, or form inputs as analytics events.
+                  We collect limited product analytics, such as page visits and explicitly allowlisted
+                  learning events, through PostHog. Session replay and automatic click capture are
+                  disabled. We do not intentionally send chat text, answers, translations, uploaded
+                  document contents, source passages, or form inputs as analytics events.
                 </p>
               </div>
             </div>
@@ -160,7 +161,7 @@ export default function PrivacyPolicy() {
             <ul className="list-disc list-inside space-y-2 text-brown-700 dark:text-gray-300 mt-2">
               <li>Access your personal data</li>
               <li>Request deletion of your account and data</li>
-              <li>Export your learning data</li>
+              <li>Request a copy of your learning data</li>
               <li>Opt out of non-essential communications</li>
             </ul>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed mt-3">

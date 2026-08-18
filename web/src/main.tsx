@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import posthog from 'posthog-js';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
+import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -27,10 +28,10 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   // Chat, learning progress, and family account pages contain sensitive text.
   // Keep replay off entirely; aggregate product events are sufficient here.
   disable_session_recording: true,
-  autocapture: {
-    dom_event_allowlist: ['click'], // Only auto-capture clicks
-    url_allowlist: [window.location.origin], // Only track your domain
-  },
+  // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
+  // are emitted explicitly through a property allowlist.
+  autocapture: false,
+  before_send: sanitizeAnalyticsEvent,
   loaded: () => {
     if (import.meta.env.DEV) {
       console.log('✅ PostHog loaded successfully');

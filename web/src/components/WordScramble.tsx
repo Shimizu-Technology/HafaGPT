@@ -9,6 +9,7 @@ import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
+import { readLearningGameContext } from '../lib/lessonPractice';
 
 interface GameSettings {
   category: string;
@@ -66,11 +67,12 @@ export function WordScramble() {
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const learningContext = useMemo(() => readLearningGameContext(window.location.search), []);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
   const [settings, setSettings] = useState<GameSettings>({
-    category: 'greetings',
+    category: learningContext?.categoryId || 'greetings',
     mode: 'beginner',
     wordsPerRound: 5,
   });
@@ -414,6 +416,15 @@ export function WordScramble() {
                 Unscramble the letters to spell Chamorro words!
               </p>
             </div>
+
+            {learningContext && (
+              <div className="flex items-center gap-3 rounded-xl border border-purple-200 bg-purple-50 p-3 text-left dark:border-purple-700/40 dark:bg-purple-900/20">
+                <BookOpen className="h-5 w-5 flex-none text-purple-600 dark:text-purple-300" aria-hidden="true" />
+                <p className="text-sm text-brown-700 dark:text-gray-200">
+                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from your lesson.
+                </p>
+              </div>
+            )}
 
             {/* Mode Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
@@ -847,4 +858,3 @@ export function WordScramble() {
     </div>
   );
 }
-
