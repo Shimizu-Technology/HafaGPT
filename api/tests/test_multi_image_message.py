@@ -85,7 +85,7 @@ def test_normalize_image_inputs_preserves_legacy_single_image():
     }]
 
 
-def test_image_detector_includes_sym_card_only_after_visual_yes() -> None:
+def test_image_detector_includes_sym_card_only_after_scoped_visual_yes() -> None:
     _, _, detect_context, completions = _load_image_helpers(detector_text="YES")
 
     card_ids = detect_context([{"data": "image-data", "content_type": "image/png"}])
@@ -94,6 +94,11 @@ def test_image_detector_includes_sym_card_only_after_visual_yes() -> None:
     request = completions.calls[0]
     assert request["model"] == "vision-model"
     assert request["max_tokens"] == 4
+    detector_prompt = request["messages"][1]["content"][0]["text"]
+    assert "BOTH" in detector_prompt
+    assert "Guam/Chamorro/Hurao" in detector_prompt
+    assert "token SYM by itself is not enough" in detector_prompt
+    assert "If either condition is uncertain" in request["messages"][0]["content"]
     assert request["messages"][1]["content"][1]["image_url"]["url"] == (
         "data:image/png;base64,image-data"
     )
