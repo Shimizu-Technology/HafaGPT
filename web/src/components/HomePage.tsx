@@ -26,6 +26,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { buildTodayPlan } from '../lib/todayPlan';
+import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
@@ -357,6 +358,17 @@ export function HomePage() {
   } = useHomepageData();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
+  const { todayUnavailable, progressUnavailable } = getHomepageSectionAvailability({
+    isLoading,
+    hasRequestError: Boolean(homepageError),
+    xp,
+    weak_areas: weakAreas,
+    sr_summary: srSummary,
+    recommended,
+    all_progress: allProgress,
+    streak,
+  });
+
   useEffect(() => {
     if (!needsOnboarding) {
       setShowOnboarding(false);
@@ -366,13 +378,16 @@ export function HomePage() {
     return () => window.clearTimeout(timer);
   }, [needsOnboarding, user?.id]);
 
-  const todayPlan = useMemo(() => buildTodayPlan({
-    preferences,
-    recommended,
-    srSummary,
-    weakAreas,
-    xp,
-  }), [preferences, recommended, srSummary, weakAreas, xp]);
+  const todayPlan = useMemo(() => {
+    if (isLoading || todayUnavailable) return null;
+    return buildTodayPlan({
+      preferences,
+      recommended,
+      srSummary,
+      weakAreas,
+      xp,
+    });
+  }, [isLoading, preferences, recommended, srSummary, todayUnavailable, weakAreas, xp]);
 
   if (!isLoaded) {
     return (
@@ -403,7 +418,7 @@ export function HomePage() {
             )}
           </div>
 
-          {homepageError ? (
+          {todayUnavailable ? (
             <TodayDataError onRetry={() => void refetchHomepage()} />
           ) : (
             <TodayPlanCard plan={todayPlan} isLoading={isLoading} />
@@ -412,7 +427,7 @@ export function HomePage() {
           <ExploreSection />
           <ProgressSummary
             isLoading={isLoading}
-            hasError={Boolean(homepageError)}
+            hasError={progressUnavailable}
             onRetry={() => void refetchHomepage()}
             todayMinutes={xp?.today_minutes ?? 0}
             goalMinutes={xp?.daily_goal_minutes ?? DEFAULT_DAILY_SESSION_MINUTES}

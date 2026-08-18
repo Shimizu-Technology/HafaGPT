@@ -22,7 +22,7 @@ const ACTIVITY_ICONS: Record<TodayActivityKind, LucideIcon> = {
 };
 
 interface TodayPlanCardProps {
-  plan: TodayPlan;
+  plan: TodayPlan | null;
   isLoading?: boolean;
 }
 
@@ -37,6 +37,11 @@ export function TodayPlanCard({ plan, isLoading = false }: TodayPlanCardProps) {
       </section>
     );
   }
+
+  // HomePage treats a missing non-loading plan as unavailable and renders its
+  // retry state instead. This guard keeps the presentational component safe if
+  // it is reused while data is transitioning.
+  if (!plan) return null;
 
   if (plan.goalDisabled) {
     return (

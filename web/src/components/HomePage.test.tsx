@@ -1,7 +1,55 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
+import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
 import { ProgressSummary } from './HomePage';
+
+const AVAILABLE_SECTION = {};
+
+function availability(overrides: Partial<Parameters<typeof getHomepageSectionAvailability>[0]> = {}) {
+  return getHomepageSectionAvailability({
+    isLoading: false,
+    hasRequestError: false,
+    xp: AVAILABLE_SECTION as never,
+    weak_areas: AVAILABLE_SECTION as never,
+    sr_summary: AVAILABLE_SECTION as never,
+    recommended: AVAILABLE_SECTION as never,
+    all_progress: AVAILABLE_SECTION as never,
+    streak: AVAILABLE_SECTION as never,
+    ...overrides,
+  });
+}
+
+describe('homepage section availability', () => {
+  it('marks both personalized sections unavailable when XP is missing from a partial success', () => {
+    expect(availability({ xp: null })).toEqual({
+      todayUnavailable: true,
+      progressUnavailable: true,
+    });
+  });
+
+  it('keeps Today available but hides progress when only path progress is missing', () => {
+    expect(availability({ all_progress: null })).toEqual({
+      todayUnavailable: false,
+      progressUnavailable: true,
+    });
+  });
+
+  it('does not turn expected nulls into an error while the request is loading', () => {
+    expect(availability({
+      isLoading: true,
+      xp: null,
+      weak_areas: null,
+      sr_summary: null,
+      recommended: null,
+      all_progress: null,
+      streak: null,
+    })).toEqual({
+      todayUnavailable: false,
+      progressUnavailable: false,
+    });
+  });
+});
 
 describe('home progress summary', () => {
   it('shows an honest loading state instead of temporary zero progress', () => {
