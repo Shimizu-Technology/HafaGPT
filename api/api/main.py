@@ -90,7 +90,7 @@ from .spaced_repetition import (
     quality_from_confidence,
     upsert_spaced_repetition_review,
 )
-from .site_theme import resolve_site_theme
+from .site_theme import resolve_site_theme, validate_site_theme_configuration
 
 # Clerk for authentication
 try:
@@ -7695,6 +7695,22 @@ async def update_admin_settings(
         
         if not body or not isinstance(body, dict):
             raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+
+        theme_keys = {"theme", "theme_enabled", "theme_end_date"}
+        if theme_keys.intersection(body):
+            theme = str(body.get("theme", get_site_setting("theme", "default")))
+            enabled_value = str(body.get("theme_enabled", get_site_setting("theme_enabled", "false"))).lower()
+            if enabled_value not in {"true", "false"}:
+                raise HTTPException(status_code=400, detail="theme_enabled must be true or false")
+
+            theme_error = validate_site_theme_configuration(
+                theme,
+                enabled=enabled_value == "true",
+                end_date=str(body.get("theme_end_date", get_site_setting("theme_end_date", ""))),
+                today=get_guam_date(),
+            )
+            if theme_error:
+                raise HTTPException(status_code=400, detail=theme_error)
         
         db_url = os.getenv("DATABASE_URL")
         if not db_url:
@@ -7725,6 +7741,8 @@ async def update_admin_settings(
         logger.info(f"✅ [ADMIN] Updated settings: {updated_keys} by {user_id}")
         return {"success": True, "updated": updated_keys}
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ [ADMIN] Update settings error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

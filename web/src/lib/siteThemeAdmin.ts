@@ -24,6 +24,15 @@ export function validateSeasonalThemeSettings(
     return 'Choose an end date before enabling seasonal effects.';
   }
 
+  const parsedEndDate = new Date(`${endDate}T00:00:00Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(endDate)
+    || Number.isNaN(parsedEndDate.getTime())
+    || parsedEndDate.toISOString().slice(0, 10) !== endDate
+  ) {
+    return 'Choose a valid calendar date.';
+  }
+
   if (endDate < today) {
     return 'Choose today or a future date in Guam time.';
   }

@@ -4,6 +4,8 @@ import { getGuamDateKey, validateSeasonalThemeSettings } from './siteThemeAdmin'
 describe('seasonal theme admin validation', () => {
   it('requires a current or future Guam cutoff for enabled seasonal themes', () => {
     expect(validateSeasonalThemeSettings('christmas', true, '', '2026-08-18')).toMatch(/end date/i);
+    expect(validateSeasonalThemeSettings('christmas', true, '2026-13-45', '2026-08-18')).toMatch(/valid calendar/i);
+    expect(validateSeasonalThemeSettings('christmas', true, '2026-02-30', '2026-02-01')).toMatch(/valid calendar/i);
     expect(validateSeasonalThemeSettings('newyear', true, '2026-08-17', '2026-08-18')).toMatch(/future/i);
     expect(validateSeasonalThemeSettings('christmas', true, '2026-08-18', '2026-08-18')).toBeNull();
   });
