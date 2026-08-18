@@ -33,12 +33,6 @@ _cancelled_messages: set[str] = set()
 
 # Valid image extensions for conversation history (prevents sending PDFs as images)
 VALID_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
-SYM_IMAGE_CONTEXT_CARD_ID = "usage.guam.school.sym_signoff"
-MSY_IMAGE_CONTEXT_CARD_ID = "usage.guam.school.msy_greeting"
-IMAGE_CONTEXT_CARD_IDS = {
-    "SYM": SYM_IMAGE_CONTEXT_CARD_ID,
-    "MSY": MSY_IMAGE_CONTEXT_CARD_ID,
-}
 
 
 def cancel_pending_message(pending_id: str) -> bool:
@@ -273,7 +267,8 @@ from src.rag.query_classification import detect_query_type
 from src.rag.query_routing import should_use_rag
 from src.rag.retrieval_observability import build_retrieval_event
 from src.rag.school_context import (
-    content_analysis_guidance,
+    IMAGE_CONTEXT_CARD_IDS,
+    resolve_school_message_context,
 )
 from src.rag.translation_policy import (
     is_passage_translation,
@@ -1278,7 +1273,21 @@ def get_chatbot_response(
         return early_cancelled_response()
     
     # Get RAG context
-    contextual_card_ids, image_school_signal = detect_image_context(normalized_image_inputs)
+    image_card_ids, image_school_signal = detect_image_context(normalized_image_inputs)
+    analysis_guidance, school_announcement, contextual_card_ids = (
+        resolve_school_message_context(
+            message,
+            has_images=bool(normalized_image_inputs),
+            image_school_signal=image_school_signal,
+            image_card_ids=image_card_ids,
+        )
+    )
+    logger.info(
+        "SCHOOL_ANNOUNCEMENT_CONTEXT matched=%s source=%s cards=%s",
+        school_announcement,
+        "image" if image_school_signal else "text" if school_announcement else "none",
+        len(contextual_card_ids),
+    )
     rag_context, sources = get_rag_context(
         message,
         conversation_length,
@@ -1300,17 +1309,6 @@ def get_chatbot_response(
     # daily word filtering, flashcard suggestions) but don't want to filter all chat
     # responses through a predetermined lens - let the AI respond naturally to what
     # the user actually asks.
-    
-    analysis_guidance, school_announcement = content_analysis_guidance(
-        message,
-        has_images=bool(normalized_image_inputs),
-        image_school_signal=image_school_signal,
-    )
-    logger.info(
-        "SCHOOL_ANNOUNCEMENT_CONTEXT matched=%s source=%s",
-        school_announcement,
-        "image" if image_school_signal else "text" if school_announcement else "none",
-    )
     
     system_prompt += analysis_guidance
     
@@ -1583,7 +1581,21 @@ def get_chatbot_response_stream(
         return
     
     # Get RAG context with token limit
-    contextual_card_ids, image_school_signal = detect_image_context(normalized_image_inputs)
+    image_card_ids, image_school_signal = detect_image_context(normalized_image_inputs)
+    analysis_guidance, school_announcement, contextual_card_ids = (
+        resolve_school_message_context(
+            message,
+            has_images=bool(normalized_image_inputs),
+            image_school_signal=image_school_signal,
+            image_card_ids=image_card_ids,
+        )
+    )
+    logger.info(
+        "SCHOOL_ANNOUNCEMENT_CONTEXT matched=%s source=%s cards=%s",
+        school_announcement,
+        "image" if image_school_signal else "text" if school_announcement else "none",
+        len(contextual_card_ids),
+    )
     rag_context, sources = get_rag_context(
         message,
         conversation_length,
@@ -1605,17 +1617,6 @@ def get_chatbot_response_stream(
     # daily word filtering, flashcard suggestions) but don't want to filter all chat
     # responses through a predetermined lens - let the AI respond naturally to what
     # the user actually asks.
-    
-    analysis_guidance, school_announcement = content_analysis_guidance(
-        message,
-        has_images=bool(normalized_image_inputs),
-        image_school_signal=image_school_signal,
-    )
-    logger.info(
-        "SCHOOL_ANNOUNCEMENT_CONTEXT matched=%s source=%s",
-        school_announcement,
-        "image" if image_school_signal else "text" if school_announcement else "none",
-    )
     
     system_prompt += analysis_guidance
     

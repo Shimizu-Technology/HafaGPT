@@ -5,6 +5,24 @@ from __future__ import annotations
 import re
 
 
+IMAGE_CONTEXT_CARD_IDS = {
+    "SYM": "usage.guam.school.sym_signoff",
+    "MSY": "usage.guam.school.msy_greeting",
+}
+_SCHOOL_CARD_TOKEN_PATTERNS = {
+    "SYM": re.compile(
+        r"(?<![A-Za-z0-9])S(?:[.\t ·_-]{0,3})Y"
+        r"(?:[.\t ·_-]{0,3})M(?![A-Za-z0-9])",
+        re.IGNORECASE,
+    ),
+    "MSY": re.compile(
+        r"(?<![A-Za-z0-9])M(?:[.\t ·_-]{0,3})S"
+        r"(?:[.\t ·_-]{0,3})Y(?![A-Za-z0-9])",
+        re.IGNORECASE,
+    ),
+}
+
+
 _EXPLICIT_SCHOOL_MESSAGE_PATTERNS = (
     re.compile(
         r"\b(?:school|class|academy|campus)\s+"
@@ -67,6 +85,7 @@ _OPERATIONAL_PATTERNS = (
     ),
 )
 
+
 def is_school_announcement_context(
     message: str,
     *,
@@ -92,6 +111,28 @@ def is_school_announcement_context(
         return True
 
     return False
+
+
+def school_context_card_ids(
+    message: str,
+    *,
+    school_announcement: bool,
+) -> tuple[str, ...]:
+    """Select scoped acronym cards from a trusted school routing decision.
+
+    Dots and spaces are accepted because phones and OCR often render a compact
+    sign-off as ``S.Y.M.`` or ``S Y M``. The caller must first establish school
+    announcement context; an acronym alone never receives a Guam-specific card.
+    """
+
+    if not school_announcement:
+        return ()
+    text = message or ""
+    return tuple(
+        IMAGE_CONTEXT_CARD_IDS[token]
+        for token, pattern in _SCHOOL_CARD_TOKEN_PATTERNS.items()
+        if pattern.search(text)
+    )
 
 
 GENERAL_DOCUMENT_ANALYSIS_GUIDANCE = """
@@ -222,3 +263,31 @@ def content_analysis_guidance(
     if school_announcement:
         return SCHOOL_ANNOUNCEMENT_GUIDANCE, True
     return "", False
+
+
+def resolve_school_message_context(
+    message: str,
+    *,
+    has_images: bool,
+    image_school_signal: bool,
+    image_card_ids: tuple[str, ...],
+) -> tuple[str, bool, tuple[str, ...]]:
+    """Resolve one shared school routing result for prompt and retrieval use."""
+
+    guidance, school_announcement = content_analysis_guidance(
+        message,
+        has_images=has_images,
+        image_school_signal=image_school_signal,
+    )
+    card_ids = tuple(
+        dict.fromkeys(
+            (
+                *image_card_ids,
+                *school_context_card_ids(
+                    message,
+                    school_announcement=school_announcement,
+                ),
+            )
+        )
+    )
+    return guidance, school_announcement, card_ids

@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 
 from src.rag.query_classification import detect_query_type
 from src.rag.source_reviews import build_registered_source_citation, get_source_review
+from src.rag.text_normalization import normalize_chamorro_match_text
 
 
 KNOWLEDGE_CARDS_PATH = Path(__file__).resolve().parents[2] / "language_content" / "knowledge_cards.json"
@@ -274,8 +275,7 @@ def production_cards() -> list[dict[str, Any]]:
 
 
 def _normalize_match_text(value: str) -> str:
-    normalized_apostrophes = value.casefold().replace("’", "'").replace("‘", "'")
-    return " ".join(re.sub(r"[^a-z0-9åñ'-]+", " ", normalized_apostrophes).split())
+    return normalize_chamorro_match_text(value)
 
 
 def _required_alias_acronyms(card: dict[str, Any]) -> set[str]:

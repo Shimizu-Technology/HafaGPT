@@ -4,6 +4,8 @@ from src.rag.school_context import (
     content_analysis_guidance,
     document_analysis_guidance,
     is_school_announcement_context,
+    resolve_school_message_context,
+    school_context_card_ids,
 )
 
 
@@ -143,3 +145,47 @@ def test_text_only_general_question_gets_no_document_contract() -> None:
 
     assert school_match is False
     assert guidance == ""
+
+
+def test_pasted_school_notice_selects_scoped_acronym_cards() -> None:
+    assert school_context_card_ids(
+        "School announcement: classes end early today. S.Y.M.!",
+        school_announcement=True,
+    ) == ("usage.guam.school.sym_signoff",)
+    assert school_context_card_ids(
+        "Hurao Academy notice: M S Y, familia. The gate opens at 7:30.",
+        school_announcement=True,
+    ) == ("usage.guam.school.msy_greeting",)
+
+
+def test_pasted_school_notice_can_select_both_cards_in_stable_order() -> None:
+    assert school_context_card_ids(
+        "School message: MSY familia. No classes today. SYM!",
+        school_announcement=True,
+    ) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
+
+def test_acronym_alone_never_selects_a_guam_school_card() -> None:
+    assert school_context_card_ids(
+        "A generic worksheet asks students to copy S.Y.M.",
+        school_announcement=False,
+    ) == ()
+
+
+def test_resolved_school_context_merges_image_and_text_cards_once() -> None:
+    guidance, school_match, card_ids = resolve_school_message_context(
+        "School announcement: MSY familia. No classes today. SYM!",
+        has_images=True,
+        image_school_signal=True,
+        image_card_ids=("usage.guam.school.sym_signoff",),
+    )
+
+    assert guidance == SCHOOL_ANNOUNCEMENT_GUIDANCE
+    assert school_match is True
+    assert card_ids == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )

@@ -3,7 +3,7 @@
   "metadata": {
     "purpose": "Original HåfaGPT explanations backed by traceable sources without copying restricted full text into production retrieval.",
     "created_at": "2026-08-18",
-    "editorial_policy": "Every card must use original wording, label region and time period, preserve derivative lineage, cite each material claim, and stay within the quotation limit of every supporting source review."
+    "editorial_policy": "Every card must use original wording, label region and time period, preserve derivative lineage, cite each material claim, and stay within the quotation limit of every supporting source review. Firsthand school observations must be de-identified and summarized as scoped usage claims; never store raw group messages, names, phone numbers, student details, or screenshots in a card."
   },
   "cards": [
     {
@@ -98,7 +98,7 @@
           "support": "corroborating"
         }
       ],
-      "review_notes": "Official Guam Legislature records document current institutional use of both SYM and the full Si Yu'us ma'åse' sign-off. Hurao Academy context is user-supplied firsthand evidence, so the approved explanation remains conditional and does not claim a formal school policy or universal abbreviation rule."
+      "review_notes": "Official Guam Legislature records document current institutional use of both SYM and the full Si Yu'us ma'åse' sign-off. Hurao Academy context is user-supplied firsthand evidence, so the approved explanation remains conditional and does not claim a formal school policy or universal abbreviation rule. No raw school message or identifying participant data is retained in this card."
     },
     {
       "id": "usage.guam.school.msy_greeting",
@@ -125,7 +125,7 @@
           "support": "primary"
         }
       ],
-      "review_notes": "The Kumisión's official cultural dictionary independently supports the full greeting, spelling, and English meaning but does not document the acronym. The MSY abbreviation at Hurao Academy is user-supplied firsthand context, so this card states a scoped interpretation and does not claim universal usage, formal policy, or a literal etymology."
+      "review_notes": "The Kumisión's official cultural dictionary independently supports the full greeting, spelling, and English meaning but does not document the acronym. The MSY abbreviation at Hurao Academy is user-supplied firsthand context, so this card states a scoped interpretation and does not claim universal usage, formal policy, or a literal etymology. No raw school message or identifying participant data is retained in this card."
     }
   ]
 }

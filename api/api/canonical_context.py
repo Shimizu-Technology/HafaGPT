@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
+from src.rag.text_normalization import normalize_chamorro_match_text
 
 
 CANONICAL_VOCABULARY_PATH = (
@@ -20,14 +22,30 @@ DICTIONARY_DATA_PATH = Path(__file__).resolve().parents[1] / "dictionary_data"
 EXACT_DICTIONARY_FILES = (
     ("chamoru_info_dictionary.json", "Chamoru.info dictionary"),
     ("chamorro_english_dictionary_TOD.json", "Topping, Ogo, and Dungca dictionary"),
-    ("revised_and_updated_chamorro_dictionary.json", "Revised and updated Chamorro dictionary"),
+    (
+        "revised_and_updated_chamorro_dictionary.json",
+        "Revised and updated Chamorro dictionary",
+    ),
 )
 MAX_CANONICAL_MATCHES = 8
 
 
 def _normalize_for_match(value: str) -> str:
-    apostrophe_normalized = value.casefold().replace("’", "'").replace("‘", "'")
-    return " ".join(re.sub(r"[^\w'-]+", " ", apostrophe_normalized).split())
+    return normalize_chamorro_match_text(value)
+
+
+def _normalize_exact_headword(value: str) -> str:
+    apostrophe_normalized = (
+        (value or "")
+        .casefold()
+        .replace("’", "'")
+        .replace("‘", "'")
+        .replace("ʼ", "'")
+        .replace("ʻ", "'")
+        .replace("`", "'")
+    )
+    composed = unicodedata.normalize("NFC", apostrophe_normalized)
+    return " ".join(re.sub(r"[^\w'-]+", " ", composed).split())
 
 
 @lru_cache(maxsize=1)
@@ -65,13 +83,13 @@ def _extract_requested_headword(user_input: str) -> str:
 
 
 def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, object]]:
-    normalized_headword = _normalize_for_match(headword)
+    normalized_headword = _normalize_exact_headword(headword)
     if not normalized_headword:
         return []
     matches = []
     for display_name, dictionary in _exact_dictionary_data():
         for entry_headword, definition in dictionary.items():
-            if _normalize_for_match(entry_headword) == normalized_headword:
+            if _normalize_exact_headword(entry_headword) == normalized_headword:
                 matches.append((display_name, entry_headword, definition))
                 break
     return matches

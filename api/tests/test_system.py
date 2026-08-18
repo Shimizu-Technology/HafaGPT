@@ -44,6 +44,10 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
         "elif not is_passage_translation(message) and not school_announcement:"
     ) == 2
     assert chatbot_source.count("translation_prompt_guidance(") == 2
+    assert chatbot_source.count("resolve_school_message_context(") == 2
+    assert chatbot_source.count(
+        "analysis_guidance, school_announcement, contextual_card_ids = ("
+    ) == 2
     assert "Do not add etymology, pronunciation, cultural-origin" in chatbot_source
 
 

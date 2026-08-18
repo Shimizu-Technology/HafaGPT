@@ -4694,7 +4694,15 @@
         "guide": "poht fah-BOHT",
         "status": "needs_native_review"
       },
-      "variants": [],
+      "variants": [
+        {
+          "term": "Put fabot",
+          "type": "source_variant",
+          "status": "source_backed",
+          "source": "revised_and_updated_chamorro_dictionary.json",
+          "notes": "This spelling occurs repeatedly in revised-dictionary examples and in present-day school messages. Preserve it when quoting a source; continue to teach Pot fabot as the primary beginner form."
+        }
+      ],
       "deprecated_app_terms": [],
       "needs_review_terms": [],
       "source_citations": [
@@ -4710,6 +4718,14 @@
         },
         {
           "source": "revised_and_updated_chamorro_dictionary.json",
+          "headword": "adingani",
+          "definition": "speak to, talk to, advise; its example glosses Put fabot as Please",
+          "evidence": [
+            "Put fabot adingani i lahi-mu — Please talk to your son"
+          ]
+        },
+        {
+          "source": "revised_and_updated_chamorro_dictionary.json",
           "headword": "fabót",
           "definition": "favor, kindness, courtesy",
           "part_of_speech": "n.",
@@ -4718,7 +4734,7 @@
           ]
         }
       ],
-      "notes": "Current app phrase is source-backed."
+      "notes": "Teach Pot fabot as the primary beginner form. Put fabot is retained as a source-backed observed variant and should not be silently rewritten inside a quoted school message."
     },
     {
       "id": "common_phrases.i_dont_understand",

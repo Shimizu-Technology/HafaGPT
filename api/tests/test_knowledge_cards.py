@@ -15,6 +15,7 @@ from src.rag.knowledge_cards import (
 
 
 def test_seed_knowledge_cards_are_valid_and_cited() -> None:
+    document = load_knowledge_cards()
     cards = cards_by_id()
 
     assert "lexicon.hanom.water" in cards
@@ -28,6 +29,14 @@ def test_seed_knowledge_cards_are_valid_and_cited() -> None:
         "usage.guam.school.sym_signoff",
         "usage.guam.school.msy_greeting",
     ]
+    assert "never store raw group messages" in document["metadata"]["editorial_policy"]
+    assert all(
+        "No raw school message" in cards[card_id]["review_notes"]
+        for card_id in (
+            "usage.guam.school.sym_signoff",
+            "usage.guam.school.msy_greeting",
+        )
+    )
 
 
 def test_knowledge_card_cannot_use_discovery_only_source() -> None:
@@ -165,6 +174,7 @@ def test_sym_card_matches_scoped_guam_and_hurao_questions() -> None:
         "Can you explain the Hurao Academy SYM sign-off?",
         "At Hurao Academy, what does SYM mean at the end of a school message?",
         "Please explain how people use SYM in a Guam school announcement",
+        "What does S.Y.M. mean at Hurao Academy?",
     ):
         assert [card["id"] for card in matching_production_cards(query)] == [
             "usage.guam.school.sym_signoff"
@@ -178,6 +188,7 @@ def test_msy_card_matches_scoped_guam_and_hurao_questions() -> None:
         "Can you explain the Hurao Academy MSY greeting?",
         "At Hurao Academy, what does MSY mean at the start of a school message?",
         "Please explain how people use MSY in a Guam school announcement",
+        "What does M S Y mean at Hurao Academy?",
     ):
         assert [card["id"] for card in matching_production_cards(query)] == [
             "usage.guam.school.msy_greeting"
