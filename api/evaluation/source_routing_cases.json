@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "metadata": {
+    "purpose": "Deterministic release gate for governed source routing; contains no model calls or production data.",
+    "created_at": "2026-08-18"
+  },
+  "cases": [
+    {"id": "guam_orthography_exact", "query": "What spelling system does Guam use?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
+    {"id": "guam_orthography_current", "query": "What is the current Guam CHamoru orthography?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
+    {"id": "guam_cnmi_comparison", "query": "Are Guam and CNMI spellings the same?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
+    {"id": "guahan_ascii", "query": "What spelling system does Guahan use?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
+    {"id": "guahan_diacritic", "query": "What orthography does Guåhan use?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
+    {"id": "ambiguous_guam_spelled_word", "query": "How is Chamorro spelled in Guam?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "guam_only", "query": "Guam", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "guam_overview", "query": "Tell me about Guam", "expected_query_type": "cultural", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "guam_school_system", "query": "What system does Guam use for schools?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "dictionary_spelling_system", "query": "What spelling system does the dictionary use?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "unspecified_current_orthography", "query": "What is the current Chamorro orthography?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "draft_hanom_card", "query": "What does hånom mean?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "english_water_lookup", "query": "How do you say water in Chamorro?", "expected_query_type": "lookup", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "language_overview", "query": "Tell me about the Chamorro language", "expected_query_type": "educational", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "cnmi_overview", "query": "Tell me about CNMI", "expected_query_type": "educational", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "historical_guam_orthography", "query": "What orthography did Guam use historically?", "expected_query_type": "historical", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "guam_spelling_1865", "query": "How was Chamorro spelled on Guam in 1865?", "expected_query_type": "historical", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "ancient_guam_spelling", "query": "Tell me about ancient Chamorro spelling in Guam", "expected_query_type": "historical", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "chamorro_greeting", "query": "Håfa Adai", "expected_query_type": "lookup", "expected_route": "vector_light", "expected_card_ids": []},
+    {"id": "english_greeting", "query": "Hello", "expected_query_type": "lookup", "expected_route": "no_rag", "expected_card_ids": []}
+  ]
+}

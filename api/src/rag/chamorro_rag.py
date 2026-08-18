@@ -19,6 +19,7 @@ from src.rag.source_policy import (
     source_weight,
 )
 from src.rag.source_reviews import build_citation_contract
+from src.rag.query_classification import detect_query_type
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -63,95 +64,6 @@ def normalize_chamorro_text(text: str) -> str:
     text = ''.join(char for char in text if unicodedata.category(char) != 'Mn')
     
     return text
-
-
-def detect_query_type(query: str) -> str:
-    """
-    Classify the evidence role needed for a query.
-
-    The source registry uses this value to decide whether a source may be
-    retrieved. Lookup and educational questions favor governed language
-    references; usage, cultural, and historical questions may opt into the
-    narrower sources registered for those roles.
-    
-    Args:
-        query: User's question
-        
-    Returns:
-        One of: lookup, educational, usage, cultural, or historical.
-    """
-    query_lower = query.lower()
-
-    # Explicit translation intent takes precedence over a broader cultural
-    # phrase in a multi-part prompt. Definition intent is evaluated after
-    # explicit historical/cultural roles so "mean in 1865" stays historical.
-    translation_lookup_patterns = [
-        r'\bchamorro word for\b',    # "What is the Chamorro word for X?"
-        r'\btranslate\b',            # "Translate X"
-        r'\bhow do you say\b',       # "How do you say X?" - this is a lookup!
-        r'\bhow do i say\b',         # "How do I say X?" - this is a lookup!
-    ]
-    if any(re.search(pattern, query_lower) for pattern in translation_lookup_patterns):
-        return 'lookup'
-
-    historical_keywords = [
-        'historical', 'historically', 'old chamorro', 'older chamorro',
-        'etymology', 'etymological', 'word origin', 'in 1865',
-    ]
-    if any(keyword in query_lower for keyword in historical_keywords):
-        return 'historical'
-
-    cultural_keywords = [
-        'culture', 'cultural', 'custom', 'tradition', 'traditional',
-        'history of guam', 'legend', 'folklore', 'values',
-    ]
-    if any(keyword in query_lower for keyword in cultural_keywords):
-        return 'cultural'
-
-    broad_guam_patterns = [
-        r'\btell me (?:all |everything )?about guam\b',
-        r'\b(?:overview|facts|information) (?:about|on) guam\b',
-        r'\bwhat is guam\b',
-    ]
-    if any(re.search(pattern, query_lower) for pattern in broad_guam_patterns):
-        return 'cultural'
-
-    generic_lookup_patterns = [
-        r'\bin chamorro\b',
-        r'\bto chamorro\b',
-        r'\bin english\b',
-        r'\bto english\b',
-        r'\bwhat (?:does|do|did)\b.+\bmean\b',
-        r'\bmeaning of\b',
-    ]
-    if any(re.search(pattern, query_lower) for pattern in generic_lookup_patterns):
-        return 'lookup'
-
-    usage_keywords = [
-        'use in a sentence', 'used in a sentence', 'example sentence',
-        'in context', 'who writes', 'newspaper', 'article', 'real-world use',
-    ]
-    if any(keyword in query_lower for keyword in usage_keywords):
-        return 'usage'
-    
-    # PRIORITY 2: Educational keywords (for grammar lessons, etc.)
-    educational_keywords = [
-        'how do i', 'how to', 'how can i', 'how would i',  # Now only triggers if no lookup pattern
-        'teach me', 'show me', 'explain', 'learn',
-        'lesson', 'grammar', 'conjugate', 'conjugation',
-        'story', 'stories', 'tell me a', 'tell me about',
-        'example', 'examples',
-        'practice', 'exercise', 'form sentences',
-        'word order', 'sentence structure',
-        'speak', 'conversation', 'talk about'
-    ]
-    
-    for keyword in educational_keywords:
-        if keyword in query_lower:
-            return 'educational'
-    
-    # Default to lookup (most queries are vocabulary lookups)
-    return 'lookup'
 
 
 def extract_target_word(query: str) -> str:

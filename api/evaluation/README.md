@@ -36,6 +36,26 @@ and cannot be selected by the production runtime.
 Automated scores are regression signals only; native-speaker/educator review is a
 required release gate.
 
+## Governed source-routing release gate
+
+`source_routing_cases.json` is the fast, deterministic pre-deploy benchmark for
+the production evidence router. It verifies query-role classification, approved
+knowledge-card selection, false-positive avoidance, regional spelling variants,
+and separation of modern guidance from historical questions. It performs no
+model calls, does not connect to the production database, and contains no user
+data.
+
+```bash
+cd api
+PYTHONPATH=. .venv/bin/python scripts/run_source_routing_benchmark.py
+```
+
+The repository-wide `scripts/check.sh` command runs this benchmark automatically.
+Production retrieval also emits a privacy-safe `RAG_SELECTION` JSON log with the
+route, query type, governed source IDs, evidence kinds, card IDs, and truncation
+status. It deliberately excludes the user message, retrieved text, source names,
+URLs, and private paths.
+
 ## Legacy evaluation suite
 
 Automated testing framework to measure and track HafaGPT's performance over time.

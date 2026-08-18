@@ -1,4 +1,5 @@
 import ast
+import json
 from pathlib import Path
 
 
@@ -7,7 +8,7 @@ SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
 
 
 class FakeLogger:
-    def info(self, _message: str) -> None:
+    def info(self, _message: str, *_args) -> None:
         pass
 
     def error(self, _message: str) -> None:
@@ -43,6 +44,10 @@ def _load_get_rag_context(*, fake_rag: FakeRAG, card_context: str):
         "rag": fake_rag,
         "count_tokens": lambda value: len(value.split()),
         "truncate_text": lambda value, _limit: value,
+        "format_source_citations": lambda sources: sources,
+        "detect_query_type": lambda _query: "lookup",
+        "build_retrieval_event": lambda **_kwargs: {},
+        "json": json,
         "logger": FakeLogger(),
     }
     exec(compile(ast.Module(body=[function], type_ignores=[]), str(SOURCE_PATH), "exec"), namespace)

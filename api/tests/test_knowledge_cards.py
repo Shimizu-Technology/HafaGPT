@@ -174,6 +174,18 @@ def test_guahan_ascii_region_marker_matches_guam_card() -> None:
     ] == ["orthography.guam.current_reference"]
 
 
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What orthography did Guam use historically?",
+        "How was Chamorro spelled on Guam in 1865?",
+        "Tell me about ancient Chamorro spelling in Guam",
+    ],
+)
+def test_modern_card_does_not_answer_historical_queries(query: str) -> None:
+    assert matching_production_cards(query) == []
+
+
 def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> None:
     context, citations = get_knowledge_card_context(
         "Are Guam and CNMI spellings the same?"
