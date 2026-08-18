@@ -59,11 +59,13 @@ export function HomePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   
   useEffect(() => {
-    if (needsOnboarding) {
-      const timer = setTimeout(() => setShowOnboarding(true), 500);
-      return () => clearTimeout(timer);
+    if (!needsOnboarding) {
+      setShowOnboarding(false);
+      return;
     }
-  }, [needsOnboarding]);
+    const timer = setTimeout(() => setShowOnboarding(true), 500);
+    return () => clearTimeout(timer);
+  }, [needsOnboarding, user?.id]);
 
   const isSignedIn = !!user;
   const isAuthLoading = !isClerkLoaded;
@@ -591,8 +593,9 @@ export function HomePage() {
       
       {/* Onboarding Modal */}
       <OnboardingModal 
-        isOpen={showOnboarding} 
+        isOpen={showOnboarding && needsOnboarding}
         onClose={() => setShowOnboarding(false)} 
+        accountKey={user?.id}
       />
 
       {/* Floating CTA for signed-out mobile users - positioned above BottomNav */}

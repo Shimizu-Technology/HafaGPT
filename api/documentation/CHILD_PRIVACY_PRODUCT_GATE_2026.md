@@ -88,6 +88,23 @@ reading support, Chamorro confidence, learning goal, and preferred session
 length. They must be optional, editable, and safely defaulted. Do not add date
 of birth, child name, school, classroom, teacher, address, or student ID.
 
+The implemented preference keys are stored in the caregiver-owned Clerk
+account's client-writable preference metadata and normalized against code
+allowlists every time they are read:
+
+| Key | Allowed values | Safe default |
+|---|---|---|
+| `learner_mode` | `self`, `with_child`, `helping_family` | `self` |
+| `reading_support` | `audio_pictures`, `short_text_audio`, `independent` | `short_text_audio` |
+| `skill_level` | `beginner`, `intermediate`, `advanced` | `beginner` |
+| `learning_goal` | `conversation`, `culture`, `family`, `travel`, `all` | `all` |
+| `daily_session_minutes` | `5`, `10`, `15`, `20` | `10` |
+
+These values are personalization hints, never authorization or identity data.
+“Skip for now” writes only the defaults above and marks onboarding complete.
+Because the metadata is client-writable, unrecognized values must never be
+trusted by the planner, analytics, or API; they fall back to these defaults.
+
 ## Release checklist
 
 - [ ] No named child, age, school, or classroom field was introduced.

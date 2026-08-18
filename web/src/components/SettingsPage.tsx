@@ -1,48 +1,87 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Check, Save, RotateCcw, Target, Zap, Shield, HelpCircle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  AudioLines,
+  BookOpen,
+  Check,
+  Clock3,
+  HandHeart,
+  Headphones,
+  HeartHandshake,
+  HelpCircle,
+  Landmark,
+  Leaf,
+  MapPin,
+  MessageCircle,
+  Moon,
+  RotateCcw,
+  Save,
+  Shield,
+  Sparkles,
+  Sprout,
+  Sun,
+  TreePine,
+  UserRound,
+  UsersRound,
+  Zap,
+} from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
-import { useUserPreferences, SkillLevel, LearningGoal } from '../hooks/useUserPreferences';
+import { useUserPreferences } from '../hooks/useUserPreferences';
 import { useSubscription } from '../hooks/useSubscription';
 import { useXP, useUpdateDailyGoal, getLevelInfo } from '../hooks/useXP';
 import { AuthButton } from './AuthButton';
+import {
+  CONFIDENCE_OPTIONS,
+  DAILY_SESSION_OPTIONS,
+  LEARNER_MODE_OPTIONS,
+  LEARNING_GOAL_OPTIONS,
+  READING_SUPPORT_OPTIONS,
+  DailySessionMinutes,
+  LearnerMode,
+  LearningGoal,
+  ReadingSupport,
+  SkillLevel,
+} from '../data/learningPreferences';
 
-const SKILL_LEVELS: { id: SkillLevel; icon: string; title: string; description: string }[] = [
-  {
-    id: 'beginner',
-    icon: '🌱',
-    title: 'Beginner',
-    description: 'New to Chamorro. Simple explanations with lots of English help.',
-  },
-  {
-    id: 'intermediate',
-    icon: '🌿',
-    title: 'Intermediate',
-    description: 'Know some basics. Ready for more Chamorro with practice exercises.',
-  },
-  {
-    id: 'advanced',
-    icon: '🌳',
-    title: 'Advanced',
-    description: 'Can understand Chamorro. Nuanced explanations and cultural depth.',
-  },
-];
+const MODE_ICONS: Record<LearnerMode, LucideIcon> = { self: UserRound, with_child: UsersRound, helping_family: HandHeart };
+const READING_ICONS: Record<ReadingSupport, LucideIcon> = { audio_pictures: Headphones, short_text_audio: AudioLines, independent: BookOpen };
+const CONFIDENCE_ICONS: Record<SkillLevel, LucideIcon> = { beginner: Sprout, intermediate: Leaf, advanced: TreePine };
+const GOAL_ICONS: Record<LearningGoal, LucideIcon> = { conversation: MessageCircle, culture: Landmark, family: HeartHandshake, travel: MapPin, all: Sparkles };
 
-const LEARNING_GOALS: { id: LearningGoal; icon: string; title: string }[] = [
-  { id: 'conversation', icon: '💬', title: 'Conversation' },
-  { id: 'culture', icon: '🌴', title: 'Culture' },
-  { id: 'family', icon: '👨‍👩‍👧‍👦', title: 'Family' },
-  { id: 'travel', icon: '✈️', title: 'Travel' },
-  { id: 'all', icon: '✨', title: 'Everything' },
-];
+interface SettingsChoiceProps<T extends string | number> {
+  id: T;
+  title: string;
+  description: string;
+  selected: boolean;
+  icon: LucideIcon;
+  onSelect: (id: T) => void;
+}
 
-const DAILY_GOAL_OPTIONS = [
-  { minutes: 0, label: 'Off', description: 'No daily goal' },
-  { minutes: 5, label: '5 min', description: 'Casual' },
-  { minutes: 10, label: '10 min', description: 'Regular' },
-  { minutes: 15, label: '15 min', description: 'Serious' },
-  { minutes: 20, label: '20 min', description: 'Intense' },
-];
+function SettingsChoice<T extends string | number>({ id, title, description, selected, icon: Icon, onSelect }: SettingsChoiceProps<T>) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onSelect(id)}
+      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900 ${
+        selected
+          ? 'border-coral-500 bg-coral-50 dark:border-ocean-400 dark:bg-ocean-900/30'
+          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-ocean-600'
+      }`}
+    >
+      <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-lg ${selected ? 'bg-coral-100 text-coral-700 dark:bg-ocean-800 dark:text-ocean-200' : 'bg-cream-100 text-brown-600 dark:bg-gray-700 dark:text-gray-300'}`}>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-brown-900 dark:text-white">{title}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-brown-600 dark:text-gray-300">{description}</span>
+      </span>
+      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />}
+    </button>
+  );
+}
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
@@ -53,33 +92,66 @@ export function SettingsPage() {
   
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
+  const [learnerMode, setLearnerMode] = useState<LearnerMode>(preferences.learner_mode);
+  const [readingSupport, setReadingSupport] = useState<ReadingSupport>(preferences.reading_support);
+  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(preferences.daily_session_minutes);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   
   // Sync state when preferences load
   useEffect(() => {
     setSkillLevel(preferences.skill_level);
     setLearningGoal(preferences.learning_goal);
-  }, [preferences.skill_level, preferences.learning_goal]);
+    setLearnerMode(preferences.learner_mode);
+    setReadingSupport(preferences.reading_support);
+    setSessionMinutes(preferences.daily_session_minutes);
+  }, [
+    preferences.daily_session_minutes,
+    preferences.learner_mode,
+    preferences.learning_goal,
+    preferences.reading_support,
+    preferences.skill_level,
+  ]);
   
   // Track if there are unsaved changes
-  const hasChanges = skillLevel !== preferences.skill_level || learningGoal !== preferences.learning_goal;
+  const hasChanges = skillLevel !== preferences.skill_level
+    || learningGoal !== preferences.learning_goal
+    || learnerMode !== preferences.learner_mode
+    || readingSupport !== preferences.reading_support
+    || sessionMinutes !== preferences.daily_session_minutes;
 
   const handleSave = async () => {
     try {
+      setSaveError('');
       await updatePreferencesAsync({
         skill_level: skillLevel,
         learning_goal: learningGoal,
+        learner_mode: learnerMode,
+        reading_support: readingSupport,
+        daily_session_minutes: sessionMinutes,
       });
+      if (xpData && xpData.daily_goal_minutes !== sessionMinutes) {
+        try {
+          await updateDailyGoal.mutateAsync(sessionMinutes);
+        } catch {
+          // The capability preference is canonical for the Today planner. The
+          // legacy XP goal sync is best-effort during the compatibility period.
+        }
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (error) {
-      console.error('Failed to save preferences:', error);
+    } catch {
+      setSaveError('We could not save your preferences. Please try again.');
     }
   };
 
   const handleReset = () => {
     setSkillLevel(preferences.skill_level);
     setLearningGoal(preferences.learning_goal);
+    setLearnerMode(preferences.learner_mode);
+    setReadingSupport(preferences.reading_support);
+    setSessionMinutes(preferences.daily_session_minutes);
+    setSaveError('');
   };
 
   return (
@@ -90,7 +162,8 @@ export function SettingsPage() {
           <div className="flex items-center gap-2">
             <Link 
               to="/"
-              className="p-2 -ml-2 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Back to home"
+              className="-ml-2 flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-cream-100 dark:hover:bg-gray-700"
             >
               <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
             </Link>
@@ -101,7 +174,7 @@ export function SettingsPage() {
           <div className="flex items-center gap-1">
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-cream-100 dark:hover:bg-gray-700"
               aria-label="Toggle theme"
             >
               {theme === 'dark' ? (
@@ -117,107 +190,69 @@ export function SettingsPage() {
 
       {/* Content */}
       <main className="max-w-2xl mx-auto px-4 py-5 space-y-5">
-        {/* Skill Level Section */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-cream-200/50 dark:border-gray-700/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-cream-200/50 dark:border-gray-700/50">
-            <h2 className="font-semibold text-brown-800 dark:text-white">Experience Level</h2>
-            <p className="text-xs text-brown-500 dark:text-gray-400 mt-0.5">
-              How familiar are you with Chamorro?
+        <section className="overflow-hidden rounded-2xl border border-cream-200/70 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="border-b border-cream-200/70 px-4 py-4 dark:border-gray-700">
+            <h2 className="font-semibold text-brown-900 dark:text-white">Your learning setup</h2>
+            <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">
+              These choices personalize pacing and presentation. We do not ask for a child’s name, age, or school.
             </p>
           </div>
-          
-          <div className="p-3 space-y-2">
-            {SKILL_LEVELS.map((level) => {
-              const isSelected = skillLevel === level.id;
-              return (
-                <button
-                  key={level.id}
-                  onClick={() => setSkillLevel(level.id)}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    isSelected
-                      ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-500/20'
-                      : 'border-cream-200 dark:border-gray-600 hover:border-coral-300 dark:hover:border-ocean-600 bg-white dark:bg-gray-700/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 ${
-                      isSelected 
-                        ? 'bg-coral-100 dark:bg-ocean-600/50' 
-                        : 'bg-cream-100 dark:bg-gray-600'
-                    }`}>
-                      {level.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className={`block font-medium ${
-                        isSelected 
-                          ? 'text-coral-700 dark:text-ocean-300' 
-                          : 'text-brown-800 dark:text-white'
-                      }`}>
-                        {level.title}
-                      </span>
-                      <p className={`text-xs mt-0.5 ${
-                        isSelected 
-                          ? 'text-coral-600 dark:text-ocean-200' 
-                          : 'text-brown-500 dark:text-gray-400'
-                      }`}>
-                        {level.description}
-                      </p>
-                    </div>
-                    {isSelected && (
-                      <Check className="w-5 h-5 text-coral-500 dark:text-ocean-400 flex-shrink-0" />
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+
+          <div className="space-y-6 p-4">
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">How you are learning</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {LEARNER_MODE_OPTIONS.map((option) => (
+                  <SettingsChoice key={option.id} {...option} icon={MODE_ICONS[option.id]} selected={learnerMode === option.id} onSelect={setLearnerMode} />
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Reading support</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {READING_SUPPORT_OPTIONS.map((option) => (
+                  <SettingsChoice key={option.id} {...option} icon={READING_ICONS[option.id]} selected={readingSupport === option.id} onSelect={setReadingSupport} />
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Chamorro confidence</legend>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {CONFIDENCE_OPTIONS.map((option) => (
+                  <SettingsChoice key={option.id} {...option} icon={CONFIDENCE_ICONS[option.id]} selected={skillLevel === option.id} onSelect={setSkillLevel} />
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Primary goal</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {LEARNING_GOAL_OPTIONS.map((option) => (
+                  <SettingsChoice key={option.id} {...option} icon={GOAL_ICONS[option.id]} selected={learningGoal === option.id} onSelect={setLearningGoal} />
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Preferred daily session</legend>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {DAILY_SESSION_OPTIONS.map((option) => (
+                  <SettingsChoice key={option.id} {...option} icon={Clock3} selected={sessionMinutes === option.id} onSelect={setSessionMinutes} />
+                ))}
+              </div>
+            </fieldset>
           </div>
         </section>
 
-        {/* Learning Goal Section */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-cream-200/50 dark:border-gray-700/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-cream-200/50 dark:border-gray-700/50">
-            <h2 className="font-semibold text-brown-800 dark:text-white">Learning Goal</h2>
-            <p className="text-xs text-brown-500 dark:text-gray-400 mt-0.5">
-              What's your main reason for learning?
-            </p>
-          </div>
-          
-          <div className="p-3">
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {LEARNING_GOALS.map((goal) => {
-                const isSelected = learningGoal === goal.id;
-                return (
-                  <button
-                    key={goal.id}
-                    onClick={() => setLearningGoal(goal.id)}
-                    className={`p-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1.5 ${
-                      isSelected
-                        ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-500/20'
-                        : 'border-cream-200 dark:border-gray-600 hover:border-coral-300 dark:hover:border-ocean-600 bg-white dark:bg-gray-700/50'
-                    }`}
-                  >
-                    <span className="text-xl">{goal.icon}</span>
-                    <span className={`text-xs font-medium text-center ${
-                      isSelected 
-                        ? 'text-coral-700 dark:text-ocean-300' 
-                        : 'text-brown-700 dark:text-gray-300'
-                    }`}>
-                      {goal.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* XP & Daily Goal Section */}
+        {/* Existing XP progress remains visible during the preference rollout. */}
         {xpData && (
           <section className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-700/50 overflow-hidden">
             <div className="px-4 py-3 border-b border-amber-200/50 dark:border-amber-700/50">
               <div className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-amber-500" />
-                <h2 className="font-semibold text-brown-800 dark:text-white">XP & Daily Goal</h2>
+                <h2 className="font-semibold text-brown-800 dark:text-white">Learning progress</h2>
               </div>
             </div>
             
@@ -249,50 +284,6 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              {/* Daily Goal Setting */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span className="text-sm font-medium text-brown-700 dark:text-gray-300">
-                    Daily Learning Goal
-                  </span>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {DAILY_GOAL_OPTIONS.map((option) => {
-                    const isSelected = xpData.daily_goal_minutes === option.minutes;
-                    return (
-                      <button
-                        key={option.minutes}
-                        onClick={() => updateDailyGoal.mutate(option.minutes)}
-                        disabled={updateDailyGoal.isPending}
-                        className={`p-2 rounded-lg border-2 transition-all text-center ${
-                          isSelected
-                            ? 'border-amber-500 bg-amber-100 dark:bg-amber-900/40 dark:border-amber-400'
-                            : 'border-amber-200 dark:border-amber-700 bg-white/60 dark:bg-gray-800/40 hover:border-amber-300 dark:hover:border-amber-600'
-                        }`}
-                      >
-                        <span className={`block text-sm font-bold ${
-                          isSelected 
-                            ? 'text-amber-700 dark:text-amber-300' 
-                            : 'text-brown-700 dark:text-gray-300'
-                        }`}>
-                          {option.label}
-                        </span>
-                        <span className={`block text-[10px] ${
-                          isSelected 
-                            ? 'text-amber-600 dark:text-amber-400' 
-                            : 'text-brown-500 dark:text-gray-400'
-                        }`}>
-                          {option.description}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-xs text-brown-500 dark:text-gray-400">
-                  Complete your daily goal to earn bonus XP! 🎯
-                </p>
-              </div>
             </div>
           </section>
         )}
@@ -312,11 +303,13 @@ export function SettingsPage() {
 
         {/* Save Bar - Fixed at bottom when there are changes */}
         {hasChanges && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-cream-200 dark:border-gray-700 p-4 shadow-lg z-20">
-            <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+          <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-cream-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:bottom-0">
+            <div className="mx-auto max-w-2xl">
+              {saveError && <p role="alert" className="mb-2 text-sm font-medium text-red-700 dark:text-red-300">{saveError}</p>}
+              <div className="flex items-center justify-between gap-3">
               <button
                 onClick={handleReset}
-                className="px-4 py-2.5 text-sm text-brown-600 dark:text-gray-300 hover:text-brown-800 dark:hover:text-white flex items-center gap-1.5 transition-colors"
+                className="flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm text-brown-600 transition-colors hover:text-brown-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:text-white"
               >
                 <RotateCcw className="w-4 h-4" />
                 Reset
@@ -324,7 +317,7 @@ export function SettingsPage() {
               <button
                 onClick={handleSave}
                 disabled={isUpdating}
-                className="flex-1 max-w-xs px-4 py-2.5 bg-coral-500 dark:bg-ocean-500 hover:bg-coral-600 dark:hover:bg-ocean-600 text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                className="flex min-h-11 max-w-xs flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400"
               >
                 {isUpdating ? (
                   'Saving...'
@@ -335,13 +328,14 @@ export function SettingsPage() {
                   </>
                 )}
               </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* Saved Toast */}
         {saved && !hasChanges && (
-          <div className="fixed bottom-4 left-4 right-4 max-w-sm mx-auto bg-green-500 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 z-20 animate-fade-in">
+          <div role="status" className="fixed bottom-20 left-4 right-4 z-30 mx-auto flex max-w-sm items-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-white shadow-lg sm:bottom-4">
             <Check className="w-5 h-5" />
             <span className="font-medium">Preferences saved!</span>
           </div>
@@ -374,7 +368,8 @@ export function SettingsPage() {
               </div>
               <button
                 onClick={toggleTheme}
-                className={`flex items-center w-[52px] h-[28px] rounded-full p-[2px] transition-colors flex-shrink-0 ${
+                aria-label="Dark mode"
+                className={`flex h-11 w-14 flex-shrink-0 items-center rounded-full p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 ${
                   theme === 'dark' 
                     ? 'bg-ocean-500 justify-end' 
                     : 'bg-cream-300 justify-start'
@@ -382,7 +377,7 @@ export function SettingsPage() {
                 role="switch"
                 aria-checked={theme === 'dark'}
               >
-                <span className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center transition-all duration-200">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-all duration-200">
                   {theme === 'dark' ? (
                     <Moon className="w-3.5 h-3.5 text-ocean-600" />
                   ) : (

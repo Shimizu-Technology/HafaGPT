@@ -1,334 +1,345 @@
-import { useState } from 'react';
-import { 
-  GraduationCap, Users, Palmtree, Globe, Sparkles, ArrowRight, Check,
-  MessageSquare, Brain, Gamepad2, BookOpen, BookMarked, Flame
+import { useEffect, useRef, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  AudioLines,
+  BookOpen,
+  Check,
+  Clock3,
+  HandHeart,
+  Headphones,
+  HeartHandshake,
+  Landmark,
+  Leaf,
+  MapPin,
+  MessageCircle,
+  Sparkles,
+  Sprout,
+  TreePine,
+  UserRound,
+  UsersRound,
 } from 'lucide-react';
-import { useUserPreferences, SkillLevel, LearningGoal } from '../hooks/useUserPreferences';
-import { useSubscription } from '../hooks/useSubscription';
-
-const FEATURES = [
-  { icon: MessageSquare, title: 'AI Chat', description: 'Ask anything about Chamorro', color: 'text-coral-500 dark:text-ocean-400', bg: 'bg-coral-100 dark:bg-ocean-900/30' },
-  { icon: Brain, title: 'Quizzes', description: 'Test your knowledge', color: 'text-purple-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
-  { icon: Gamepad2, title: 'Games', description: 'Learn while playing', color: 'text-emerald-500', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  { icon: BookOpen, title: 'Stories', description: 'Read & translate', color: 'text-amber-500', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  { icon: BookMarked, title: 'Flashcards', description: 'Study vocabulary', color: 'text-teal-500', bg: 'bg-teal-100 dark:bg-teal-900/30' },
-  { icon: Flame, title: 'Streaks', description: 'Track your progress', color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
-];
+import {
+  CONFIDENCE_OPTIONS,
+  DAILY_SESSION_OPTIONS,
+  LEARNER_MODE_OPTIONS,
+  LEARNING_GOAL_OPTIONS,
+  READING_SUPPORT_OPTIONS,
+  DailySessionMinutes,
+  LearnerMode,
+  LearningGoal,
+  ReadingSupport,
+  SkillLevel,
+} from '../data/learningPreferences';
+import {
+  DEFAULT_PREFERENCES,
+  OnboardingPreferences,
+  useUserPreferences,
+} from '../hooks/useUserPreferences';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  accountKey?: string;
 }
 
-const SKILL_LEVELS: { id: SkillLevel; icon: string; title: string; description: string }[] = [
-  {
-    id: 'beginner',
-    icon: '🌱',
-    title: 'Beginner',
-    description: 'New to Chamorro. I want simple explanations and lots of English help.',
-  },
-  {
-    id: 'intermediate',
-    icon: '🌿',
-    title: 'Intermediate',
-    description: 'I know some basics. Ready for more Chamorro with practice exercises.',
-  },
-  {
-    id: 'advanced',
-    icon: '🌳',
-    title: 'Advanced',
-    description: 'I can understand Chamorro. Give me nuanced explanations and cultural depth.',
-  },
-];
+const MODE_ICONS: Record<LearnerMode, LucideIcon> = {
+  self: UserRound,
+  with_child: UsersRound,
+  helping_family: HandHeart,
+};
 
-const LEARNING_GOALS: { id: LearningGoal; icon: React.ReactNode; title: string; description: string }[] = [
-  {
-    id: 'conversation',
-    icon: <Users className="w-5 h-5" />,
-    title: 'Daily Conversation',
-    description: 'Speak with family and friends',
-  },
-  {
-    id: 'culture',
-    icon: <Palmtree className="w-5 h-5" />,
-    title: 'Culture & Heritage',
-    description: 'Connect with Chamorro roots',
-  },
-  {
-    id: 'family',
-    icon: <GraduationCap className="w-5 h-5" />,
-    title: 'Teach My Family',
-    description: 'Pass on the language',
-  },
-  {
-    id: 'travel',
-    icon: <Globe className="w-5 h-5" />,
-    title: 'Travel to Guam',
-    description: 'Prepare for a visit',
-  },
-  {
-    id: 'all',
-    icon: <Sparkles className="w-5 h-5" />,
-    title: 'Everything!',
-    description: 'Learn it all',
-  },
-];
+const READING_ICONS: Record<ReadingSupport, LucideIcon> = {
+  audio_pictures: Headphones,
+  short_text_audio: AudioLines,
+  independent: BookOpen,
+};
 
-export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
-  const [step, setStep] = useState<0 | 1 | 2>(0);
-  const [selectedLevel, setSelectedLevel] = useState<SkillLevel>('beginner');
-  const [selectedGoal, setSelectedGoal] = useState<LearningGoal>('all');
+const CONFIDENCE_ICONS: Record<SkillLevel, LucideIcon> = {
+  beginner: Sprout,
+  intermediate: Leaf,
+  advanced: TreePine,
+};
+
+const GOAL_ICONS: Record<LearningGoal, LucideIcon> = {
+  conversation: MessageCircle,
+  culture: Landmark,
+  family: HeartHandshake,
+  travel: MapPin,
+  all: Sparkles,
+};
+
+const STEP_COPY = [
+  {
+    title: 'How will you use HåfaGPT?',
+    subtitle: 'Choose what fits today. You can change this anytime.',
+  },
+  {
+    title: 'What reading support feels best?',
+    subtitle: 'This changes how much listening and text we show first.',
+  },
+  {
+    title: 'How confident are you with Chamorro?',
+    subtitle: 'An honest starting point helps us choose the right pace.',
+  },
+  {
+    title: 'What would you most like to do?',
+    subtitle: 'We will use this to prioritize your daily practice.',
+  },
+  {
+    title: 'How long should a daily session be?',
+    subtitle: 'A small routine is enough. You can always do more.',
+  },
+] as const;
+
+interface ChoiceCardProps<T extends string | number> {
+  id: T;
+  title: string;
+  description: string;
+  selected: boolean;
+  icon: LucideIcon;
+  onSelect: (id: T) => void;
+}
+
+function ChoiceCard<T extends string | number>({
+  id,
+  title,
+  description,
+  selected,
+  icon: Icon,
+  onSelect,
+}: ChoiceCardProps<T>) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onSelect(id)}
+      className={`flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900 ${
+        selected
+          ? 'border-coral-500 bg-coral-50 dark:border-ocean-400 dark:bg-ocean-900/30'
+          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-ocean-600'
+      }`}
+    >
+      <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${
+        selected
+          ? 'bg-coral-100 text-coral-700 dark:bg-ocean-800 dark:text-ocean-200'
+          : 'bg-cream-100 text-brown-600 dark:bg-gray-700 dark:text-gray-300'
+      }`}>
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-brown-900 dark:text-white">{title}</span>
+        <span className="mt-0.5 block text-sm leading-snug text-brown-600 dark:text-gray-300">
+          {description}
+        </span>
+      </span>
+      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />}
+    </button>
+  );
+}
+
+export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModalProps) {
+  const [step, setStep] = useState(0);
+  const [learnerMode, setLearnerMode] = useState<LearnerMode>(DEFAULT_PREFERENCES.learner_mode);
+  const [readingSupport, setReadingSupport] = useState<ReadingSupport>(DEFAULT_PREFERENCES.reading_support);
+  const [skillLevel, setSkillLevel] = useState<SkillLevel>(DEFAULT_PREFERENCES.skill_level);
+  const [learningGoal, setLearningGoal] = useState<LearningGoal>(DEFAULT_PREFERENCES.learning_goal);
+  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(DEFAULT_PREFERENCES.daily_session_minutes);
+  const [saveError, setSaveError] = useState('');
+  const dialogRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const activeSessionRef = useRef({ accountKey, isOpen, generation: 0 });
+  if (
+    activeSessionRef.current.accountKey !== accountKey
+    || activeSessionRef.current.isOpen !== isOpen
+  ) {
+    activeSessionRef.current = {
+      accountKey,
+      isOpen,
+      generation: activeSessionRef.current.generation + 1,
+    };
+  }
   const { completeOnboarding, isUpdating } = useUserPreferences();
-  const { isChristmasTheme, isNewYearTheme } = useSubscription();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep(0);
+    setLearnerMode(DEFAULT_PREFERENCES.learner_mode);
+    setReadingSupport(DEFAULT_PREFERENCES.reading_support);
+    setSkillLevel(DEFAULT_PREFERENCES.skill_level);
+    setLearningGoal(DEFAULT_PREFERENCES.learning_goal);
+    setSessionMinutes(DEFAULT_PREFERENCES.daily_session_minutes);
+    setSaveError('');
+  }, [accountKey, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    contentRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+  }, [isOpen, step]);
 
   if (!isOpen) return null;
 
-  const handleComplete = async () => {
+  const selectedPreferences: OnboardingPreferences = {
+    learner_mode: learnerMode,
+    reading_support: readingSupport,
+    skill_level: skillLevel,
+    learning_goal: learningGoal,
+    daily_session_minutes: sessionMinutes,
+  };
+
+  const saveAndClose = async (preferences: OnboardingPreferences) => {
+    const savingForGeneration = activeSessionRef.current.generation;
+    setSaveError('');
     try {
-      await completeOnboarding(selectedLevel, selectedGoal);
-      onClose();
-    } catch (error) {
-      console.error('Failed to save onboarding preferences:', error);
-      // Still close on error - user can update preferences later
-      onClose();
+      await completeOnboarding(preferences);
+      if (activeSessionRef.current.generation === savingForGeneration) {
+        onClose();
+      }
+    } catch {
+      if (activeSessionRef.current.generation === savingForGeneration) {
+        setSaveError('We could not save your choices. Please try again.');
+      }
     }
   };
 
-  const handleNext = () => {
-    if (step === 0) {
-      setStep(1);
-    } else if (step === 1) {
-      setStep(2);
-    } else {
-      handleComplete();
+  const handleContinue = () => {
+    if (step < STEP_COPY.length - 1) {
+      setSaveError('');
+      setStep((current) => current + 1);
+      return;
     }
+    void saveAndClose(selectedPreferences);
   };
 
   const handleSkip = () => {
-    // Skip with defaults
-    completeOnboarding('beginner', 'all').then(() => onClose()).catch(() => onClose());
+    void saveAndClose({
+      learner_mode: DEFAULT_PREFERENCES.learner_mode,
+      reading_support: DEFAULT_PREFERENCES.reading_support,
+      skill_level: DEFAULT_PREFERENCES.skill_level,
+      learning_goal: DEFAULT_PREFERENCES.learning_goal,
+      daily_session_minutes: DEFAULT_PREFERENCES.daily_session_minutes,
+    });
   };
 
-  const getStepTitle = () => {
-    switch (step) {
-      case 0: return 'Welcome to HåfaGPT!';
-      case 1: return "What's your level?";
-      case 2: return 'What brings you here?';
-    }
-  };
+  const copy = STEP_COPY[step];
 
-  const getStepSubtitle = () => {
-    switch (step) {
-      case 0: return 'Your AI-powered Chamorro language tutor';
-      case 1: return "Let's personalize your experience";
-      case 2: return 'This helps us tailor your journey';
+  const keepFocusInDialog = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') || [],
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-scale-up max-h-[90vh] flex flex-col">
-        {/* Header with gradient */}
-        <div className={`px-4 sm:px-6 py-4 sm:py-5 flex-shrink-0 ${
-          isChristmasTheme 
-            ? 'bg-gradient-to-r from-red-500 to-green-600' 
-            : 'bg-gradient-to-r from-coral-500 to-teal-500 dark:from-ocean-600 dark:to-teal-600'
-        }`}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
-                {getStepTitle()}
-              </h2>
-              <p className="text-xs sm:text-sm text-white/80 mt-0.5 sm:mt-1">
-                {getStepSubtitle()}
-              </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brown-950/55 p-3 backdrop-blur-sm sm:p-5">
+      <section
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        aria-describedby="onboarding-subtitle"
+        onKeyDown={keepFocusInDialog}
+        className="flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-cream-200 bg-cream-50 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+      >
+        <header className="border-b border-cream-200 bg-white px-5 py-5 dark:border-gray-700 dark:bg-gray-800 sm:px-7">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-900 dark:text-ocean-200">
+                <Sparkles className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Make HåfaGPT yours</p>
+                <p className="text-xs text-brown-500 dark:text-gray-400">No name, age, or school information needed</p>
+              </div>
             </div>
-            <div className="text-2xl sm:text-3xl flex-shrink-0">
-              {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-            </div>
+            <span className="text-sm font-medium text-brown-500 dark:text-gray-400">
+              {step + 1} of {STEP_COPY.length}
+            </span>
           </div>
-          
-          {/* Progress indicator - 3 steps */}
-          <div className="flex gap-2 mt-3 sm:mt-4">
-            <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 0 ? 'bg-white' : 'bg-white/30'}`} />
-            <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-white' : 'bg-white/30'}`} />
-            <div className={`h-1 sm:h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-white' : 'bg-white/30'}`} />
+          <div className="flex gap-1.5" aria-hidden="true">
+            {STEP_COPY.map((_, index) => (
+              <span
+                key={index}
+                className={`h-1.5 flex-1 rounded-full ${index <= step ? 'bg-coral-500 dark:bg-ocean-400' : 'bg-cream-200 dark:bg-gray-700'}`}
+              />
+            ))}
           </div>
-        </div>
+          <h2 id="onboarding-title" className="mt-5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">
+            {copy.title}
+          </h2>
+          <p id="onboarding-subtitle" className="mt-1 text-sm text-brown-600 dark:text-gray-300">
+            {copy.subtitle}
+          </p>
+        </header>
 
-        {/* Content */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-white dark:bg-gray-800">
-          {step === 0 ? (
-            <div className="space-y-4">
-              <p className="text-sm text-brown-600 dark:text-gray-300 text-center">
-                Everything you need to learn Chamorro
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {FEATURES.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <div
-                      key={feature.title}
-                      className="p-3 sm:p-4 rounded-xl bg-cream-50 dark:bg-gray-700/50 border border-cream-200 dark:border-gray-600"
-                    >
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${feature.bg} flex items-center justify-center mb-2`}>
-                        <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${feature.color}`} />
-                      </div>
-                      <p className="font-semibold text-sm text-brown-800 dark:text-white">
-                        {feature.title}
-                      </p>
-                      <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400 leading-tight">
-                        {feature.description}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-center text-brown-500 dark:text-gray-400 pt-2">
-                Built specifically for learning the Chamorro language 🇬🇺
-              </p>
-            </div>
-          ) : step === 1 ? (
-            <div className="space-y-2 sm:space-y-3">
-              <p className="text-sm text-brown-600 dark:text-gray-300 mb-3 sm:mb-4">
-                What's your Chamorro experience level?
-              </p>
-              {SKILL_LEVELS.map((level) => {
-                const isSelected = selectedLevel === level.id;
-                return (
-                  <button
-                    key={level.id}
-                    onClick={() => setSelectedLevel(level.id)}
-                    className={`w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left ${
-                      isSelected
-                        ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-500/20'
-                        : 'border-cream-200 dark:border-gray-600 hover:border-coral-300 dark:hover:border-ocean-600 bg-white dark:bg-gray-700/50'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <span className="text-xl sm:text-2xl flex-shrink-0">{level.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`font-semibold text-sm sm:text-base ${
-                            isSelected 
-                              ? 'text-coral-700 dark:text-ocean-300' 
-                              : 'text-brown-800 dark:text-white'
-                          }`}>
-                            {level.title}
-                          </span>
-                          {isSelected && (
-                            <Check className="w-4 h-4 sm:w-5 sm:h-5 text-coral-500 dark:text-ocean-400 flex-shrink-0" />
-                          )}
-                        </div>
-                        <p className={`text-xs sm:text-sm mt-0.5 leading-snug ${
-                          isSelected 
-                            ? 'text-coral-600 dark:text-ocean-200' 
-                            : 'text-brown-500 dark:text-gray-400'
-                        }`}>
-                          {level.description}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-brown-600 dark:text-gray-300 mb-4">
-                Choose your main learning goal:
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                {LEARNING_GOALS.map((goal) => {
-                  const isSelected = selectedGoal === goal.id;
-                  return (
-                    <button
-                      key={goal.id}
-                      onClick={() => setSelectedGoal(goal.id)}
-                      className={`p-3 sm:p-4 rounded-xl border-2 transition-all text-left ${
-                        goal.id === 'all' ? 'col-span-2' : ''
-                      } ${
-                        isSelected
-                          ? 'border-coral-500 dark:border-ocean-400 bg-coral-50 dark:bg-ocean-500/20'
-                          : 'border-cream-200 dark:border-gray-600 hover:border-coral-300 dark:hover:border-ocean-600 bg-white dark:bg-gray-700/50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <div className={`p-1.5 sm:p-2 rounded-lg flex-shrink-0 ${
-                          isSelected
-                            ? 'bg-coral-100 dark:bg-ocean-600/50 text-coral-600 dark:text-ocean-200'
-                            : 'bg-cream-100 dark:bg-gray-600 text-brown-500 dark:text-gray-400'
-                        }`}>
-                          {goal.icon}
-                        </div>
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`font-semibold text-xs sm:text-sm leading-tight ${
-                              isSelected 
-                                ? 'text-coral-700 dark:text-ocean-300' 
-                                : 'text-brown-800 dark:text-white'
-                            }`}>
-                              {goal.title}
-                            </span>
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-coral-500 dark:text-ocean-400 flex-shrink-0" />
-                            )}
-                          </div>
-                          <p className={`text-[10px] sm:text-xs leading-tight mt-0.5 ${
-                            isSelected 
-                              ? 'text-coral-600 dark:text-ocean-200' 
-                              : 'text-brown-500 dark:text-gray-400'
-                          }`}>
-                            {goal.description}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+        <div ref={contentRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="space-y-2.5">
+            {step === 0 && LEARNER_MODE_OPTIONS.map((option) => (
+              <ChoiceCard key={option.id} {...option} icon={MODE_ICONS[option.id]} selected={learnerMode === option.id} onSelect={setLearnerMode} />
+            ))}
+            {step === 1 && READING_SUPPORT_OPTIONS.map((option) => (
+              <ChoiceCard key={option.id} {...option} icon={READING_ICONS[option.id]} selected={readingSupport === option.id} onSelect={setReadingSupport} />
+            ))}
+            {step === 2 && CONFIDENCE_OPTIONS.map((option) => (
+              <ChoiceCard key={option.id} {...option} icon={CONFIDENCE_ICONS[option.id]} selected={skillLevel === option.id} onSelect={setSkillLevel} />
+            ))}
+            {step === 3 && LEARNING_GOAL_OPTIONS.map((option) => (
+              <ChoiceCard key={option.id} {...option} icon={GOAL_ICONS[option.id]} selected={learningGoal === option.id} onSelect={setLearningGoal} />
+            ))}
+            {step === 4 && DAILY_SESSION_OPTIONS.map((option) => (
+              <ChoiceCard key={option.id} {...option} icon={Clock3} selected={sessionMinutes === option.id} onSelect={setSessionMinutes} />
+            ))}
+          </div>
+          {saveError && (
+            <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200">
+              {saveError}
+            </p>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-4 sm:px-6 py-3 sm:py-4 bg-cream-50 dark:bg-gray-700/50 border-t border-cream-200 dark:border-gray-600 flex items-center justify-between flex-shrink-0">
+        <footer className="flex min-h-18 items-center gap-2 border-t border-cream-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6">
+          {step > 0 ? (
+            <button
+              type="button"
+              onClick={() => setStep((current) => current - 1)}
+              disabled={isUpdating}
+              aria-label="Go back"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : <span className="min-w-11" />}
           <button
+            type="button"
             onClick={handleSkip}
-            className="text-xs sm:text-sm text-brown-500 dark:text-gray-400 hover:text-brown-700 dark:hover:text-gray-200 transition-colors"
+            disabled={isUpdating}
+            className="min-h-11 px-2 text-sm font-medium text-brown-600 hover:text-brown-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:text-white"
           >
             Skip for now
           </button>
           <button
-            onClick={handleNext}
+            type="button"
+            onClick={handleContinue}
             disabled={isUpdating}
-            className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium text-white text-sm sm:text-base transition-all flex items-center gap-1.5 sm:gap-2 ${
-              isChristmasTheme
-                ? 'bg-gradient-to-r from-red-500 to-green-600 hover:from-red-600 hover:to-green-700'
-                : 'bg-gradient-to-r from-coral-500 to-coral-600 hover:from-coral-600 hover:to-coral-700 dark:from-ocean-500 dark:to-ocean-600'
-            } disabled:opacity-50`}
+            className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-semibold text-white hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900"
           >
-            {isUpdating ? (
-              'Saving...'
-            ) : step === 0 ? (
-              <>
-                Get Started
-                <ArrowRight className="w-4 h-4" />
-              </>
-            ) : step === 1 ? (
-              <>
-                Next
-                <ArrowRight className="w-4 h-4" />
-              </>
-            ) : (
-              <>
-                Start Learning
-                <Sparkles className="w-4 h-4" />
-              </>
-            )}
+            {isUpdating ? 'Saving…' : step === STEP_COPY.length - 1 ? 'Start learning' : 'Continue'}
+            {!isUpdating && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
           </button>
-        </div>
-      </div>
+        </footer>
+      </section>
     </div>
   );
 }
