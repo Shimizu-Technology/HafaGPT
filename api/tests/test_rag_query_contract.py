@@ -5,8 +5,15 @@ from src.rag.chamorro_rag import (
     _extract_english_lookup_candidate,
     _english_keyword_query_params,
     detect_query_type,
+    extract_target_word,
 )
 from src.rag.source_policy import annotate_metadata
+from src.rag.translation_policy import (
+    classify_translation_request,
+    extract_translation_payload,
+    extract_translation_retrieval_payload,
+    translation_prompt_guidance,
+)
 
 
 def test_chamorro_keyword_collection_parameter_follows_ranking_patterns() -> None:
@@ -81,6 +88,160 @@ def test_cultural_meaning_question_stays_cultural() -> None:
 
 def test_unqualified_definition_question_remains_lookup() -> None:
     assert detect_query_type("What does hånom mean?") == "lookup"
+
+
+def test_school_chat_wrapper_is_a_passage_not_the_word_this() -> None:
+    query = (
+        "What does this mean? It’s from my daughter’s class chat for school\n\n"
+        "Someone sent it in there (a parent probably)\n\n"
+        "Manana si Yu’os! Dispensa lao ti para u fåtto pågo si Fåyi gi eskuela "
+        "sa guaha ‘appointment’."
+    )
+
+    assert classify_translation_request(query) == "passage_to_english"
+    assert detect_query_type(query) == "educational"
+    assert extract_target_word(query) == ""
+    assert extract_translation_payload(query).startswith("Manana si Yu’os!")
+
+
+def test_trailing_context_does_not_replace_middle_chamorro_passage() -> None:
+    query = (
+        "What does this mean?\n\n"
+        "Dispensa lao ti para u fåtto pågo si Fåyi gi eskuela.\n\n"
+        "This is from my daughter's class, and a parent probably sent it."
+    )
+
+    assert classify_translation_request(query) == "passage_to_english"
+    assert extract_translation_payload(query).startswith("Dispensa lao")
+
+
+def test_trailing_context_does_not_replace_middle_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie is sick and will not be at school today.\n\n"
+        "For context, this is for my daughter's teacher."
+    )
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert extract_translation_payload(query).startswith("Good morning")
+
+
+def test_trailing_translation_instruction_is_not_embedded_with_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie is sick and will not be at school today.\n\n"
+        "Please make the result sound warm and natural while retaining all of the "
+        "important details in a way that another family can understand clearly."
+    )
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    payload = extract_translation_payload(query)
+    assert payload.startswith("Good morning")
+    assert "Please make the result" not in payload
+
+
+def test_leading_translation_instruction_is_not_embedded_with_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Please keep the wording gentle because the family is worried.\n\n"
+        "Good morning, Stassie is sick and will not be at school today."
+    )
+
+    payload = extract_translation_payload(query)
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert "Please keep the wording gentle" not in payload
+    assert "Good morning, Stassie is sick" in payload
+
+
+def test_unlabeled_leading_note_disables_ambiguous_retrieval() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Our family is worried about her.\n\n"
+        "Good morning, Stassie is sick and will not be at school today."
+    )
+
+    assert "Our family is worried" in extract_translation_payload(query)
+    assert "Good morning, Stassie is sick" in extract_translation_payload(query)
+    assert extract_translation_retrieval_payload(query) == ""
+
+
+def test_unlabeled_trailing_note_disables_ambiguous_retrieval() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie will not be at school today.\n\n"
+        "Our family has been worried about her."
+    )
+
+    assert extract_translation_retrieval_payload(query) == ""
+
+
+def test_multiline_source_passage_is_one_retrieval_block() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie is sick.\n"
+        "She will not be at school today.\n"
+        "Thank you for understanding."
+    )
+
+    assert extract_translation_retrieval_payload(query) == (
+        "Good morning, Stassie is sick.\n"
+        "She will not be at school today.\n"
+        "Thank you for understanding."
+    )
+
+
+def test_multiword_english_request_uses_passage_translation_policy() -> None:
+    query = (
+        "How do I say - good morning, Stassie is sick so she will not be at "
+        "school today - in Chamorro?"
+    )
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert detect_query_type(query) == "educational"
+    guidance = translation_prompt_guidance(query, has_references=False)
+    assert "complete translation" in guidance
+    assert "need to contain every" in guidance
+    assert "No governed reference was retrieved" in guidance
+
+
+def test_quoted_multiword_phrase_excludes_the_requested_language() -> None:
+    query = "Translate ‘I love you’ to Chamorro"
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert extract_translation_payload(query) == "I love you"
+
+
+def test_single_word_lookup_keeps_strict_dictionary_lane() -> None:
+    query = "How do you say water in Chamorro?"
+
+    assert classify_translation_request(query) == "single_word_lookup"
+    assert detect_query_type(query) == "lookup"
+    assert extract_target_word(query) == "water"
+    assert translation_prompt_guidance(query, has_references=False) == ""
+
+
+def test_passage_reference_context_ends_with_non_refusal_instruction() -> None:
+    rag = ChamorroRAG.__new__(ChamorroRAG)
+    rag.search = lambda query, k, card_type: [
+        (
+            "fåtto: come, arrive",
+            {
+                "source": "Local Revised Chamorro Dictionary snapshot",
+                "source_id": "local_revised_dictionary_snapshot",
+                "content_role": "modern_dictionary",
+                "source_region": "guam",
+                "page": 1,
+            },
+        )
+    ]
+
+    context, _ = rag.create_context(
+        "What does this mean?\n\nDispensa lao ti para u fåtto pågo.",
+        k=6,
+    )
+
+    assert "do not refuse the complete translation" in context
+    assert "If the evidence does not answer the question" not in context
 
 
 def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:

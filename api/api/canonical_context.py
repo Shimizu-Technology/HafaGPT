@@ -7,6 +7,9 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
+from src.rag.source_policy import resolve_source
+from src.rag.source_reviews import build_registered_source_citation
+
 
 CANONICAL_VOCABULARY_PATH = (
     Path(__file__).resolve().parents[1]
@@ -23,7 +26,8 @@ MAX_CANONICAL_MATCHES = 8
 
 
 def _normalize_for_match(value: str) -> str:
-    return " ".join(re.sub(r"[^\w'’-]+", " ", value.casefold()).split())
+    apostrophe_normalized = value.casefold().replace("’", "'").replace("‘", "'")
+    return " ".join(re.sub(r"[^\w'-]+", " ", apostrophe_normalized).split())
 
 
 @lru_cache(maxsize=1)
@@ -92,7 +96,7 @@ def _phrase_matches(normalized_input: str, phrase: str | None) -> bool:
     return f" {normalized_phrase} " in f" {normalized_input} "
 
 
-def get_canonical_tutor_context(user_input: str) -> tuple[str, list[tuple[str, None]]]:
+def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     """Return exact curriculum matches before semantic RAG material.
 
     This is intentionally a lexical bridge, not a replacement for retrieval. It
@@ -106,10 +110,20 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[tuple[str, N
 
     matches = []
     for entry in _canonical_entries():
-        candidate_phrases = (
+        candidate_phrases = [
             entry.get("english"),
             entry.get("canonical_chamorro"),
             entry.get("recommended_teaching_term"),
+        ]
+        candidate_phrases.extend(
+            variant.get("term")
+            for variant in entry.get("variants") or []
+            if isinstance(variant, dict)
+        )
+        candidate_phrases.extend(
+            citation.get("headword")
+            for citation in entry.get("source_citations") or []
+            if isinstance(citation, dict)
         )
         if any(_phrase_matches(normalized_input, phrase) for phrase in candidate_phrases):
             matches.append(entry)
@@ -125,7 +139,7 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[tuple[str, N
     lines = [
         "=== HÅFAGPT EXACT GOVERNED REFERENCE MATCHES ===",
         "These deterministic matches outrank non-canonical or semantically similar retrieved usage.",
-        "Do not compose an unverified full sentence from verified component words; label unsupported grammar or possession explicitly.",
+        "Do not present a complete sentence as fully reference-backed merely because some component words are verified; identify the exact scope of support.",
         "",
     ]
     for entry in matches:
@@ -178,11 +192,46 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[tuple[str, N
             "Cite exact headword definitions by the dictionary source name shown above."
         )
     lines.append("=" * 60)
-    sources = []
+    sources: list[object] = []
     if matches:
         sources.append(("HåfaGPT canonical vocabulary", None))
+        for entry in matches:
+            for citation in entry.get("source_citations") or []:
+                if not isinstance(citation, dict) or not citation.get("url"):
+                    continue
+                registered_source = resolve_source({"source": citation["url"]})
+                source_contract = (
+                    build_registered_source_citation(registered_source["id"])
+                    if registered_source
+                    else {
+                        "source_id": None,
+                        "name": citation.get("source", "Underlying canonical source"),
+                        "url": citation["url"],
+                        "page": None,
+                    }
+                )
+                source_contract.update(
+                    {
+                        "support": (
+                            f"Attests {citation.get('headword', 'the recorded variant')} "
+                            f"as {citation.get('definition', 'public usage')}."
+                        ),
+                        "evidence_kind": "canonical_underlying_source",
+                    }
+                )
+                sources.append(source_contract)
     sources.extend(
         (display_name, None)
         for display_name, _headword, _definition in dictionary_matches
     )
-    return "\n".join(lines), list(dict.fromkeys(sources))
+    deduplicated_sources: list[object] = []
+    seen_source_keys: set[tuple[object, object]] = set()
+    for source in sources:
+        if isinstance(source, dict):
+            key = (source.get("source_id") or source.get("name"), source.get("url"))
+        else:
+            key = (source[0], source[1])
+        if key not in seen_source_keys:
+            seen_source_keys.add(key)
+            deduplicated_sources.append(source)
+    return "\n".join(lines), deduplicated_sources

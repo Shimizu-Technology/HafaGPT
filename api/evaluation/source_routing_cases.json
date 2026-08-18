@@ -24,6 +24,9 @@
     {"id": "guam_spelling_1865", "query": "How was Chamorro spelled on Guam in 1865?", "expected_query_type": "historical", "expected_route": "vector_full", "expected_card_ids": []},
     {"id": "ancient_guam_spelling", "query": "Tell me about ancient Chamorro spelling in Guam", "expected_query_type": "historical", "expected_route": "vector_full", "expected_card_ids": []},
     {"id": "chamorro_greeting", "query": "Håfa Adai", "expected_query_type": "lookup", "expected_route": "vector_light", "expected_card_ids": []},
-    {"id": "english_greeting", "query": "Hello", "expected_query_type": "lookup", "expected_route": "no_rag", "expected_card_ids": []}
+    {"id": "english_greeting", "query": "Hello", "expected_query_type": "lookup", "expected_route": "no_rag", "expected_card_ids": []},
+    {"id": "school_chat_passage_to_english", "query": "What does this mean? It’s from my daughter’s class chat for school\n\nSomeone sent it in there (a parent probably)\n\nManana si Yu’os! Dispensa lao ti para u fåtto pågo si Fåyi gi eskuela sa guaha ‘appointment’.", "expected_query_type": "educational", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "family_message_passage_to_chamorro", "query": "How do I say - good morning, Stassie is sick so she will not be at school today - in Chamorro?", "expected_query_type": "educational", "expected_route": "vector_full", "expected_card_ids": []},
+    {"id": "quoted_phrase_to_chamorro", "query": "Translate ‘I love you’ to Chamorro", "expected_query_type": "educational", "expected_route": "vector_full", "expected_card_ids": []}
   ]
 }

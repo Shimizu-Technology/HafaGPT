@@ -20,6 +20,10 @@ from src.rag.source_policy import (
 )
 from src.rag.source_reviews import build_citation_contract
 from src.rag.query_classification import detect_query_type
+from src.rag.translation_policy import (
+    extract_translation_retrieval_payload,
+    is_passage_translation,
+)
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -93,6 +97,10 @@ def extract_target_word(query: str) -> str:
         The extracted word, or empty string if not found
     """
     import re
+    from src.rag.translation_policy import is_passage_translation
+
+    if is_passage_translation(query):
+        return ""
     
     # Pattern 1: Word between single quotes (as delimiters, not apostrophes in word)
     # Use non-greedy match (.*?) to get content between OUTER quotes
@@ -650,10 +658,17 @@ class ChamorroRAG:
         
         # PHASE 1 FIX: Clean query before embedding search
         # Remove contaminating words that cause semantic search to match wrong results
-        clean_query = query_lower
-        contaminating_words = ['chamorro', 'chamoru', 'in chamorro', 'to chamorro']
-        for word in contaminating_words:
-            clean_query = clean_query.replace(word, '').strip()
+        passage_translation = is_passage_translation(query)
+        translation_payload = extract_translation_retrieval_payload(query)
+        if passage_translation and translation_payload:
+            # Embed the content the user wants translated, not wrapper text such
+            # as "what does this mean" or the surrounding school-chat context.
+            clean_query = translation_payload.casefold()
+        else:
+            clean_query = query_lower
+            contaminating_words = ['chamorro', 'chamoru', 'in chamorro', 'to chamorro']
+            for word in contaminating_words:
+                clean_query = clean_query.replace(word, '').strip()
         
         # Stage 0: PHASE 3 - Try keyword search for word translations first!
         query_type = detect_query_type(query)
@@ -663,6 +678,12 @@ class ChamorroRAG:
             query_type = 'educational'
         elif card_type == 'cultural':
             query_type = 'cultural'
+
+        # Do not attach governed citations to an ambiguous multi-block passage.
+        # The chatbot still receives the complete original message and follows the
+        # no-reference best-effort translation policy.
+        if passage_translation and not translation_payload:
+            return []
         
         if query_type == 'lookup':
             # Try to extract the target word
@@ -772,10 +793,14 @@ class ChamorroRAG:
         source_info: list[dict] = []
         seen_citations: set[tuple[str, object]] = set()
         
+        passage_translation = is_passage_translation(query)
         context = "=== GOVERNED CHAMORRO REFERENCE MATERIAL ===\n"
         context += "Use each reference only for its stated evidence role.\n"
-        context += "Do not guess when the references are incomplete or conflicting.\n"
-        context += "Do not let authentic usage, tourism copy, cultural context, or historical material decide canonical spelling or translation.\n"
+        if passage_translation:
+            context += "Use these references to corroborate the passage analysis; they need not contain every surface form before you provide a complete translation.\n"
+        else:
+            context += "Do not guess when the references are incomplete or conflicting.\n"
+        context += "Do not let authentic usage, tourism copy, cultural context, or historical material decide canonical spelling or a single-word translation.\n"
         context += "Preserve Guam/CNMI or author-specific differences and explain them when relevant.\n\n"
         
         for i, (content, metadata) in enumerate(chunks, 1):
@@ -825,7 +850,10 @@ class ChamorroRAG:
         context += "Base supported claims on the eligible references above.\n"
         context += "Cite factual claims inline using the exact source name in square brackets, for example [Chamoru.info dictionary].\n"
         context += "When a reference includes Citation locators, cite an underlying locator rather than only the container or index name.\n"
-        context += "If the evidence does not answer the question, say that it is not verified.\n"
+        if passage_translation:
+            context += "For this passage translation, identify any unsupported uncertainty precisely; do not refuse the complete translation merely because a reference covers only part of it.\n"
+        else:
+            context += "If the evidence does not answer the question, say that it is not verified.\n"
         context += "If sources conflict, describe the conflict instead of inventing a single answer.\n"
         context += "="*60
         

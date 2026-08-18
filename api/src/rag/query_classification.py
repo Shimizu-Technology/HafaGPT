@@ -4,19 +4,13 @@ from __future__ import annotations
 
 import re
 
+from src.rag.translation_policy import classify_translation_request
+
 
 def detect_query_type(query: str) -> str:
     """Return lookup, educational, usage, cultural, or historical."""
 
     query_lower = query.lower()
-    translation_lookup_patterns = [
-        r"\bchamorro word for\b",
-        r"\btranslate\b",
-        r"\bhow do you say\b",
-        r"\bhow do i say\b",
-    ]
-    if any(re.search(pattern, query_lower) for pattern in translation_lookup_patterns):
-        return "lookup"
 
     historical_keywords = [
         "historical",
@@ -45,6 +39,17 @@ def detect_query_type(query: str) -> str:
     ]
     if any(keyword in query_lower for keyword in cultural_keywords):
         return "cultural"
+
+    translation_intent = classify_translation_request(query)
+    if translation_intent.startswith("passage_"):
+        # Sentence and passage translation needs grammar plus lexical evidence,
+        # rather than the single dictionary-headword lookup lane.
+        return "educational"
+    if translation_intent == "single_word_lookup":
+        return "lookup"
+
+    if "chamorro word for" in query_lower:
+        return "lookup"
 
     broad_guam_patterns = [
         r"\btell me (?:all |everything )?about guam\b",
