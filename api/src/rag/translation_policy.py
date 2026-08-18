@@ -41,6 +41,27 @@ at the specific word or clause where it occurs.
 """
 
 _WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
+_CONTEXT_PARAGRAPH_PATTERN = re.compile(
+    r"(?ix)"
+    r"(?:\b(?:this|it|that)\s+(?:is|was|came)\s+from\b|"
+    r"\b(?:someone|a\s+parent|the\s+teacher)\s+sent\b|"
+    r"\bfor\s+context\b|\b(?:my\s+)?(?:daughter|son|child)'?s\s+(?:class|school|teacher)\b|"
+    r"\b(?:a\s+parent|the\s+teacher)\s+probably\b|"
+    r"\bi\s+(?:saw|got|received|found)\s+(?:it|this)\b)"
+)
+_CHAMORRO_PASSAGE_MARKERS = {
+    "dispensa",
+    "eskuela",
+    "fåtto",
+    "guaha",
+    "håfa",
+    "lao",
+    "manana",
+    "mañana",
+    "pågo",
+    "yu'os",
+    "yu’os",
+}
 
 
 def _words(value: str) -> list[str]:
@@ -49,6 +70,35 @@ def _words(value: str) -> list[str]:
 
 def _strip_wrapping_quotes(value: str) -> str:
     return value.strip().strip(" \t\r\n'\"“”‘’")
+
+
+def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
+    """Choose passage text while ignoring before/after explanatory notes."""
+
+    candidates = paragraphs[1:]
+    content_candidates = [
+        paragraph
+        for paragraph in candidates
+        if not _CONTEXT_PARAGRAPH_PATTERN.search(paragraph)
+    ]
+    if not content_candidates:
+        content_candidates = candidates
+
+    translating_to_chamorro = bool(
+        re.search(r"(?i)\b(?:to|in)\s+chamorr[ou]\b", query)
+    )
+
+    def passage_score(paragraph: str) -> tuple[int, int]:
+        words = _words(paragraph)
+        normalized_words = {word.casefold() for word in words}
+        chamorro_markers = len(normalized_words & _CHAMORRO_PASSAGE_MARKERS)
+        chamorro_orthography = len(re.findall(r"[åÅñÑ]|\w[’']\w", paragraph))
+        language_score = 0 if translating_to_chamorro else 5 * (
+            chamorro_markers + chamorro_orthography
+        )
+        return language_score + min(len(words), 40), len(words)
+
+    return max(content_candidates, key=passage_score)
 
 
 def extract_translation_payload(query: str) -> str:
@@ -63,7 +113,7 @@ def extract_translation_payload(query: str) -> str:
         r"(?i)\b(?:what does this mean|what does this say|translate this|what is this saying)\b",
         paragraphs[0],
     ):
-        return _strip_wrapping_quotes(paragraphs[-1])
+        return _strip_wrapping_quotes(_select_wrapper_payload(paragraphs, normalized))
 
     wrapper_match = re.search(
         r"(?is)\b(?:what does this mean|what does this say|what is this saying)\s*\?\s*(.+)$",
