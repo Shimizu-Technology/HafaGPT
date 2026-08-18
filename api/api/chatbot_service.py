@@ -146,6 +146,10 @@ from src.rag.knowledge_cards import get_knowledge_card_context
 from src.rag.query_classification import detect_query_type
 from src.rag.query_routing import should_use_rag
 from src.rag.retrieval_observability import build_retrieval_event
+from src.rag.translation_policy import (
+    is_passage_translation,
+    translation_prompt_guidance,
+)
 from src.rag.web_search_tool import web_search, format_search_results
 
 # Import token management for budget control
@@ -531,7 +535,8 @@ Be conversational, encouraging, and informative.
 
 SOURCE FAITHFULNESS:
 - Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
-- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
+- If the references do not support one of those factual claims, say it is not verified instead of filling the gap from general model knowledge.
+- Multi-word translation requests follow the separate translation policy below; do not require a dictionary entry for every inflected word before translating user-supplied text.
 
 IMPORTANT CAPABILITIES:
 - You have access to a Chamorro language knowledge base (grammar books, dictionaries, bilingual articles)
@@ -594,7 +599,8 @@ Respond with Chamorro first, then provide English translation and breakdown.
 
 SOURCE FAITHFULNESS:
 - Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
-- If the references do not support a requested detail, say it is not verified instead of filling the gap from general model knowledge.
+- If the references do not support one of those factual claims, say it is not verified instead of filling the gap from general model knowledge.
+- Multi-word translation requests follow the separate translation policy below; do not require a dictionary entry for every inflected word before translating user-supplied text.
 
 If you receive web search results for current information, incorporate them into your response.
 
@@ -935,6 +941,8 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     Returns:
         tuple: (context_string, sources_list)
     """
+    from src.rag.translation_policy import is_passage_translation
+
     use_rag, rag_mode = should_use_rag(user_input, conversation_length)
     
     if not use_rag:
@@ -1191,10 +1199,15 @@ REQUIRED OUTPUT FORMAT (use these exact headers):
 IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
 """
     
+    system_prompt += translation_prompt_guidance(
+        message,
+        has_references=bool(rag_context),
+    )
+
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
-    else:
+    elif not is_passage_translation(message):
         system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
@@ -1523,10 +1536,15 @@ REQUIRED OUTPUT FORMAT (use these exact headers):
 IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
 """
     
+    system_prompt += translation_prompt_guidance(
+        message,
+        has_references=bool(rag_context),
+    )
+
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
-    else:
+    elif not is_passage_translation(message):
         system_prompt += NO_REFERENCE_GUARD
     
     # Add web search context if available
