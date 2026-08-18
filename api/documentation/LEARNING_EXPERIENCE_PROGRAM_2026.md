@@ -1,8 +1,17 @@
 # HåfaGPT Learning Experience Program — Phases 1 and 2
 
 **Re-reviewed:** August 18, 2026 (Guam)  
-**Baseline:** `main` at `bcd2740`  
-**Status:** approved implementation plan
+**Implementation baseline:** `main` at `bcd2740`
+
+**Delivered baseline:** `main` at `f5659b6`
+
+**Status:** Phases 1 and 2 delivered to production on August 19, 2026 (Guam)
+
+The exact implementation ledger, acceptance evidence, rollback order, production
+smoke test, and remaining work are recorded in
+[LEARNING_EXPERIENCE_RELEASE_2026-08-19.md](LEARNING_EXPERIENCE_RELEASE_2026-08-19.md).
+The requirements below are retained as the durable design record; their wording
+describes the approved target, not a still-pending plan.
 
 ## Purpose and scope
 
