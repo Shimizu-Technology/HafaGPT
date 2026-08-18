@@ -593,6 +593,7 @@ export function HomePage() {
       <OnboardingModal 
         isOpen={showOnboarding} 
         onClose={() => setShowOnboarding(false)} 
+        accountKey={user?.id}
       />
 
       {/* Floating CTA for signed-out mobile users - positioned above BottomNav */}

@@ -86,14 +86,13 @@ describe('capability onboarding', () => {
   });
 
   it('clears selections before a fresh opening so preferences cannot cross accounts', async () => {
-    const { rerender } = render(<OnboardingModal isOpen onClose={vi.fn()} />);
+    const { rerender } = render(<OnboardingModal isOpen onClose={vi.fn()} accountKey="account-one" />);
 
     fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
     expect(screen.getByRole('heading', { name: /what reading support/i })).toBeInTheDocument();
 
-    rerender(<OnboardingModal isOpen={false} onClose={vi.fn()} />);
-    rerender(<OnboardingModal isOpen onClose={vi.fn()} />);
+    rerender(<OnboardingModal isOpen onClose={vi.fn()} accountKey="account-two" />);
 
     expect(screen.getByRole('heading', { name: /how will you use/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /learning for myself/i })).toHaveAttribute('aria-pressed', 'true');

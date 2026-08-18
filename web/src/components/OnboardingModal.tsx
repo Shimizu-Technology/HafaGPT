@@ -41,6 +41,7 @@ import {
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  accountKey?: string;
 }
 
 const MODE_ICONS: Record<LearnerMode, LucideIcon> = {
@@ -138,7 +139,7 @@ function ChoiceCard<T extends string | number>({
   );
 }
 
-export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
+export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
   const [learnerMode, setLearnerMode] = useState<LearnerMode>(DEFAULT_PREFERENCES.learner_mode);
   const [readingSupport, setReadingSupport] = useState<ReadingSupport>(DEFAULT_PREFERENCES.reading_support);
@@ -159,7 +160,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
     setLearningGoal(DEFAULT_PREFERENCES.learning_goal);
     setSessionMinutes(DEFAULT_PREFERENCES.daily_session_minutes);
     setSaveError('');
-  }, [isOpen]);
+  }, [accountKey, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
