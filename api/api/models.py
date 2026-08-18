@@ -257,6 +257,12 @@ class ReviewCardRequest(BaseModel):
     user_id: str = Field(..., description="User ID from Clerk")
     flashcard_id: str = Field(..., description="Flashcard UUID")
     confidence: int = Field(..., ge=1, le=3, description="Confidence: 1=hard, 2=good, 3=easy")
+    quality: Optional[int] = Field(
+        None,
+        ge=0,
+        le=5,
+        description="Optional SM-2 quality used by current clients",
+    )
 
 
 class ReviewCardResponse(BaseModel):
@@ -264,6 +270,25 @@ class ReviewCardResponse(BaseModel):
     next_review: datetime = Field(..., description="When to review this card next")
     message: str = Field(..., description="Feedback message")
     days_until_next: int = Field(..., description="Days until next review")
+
+
+class FlashcardReviewContent(BaseModel):
+    """Minimum non-sensitive card snapshot for a due-review queue."""
+
+    front: str = Field(..., min_length=1, max_length=500)
+    back: str = Field(..., min_length=1, max_length=1000)
+    pronunciation: Optional[str] = Field(None, max_length=500)
+    example: Optional[str] = Field(None, max_length=2000)
+    source_kind: str = Field(default="curated", max_length=32)
+
+
+class SpacedRepetitionReviewRequest(BaseModel):
+    """Record a review in the canonical spaced-repetition scheduler."""
+
+    card_id: str = Field(..., min_length=1, max_length=255)
+    deck_id: str = Field(..., min_length=1, max_length=255)
+    quality: int = Field(..., ge=0, le=5)
+    content: Optional[FlashcardReviewContent] = None
 
 
 # Message Feedback Models

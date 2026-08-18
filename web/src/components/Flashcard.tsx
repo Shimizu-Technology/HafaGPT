@@ -22,10 +22,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
   const handleFlip = () => {
     const newFlippedState = !isFlipped;
     setIsFlipped(newFlippedState);
-    // Notify parent when flipped to back (true)
-    if (onFlip && newFlippedState) {
-      onFlip(newFlippedState);
-    }
+    onFlip?.(newFlippedState);
   };
 
   const toggleSpeech = () => {
@@ -48,14 +45,15 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
   };
 
   return (
-    <div
-      className="relative w-full aspect-[3/4] cursor-pointer perspective-1000"
-      onClick={handleFlip}
-    >
-      <div
+    <div className="relative w-full aspect-[3/4] perspective-1000">
+      <button
+        type="button"
+        onClick={handleFlip}
+        aria-pressed={isFlipped}
+        aria-label={isFlipped ? `Show the Chamorro side for ${back}` : `Show the meaning of ${front}`}
         className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
           isFlipped ? 'rotate-y-180' : ''
-        }`}
+        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4 rounded-2xl`}
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden">
@@ -65,17 +63,6 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
                 {front}
               </p>
             </div>
-            
-            {/* Audio button */}
-            {isSupported && (
-              <button
-                onClick={handleSpeak}
-                onTouchEnd={handleSpeakTouch}
-                className="absolute top-4 right-4 p-3 rounded-full bg-coral-100 dark:bg-ocean-900/30 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800/50 transition-colors touch-manipulation"
-              >
-                <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse' : ''}`} />
-              </button>
-            )}
             
             <p className="text-sm text-brown-500 dark:text-gray-400 mt-4">
               Tap to flip
@@ -112,8 +99,19 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
             </p>
           </div>
         </div>
-      </div>
+      </button>
+
+      {!isFlipped && isSupported && (
+        <button
+          type="button"
+          onClick={handleSpeak}
+          onTouchEnd={handleSpeakTouch}
+          aria-label={isSpeaking ? `Stop playing ${front}` : `Listen to ${front}`}
+          className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-coral-100 text-coral-600 transition-colors hover:bg-coral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-900/30 dark:text-ocean-400 dark:hover:bg-ocean-800/50"
+        >
+          <Volume2 className={`w-5 h-5 ${isSpeaking ? 'motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }
-

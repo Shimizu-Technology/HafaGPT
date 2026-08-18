@@ -21,6 +21,7 @@ fi
 (
   cd "$repository_root/web"
   npm run lint
+  npm run test
   npm run typecheck
   npm run build
 )

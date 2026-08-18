@@ -57,6 +57,7 @@ from .models import (
     DeckCardsResponse,
     ReviewCardRequest,
     ReviewCardResponse,
+    SpacedRepetitionReviewRequest,
     # Feedback Models
     MessageFeedbackRequest,
     MessageFeedbackResponse,
@@ -84,6 +85,11 @@ from .models import (
 )
 from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
 from . import conversations
+from .spaced_repetition import (
+    calculate_sm2 as _calculate_sm2,
+    quality_from_confidence,
+    upsert_spaced_repetition_review,
+)
 
 # Clerk for authentication
 try:
@@ -3025,14 +3031,15 @@ async def review_flashcard(
 
         cursor.execute(
             """
-            SELECT 1
+            SELECT f.deck_id, f.front, f.back, f.pronunciation, f.example
             FROM flashcards f
             JOIN flashcard_decks d ON f.deck_id = d.id
             WHERE f.id = %s AND d.user_id = %s
             """,
             (request.flashcard_id, user_id)
         )
-        if not cursor.fetchone():
+        card_row = cursor.fetchone()
+        if not card_row:
             cursor.close()
             conn.close()
             raise HTTPException(status_code=404, detail="Flashcard not found")
@@ -3058,6 +3065,29 @@ async def review_flashcard(
                 datetime.now(), next_review, request.confidence, datetime.now()
             )
         )
+
+        # Compatibility period: preserve the legacy fixed-interval record above
+        # while also writing the canonical scheduler. No historical rows are
+        # deleted or rewritten.
+        canonical_quality = (
+            request.quality
+            if request.quality is not None
+            else quality_from_confidence(request.confidence)
+        )
+        upsert_spaced_repetition_review(
+            cursor,
+            user_id=user_id,
+            card_id=f"v1:saved:{request.flashcard_id}",
+            deck_id=f"saved:{card_row[0]}",
+            quality=canonical_quality,
+            content={
+                "front": card_row[1],
+                "back": card_row[2],
+                "pronunciation": card_row[3],
+                "example": card_row[4],
+                "source_kind": "saved",
+            },
+        )
         
         conn.commit()
         cursor.close()
@@ -3065,9 +3095,9 @@ async def review_flashcard(
         
         # Create feedback message
         messages = {
-            1: f"Let's practice this again tomorrow! 💪",
-            2: f"Good job! See you in a week! 👍",
-            3: f"Awesome! You've mastered this! See you in a month! 🎉"
+            1: "Let's practice this again tomorrow!",
+            2: "Good job! See you in a week!",
+            3: "Strong recall. See you in a month!"
         }
         
         logger.info(f"✅ [REVIEW] Updated progress for card {request.flashcard_id}, next review in {days} days")
@@ -5070,31 +5100,13 @@ def calculate_sm2(quality: int, easiness_factor: float, interval: int, repetitio
     Returns:
         tuple: (new_ef, new_interval, new_repetition)
     """
-    # Calculate new easiness factor
-    new_ef = easiness_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-    new_ef = max(1.3, new_ef)  # EF should not go below 1.3
-    
-    if quality < 3:
-        # Incorrect response - reset repetitions, start over
-        new_repetition = 0
-        new_interval = 1
-    else:
-        # Correct response
-        new_repetition = repetition + 1
-        if new_repetition == 1:
-            new_interval = 1
-        elif new_repetition == 2:
-            new_interval = 6
-        else:
-            new_interval = int(interval * new_ef)
-    
-    return new_ef, new_interval, new_repetition
+    return _calculate_sm2(quality, easiness_factor, interval, repetition)
 
 
 @app.get("/api/flashcards/due", tags=["Spaced Repetition"])
 async def get_due_flashcards(
     deck_id: Optional[str] = None,
-    limit: int = 20,
+    limit: int = Query(20, ge=1, le=100),
     authorization: Optional[str] = Header(None)
 ):
     """
@@ -5118,11 +5130,13 @@ async def get_due_flashcards(
             # Get due cards for specific deck
             cursor.execute("""
                 SELECT card_id, deck_id, easiness_factor, interval, repetition, 
-                       last_review, next_review, total_reviews, correct_count, incorrect_count
+                       last_review, next_review, total_reviews, correct_count, incorrect_count,
+                       front, back, pronunciation, example, source_kind
                 FROM spaced_repetition
                 WHERE user_id = %s 
                 AND deck_id = %s
                 AND (next_review IS NULL OR next_review <= NOW())
+                AND front IS NOT NULL AND back IS NOT NULL
                 ORDER BY next_review ASC NULLS FIRST
                 LIMIT %s
             """, (user_id, deck_id, limit))
@@ -5130,10 +5144,12 @@ async def get_due_flashcards(
             # Get due cards across all decks
             cursor.execute("""
                 SELECT card_id, deck_id, easiness_factor, interval, repetition,
-                       last_review, next_review, total_reviews, correct_count, incorrect_count
+                       last_review, next_review, total_reviews, correct_count, incorrect_count,
+                       front, back, pronunciation, example, source_kind
                 FROM spaced_repetition
                 WHERE user_id = %s 
                 AND (next_review IS NULL OR next_review <= NOW())
+                AND front IS NOT NULL AND back IS NOT NULL
                 ORDER BY next_review ASC NULLS FIRST
                 LIMIT %s
             """, (user_id, limit))
@@ -5146,12 +5162,14 @@ async def get_due_flashcards(
                 SELECT COUNT(*) FROM spaced_repetition
                 WHERE user_id = %s AND deck_id = %s
                 AND (next_review IS NULL OR next_review <= NOW())
+                AND front IS NOT NULL AND back IS NOT NULL
             """, (user_id, deck_id))
         else:
             cursor.execute("""
                 SELECT COUNT(*) FROM spaced_repetition
                 WHERE user_id = %s
                 AND (next_review IS NULL OR next_review <= NOW())
+                AND front IS NOT NULL AND back IS NOT NULL
             """, (user_id,))
         
         total_due = cursor.fetchone()[0]
@@ -5172,6 +5190,11 @@ async def get_due_flashcards(
                 "total_reviews": row[7],
                 "correct_count": row[8],
                 "incorrect_count": row[9],
+                "front": row[10],
+                "back": row[11],
+                "pronunciation": row[12],
+                "example": row[13],
+                "source_kind": row[14] or "curated",
             })
         
         return {
@@ -5192,7 +5215,7 @@ async def get_due_flashcards(
 
 @app.post("/api/flashcards/review", tags=["Spaced Repetition"])
 async def record_flashcard_review(
-    request: dict,
+    request: SpacedRepetitionReviewRequest,
     authorization: Optional[str] = Header(None)
 ):
     """
@@ -5208,92 +5231,26 @@ async def record_flashcard_review(
     try:
         user_id = await verify_user(authorization)
         
-        card_id = request.get("card_id")
-        deck_id = request.get("deck_id")
-        quality = request.get("quality", 3)  # Default to "hard"
-        
-        if not card_id or not deck_id:
-            raise HTTPException(status_code=400, detail="card_id and deck_id are required")
-        
-        if quality < 0 or quality > 5:
-            raise HTTPException(status_code=400, detail="quality must be 0-5")
-        
         db_url = os.getenv("DATABASE_URL")
         import psycopg2
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
-        
-        # Get current card state (or defaults for new card)
-        cursor.execute("""
-            SELECT easiness_factor, interval, repetition
-            FROM spaced_repetition
-            WHERE user_id = %s AND card_id = %s
-        """, (user_id, card_id))
-        
-        row = cursor.fetchone()
-        
-        if row:
-            current_ef, current_interval, current_rep = row
-        else:
-            # New card - use defaults
-            current_ef, current_interval, current_rep = 2.5, 1, 0
-        
-        # Calculate new values using SM-2
-        new_ef, new_interval, new_rep = calculate_sm2(
-            quality, float(current_ef), current_interval, current_rep
+
+        result = upsert_spaced_repetition_review(
+            cursor,
+            user_id=user_id,
+            card_id=request.card_id,
+            deck_id=request.deck_id,
+            quality=request.quality,
+            content=request.content.model_dump() if request.content else None,
         )
-        
-        # Calculate next review date
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        next_review = now + timedelta(days=new_interval)
-        
-        # Track correct/incorrect
-        is_correct = quality >= 3
-        correct_increment = 1 if is_correct else 0
-        incorrect_increment = 0 if is_correct else 1
-        
-        # Upsert the card progress
-        cursor.execute("""
-            INSERT INTO spaced_repetition (
-                user_id, card_id, deck_id, easiness_factor, interval, repetition,
-                last_review, next_review, total_reviews, correct_count, incorrect_count
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, NOW(), %s, 1, %s, %s)
-            ON CONFLICT (user_id, card_id) DO UPDATE SET
-                easiness_factor = EXCLUDED.easiness_factor,
-                interval = EXCLUDED.interval,
-                repetition = EXCLUDED.repetition,
-                last_review = NOW(),
-                next_review = EXCLUDED.next_review,
-                total_reviews = spaced_repetition.total_reviews + 1,
-                correct_count = spaced_repetition.correct_count + %s,
-                incorrect_count = spaced_repetition.incorrect_count + %s,
-                updated_at = NOW()
-            RETURNING total_reviews, correct_count, incorrect_count
-        """, (
-            user_id, card_id, deck_id, new_ef, new_interval, new_rep,
-            next_review, correct_increment, incorrect_increment,
-            correct_increment, incorrect_increment
-        ))
-        
-        result = cursor.fetchone()
         conn.commit()
         cursor.close()
         conn.close()
         
         return {
-            "card_id": card_id,
-            "deck_id": deck_id,
-            "quality": quality,
-            "is_correct": is_correct,
-            "easiness_factor": round(new_ef, 2),
-            "interval_days": new_interval,
-            "repetition": new_rep,
-            "next_review": next_review.isoformat(),
-            "total_reviews": result[0],
-            "correct_count": result[1],
-            "incorrect_count": result[2],
+            **result,
+            "next_review": result["next_review"].isoformat(),
         }
         
     except HTTPException:

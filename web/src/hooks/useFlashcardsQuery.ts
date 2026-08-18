@@ -19,6 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // ===========================
 
 export interface DictionaryFlashcard {
+  source_id: string;
   front: string;
   back: string;
   part_of_speech: string;
@@ -98,6 +99,7 @@ interface ReviewCardRequest {
   user_id: string;
   flashcard_id: string;
   confidence: 1 | 2 | 3;
+  quality?: 0 | 1 | 2 | 3 | 4 | 5;
 }
 
 interface ReviewCardResponse {
@@ -295,4 +297,3 @@ export function useDictionaryFlashcards(
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
-

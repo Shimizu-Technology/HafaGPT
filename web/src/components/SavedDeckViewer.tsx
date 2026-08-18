@@ -4,6 +4,8 @@ import { useUser } from '@clerk/clerk-react';
 import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { useDeckCards, useReviewCard } from '../hooks/useFlashcardsQuery';
+import { type QualityRating } from '../hooks/useSpacedRepetition';
+import { ReviewRatingButtons } from './ReviewRatingButtons';
 
 export function SavedDeckViewer() {
   const { deckId } = useParams<{ deckId: string }>();
@@ -11,6 +13,7 @@ export function SavedDeckViewer() {
   const { user, isLoaded } = useUser();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   // Fetch deck cards with progress
   const { data, isLoading, isError, error } = useDeckCards(deckId, user?.id, isLoaded && !!user);
@@ -43,15 +46,18 @@ export function SavedDeckViewer() {
   };
 
   // Handle card rating
-  const handleRating = (confidence: 1 | 2 | 3) => {
+  const handleRating = (quality: QualityRating) => {
     if (!user || !cards[currentIndex]) return;
 
     const card = cards[currentIndex];
+    const confidence: 1 | 2 | 3 = quality <= 3 ? 1 : quality === 4 ? 2 : 3;
+    setReviewError(null);
 
     reviewCardMutation.mutate({
       user_id: user.id,
       flashcard_id: card.id,
-      confidence: confidence
+      confidence,
+      quality,
     }, {
       onSuccess: (data) => {
         console.log(`✅ Card reviewed: ${data.message}`);
@@ -60,7 +66,7 @@ export function SavedDeckViewer() {
       },
       onError: (err) => {
         console.error('Failed to review card:', err);
-        alert('Failed to save progress. Please try again.');
+        setReviewError('Your review was not saved. Please try again.');
       }
     });
   };
@@ -207,29 +213,11 @@ export function SavedDeckViewer() {
 
         {/* Rating Buttons (show after flip) */}
         {isCardFlipped && (
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <button
-              onClick={() => handleRating(1)}
-              disabled={reviewCardMutation.isPending}
-              className="px-6 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px] disabled:opacity-50"
-            >
-              Hard
-            </button>
-            <button
-              onClick={() => handleRating(2)}
-              disabled={reviewCardMutation.isPending}
-              className="px-6 py-3 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px] disabled:opacity-50"
-            >
-              Good
-            </button>
-            <button
-              onClick={() => handleRating(3)}
-              disabled={reviewCardMutation.isPending}
-              className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px] disabled:opacity-50"
-            >
-              Easy
-            </button>
-          </div>
+          <ReviewRatingButtons
+            onRate={handleRating}
+            disabled={reviewCardMutation.isPending}
+            error={reviewError}
+          />
         )}
 
         {/* Navigation */}
@@ -277,4 +265,3 @@ export function SavedDeckViewer() {
     </div>
   );
 }
-
