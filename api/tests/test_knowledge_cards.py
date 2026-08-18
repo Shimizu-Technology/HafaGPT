@@ -154,6 +154,13 @@ def test_region_specific_card_does_not_match_generic_token_overlap() -> None:
     assert matching_production_cards("What is the current Chamorro orthography?") == []
 
 
+def test_guahan_ascii_region_marker_matches_guam_card() -> None:
+    assert [
+        card["id"]
+        for card in matching_production_cards("What spelling system does Guahan use?")
+    ] == ["orthography.guam.current_reference"]
+
+
 def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> None:
     context, citations = get_knowledge_card_context(
         "Are Guam and CNMI spellings the same?"

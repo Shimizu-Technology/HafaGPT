@@ -59,7 +59,7 @@ INVALID_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 DOMAIN_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
 LEGACY_IP_LABEL = re.compile(r"(?:0[xX][0-9A-Fa-f]+|[0-9]+)")
 REGION_QUERY_MARKERS = {
-    "Guam": {"guam", "guåhan"},
+    "Guam": {"guam", "guåhan", "guahan"},
     "CNMI": {"cnmi", "saipan", "tinian", "rota", "marianas"},
 }
 
