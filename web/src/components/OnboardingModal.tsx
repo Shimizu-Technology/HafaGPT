@@ -149,6 +149,8 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   const [saveError, setSaveError] = useState('');
   const dialogRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const activeAccountKeyRef = useRef(accountKey);
+  activeAccountKeyRef.current = accountKey;
   const { completeOnboarding, isUpdating } = useUserPreferences();
 
   useEffect(() => {
@@ -178,12 +180,17 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   };
 
   const saveAndClose = async (preferences: OnboardingPreferences) => {
+    const savingForAccount = activeAccountKeyRef.current;
     setSaveError('');
     try {
       await completeOnboarding(preferences);
-      onClose();
+      if (activeAccountKeyRef.current === savingForAccount) {
+        onClose();
+      }
     } catch {
-      setSaveError('We could not save your choices. Please try again.');
+      if (activeAccountKeyRef.current === savingForAccount) {
+        setSaveError('We could not save your choices. Please try again.');
+      }
     }
   };
 

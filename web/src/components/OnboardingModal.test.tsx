@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OnboardingModal } from './OnboardingModal';
 
@@ -97,5 +97,25 @@ describe('capability onboarding', () => {
     expect(screen.getByRole('heading', { name: /how will you use/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /learning for myself/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /learning with a child/i })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('does not let an earlier account save close a new account onboarding', async () => {
+    let finishSave: (() => void) | undefined;
+    onboardingMocks.completeOnboarding.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishSave = resolve;
+    }));
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <OnboardingModal isOpen onClose={onClose} accountKey="account-one" />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-two" />);
+    await act(async () => finishSave?.());
+
+    expect(onboardingMocks.completeOnboarding).toHaveBeenCalledOnce();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /learning for myself/i })).toHaveAttribute('aria-pressed', 'true');
   });
 });
