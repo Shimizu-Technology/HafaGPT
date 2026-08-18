@@ -134,7 +134,22 @@ def test_long_unrecognized_trailing_note_does_not_outscore_english_passage() -> 
     )
 
     assert classify_translation_request(query) == "passage_to_chamorro"
-    assert extract_translation_payload(query).startswith("Good morning")
+    payload = extract_translation_payload(query)
+    assert payload.startswith("Good morning")
+    assert "Please make the result" in payload
+
+
+def test_unrecognized_leading_note_cannot_erase_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Please keep the wording gentle because the family is worried.\n\n"
+        "Good morning, Stassie is sick and will not be at school today."
+    )
+
+    payload = extract_translation_payload(query)
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert "Please keep the wording gentle" in payload
+    assert "Good morning, Stassie is sick" in payload
 
 
 def test_multiword_english_request_uses_passage_translation_policy() -> None:

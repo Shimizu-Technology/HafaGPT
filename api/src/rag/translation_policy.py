@@ -88,10 +88,10 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
         re.search(r"(?i)\b(?:to|in)\s+chamorr[ou]\b", query)
     )
     if translating_to_chamorro:
-        # In an explicit "translate this to Chamorro" block, the target passage
-        # conventionally follows the wrapper. A later prose note must not win
-        # merely because it contains more English words.
-        return content_candidates[0]
+        # English prose alone cannot reliably distinguish an unlabeled passage
+        # from an unlabeled before/after note. Preserve every non-recognized
+        # paragraph so context can never replace or erase the requested text.
+        return "\n\n".join(content_candidates)
 
     def passage_score(paragraph: str) -> tuple[int, int]:
         words = _words(paragraph)
