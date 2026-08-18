@@ -157,6 +157,8 @@ function ExploreSection() {
 
 interface ProgressSummaryProps {
   isLoading: boolean;
+  hasError?: boolean;
+  onRetry?: () => void;
   todayMinutes: number;
   goalMinutes: number;
   completedTopics: number;
@@ -165,7 +167,7 @@ interface ProgressSummaryProps {
   streak: number;
 }
 
-export function ProgressSummary({ isLoading, todayMinutes, goalMinutes, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
+export function ProgressSummary({ isLoading, hasError = false, onRetry, todayMinutes, goalMinutes, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
   if (isLoading) {
     return (
       <section
@@ -181,6 +183,27 @@ export function ProgressSummary({ isLoading, todayMinutes, goalMinutes, complete
           <div className="h-4 w-36 rounded bg-cream-100 dark:bg-slate-700" />
           <div className="h-16 rounded-xl bg-cream-50 dark:bg-slate-900/50" />
         </div>
+      </section>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <section aria-labelledby="progress-heading" className="rounded-2xl border border-amber-200 bg-white p-4 dark:border-amber-900 dark:bg-slate-800 sm:p-5">
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">At a glance</p>
+        <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Progress unavailable</h2>
+        <p role="alert" className="mt-2 text-sm text-brown-600 dark:text-gray-300">
+          We could not load your progress. Nothing was reset or changed.
+        </p>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-4 min-h-11 rounded-xl border border-amber-300 px-4 py-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-amber-800 dark:text-amber-200 dark:hover:bg-amber-950/30"
+          >
+            Try again
+          </button>
+        )}
       </section>
     );
   }
@@ -222,6 +245,25 @@ export function ProgressSummary({ isLoading, todayMinutes, goalMinutes, complete
           <dd className="mt-1 font-bold text-brown-900 dark:text-white">{streak}</dd>
         </div>
       </dl>
+    </section>
+  );
+}
+
+function TodayDataError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <section aria-labelledby="today-error-heading" className="rounded-3xl border border-amber-200 bg-white p-5 dark:border-amber-900 dark:bg-slate-800 sm:p-7">
+      <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Today</p>
+      <h2 id="today-error-heading" className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Your plan is temporarily unavailable</h2>
+      <p role="alert" className="mt-2 max-w-2xl text-brown-600 dark:text-gray-300">
+        We could not load your learning history, so we will not guess at your next step. Your progress is safe.
+      </p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-5 min-h-11 rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+      >
+        Try loading again
+      </button>
     </section>
   );
 }
@@ -295,6 +337,8 @@ export function HomePage() {
   const { preferences, needsOnboarding } = useUserPreferences();
   const {
     isLoading,
+    error: homepageError,
+    refetch: refetchHomepage,
     streak,
     xp,
     weakAreas,
@@ -350,11 +394,17 @@ export function HomePage() {
             )}
           </div>
 
-          <TodayPlanCard plan={todayPlan} isLoading={isLoading} />
+          {homepageError ? (
+            <TodayDataError onRetry={() => void refetchHomepage()} />
+          ) : (
+            <TodayPlanCard plan={todayPlan} isLoading={isLoading} />
+          )}
           <UtilityLinks />
           <ExploreSection />
           <ProgressSummary
             isLoading={isLoading}
+            hasError={Boolean(homepageError)}
+            onRetry={() => void refetchHomepage()}
             todayMinutes={xp?.today_minutes ?? 0}
             goalMinutes={xp && xp.daily_goal_minutes > 0
               ? xp.daily_goal_minutes
