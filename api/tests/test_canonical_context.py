@@ -79,3 +79,16 @@ def test_exact_dictionary_lookup_bypasses_semantic_retrieval_for_curly_quotes():
     assert "absent, not present, inattentive, disappear" in context
     assert ("Chamoru.info dictionary", None) in sources
     assert ("Topping, Ogo, and Dungca dictionary", None) in sources
+
+
+def test_exact_dictionary_lookup_keeps_para_and_para_with_ring_distinct():
+    para_context, _para_sources = get_canonical_tutor_context(
+        "What does para mean?"
+    )
+    para_with_ring_context, _ring_sources = get_canonical_tutor_context(
+        "What does påra mean?"
+    )
+
+    assert "Exact dictionary headword: para" in para_context
+    assert "Exact dictionary headword: påra" not in para_context
+    assert "Exact dictionary headword: påra" in para_with_ring_context

@@ -44,13 +44,8 @@ def _normalize_exact_headword(value: str) -> str:
         .replace("ʻ", "'")
         .replace("`", "'")
     )
-    decomposed = unicodedata.normalize("NFKD", apostrophe_normalized)
-    without_diacritics = "".join(
-        character
-        for character in decomposed
-        if unicodedata.category(character) != "Mn"
-    )
-    return " ".join(re.sub(r"[^a-z0-9'-]+", " ", without_diacritics).split())
+    composed = unicodedata.normalize("NFC", apostrophe_normalized)
+    return " ".join(re.sub(r"[^\w'-]+", " ", composed).split())
 
 
 @lru_cache(maxsize=1)
