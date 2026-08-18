@@ -34,7 +34,7 @@ def test_retrieval_event_reports_governed_card_without_user_text() -> None:
     assert "/private/source.pdf" not in serialized
 
 
-def test_retrieval_event_distinguishes_vector_and_no_evidence_routes() -> None:
+def test_retrieval_event_distinguishes_vector_no_evidence_and_no_rag_routes() -> None:
     vector_event = build_retrieval_event(
         query_type="lookup",
         rag_mode="full",
@@ -52,7 +52,14 @@ def test_retrieval_event_distinguishes_vector_and_no_evidence_routes() -> None:
         sources=[],
         context_truncated=False,
     )
+    no_rag_event = build_retrieval_event(
+        query_type="general",
+        rag_mode=None,
+        sources=[],
+        context_truncated=False,
+    )
 
     assert vector_event["route"] == "vector"
     assert vector_event["context_truncated"] is True
     assert empty_event["route"] == "no_evidence"
+    assert no_rag_event["route"] == "no_rag"

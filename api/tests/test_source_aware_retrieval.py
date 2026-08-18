@@ -8,8 +8,11 @@ SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
 
 
 class FakeLogger:
+    def __init__(self) -> None:
+        self.info_calls: list[tuple[str, tuple]] = []
+
     def info(self, _message: str, *_args) -> None:
-        pass
+        self.info_calls.append((_message, _args))
 
     def error(self, _message: str) -> None:
         pass
@@ -24,15 +27,23 @@ class FakeRAG:
         return "vector context", [{"name": "Vector source", "page": None}]
 
 
-def _load_get_rag_context(*, fake_rag: FakeRAG, card_context: str):
+def _load_get_rag_context(
+    *,
+    fake_rag: FakeRAG,
+    card_context: str,
+    use_rag: bool = True,
+):
     module = ast.parse(SOURCE)
     function = next(
         node
         for node in module.body
         if isinstance(node, ast.FunctionDef) and node.name == "get_rag_context"
     )
+    logger = FakeLogger()
     namespace = {
-        "should_use_rag": lambda _query, _length: (True, "full"),
+        "should_use_rag": lambda _query, _length: (
+            (True, "full") if use_rag else (False, None)
+        ),
         "get_canonical_tutor_context": lambda _query: (
             "canonical context",
             [{"name": "Canonical", "page": None}],
@@ -46,17 +57,17 @@ def _load_get_rag_context(*, fake_rag: FakeRAG, card_context: str):
         "truncate_text": lambda value, _limit: value,
         "format_source_citations": lambda sources: sources,
         "detect_query_type": lambda _query: "lookup",
-        "build_retrieval_event": lambda **_kwargs: {},
+        "build_retrieval_event": lambda **kwargs: kwargs,
         "json": json,
-        "logger": FakeLogger(),
+        "logger": logger,
     }
     exec(compile(ast.Module(body=[function], type_ignores=[]), str(SOURCE_PATH), "exec"), namespace)
-    return namespace["get_rag_context"]
+    return namespace["get_rag_context"], logger
 
 
 def test_production_card_is_not_diluted_by_vector_retrieval() -> None:
     fake_rag = FakeRAG()
-    get_rag_context = _load_get_rag_context(
+    get_rag_context, _logger = _load_get_rag_context(
         fake_rag=fake_rag,
         card_context="approved card context",
     )
@@ -72,10 +83,41 @@ def test_production_card_is_not_diluted_by_vector_retrieval() -> None:
 
 def test_unmatched_question_continues_through_vector_corpus() -> None:
     fake_rag = FakeRAG()
-    get_rag_context = _load_get_rag_context(fake_rag=fake_rag, card_context="")
+    get_rag_context, _logger = _load_get_rag_context(fake_rag=fake_rag, card_context="")
 
     context, sources = get_rag_context("What does hånom mean?")
 
     assert context == "canonical context\n\nvector context"
     assert [source["name"] for source in sources] == ["Canonical", "Vector source"]
     assert fake_rag.calls == [("What does hånom mean?", 3)]
+
+
+def test_no_rag_decision_emits_privacy_safe_selection_event() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, logger = _load_get_rag_context(
+        fake_rag=fake_rag,
+        card_context="",
+        use_rag=False,
+    )
+
+    context, sources = get_rag_context("Hello")
+
+    assert context == ""
+    assert sources == []
+    assert fake_rag.calls == []
+    assert logger.info_calls == [
+        (
+            "RAG_SELECTION %s",
+            (
+                json.dumps(
+                    {
+                        "query_type": "lookup",
+                        "rag_mode": None,
+                        "sources": [],
+                        "context_truncated": False,
+                    },
+                    sort_keys=True,
+                ),
+            ),
+        )
+    ]

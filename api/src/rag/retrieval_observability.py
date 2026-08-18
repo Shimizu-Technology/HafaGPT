@@ -36,6 +36,8 @@ def build_retrieval_event(
         route = "knowledge_card"
     elif "legacy_retrieval" in evidence_kinds:
         route = "vector"
+    elif rag_mode is None:
+        route = "no_rag"
     elif source_count:
         route = "canonical"
     else:

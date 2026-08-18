@@ -938,6 +938,13 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     use_rag, rag_mode = should_use_rag(user_input, conversation_length)
     
     if not use_rag:
+        retrieval_event = build_retrieval_event(
+            query_type=detect_query_type(user_input),
+            rag_mode=None,
+            sources=[],
+            context_truncated=False,
+        )
+        logger.info("RAG_SELECTION %s", json.dumps(retrieval_event, sort_keys=True))
         return "", []
     
     contexts: list[str] = []
