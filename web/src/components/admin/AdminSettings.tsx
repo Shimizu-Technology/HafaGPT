@@ -10,6 +10,7 @@ import {
   Palette
 } from 'lucide-react';
 import { useAdminSettings, useUpdateAdminSettings } from '../../hooks/useAdminQuery';
+import { validateSeasonalThemeSettings } from '../../lib/siteThemeAdmin';
 import { AdminLayout } from './AdminLayout';
 
 export function AdminSettings() {
@@ -21,8 +22,11 @@ export function AdminSettings() {
   const [promoEndDate, setPromoEndDate] = useState('');
   const [promoTitle, setPromoTitle] = useState('');
   const [theme, setTheme] = useState('default');
+  const [themeEnabled, setThemeEnabled] = useState(false);
+  const [themeEndDate, setThemeEndDate] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const themeValidationError = validateSeasonalThemeSettings(theme, themeEnabled, themeEndDate);
   
   // Load settings into form when data arrives
   useEffect(() => {
@@ -31,6 +35,8 @@ export function AdminSettings() {
       setPromoEndDate(data.settings.promo_end_date?.value || '2026-01-06');
       setPromoTitle(data.settings.promo_title?.value || '');
       setTheme(data.settings.theme?.value || 'default');
+      setThemeEnabled(data.settings.theme_enabled?.value === 'true');
+      setThemeEndDate(data.settings.theme_end_date?.value || '');
     }
   }, [data]);
   
@@ -42,23 +48,31 @@ export function AdminSettings() {
     const originalEndDate = data.settings.promo_end_date?.value || '';
     const originalTitle = data.settings.promo_title?.value || '';
     const originalTheme = data.settings.theme?.value || 'default';
+    const originalThemeEnabled = data.settings.theme_enabled?.value === 'true';
+    const originalThemeEndDate = data.settings.theme_end_date?.value || '';
     
     const changed = 
       promoEnabled !== originalEnabled ||
       promoEndDate !== originalEndDate ||
       promoTitle !== originalTitle ||
-      theme !== originalTheme;
+      theme !== originalTheme ||
+      themeEnabled !== originalThemeEnabled ||
+      themeEndDate !== originalThemeEndDate;
     
     setHasChanges(changed);
-  }, [promoEnabled, promoEndDate, promoTitle, theme, data]);
+  }, [promoEnabled, promoEndDate, promoTitle, theme, themeEnabled, themeEndDate, data]);
   
   const handleSave = async () => {
+    if (themeValidationError) return;
+
     try {
       await updateSettings.mutateAsync({
         promo_enabled: promoEnabled.toString(),
         promo_end_date: promoEndDate,
         promo_title: promoTitle,
         theme: theme,
+        theme_enabled: themeEnabled.toString(),
+        theme_end_date: themeEndDate,
       });
       setHasChanges(false);
       setSaveSuccess(true);
@@ -112,9 +126,9 @@ export function AdminSettings() {
           
           <button
             onClick={handleSave}
-            disabled={!hasChanges || updateSettings.isPending}
+            disabled={!hasChanges || updateSettings.isPending || Boolean(themeValidationError)}
             className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all ${
-              hasChanges 
+              hasChanges && !themeValidationError
                 ? 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600 shadow-lg'
                 : 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500 cursor-not-allowed'
             }`}
@@ -265,11 +279,64 @@ export function AdminSettings() {
               Theme Settings
             </h2>
             <p className="text-sm text-brown-500 dark:text-gray-400 mt-1">
-              Choose a seasonal theme for the app
+              Choose the app theme and independently bound seasonal effects
             </p>
           </div>
           
-          <div className="p-6">
+          <div className="p-6 space-y-6">
+            <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 dark:bg-slate-700/50 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <label htmlFor="seasonal-theme-toggle" className="font-medium text-brown-800 dark:text-white">
+                  Enable seasonal effects
+                </label>
+                <p className="mt-0.5 text-sm text-brown-500 dark:text-gray-400">
+                  Required for Christmas or New Year visuals. Promo access is controlled separately.
+                </p>
+              </div>
+              <button
+                id="seasonal-theme-toggle"
+                type="button"
+                onClick={() => setThemeEnabled(!themeEnabled)}
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                  themeEnabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
+                }`}
+                role="switch"
+                aria-checked={themeEnabled}
+              >
+                <span
+                  className={`inline-block h-9 w-9 rounded-full bg-white shadow transition-transform ${
+                    themeEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div>
+              <label htmlFor="seasonal-theme-end-date" className="mb-2 block font-medium text-brown-800 dark:text-white">
+                <span className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Seasonal Theme End Date
+                </span>
+              </label>
+              <input
+                id="seasonal-theme-end-date"
+                type="date"
+                value={themeEndDate}
+                onChange={(event) => setThemeEndDate(event.target.value)}
+                className="min-h-11 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-brown-800 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white sm:w-64"
+                aria-describedby={themeValidationError ? 'seasonal-theme-error' : 'seasonal-theme-help'}
+                aria-invalid={Boolean(themeValidationError)}
+              />
+              <p id="seasonal-theme-help" className="mt-1.5 text-sm text-brown-500 dark:text-gray-400">
+                Seasonal visuals turn off automatically after this date in Guam time.
+              </p>
+              {themeValidationError && (
+                <p id="seasonal-theme-error" role="alert" className="mt-2 text-sm font-medium text-red-600 dark:text-red-400">
+                  {themeValidationError}
+                </p>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
                 { id: 'default', label: 'Default', emoji: '🌺', color: 'from-coral-500 to-coral-600' },
@@ -279,8 +346,13 @@ export function AdminSettings() {
               ].map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTheme(t.id)}
-                  className={`p-4 rounded-xl border-2 transition-all bg-white dark:bg-slate-700 ${
+                  onClick={() => {
+                    setTheme(t.id);
+                    if (t.id === 'default' || t.id === 'chamorro') {
+                      setThemeEnabled(false);
+                    }
+                  }}
+                  className={`min-h-11 p-4 rounded-xl border-2 transition-all bg-white dark:bg-slate-700 ${
                     theme === t.id
                       ? 'border-coral-500 dark:border-ocean-400 ring-2 ring-coral-500/20 dark:ring-ocean-400/20'
                       : 'border-cream-200 dark:border-slate-600 hover:border-cream-300 dark:hover:border-slate-500'
