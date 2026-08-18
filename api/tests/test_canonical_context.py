@@ -1,3 +1,5 @@
+import pytest
+
 from api.canonical_context import get_canonical_tutor_context
 
 
@@ -32,6 +34,37 @@ def test_recorded_variant_and_cited_spelling_match_inside_a_passage():
         "kumision_learning_tools",
         "visit_guam_greetings",
     ]
+
+
+@pytest.mark.parametrize(
+    "school_spelling",
+    (
+        "Manana si Yuos",
+        "Mañana si Yu’os",
+        "Manana si Yu os",
+    ),
+)
+def test_school_greeting_matches_without_phone_diacritics_or_clean_ocr(
+    school_spelling: str,
+):
+    context, _sources = get_canonical_tutor_context(
+        f"What does this school greeting mean? {school_spelling}, familia."
+    )
+
+    assert "English: Good morning" in context
+    assert "Recommended teaching term: Buenas dias" in context
+    assert "Manana si Yu'os" in context
+
+
+def test_school_put_fabot_variant_preserves_source_and_teaching_form():
+    context, _sources = get_canonical_tutor_context(
+        "School announcement: Put fabot review the handbook."
+    )
+
+    assert "Recommended teaching term: Pot fabot" in context
+    assert "Put fabot" in context
+    assert "not the primary beginner term" in context
+    assert "its example glosses Put fabot as Please" in context
 
 
 def test_unrelated_request_does_not_add_canonical_context():
