@@ -21,7 +21,7 @@ from src.rag.source_policy import (
 from src.rag.source_reviews import build_citation_contract
 from src.rag.query_classification import detect_query_type
 from src.rag.translation_policy import (
-    extract_translation_payload,
+    extract_translation_retrieval_payload,
     is_passage_translation,
 )
 
@@ -658,8 +658,9 @@ class ChamorroRAG:
         
         # PHASE 1 FIX: Clean query before embedding search
         # Remove contaminating words that cause semantic search to match wrong results
-        translation_payload = extract_translation_payload(query)
-        if is_passage_translation(query) and translation_payload:
+        passage_translation = is_passage_translation(query)
+        translation_payload = extract_translation_retrieval_payload(query)
+        if passage_translation and translation_payload:
             # Embed the content the user wants translated, not wrapper text such
             # as "what does this mean" or the surrounding school-chat context.
             clean_query = translation_payload.casefold()
@@ -677,6 +678,12 @@ class ChamorroRAG:
             query_type = 'educational'
         elif card_type == 'cultural':
             query_type = 'cultural'
+
+        # Do not attach governed citations to an ambiguous multi-block passage.
+        # The chatbot still receives the complete original message and follows the
+        # no-reference best-effort translation policy.
+        if passage_translation and not translation_payload:
+            return []
         
         if query_type == 'lookup':
             # Try to extract the target word

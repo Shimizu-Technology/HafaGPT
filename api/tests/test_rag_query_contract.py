@@ -11,6 +11,7 @@ from src.rag.source_policy import annotate_metadata
 from src.rag.translation_policy import (
     classify_translation_request,
     extract_translation_payload,
+    extract_translation_retrieval_payload,
     translation_prompt_guidance,
 )
 
@@ -152,27 +153,41 @@ def test_leading_translation_instruction_is_not_embedded_with_english_passage() 
     assert "Good morning, Stassie is sick" in payload
 
 
-def test_unlabeled_leading_note_is_not_combined_with_english_passage() -> None:
+def test_unlabeled_leading_note_disables_ambiguous_retrieval() -> None:
     query = (
         "Translate this to Chamorro:\n\n"
         "Our family is worried about her.\n\n"
         "Good morning, Stassie is sick and will not be at school today."
     )
 
-    payload = extract_translation_payload(query)
-    assert "Our family is worried" not in payload
-    assert "Good morning, Stassie is sick" in payload
+    assert "Our family is worried" in extract_translation_payload(query)
+    assert "Good morning, Stassie is sick" in extract_translation_payload(query)
+    assert extract_translation_retrieval_payload(query) == ""
 
 
-def test_unlabeled_trailing_note_is_not_combined_with_english_passage() -> None:
+def test_unlabeled_trailing_note_disables_ambiguous_retrieval() -> None:
     query = (
         "Translate this to Chamorro:\n\n"
         "Good morning, Stassie will not be at school today.\n\n"
         "Our family has been worried about her."
     )
 
-    payload = extract_translation_payload(query)
-    assert payload == "Good morning, Stassie will not be at school today."
+    assert extract_translation_retrieval_payload(query) == ""
+
+
+def test_multiline_source_passage_is_one_retrieval_block() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie is sick.\n"
+        "She will not be at school today.\n"
+        "Thank you for understanding."
+    )
+
+    assert extract_translation_retrieval_payload(query) == (
+        "Good morning, Stassie is sick.\n"
+        "She will not be at school today.\n"
+        "Thank you for understanding."
+    )
 
 
 def test_multiword_english_request_uses_passage_translation_policy() -> None:

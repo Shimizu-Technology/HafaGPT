@@ -31,12 +31,12 @@ class FakeVectorStore:
 
     def similarity_search_with_score(
         self,
-        _query: str,
+        query: str,
         *,
         k: int,
         filter: dict | None = None,
     ) -> list[tuple[Document, float]]:
-        self.calls.append({"k": k, "filter": filter})
+        self.calls.append({"query": query, "k": k, "filter": filter})
         documents = [
             item for item in self.documents if self._matches_filter(item, filter)
         ]
@@ -172,3 +172,32 @@ def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -
         "More relevant lesson",
         "Less relevant lesson",
     ]
+
+
+def test_ambiguous_translation_blocks_do_not_attach_vector_evidence() -> None:
+    rag = rag_with_documents(
+        [document("Governed lesson", "https://www.chamoru.info/language-lessons/example")]
+    )
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Our family has been worried about her.\n\n"
+        "Good morning, Stassie will not be at school today."
+    )
+
+    assert rag.search(query, k=3) == []
+    assert rag.vectorstore.calls == []
+
+
+def test_multiline_translation_is_embedded_as_one_complete_passage() -> None:
+    rag = rag_with_documents(
+        [document("Governed lesson", "https://www.chamoru.info/language-lessons/example")]
+    )
+    passage = (
+        "Good morning, Stassie is sick.\n"
+        "She will not be at school today.\n"
+        "Thank you for understanding."
+    )
+
+    rag.search(f"Translate this to Chamorro:\n\n{passage}", k=3)
+
+    assert rag.vectorstore.calls[0]["query"] == passage.casefold()

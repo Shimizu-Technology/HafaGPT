@@ -56,12 +56,6 @@ _TRANSLATION_INSTRUCTION_PATTERN = re.compile(
     r"\b(?:make|keep)\s+(?:it|the\s+(?:wording|translation|result))\b|"
     r"\b(?:sound|feel|read)\s+(?:more\s+)?(?:warm|gentle|natural|formal|casual|polite)\b)"
 )
-_ENGLISH_MESSAGE_MARKER_PATTERN = re.compile(
-    r"(?ix)"
-    r"(?:^\s*(?:good\s+(?:morning|afternoon|evening)|hello|hi|dear)\b|"
-    r"\b(?:today|tomorrow|yesterday|appointment|school|class|teacher)\b|"
-    r"\b(?:will|would|can|could)\s+not\b|\b(?:won't|can't|couldn't|wouldn't)\b)"
-)
 _CHAMORRO_PASSAGE_MARKERS = {
     "dispensa",
     "eskuela",
@@ -102,19 +96,10 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
         re.search(r"(?i)\b(?:to|in)\s+chamorr[ou]\b", query)
     )
     if translating_to_chamorro:
-        # English prose alone cannot reliably distinguish an unlabeled passage
-        # from a completely unlabeled before/after note. Strip paragraphs that
-        # identify themselves as translation instructions, then select one
-        # message-like passage. Never combine surrounding prose into the vector
-        # query: a note can otherwise retrieve unrelated governed citations. The
-        # original query still reaches the model unchanged, so context and style
-        # instructions continue to shape the response.
-        def english_passage_score(paragraph: str) -> tuple[int, int]:
-            words = _words(paragraph)
-            message_markers = len(_ENGLISH_MESSAGE_MARKER_PATTERN.findall(paragraph))
-            return 10 * message_markers + min(len(words), 40), len(words)
-
-        return max(content_candidates, key=english_passage_score)
+        # This value is used for intent classification, not retrieval. Preserve
+        # every remaining block because English prose cannot reliably distinguish
+        # an arbitrary unlabeled passage from an arbitrary unlabeled note.
+        return "\n\n".join(content_candidates)
 
     def passage_score(paragraph: str) -> tuple[int, int]:
         words = _words(paragraph)
@@ -127,19 +112,36 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     return max(content_candidates, key=passage_score)
 
 
-def extract_translation_payload(query: str) -> str:
-    """Extract the text being translated without treating ``this`` as a word."""
+def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> str:
+    """Extract translation text, optionally refusing ambiguous retrieval text."""
 
     normalized = query.strip()
     if not normalized:
         return ""
 
-    paragraphs = [part.strip() for part in re.split(r"\n\s*\n|\r?\n", normalized) if part.strip()]
+    # A single newline can be part of the source passage. Only blank lines create
+    # wrapper/context boundaries.
+    paragraphs = [
+        part.strip()
+        for part in re.split(r"(?:\r?\n)[ \t]*(?:\r?\n)+", normalized)
+        if part.strip()
+    ]
     if len(paragraphs) > 1 and re.search(
         r"(?i)\b(?:what does this mean|what does this say|translate this|what is this saying)\b",
         paragraphs[0],
     ):
-        return _strip_wrapping_quotes(_select_wrapper_payload(paragraphs, normalized))
+        selected = _select_wrapper_payload(paragraphs, normalized)
+        if require_unambiguous:
+            candidates = [
+                paragraph
+                for paragraph in paragraphs[1:]
+                if not _CONTEXT_PARAGRAPH_PATTERN.search(paragraph)
+                and not _TRANSLATION_INSTRUCTION_PATTERN.search(paragraph)
+            ]
+            if len(candidates) != 1:
+                return ""
+            selected = candidates[0]
+        return _strip_wrapping_quotes(selected)
 
     wrapper_match = re.search(
         r"(?is)\b(?:what does this mean|what does this say|what is this saying)\s*\?\s*(.+)$",
@@ -196,6 +198,23 @@ def extract_translation_payload(query: str) -> str:
             return candidate
 
     return ""
+
+
+def extract_translation_payload(query: str) -> str:
+    """Extract text for intent classification without treating ``this`` as a word."""
+
+    return _extract_translation_payload(query, require_unambiguous=False)
+
+
+def extract_translation_retrieval_payload(query: str) -> str:
+    """Return passage text only when it is safe to attach retrieved citations.
+
+    Multiple unlabeled prose blocks are inherently ambiguous. Returning no vector
+    query is safer than retrieving evidence for the wrong block; the original
+    message still reaches the model for a best-effort translation.
+    """
+
+    return _extract_translation_payload(query, require_unambiguous=True)
 
 
 def classify_translation_request(query: str) -> TranslationIntent:
