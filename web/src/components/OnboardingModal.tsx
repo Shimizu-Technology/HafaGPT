@@ -149,8 +149,17 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   const [saveError, setSaveError] = useState('');
   const dialogRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const activeAccountKeyRef = useRef(accountKey);
-  activeAccountKeyRef.current = accountKey;
+  const activeSessionRef = useRef({ accountKey, isOpen, generation: 0 });
+  if (
+    activeSessionRef.current.accountKey !== accountKey
+    || activeSessionRef.current.isOpen !== isOpen
+  ) {
+    activeSessionRef.current = {
+      accountKey,
+      isOpen,
+      generation: activeSessionRef.current.generation + 1,
+    };
+  }
   const { completeOnboarding, isUpdating } = useUserPreferences();
 
   useEffect(() => {
@@ -180,15 +189,15 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   };
 
   const saveAndClose = async (preferences: OnboardingPreferences) => {
-    const savingForAccount = activeAccountKeyRef.current;
+    const savingForGeneration = activeSessionRef.current.generation;
     setSaveError('');
     try {
       await completeOnboarding(preferences);
-      if (activeAccountKeyRef.current === savingForAccount) {
+      if (activeSessionRef.current.generation === savingForGeneration) {
         onClose();
       }
     } catch {
-      if (activeAccountKeyRef.current === savingForAccount) {
+      if (activeSessionRef.current.generation === savingForGeneration) {
         setSaveError('We could not save your choices. Please try again.');
       }
     }

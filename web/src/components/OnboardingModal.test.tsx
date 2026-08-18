@@ -118,4 +118,25 @@ describe('capability onboarding', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /learning for myself/i })).toHaveAttribute('aria-pressed', 'true');
   });
+
+  it('does not let an old save close a newer session for the same account', async () => {
+    let finishSave: (() => void) | undefined;
+    onboardingMocks.completeOnboarding.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishSave = resolve;
+    }));
+    const onClose = vi.fn();
+    const { rerender } = render(
+      <OnboardingModal isOpen onClose={onClose} accountKey="account-a" />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-b" />);
+    rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-a" />);
+    fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
+    await act(async () => finishSave?.());
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /learning with a child/i })).toHaveAttribute('aria-pressed', 'true');
+  });
 });
