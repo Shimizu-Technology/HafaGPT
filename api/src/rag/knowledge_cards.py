@@ -62,6 +62,17 @@ REGION_QUERY_MARKERS = {
     "Guam": {"guam", "guåhan", "guahan"},
     "CNMI": {"cnmi", "saipan", "tinian", "rota", "marianas"},
 }
+CARD_INTENT_MARKERS = {
+    "orthography_rule": {
+        "spell",
+        "spelling",
+        "spellings",
+        "orthography",
+        "utugrafihan",
+        "write",
+        "writing",
+    },
+}
 
 
 def _validate_exact_fields(
@@ -286,6 +297,9 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
         region_markers = REGION_QUERY_MARKERS.get(card["region"])
         if region_markers and query_tokens.isdisjoint(region_markers):
             continue
+        intent_markers = CARD_INTENT_MARKERS.get(card["claim_type"])
+        if intent_markers and query_tokens.isdisjoint(intent_markers):
+            continue
         best_score = 0.0
         for alias in card["question_aliases"]:
             normalized_alias = _normalize_match_text(alias)
@@ -294,8 +308,11 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
             if normalized_alias == normalized_query:
                 best_score = max(best_score, 3.0)
                 continue
-            if normalized_alias in normalized_query or normalized_query in normalized_alias:
+            if normalized_alias in normalized_query:
                 best_score = max(best_score, 2.0)
+                continue
+            if len(query_tokens) >= 3 and normalized_query in normalized_alias:
+                best_score = max(best_score, 1.5)
                 continue
             alias_tokens = set(normalized_alias.split())
             overlap = len(query_tokens & alias_tokens)

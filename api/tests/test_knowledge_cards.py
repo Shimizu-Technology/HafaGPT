@@ -154,6 +154,19 @@ def test_region_specific_card_does_not_match_generic_token_overlap() -> None:
     assert matching_production_cards("What is the current Chamorro orthography?") == []
 
 
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Guam",
+        "Tell me about Guam",
+        "What system does Guam use for schools?",
+        "What does Guam use today?",
+    ],
+)
+def test_guam_marker_without_orthography_intent_does_not_match(query: str) -> None:
+    assert matching_production_cards(query) == []
+
+
 def test_guahan_ascii_region_marker_matches_guam_card() -> None:
     assert [
         card["id"]
