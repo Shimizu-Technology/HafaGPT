@@ -44,6 +44,7 @@ describe('learning preference settings', () => {
     settingsMocks.updatePreferencesAsync.mockReset();
     settingsMocks.updatePreferencesAsync.mockResolvedValue(undefined);
     settingsMocks.updateDailyGoal.mockReset();
+    settingsMocks.updateDailyGoal.mockResolvedValue({ daily_goal_minutes: 15 });
   });
 
   it('keeps every capability preference editable and saves the allowlisted values', async () => {
@@ -63,6 +64,17 @@ describe('learning preference settings', () => {
       reading_support: 'audio_pictures',
       daily_session_minutes: 15,
     }));
+    expect(settingsMocks.updateDailyGoal).toHaveBeenCalledWith(15);
+  });
+
+  it('does not save a divergent preference when the tracked goal cannot update', async () => {
+    settingsMocks.updateDailyGoal.mockRejectedValueOnce(new Error('offline'));
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
+    expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
   });
 });
-

@@ -99,4 +99,66 @@ describe('deterministic Today planner', () => {
     expect(complete.goalComplete).toBe(true);
     expect(complete.activities).toEqual([]);
   });
+
+  it('never truncates a full activity to fill a partial remaining minute', () => {
+    const plan = buildTodayPlan(input({
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 10 },
+      xp: {
+        total_xp: 100,
+        level: 2,
+        xp_for_current_level: 100,
+        xp_for_next_level: 250,
+        xp_progress: 0,
+        daily_goal_minutes: 10,
+        today_minutes: 9,
+        daily_goal_complete: false,
+      },
+    }));
+
+    expect(plan.remainingMinutes).toBe(1);
+    expect(plan.activities).toEqual([expect.objectContaining({
+      id: 'quick-phrase',
+      minutes: 1,
+      to: '/chat?intent=practice',
+    })]);
+    expect(plan.activities[0].title).not.toMatch(/learn greetings/i);
+  });
+
+  it('uses the XP goal that owns tracked minutes when stored goals diverge', () => {
+    const plan = buildTodayPlan(input({
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 20 },
+      xp: {
+        total_xp: 100,
+        level: 2,
+        xp_for_current_level: 100,
+        xp_for_next_level: 250,
+        xp_progress: 0,
+        daily_goal_minutes: 5,
+        today_minutes: 5,
+        daily_goal_complete: true,
+      },
+    }));
+
+    expect(plan.budgetMinutes).toBe(5);
+    expect(plan.goalComplete).toBe(true);
+  });
+
+  it('falls back to the capability preference for a legacy disabled XP goal', () => {
+    const plan = buildTodayPlan(input({
+      preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true, daily_session_minutes: 15 },
+      xp: {
+        total_xp: 0,
+        level: 1,
+        xp_for_current_level: 0,
+        xp_for_next_level: 100,
+        xp_progress: 0,
+        daily_goal_minutes: 0,
+        today_minutes: 0,
+        daily_goal_complete: true,
+      },
+    }));
+
+    expect(plan.budgetMinutes).toBe(15);
+    expect(plan.goalComplete).toBe(false);
+  });
 });

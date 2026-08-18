@@ -109,10 +109,8 @@ function fitActivities(candidates: TodayActivity[], budget: number): TodayActivi
       continue;
     }
 
-    if (selected.length === 0) {
-      selected.push({ ...candidate, minutes: remaining });
-      used += remaining;
-    }
+    // Activities link to complete learning experiences. Never relabel a full
+    // lesson or review as shorter than it really is just to fill the budget.
   }
 
   return selected;
@@ -125,7 +123,12 @@ export function buildTodayPlan({
   weakAreas,
   xp,
 }: TodayPlanInput): TodayPlan {
-  const budgetMinutes = preferences.daily_session_minutes;
+  // XP owns the minutes counter and completion reward, so its enabled goal is
+  // the canonical budget. The capability preference is the fallback for new
+  // accounts and legacy records where daily goals were disabled with zero.
+  const budgetMinutes = xp && xp.daily_goal_minutes > 0
+    ? xp.daily_goal_minutes
+    : preferences.daily_session_minutes;
   const minutesAlreadyLearned = Math.max(0, xp?.today_minutes ?? 0);
   const remainingMinutes = Math.max(0, budgetMinutes - minutesAlreadyLearned);
 
@@ -223,6 +226,16 @@ export function buildTodayPlan({
   }
 
   const activities = fitActivities(candidates, remainingMinutes);
+  if (activities.length === 0) {
+    activities.push({
+      id: 'quick-phrase',
+      kind: 'practice',
+      title: 'Practice one quick phrase',
+      description: 'Ask for one short phrase and say it aloud.',
+      minutes: remainingMinutes,
+      to: '/chat?intent=practice',
+    });
+  }
   const totalMinutes = activities.reduce((sum, activity) => sum + activity.minutes, 0);
   const first = activities[0];
 

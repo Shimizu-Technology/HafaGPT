@@ -37,6 +37,7 @@ import {
   OnboardingPreferences,
   useUserPreferences,
 } from '../hooks/useUserPreferences';
+import { useUpdateDailyGoal } from '../hooks/useXP';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -161,6 +162,8 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
     };
   }
   const { completeOnboarding, isUpdating } = useUserPreferences();
+  const updateDailyGoal = useUpdateDailyGoal();
+  const isSaving = isUpdating || updateDailyGoal.isPending;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -192,6 +195,10 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
     const savingForGeneration = activeSessionRef.current.generation;
     setSaveError('');
     try {
+      // Sync the counter-owning XP goal before marking onboarding complete. If
+      // that request fails, the learner can retry without a partially-complete
+      // onboarding record silently closing this dialog.
+      await updateDailyGoal.mutateAsync(preferences.daily_session_minutes);
       await completeOnboarding(preferences);
       if (activeSessionRef.current.generation === savingForGeneration) {
         onClose();
@@ -314,7 +321,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
             <button
               type="button"
               onClick={() => setStep((current) => current - 1)}
-              disabled={isUpdating}
+              disabled={isSaving}
               aria-label="Go back"
               className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-700"
             >
@@ -324,7 +331,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           <button
             type="button"
             onClick={handleSkip}
-            disabled={isUpdating}
+            disabled={isSaving}
             className="min-h-11 px-2 text-sm font-medium text-brown-600 hover:text-brown-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:text-white"
           >
             Skip for now
@@ -332,11 +339,11 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           <button
             type="button"
             onClick={handleContinue}
-            disabled={isUpdating}
+            disabled={isSaving}
             className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-semibold text-white hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900"
           >
-            {isUpdating ? 'Saving…' : step === STEP_COPY.length - 1 ? 'Start learning' : 'Continue'}
-            {!isUpdating && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
+            {isSaving ? 'Saving…' : step === STEP_COPY.length - 1 ? 'Start learning' : 'Continue'}
+            {!isSaving && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
           </button>
         </footer>
       </section>

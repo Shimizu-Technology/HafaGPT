@@ -121,10 +121,10 @@ export interface HomepageData {
  * This reduces homepage load from 8+ API calls to just 1.
  */
 export function useHomepageData() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   const { data, isLoading, error, refetch } = useQuery<HomepageData>({
-    queryKey: ['homepageData'],
+    queryKey: ['homepageData', userId],
     queryFn: async () => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/homepage/data`, {
@@ -142,7 +142,6 @@ export function useHomepageData() {
     enabled: isSignedIn,
     staleTime: 1000 * 60 * 2, // 2 minutes - homepage data changes moderately
     refetchOnWindowFocus: true,
-    placeholderData: (previousData) => previousData,
   });
 
   return {
@@ -163,4 +162,3 @@ export function useHomepageData() {
 }
 
 export default useHomepageData;
-

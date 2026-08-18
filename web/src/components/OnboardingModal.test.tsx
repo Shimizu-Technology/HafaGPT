@@ -4,6 +4,7 @@ import { OnboardingModal } from './OnboardingModal';
 
 const onboardingMocks = vi.hoisted(() => ({
   completeOnboarding: vi.fn(),
+  updateDailyGoal: vi.fn(),
 }));
 
 vi.mock('../hooks/useUserPreferences', async () => {
@@ -17,10 +18,19 @@ vi.mock('../hooks/useUserPreferences', async () => {
   };
 });
 
+vi.mock('../hooks/useXP', () => ({
+  useUpdateDailyGoal: () => ({
+    mutateAsync: onboardingMocks.updateDailyGoal,
+    isPending: false,
+  }),
+}));
+
 describe('capability onboarding', () => {
   beforeEach(() => {
     onboardingMocks.completeOnboarding.mockReset();
     onboardingMocks.completeOnboarding.mockResolvedValue(undefined);
+    onboardingMocks.updateDailyGoal.mockReset();
+    onboardingMocks.updateDailyGoal.mockResolvedValue(undefined);
   });
 
   it('collects only the five capability preferences and completes without a reload', async () => {
@@ -45,6 +55,7 @@ describe('capability onboarding', () => {
       learning_goal: 'family',
       daily_session_minutes: 15,
     }));
+    expect(onboardingMocks.updateDailyGoal).toHaveBeenCalledWith(15);
     expect(onClose).toHaveBeenCalledOnce();
   });
 
@@ -61,6 +72,7 @@ describe('capability onboarding', () => {
       learning_goal: 'all',
       daily_session_minutes: 10,
     }));
+    expect(onboardingMocks.updateDailyGoal).toHaveBeenCalledWith(10);
     expect(onClose).toHaveBeenCalledOnce();
   });
 
@@ -74,6 +86,18 @@ describe('capability onboarding', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('does not mark onboarding complete when the tracked daily goal cannot sync', async () => {
+    onboardingMocks.updateDailyGoal.mockRejectedValueOnce(new Error('offline'));
+    const onClose = vi.fn();
+    render(<OnboardingModal isOpen onClose={onClose} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
+    expect(onboardingMocks.completeOnboarding).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('keeps keyboard focus inside the modal', async () => {

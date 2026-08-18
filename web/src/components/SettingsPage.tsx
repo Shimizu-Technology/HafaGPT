@@ -123,6 +123,9 @@ export function SettingsPage() {
   const handleSave = async () => {
     try {
       setSaveError('');
+      if (!xpData || xpData.daily_goal_minutes !== sessionMinutes) {
+        await updateDailyGoal.mutateAsync(sessionMinutes);
+      }
       await updatePreferencesAsync({
         skill_level: skillLevel,
         learning_goal: learningGoal,
@@ -130,14 +133,6 @@ export function SettingsPage() {
         reading_support: readingSupport,
         daily_session_minutes: sessionMinutes,
       });
-      if (xpData && xpData.daily_goal_minutes !== sessionMinutes) {
-        try {
-          await updateDailyGoal.mutateAsync(sessionMinutes);
-        } catch {
-          // The capability preference is canonical for the Today planner. The
-          // legacy XP goal sync is best-effort during the compatibility period.
-        }
-      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {

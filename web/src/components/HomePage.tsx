@@ -155,6 +155,7 @@ function ExploreSection() {
 }
 
 interface ProgressSummaryProps {
+  isLoading: boolean;
   todayMinutes: number;
   goalMinutes: number;
   completedTopics: number;
@@ -163,7 +164,26 @@ interface ProgressSummaryProps {
   streak: number;
 }
 
-function ProgressSummary({ todayMinutes, goalMinutes, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
+export function ProgressSummary({ isLoading, todayMinutes, goalMinutes, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
+  if (isLoading) {
+    return (
+      <section
+        aria-labelledby="progress-heading"
+        aria-busy="true"
+        className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5"
+      >
+        <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">At a glance</p>
+        <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
+        <span className="sr-only">Loading your progress</span>
+        <div className="mt-4 animate-pulse space-y-3 motion-reduce:animate-none" aria-hidden="true">
+          <div className="h-2 rounded-full bg-cream-200 dark:bg-slate-700" />
+          <div className="h-4 w-36 rounded bg-cream-100 dark:bg-slate-700" />
+          <div className="h-16 rounded-xl bg-cream-50 dark:bg-slate-900/50" />
+        </div>
+      </section>
+    );
+  }
+
   const progress = goalMinutes > 0 ? Math.min(100, Math.round((todayMinutes / goalMinutes) * 100)) : 0;
   return (
     <section aria-labelledby="progress-heading" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
@@ -304,7 +324,7 @@ export function HomePage() {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
         <HomeHeader signedIn={false} />
-        <main className="mx-auto max-w-6xl animate-pulse space-y-4 px-4 py-8">
+        <main className="mx-auto max-w-6xl animate-pulse space-y-4 px-4 py-8 motion-reduce:animate-none">
           <div className="h-56 rounded-3xl bg-white dark:bg-slate-800" />
           <div className="grid gap-4 sm:grid-cols-2"><div className="h-36 rounded-2xl bg-white dark:bg-slate-800" /><div className="h-36 rounded-2xl bg-white dark:bg-slate-800" /></div>
         </main>
@@ -333,8 +353,11 @@ export function HomePage() {
           <UtilityLinks />
           <ExploreSection />
           <ProgressSummary
+            isLoading={isLoading}
             todayMinutes={xp?.today_minutes ?? 0}
-            goalMinutes={preferences.daily_session_minutes}
+            goalMinutes={xp && xp.daily_goal_minutes > 0
+              ? xp.daily_goal_minutes
+              : preferences.daily_session_minutes}
             completedTopics={allProgress?.summary.total_completed ?? 0}
             totalTopics={allProgress?.summary.total_topics ?? 21}
             dueCards={srSummary?.due_today ?? 0}

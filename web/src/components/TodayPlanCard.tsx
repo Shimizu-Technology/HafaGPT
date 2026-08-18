@@ -29,7 +29,7 @@ interface TodayPlanCardProps {
 export function TodayPlanCard({ plan, isLoading = false }: TodayPlanCardProps) {
   if (isLoading) {
     return (
-      <section aria-label="Loading today's plan" className="animate-pulse rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+      <section aria-label="Loading today's plan" className="animate-pulse rounded-3xl border border-cream-200 bg-white p-5 motion-reduce:animate-none dark:border-slate-700 dark:bg-slate-800 sm:p-7">
         <div className="h-4 w-24 rounded bg-cream-200 dark:bg-slate-700" />
         <div className="mt-4 h-8 w-52 rounded bg-cream-200 dark:bg-slate-700" />
         <div className="mt-3 h-4 w-full max-w-md rounded bg-cream-100 dark:bg-slate-700" />
