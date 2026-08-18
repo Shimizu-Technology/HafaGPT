@@ -3949,7 +3949,15 @@ async def get_promo_status():
     promo_end_date = get_site_setting("promo_end_date", FREE_PROMO_END_DATE)
     promo_title = get_site_setting("promo_title", "🎄 Holiday Special: Unlimited access!")
     current_theme = get_site_setting("theme", "default")
-    theme_enabled = get_site_setting("theme_enabled", "true" if promo_active else "false").lower() == "true"
+    # Compatibility: existing installations only have `theme` and
+    # `promo_end_date`. Preserve an explicitly selected theme while using the
+    # existing end date as its safety boundary. New installations can control
+    # theme enablement and its boundary independently from unlimited access.
+    legacy_theme_enabled = current_theme in {"christmas", "newyear"}
+    theme_enabled = get_site_setting(
+        "theme_enabled",
+        "true" if legacy_theme_enabled else "false",
+    ).lower() == "true"
     theme_end_date = get_site_setting("theme_end_date", promo_end_date)
     effective_theme, theme_active = resolve_site_theme(
         current_theme,

@@ -18,6 +18,7 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
   const isPassing = quizScore >= 70;
   const isPerfect = quizScore === 100;
   const isLastTopic = topicIndex === totalTopics;
+  const levelLabel = `${topic.level.charAt(0).toUpperCase()}${topic.level.slice(1)}`;
 
   // Calculate stars (1-3 based on score)
   const stars = quizScore >= 90 ? 3 : quizScore >= 70 ? 2 : 1;
@@ -102,7 +103,7 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
       {isPassing && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-cream-200/50 dark:border-slate-700/50">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-brown-600 dark:text-gray-400">Beginner Path Progress</span>
+            <span className="text-brown-600 dark:text-gray-400">{levelLabel} Path Progress</span>
             <span className="font-semibold text-coral-600 dark:text-ocean-400">
               {topicIndex}/{totalTopics}
             </span>
@@ -157,10 +158,10 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
         <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-700/30">
           <Sparkles className="w-12 h-12 mx-auto mb-3 text-purple-500" />
           <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2">
-            🎉 You've completed all beginner topics!
+            You've completed all {topic.level} topics!
           </h3>
           <p className="text-purple-700 dark:text-purple-300 text-sm">
-            Amazing work! You've built a solid foundation in Chamorro. Keep practicing with games, chat, and quizzes!
+            Amazing work! You completed every topic in this level. Keep practicing with games, chat, and quizzes!
           </p>
         </div>
       )}
@@ -232,4 +233,3 @@ export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNe
     </div>
   );
 }
-
