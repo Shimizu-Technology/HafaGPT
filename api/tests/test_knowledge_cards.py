@@ -147,6 +147,13 @@ def test_only_production_ready_cards_can_match_runtime_queries() -> None:
     assert matching_production_cards("What does hånom mean?") == []
 
 
+def test_region_specific_card_does_not_match_generic_token_overlap() -> None:
+    assert matching_production_cards(
+        "What spelling system does the dictionary use?"
+    ) == []
+    assert matching_production_cards("What is the current Chamorro orthography?") == []
+
+
 def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> None:
     context, citations = get_knowledge_card_context(
         "Are Guam and CNMI spellings the same?"

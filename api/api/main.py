@@ -1134,7 +1134,7 @@ async def chat(
         
         # Convert sources to SourceInfo models
         sources = [
-            SourceInfo(name=s["name"], page=s["page"])
+            SourceInfo(**s)
             for s in result["sources"]
         ]
         
@@ -1532,7 +1532,7 @@ async def eval_chat(
         
         # Convert sources to SourceInfo models
         sources = [
-            SourceInfo(name=s["name"], page=s["page"])
+            SourceInfo(**s)
             for s in result["sources"]
         ]
         

@@ -58,6 +58,10 @@ URI_CHARACTERS = re.compile(r"[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]+")
 INVALID_PERCENT_ESCAPE = re.compile(r"%(?![0-9A-Fa-f]{2})")
 DOMAIN_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
 LEGACY_IP_LABEL = re.compile(r"(?:0[xX][0-9A-Fa-f]+|[0-9]+)")
+REGION_QUERY_MARKERS = {
+    "Guam": {"guam", "guåhan"},
+    "CNMI": {"cnmi", "saipan", "tinian", "rota", "marianas"},
+}
 
 
 def _validate_exact_fields(
@@ -84,7 +88,7 @@ def _is_iso_date(value: Any) -> bool:
         return False
 
 
-def _is_public_http_url(value: Any) -> bool:
+def is_public_http_url(value: Any) -> bool:
     if not isinstance(value, str) or not value.strip() or value != value.strip():
         return False
     # Keep runtime validation aligned with the schema's RFC 3986 `uri` format.
@@ -225,7 +229,7 @@ def validate_knowledge_cards(document: dict[str, Any]) -> None:
                 raise ValueError(
                     f"production-ready card {card_id} cites incomplete source review: {source_id}"
                 )
-            if not _is_public_http_url(citation.get("url")):
+            if not is_public_http_url(citation.get("url")):
                 raise ValueError(f"knowledge card {card_id} citation requires a public HTTP(S) URL")
             if not isinstance(citation.get("locator"), str) or not citation["locator"].strip():
                 raise ValueError(f"knowledge card {card_id} citation requires locator")
@@ -275,6 +279,13 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     query_tokens = set(normalized_query.split())
     scored: list[tuple[float, dict[str, Any]]] = []
     for card in production_cards():
+        # A region-specific reviewed answer must never win on generic wording
+        # alone. Requiring an explicit place marker prevents questions about a
+        # dictionary or an unspecified spelling system from silently inheriting
+        # Guam- or CNMI-specific guidance.
+        region_markers = REGION_QUERY_MARKERS.get(card["region"])
+        if region_markers and query_tokens.isdisjoint(region_markers):
+            continue
         best_score = 0.0
         for alias in card["question_aliases"]:
             normalized_alias = _normalize_match_text(alias)

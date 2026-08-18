@@ -20,6 +20,7 @@ from .models import (
     MessageResponse,
     SourceInfo
 )
+from .source_citations import format_source_citations
 from .upload_storage import delete_private_upload_references, resolve_private_upload_reference
 
 logger = logging.getLogger(__name__)
@@ -313,11 +314,10 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
             if row[3] and row[3].strip():
                 sources = []
                 if row[5]:  # sources_used (JSONB)
-                    for source in row[5]:
-                        sources.append(SourceInfo(
-                            name=source.get("name", ""),
-                            page=source.get("page")
-                        ))
+                    sources = [
+                        SourceInfo(**source)
+                        for source in format_source_citations(row[5])
+                    ]
                 messages.append(MessageResponse(
                     id=row[0],
                     role="assistant",
