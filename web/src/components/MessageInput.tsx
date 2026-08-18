@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus, GraduationCap } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
 
 // Supported file types
@@ -440,6 +440,15 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             aria-live="polite"
           >
             {fileError}
+          </div>
+        )}
+        {selectedFiles.length > 0 && !fileError && (
+          <div className="mb-2 flex items-center gap-2 px-1 text-[11px] sm:text-xs text-brown-600 dark:text-gray-400">
+            <GraduationCap
+              className="h-4 w-4 shrink-0 text-teal-600 dark:text-ocean-400"
+              aria-hidden="true"
+            />
+            <span>School notice? Ask: “Translate this and tell me what I need to do.”</span>
           </div>
         )}
 

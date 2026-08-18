@@ -16,6 +16,7 @@ def _load_image_helpers(
         and node.name in {
             "_normalize_image_inputs",
             "_build_current_user_message",
+            "detect_image_context",
             "detect_image_context_card_ids",
         }
     ]
@@ -62,12 +63,13 @@ def _load_image_helpers(
         namespace["_normalize_image_inputs"],
         namespace["_build_current_user_message"],
         namespace["detect_image_context_card_ids"],
+        namespace["detect_image_context"],
         completions,
     )
 
 
 def test_build_current_user_message_includes_all_images_with_content_types():
-    _, build_message, _, _ = _load_image_helpers()
+    _, build_message, _, _, _ = _load_image_helpers()
 
     message = build_message(
         "Compare these screenshots",
@@ -88,7 +90,7 @@ def test_build_current_user_message_includes_all_images_with_content_types():
 
 
 def test_normalize_image_inputs_preserves_legacy_single_image():
-    normalize, _, _, _ = _load_image_helpers()
+    normalize, _, _, _, _ = _load_image_helpers()
 
     assert normalize(image_base64="legacy-image", image_inputs=None) == [{
         "data": "legacy-image",
@@ -97,7 +99,7 @@ def test_normalize_image_inputs_preserves_legacy_single_image():
 
 
 def test_image_detector_includes_sym_card_only_after_scoped_visual_match() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="SYM")
+    _, _, detect_context, _, completions = _load_image_helpers(detector_text="SYM")
 
     card_ids = detect_context([{"data": "image-data", "content_type": "image/png"}])
 
@@ -108,8 +110,8 @@ def test_image_detector_includes_sym_card_only_after_scoped_visual_match() -> No
     detector_prompt = request["messages"][1]["content"][0]["text"]
     assert "same image" in detector_prompt
     assert "Guam/Chamorro/Hurao" in detector_prompt
-    assert "SYM and MSY" in detector_prompt
-    assert "token by itself" in detector_prompt
+    assert "standalone SYM or MSY" in detector_prompt
+    assert "isolated token" in detector_prompt
     assert "same image" in request["messages"][0]["content"]
     assert "if none qualify, answer NONE" in request["messages"][0]["content"]
     assert request["messages"][1]["content"][1]["image_url"]["url"] == (
@@ -118,7 +120,7 @@ def test_image_detector_includes_sym_card_only_after_scoped_visual_match() -> No
 
 
 def test_image_detector_includes_msy_card_after_scoped_visual_match() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="MSY")
+    _, _, detect_context, _, completions = _load_image_helpers(detector_text="MSY")
 
     assert detect_context(
         [{"data": "hurao-msy-image", "content_type": "image/jpeg"}]
@@ -127,7 +129,7 @@ def test_image_detector_includes_msy_card_after_scoped_visual_match() -> None:
 
 
 def test_image_detector_can_include_both_scoped_cards_from_one_image() -> None:
-    _, _, detect_context, _ = _load_image_helpers(detector_text="`MSY`, `SYM`.")
+    _, _, detect_context, _, _ = _load_image_helpers(detector_text="`MSY`, `SYM`.")
 
     assert detect_context(
         [{"data": "both-abbreviations", "content_type": "image/png"}]
@@ -138,7 +140,7 @@ def test_image_detector_can_include_both_scoped_cards_from_one_image() -> None:
 
 
 def test_image_detector_excludes_cards_after_visual_none() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="NONE")
+    _, _, detect_context, _, completions = _load_image_helpers(detector_text="NONE")
 
     assert detect_context(
         [{"data": "unrelated-image", "content_type": "image/jpeg"}]
@@ -147,7 +149,7 @@ def test_image_detector_excludes_cards_after_visual_none() -> None:
 
 
 def test_image_detector_does_not_combine_signals_across_images() -> None:
-    _, _, detect_context, completions = _load_image_helpers(
+    _, _, detect_context, _, completions = _load_image_helpers(
         detector_text=["NONE", "NONE"]
     )
 
@@ -165,7 +167,7 @@ def test_image_detector_does_not_combine_signals_across_images() -> None:
 
 
 def test_image_detector_continues_after_one_attachment_provider_error() -> None:
-    _, _, detect_context, completions = _load_image_helpers(
+    _, _, detect_context, _, completions = _load_image_helpers(
         detector_text=[RuntimeError("first image failed"), "MSY"]
     )
 
@@ -177,7 +179,7 @@ def test_image_detector_continues_after_one_attachment_provider_error() -> None:
 
 
 def test_image_detector_accumulates_scoped_matches_across_attachments() -> None:
-    _, _, detect_context, completions = _load_image_helpers(
+    _, _, detect_context, _, completions = _load_image_helpers(
         detector_text=["MSY", "SYM"]
     )
 
@@ -192,7 +194,7 @@ def test_image_detector_accumulates_scoped_matches_across_attachments() -> None:
 
 
 def test_image_detector_rejects_unexpected_provider_output() -> None:
-    _, _, detect_context, completions = _load_image_helpers(
+    _, _, detect_context, _, completions = _load_image_helpers(
         detector_text="MSY because it means good morning"
     )
 
@@ -203,7 +205,7 @@ def test_image_detector_rejects_unexpected_provider_output() -> None:
 
 
 def test_image_detector_rejects_empty_provider_output() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="")
+    _, _, detect_context, _, completions = _load_image_helpers(detector_text="")
 
     assert detect_context(
         [{"data": "image", "content_type": "image/png"}]
@@ -212,12 +214,34 @@ def test_image_detector_rejects_empty_provider_output() -> None:
 
 
 def test_image_detector_fails_closed_without_images_or_on_provider_error() -> None:
-    _, _, detect_empty, empty_completions = _load_image_helpers(detector_text="MSY")
+    _, _, detect_empty, _, empty_completions = _load_image_helpers(detector_text="MSY")
     assert detect_empty([]) == ()
     assert empty_completions.calls == []
 
-    _, _, detect_error, error_completions = _load_image_helpers(
+    _, _, detect_error, _, error_completions = _load_image_helpers(
         detector_error=RuntimeError("provider unavailable")
     )
     assert detect_error([{"data": "image", "content_type": "image/webp"}]) == ()
     assert len(error_completions.calls) == 1
+
+
+def test_image_detector_reports_school_signal_without_governed_cards() -> None:
+    _, _, _, detect_image_context, completions = _load_image_helpers(
+        detector_text="SCHOOL"
+    )
+
+    assert detect_image_context(
+        [{"data": "school-announcement", "content_type": "image/png"}]
+    ) == ((), True)
+    detector_prompt = completions.calls[0]["messages"][1]["content"][0]["text"]
+    assert "operational school" in detector_prompt
+
+
+def test_image_detector_can_report_school_and_scoped_acronym_together() -> None:
+    _, _, _, detect_image_context, _ = _load_image_helpers(
+        detector_text="SCHOOL,SYM"
+    )
+
+    assert detect_image_context(
+        [{"data": "hurao-school-sym", "content_type": "image/jpeg"}]
+    ) == (("usage.guam.school.sym_signoff",), True)
