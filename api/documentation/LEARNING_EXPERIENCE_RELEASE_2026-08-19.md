@@ -100,6 +100,11 @@ data. Do not run destructive downgrades merely to roll back UI behavior.
 
 Suggested rollback order:
 
+Each hash below is a merge commit. Create and test a dedicated rollback PR with
+`git revert -m 1 <merge-commit>` so the first parent (`main` before that PR) is
+the mainline. Do not use plain `git revert <merge-commit>`, and do not push a
+rollback directly to production.
+
 1. `f5659b6` — personalized Today home;
 2. `c162356` — capability onboarding/settings;
 3. `2eff9fe` — lesson/game handoff and attempt recording;
