@@ -19,6 +19,12 @@ def test_operational_bilingual_school_message_activates_school_mode() -> None:
     )
 
 
+def test_named_academy_reminder_activates_school_mode() -> None:
+    assert is_school_announcement_context(
+        "Hurao Academy reminder: permission slips are due Friday."
+    )
+
+
 def test_hurao_style_family_greeting_plus_operational_notice_activates() -> None:
     assert is_school_announcement_context(
         "Buenas familia. The phone lines are down today. Put fabot email the office."
@@ -60,9 +66,16 @@ def test_generic_attachment_without_school_evidence_stays_general() -> None:
     )
 
 
-def test_school_worksheet_with_action_words_stays_general() -> None:
-    assert not is_school_announcement_context(
-        "Hurao Academy worksheet: review vocabulary and bring it on Friday."
+def test_school_worksheets_with_assignment_wording_stay_general() -> None:
+    worksheet_texts = (
+        "Hurao Academy worksheet: review vocabulary and bring it on Friday.",
+        "Hurao Academy worksheet: homework is due Friday.",
+        "Hurao Academy worksheet: see the schedule on page two.",
+        "Hurao Academy worksheet: complete the permission slip exercise.",
+    )
+
+    assert all(
+        not is_school_announcement_context(worksheet) for worksheet in worksheet_texts
     )
 
 

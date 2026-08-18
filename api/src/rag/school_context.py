@@ -7,7 +7,8 @@ import re
 
 _EXPLICIT_SCHOOL_MESSAGE_PATTERNS = (
     re.compile(
-        r"\b(?:school|class)\s+(?:announcement|message|notice|chat)\b",
+        r"\b(?:school|class|academy|campus)\s+"
+        r"(?:announcement|message|notice|reminder|chat)\b",
         re.IGNORECASE,
     ),
     re.compile(
@@ -55,10 +56,6 @@ _OPERATIONAL_PATTERNS = (
         re.IGNORECASE,
     ),
     re.compile(r"\b(?:first|last)\s+day\s+of\s+school\b", re.IGNORECASE),
-    re.compile(
-        r"\b(?:reminders?|schedule|deadline|due|fundraiser|handbook|permission)\b",
-        re.IGNORECASE,
-    ),
     re.compile(
         r"\b(?:phone\s+lines?|water|power)\b.{0,40}"
         r"\b(?:down|out|low|closed|issue|problem)\b",
