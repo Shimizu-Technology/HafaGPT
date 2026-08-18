@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
+import type { SourceInfo } from '../types/source';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -29,7 +30,7 @@ export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  sources?: Array<{ name: string; page?: number }>;
+  sources?: SourceInfo[];
   used_rag?: boolean;
   used_web_search?: boolean;
   image_url?: string; // Legacy field

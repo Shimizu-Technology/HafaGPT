@@ -18,6 +18,7 @@ from src.rag.source_policy import (
     sources_explicitly_mentioned,
     source_weight,
 )
+from src.rag.source_reviews import build_citation_contract
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -848,16 +849,16 @@ class ChamorroRAG:
             card_type: Optional card type for flashcard generation ('words', 'phrases', 'numbers', 'cultural')
             
         Returns:
-            Tuple of (formatted_context, source_info_list) for the LLM prompt
-            source_info_list contains tuples of (source_name, page_number)
+            Tuple of (formatted_context, source_info_list) for the LLM prompt.
+            Each source entry is a public, structured citation contract.
         """
         chunks = self.search(query, k=k, card_type=card_type)
         
         if not chunks:
             return "", []
         
-        # Track sources with page numbers
-        source_info = []
+        source_info: list[dict] = []
+        seen_citations: set[tuple[str, object]] = set()
         
         context = "=== GOVERNED CHAMORRO REFERENCE MATERIAL ===\n"
         context += "Use each reference only for its stated evidence role.\n"
@@ -880,18 +881,37 @@ class ChamorroRAG:
             )
             if source_file.startswith(('http://', 'https://')):
                 page = None
+
+            citation = build_citation_contract(metadata) or {
+                "source_id": str(metadata.get("source_id") or "unregistered"),
+                "name": source_name,
+                "url": None,
+                "page": page,
+                "content_role": content_role,
+                "region": source_region,
+            }
+            citation.update(
+                {
+                    "page": page,
+                    "locator": f"Page {page}" if page and page > 0 else None,
+                    "evidence_kind": "legacy_retrieval",
+                }
+            )
             
             # Add to context with source info
             if page and page > 0:
                 context += f"[Reference {i}: {source_name}, role={content_role}, region={source_region}, Page {page}]:\n{content}\n\n"
-                source_info.append((source_name, page))
             else:
                 context += f"[Reference {i}: {source_name}, role={content_role}, region={source_region}]:\n{content}\n\n"
-                source_info.append((source_name, None))
+            citation_key = (citation["source_id"], citation.get("page"))
+            if citation_key not in seen_citations:
+                seen_citations.add(citation_key)
+                source_info.append(citation)
         
         context += "\n" + "="*60 + "\n"
         context += "CRITICAL INSTRUCTION:\n"
-        context += "Base supported claims on the eligible references above and cite their role.\n"
+        context += "Base supported claims on the eligible references above.\n"
+        context += "Cite factual claims inline using the exact source name in square brackets, for example [Chamoru.info dictionary].\n"
         context += "When a reference includes Citation locators, cite an underlying locator rather than only the container or index name.\n"
         context += "If the evidence does not answer the question, say that it is not verified.\n"
         context += "If sources conflict, describe the conflict instead of inventing a single answer.\n"

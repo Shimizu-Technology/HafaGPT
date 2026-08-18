@@ -123,5 +123,5 @@ def test_live_rag_retrieves_pdn_for_pdn_specific_query() -> None:
         "Who writes Chamorro language content in the Pacific Daily News?",
         k=5,
     )
-    source_names = [str(source_name).lower() for source_name, _page in sources]
+    source_names = [str(source["name"]).lower() for source in sources]
     assert any("pacific daily news" in source or "guampdn.com" in source for source in source_names)

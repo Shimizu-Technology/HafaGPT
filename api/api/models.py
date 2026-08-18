@@ -50,6 +50,20 @@ class SourceInfo(BaseModel):
     """Information about a source used in the response"""
     name: str = Field(..., description="Name of the source")
     page: Optional[int] = Field(None, description="Page number if applicable")
+    source_id: Optional[str] = Field(None, description="Stable governed source identifier")
+    url: Optional[str] = Field(None, description="Public source URL when available")
+    locator: Optional[str] = Field(None, description="Page, entry, or publication locator")
+    content_role: Optional[str] = Field(None, description="Reviewed evidence role")
+    region: Optional[str] = Field(None, description="Regional scope of the source")
+    orthography: Optional[str] = Field(None, description="Orthography represented by the source")
+    temporal_scope: Optional[str] = Field(None, description="Modern, living, historical, or mixed scope")
+    usage_mode: Optional[str] = Field(None, description="Governed usage mode")
+    authority_score: Optional[int] = Field(None, description="Reviewed authority score from 0 to 5")
+    citation_required: Optional[bool] = Field(None, description="Whether claims require citation")
+    accessed_at: Optional[str] = Field(None, description="Date the cited public source was accessed")
+    support: Optional[str] = Field(None, description="How the citation supports the knowledge card")
+    knowledge_card_id: Optional[str] = Field(None, description="Knowledge card identifier when applicable")
+    evidence_kind: Optional[str] = Field(None, description="Runtime evidence path")
 
 
 class ChatResponse(BaseModel):
@@ -661,4 +675,3 @@ class TopicProgressResponse(BaseModel):
     progress: TopicProgress = Field(..., description="Updated progress")
     is_completed: bool = Field(..., description="Whether topic is now complete")
     next_topic: Optional[LearningTopic] = Field(None, description="Next topic to do (if completed)")
-

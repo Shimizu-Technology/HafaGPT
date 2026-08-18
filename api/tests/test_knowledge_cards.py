@@ -6,7 +6,9 @@ import pytest
 
 from src.rag.knowledge_cards import (
     cards_by_id,
+    get_knowledge_card_context,
     load_knowledge_cards,
+    matching_production_cards,
     production_cards,
     validate_knowledge_cards,
 )
@@ -135,3 +137,68 @@ def test_knowledge_card_requires_complete_metadata_contract() -> None:
 
     with pytest.raises(ValueError, match="metadata is missing fields"):
         validate_knowledge_cards(document)
+
+
+def test_only_production_ready_cards_can_match_runtime_queries() -> None:
+    assert [
+        card["id"]
+        for card in matching_production_cards("What spelling system does Guam use?")
+    ] == ["orthography.guam.current_reference"]
+    assert matching_production_cards("What does hånom mean?") == []
+
+
+def test_region_specific_card_does_not_match_generic_token_overlap() -> None:
+    assert matching_production_cards(
+        "What spelling system does the dictionary use?"
+    ) == []
+    assert matching_production_cards("What is the current Chamorro orthography?") == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Guam",
+        "Tell me about Guam",
+        "What system does Guam use for schools?",
+        "What does Guam use today?",
+    ],
+)
+def test_guam_marker_without_orthography_intent_does_not_match(query: str) -> None:
+    assert matching_production_cards(query) == []
+
+
+def test_guahan_ascii_region_marker_matches_guam_card() -> None:
+    assert [
+        card["id"]
+        for card in matching_production_cards("What spelling system does Guahan use?")
+    ] == ["orthography.guam.current_reference"]
+
+
+def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> None:
+    context, citations = get_knowledge_card_context(
+        "Are Guam and CNMI spellings the same?"
+    )
+
+    assert "Approved explanation:" in context
+    assert "label CNMI forms separately" in context
+    assert "Utugrafihan CHamoru, Guåhan, third edition (2024)" in context
+    assert citations == [
+        {
+            "source_id": "kumision_guam_orthography_2024",
+            "name": "Utugrafihan CHamoru, Guåhan, third edition (2024)",
+            "url": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/",
+            "page": None,
+            "content_role": "normative_orthography",
+            "region": "Guam",
+            "orthography": "Guam_2024",
+            "temporal_scope": "modern",
+            "usage_mode": "knowledge_cards",
+            "authority_score": 5,
+            "citation_required": True,
+            "locator": "Official 2024 Utugrafihan CHamoru, Guåhan publication page",
+            "accessed_at": "2026-08-18",
+            "support": "primary",
+            "knowledge_card_id": "orthography.guam.current_reference",
+            "evidence_kind": "knowledge_card",
+        }
+    ]

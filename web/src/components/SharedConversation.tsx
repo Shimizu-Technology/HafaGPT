@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useTheme } from '../hooks/useTheme';
 import { useSubscription } from '../hooks/useSubscription';
+import type { SourceInfo } from '../types/source';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -19,7 +20,7 @@ interface Message {
   role: string;
   content: string;
   timestamp: string;
-  sources: Array<{ name: string; page?: number }>;
+  sources: SourceInfo[];
   used_rag: boolean;
   used_web_search: boolean;
   image_url?: string;
@@ -401,15 +402,25 @@ export function SharedConversation() {
                   <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-gray-700">
                     <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-500 mb-1">Sources:</p>
                     <div className="flex flex-wrap gap-1">
-                      {message.sources.map((source, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] sm:text-xs bg-cream-100 dark:bg-gray-700 text-brown-600 dark:text-gray-400 px-1.5 sm:px-2 py-0.5 rounded"
-                        >
-                          {source.name}
-                          {source.page && ` (p.${source.page})`}
-                        </span>
-                      ))}
+                      {message.sources.map((source, i) => {
+                        const className = "text-[10px] sm:text-xs bg-cream-100 dark:bg-gray-700 text-brown-600 dark:text-gray-400 px-1.5 sm:px-2 py-0.5 rounded";
+                        const label = `${source.name}${typeof source.page === 'number' ? ` (p.${source.page})` : ''}`;
+                        return source.url ? (
+                          <a
+                            key={`${source.source_id || source.name}-${i}`}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${className} underline underline-offset-2`}
+                          >
+                            {label}
+                          </a>
+                        ) : (
+                          <span key={`${source.source_id || source.name}-${i}`} className={className}>
+                            {label}
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
