@@ -29,6 +29,7 @@ import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
+import { getChatIntentPlaceholder } from '../lib/chatIntent';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -72,6 +73,8 @@ export function Chat() {
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const chatIntent = searchParams.get('intent');
+  const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
   // React Query hooks - replaces old useConversations hook
@@ -1047,7 +1050,9 @@ End of Export
 
                 return (
                   <Message 
-                    key={message.id || index} 
+                    // A conversation log row can produce both the user and assistant
+                    // message, so its database id is only unique together with role.
+                    key={message.id ? `${message.id}-${message.role}` : index}
                     role={message.role}
                     content={message.content}
                     imageUrl={message.imageUrl}
@@ -1126,7 +1131,7 @@ End of Export
           onSend={handleSend} 
           disabled={!isSignedIn || loading} 
           inputRef={messageInputRef}
-          placeholder={!isSignedIn ? "Sign in to chat..." : undefined}
+          placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
           loading={loading}
           onCancel={cancelMessage}

@@ -166,6 +166,7 @@ export function useUpdateDailyGoal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['xp'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
     },
   });
 }
@@ -192,4 +193,3 @@ export const LEVEL_INFO: Record<number, { emoji: string; title: string }> = {
 export function getLevelInfo(level: number) {
   return LEVEL_INFO[level] || LEVEL_INFO[15];
 }
-

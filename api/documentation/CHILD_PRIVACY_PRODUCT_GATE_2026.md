@@ -88,7 +88,7 @@ reading support, Chamorro confidence, learning goal, and preferred session
 length. They must be optional, editable, and safely defaulted. Do not add date
 of birth, child name, school, classroom, teacher, address, or student ID.
 
-The implemented preference keys are stored in the caregiver-owned Clerk
+The metadata-backed preference keys are stored in the caregiver-owned Clerk
 account's client-writable preference metadata and normalized against code
 allowlists every time they are read:
 
@@ -98,12 +98,18 @@ allowlists every time they are read:
 | `reading_support` | `audio_pictures`, `short_text_audio`, `independent` | `short_text_audio` |
 | `skill_level` | `beginner`, `intermediate`, `advanced` | `beginner` |
 | `learning_goal` | `conversation`, `culture`, `family`, `travel`, `all` | `all` |
-| `daily_session_minutes` | `5`, `10`, `15`, `20` | `10` |
+
+Preferred session length is stored only as `user_xp.daily_goal_minutes` (`0`
+for no time goal, or `5`, `10`, `15`, or `20`; safe default `10`) because that first-party record also
+owns the tracked minute counter and completion reward. Legacy
+`daily_session_minutes` Clerk metadata is left recoverable but is no longer read
+or written, avoiding a non-atomic duplicate preference across providers.
 
 These values are personalization hints, never authorization or identity data.
-“Skip for now” writes only the defaults above and marks onboarding complete.
-Because the metadata is client-writable, unrecognized values must never be
-trusted by the planner, analytics, or API; they fall back to these defaults.
+“Skip for now” writes the safe metadata defaults above, writes the 10-minute
+default to the XP goal record, and marks onboarding complete. Because the
+metadata is client-writable, unrecognized values must never be trusted by the
+planner, analytics, or API; they fall back to these defaults.
 
 ## Release checklist
 
