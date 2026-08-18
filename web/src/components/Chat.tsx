@@ -157,6 +157,7 @@ export function Chat() {
           file_urls: msg.file_urls || undefined, // Multi-file support
           timestamp: new Date(msg.timestamp).getTime(),
           sources: msg.sources?.map((src) => ({
+            ...src,
             name: src.name,
             page: src.page ?? null
           })) || [],
@@ -825,7 +826,7 @@ ${messages.map((msg) => {
   let content = `[${time}] ${role}:\n${msg.content}\n`;
   
   if (msg.sources && msg.sources.length > 0) {
-    content += `\nSources: ${msg.sources.map(s => `${s.name}${s.page ? ` (p. ${s.page})` : ''}`).join(', ')}\n`;
+    content += `\nSources: ${msg.sources.map(s => `${s.name}${typeof s.page === 'number' ? ` (p. ${s.page})` : ''}${s.url ? ` — ${s.url}` : ''}`).join(', ')}\n`;
   }
   
   if (msg.response_time) {

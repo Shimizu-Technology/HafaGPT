@@ -1,10 +1,12 @@
 from src.rag.chamorro_rag import (
+    ChamorroRAG,
     _chamorro_keyword_query_params,
     _clip_english_lookup_evidence,
     _extract_english_lookup_candidate,
     _english_keyword_query_params,
     detect_query_type,
 )
+from src.rag.source_policy import annotate_metadata
 
 
 def test_chamorro_keyword_collection_parameter_follows_ranking_patterns() -> None:
@@ -92,3 +94,27 @@ def test_english_lookup_clips_large_dictionary_pages_around_evidence() -> None:
 
     assert "| water | hånum |" in excerpt
     assert len(excerpt) <= 500
+
+
+def test_rag_context_returns_structured_public_citation_contract() -> None:
+    rag = object.__new__(ChamorroRAG)
+    rag.search = lambda _query, k=3, card_type=None: [
+        (
+            "hånom: water; liquid",
+            annotate_metadata(
+                {
+                    "source": "/documents/Revised-Chamorro-Dictionary.pdf",
+                    "page": 42,
+                }
+            ),
+        )
+    ]
+
+    context, sources = rag.create_context("What does hånom mean?")
+
+    assert "Local Revised Chamorro Dictionary snapshot" in context
+    assert sources[0]["source_id"] == "local_revised_dictionary_snapshot"
+    assert sources[0]["page"] == 42
+    assert sources[0]["locator"] == "Page 42"
+    assert sources[0]["url"] is None
+    assert sources[0]["evidence_kind"] == "legacy_retrieval"

@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from dotenv import load_dotenv
 from openai import OpenAI
 from .canonical_context import get_canonical_tutor_context
+from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
 
 # Add parent directory to path for root-level imports
@@ -141,6 +142,7 @@ def _build_current_user_message(
 
 # Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
+from src.rag.knowledge_cards import get_knowledge_card_context
 from src.rag.web_search_tool import web_search, format_search_results
 
 # Import token management for budget control
@@ -1016,27 +1018,59 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     if not use_rag:
         return "", []
     
+    contexts: list[str] = []
+    sources: list[object] = []
+
+    # Exact canonical matches and approved cards do not depend on the vector
+    # database, so a transient database failure must not erase them.
+    canonical_context, canonical_sources = get_canonical_tutor_context(user_input)
+    if canonical_context:
+        contexts.append(canonical_context)
+        sources.extend(canonical_sources)
+
+    card_context = ""
     try:
-        # Adjust retrieval size based on mode
-        k = 1 if rag_mode == "light" else 3
-        context, sources = rag.create_context(user_input, k=k)
-        canonical_context, canonical_sources = get_canonical_tutor_context(user_input)
-        if canonical_context:
-            context = f"{canonical_context}\n\n{context}" if context else canonical_context
-            sources = canonical_sources + sources
-        
-        # Apply token limit to RAG context
-        context_tokens = count_tokens(context)
-        if context_tokens > max_tokens:
-            logger.info(f"RAG context ({context_tokens} tokens) exceeds limit ({max_tokens}), truncating...")
-            context = truncate_text(context, max_tokens)
-        
-        return context, sources
-    except Exception as e:
-        logger.error(f"RAG error: {e}")
-        # Canonical lexical matching does not depend on the vector database, so
-        # retain it even when semantic retrieval is temporarily unavailable.
-        return get_canonical_tutor_context(user_input)
+        card_context, card_sources = get_knowledge_card_context(user_input)
+        if card_context:
+            contexts.append(card_context)
+            sources.extend(card_sources)
+    except Exception as error:
+        logger.error(f"Knowledge card error: {error}")
+
+    try:
+        # A deterministic production-ready card is the reviewed answer for its
+        # matched question. Do not dilute it with broad semantic retrieval that
+        # can add older, regional, or merely incidental evidence. Queries that
+        # do not match a card continue through the complete legacy corpus.
+        if rag is not None and not card_context:
+            k = 1 if rag_mode == "light" else 3
+            vector_context, vector_sources = rag.create_context(user_input, k=k)
+            if vector_context:
+                contexts.append(vector_context)
+                sources.extend(vector_sources)
+    except Exception as error:
+        logger.error(f"RAG error: {error}")
+
+    context = "\n\n".join(contexts)
+    context_tokens = count_tokens(context)
+    if context_tokens > max_tokens:
+        logger.info(f"RAG context ({context_tokens} tokens) exceeds limit ({max_tokens}), truncating...")
+        context = truncate_text(context, max_tokens)
+        sources = [
+            source
+            for source in sources
+            if (
+                isinstance(source, dict)
+                and str(source.get("name") or "") in context
+            )
+            or (
+                isinstance(source, (tuple, list))
+                and source
+                and str(source[0]) in context
+            )
+        ]
+
+    return context, sources
 
 
 def get_chatbot_response(
@@ -1348,30 +1382,8 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
     response_time = time.time() - start_time
     
     # Format sources for API
-    formatted_sources = [
-        {"name": source[0], "page": source[1] if len(source) > 1 else None}
-        for source in sources
-    ]
-    
-    # OPTION B: Only show sources if they're actually relevant to the query
-    message_lower = message.lower().strip()
-    should_show_sources = (
-        used_rag and 
-        len(formatted_sources) > 0 and
-        len(message.strip()) > 8 and
-        any(word in message_lower for word in [
-            'chamorro', 'chamoru', 'translate', 'mean', 'word', 'say', 'phrase',
-            'definition', 'grammar', 'pronounce', 'spell', 'language',
-            'how', 'what', 'why', 'where', 'when', 'who', 'which',
-            'tell me', 'explain', 'teach', 'learn', 'example',
-            'culture', 'history', 'tradition', 'people', 'guam', 'island',
-            'food', 'fiesta', 'family', 'story', 'legend',
-        ])
-    )
-    
-    # Apply source filtering
-    if not should_show_sources:
-        formatted_sources = []
+    formatted_sources = format_source_citations(sources)
+    if not formatted_sources:
         used_rag = False
     
     # Check if this message was cancelled before saving
@@ -1627,36 +1639,15 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
         return
     
     # Format sources for metadata
-    formatted_sources = [
-        {"name": source[0], "page": source[1] if len(source) > 1 else None}
-        for source in sources
-    ]
-    
-    # OPTION B: Only show sources if they're actually relevant to the query
-    # This prevents showing irrelevant dictionary sources for casual messages
-    message_lower = message.lower().strip()
-    should_show_sources = (
-        used_rag and 
-        len(formatted_sources) > 0 and
-        len(message.strip()) > 8 and  # Message has some substance (not just "test", "hi")
-        any(word in message_lower for word in [
-            # Language/translation keywords
-            'chamorro', 'chamoru', 'translate', 'mean', 'word', 'say', 'phrase',
-            'definition', 'grammar', 'pronounce', 'spell', 'language',
-            # Question keywords
-            'how', 'what', 'why', 'where', 'when', 'who', 'which',
-            'tell me', 'explain', 'teach', 'learn', 'example',
-            # Culture/topic keywords  
-            'culture', 'history', 'tradition', 'people', 'guam', 'island',
-            'food', 'fiesta', 'family', 'story', 'legend',
-        ])
-    )
+    formatted_sources = format_source_citations(sources)
+    should_show_sources = used_rag and bool(formatted_sources)
+    used_rag = should_show_sources
     
     # Send metadata first (sources, rag status, etc.)
     yield {
         "type": "metadata",
         "sources": formatted_sources if should_show_sources else [],
-        "used_rag": used_rag and should_show_sources,  # Only mark as used_rag if showing sources
+        "used_rag": used_rag,
         "used_web_search": use_web
     }
     

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
+import type { SourceInfo } from '../types/source';
 
 /**
  * Clean markdown content to prevent unwanted code blocks.
@@ -100,7 +101,7 @@ interface MessageProps {
   content: string;
   imageUrl?: string; // Legacy: For displaying uploaded files
   file_urls?: FileInfo[]; // New: All uploaded files
-  sources?: Array<{ name: string; page: number | null }>;
+  sources?: SourceInfo[];
   used_rag?: boolean;
   used_web_search?: boolean;
   response_time?: number;

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from src.rag.source_reviews import get_source_review
+from src.rag.source_reviews import build_registered_source_citation, get_source_review
 
 
 KNOWLEDGE_CARDS_PATH = Path(__file__).resolve().parents[2] / "language_content" / "knowledge_cards.json"
@@ -254,3 +254,94 @@ def production_cards() -> list[dict[str, Any]]:
         for card in load_knowledge_cards()["cards"]
         if card["release_status"] == "production_ready"
     ]
+
+
+def _normalize_match_text(value: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9åñ'’-]+", " ", value.casefold()).split())
+
+
+def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, Any]]:
+    """Return approved cards whose reviewed question aliases match the query.
+
+    Knowledge cards are intentionally deterministic: they are not placed in the
+    vector collection and cannot be selected merely because they are vaguely
+    semantically similar to a request.
+    """
+
+    normalized_query = _normalize_match_text(query)
+    if not normalized_query or limit <= 0:
+        return []
+
+    query_tokens = set(normalized_query.split())
+    scored: list[tuple[float, dict[str, Any]]] = []
+    for card in production_cards():
+        best_score = 0.0
+        for alias in card["question_aliases"]:
+            normalized_alias = _normalize_match_text(alias)
+            if not normalized_alias:
+                continue
+            if normalized_alias == normalized_query:
+                best_score = max(best_score, 3.0)
+                continue
+            if normalized_alias in normalized_query or normalized_query in normalized_alias:
+                best_score = max(best_score, 2.0)
+                continue
+            alias_tokens = set(normalized_alias.split())
+            overlap = len(query_tokens & alias_tokens)
+            if overlap >= 3:
+                best_score = max(best_score, overlap / len(alias_tokens | query_tokens))
+        if best_score >= 0.5:
+            scored.append((best_score, card))
+
+    scored.sort(key=lambda item: (-item[0], item[1]["id"]))
+    return [card for _score, card in scored[:limit]]
+
+
+def get_knowledge_card_context(query: str) -> tuple[str, list[dict[str, Any]]]:
+    """Build prompt context and public citations from matching approved cards."""
+
+    cards = matching_production_cards(query)
+    if not cards:
+        return "", []
+
+    lines = [
+        "=== APPROVED HÅFAGPT KNOWLEDGE CARDS ===",
+        "These are original reviewed explanations. Use only the claims and scope stated here.",
+        "Cite supporting sources by their exact displayed names in square brackets.",
+        "",
+    ]
+    citations: list[dict[str, Any]] = []
+    seen_citations: set[tuple[str, str]] = set()
+    for card in cards:
+        lines.extend(
+            [
+                f"[Knowledge card: {card['id']}]",
+                f"Title: {card['title']}",
+                f"Approved explanation: {card['answer_text']}",
+                f"Region: {card['region']}",
+                f"Time scope: {card['temporal_scope']}",
+                f"Confidence: {card['confidence']}",
+                "Supporting citations:",
+            ]
+        )
+        for item in card["citations"]:
+            source = build_registered_source_citation(item["source_id"])
+            source.update(
+                {
+                    "url": item["url"],
+                    "locator": item["locator"],
+                    "accessed_at": item["accessed_at"],
+                    "support": item["support"],
+                    "knowledge_card_id": card["id"],
+                    "evidence_kind": "knowledge_card",
+                }
+            )
+            lines.append(f"- {source['name']}: {item['locator']}")
+            key = (source["source_id"], item["locator"])
+            if key not in seen_citations:
+                seen_citations.add(key)
+                citations.append(source)
+        lines.append("")
+
+    lines.append("=" * 60)
+    return "\n".join(lines), citations

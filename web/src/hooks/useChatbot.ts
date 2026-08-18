@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
+import type { SourceInfo } from '../types/source';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -40,7 +41,7 @@ export interface ChatMessage {
   imageUrl?: string; // Legacy: For displaying uploaded images in chat history
   file_urls?: FileInfo[]; // New: All uploaded files
   fileCount?: number; // Number of files attached to message (for pending uploads)
-  sources?: Array<{ name: string; page: number | null }>;
+  sources?: SourceInfo[];
   used_rag?: boolean;
   used_web_search?: boolean;
   response_time?: number;
@@ -54,7 +55,7 @@ export interface ChatMessage {
 export interface ChatResponse {
   response: string;
   mode: string;
-  sources?: Array<{ name: string; page: number | null }>;
+  sources?: SourceInfo[];
   used_rag?: boolean;
   used_web_search?: boolean;
   response_time?: number;
@@ -64,7 +65,7 @@ export interface ChatResponse {
 // Streaming event types from backend
 interface StreamMetadata {
   type: 'metadata';
-  sources: Array<{ name: string; page: number | null }>;
+  sources: SourceInfo[];
   used_rag: boolean;
   used_web_search: boolean;
 }
@@ -94,7 +95,7 @@ type StreamEvent = StreamMetadata | StreamChunk | StreamDone | StreamCancelled |
 // Callback for streaming updates
 export interface StreamCallbacks {
   onChunk: (content: string, fullContent: string) => void;
-  onMetadata: (metadata: { sources: Array<{ name: string; page: number | null }>; used_rag: boolean; used_web_search: boolean }) => void;
+  onMetadata: (metadata: { sources: SourceInfo[]; used_rag: boolean; used_web_search: boolean }) => void;
   onDone: (response_time: number) => void;
   onError: (error: string) => void;
   onCancelled: () => void;

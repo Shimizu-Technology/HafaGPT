@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { SourceInfo } from '../types/source';
 import { useAuth } from '@clerk/clerk-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -143,7 +144,7 @@ export function useSharedConversation(shareId: string | undefined) {
       role: string;
       content: string;
       timestamp: string;
-      sources: Array<{ name: string; page?: number }>;
+      sources: SourceInfo[];
       used_rag: boolean;
       used_web_search: boolean;
     }>;
