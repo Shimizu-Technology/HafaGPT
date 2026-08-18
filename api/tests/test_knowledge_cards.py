@@ -169,14 +169,12 @@ def test_sym_card_matches_scoped_guam_and_hurao_questions() -> None:
         ]
 
 
-def test_sym_card_matches_reviewed_school_image_prompt_without_typed_region() -> None:
+def test_generic_school_image_prompt_does_not_select_a_guam_card_from_text() -> None:
     for query in (
         "What does this say? It's from my daughter's school",
         "What does this say? It’s from my daughter’s school",
     ):
-        assert [
-            card["id"] for card in matching_production_cards(query)
-        ] == ["usage.guam.school.sym_signoff"]
+        assert matching_production_cards(query) == []
 
 
 @pytest.mark.parametrize(
@@ -256,7 +254,7 @@ def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> N
 
 def test_sym_card_context_is_conditional_and_cites_usage_and_meaning() -> None:
     context, citations = get_knowledge_card_context(
-        "What does this say? It's from my daughter's school"
+        "At Hurao Academy, what does SYM mean at the end of a school message?"
     )
 
     assert "Si Yu'os Ma'åse'" in context
