@@ -260,7 +260,10 @@
       "review_status": "complete",
       "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/", "accessed_at": "2026-08-18", "supports": "Official learning materials published by the Guam language commission."}],
+      "evidence": [
+        {"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/", "accessed_at": "2026-08-18", "supports": "Official learning materials published by the Guam language commission."},
+        {"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/03/Cultural-Dictionary_Kumision-i-Fino-CHamoru_Digital.pdf", "accessed_at": "2026-08-18", "supports": "The official cultural dictionary documents Manana si Yu'os as Good morning on page 33."}
+      ],
       "rationale": "High-priority modern Guam teaching authority; create original linked cards rather than copying complete assets."
     },
     {

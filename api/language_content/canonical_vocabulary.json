@@ -1291,11 +1291,11 @@
       },
       "variants": [
         {
-          "term": "Mañana si Yu'os",
+          "term": "Manana si Yu'os",
           "type": "source_variant",
           "status": "source_backed",
-          "source": "Visit Guam Simple CHamoru Greetings",
-          "notes": "Externally attested as Good Morning on Visit Guam; keep as a common-phrase variant pending teacher review, not the primary dictionary-backed beginner display."
+          "source": "Kumisión i Fino' CHamoru cultural dictionary",
+          "notes": "Attested as Good morning in current official Guam materials; retain as a supported Guam usage variant alongside the dictionary-backed beginner display."
         }
       ],
       "deprecated_app_terms": [],
@@ -1312,6 +1312,13 @@
           "definition": "good morning, good day, hello"
         },
         {
+          "source": "Kumisión i Fino' CHamoru cultural dictionary",
+          "url": "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/03/Cultural-Dictionary_Kumision-i-Fino-CHamoru_Digital.pdf",
+          "headword": "Manana si Yu'os",
+          "definition": "Good morning",
+          "notes": "Official Guam cultural dictionary, page 33."
+        },
+        {
           "source": "Visit Guam Simple CHamoru Greetings",
           "url": "https://www.visitguam.com/chamorro-culture/simple-chamorro-greetings/",
           "headword": "Manana Si Yu'os",
@@ -1319,7 +1326,7 @@
           "notes": "Tourism/common-phrase source; not selected over dictionary-backed Buenas dias as beginner primary display."
         }
       ],
-      "notes": "Use dictionary-backed Buenas dias as the primary beginner display. Mañana si Yu'os is externally attested as a common/tourism greeting variant and should be reviewed before being reintroduced as core teaching content."
+      "notes": "Use dictionary-backed Buenas dias as the primary beginner display. Manana si Yu'os is attested by current official Guam sources as a good-morning greeting and remains a supported usage variant."
     },
     {
       "id": "greetings.good_afternoon",

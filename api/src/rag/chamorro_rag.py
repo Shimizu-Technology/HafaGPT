@@ -36,13 +36,13 @@ def normalize_chamorro_text(text: str) -> str:
     - Converts to lowercase for case-insensitive matching
     
     Examples:
-        "Mañana si Yu'os" → "manana si yu'os"
+        "Manana si Yu'os" → "manana si yu'os"
         "Håfa Adai" → "hafa adai"
         "siña" → "sina"
         "Yu'os" / "Yuos" / "Yu`os" → "yu'os"
     
     This allows users to type without worrying about special characters:
-    - "manana si yuos" will match "Mañana si Yu'os"
+    - "manana si yuos" will match "Manana si Yu'os"
     - "hafa adai" will match "Håfa Adai"
     
     Args:

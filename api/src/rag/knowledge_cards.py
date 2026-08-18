@@ -278,6 +278,18 @@ def _normalize_match_text(value: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9åñ'-]+", " ", normalized_apostrophes).split())
 
 
+def _required_alias_acronyms(card: dict[str, Any]) -> set[str]:
+    """Return acronym tokens deliberately present in every reviewed alias."""
+
+    alias_acronyms = [
+        {token.casefold() for token in re.findall(r"\b[A-Z]{2,6}\b", alias)}
+        for alias in card["question_aliases"]
+    ]
+    if not alias_acronyms:
+        return set()
+    return set.intersection(*alias_acronyms)
+
+
 def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, Any]]:
     """Return approved cards whose reviewed question aliases match the query.
 
@@ -294,6 +306,12 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     query_type = detect_query_type(query)
     scored: list[tuple[float, dict[str, Any]]] = []
     for card in production_cards():
+        required_acronyms = _required_alias_acronyms(card)
+        if required_acronyms and query_tokens.isdisjoint(required_acronyms):
+            # Nearby cards can share phrases such as "Guam school message."
+            # If editors intentionally put the same acronym in every alias,
+            # require that exact token so SYM and MSY cannot select each other.
+            continue
         if (
             query_type == "historical"
             and card["temporal_scope"] not in {"historical", "mixed"}

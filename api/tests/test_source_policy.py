@@ -88,6 +88,10 @@ def test_granted_permission_requires_a_versioned_artifact() -> None:
             "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
             "website",
         ),
+        (
+            "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/03/Cultural-Dictionary_Kumision-i-Fino-CHamoru_Digital.pdf",
+            "pdf",
+        ),
     ],
 )
 def test_phase_zero_blocked_sources_are_never_retrieved(source: str, source_type: str) -> None:

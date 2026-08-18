@@ -99,7 +99,7 @@ When a user asks: **"What does 'maolek' mean?"**
 │                                                                         │
 │   Handles Chamorro spelling variations:                                 │
 │   • "Håfa Adai" → "hafa adai"                                          │
-│   • "Mañana Si Yu'os" → "manana si yuos"                               │
+│   • "Manana Si Yu'os" → "manana si yuos"                               │
 │   • Removes accents: å→a, ñ→n, glottal stops removed                   │
 │                                                                         │
 │   Why? Users might type "hafa" or "Håfa" - both should match!          │
@@ -530,7 +530,6 @@ LIMIT 30;
 ---
 
 **Questions?** The code is well-commented - start with `src/rag/chamorro_rag.py`! 🌺
-
 
 
 

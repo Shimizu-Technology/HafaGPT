@@ -25,7 +25,7 @@ This follow-up rechecked the language-content corrections against the bundled di
 | Purple | `Kulot lila` remains the beginner phrase, but bare `Lila` is source-backed and should not be flagged as wrong. |
 | Black | Keep `Åttilung` primary from RUCD/Finder 2024; preserve `Åttilong` / `Attilong` as source-backed variants. Exact legacy `Åttelong` / `Attelong` remains deprecated. |
 | One | Keep `Unu` primary. `Uno` is the Spanish etymon/common expectation, but sources support `Unu`; `Hacha` can be taught later as an indigenous/classical form. |
-| Greetings | Keep `Buenas dias` / `Buenas tåtdes` as dictionary-backed beginner display terms. Preserve Visit Guam `Mañana si Yu'os` and `Ha'anen Maolek` as externally attested phrase variants pending teacher review. |
+| Greetings | Keep `Buenas dias` / `Buenas tåtdes` as dictionary-backed beginner display terms. Preserve official-source `Manana si Yu'os` and Visit Guam `Ha'anen Maolek` as attested Guam phrase variants. |
 | Orange | Keep `Kulot kåhet` primary; preserve `Kulót kåhit` and `Kulot kahet` as source-backed variants. |
 | Food/drink variants | Preserve dictionary splits such as `Kåtne`/`Kåtni`, `Månnok`/`Månnuk`/`Mannok`, `Kåddo`/`Kaddo`/`Kåddu`/`Kåtdu`, `Hånom`/`Hånum`/`Hanom`, `Niyok`/`Niyuk`, and `Månnge'`/`Månngi'`. |
 

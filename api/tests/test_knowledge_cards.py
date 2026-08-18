@@ -20,11 +20,13 @@ def test_seed_knowledge_cards_are_valid_and_cited() -> None:
     assert "lexicon.hanom.water" in cards
     assert "orthography.guam.current_reference" in cards
     assert "usage.guam.school.sym_signoff" in cards
+    assert "usage.guam.school.msy_greeting" in cards
     assert all(card["citations"] for card in cards.values())
     assert all(card["review_notes"] for card in cards.values())
     assert [card["id"] for card in production_cards()] == [
         "orthography.guam.current_reference",
         "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
     ]
 
 
@@ -169,6 +171,19 @@ def test_sym_card_matches_scoped_guam_and_hurao_questions() -> None:
         ]
 
 
+def test_msy_card_matches_scoped_guam_and_hurao_questions() -> None:
+    for query in (
+        "What does MSY mean in a Guam school message?",
+        "What does MSY mean at Hurao Academy?",
+        "Can you explain the Hurao Academy MSY greeting?",
+        "At Hurao Academy, what does MSY mean at the start of a school message?",
+        "Please explain how people use MSY in a Guam school announcement",
+    ):
+        assert [card["id"] for card in matching_production_cards(query)] == [
+            "usage.guam.school.msy_greeting"
+        ]
+
+
 def test_generic_school_image_prompt_does_not_select_a_guam_card_from_text() -> None:
     for query in (
         "What does this say? It's from my daughter's school",
@@ -181,12 +196,13 @@ def test_generic_school_image_prompt_does_not_select_a_guam_card_from_text() -> 
     "query",
     [
         "What does SYM mean?",
+        "What does MSY mean?",
         "Tell me about school",
         "What does this image say?",
         "My daughter is at school in Saipan",
     ],
 )
-def test_sym_card_does_not_apply_without_reviewed_guam_school_context(query: str) -> None:
+def test_school_abbreviation_cards_do_not_apply_without_reviewed_context(query: str) -> None:
     assert matching_production_cards(query) == []
 
 
@@ -270,11 +286,28 @@ def test_sym_card_context_is_conditional_and_cites_usage_and_meaning() -> None:
     )
 
 
+def test_msy_card_context_is_conditional_and_preserves_teaching_precedence() -> None:
+    context, citations = get_knowledge_card_context(
+        "At Hurao Academy, what does MSY mean in a school message?"
+    )
+
+    assert "Manana si Yu'os" in context
+    assert "good morning" in context
+    assert "firsthand user context" in context
+    assert "not a universal expansion" in context
+    assert "Buenas dias" in context
+    assert [citation["source_id"] for citation in citations] == [
+        "kumision_learning_tools"
+    ]
+    assert citations[0]["knowledge_card_id"] == "usage.guam.school.msy_greeting"
+
+
 def test_image_context_can_include_only_a_production_ready_card() -> None:
     context, citations = get_knowledge_card_context(
         "What does this image say?",
         include_card_ids=(
             "usage.guam.school.sym_signoff",
+            "usage.guam.school.msy_greeting",
             "lexicon.hanom.water",
             "does.not.exist",
         ),
@@ -283,5 +316,6 @@ def test_image_context_can_include_only_a_production_ready_card() -> None:
     assert "usage.guam.school.sym_signoff" in context
     assert "lexicon.hanom.water" not in context
     assert {citation["knowledge_card_id"] for citation in citations} == {
-        "usage.guam.school.sym_signoff"
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
     }
