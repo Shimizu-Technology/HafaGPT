@@ -220,17 +220,26 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, todayMin
           Details <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-      <div
-        className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
-        role="progressbar"
-        aria-label="Daily learning goal"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={progress}
-      >
-        <div className="h-full rounded-full bg-teal-600" style={{ width: `${progress}%` }} />
-      </div>
-      <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">{todayMinutes} of {goalMinutes} minutes today</p>
+      {goalMinutes === 0 ? (
+        <div className="mt-4 flex min-h-11 items-center justify-between gap-3 rounded-xl bg-cream-50 px-3 py-2 dark:bg-slate-900/50">
+          <p className="text-sm text-brown-600 dark:text-gray-300">Daily time goal is off</p>
+          <Link to="/settings" className="text-sm font-semibold text-coral-700 hover:underline dark:text-ocean-300">Set a goal</Link>
+        </div>
+      ) : (
+        <>
+          <div
+            className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
+            role="progressbar"
+            aria-label="Daily learning goal"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+          >
+            <div className="h-full rounded-full bg-teal-600" style={{ width: `${progress}%` }} />
+          </div>
+          <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">{todayMinutes} of {goalMinutes} minutes today</p>
+        </>
+      )}
       <dl className="mt-4 grid grid-cols-3 divide-x divide-cream-200 rounded-xl bg-cream-50 py-3 text-center dark:divide-slate-700 dark:bg-slate-900/50">
         <div className="px-2">
           <dt className="text-xs text-brown-500 dark:text-gray-400">Path</dt>
@@ -406,9 +415,7 @@ export function HomePage() {
             hasError={Boolean(homepageError)}
             onRetry={() => void refetchHomepage()}
             todayMinutes={xp?.today_minutes ?? 0}
-            goalMinutes={xp && xp.daily_goal_minutes > 0
-              ? xp.daily_goal_minutes
-              : DEFAULT_DAILY_SESSION_MINUTES}
+            goalMinutes={xp?.daily_goal_minutes ?? DEFAULT_DAILY_SESSION_MINUTES}
             completedTopics={allProgress?.summary.total_completed ?? 0}
             totalTopics={allProgress?.summary.total_topics ?? 21}
             dueCards={srSummary?.due_today ?? 0}

@@ -23,6 +23,7 @@ export interface TodayPlan {
   remainingMinutes: number;
   totalMinutes: number;
   goalComplete: boolean;
+  goalDisabled: boolean;
   headline: string;
   summary: string;
   primaryLabel: string;
@@ -125,12 +126,26 @@ export function buildTodayPlan({
   xp,
 }: TodayPlanInput): TodayPlan {
   // XP is the single source of truth for both the minutes counter and goal.
-  // New/legacy accounts with a disabled zero goal receive the safe default.
-  const budgetMinutes = xp && xp.daily_goal_minutes > 0
-    ? xp.daily_goal_minutes
-    : DEFAULT_DAILY_SESSION_MINUTES;
+  // A stored zero is an explicit disabled state; only a missing XP record uses
+  // the safe default for a new account.
+  const goalDisabled = xp?.daily_goal_minutes === 0;
+  const budgetMinutes = xp?.daily_goal_minutes ?? DEFAULT_DAILY_SESSION_MINUTES;
   const minutesAlreadyLearned = Math.max(0, xp?.today_minutes ?? 0);
   const remainingMinutes = Math.max(0, budgetMinutes - minutesAlreadyLearned);
+
+  if (goalDisabled) {
+    return {
+      budgetMinutes: 0,
+      remainingMinutes: 0,
+      totalMinutes: 0,
+      goalComplete: false,
+      goalDisabled: true,
+      headline: 'Learn at your own pace',
+      summary: 'Your daily time goal is off. Choose anything that feels useful today.',
+      primaryLabel: 'Explore learning',
+      activities: [],
+    };
+  }
 
   if (remainingMinutes === 0) {
     return {
@@ -138,6 +153,7 @@ export function buildTodayPlan({
       remainingMinutes: 0,
       totalMinutes: 0,
       goalComplete: true,
+      goalDisabled: false,
       headline: 'Daily goal complete',
       summary: `You reached your ${budgetMinutes}-minute goal. Explore anything that sounds fun next.`,
       primaryLabel: 'Choose another activity',
@@ -244,6 +260,7 @@ export function buildTodayPlan({
     remainingMinutes,
     totalMinutes,
     goalComplete: false,
+    goalDisabled: false,
     headline: minutesAlreadyLearned > 0 ? 'Keep today going' : 'Your plan for today',
     summary: first
       ? `${activities.length} focused step${activities.length === 1 ? '' : 's'} chosen for your goals and pace.`

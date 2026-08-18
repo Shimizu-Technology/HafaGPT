@@ -99,8 +99,8 @@ allowlists every time they are read:
 | `skill_level` | `beginner`, `intermediate`, `advanced` | `beginner` |
 | `learning_goal` | `conversation`, `culture`, `family`, `travel`, `all` | `all` |
 
-Preferred session length is stored only as `user_xp.daily_goal_minutes` (`5`,
-`10`, `15`, or `20`; safe default `10`) because that first-party record also
+Preferred session length is stored only as `user_xp.daily_goal_minutes` (`0`
+for no time goal, or `5`, `10`, `15`, or `20`; safe default `10`) because that first-party record also
 owns the tracked minute counter and completion reward. Legacy
 `daily_session_minutes` Clerk metadata is left recoverable but is no longer read
 or written, avoiding a non-atomic duplicate preference across providers.

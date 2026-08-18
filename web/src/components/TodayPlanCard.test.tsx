@@ -9,6 +9,7 @@ const ACTIVE_PLAN: TodayPlan = {
   remainingMinutes: 10,
   totalMinutes: 7,
   goalComplete: false,
+  goalDisabled: false,
   headline: 'Your plan for today',
   summary: '2 focused steps chosen for your goals and pace.',
   primaryLabel: 'Start today',
@@ -68,5 +69,30 @@ describe('TodayPlanCard', () => {
     expect(screen.getByRole('heading', { name: 'Daily goal complete' })).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: /today's learning steps/i })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /choose another activity/i })).toHaveAttribute('href', '/learning');
+  });
+
+  it('honors a disabled time goal while keeping learning available', () => {
+    const disabledPlan: TodayPlan = {
+      ...ACTIVE_PLAN,
+      budgetMinutes: 0,
+      remainingMinutes: 0,
+      totalMinutes: 0,
+      goalComplete: false,
+      goalDisabled: true,
+      headline: 'Learn at your own pace',
+      summary: 'Your daily time goal is off. Choose anything that feels useful today.',
+      primaryLabel: 'Explore learning',
+      activities: [],
+    };
+
+    render(
+      <MemoryRouter>
+        <TodayPlanCard plan={disabledPlan} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Learn at your own pace' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /explore learning/i })).toHaveAttribute('href', '/learning');
+    expect(screen.getByRole('link', { name: /set a time goal/i })).toHaveAttribute('href', '/settings');
   });
 });

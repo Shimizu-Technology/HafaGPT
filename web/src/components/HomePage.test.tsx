@@ -48,4 +48,24 @@ describe('home progress summary', () => {
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     expect(onRetry).toHaveBeenCalledOnce();
   });
+
+  it('shows a disabled daily goal without a false zero-percent meter', () => {
+    render(
+      <MemoryRouter>
+        <ProgressSummary
+          isLoading={false}
+          todayMinutes={0}
+          goalMinutes={0}
+          completedTopics={2}
+          totalTopics={21}
+          dueCards={3}
+          streak={1}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Daily time goal is off')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar', { name: /daily learning goal/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /set a goal/i })).toHaveAttribute('href', '/settings');
+  });
 });

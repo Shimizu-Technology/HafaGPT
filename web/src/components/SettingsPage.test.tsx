@@ -6,6 +6,12 @@ import { SettingsPage } from './SettingsPage';
 const settingsMocks = vi.hoisted(() => ({
   updatePreferencesAsync: vi.fn(),
   updateDailyGoal: vi.fn(),
+  xpData: null as null | {
+    total_xp: number;
+    level: number;
+    xp_progress: number;
+    daily_goal_minutes: number;
+  },
 }));
 
 vi.mock('../hooks/useUserPreferences', () => ({
@@ -31,7 +37,7 @@ vi.mock('../hooks/useSubscription', () => ({
 }));
 
 vi.mock('../hooks/useXP', () => ({
-  useXP: () => ({ data: null, isLoading: false }),
+  useXP: () => ({ data: settingsMocks.xpData, isLoading: false }),
   useUpdateDailyGoal: () => ({ mutateAsync: settingsMocks.updateDailyGoal, isPending: false }),
   getLevelInfo: () => ({ emoji: '', title: '' }),
 }));
@@ -44,6 +50,7 @@ describe('learning preference settings', () => {
     settingsMocks.updatePreferencesAsync.mockResolvedValue(undefined);
     settingsMocks.updateDailyGoal.mockReset();
     settingsMocks.updateDailyGoal.mockResolvedValue({ daily_goal_minutes: 15 });
+    settingsMocks.xpData = null;
   });
 
   it('keeps every capability preference editable and saves the allowlisted values', async () => {
@@ -84,5 +91,19 @@ describe('learning preference settings', () => {
 
     await waitFor(() => expect(settingsMocks.updateDailyGoal).toHaveBeenCalledWith(15));
     expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
+  });
+
+  it('shows and preserves an explicitly disabled time goal', () => {
+    settingsMocks.xpData = {
+      total_xp: 0,
+      level: 1,
+      xp_progress: 0,
+      daily_goal_minutes: 0,
+    };
+
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    expect(screen.getByRole('button', { name: /no time goal/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: /save changes/i })).not.toBeInTheDocument();
   });
 });

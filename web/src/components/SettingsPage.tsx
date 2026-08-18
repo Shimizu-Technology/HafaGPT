@@ -34,17 +34,17 @@ import { useXP, useUpdateDailyGoal, getLevelInfo } from '../hooks/useXP';
 import { AuthButton } from './AuthButton';
 import {
   CONFIDENCE_OPTIONS,
-  DAILY_SESSION_OPTIONS,
+  DAILY_GOAL_OPTIONS,
   LEARNER_MODE_OPTIONS,
   LEARNING_GOAL_OPTIONS,
   READING_SUPPORT_OPTIONS,
-  DailySessionMinutes,
+  DailyGoalMinutes,
   DEFAULT_DAILY_SESSION_MINUTES,
   LearnerMode,
   LearningGoal,
   ReadingSupport,
   SkillLevel,
-  normalizeDailySessionMinutes,
+  normalizeDailyGoalMinutes,
 } from '../data/learningPreferences';
 
 const MODE_ICONS: Record<LearnerMode, LucideIcon> = { self: UserRound, with_child: UsersRound, helping_family: HandHeart };
@@ -91,8 +91,8 @@ export function SettingsPage() {
   const { isChristmasTheme, isNewYearTheme } = useSubscription();
   const { data: xpData, isLoading: isLoadingXP } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
-  const savedSessionMinutes = xpData && xpData.daily_goal_minutes > 0
-    ? normalizeDailySessionMinutes(xpData.daily_goal_minutes)
+  const savedSessionMinutes = xpData
+    ? normalizeDailyGoalMinutes(xpData.daily_goal_minutes)
     : DEFAULT_DAILY_SESSION_MINUTES;
   const isSaving = isUpdating || updateDailyGoal.isPending;
   
@@ -100,7 +100,7 @@ export function SettingsPage() {
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
   const [learnerMode, setLearnerMode] = useState<LearnerMode>(preferences.learner_mode);
   const [readingSupport, setReadingSupport] = useState<ReadingSupport>(preferences.reading_support);
-  const [sessionMinutes, setSessionMinutes] = useState<DailySessionMinutes>(savedSessionMinutes);
+  const [sessionMinutes, setSessionMinutes] = useState<DailyGoalMinutes>(savedSessionMinutes);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   
@@ -240,8 +240,8 @@ export function SettingsPage() {
 
             <fieldset>
               <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Preferred daily session</legend>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {DAILY_SESSION_OPTIONS.map((option) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {DAILY_GOAL_OPTIONS.map((option) => (
                   <SettingsChoice key={option.id} {...option} icon={Clock3} selected={sessionMinutes === option.id} onSelect={setSessionMinutes} />
                 ))}
               </div>

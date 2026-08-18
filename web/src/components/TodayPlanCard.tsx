@@ -38,6 +38,25 @@ export function TodayPlanCard({ plan, isLoading = false }: TodayPlanCardProps) {
     );
   }
 
+  if (plan.goalDisabled) {
+    return (
+      <section className="rounded-3xl border border-cream-300 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+        <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Today</p>
+        <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">{plan.headline}</h2>
+        <p className="mt-2 text-brown-700 dark:text-gray-300">{plan.summary}</p>
+        <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+          <Link to="/learning" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2">
+            {plan.primaryLabel}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+          <Link to="/settings" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 px-4 py-2.5 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:text-white dark:hover:bg-slate-700">
+            Set a time goal
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
   if (plan.goalComplete) {
     return (
       <section className="rounded-3xl border border-teal-200 bg-teal-50 p-5 dark:border-teal-800 dark:bg-teal-950/30 sm:p-7">

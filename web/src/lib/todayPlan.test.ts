@@ -141,7 +141,7 @@ describe('deterministic Today planner', () => {
     expect(plan.goalComplete).toBe(true);
   });
 
-  it('falls back to the safe default for a legacy disabled XP goal', () => {
+  it('honors an explicitly disabled XP goal without assigning timed work', () => {
     const plan = buildTodayPlan(input({
       preferences: { ...DEFAULT_PREFERENCES, onboarding_completed: true },
       xp: {
@@ -156,7 +156,9 @@ describe('deterministic Today planner', () => {
       },
     }));
 
-    expect(plan.budgetMinutes).toBe(10);
+    expect(plan.budgetMinutes).toBe(0);
+    expect(plan.goalDisabled).toBe(true);
     expect(plan.goalComplete).toBe(false);
+    expect(plan.activities).toEqual([]);
   });
 });
