@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 
 def _load_image_helpers(
-    detector_text: str | list[str] = "NO",
+    detector_text: str | list[str | Exception] = "NO",
     detector_error: Exception | None = None,
 ):
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -33,6 +33,8 @@ def _load_image_helpers(
                 response_text = detector_text[len(self.calls) - 1]
             else:
                 response_text = detector_text
+            if isinstance(response_text, Exception):
+                raise response_text
             message = SimpleNamespace(content=response_text)
             return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
@@ -135,6 +137,18 @@ def test_image_detector_does_not_combine_signals_across_images() -> None:
     assert len([part for part in second_content if part["type"] == "image_url"]) == 1
     assert first_content[1]["image_url"]["url"].endswith("sym-only-image")
     assert second_content[1]["image_url"]["url"].endswith("guam-context-only-image")
+
+
+def test_image_detector_continues_after_one_attachment_provider_error() -> None:
+    _, _, detect_context, completions = _load_image_helpers(
+        detector_text=[RuntimeError("first image failed"), "YES"]
+    )
+
+    assert detect_context([
+        {"data": "failed-image", "content_type": "image/png"},
+        {"data": "valid-scoped-sym-image", "content_type": "image/jpeg"},
+    ]) == ("usage.guam.school.sym_signoff",)
+    assert len(completions.calls) == 2
 
 
 def test_image_detector_fails_closed_without_images_or_on_provider_error() -> None:

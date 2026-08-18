@@ -160,20 +160,25 @@ def detect_image_context_card_ids(
 
     try:
         detector_client, detector_model = get_client_for_request(has_image=True)
-        for image_index, image in enumerate(images):
-            detector_message = _build_current_user_message(
-                (
-                    "Inspect this single uploaded image. Return exactly YES only when "
-                    "BOTH are visibly established in this same image: (1) the standalone "
-                    "text token SYM (case-insensitive), including punctuation forms such "
-                    "as SYM! or SYM.; and (2) Guam/Chamorro/Hurao or Guam-local school "
-                    "or institutional context, established by visible names, logos, "
-                    "addresses, or surrounding Chamorro-language text. A generic school "
-                    "document or the token SYM by itself is not enough. Otherwise return "
-                    "exactly NO."
-                ),
-                [image],
-            )
+    except Exception as error:
+        logger.warning("Image context detector unavailable; failing closed: %s", error)
+        return ()
+
+    for image_index, image in enumerate(images):
+        detector_message = _build_current_user_message(
+            (
+                "Inspect this single uploaded image. Return exactly YES only when "
+                "BOTH are visibly established in this same image: (1) the standalone "
+                "text token SYM (case-insensitive), including punctuation forms such "
+                "as SYM! or SYM.; and (2) Guam/Chamorro/Hurao or Guam-local school "
+                "or institutional context, established by visible names, logos, "
+                "addresses, or surrounding Chamorro-language text. A generic school "
+                "document or the token SYM by itself is not enough. Otherwise return "
+                "exactly NO."
+            ),
+            [image],
+        )
+        try:
             response = detector_client.chat.completions.create(
                 model=detector_model,
                 messages=[
@@ -201,9 +206,13 @@ def detect_image_context_card_ids(
                     image_index,
                 )
                 return (SYM_IMAGE_CONTEXT_CARD_ID,)
-        logger.info("IMAGE_CONTEXT_DETECTION matched=none")
-    except Exception as error:
-        logger.warning("Image context detection failed closed: %s", error)
+        except Exception as error:
+            logger.warning(
+                "Image context detection failed closed for image_index=%s: %s",
+                image_index,
+                error,
+            )
+    logger.info("IMAGE_CONTEXT_DETECTION matched=none")
     return ()
 
 # Import RAG module (uses OpenAI embeddings - lightweight!)
