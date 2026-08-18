@@ -1,5 +1,11 @@
 # HåfaGPT Modernization Roadmap — 2026
 
+> **Product-program note (August 18, 2026):** The learning-experience work
+> informally called “Phase 1” and “Phase 2” is specified separately in
+> [LEARNING_EXPERIENCE_PROGRAM_2026.md](LEARNING_EXPERIENCE_PROGRAM_2026.md).
+> Those product phase names do not replace the engineering phases in this
+> roadmap.
+
 **Goal:** make HåfaGPT a trustworthy, maintainable, family-centered Chamorro learning platform without destabilizing the existing product or coupling API/web deployment.
 
 ## Principles
