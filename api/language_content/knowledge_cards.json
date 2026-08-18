@@ -99,6 +99,33 @@
         }
       ],
       "review_notes": "Official Guam Legislature records document current institutional use of both SYM and the full Si Yu'us ma'åse' sign-off. Hurao Academy context is user-supplied firsthand evidence, so the approved explanation remains conditional and does not claim a formal school policy or universal abbreviation rule."
+    },
+    {
+      "id": "usage.guam.school.msy_greeting",
+      "title": "MSY in a modern Hurao or Guam school message",
+      "claim_type": "usage",
+      "answer_text": "In the Hurao Academy context reported to HåfaGPT, MSY is best read as Manana si Yu'os—‘good morning.’ The full phrase and meaning are independently documented by the Kumisión i Fino' CHamoru, while the abbreviated Hurao usage is firsthand user context. Treat this as a contextual interpretation, not a universal expansion of MSY or a claim about formal school policy; if the institution or context differs, describe it as likely rather than certain. Both Manana si Yu'os and Buenas dias are source-backed Guam good-morning greetings; this card explains the Hurao abbreviation rather than declaring one universal form.",
+      "question_aliases": [
+        "What does MSY mean in a Guam school message?",
+        "What does MSY mean at Hurao Academy?",
+        "Hurao Academy MSY greeting",
+        "Hurao Academy MSY",
+        "Guam school MSY"
+      ],
+      "region": "Guam",
+      "temporal_scope": "modern",
+      "confidence": "medium",
+      "release_status": "production_ready",
+      "citations": [
+        {
+          "source_id": "kumision_learning_tools",
+          "url": "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/03/Cultural-Dictionary_Kumision-i-Fino-CHamoru_Digital.pdf",
+          "locator": "Ginen i Hila' i Mañaina-ta, page 33, Manana si Yu'os — Good morning",
+          "accessed_at": "2026-08-18",
+          "support": "primary"
+        }
+      ],
+      "review_notes": "The Kumisión's official cultural dictionary independently supports the full greeting, spelling, and English meaning but does not document the acronym. The MSY abbreviation at Hurao Academy is user-supplied firsthand context, so this card states a scoped interpretation and does not claim universal usage, formal policy, or a literal etymology."
     }
   ]
 }

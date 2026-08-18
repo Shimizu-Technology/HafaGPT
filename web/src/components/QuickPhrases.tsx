@@ -7,7 +7,7 @@ export function QuickPhrases({ onSelect, disabled }: QuickPhrasesProps) {
   const phrases = [
     { text: "How do you say hello?", icon: "👋" },
     { text: "Teach me greetings", icon: "🗣️" },
-    { text: "What does MSY mean?", icon: "❓" },
+    { text: "What does MSY mean in a Guam school message?", icon: "❓" },
     { text: "Translate this sentence", icon: "🔤" }
   ];
 

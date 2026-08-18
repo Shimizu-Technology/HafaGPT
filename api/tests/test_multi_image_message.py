@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 
 def _load_image_helpers(
-    detector_text: str | list[str | Exception] = "NO",
+    detector_text: str | list[str | Exception] = "NONE",
     detector_error: Exception | None = None,
 ):
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -49,6 +49,11 @@ def _load_image_helpers(
     client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
     namespace = {
         "SYM_IMAGE_CONTEXT_CARD_ID": "usage.guam.school.sym_signoff",
+        "MSY_IMAGE_CONTEXT_CARD_ID": "usage.guam.school.msy_greeting",
+        "IMAGE_CONTEXT_CARD_IDS": {
+            "SYM": "usage.guam.school.sym_signoff",
+            "MSY": "usage.guam.school.msy_greeting",
+        },
         "get_client_for_request": lambda **_kwargs: (client, "vision-model"),
         "logger": FakeLogger(),
     }
@@ -91,29 +96,49 @@ def test_normalize_image_inputs_preserves_legacy_single_image():
     }]
 
 
-def test_image_detector_includes_sym_card_only_after_scoped_visual_yes() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="YES")
+def test_image_detector_includes_sym_card_only_after_scoped_visual_match() -> None:
+    _, _, detect_context, completions = _load_image_helpers(detector_text="SYM")
 
     card_ids = detect_context([{"data": "image-data", "content_type": "image/png"}])
 
     assert card_ids == ("usage.guam.school.sym_signoff",)
     request = completions.calls[0]
     assert request["model"] == "vision-model"
-    assert request["max_tokens"] == 4
+    assert request["max_tokens"] == 64
     detector_prompt = request["messages"][1]["content"][0]["text"]
-    assert "BOTH" in detector_prompt
     assert "same image" in detector_prompt
     assert "Guam/Chamorro/Hurao" in detector_prompt
-    assert "token SYM by itself is not enough" in detector_prompt
+    assert "SYM and MSY" in detector_prompt
+    assert "token by itself" in detector_prompt
     assert "same image" in request["messages"][0]["content"]
-    assert "If either condition is uncertain" in request["messages"][0]["content"]
+    assert "if none qualify, answer NONE" in request["messages"][0]["content"]
     assert request["messages"][1]["content"][1]["image_url"]["url"] == (
         "data:image/png;base64,image-data"
     )
 
 
-def test_image_detector_excludes_sym_card_after_visual_no() -> None:
-    _, _, detect_context, completions = _load_image_helpers(detector_text="NO")
+def test_image_detector_includes_msy_card_after_scoped_visual_match() -> None:
+    _, _, detect_context, completions = _load_image_helpers(detector_text="MSY")
+
+    assert detect_context(
+        [{"data": "hurao-msy-image", "content_type": "image/jpeg"}]
+    ) == ("usage.guam.school.msy_greeting",)
+    assert len(completions.calls) == 1
+
+
+def test_image_detector_can_include_both_scoped_cards_from_one_image() -> None:
+    _, _, detect_context, _ = _load_image_helpers(detector_text="`MSY`, `SYM`.")
+
+    assert detect_context(
+        [{"data": "both-abbreviations", "content_type": "image/png"}]
+    ) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
+
+def test_image_detector_excludes_cards_after_visual_none() -> None:
+    _, _, detect_context, completions = _load_image_helpers(detector_text="NONE")
 
     assert detect_context(
         [{"data": "unrelated-image", "content_type": "image/jpeg"}]
@@ -123,7 +148,7 @@ def test_image_detector_excludes_sym_card_after_visual_no() -> None:
 
 def test_image_detector_does_not_combine_signals_across_images() -> None:
     _, _, detect_context, completions = _load_image_helpers(
-        detector_text=["NO", "NO"]
+        detector_text=["NONE", "NONE"]
     )
 
     assert detect_context([
@@ -141,18 +166,53 @@ def test_image_detector_does_not_combine_signals_across_images() -> None:
 
 def test_image_detector_continues_after_one_attachment_provider_error() -> None:
     _, _, detect_context, completions = _load_image_helpers(
-        detector_text=[RuntimeError("first image failed"), "YES"]
+        detector_text=[RuntimeError("first image failed"), "MSY"]
     )
 
     assert detect_context([
         {"data": "failed-image", "content_type": "image/png"},
-        {"data": "valid-scoped-sym-image", "content_type": "image/jpeg"},
-    ]) == ("usage.guam.school.sym_signoff",)
+        {"data": "valid-scoped-msy-image", "content_type": "image/jpeg"},
+    ]) == ("usage.guam.school.msy_greeting",)
     assert len(completions.calls) == 2
 
 
+def test_image_detector_accumulates_scoped_matches_across_attachments() -> None:
+    _, _, detect_context, completions = _load_image_helpers(
+        detector_text=["MSY", "SYM"]
+    )
+
+    assert detect_context([
+        {"data": "scoped-msy-image", "content_type": "image/png"},
+        {"data": "scoped-sym-image", "content_type": "image/jpeg"},
+    ]) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+    assert len(completions.calls) == 2
+
+
+def test_image_detector_rejects_unexpected_provider_output() -> None:
+    _, _, detect_context, completions = _load_image_helpers(
+        detector_text="MSY because it means good morning"
+    )
+
+    assert detect_context(
+        [{"data": "image", "content_type": "image/png"}]
+    ) == ()
+    assert len(completions.calls) == 1
+
+
+def test_image_detector_rejects_empty_provider_output() -> None:
+    _, _, detect_context, completions = _load_image_helpers(detector_text="")
+
+    assert detect_context(
+        [{"data": "image", "content_type": "image/png"}]
+    ) == ()
+    assert len(completions.calls) == 1
+
+
 def test_image_detector_fails_closed_without_images_or_on_provider_error() -> None:
-    _, _, detect_empty, empty_completions = _load_image_helpers(detector_text="YES")
+    _, _, detect_empty, empty_completions = _load_image_helpers(detector_text="MSY")
     assert detect_empty([]) == ()
     assert empty_completions.calls == []
 

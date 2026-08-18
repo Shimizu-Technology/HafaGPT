@@ -537,7 +537,11 @@
       "name": "Kumisión i Fino' CHamoru learning tools",
       "canonical_url": "https://kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools/",
       "match": {
-        "source_contains": ["kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools", "materiat-ineyak-siha-learning-tools"]
+        "source_contains": [
+          "kumisionchamoru.guam.gov/materiat-ineyak-siha-learning-tools",
+          "materiat-ineyak-siha-learning-tools",
+          "cultural-dictionary_kumision-i-fino-chamoru"
+        ]
       },
       "content_role": "official_learning_material",
       "region": "Guam",
