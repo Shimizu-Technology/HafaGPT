@@ -87,15 +87,18 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     translating_to_chamorro = bool(
         re.search(r"(?i)\b(?:to|in)\s+chamorr[ou]\b", query)
     )
+    if translating_to_chamorro:
+        # In an explicit "translate this to Chamorro" block, the target passage
+        # conventionally follows the wrapper. A later prose note must not win
+        # merely because it contains more English words.
+        return content_candidates[0]
 
     def passage_score(paragraph: str) -> tuple[int, int]:
         words = _words(paragraph)
         normalized_words = {word.casefold() for word in words}
         chamorro_markers = len(normalized_words & _CHAMORRO_PASSAGE_MARKERS)
         chamorro_orthography = len(re.findall(r"[åÅñÑ]|\w[’']\w", paragraph))
-        language_score = 0 if translating_to_chamorro else 5 * (
-            chamorro_markers + chamorro_orthography
-        )
+        language_score = 5 * (chamorro_markers + chamorro_orthography)
         return language_score + min(len(words), 40), len(words)
 
     return max(content_candidates, key=passage_score)

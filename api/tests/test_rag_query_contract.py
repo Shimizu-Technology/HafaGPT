@@ -125,6 +125,18 @@ def test_trailing_context_does_not_replace_middle_english_passage() -> None:
     assert extract_translation_payload(query).startswith("Good morning")
 
 
+def test_long_unrecognized_trailing_note_does_not_outscore_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie is sick and will not be at school today.\n\n"
+        "Please make the result sound warm and natural while retaining all of the "
+        "important details in a way that another family can understand clearly."
+    )
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert extract_translation_payload(query).startswith("Good morning")
+
+
 def test_multiword_english_request_uses_passage_translation_policy() -> None:
     query = (
         "How do I say - good morning, Stassie is sick so she will not be at "
