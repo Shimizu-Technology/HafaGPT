@@ -94,7 +94,7 @@ export function DueCardsWidget({ srSummaryData: passedData, isLoading: passedLoa
       {/* Action button */}
       {hasDueCards && (
         <Link
-          to="/flashcards"
+          to="/flashcards/review"
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded-xl font-medium transition-all hover:shadow-lg active:scale-98 group"
         >
           <RotateCcw className="w-4 h-4" />
@@ -105,10 +105,9 @@ export function DueCardsWidget({ srSummaryData: passedData, isLoading: passedLoa
 
       {!hasDueCards && (
         <p className="text-xs text-center text-brown-500 dark:text-gray-400">
-          🎉 Great job! Check back later for more reviews.
+          Great job! Check back later for more reviews.
         </p>
       )}
     </div>
   );
 }
-

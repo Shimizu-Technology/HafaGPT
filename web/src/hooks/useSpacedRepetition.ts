@@ -15,6 +15,19 @@ export interface DueCard {
   total_reviews: number;
   correct_count: number;
   incorrect_count: number;
+  front: string;
+  back: string;
+  pronunciation: string | null;
+  example: string | null;
+  source_kind: 'curated' | 'dictionary' | 'saved' | 'custom';
+}
+
+export interface ReviewCardContent {
+  front: string;
+  back: string;
+  pronunciation?: string | null;
+  example?: string | null;
+  source_kind: DueCard['source_kind'];
 }
 
 export interface DueCardsResponse {
@@ -96,7 +109,7 @@ export function useRecordReview() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { cardId: string; deckId: string; quality: QualityRating }): Promise<ReviewResult> => {
+    mutationFn: async (params: { cardId: string; deckId: string; quality: QualityRating; content?: ReviewCardContent }): Promise<ReviewResult> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/flashcards/review`, {
         method: 'POST',
@@ -108,6 +121,7 @@ export function useRecordReview() {
           card_id: params.cardId,
           deck_id: params.deckId,
           quality: params.quality,
+          content: params.content,
         }),
       });
 
@@ -121,6 +135,7 @@ export function useRecordReview() {
       // Invalidate due cards and summary
       queryClient.invalidateQueries({ queryKey: ['dueCards'] });
       queryClient.invalidateQueries({ queryKey: ['srSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
     },
   });
 }
@@ -195,4 +210,3 @@ export function getQualityColor(quality: QualityRating, isSelected: boolean): st
     ? 'bg-blue-500 text-white border-blue-500'
     : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50';
 }
-

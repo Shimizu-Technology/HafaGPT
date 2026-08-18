@@ -98,6 +98,7 @@ interface ReviewCardRequest {
   user_id: string;
   flashcard_id: string;
   confidence: 1 | 2 | 3;
+  quality?: 0 | 1 | 2 | 3 | 4 | 5;
 }
 
 interface ReviewCardResponse {
@@ -295,4 +296,3 @@ export function useDictionaryFlashcards(
     gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
-

@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
+import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
+import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
+import { ReviewRatingButtons } from './ReviewRatingButtons';
 
 interface FlashcardData {
   front: string;
@@ -57,9 +60,12 @@ export function FlashcardViewer() {
   const [isCardFlipped, setIsCardFlipped] = useState(false); // Track if current card is flipped
   const [isDeckSaved, setIsDeckSaved] = useState(false); // Track if custom deck has been saved
   const [cardsStudied, setCardsStudied] = useState(0); // Track total cards studied this session
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSaved, setReviewSaved] = useState(false);
 
   // Use React Query mutation for saving decks
   const saveDeckMutation = useSaveDeck();
+  const recordReviewMutation = useRecordReview();
   
   // Use dictionary flashcards API for "dictionary" mode (instant loading from 10,350+ words)
   const {
@@ -304,16 +310,40 @@ export function FlashcardViewer() {
   };
 
   // Handle card rating (Hard/Good/Easy)
-  const handleRating = async (confidence: 1 | 2 | 3) => {
-    // For now, just log the rating (we'll wire up the API later)
-    console.log(`Card rated: ${confidence} (1=Hard, 2=Good, 3=Easy)`);
-    
-    // TODO: Add toast notification
-    const ratingLabels = { 1: 'Hard', 2: 'Good', 3: 'Easy' };
-    console.log(`✅ Rated as ${ratingLabels[confidence]}!`);
-    
-    // Move to next card
-    handleNext();
+  const handleRating = async (quality: QualityRating) => {
+    if (!topic || !currentCard) return;
+
+    setReviewError(null);
+    setReviewSaved(false);
+    const sourceKind: CardSourceKind = cardTypeParam === 'custom' ? 'custom' : cardType;
+
+    try {
+      await recordReviewMutation.mutateAsync({
+        cardId: createCardIdentity({
+          sourceKind,
+          deckId: topic,
+          front: currentCard.front,
+          back: currentCard.back,
+        }),
+        deckId: `${sourceKind}:${topic}`,
+        quality,
+        content: {
+          front: currentCard.front,
+          back: currentCard.back,
+          pronunciation: currentCard.pronunciation,
+          example: currentCard.example,
+          source_kind: sourceKind,
+        },
+      });
+      setReviewSaved(true);
+      if (currentIndex < flashcards.length - 1) {
+        handleNext();
+      } else {
+        setIsCardFlipped(false);
+      }
+    } catch {
+      setReviewError('Your review was not saved. Please try again.');
+    }
   };
 
   // Handle saving custom deck
@@ -487,7 +517,7 @@ export function FlashcardViewer() {
                 <Save className="w-4 h-4" />
               )}
               <span className="hidden sm:inline">
-                {isDeckSaved ? '✓ Saved' : isGeneratingMore ? 'Generating...' : 'Save'}
+                {isDeckSaved ? 'Saved' : isGeneratingMore ? 'Generating...' : 'Save'}
               </span>
             </button>
           )}
@@ -537,32 +567,24 @@ export function FlashcardViewer() {
         {/* Rating Buttons (show after flip) */}
         {/* Rating Buttons - Only show if card is flipped AND (deck is curated/dictionary OR saved) */}
         {isCardFlipped && (cardType === 'curated' || cardType === 'dictionary' || isDeckSaved) && (
-          <div className="flex items-center justify-center gap-3 mt-6">
-            <button
-              onClick={() => handleRating(1)}
-              className="px-6 py-3 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
-            >
-              Hard
-            </button>
-            <button
-              onClick={() => handleRating(2)}
-              className="px-6 py-3 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
-            >
-              Good
-            </button>
-            <button
-              onClick={() => handleRating(3)}
-              className="px-6 py-3 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold shadow-md hover:shadow-lg transition-all touch-manipulation min-w-[100px]"
-            >
-              Easy
-            </button>
-          </div>
+          <ReviewRatingButtons
+            onRate={(quality) => void handleRating(quality)}
+            disabled={recordReviewMutation.isPending}
+            error={reviewError}
+          />
+        )}
+
+        {reviewSaved && !isCardFlipped && (
+          <p className="mt-4 text-sm font-semibold text-teal-700 dark:text-teal-300" role="status">
+            Review saved. We will bring this card back at the right time.
+          </p>
         )}
         
         {/* Help text for unsaved custom cards (legacy) */}
         {cardTypeParam === 'custom' && !isDeckSaved && isCardFlipped && (
-          <div className="mt-6 text-center text-sm text-brown-600 dark:text-gray-400 italic">
-            💡 Save this deck to track your progress with ratings
+          <div className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-brown-600 dark:text-gray-400">
+            <HelpCircle className="h-4 w-4" aria-hidden="true" />
+            <span>Save this deck to track your progress with ratings</span>
           </div>
         )}
 
@@ -603,7 +625,8 @@ export function FlashcardViewer() {
           <div className="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-700/50">
             <div className="text-center">
               <p className="text-emerald-700 dark:text-emerald-300 font-semibold mb-3">
-                🎉 Great job! You've finished this deck!
+                <CheckCircle2 className="mx-auto mb-2 h-6 w-6" aria-hidden="true" />
+                Great job! You've finished this deck!
                 {cardsStudied > 0 && (
                   <span className="block text-sm font-normal mt-1">
                     Cards studied this session: {cardsStudied + flashcards.length}
@@ -677,4 +700,3 @@ export function FlashcardViewer() {
     </div>
   );
 }
-

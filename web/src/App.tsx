@@ -3,6 +3,7 @@ import { Chat } from './components/Chat';
 import { HomePage } from './components/HomePage';
 import { FlashcardDeckList } from './components/FlashcardDeckList';
 import { FlashcardViewer } from './components/FlashcardViewer';
+import { ReviewQueue } from './components/ReviewQueue';
 import { MyDecks } from './components/MyDecks';
 import { SavedDeckViewer } from './components/SavedDeckViewer';
 import { QuizList } from './components/QuizList';
@@ -70,6 +71,7 @@ function App() {
         {/* Protected routes - require authentication */}
         <Route path="/flashcards" element={<ProtectedRoute><FlashcardDeckList /></ProtectedRoute>} />
         <Route path="/flashcards/:topic" element={<ProtectedRoute><FlashcardViewer /></ProtectedRoute>} />
+        <Route path="/flashcards/review" element={<ProtectedRoute><ReviewQueue /></ProtectedRoute>} />
         <Route path="/flashcards/my-decks" element={<ProtectedRoute><MyDecks /></ProtectedRoute>} />
         <Route path="/flashcards/my-deck/:deckId" element={<ProtectedRoute><SavedDeckViewer /></ProtectedRoute>} />
         
