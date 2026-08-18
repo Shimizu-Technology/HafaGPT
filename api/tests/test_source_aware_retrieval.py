@@ -48,7 +48,7 @@ def _load_get_rag_context(
             "canonical context",
             [{"name": "Canonical", "page": None}],
         ),
-        "get_knowledge_card_context": lambda _query: (
+        "get_knowledge_card_context": lambda _query, **_kwargs: (
             card_context,
             [{"name": "Reviewed source", "page": None}] if card_context else [],
         ),
@@ -90,6 +90,58 @@ def test_unmatched_question_continues_through_vector_corpus() -> None:
     assert context == "canonical context\n\nvector context"
     assert [source["name"] for source in sources] == ["Canonical", "Vector source"]
     assert fake_rag.calls == [("What does hånom mean?", 3)]
+
+
+def test_passage_translation_combines_scoped_card_and_vector_context() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _logger = _load_get_rag_context(
+        fake_rag=fake_rag,
+        card_context="approved SYM context",
+    )
+    query = "Please translate this full school message that ends with SYM for me"
+
+    context, sources = get_rag_context(query)
+
+    assert context == "canonical context\n\napproved SYM context\n\nvector context"
+    assert [source["name"] for source in sources] == [
+        "Canonical",
+        "Reviewed source",
+        "Vector source",
+    ]
+    assert fake_rag.calls == [(query, 3)]
+
+
+def test_image_context_card_does_not_suppress_vector_retrieval() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _logger = _load_get_rag_context(
+        fake_rag=fake_rag,
+        card_context="conditional image card",
+    )
+
+    context, _sources = get_rag_context(
+        "What does this image say?",
+        contextual_card_ids=("usage.guam.school.sym_signoff",),
+    )
+
+    assert context.endswith("conditional image card\n\nvector context")
+    assert fake_rag.calls == [("What does this image say?", 3)]
+
+
+def test_image_context_card_survives_a_no_rag_typed_message() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _logger = _load_get_rag_context(
+        fake_rag=fake_rag,
+        card_context="conditional image card",
+        use_rag=False,
+    )
+
+    context, _sources = get_rag_context(
+        "Help",
+        contextual_card_ids=("usage.guam.school.sym_signoff",),
+    )
+
+    assert context.endswith("conditional image card\n\nvector context")
+    assert fake_rag.calls == [("Help", 3)]
 
 
 def test_no_rag_decision_emits_privacy_safe_selection_event() -> None:

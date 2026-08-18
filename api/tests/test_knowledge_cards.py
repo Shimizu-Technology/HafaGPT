@@ -19,10 +19,12 @@ def test_seed_knowledge_cards_are_valid_and_cited() -> None:
 
     assert "lexicon.hanom.water" in cards
     assert "orthography.guam.current_reference" in cards
+    assert "usage.guam.school.sym_signoff" in cards
     assert all(card["citations"] for card in cards.values())
     assert all(card["review_notes"] for card in cards.values())
     assert [card["id"] for card in production_cards()] == [
-        "orthography.guam.current_reference"
+        "orthography.guam.current_reference",
+        "usage.guam.school.sym_signoff",
     ]
 
 
@@ -154,6 +156,40 @@ def test_region_specific_card_does_not_match_generic_token_overlap() -> None:
     assert matching_production_cards("What is the current Chamorro orthography?") == []
 
 
+def test_sym_card_matches_scoped_guam_and_hurao_questions() -> None:
+    for query in (
+        "What does SYM mean in a Guam school message?",
+        "What does SYM mean at Hurao Academy?",
+        "Can you explain the Hurao Academy SYM sign-off?",
+        "At Hurao Academy, what does SYM mean at the end of a school message?",
+        "Please explain how people use SYM in a Guam school announcement",
+    ):
+        assert [card["id"] for card in matching_production_cards(query)] == [
+            "usage.guam.school.sym_signoff"
+        ]
+
+
+def test_generic_school_image_prompt_does_not_select_a_guam_card_from_text() -> None:
+    for query in (
+        "What does this say? It's from my daughter's school",
+        "What does this say? It’s from my daughter’s school",
+    ):
+        assert matching_production_cards(query) == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What does SYM mean?",
+        "Tell me about school",
+        "What does this image say?",
+        "My daughter is at school in Saipan",
+    ],
+)
+def test_sym_card_does_not_apply_without_reviewed_guam_school_context(query: str) -> None:
+    assert matching_production_cards(query) == []
+
+
 @pytest.mark.parametrize(
     "query",
     [
@@ -214,3 +250,38 @@ def test_knowledge_card_context_is_original_scoped_and_structurally_cited() -> N
             "evidence_kind": "knowledge_card",
         }
     ]
+
+
+def test_sym_card_context_is_conditional_and_cites_usage_and_meaning() -> None:
+    context, citations = get_knowledge_card_context(
+        "At Hurao Academy, what does SYM mean at the end of a school message?"
+    )
+
+    assert "Si Yu'os Ma'åse'" in context
+    assert "contextual Guam usage, not a universal expansion" in context
+    assert "likely reading rather than certain" in context
+    assert [citation["source_id"] for citation in citations] == [
+        "guam_legislature_committee_records",
+        "chamoru_info_dictionary",
+    ]
+    assert all(
+        citation["knowledge_card_id"] == "usage.guam.school.sym_signoff"
+        for citation in citations
+    )
+
+
+def test_image_context_can_include_only_a_production_ready_card() -> None:
+    context, citations = get_knowledge_card_context(
+        "What does this image say?",
+        include_card_ids=(
+            "usage.guam.school.sym_signoff",
+            "lexicon.hanom.water",
+            "does.not.exist",
+        ),
+    )
+
+    assert "usage.guam.school.sym_signoff" in context
+    assert "lexicon.hanom.water" not in context
+    assert {citation["knowledge_card_id"] for citation in citations} == {
+        "usage.guam.school.sym_signoff"
+    }
