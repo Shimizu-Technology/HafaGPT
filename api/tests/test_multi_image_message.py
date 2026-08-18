@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 
 def _load_image_helpers(
-    detector_text: str = "NO",
+    detector_text: str | list[str] = "NO",
     detector_error: Exception | None = None,
 ):
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -29,7 +29,11 @@ def _load_image_helpers(
             self.calls.append(kwargs)
             if detector_error:
                 raise detector_error
-            message = SimpleNamespace(content=detector_text)
+            if isinstance(detector_text, list):
+                response_text = detector_text[len(self.calls) - 1]
+            else:
+                response_text = detector_text
+            message = SimpleNamespace(content=response_text)
             return SimpleNamespace(choices=[SimpleNamespace(message=message)])
 
     class FakeLogger:
@@ -96,8 +100,10 @@ def test_image_detector_includes_sym_card_only_after_scoped_visual_yes() -> None
     assert request["max_tokens"] == 4
     detector_prompt = request["messages"][1]["content"][0]["text"]
     assert "BOTH" in detector_prompt
+    assert "same image" in detector_prompt
     assert "Guam/Chamorro/Hurao" in detector_prompt
     assert "token SYM by itself is not enough" in detector_prompt
+    assert "same image" in request["messages"][0]["content"]
     assert "If either condition is uncertain" in request["messages"][0]["content"]
     assert request["messages"][1]["content"][1]["image_url"]["url"] == (
         "data:image/png;base64,image-data"
@@ -111,6 +117,24 @@ def test_image_detector_excludes_sym_card_after_visual_no() -> None:
         [{"data": "unrelated-image", "content_type": "image/jpeg"}]
     ) == ()
     assert len(completions.calls) == 1
+
+
+def test_image_detector_does_not_combine_signals_across_images() -> None:
+    _, _, detect_context, completions = _load_image_helpers(
+        detector_text=["NO", "NO"]
+    )
+
+    assert detect_context([
+        {"data": "sym-only-image", "content_type": "image/png"},
+        {"data": "guam-context-only-image", "content_type": "image/jpeg"},
+    ]) == ()
+    assert len(completions.calls) == 2
+    first_content = completions.calls[0]["messages"][1]["content"]
+    second_content = completions.calls[1]["messages"][1]["content"]
+    assert len([part for part in first_content if part["type"] == "image_url"]) == 1
+    assert len([part for part in second_content if part["type"] == "image_url"]) == 1
+    assert first_content[1]["image_url"]["url"].endswith("sym-only-image")
+    assert second_content[1]["image_url"]["url"].endswith("guam-context-only-image")
 
 
 def test_image_detector_fails_closed_without_images_or_on_provider_error() -> None:
