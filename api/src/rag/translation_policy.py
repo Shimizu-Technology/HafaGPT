@@ -56,6 +56,12 @@ _TRANSLATION_INSTRUCTION_PATTERN = re.compile(
     r"\b(?:make|keep)\s+(?:it|the\s+(?:wording|translation|result))\b|"
     r"\b(?:sound|feel|read)\s+(?:more\s+)?(?:warm|gentle|natural|formal|casual|polite)\b)"
 )
+_ENGLISH_MESSAGE_MARKER_PATTERN = re.compile(
+    r"(?ix)"
+    r"(?:^\s*(?:good\s+(?:morning|afternoon|evening)|hello|hi|dear)\b|"
+    r"\b(?:today|tomorrow|yesterday|appointment|school|class|teacher)\b|"
+    r"\b(?:will|would|can|could)\s+not\b|\b(?:won't|can't|couldn't|wouldn't)\b)"
+)
 _CHAMORRO_PASSAGE_MARKERS = {
     "dispensa",
     "eskuela",
@@ -98,11 +104,17 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     if translating_to_chamorro:
         # English prose alone cannot reliably distinguish an unlabeled passage
         # from a completely unlabeled before/after note. Strip paragraphs that
-        # identify themselves as translation instructions, then preserve every
-        # remaining paragraph so an ambiguous note can never erase the passage.
-        # The original query still reaches the model, so these instructions are
-        # omitted only from retrieval and continue to shape the response.
-        return "\n\n".join(content_candidates)
+        # identify themselves as translation instructions, then select one
+        # message-like passage. Never combine surrounding prose into the vector
+        # query: a note can otherwise retrieve unrelated governed citations. The
+        # original query still reaches the model unchanged, so context and style
+        # instructions continue to shape the response.
+        def english_passage_score(paragraph: str) -> tuple[int, int]:
+            words = _words(paragraph)
+            message_markers = len(_ENGLISH_MESSAGE_MARKER_PATTERN.findall(paragraph))
+            return 10 * message_markers + min(len(words), 40), len(words)
+
+        return max(content_candidates, key=english_passage_score)
 
     def passage_score(paragraph: str) -> tuple[int, int]:
         words = _words(paragraph)

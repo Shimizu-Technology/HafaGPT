@@ -152,7 +152,7 @@ def test_leading_translation_instruction_is_not_embedded_with_english_passage() 
     assert "Good morning, Stassie is sick" in payload
 
 
-def test_retrieval_keeps_an_ambiguous_english_paragraph_instead_of_dropping_it() -> None:
+def test_unlabeled_leading_note_is_not_combined_with_english_passage() -> None:
     query = (
         "Translate this to Chamorro:\n\n"
         "Our family is worried about her.\n\n"
@@ -160,8 +160,19 @@ def test_retrieval_keeps_an_ambiguous_english_paragraph_instead_of_dropping_it()
     )
 
     payload = extract_translation_payload(query)
-    assert "Our family is worried" in payload
+    assert "Our family is worried" not in payload
     assert "Good morning, Stassie is sick" in payload
+
+
+def test_unlabeled_trailing_note_is_not_combined_with_english_passage() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Good morning, Stassie will not be at school today.\n\n"
+        "Our family has been worried about her."
+    )
+
+    payload = extract_translation_payload(query)
+    assert payload == "Good morning, Stassie will not be at school today."
 
 
 def test_multiword_english_request_uses_passage_translation_policy() -> None:
