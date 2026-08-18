@@ -29,6 +29,24 @@ def test_attempt_contains_only_stable_learning_properties():
     }
 
 
+def test_topic_can_use_a_distinct_allowlisted_vocabulary_category():
+    assert build_game_learning_attempt(
+        topic_id="body-parts",
+        category_id="body",
+        source="lesson",
+        game_type="memory_match",
+        stars=2,
+        score=200,
+        time_seconds=120,
+    ) == {
+        "concept_id": "v1:topic:body-parts",
+        "activity_type": "game:memory_match",
+        "success": True,
+        "duration_bucket": "2_to_5m",
+        "source": "lesson",
+    }
+
+
 def test_attempt_rejects_unknown_or_mismatched_context():
     with pytest.raises(ValueError, match="Unknown learning topic"):
         build_game_learning_attempt(

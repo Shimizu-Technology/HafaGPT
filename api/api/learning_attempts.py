@@ -3,28 +3,28 @@
 from typing import Optional
 
 
-LEARNING_TOPIC_IDS = {
-    "greetings",
-    "numbers",
-    "colors",
-    "family",
-    "food",
-    "animals",
-    "phrases",
-    "questions",
-    "body",
-    "days",
-    "months",
-    "verbs",
-    "adjectives",
-    "sentences",
-    "places",
-    "weather",
-    "household",
-    "directions",
-    "shopping",
-    "daily-life",
-    "culture",
+LEARNING_TOPIC_CATEGORIES = {
+    "greetings": "greetings",
+    "numbers": "numbers",
+    "colors": "colors",
+    "family": "family",
+    "food": "food",
+    "animals": "animals",
+    "phrases": "phrases",
+    "questions": "questions",
+    "body-parts": "body",
+    "days": "days",
+    "months": "months",
+    "verbs": "verbs",
+    "adjectives": "adjectives",
+    "sentences": "sentences",
+    "places": "places",
+    "weather": "weather",
+    "household": "household",
+    "directions": "directions",
+    "shopping": "shopping",
+    "daily-life": "daily-life",
+    "culture": "culture",
 }
 LEARNING_SOURCES = {"lesson", "today"}
 LEARNING_GAME_TYPES = {
@@ -67,9 +67,10 @@ def build_game_learning_attempt(
 ) -> dict:
     """Build an allowlisted attempt row without learner-entered content."""
 
-    if topic_id not in LEARNING_TOPIC_IDS:
+    expected_category = LEARNING_TOPIC_CATEGORIES.get(topic_id)
+    if expected_category is None:
         raise ValueError("Unknown learning topic")
-    if category_id != topic_id:
+    if category_id != expected_category:
         raise ValueError("Learning topic must match the played category")
     if source not in LEARNING_SOURCES:
         raise ValueError("Unknown learning source")
