@@ -6,11 +6,12 @@ import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { useDueCards, useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 
 export function ReviewQueue() {
-  const { data, isLoading, isError, refetch } = useDueCards(undefined, 20);
+  const { data, isLoading, isFetching, isError, refetch } = useDueCards(undefined, 20);
   const reviewMutation = useRecordReview();
   const [reviewedCardIds, setReviewedCardIds] = useState<Set<string>>(() => new Set());
   const [isFlipped, setIsFlipped] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingNextPage, setIsLoadingNextPage] = useState(false);
 
   const allCards = data?.due_cards ?? [];
   const cards = allCards.filter((card) => !reviewedCardIds.has(card.card_id));
@@ -35,7 +36,17 @@ export function ReviewQueue() {
       });
       setIsFlipped(false);
       setReviewedCardIds((cardIds) => new Set(cardIds).add(currentCard.card_id));
+
+      if (cards.length === 1 && (data?.total_due ?? 0) > 1) {
+        setIsLoadingNextPage(true);
+        const refreshed = await refetch();
+        setIsLoadingNextPage(false);
+        if (refreshed.isError) {
+          setError('More reviews could not load. Please try again.');
+        }
+      }
     } catch {
+      setIsLoadingNextPage(false);
       setError('Your review was not saved. Please try again.');
     }
   };
@@ -51,7 +62,7 @@ export function ReviewQueue() {
     );
   }
 
-  if (isError) {
+  if (isError || (!currentCard && error)) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream-50 px-4 dark:bg-slate-900">
         <div className="max-w-sm text-center">
@@ -64,6 +75,17 @@ export function ReviewQueue() {
           >
             Try again
           </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentCard && (isFetching || isLoadingNextPage)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-cream-50 dark:bg-slate-900">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coral-600" aria-hidden="true" />
+          <p className="mt-3 text-brown-700 dark:text-gray-200">Loading more reviews…</p>
         </div>
       </main>
     );
@@ -112,6 +134,7 @@ export function ReviewQueue() {
       <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-6 sm:py-10">
         <div className="w-full max-w-md">
           <Flashcard
+            key={currentCard.card_id}
             front={currentCard.front}
             back={currentCard.back}
             pronunciation={currentCard.pronunciation ?? undefined}

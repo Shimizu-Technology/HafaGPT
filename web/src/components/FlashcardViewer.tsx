@@ -11,6 +11,7 @@ import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 
 interface FlashcardData {
+  sourceId?: string;
   front: string;
   back: string;
   pronunciation?: string;
@@ -123,7 +124,8 @@ export function FlashcardViewer() {
     
     const deck = DEFAULT_FLASHCARD_DECKS[topic];
     if (deck) {
-      const formattedCards: FlashcardData[] = deck.cards.map(card => ({
+      const formattedCards: FlashcardData[] = deck.cards.map((card, index) => ({
+        sourceId: `curated:${topic}:${index}`,
         front: card.front,
         back: card.back,
         pronunciation: card.pronunciation,
@@ -169,6 +171,7 @@ export function FlashcardViewer() {
     if (cardType === 'dictionary' && dictionaryData?.cards && dictionaryData.cards.length > 0) {
       // Map dictionary cards to FlashcardData format
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
+        sourceId: card.source_id,
         front: card.front,
         back: card.back,
         pronunciation: undefined, // Dictionary doesn't have pronunciation
@@ -321,9 +324,7 @@ export function FlashcardViewer() {
       await recordReviewMutation.mutateAsync({
         cardId: createCardIdentity({
           sourceKind,
-          deckId: topic,
-          front: currentCard.front,
-          back: currentCard.back,
+          sourceId: currentCard.sourceId ?? `${sourceKind}:${topic}:${currentIndex}`,
         }),
         deckId: `${sourceKind}:${topic}`,
         quality,

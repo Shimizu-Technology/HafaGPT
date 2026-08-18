@@ -2,49 +2,38 @@ import { describe, expect, it } from 'vitest';
 import { createCardIdentity } from './cardIdentity';
 
 describe('createCardIdentity', () => {
-  it('is stable across whitespace, case, and equivalent Unicode composition', () => {
+  it('is stable across source ID whitespace, case, and Unicode composition', () => {
     const composed = createCardIdentity({
       sourceKind: 'curated',
-      deckId: 'Greetings',
-      front: 'Håfa   Adai',
-      back: 'Hello',
+      sourceId: 'Greetings:Håfa',
     });
     const decomposed = createCardIdentity({
       sourceKind: 'curated',
-      deckId: ' greetings ',
-      front: 'HA\u030AFA ADAI',
-      back: ' hello ',
+      sourceId: ' greetings:HA\u030AFA ',
     });
 
     expect(decomposed).toBe(composed);
-    expect(composed).toMatch(/^v1:curated:[a-z0-9]+:[a-z0-9]+$/);
+    expect(composed).toMatch(/^v1:curated:[a-z0-9]+$/);
   });
 
-  it('keeps source kinds and distinct translations separate', () => {
-    const base = {
-      deckId: 'family',
-      front: 'Che’lu',
-      back: 'Sibling',
-    } as const;
+  it('keeps source kinds and source-owned keys separate', () => {
+    const base = { sourceId: 'family:12' } as const;
 
     expect(createCardIdentity({ ...base, sourceKind: 'curated' })).not.toBe(
       createCardIdentity({ ...base, sourceKind: 'dictionary' }),
     );
     expect(createCardIdentity({ ...base, sourceKind: 'curated' })).not.toBe(
-      createCardIdentity({ ...base, sourceKind: 'curated', back: 'Brother or sister' }),
+      createCardIdentity({ sourceKind: 'curated', sourceId: 'family:13' }),
     );
   });
 
-  it('uses an opaque stable source identifier for saved cards', () => {
+  it('does not change when learner-visible copy changes outside the identity input', () => {
     const identity = createCardIdentity({
       sourceKind: 'saved',
-      deckId: 'ignored-for-source-id',
-      front: 'private display text',
-      back: 'private translation',
       sourceId: '3b8bb0f2-9ca2-4a87-b607-994ad2982285',
     });
 
     expect(identity).toMatch(/^v1:saved:[a-z0-9]+$/);
-    expect(identity).not.toContain('private');
+    expect(identity).not.toContain('3b8bb0f2');
   });
 });

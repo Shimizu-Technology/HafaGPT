@@ -2,14 +2,11 @@ export type CardSourceKind = 'curated' | 'dictionary' | 'saved' | 'custom';
 
 interface CardIdentityInput {
   sourceKind: CardSourceKind;
-  deckId: string;
-  front: string;
-  back: string;
-  sourceId?: string;
+  sourceId: string;
 }
 
 function normalizeIdentityPart(value: string): string {
-  return value.normalize('NFC').trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+  return value.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 function fnv1a(value: string): string {
@@ -23,16 +20,7 @@ function fnv1a(value: string): string {
   return (hash >>> 0).toString(36);
 }
 
-/** Create a stable, versioned identity without embedding learner-visible text. */
+/** Create a stable, versioned identity from a source-owned, non-display key. */
 export function createCardIdentity(input: CardIdentityInput): string {
-  if (input.sourceId) {
-    return `v1:${input.sourceKind}:${fnv1a(normalizeIdentityPart(input.sourceId))}`;
-  }
-
-  const deckHash = fnv1a(normalizeIdentityPart(input.deckId));
-  const contentHash = fnv1a(
-    `${normalizeIdentityPart(input.front)}\u0000${normalizeIdentityPart(input.back)}`,
-  );
-
-  return `v1:${input.sourceKind}:${deckHash}:${contentHash}`;
+  return `v1:${input.sourceKind}:${fnv1a(normalizeIdentityPart(input.sourceId))}`;
 }

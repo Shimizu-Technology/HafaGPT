@@ -64,6 +64,15 @@ def upsert_spaced_repetition_review(
     reviewed_at = reviewed_at or datetime.now(timezone.utc)
     content = content or {}
 
+    # Serialize reviews for this learner/card pair before reading scheduler
+    # state. Row locks alone cannot protect the first review because no row
+    # exists yet; the transaction-scoped advisory lock covers both insert and
+    # update paths without blocking reviews for unrelated cards.
+    cursor.execute(
+        "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+        (f"{len(user_id)}:{user_id}{card_id}",),
+    )
+
     cursor.execute(
         """
         SELECT easiness_factor, interval, repetition

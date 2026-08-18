@@ -196,9 +196,10 @@ class DictionaryService:
             
             # Build word list for faster iteration
             self._word_list = []
-            for word, data in self._dictionary.items():
+            for source_index, (word, data) in enumerate(self._dictionary.items()):
                 if isinstance(data, dict):
                     entry = {
+                        "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": data.get("PartOfSpeech", ""),
                         "definition": data.get("Definition", ""),
@@ -207,6 +208,7 @@ class DictionaryService:
                 else:
                     # Simple string definition
                     entry = {
+                        "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": "",
                         "definition": str(data),
@@ -760,6 +762,7 @@ class DictionaryService:
                 example = f"{ex.get('chamorro', '')} - {ex.get('english', '')}"
             
             flashcards.append({
+                "source_id": word["source_id"],
                 "front": word["chamorro"],
                 "back": word["definition"],
                 "part_of_speech": word.get("part_of_speech", ""),

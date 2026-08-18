@@ -70,7 +70,10 @@ def test_upsert_preserves_snapshot_and_returns_schedule():
     assert result["next_review"].isoformat() == "2026-08-19T10:00:00+00:00"
     assert result["total_reviews"] == 3
 
-    insert_params = cursor.calls[1][1]
+    assert "pg_advisory_xact_lock" in cursor.calls[0][0]
+    assert cursor.calls[0][1] == ("8:user_123v1:curated:greetings:hafa",)
+
+    insert_params = cursor.calls[2][1]
     assert "Håfa Adai" in insert_params
     assert "Hello" in insert_params
-    assert "COALESCE(EXCLUDED.front, spaced_repetition.front)" in cursor.calls[1][0]
+    assert "COALESCE(EXCLUDED.front, spaced_repetition.front)" in cursor.calls[2][0]
