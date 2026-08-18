@@ -5,6 +5,10 @@ const audioCache = new Map<string, string>(); // text -> audioUrl
 const preloadingPromises = new Map<string, Promise<boolean>>(); // text -> preload promise
 const AUDIO_LOAD_TIMEOUT_MS = 8000;
 const TTS_REQUEST_TIMEOUT_MS = 15000;
+let activePlaybackOwner: symbol | null = null;
+let activePlaybackStop: (() => void) | null = null;
+
+export type SpeechPlaybackSource = 'reviewed' | 'generated' | 'device';
 
 // Pre-generated audio manifest (loaded from S3)
 // Maps Chamorro text to filename
@@ -76,8 +80,11 @@ export function useSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [isPreloading, setIsPreloading] = useState(false);
+  const [playbackSource, setPlaybackSource] = useState<SpeechPlaybackSource | null>(null);
+  const [speechError, setSpeechError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const transientAudioUrlRef = useRef<string | null>(null);
+  const playbackOwnerRef = useRef(Symbol('speech-playback'));
 
   const stopCurrentAudio = useCallback(() => {
     if (!audioRef.current) return;
@@ -92,6 +99,21 @@ export function useSpeech() {
       transientAudioUrlRef.current = null;
     }
   }, []);
+
+  const stopForHandoff = useCallback(() => {
+    stopCurrentAudio();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setPlaybackSource(null);
+  }, [stopCurrentAudio]);
+
+  const claimPlayback = useCallback(() => {
+    if (activePlaybackOwner !== playbackOwnerRef.current) {
+      activePlaybackStop?.();
+      activePlaybackOwner = playbackOwnerRef.current;
+      activePlaybackStop = stopForHandoff;
+    }
+  }, [stopForHandoff]);
 
   const fetchWithTimeout = useCallback(async (url: string, init: RequestInit = {}) => {
     const controller = new AbortController();
@@ -142,9 +164,9 @@ export function useSpeech() {
       audio.onloadeddata = () => finish();
       audio.onerror = () => finish(new Error(`${label} failed to load`));
       // `stalled` can be transient on mobile/slow networks, so let the timeout handle real hangs.
-      audio.onstalled = () => console.warn(`${label} stalled while loading`);
+      audio.onstalled = () => console.debug(`${label} stalled while loading`);
       audio.onabort = () => finish(new Error(`${label} was aborted before playback`));
-      audio.onemptied = () => console.warn(`${label} emptied while loading`);
+      audio.onemptied = () => console.debug(`${label} emptied while loading`);
 
       audio.load();
     });
@@ -162,13 +184,15 @@ export function useSpeech() {
   }, []);
 
   useEffect(() => {
+    const playbackOwner = playbackOwnerRef.current;
     return () => {
-      stopCurrentAudio();
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+      stopForHandoff();
+      if (activePlaybackOwner === playbackOwner) {
+        activePlaybackOwner = null;
+        activePlaybackStop = null;
       }
     };
-  }, [stopCurrentAudio]);
+  }, [stopForHandoff]);
 
   /**
    * Convert base64 audio to playable Blob
@@ -201,6 +225,7 @@ export function useSpeech() {
       }
       
       setIsSpeaking(true);
+      setPlaybackSource('generated');
       
       // Check cache FIRST before making API call
       const cachedUrl = audioCache.get(text);
@@ -300,10 +325,12 @@ export function useSpeech() {
   const speakBrowser = useCallback((text: string) => {
     if (!isSupported) {
       console.warn('Browser TTS not supported');
+      setSpeechError('Pronunciation audio is unavailable on this device.');
       return;
     }
 
     console.log('🔊 Using Browser TTS fallback...');
+    setPlaybackSource('device');
 
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
@@ -337,6 +364,7 @@ export function useSpeech() {
     
     utterance.onerror = () => {
       setIsSpeaking(false);
+      setSpeechError('Pronunciation audio could not play.');
       console.error('❌ Browser TTS failed');
     };
 
@@ -420,6 +448,7 @@ export function useSpeech() {
     try {
       console.log(`⚡ Playing from cache: "${text}"`);
       setIsSpeaking(true);
+      setPlaybackSource('generated');
       
       const audio = new Audio(cachedUrl);
       audioRef.current = audio;
@@ -457,6 +486,7 @@ export function useSpeech() {
     try {
       console.log(`🎯 Playing pre-generated audio: "${text}"`);
       setIsSpeaking(true);
+      setPlaybackSource('reviewed');
       
       // Stop any currently playing audio
       if (audioRef.current) {
@@ -493,6 +523,8 @@ export function useSpeech() {
    * Priority: Pre-generated S3 → Cache → OpenAI API → Browser fallback
    */
   const speak = useCallback(async (text: string) => {
+    claimPlayback();
+    setSpeechError(null);
     // 1. Try pre-generated static audio first (most consistent!)
     const staticSuccess = await playFromStatic(text);
     if (staticSuccess) return;
@@ -516,21 +548,19 @@ export function useSpeech() {
       console.log('⚠️ OpenAI TTS unavailable, using browser TTS fallback');
       speakBrowser(text);
     }
-  }, [playFromStatic, playFromCache, speakOpenAI, speakBrowser]);
+  }, [claimPlayback, playFromStatic, playFromCache, speakOpenAI, speakBrowser]);
 
   /**
    * Stop any ongoing speech
    */
   const stop = useCallback(() => {
-    // Stop OpenAI audio
-    stopCurrentAudio();
-    
-    // Stop browser TTS
-    window.speechSynthesis.cancel();
-    
-    setIsSpeaking(false);
+    stopForHandoff();
+    if (activePlaybackOwner === playbackOwnerRef.current) {
+      activePlaybackOwner = null;
+      activePlaybackStop = null;
+    }
     console.log('🛑 Speech stopped');
-  }, [stopCurrentAudio]);
+  }, [stopForHandoff]);
 
   /**
    * Clear cached audio for a specific word (or all if no text provided)
@@ -557,13 +587,15 @@ export function useSpeech() {
    * Use when the cached pronunciation sounds wrong
    */
   const speakFresh = useCallback(async (text: string) => {
+    claimPlayback();
+    setSpeechError(null);
     clearCache(text);
     const success = await speakOpenAI(text);
     if (!success) {
       console.log('⚠️ Fresh TTS failed, using browser fallback');
       speakBrowser(text);
     }
-  }, [clearCache, speakOpenAI, speakBrowser]);
+  }, [claimPlayback, clearCache, speakOpenAI, speakBrowser]);
 
   /**
    * Extract Chamorro text from mixed content
@@ -583,6 +615,8 @@ export function useSpeech() {
     extractChamorroText,
     isSpeaking,
     isPreloading,
-    isSupported
+    isSupported,
+    playbackSource,
+    speechError,
   };
 }

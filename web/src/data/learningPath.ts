@@ -440,8 +440,8 @@ export function getNextTopic(currentId: string): LearningTopic | undefined {
 export function getTopicIndex(id: string): number {
   const topic = getTopic(id);
   if (!topic) return -1;
-  
-  const path = topic.level === 'beginner' ? BEGINNER_PATH : INTERMEDIATE_PATH;
+
+  const path = getPathForLevel(topic.level);
   return path.findIndex(t => t.id === id) + 1;
 }
 
