@@ -49,6 +49,13 @@ _CONTEXT_PARAGRAPH_PATTERN = re.compile(
     r"\b(?:a\s+parent|the\s+teacher)\s+probably\b|"
     r"\bi\s+(?:saw|got|received|found)\s+(?:it|this)\b)"
 )
+_TRANSLATION_INSTRUCTION_PATTERN = re.compile(
+    r"(?ix)"
+    r"(?:^\s*(?:please|could\s+you|can\s+you|i(?:'d|\s+would)\s+like|i\s+want)\b"
+    r".*\b(?:translation|translated|result|response|output|wording|tone|phrasing)\b|"
+    r"\b(?:make|keep)\s+(?:it|the\s+(?:wording|translation|result))\b|"
+    r"\b(?:sound|feel|read)\s+(?:more\s+)?(?:warm|gentle|natural|formal|casual|polite)\b)"
+)
 _CHAMORRO_PASSAGE_MARKERS = {
     "dispensa",
     "eskuela",
@@ -80,6 +87,7 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
         paragraph
         for paragraph in candidates
         if not _CONTEXT_PARAGRAPH_PATTERN.search(paragraph)
+        and not _TRANSLATION_INSTRUCTION_PATTERN.search(paragraph)
     ]
     if not content_candidates:
         content_candidates = candidates
@@ -89,8 +97,11 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     )
     if translating_to_chamorro:
         # English prose alone cannot reliably distinguish an unlabeled passage
-        # from an unlabeled before/after note. Preserve every non-recognized
-        # paragraph so context can never replace or erase the requested text.
+        # from a completely unlabeled before/after note. Strip paragraphs that
+        # identify themselves as translation instructions, then preserve every
+        # remaining paragraph so an ambiguous note can never erase the passage.
+        # The original query still reaches the model, so these instructions are
+        # omitted only from retrieval and continue to shape the response.
         return "\n\n".join(content_candidates)
 
     def passage_score(paragraph: str) -> tuple[int, int]:

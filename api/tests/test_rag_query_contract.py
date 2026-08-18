@@ -125,7 +125,7 @@ def test_trailing_context_does_not_replace_middle_english_passage() -> None:
     assert extract_translation_payload(query).startswith("Good morning")
 
 
-def test_long_unrecognized_trailing_note_does_not_outscore_english_passage() -> None:
+def test_trailing_translation_instruction_is_not_embedded_with_english_passage() -> None:
     query = (
         "Translate this to Chamorro:\n\n"
         "Good morning, Stassie is sick and will not be at school today.\n\n"
@@ -136,10 +136,10 @@ def test_long_unrecognized_trailing_note_does_not_outscore_english_passage() -> 
     assert classify_translation_request(query) == "passage_to_chamorro"
     payload = extract_translation_payload(query)
     assert payload.startswith("Good morning")
-    assert "Please make the result" in payload
+    assert "Please make the result" not in payload
 
 
-def test_unrecognized_leading_note_cannot_erase_english_passage() -> None:
+def test_leading_translation_instruction_is_not_embedded_with_english_passage() -> None:
     query = (
         "Translate this to Chamorro:\n\n"
         "Please keep the wording gentle because the family is worried.\n\n"
@@ -148,7 +148,19 @@ def test_unrecognized_leading_note_cannot_erase_english_passage() -> None:
 
     payload = extract_translation_payload(query)
     assert classify_translation_request(query) == "passage_to_chamorro"
-    assert "Please keep the wording gentle" in payload
+    assert "Please keep the wording gentle" not in payload
+    assert "Good morning, Stassie is sick" in payload
+
+
+def test_retrieval_keeps_an_ambiguous_english_paragraph_instead_of_dropping_it() -> None:
+    query = (
+        "Translate this to Chamorro:\n\n"
+        "Our family is worried about her.\n\n"
+        "Good morning, Stassie is sick and will not be at school today."
+    )
+
+    payload = extract_translation_payload(query)
+    assert "Our family is worried" in payload
     assert "Good morning, Stassie is sick" in payload
 
 
