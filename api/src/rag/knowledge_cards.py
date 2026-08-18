@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from src.rag.query_classification import detect_query_type
 from src.rag.source_reviews import build_registered_source_citation, get_source_review
 
 
@@ -68,6 +69,7 @@ CARD_INTENT_MARKERS = {
         "spelling",
         "spellings",
         "orthography",
+        "orthographic",
         "utugrafihan",
         "write",
         "writing",
@@ -288,8 +290,14 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
         return []
 
     query_tokens = set(normalized_query.split())
+    query_type = detect_query_type(query)
     scored: list[tuple[float, dict[str, Any]]] = []
     for card in production_cards():
+        if (
+            query_type == "historical"
+            and card["temporal_scope"] not in {"historical", "mixed"}
+        ):
+            continue
         # A region-specific reviewed answer must never win on generic wording
         # alone. Requiring an explicit place marker prevents questions about a
         # dictionary or an unspecified spelling system from silently inheriting

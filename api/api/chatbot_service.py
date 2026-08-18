@@ -143,6 +143,9 @@ def _build_current_user_message(
 # Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
 from src.rag.knowledge_cards import get_knowledge_card_context
+from src.rag.query_classification import detect_query_type
+from src.rag.query_routing import should_use_rag
+from src.rag.retrieval_observability import build_retrieval_event
 from src.rag.web_search_tool import web_search, format_search_results
 
 # Import token management for budget control
@@ -868,87 +871,6 @@ def log_conversation(
         logger.error(f"⚠️  Failed to log conversation to database: {e}")
 
 
-def should_use_rag(user_input: str, conversation_length: int = 0) -> tuple[bool, str | None]:
-    """
-    Determine if we should use RAG and what intensity level.
-    
-    Returns:
-        tuple: (use_rag: bool, rag_mode: "full" | "light" | None)
-               - True, "full": Use RAG with 3 chunks (language questions)
-               - True, "light": Use RAG with 1 chunk (greetings needing context)
-               - False, None: Skip RAG entirely (casual chat, tests, simple messages)
-    """
-    import re
-    
-    user_lower = user_input.lower().strip()
-    
-    # FIRST: Skip RAG for very short/simple messages (not language questions)
-    # These are casual messages that don't need knowledge base context
-    simple_patterns = [
-        r'^(test(ing)?|testing\s*(it\s*)?(out)?|still\s*testing)[\s\?\.!,]*$',  # Test messages
-        r'^(ok(ay)?|k|yes|no|sure|yep|nope|yeah|nah|yup)[\s\?\.!,]*$',  # Simple confirmations
-        r'^(thanks?|thank\s*you|ty|thx)[\s\?\.!,]*$',  # Thank yous
-        r'^(cool|nice|great|awesome|wow|lol|haha|interesting)[\s\?\.!,]*$',  # Reactions
-        r'^(got\s*it|i\s*see|makes\s*sense|understood)[\s\?\.!,]*$',  # Acknowledgments
-        r'^.{1,4}$',  # Very short messages (1-4 chars)
-    ]
-    for pattern in simple_patterns:
-        if re.search(pattern, user_lower):
-            return False, None  # Skip RAG entirely for simple messages
-    
-    # Skip RAG for meta-requests about the conversation itself
-    meta_patterns = ['summarize', 'summary', 'recap', 'review']
-    if any(pattern in user_lower for pattern in meta_patterns):
-        return False, None
-    
-    # SECOND: Always use FULL RAG for Chamorro language/grammar/culture questions
-    language_indicators = [
-        # Language-specific
-        'chamorro', 'chamoru', 'translate', 'say in', 'mean', 'means',
-        'definition', 'grammar', 'word for', 'phrase', 'pronounce',
-        'spell', 'written', 'speak', 'language',
-        # Question patterns that need context
-        'how do i', 'how to', 'how can i', 'how would',
-        'what is', 'what does', 'what are', "what's",
-        'tell me about', 'tell me more', 'explain',
-        'teach me', 'learn', 'example',
-        # Culture/history topics
-        'guam', 'culture', 'history', 'tradition', 'people',
-        'island', 'pacific', 'mariana', 'indigenous', 'native',
-        'food', 'fiesta', 'family', 'respect', 'inafa\'maolek',
-    ]
-    if any(indicator in user_lower for indicator in language_indicators):
-        return True, "full"
-    
-    # THIRD: Light RAG for Chamorro greetings (need context for proper response)
-    chamorro_greeting_patterns = [
-        r'hafa\s*adai', r'buenas', r'manana\s*si', r'mañana\s*si',
-        r'si\s*yu\'?os', r'adios', r'esta',
-    ]
-    for pattern in chamorro_greeting_patterns:
-        if re.search(pattern, user_lower):
-            return True, "light"
-    
-    # FOURTH: Skip RAG for simple English greetings (no context needed)
-    english_greeting_patterns = [
-        r'^(hi|hello|hey|yo|sup)[\s\?\.!,]*$',
-        r'^good\s*(morning|afternoon|evening|night)[\s\?\.!,]*$',
-    ]
-    for pattern in english_greeting_patterns:
-        if re.search(pattern, user_lower):
-            return False, None  # Simple greetings don't need RAG
-    
-    # FIFTH: For longer messages, check if they're questions (likely need context)
-    if len(user_lower) > 15:
-        question_indicators = ['?', 'what', 'how', 'why', 'where', 'when', 'who', 'which', 'can you', 'could you', 'would you', 'do you know']
-        if any(q in user_lower for q in question_indicators):
-            return True, "full"
-    
-    # DEFAULT: Skip RAG for casual conversation that doesn't need language context
-    # This prevents showing irrelevant sources for messages like "test", "hello", etc.
-    return False, None
-
-
 def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
     """
     Determine if we should use web search.
@@ -1016,6 +938,13 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
     use_rag, rag_mode = should_use_rag(user_input, conversation_length)
     
     if not use_rag:
+        retrieval_event = build_retrieval_event(
+            query_type=detect_query_type(user_input),
+            rag_mode=None,
+            sources=[],
+            context_truncated=False,
+        )
+        logger.info("RAG_SELECTION %s", json.dumps(retrieval_event, sort_keys=True))
         return "", []
     
     contexts: list[str] = []
@@ -1052,10 +981,12 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
         logger.error(f"RAG error: {error}")
 
     context = "\n\n".join(contexts)
+    context_truncated = False
     context_tokens = count_tokens(context)
     if context_tokens > max_tokens:
         logger.info(f"RAG context ({context_tokens} tokens) exceeds limit ({max_tokens}), truncating...")
         context = truncate_text(context, max_tokens)
+        context_truncated = True
         sources = [
             source
             for source in sources
@@ -1069,6 +1000,14 @@ def get_rag_context(user_input: str, conversation_length: int = 0, max_tokens: i
                 and str(source[0]) in context
             )
         ]
+
+    retrieval_event = build_retrieval_event(
+        query_type=detect_query_type(user_input),
+        rag_mode=rag_mode,
+        sources=format_source_citations(sources),
+        context_truncated=context_truncated,
+    )
+    logger.info("RAG_SELECTION %s", json.dumps(retrieval_event, sort_keys=True))
 
     return context, sources
 
