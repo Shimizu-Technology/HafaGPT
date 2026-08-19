@@ -2,7 +2,6 @@ import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import posthog from 'posthog-js';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
 import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
@@ -24,24 +23,33 @@ registerSW({
 // error in the browser and obscures real runtime failures during QA.
 const POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
 if (POSTHOG_KEY) {
-  posthog.init(POSTHOG_KEY, {
-    api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-    person_profiles: 'identified_only', // Only create profiles for logged-in users
-    capture_pageview: true, // Automatically capture page views
-    capture_pageleave: true, // Track when users leave
-    // Chat, learning progress, and family account pages contain sensitive text.
-    // Keep replay off entirely; aggregate product events are sufficient here.
-    disable_session_recording: true,
-    // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
-    // are emitted explicitly through a property allowlist.
-    autocapture: false,
-    before_send: sanitizeAnalyticsEvent,
-    loaded: () => {
-      if (import.meta.env.DEV) {
-        console.log('✅ PostHog loaded successfully');
-      }
-    },
-  });
+  // Analytics must not delay the learning experience. Load the SDK in parallel
+  // after the application entry point starts instead of putting it in the
+  // render-blocking bundle.
+  void import('posthog-js')
+    .then(({ default: posthog }) => {
+      posthog.init(POSTHOG_KEY, {
+        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+        person_profiles: 'identified_only', // Only create profiles for logged-in users
+        capture_pageview: true, // Automatically capture page views
+        capture_pageleave: true, // Track when users leave
+        // Chat, learning progress, and family account pages contain sensitive text.
+        // Keep replay off entirely; aggregate product events are sufficient here.
+        disable_session_recording: true,
+        // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
+        // are emitted explicitly through a property allowlist.
+        autocapture: false,
+        before_send: sanitizeAnalyticsEvent,
+        loaded: () => {
+          if (import.meta.env.DEV) {
+            console.log('✅ PostHog loaded successfully');
+          }
+        },
+      });
+    })
+    .catch((error: unknown) => {
+      console.warn('Analytics failed to load:', error);
+    });
 }
 
 // Create a QueryClient instance

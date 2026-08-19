@@ -1,61 +1,143 @@
+import {
+  Component,
+  lazy,
+  Suspense,
+  type ComponentType,
+  type ErrorInfo,
+  type ReactNode,
+} from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Chat } from './components/Chat';
-import { HomePage } from './components/HomePage';
-import { FlashcardDeckList } from './components/FlashcardDeckList';
-import { FlashcardViewer } from './components/FlashcardViewer';
-import { ReviewQueue } from './components/ReviewQueue';
-import { MyDecks } from './components/MyDecks';
-import { SavedDeckViewer } from './components/SavedDeckViewer';
-import { QuizList } from './components/QuizList';
-import { QuizViewer } from './components/QuizViewer';
-import { QuizReview } from './components/QuizReview';
-import { QuizHistory } from './components/QuizHistory';
-import { StoryList } from './components/StoryList';
-import { StoryViewer } from './components/StoryViewer';
-import { LengguahitaStoryViewer } from './components/LengguahitaStoryViewer';
-import { Dashboard } from './components/Dashboard';
-import { VocabularyList } from './components/VocabularyList';
-import { VocabularyCategory } from './components/VocabularyCategory';
-import { ConversationList } from './components/ConversationList';
-import { ConversationPractice } from './components/ConversationPractice';
-import { Games } from './components/Games';
-import { MemoryMatch } from './components/MemoryMatch';
-import { SoundMatch } from './components/SoundMatch';
-import { PicturePairs } from './components/PicturePairs';
-import { WordScramble } from './components/WordScramble';
-import { FallingWords } from './components/FallingWords';
-import { WordCatch } from './components/WordCatch';
-import { ChamorroWordle } from './components/ChamorroWordle';
-import { Hangman } from './components/Hangman';
-import { CulturalTrivia } from './components/CulturalTrivia';
-import { ColorTouch } from './components/ColorTouch';
-import { NumberTap } from './components/NumberTap';
-import { SimonSays } from './components/SimonSays';
-import { PricingPage } from './components/PricingPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
-import { AdminDashboard } from './components/admin/AdminDashboard';
-import { AdminUsers } from './components/admin/AdminUsers';
-import { AdminUserDetail } from './components/admin/AdminUserDetail';
-import { AdminAnalytics } from './components/admin/AdminAnalytics';
-import { AdminSettings } from './components/admin/AdminSettings';
-import { AdminAudioReview } from './components/admin/AdminAudioReview';
-import { SettingsPage } from './components/SettingsPage';
-import { AboutPage } from './components/AboutPage';
-import { SharedConversation } from './components/SharedConversation';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import SupportPage from './components/SupportPage';
-import { LessonPage } from './components/LessonPage';
-import { LearningPathPage } from './components/LearningPathPage';
 import { BottomNav } from './components/BottomNav';
 import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 import { ScrollToTop } from './components/ScrollToTop';
+
+function lazyNamed<TModule>(
+  loader: () => Promise<TModule>,
+  exportName: keyof TModule,
+) {
+  return lazy(async () => ({
+    default: (await loader())[exportName] as ComponentType,
+  }));
+}
+
+// Each page is loaded only when its route is visited. This keeps games,
+// administration, charts, and the AI chat out of the initial home-page bundle.
+const HomePage = lazyNamed(() => import('./components/HomePage'), 'HomePage');
+const Chat = lazyNamed(() => import('./components/Chat'), 'Chat');
+const LearningPathPage = lazyNamed(() => import('./components/LearningPathPage'), 'LearningPathPage');
+const LessonPage = lazyNamed(() => import('./components/LessonPage'), 'LessonPage');
+const FlashcardDeckList = lazyNamed(() => import('./components/FlashcardDeckList'), 'FlashcardDeckList');
+const FlashcardViewer = lazyNamed(() => import('./components/FlashcardViewer'), 'FlashcardViewer');
+const ReviewQueue = lazyNamed(() => import('./components/ReviewQueue'), 'ReviewQueue');
+const MyDecks = lazyNamed(() => import('./components/MyDecks'), 'MyDecks');
+const SavedDeckViewer = lazyNamed(() => import('./components/SavedDeckViewer'), 'SavedDeckViewer');
+const QuizList = lazyNamed(() => import('./components/QuizList'), 'QuizList');
+const QuizViewer = lazyNamed(() => import('./components/QuizViewer'), 'QuizViewer');
+const QuizReview = lazyNamed(() => import('./components/QuizReview'), 'QuizReview');
+const QuizHistory = lazyNamed(() => import('./components/QuizHistory'), 'QuizHistory');
+const VocabularyList = lazyNamed(() => import('./components/VocabularyList'), 'VocabularyList');
+const VocabularyCategory = lazyNamed(() => import('./components/VocabularyCategory'), 'VocabularyCategory');
+const StoryList = lazyNamed(() => import('./components/StoryList'), 'StoryList');
+const StoryViewer = lazyNamed(() => import('./components/StoryViewer'), 'StoryViewer');
+const LengguahitaStoryViewer = lazyNamed(() => import('./components/LengguahitaStoryViewer'), 'LengguahitaStoryViewer');
+const Dashboard = lazyNamed(() => import('./components/Dashboard'), 'Dashboard');
+const ConversationList = lazyNamed(() => import('./components/ConversationList'), 'ConversationList');
+const ConversationPractice = lazyNamed(() => import('./components/ConversationPractice'), 'ConversationPractice');
+const Games = lazyNamed(() => import('./components/Games'), 'Games');
+const MemoryMatch = lazyNamed(() => import('./components/MemoryMatch'), 'MemoryMatch');
+const SoundMatch = lazyNamed(() => import('./components/SoundMatch'), 'SoundMatch');
+const PicturePairs = lazyNamed(() => import('./components/PicturePairs'), 'PicturePairs');
+const WordScramble = lazyNamed(() => import('./components/WordScramble'), 'WordScramble');
+const FallingWords = lazyNamed(() => import('./components/FallingWords'), 'FallingWords');
+const WordCatch = lazyNamed(() => import('./components/WordCatch'), 'WordCatch');
+const ChamorroWordle = lazyNamed(() => import('./components/ChamorroWordle'), 'ChamorroWordle');
+const Hangman = lazyNamed(() => import('./components/Hangman'), 'Hangman');
+const CulturalTrivia = lazyNamed(() => import('./components/CulturalTrivia'), 'CulturalTrivia');
+const ColorTouch = lazyNamed(() => import('./components/ColorTouch'), 'ColorTouch');
+const NumberTap = lazyNamed(() => import('./components/NumberTap'), 'NumberTap');
+const SimonSays = lazyNamed(() => import('./components/SimonSays'), 'SimonSays');
+const PricingPage = lazyNamed(() => import('./components/PricingPage'), 'PricingPage');
+const AboutPage = lazyNamed(() => import('./components/AboutPage'), 'AboutPage');
+const SharedConversation = lazyNamed(() => import('./components/SharedConversation'), 'SharedConversation');
+const SettingsPage = lazyNamed(() => import('./components/SettingsPage'), 'SettingsPage');
+const AdminDashboard = lazyNamed(() => import('./components/admin/AdminDashboard'), 'AdminDashboard');
+const AdminUsers = lazyNamed(() => import('./components/admin/AdminUsers'), 'AdminUsers');
+const AdminUserDetail = lazyNamed(() => import('./components/admin/AdminUserDetail'), 'AdminUserDetail');
+const AdminAnalytics = lazyNamed(() => import('./components/admin/AdminAnalytics'), 'AdminAnalytics');
+const AdminAudioReview = lazyNamed(() => import('./components/admin/AdminAudioReview'), 'AdminAudioReview');
+const AdminSettings = lazyNamed(() => import('./components/admin/AdminSettings'), 'AdminSettings');
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const SupportPage = lazy(() => import('./components/SupportPage'));
+
+function RouteLoadingFallback() {
+  return (
+    <main
+      className="flex min-h-[60vh] items-center justify-center px-4 pb-24"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-3 rounded-2xl border border-cream-300 bg-white px-5 py-4 text-brown-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+        <span
+          className="h-5 w-5 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600 dark:border-gray-600 dark:border-t-ocean-400"
+          aria-hidden="true"
+        />
+        <span className="text-sm font-medium">Loading page…</span>
+      </div>
+    </main>
+  );
+}
+
+interface RouteErrorBoundaryState {
+  hasError: boolean;
+}
+
+class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBoundaryState> {
+  state: RouteErrorBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): RouteErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Unable to load route', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="flex min-h-[60vh] items-center justify-center px-4 pb-24">
+          <div className="max-w-sm rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
+              This page needs a refresh
+            </h1>
+            <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">
+              A newer version may be available. Refresh to load the latest page.
+            </p>
+            <button
+              type="button"
+              className="mt-5 min-h-11 rounded-xl bg-coral-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coral-600 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              onClick={() => window.location.reload()}
+            >
+              Refresh page
+            </button>
+          </div>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Routes>
+      <RouteErrorBoundary>
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Routes>
         {/* Homepage - Learning dashboard */}
         <Route path="/" element={<HomePage />} />
         
@@ -137,7 +219,9 @@ function App() {
         <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
         <Route path="/admin/audio" element={<AdminRoute><AdminAudioReview /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
-      </Routes>
+          </Routes>
+        </Suspense>
+      </RouteErrorBoundary>
       
       {/* Mobile bottom navigation - shows on mobile only */}
       <BottomNav />
