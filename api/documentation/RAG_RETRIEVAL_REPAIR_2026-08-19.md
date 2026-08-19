@@ -39,12 +39,15 @@ studying.” Finally, retrieval ran before conversation history was loaded, so
 1. Leave `chamorro_grammar` unchanged.
 2. Build a fresh version such as `hafagpt_governed_openai_v3` on a database branch.
 3. Run retrieval, answer-quality, API, and browser checks with
-   `RAG_COLLECTION_NAME=hafagpt_governed_openai_v1`.
+   `RAG_COLLECTION_NAME=hafagpt_governed_openai_v3`.
 4. Build the same versioned collection on the production database while the API
    still points to the legacy name.
 5. Change only `RAG_COLLECTION_NAME` and redeploy.
 6. Roll back by restoring `RAG_COLLECTION_NAME=chamorro_grammar`; no restore or
    deletion is required.
 
-The rebuild is additive and resumable. It has no delete operation and never
-updates legacy embedding rows.
+The rebuild is additive and resumable while the eligible source snapshot is
+unchanged. Every target records a deterministic snapshot fingerprint; if source
+eligibility changes during a partial build, the command leaves that target
+untouched and requires a fresh versioned name. It has no delete operation and
+never updates legacy embedding rows.

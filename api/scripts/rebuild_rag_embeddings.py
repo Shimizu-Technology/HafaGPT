@@ -61,6 +61,28 @@ def _stable_id(source_collection: str, content: str, metadata: dict[str, Any]) -
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
+def source_snapshot_sha256(ids: list[str]) -> str:
+    """Fingerprint the exact eligible source set for safe resumability."""
+    digest = hashlib.sha256()
+    for item_id in sorted(ids):
+        digest.update(item_id.encode("ascii"))
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def validate_resume_snapshot(
+    prior_metadata: dict[str, Any] | None,
+    prior_ids: set[str],
+    source_snapshot: str,
+) -> None:
+    """Refuse to mix rows from two eligible source snapshots."""
+    if prior_ids and (prior_metadata or {}).get("source_snapshot_sha256") != source_snapshot:
+        raise RuntimeError(
+            "target collection was built from a different eligible source snapshot; "
+            "leave it untouched and choose a new versioned target name"
+        )
+
+
 def load_documents(database_url: str, source_collection: str) -> tuple[list[Document], list[str]]:
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
@@ -113,9 +135,27 @@ def existing_ids(database_url: str, target_collection: str) -> set[str]:
             return {str(row[0]) for row in cursor.fetchall() if row[0]}
 
 
-def update_status(database_url: str, target: str, status: str, count: int) -> None:
+def target_metadata(database_url: str, target_collection: str) -> dict[str, Any] | None:
+    with psycopg.connect(database_url) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT cmetadata FROM langchain_pg_collection WHERE name = %s",
+                (target_collection,),
+            )
+            row = cursor.fetchone()
+    return dict(row[0] or {}) if row else None
+
+
+def update_status(
+    database_url: str,
+    target: str,
+    status: str,
+    count: int,
+    source_snapshot: str,
+) -> None:
     metadata = collection_metadata(OPENAI_EMBEDDING_CONTRACT, status=status)
     metadata["document_count"] = count
+    metadata["source_snapshot_sha256"] = source_snapshot
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -126,6 +166,13 @@ def update_status(database_url: str, target: str, status: str, count: int) -> No
 
 def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dict[str, int | str]:
     validate_names(source, target)
+    documents, ids = load_documents(database_url, source)
+    expected_ids = set(ids)
+    source_snapshot = source_snapshot_sha256(ids)
+    prior_metadata = target_metadata(database_url, target)
+    prior_ids = existing_ids(database_url, target) if prior_metadata is not None else set()
+    validate_resume_snapshot(prior_metadata, prior_ids, source_snapshot)
+
     embeddings = OpenAIEmbeddings(
         model=OPENAI_EMBEDDING_CONTRACT["model"],
         dimensions=OPENAI_EMBEDDING_CONTRACT["dimensions"],
@@ -134,15 +181,19 @@ def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dic
     vectorstore = PGVector(
         embeddings=embeddings,
         collection_name=target,
-        collection_metadata=collection_metadata(OPENAI_EMBEDDING_CONTRACT, status="building"),
+        collection_metadata={
+            **collection_metadata(OPENAI_EMBEDDING_CONTRACT, status="building"),
+            "source_snapshot_sha256": source_snapshot,
+            "document_count": len(prior_ids),
+        },
         connection=database_url,
         use_jsonb=True,
         embedding_length=OPENAI_EMBEDDING_CONTRACT["dimensions"],
         pre_delete_collection=False,
     )
-    update_status(database_url, target, "building", 0)
-    documents, ids = load_documents(database_url, source)
     already_present = existing_ids(database_url, target)
+    if not already_present:
+        update_status(database_url, target, "building", 0, source_snapshot)
     pending = [(document, item_id) for document, item_id in zip(documents, ids) if item_id not in already_present]
 
     for offset in range(0, len(pending), batch_size):
@@ -153,10 +204,17 @@ def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dic
         )
         print(f"embedded {min(offset + len(batch), len(pending))}/{len(pending)} pending chunks", flush=True)
 
-    total = len(existing_ids(database_url, target))
-    if total != len(documents):
-        raise RuntimeError(f"target verification failed: expected {len(documents)} rows, found {total}")
-    update_status(database_url, target, "ready", total)
+    completed_ids = existing_ids(database_url, target)
+    missing_ids = expected_ids - completed_ids
+    stale_ids = completed_ids - expected_ids
+    if missing_ids or stale_ids:
+        raise RuntimeError(
+            "target verification failed: "
+            f"missing={len(missing_ids)}, stale={len(stale_ids)}; "
+            "leave this target untouched and choose a new versioned name if the source changed"
+        )
+    total = len(completed_ids)
+    update_status(database_url, target, "ready", total, source_snapshot)
     return {
         "source_collection": source,
         "target_collection": target,
@@ -164,6 +222,7 @@ def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dic
         "previously_completed_chunks": len(already_present),
         "new_chunks": len(pending),
         "status": "ready",
+        "source_snapshot_sha256": source_snapshot,
     }
 
 
