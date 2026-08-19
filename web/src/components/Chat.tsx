@@ -30,6 +30,7 @@ import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentPlaceholder } from '../lib/chatIntent';
+import { shouldPinInitialExchangeToTop } from '../lib/chatScroll';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -314,6 +315,10 @@ export function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
 
+  const scrollToConversationStart = (behavior: ScrollBehavior = 'auto') => {
+    messagesContainerRef.current?.scrollTo({ top: 0, behavior });
+  };
+
   // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
   const userScrolledUpRef = useRef(false);
   // Track if we're doing programmatic scroll (to ignore scroll events from auto-scroll)
@@ -326,6 +331,8 @@ export function Chat() {
     const { scrollTop, scrollHeight, clientHeight } = container;
     return scrollHeight - scrollTop - clientHeight < 150;
   };
+
+  const pinInitialExchangeToTop = shouldPinInitialExchangeToTop(messages);
 
   // Track user scroll behavior - only respond to user-initiated scroll
   useEffect(() => {
@@ -379,12 +386,16 @@ export function Chat() {
       // Always scroll when new message is added (unless user explicitly scrolled up)
       if (!userScrolledUpRef.current) {
         isProgrammaticScrollRef.current = true;
-        scrollToBottom();
+        if (pinInitialExchangeToTop) {
+          scrollToConversationStart('instant');
+        } else {
+          scrollToBottom();
+        }
         setTimeout(() => { isProgrammaticScrollRef.current = false; }, 100);
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [messages.length]);
+  }, [messages.length, pinInitialExchangeToTop]);
 
   // Auto-scroll during streaming - but respect user's choice to scroll up
   const isCurrentlyStreaming = messages.some(m => m.id?.startsWith('streaming_'));
@@ -392,10 +403,14 @@ export function Chat() {
     if (isCurrentlyStreaming && !userScrolledUpRef.current) {
       // Use instant scroll during streaming for smoother experience
       isProgrammaticScrollRef.current = true;
-      scrollToBottom('instant');
+      if (pinInitialExchangeToTop) {
+        scrollToConversationStart('instant');
+      } else {
+        scrollToBottom('instant');
+      }
       setTimeout(() => { isProgrammaticScrollRef.current = false; }, 50);
     }
-  }, [messages, isCurrentlyStreaming]);
+  }, [messages, isCurrentlyStreaming, pinInitialExchangeToTop]);
   
   // Reset scroll tracking when user sends a new message (they want to see the response)
   const resetScrollTracking = () => {
@@ -1012,7 +1027,7 @@ End of Export
       <div
         ref={messagesContainerRef}
         data-testid="chat-messages"
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 pb-[200px] sm:pb-[140px] custom-scrollbar"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 pt-5 sm:pt-6 pb-[200px] sm:pb-[140px] scroll-pt-5 sm:scroll-pt-6 custom-scrollbar"
       >
         <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
