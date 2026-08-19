@@ -274,6 +274,24 @@
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["usage"], "citation_required": true, "max_source_quote_words": 10},
       "evidence": [{"kind": "institution", "reference": "https://www.guamlegislature.gov/38th_Guam_Legislature/Committee_Reports_38th/CR%20Appt%20Arriola%2C%20Frank%20P.%20-PAG.pdf", "accessed_at": "2026-08-18", "supports": "Official 2026 committee record PDF page 38 contains both SYM and full Si Yu'us ma'åse' sign-offs in the same institutional email thread."}],
       "rationale": "Primary evidence for current Guam institutional sign-off usage; supports a scoped medium-confidence interpretation, not a universal abbreviation rule."
+    },
+    {
+      "source_id": "kumision_indigenous_language_philosophy",
+      "reviewed_at": "2026-08-19",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/hinenggen-mami-our-philosophy/", "accessed_at": "2026-08-19", "supports": "The official Guam language commission identifies CHamoru as the Indigenous language of the Taotao Tåno'."}],
+      "rationale": "Primary Guam institutional authority for the Indigenous-language claim; use an original concise explanation with a direct link."
+    },
+    {
+      "source_id": "guam_code_official_languages",
+      "reviewed_at": "2026-08-19",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF", "accessed_at": "2026-08-19", "supports": "Section 706 of Title 1 identifies English and Chamorro as Guam's official languages."}],
+      "rationale": "Controlling primary legal source for the official-language claim; cite section 706 without reproducing the code as a corpus."
     }
   ]
 }

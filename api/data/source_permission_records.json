@@ -262,6 +262,26 @@
       "expires_at": null,
       "restrictions": "Use links and original summaries only; do not retain or vectorize complete committee reports or expose personal data beyond what is necessary to identify the cited public record.",
       "next_action": "Re-review if use expands beyond citation-backed knowledge cards."
+    },
+    {
+      "source_id": "kumision_indigenous_language_philosophy",
+      "owner_or_steward": "Kumisión i Fino' CHamoru",
+      "status": "not_pursued",
+      "requested_uses": ["cite_public_page", "derive_original_status_summary", "public_service"],
+      "evidence_reference": "https://kumisionchamoru.guam.gov/hinenggen-mami-our-philosophy/",
+      "expires_at": null,
+      "restrictions": "Use a direct link and original concise summary only; do not copy or vectorize the complete page.",
+      "next_action": "Re-review if use expands beyond citation-backed knowledge cards."
+    },
+    {
+      "source_id": "guam_code_official_languages",
+      "owner_or_steward": "Supreme Court of Guam Compiler of Laws",
+      "status": "not_pursued",
+      "requested_uses": ["cite_public_law", "derive_original_legal_summary", "public_service"],
+      "evidence_reference": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF",
+      "expires_at": null,
+      "restrictions": "Cite the controlling section and provide an original summary; do not vectorize the complete code title.",
+      "next_action": "Recheck the official compiler if section 706 is amended."
     }
   ]
 }

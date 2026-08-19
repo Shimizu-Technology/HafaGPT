@@ -5,6 +5,9 @@
     "created_at": "2026-08-18"
   },
   "cases": [
+    {"id": "guam_language_status", "query": "Is Chamorro Guam's native language?", "expected_query_type": "cultural", "expected_route": "knowledge_card_full", "expected_card_ids": ["culture.guam.chamoru_language_status"]},
+    {"id": "guam_language_overview", "query": "Tell me about Guam's language", "expected_query_type": "cultural", "expected_route": "knowledge_card_full", "expected_card_ids": ["culture.guam.chamoru_language_status"]},
+    {"id": "guam_language_contextual_followup", "query": "Tell me about the language in Guam", "expected_query_type": "cultural", "expected_route": "knowledge_card_full", "expected_card_ids": ["culture.guam.chamoru_language_status"]},
     {"id": "guam_orthography_exact", "query": "What spelling system does Guam use?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
     {"id": "guam_orthography_current", "query": "What is the current Guam CHamoru orthography?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},
     {"id": "guam_cnmi_comparison", "query": "Are Guam and CNMI spellings the same?", "expected_query_type": "lookup", "expected_route": "knowledge_card_full", "expected_card_ids": ["orthography.guam.current_reference"]},

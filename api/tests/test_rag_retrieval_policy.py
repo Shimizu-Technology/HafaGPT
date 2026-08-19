@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.documents import Document
 
-from src.rag.chamorro_rag import ChamorroRAG
+from src.rag.chamorro_rag import ChamorroRAG, _is_low_quality_semantic_chunk
 
 
 class FakeVectorStore:
@@ -172,6 +172,35 @@ def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -
         "More relevant lesson",
         "Less relevant lesson",
     ]
+
+
+def test_runtime_rejects_semantically_distant_vector_candidates() -> None:
+    rag = rag_with_documents(
+        [
+            document("Relevant lesson", "https://www.chamoru.info/language-lessons/one", distance=0.2),
+            document("Unrelated lesson", "https://www.chamoru.info/language-lessons/two", distance=0.9),
+        ]
+    )
+    rag.embedding_contract = {"provider": "openai"}
+
+    results = rag.search("Teach me about Chamorro grammar", k=2)
+
+    assert [content for content, _metadata in results] == ["Relevant lesson"]
+
+
+def test_book_index_and_table_of_contents_fragments_are_not_answer_evidence() -> None:
+    assert _is_low_quality_semantic_chunk(
+        "questions ........ 482 ........ 493",
+        {"source_id": "chung_grammar_2020", "page": 19},
+    )
+    assert _is_low_quality_semantic_chunk(
+        "predicate, 25, 31, 35, 36, 263, 264, 340, 631, 633, 635, 690",
+        {"source_id": "chung_grammar_2020", "page": 745},
+    )
+    assert not _is_low_quality_semantic_chunk(
+        "Chamorro is an Austronesian language spoken in the Mariana Islands.",
+        {"source_id": "chung_grammar_2020", "page": 34},
+    )
 
 
 def test_ambiguous_translation_blocks_do_not_attach_vector_evidence() -> None:

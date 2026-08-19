@@ -76,6 +76,17 @@ CARD_INTENT_MARKERS = {
         "writing",
     },
 }
+CARD_REQUIRED_MARKERS = {
+    "culture.guam.chamoru_language_status": {
+        "language",
+        "languages",
+        "chamorro",
+        "chamoru",
+        "indigenous",
+        "native",
+        "official",
+    },
+}
 
 
 def _validate_exact_fields(
@@ -306,6 +317,9 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     query_type = detect_query_type(query)
     scored: list[tuple[float, dict[str, Any]]] = []
     for card in production_cards():
+        required_markers = CARD_REQUIRED_MARKERS.get(card["id"])
+        if required_markers and query_tokens.isdisjoint(required_markers):
+            continue
         required_acronyms = _required_alias_acronyms(card)
         if required_acronyms and query_tokens.isdisjoint(required_acronyms):
             # Nearby cards can share phrases such as "Guam school message."

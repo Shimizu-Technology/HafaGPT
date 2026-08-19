@@ -92,6 +92,23 @@ def test_unmatched_question_continues_through_vector_corpus() -> None:
     assert fake_rag.calls == [("What does hånom mean?", 3)]
 
 
+def test_web_backed_question_keeps_cards_but_skips_unrelated_vectors() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _logger = _load_get_rag_context(
+        fake_rag=fake_rag,
+        card_context="approved card context",
+    )
+
+    context, sources = get_rag_context(
+        "What is current Guam language policy?",
+        include_vector=False,
+    )
+
+    assert context == "canonical context\n\napproved card context"
+    assert [source["name"] for source in sources] == ["Canonical", "Reviewed source"]
+    assert fake_rag.calls == []
+
+
 def test_passage_translation_combines_scoped_card_and_vector_context() -> None:
     fake_rag = FakeRAG()
     get_rag_context, _logger = _load_get_rag_context(

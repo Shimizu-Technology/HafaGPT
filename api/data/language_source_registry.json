@@ -576,6 +576,44 @@
         "weight": 0.0
       },
       "decision": "May support original, citation-backed knowledge cards about documented institutional usage; do not vectorize complete committee reports or generalize individual sign-offs into universal language rules."
+    },
+    {
+      "id": "kumision_indigenous_language_philosophy",
+      "name": "Kumisión i Fino' CHamoru — Our Philosophy",
+      "canonical_url": "https://kumisionchamoru.guam.gov/hinenggen-mami-our-philosophy/",
+      "match": {
+        "source_contains": ["kumisionchamoru.guam.gov/hinenggen-mami-our-philosophy"]
+      },
+      "content_role": "official_language_status",
+      "region": "Guam",
+      "orthography": "Guam_2024",
+      "rights_status": "public_record_reference_only",
+      "review_status": "complete_for_scoped_knowledge_card",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "May support original citation-backed cards identifying CHamoru as the Indigenous language of the Taotao Tåno'; do not copy the complete page into vector retrieval."
+    },
+    {
+      "id": "guam_code_official_languages",
+      "name": "Guam Code Annotated, 1 GCA § 706",
+      "canonical_url": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF",
+      "match": {
+        "source_contains": ["guamcourts.org/compileroflaws/gca/01gca/1gc007"]
+      },
+      "content_role": "official_language_law",
+      "region": "Guam",
+      "orthography": "document_specific",
+      "rights_status": "public_law_reference_only",
+      "review_status": "complete_for_scoped_knowledge_card",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Primary legal authority for Guam's official-language status; cite section 706 through original knowledge cards rather than vectorizing the code."
     }
   ]
 }

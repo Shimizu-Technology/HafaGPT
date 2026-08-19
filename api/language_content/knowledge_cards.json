@@ -39,6 +39,43 @@
       "review_notes": "The wording is an original compact factual statement. The local Natibu-derived snapshot must receive a date and checksum before a production card build."
     },
     {
+      "id": "culture.guam.chamoru_language_status",
+      "title": "CHamoru as Guam's Indigenous and official language",
+      "claim_type": "cultural_context",
+      "answer_text": "CHamoru—also commonly written Chamorro—is the Indigenous language of the CHamoru people (Taotao Tåno') and is deeply connected with Guåhan and the Mariana Islands. In Guam law, Chamorro and English are the island's two official languages. If someone says it is Guam's ‘native language,’ that is broadly understandable; ‘the Indigenous language of the CHamoru people and an official language of Guam’ is more precise.",
+      "question_aliases": [
+        "Tell me about Guam's language",
+        "Tell me about the language in Guam",
+        "Tell me about the Chamorro language of Guam",
+        "Is Chamorro Guam's native language?",
+        "Is CHamoru the Indigenous language of Guam?",
+        "What is Guam's native language?",
+        "What are Guam's official languages?",
+        "Is Chamorro an official language of Guam?"
+      ],
+      "region": "Guam",
+      "temporal_scope": "modern",
+      "confidence": "high",
+      "release_status": "production_ready",
+      "citations": [
+        {
+          "source_id": "kumision_indigenous_language_philosophy",
+          "url": "https://kumisionchamoru.guam.gov/hinenggen-mami-our-philosophy/",
+          "locator": "Hinenggen-Måmi (Our Philosophy), statement identifying CHamoru as the Indigenous language of the Taotao Tåno'",
+          "accessed_at": "2026-08-19",
+          "support": "primary"
+        },
+        {
+          "source_id": "guam_code_official_languages",
+          "url": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF",
+          "locator": "1 GCA § 706, Official Languages",
+          "accessed_at": "2026-08-19",
+          "support": "primary"
+        }
+      ],
+      "review_notes": "The explanation distinguishes Indigenous identity from legal official-language status and avoids treating the colloquial phrase ‘native language’ as a precise legal or demographic term. Both claims were rechecked against official Guam sources on 2026-08-19."
+    },
+    {
       "id": "orthography.guam.current_reference",
       "title": "Current Guam orthography reference",
       "claim_type": "orthography_rule",
