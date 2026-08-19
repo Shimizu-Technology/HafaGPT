@@ -48,6 +48,11 @@ jobs:
   web:
     name: React web
     runs-on: ubuntu-latest
+    env:
+      VITE_API_URL: http://127.0.0.1:8999
+      VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+      VITE_PUBLIC_POSTHOG_KEY: ""
+      VITE_PUBLIC_POSTHOG_HOST: ""
     defaults:
       run:
         working-directory: web
@@ -77,6 +82,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install browser for end-to-end tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Run critical browser flows
+        run: npm run test:e2e
 
   content-sync:
     name: Cross-app content sync
