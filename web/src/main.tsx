@@ -19,25 +19,30 @@ registerSW({
   },
 });
 
-// Initialize PostHog
-posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-  person_profiles: 'identified_only', // Only create profiles for logged-in users
-  capture_pageview: true, // Automatically capture page views
-  capture_pageleave: true, // Track when users leave
-  // Chat, learning progress, and family account pages contain sensitive text.
-  // Keep replay off entirely; aggregate product events are sufficient here.
-  disable_session_recording: true,
-  // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
-  // are emitted explicitly through a property allowlist.
-  autocapture: false,
-  before_send: sanitizeAnalyticsEvent,
-  loaded: () => {
-    if (import.meta.env.DEV) {
-      console.log('✅ PostHog loaded successfully');
-    }
-  },
-});
+// Analytics are optional in local, test, and privacy-restricted deployments.
+// Do not initialize the SDK without a key because it reports a configuration
+// error in the browser and obscures real runtime failures during QA.
+const POSTHOG_KEY = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
+if (POSTHOG_KEY) {
+  posthog.init(POSTHOG_KEY, {
+    api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+    person_profiles: 'identified_only', // Only create profiles for logged-in users
+    capture_pageview: true, // Automatically capture page views
+    capture_pageleave: true, // Track when users leave
+    // Chat, learning progress, and family account pages contain sensitive text.
+    // Keep replay off entirely; aggregate product events are sufficient here.
+    disable_session_recording: true,
+    // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
+    // are emitted explicitly through a property allowlist.
+    autocapture: false,
+    before_send: sanitizeAnalyticsEvent,
+    loaded: () => {
+      if (import.meta.env.DEV) {
+        console.log('✅ PostHog loaded successfully');
+      }
+    },
+  });
+}
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({

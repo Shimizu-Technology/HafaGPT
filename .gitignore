@@ -11,6 +11,9 @@
 node_modules/
 dist/
 coverage/
+playwright-report/
+test-results/
+web/playwright/.clerk/
 
 __pycache__/
 *.py[cod]

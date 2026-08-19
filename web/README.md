@@ -90,6 +90,33 @@ npm run dev      # Start dev server
 npm run build    # Production build
 npm run preview  # Preview build
 npm run lint     # Run linter
+npm run test     # Run component and unit tests
+npm run test:e2e # Run desktop and mobile critical browser flows
+```
+
+### Browser tests
+
+Install Chromium once, then build and run the browser suite:
+
+```bash
+npx playwright install chromium
+npm run build
+npm run test:e2e
+```
+
+The default suite uses mocked public API responses and never sends chat
+messages or changes learner data. It covers the public home, translation
+intent, dictionary search, stories, protected-route behavior, console errors,
+and horizontal overflow at desktop and mobile sizes.
+
+An authenticated settings smoke test is available when all three variables
+below are supplied for a dedicated Clerk development test user. The generated
+session file stays under the ignored `playwright/.clerk/` directory.
+
+```env
+CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+E2E_CLERK_USER_EMAIL=test-user@example.com
 ```
 
 ---
