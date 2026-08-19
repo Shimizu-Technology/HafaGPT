@@ -40,6 +40,16 @@ def detect_query_type(query: str) -> str:
     if any(keyword in query_lower for keyword in cultural_keywords):
         return "cultural"
 
+    language_identity_patterns = [
+        r"\b(?:chamorro|chamoru)\b.{0,40}\b(?:native|indigenous|official) language\b",
+        r"\b(?:native|indigenous|official) language\b.{0,40}\b(?:guam|guåhan|guahan|chamorro|chamoru)\b",
+        r"\bwhat (?:is|are) (?:guam|guåhan|guahan)'?s? (?:native|official)?\s*languages?\b",
+        r"\btell me about (?:guam|guåhan|guahan)'?s? language\b",
+        r"\btell me about (?:the )?language (?:in|of) (?:guam|guåhan|guahan)\b",
+    ]
+    if any(re.search(pattern, query_lower) for pattern in language_identity_patterns):
+        return "cultural"
+
     translation_intent = classify_translation_request(query)
     if translation_intent.startswith("passage_"):
         # Sentence and passage translation needs grammar plus lexical evidence,

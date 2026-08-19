@@ -3,6 +3,7 @@ Helper module for RAG (Retrieval-Augmented Generation) functionality.
 Loads the Chamorro grammar vector database and provides search capabilities.
 """
 
+import os
 import re
 import unicodedata
 import time
@@ -23,6 +24,10 @@ from src.rag.query_classification import detect_query_type
 from src.rag.translation_policy import (
     extract_translation_retrieval_payload,
     is_passage_translation,
+)
+from src.rag.embedding_contract import (
+    runtime_embedding_contract,
+    validate_collection_contract,
 )
 
 
@@ -247,6 +252,23 @@ def _clip_english_lookup_evidence(content: str, target_word: str, max_chars: int
     return content[:max_chars]
 
 
+def _is_low_quality_semantic_chunk(content: str, metadata: dict) -> bool:
+    """Exclude book-navigation fragments that are poor evidence for an answer."""
+
+    normalized = content.casefold()
+    if "....." in content:
+        return True
+    if metadata.get("source_id") == "chung_grammar_2020":
+        try:
+            if int(metadata.get("page", 0)) >= 720:
+                return True
+        except (TypeError, ValueError):
+            pass
+    # Dense comma-and-page-number runs are index entries, not explanatory prose.
+    page_number_tokens = re.findall(r"\b\d{1,3}(?:-\d{1,3})?\b", normalized)
+    return len(page_number_tokens) >= 12 and content.count(",") >= 8
+
+
 class ChamorroRAG:
     def __init__(
         self,
@@ -270,6 +292,7 @@ class ChamorroRAG:
         # EMBEDDING CONFIGURATION
         # Choose between local (free, private, memory-heavy) or cloud (paid, fast, lightweight)
         embedding_mode = os.getenv("EMBEDDING_MODE", "openai").lower()
+        self.embedding_contract = runtime_embedding_contract(embedding_mode)
         
         if embedding_mode == "local":
             # LOCAL EMBEDDINGS (HuggingFace)
@@ -311,6 +334,23 @@ class ChamorroRAG:
             embedding_length=384,  # Explicit embedding dimensions for PGVector
             # Add connection pool settings for better reliability
             pre_delete_collection=False  # Don't delete collection on init
+        )
+        self._assert_embedding_contract()
+
+    def _assert_embedding_contract(self) -> None:
+        """Fail closed before querying a governed collection in the wrong space."""
+        with self._get_db_connection_with_retry() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT cmetadata FROM langchain_pg_collection WHERE name = %s",
+                    (self.collection_name,),
+                )
+                row = cursor.fetchone()
+        metadata = row[0] if row else None
+        validate_collection_contract(
+            self.collection_name,
+            metadata,
+            self.embedding_contract,
         )
     
     def _retry_on_connection_error(self, func, *args, **kwargs):
@@ -751,7 +791,14 @@ class ChamorroRAG:
         # dictionary merely because it was assigned a larger integer.
         scored_results = []
         seen_content: set[str] = set()
+        max_vector_distance = (
+            float(os.getenv("RAG_MAX_VECTOR_DISTANCE", "0.75"))
+            if hasattr(self, "embedding_contract")
+            else float("inf")
+        )
         for doc, distance in results:
+            if float(distance) > max_vector_distance:
+                continue
             if doc.page_content in seen_content:
                 continue
             if not is_retrieval_allowed(doc.metadata, query_type):
@@ -759,6 +806,8 @@ class ChamorroRAG:
 
             seen_content.add(doc.page_content)
             doc.metadata = annotate_metadata(doc.metadata)
+            if _is_low_quality_semantic_chunk(doc.page_content, doc.metadata):
+                continue
             # PGVector returns a distance, where smaller means more relevant.
             # Convert it into a bounded relevance value before applying the
             # registry's intentionally modest source-authority weight.

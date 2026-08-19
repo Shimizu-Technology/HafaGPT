@@ -15,12 +15,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from dotenv import load_dotenv
 from openai import OpenAI
+
+# Add parent directory to path for root-level imports.
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from .canonical_context import get_canonical_tutor_context
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
-
-# Add parent directory to path for root-level imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.rag.conversation_retrieval import build_contextual_retrieval_query
 
 # Application entry points own environment-file loading. This must happen before
 # importing the singleton RAG service below; the RAG library itself intentionally
@@ -653,13 +655,16 @@ def get_client_for_request(has_image: bool):
 MODE_PROMPTS = {
     "english": {
         "name": "General Chat",
-        "prompt": """You are a Chamorro language tutor helping students learn Chamorro.
+        "prompt": """You are HåfaGPT, a Chamorro language and Guam learning assistant.
 Answer questions naturally in English, using Chamorro examples when relevant.
 Be conversational, encouraging, and informative.
+Do not assume the user is studying, enrolled in a class, or pursuing a learning
+goal unless the user explicitly says so. Refer to the topic directly instead.
 
 SOURCE FAITHFULNESS:
 - Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
 - If the references do not support one of those factual claims, say it is not verified instead of filling the gap from general model knowledge.
+- When an APPROVED HÅFAGPT KNOWLEDGE CARD is supplied, answer only from its approved explanation. Do not enrich it with familiar facts, usage claims, vocabulary examples, or spelling preferences unless another supplied reference explicitly supports them.
 - Multi-word translation requests follow the separate translation policy below; do not require a dictionary entry for every inflected word before translating user-supplied text.
 
 IMPORTANT CAPABILITIES:
@@ -1058,6 +1063,8 @@ def get_rag_context(
     conversation_length: int = 0,
     max_tokens: int = 4000,
     contextual_card_ids: tuple[str, ...] = (),
+    retrieval_input: str | None = None,
+    include_vector: bool = True,
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1073,7 +1080,8 @@ def get_rag_context(
     """
     from src.rag.translation_policy import is_passage_translation
 
-    use_rag, rag_mode = should_use_rag(user_input, conversation_length)
+    retrieval_query = retrieval_input or user_input
+    use_rag, rag_mode = should_use_rag(retrieval_query, conversation_length)
     if contextual_card_ids and not use_rag:
         # An image can contain the trigger text even when the typed message is
         # empty or conversational. Trusted vision context still needs a prompt
@@ -1082,7 +1090,7 @@ def get_rag_context(
     
     if not use_rag:
         retrieval_event = build_retrieval_event(
-            query_type=detect_query_type(user_input),
+            query_type=detect_query_type(retrieval_query),
             rag_mode=None,
             sources=[],
             context_truncated=False,
@@ -1095,7 +1103,7 @@ def get_rag_context(
 
     # Exact canonical matches and approved cards do not depend on the vector
     # database, so a transient database failure must not erase them.
-    canonical_context, canonical_sources = get_canonical_tutor_context(user_input)
+    canonical_context, canonical_sources = get_canonical_tutor_context(retrieval_query)
     if canonical_context:
         contexts.append(canonical_context)
         sources.extend(canonical_sources)
@@ -1103,7 +1111,7 @@ def get_rag_context(
     card_context = ""
     try:
         card_context, card_sources = get_knowledge_card_context(
-            user_input,
+            retrieval_query,
             include_card_ids=contextual_card_ids,
         )
         if card_context:
@@ -1118,13 +1126,13 @@ def get_rag_context(
         # can add older, regional, or merely incidental evidence. Passage
         # translations are the exception: a scoped usage card can clarify one
         # abbreviation while vector retrieval supports the rest of the passage.
-        if rag is not None and (
+        if include_vector and rag is not None and (
             not card_context
             or contextual_card_ids
             or is_passage_translation(user_input)
         ):
             k = 1 if rag_mode == "light" else 3
-            vector_context, vector_sources = rag.create_context(user_input, k=k)
+            vector_context, vector_sources = rag.create_context(retrieval_query, k=k)
             if vector_context:
                 contexts.append(vector_context)
                 sources.extend(vector_sources)
@@ -1153,7 +1161,7 @@ def get_rag_context(
         ]
 
     retrieval_event = build_retrieval_event(
-        query_type=detect_query_type(user_input),
+        query_type=detect_query_type(retrieval_query),
         rag_mode=rag_mode,
         sources=format_source_citations(sources),
         context_truncated=context_truncated,
@@ -1250,6 +1258,17 @@ def get_chatbot_response(
     if is_message_cancelled(pending_id):
         print(f"⚠️  Message {pending_id} cancelled before processing started")
         return early_cancelled_response()
+
+    # Retrieval must see the same conversation context as the model. Previously
+    # RAG ran first, so a follow-up such as "tell me about the language" lost the
+    # preceding Guam topic and selected unrelated chunks.
+    past_messages = (
+        get_conversation_history(conversation_id, max_messages=10)
+        if conversation_id
+        else []
+    )
+    retrieval_message = build_contextual_retrieval_query(message, past_messages)
+    conversation_length = len(past_messages) // 2
     
     # Get mode configuration
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
@@ -1292,6 +1311,8 @@ def get_chatbot_response(
         message,
         conversation_length,
         contextual_card_ids=contextual_card_ids,
+        retrieval_input=retrieval_message,
+        include_vector=not use_web,
     )
     used_rag = bool(rag_context)
     
@@ -1344,8 +1365,6 @@ def get_chatbot_response(
     # Retrieve and add past conversation history (last 10 message pairs)
     # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
     if conversation_id:
-        past_messages = get_conversation_history(conversation_id, max_messages=10)
-        
         # Apply token limit to conversation history
         history_tokens = count_message_tokens(past_messages)
         if history_tokens > token_manager.budget.conversation_history:
@@ -1557,6 +1576,16 @@ def get_chatbot_response_stream(
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
         cleanup_cancelled_message(pending_id)
         return
+
+    # Fetch history before retrieval so ambiguous follow-ups keep the user's
+    # explicit prior topic. The same list is reused below for the model prompt.
+    past_messages = (
+        get_conversation_history(conversation_id, max_messages=10)
+        if conversation_id
+        else []
+    )
+    retrieval_message = build_contextual_retrieval_query(message, past_messages)
+    conversation_length = len(past_messages) // 2
     
     # Get mode configuration
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
@@ -1601,6 +1630,8 @@ def get_chatbot_response_stream(
         conversation_length,
         max_tokens=token_manager.budget.rag_context,
         contextual_card_ids=contextual_card_ids,
+        retrieval_input=retrieval_message,
+        include_vector=not use_web,
     )
     used_rag = bool(rag_context)
     
@@ -1647,8 +1678,6 @@ def get_chatbot_response_stream(
     # Retrieve past conversation history with token limit
     # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
     if conversation_id:
-        past_messages = get_conversation_history(conversation_id, max_messages=10)
-        
         # Apply token limit to conversation history
         history_tokens = count_message_tokens(past_messages)
         if history_tokens > token_manager.budget.conversation_history:

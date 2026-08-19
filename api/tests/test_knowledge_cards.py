@@ -25,6 +25,7 @@ def test_seed_knowledge_cards_are_valid_and_cited() -> None:
     assert all(card["citations"] for card in cards.values())
     assert all(card["review_notes"] for card in cards.values())
     assert [card["id"] for card in production_cards()] == [
+        "culture.guam.chamoru_language_status",
         "orthography.guam.current_reference",
         "usage.guam.school.sym_signoff",
         "usage.guam.school.msy_greeting",
