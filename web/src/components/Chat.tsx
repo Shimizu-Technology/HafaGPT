@@ -311,7 +311,7 @@ export function Chat() {
   }, [messages.length]);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior });
+    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   };
 
   // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
@@ -904,9 +904,12 @@ End of Export
       )}
 
       {/* Main chat area */}
-      <div className={`flex flex-col flex-1 h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
-        {/* Header - Fixed Position */}
-        <header className={`fixed right-0 left-0 border-b border-cream-300 dark:border-gray-800 bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-xl z-40 safe-area-top transition-all duration-300 ${!isSignedIn ? 'top-[52px] sm:top-[56px] pt-3' : 'top-0'}`}>
+      <div className={`flex min-h-0 flex-1 flex-col h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
+        {/* Header stays in the chat column's layout so messages can never slide underneath it. */}
+        <header
+          data-testid="chat-header"
+          className="relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95"
+        >
           <div className="px-3 sm:px-6 py-1.5 sm:py-4">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
@@ -998,9 +1001,6 @@ End of Export
         <ModeSelector mode={mode} onModeChange={setMode} />
       </header>
 
-      {/* Spacer for fixed header - taller on iOS to account for safe-area-top */}
-      <div className="h-[100px] sm:h-[170px] flex-shrink-0 safe-area-spacer" aria-hidden="true"></div>
-
       {/* Quick Phrases */}
       {messages.length === 0 && !loading && (
         <div className="flex-shrink-0">
@@ -1011,7 +1011,8 @@ End of Export
       {/* Messages Area - Scrollable */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 pb-[200px] sm:pb-[140px] custom-scrollbar"
+        data-testid="chat-messages"
+        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 py-4 sm:py-6 pb-[200px] sm:pb-[140px] custom-scrollbar"
       >
         <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
