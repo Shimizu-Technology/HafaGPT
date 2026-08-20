@@ -173,8 +173,11 @@ on the final commit, and production verification after merge.
    empty, and error states. Saved decks now show useful review progress and due
    cards at a glance, while saved-deck study has consistent progress, rating,
    completion, and recovery states. Settings now groups learning style, pace,
-   appearance, progress, support, and privacy with one clear save surface. Public
-   information pages remain in the next focused pass.
+   appearance, progress, support, and privacy with one clear save surface. About,
+   pricing, support, privacy, and shared conversations now use one public shell,
+   readable content widths, consistent actions and footers, and recoverable
+   loading/error behavior. Shared conversations also preserve source links and
+   attachments while adding retry and an accessible image preview.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
    behavior, reduced motion, contrast, audio/text parity, early-reader affordance,
    and responsive behavior across the complete learner route matrix.

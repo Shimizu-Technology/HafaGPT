@@ -28,6 +28,7 @@ interface LearnerPageHeaderProps {
   iconClassName?: string;
   maxWidthClassName?: string;
   showThemeToggle?: boolean;
+  sticky?: boolean;
 }
 
 export function LearnerPageHeader({
@@ -42,6 +43,7 @@ export function LearnerPageHeader({
   iconClassName = 'bg-coral-100 text-coral-700 dark:bg-teal-900/50 dark:text-teal-300',
   maxWidthClassName = 'max-w-5xl',
   showThemeToggle = true,
+  sticky = true,
 }: LearnerPageHeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -60,7 +62,7 @@ export function LearnerPageHeader({
   };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+    <header className={`${sticky ? 'sticky top-0 z-30' : 'relative z-20'} border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95`}>
       <div className={`safe-area-top mx-auto px-4 py-3 ${maxWidthClassName}`}>
         <div className="flex items-center gap-2">
           <button

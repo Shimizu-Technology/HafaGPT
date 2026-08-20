@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MessageSquare, Eye, Calendar, ArrowLeft, ExternalLink, Sparkles, Moon, Sun, FileText, File, Search } from 'lucide-react';
+import { BookOpen, Calendar, ExternalLink, Eye, FileText, File, Loader2, MessageSquare, RefreshCw, Search, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useTheme } from '../hooks/useTheme';
-import { useSubscription } from '../hooks/useSubscription';
 import type { SourceInfo } from '../types/source';
+import { PublicPage } from './PublicPage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -41,8 +40,16 @@ export function SharedConversation() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { theme, toggleTheme } = useTheme();
-  const { isChristmasTheme, isNewYearTheme } = useSubscription();
+  const [retryCount, setRetryCount] = useState(0);
+  const imageTriggerRef = useRef<HTMLElement | null>(null);
+  const imageCloseRef = useRef<HTMLButtonElement | null>(null);
+
+  const openImagePreview = (url: string) => {
+    imageTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setImagePreview(url);
+  };
+
+  const closeImagePreview = () => setImagePreview(null);
 
   // Helper to check if URL is an image
   const isImageFile = (file: FileInfo) => {
@@ -51,14 +58,20 @@ export function SharedConversation() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchSharedConversation = async () => {
+      setLoading(true);
+      setError(null);
+      setData(null);
       if (!shareId) {
+        setError('This share link is incomplete.');
         setLoading(false);
         return;
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/share/${shareId}`);
+        const response = await fetch(`${API_URL}/api/share/${shareId}`, { signal: controller.signal });
 
         if (response.status === 404) {
           throw new Error('This share link was not found. It may have been revoked.');
@@ -75,47 +88,59 @@ export function SharedConversation() {
         const result = await response.json();
         setData(result);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         const message = err instanceof Error ? err.message : 'Failed to load conversation';
         setError(message);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
     fetchSharedConversation();
-  }, [shareId]);
+    return () => controller.abort();
+  }, [retryCount, shareId]);
+
+  useEffect(() => {
+    if (!imagePreview) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setImagePreview(null);
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleEscape);
+      window.setTimeout(() => imageTriggerRef.current?.focus(), 0);
+    };
+  }, [imagePreview]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream-100 dark:bg-gray-950 flex items-center justify-center transition-colors duration-300">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-coral-500 dark:border-ocean-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-brown-600 dark:text-gray-400">Loading conversation...</p>
+      <PublicPage title="Shared conversation" subtitle="A read-only conversation from HåfaGPT" icon={MessageSquare} showFooter={false}>
+        <div role="status" className="flex min-h-64 flex-col items-center justify-center gap-4 text-center">
+          <Loader2 className="h-9 w-9 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+          <p className="font-medium text-brown-600 dark:text-gray-300">Loading conversation…</p>
         </div>
-      </div>
+      </PublicPage>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-cream-100 dark:bg-gray-950 flex items-center justify-center p-4 transition-colors duration-300">
-        <div className="max-w-md w-full bg-cream-50 dark:bg-gray-900 rounded-2xl shadow-xl p-6 sm:p-8 text-center border border-cream-300 dark:border-gray-800">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <MessageSquare className="w-7 h-7 sm:w-8 sm:h-8 text-red-500" />
+      <PublicPage title="Shared conversation" subtitle="A read-only conversation from HåfaGPT" icon={MessageSquare}>
+        <div className="mx-auto max-w-lg rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"><MessageSquare className="h-7 w-7" aria-hidden="true" /></span>
+          <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">Unable to load conversation</h2>
+          <p role="alert" className="mt-2 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{error}</p>
+          <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+            <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
+              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
+            </button>
+            <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 px-5 font-semibold text-brown-700 hover:bg-cream-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700">Go to HåfaGPT</Link>
           </div>
-          <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-2">
-            Unable to Load Conversation
-          </h1>
-          <p className="text-sm sm:text-base text-brown-600 dark:text-gray-400 mb-6">{error}</p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-coral-500 dark:bg-ocean-500 text-white rounded-xl hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors text-sm sm:text-base font-medium"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go to HåfaGPT
-          </Link>
         </div>
-      </div>
+      </PublicPage>
     );
   }
 
@@ -130,61 +155,17 @@ export function SharedConversation() {
   };
 
   return (
-    <div className="min-h-screen bg-cream-100 dark:bg-gray-950 transition-colors duration-300">
-      {/* Header */}
-      <header className="bg-cream-50/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-cream-300 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 safe-area-top">
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Logo & Title - clickable to go home */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity">
-              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg sm:text-2xl shadow-lg flex-shrink-0 ${
-                isChristmasTheme 
-                  ? 'bg-gradient-to-br from-red-500 to-green-600' 
-                  : 'bg-gradient-to-br from-coral-400 to-coral-600'
-              }`}>
-                {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-sm sm:text-lg font-bold text-brown-800 dark:text-white truncate">
-                  {data.title}
-                </h1>
-                <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-brown-500 dark:text-gray-500">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(data.created_at)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    {data.view_count} views
-                  </span>
-                </div>
-              </div>
-            </Link>
-            
-            {/* Actions - fixed centering */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-              {/* Theme toggle */}
-              <button
-                onClick={toggleTheme}
-                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-colors text-brown-700 dark:text-gray-300 border border-cream-300 dark:border-gray-700"
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? <Moon className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sun className="w-4 h-4 sm:w-5 sm:h-5" />}
-              </button>
-              <Link
-                to="/chat"
-                className="h-9 sm:h-10 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 bg-coral-500 dark:bg-ocean-500 text-white rounded-xl hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors text-xs sm:text-sm font-medium"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span className="hidden sm:inline">Try HåfaGPT</span>
-              </Link>
-            </div>
-          </div>
+    <>
+    <PublicPage title="Shared conversation" subtitle={data.title} icon={MessageSquare} maxWidthClassName="max-w-4xl">
+      <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <p className="text-xs font-semibold uppercase tracking-wide text-coral-700 dark:text-teal-300">Shared conversation · read only</p>
+        <h2 className="mt-1 break-words text-xl font-bold text-brown-950 dark:text-white">{data.title}</h2>
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-brown-500 dark:text-gray-400">
+          <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{formatDate(data.created_at)}</span>
+          <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" aria-hidden="true" />{data.view_count} {data.view_count === 1 ? 'view' : 'views'}</span>
         </div>
-      </header>
-
-      {/* Messages */}
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      </section>
+      <section aria-label="Conversation messages">
         <div className="space-y-3 sm:space-y-4">
           {data.messages.map((message, index) => (
             <div
@@ -202,23 +183,19 @@ export function SharedConversation() {
               >
                 {message.role === 'assistant' && (
                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-cream-200 dark:border-gray-700">
-                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-xs sm:text-sm ${
-                      isChristmasTheme 
-                        ? 'bg-gradient-to-br from-red-500 to-green-600' 
-                        : 'bg-gradient-to-br from-coral-400 to-coral-600'
-                    }`}>
-                      {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-                    </div>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral-100 text-coral-700 dark:bg-teal-950/60 dark:text-teal-300">
+                      <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
+                    </span>
                     <span className="text-xs sm:text-sm font-medium text-coral-600 dark:text-ocean-400">
                       HåfaGPT
                     </span>
                     {message.used_rag && (
-                      <span className="text-[10px] sm:text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span className="hidden sm:inline">📚</span> Knowledge Base
+                      <span className="flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
+                        <BookOpen className="h-3 w-3" aria-hidden="true" /> Knowledge base
                       </span>
                     )}
                     {message.used_web_search && (
-                      <span className="text-[10px] sm:text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 sm:px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
                         <Search className="w-3 h-3" /> <span className="hidden sm:inline">Web Search</span>
                       </span>
                     )}
@@ -231,7 +208,9 @@ export function SharedConversation() {
                       <div key={idx} className="relative">
                         {isImageFile(file) ? (
                           <button
-                            onClick={() => setImagePreview(file.url)}
+                            type="button"
+                            onClick={() => openImagePreview(file.url)}
+                            aria-label={`Open image ${file.filename}`}
                             className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
                           >
                             <img
@@ -265,7 +244,9 @@ export function SharedConversation() {
                 {message.role === 'user' && !message.file_urls && message.image_url && (
                   <div className="mb-2">
                     <button
-                      onClick={() => setImagePreview(message.image_url!)}
+                      type="button"
+                      onClick={() => openImagePreview(message.image_url!)}
+                      aria-label="Open uploaded image"
                       className="block rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
                     >
                       <img
@@ -314,6 +295,11 @@ export function SharedConversation() {
                           </strong>
                         ),
                         em: ({ children }) => <em className="italic">{children}</em>,
+                        a: ({ href, children }) => (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-coral-700 underline underline-offset-2 dark:text-teal-300">
+                            {children}
+                          </a>
+                        ),
                         // Lists
                         ul: ({ children }) => (
                           <ul className="list-disc ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
@@ -330,7 +316,7 @@ export function SharedConversation() {
                         ),
                         // Code blocks
                         pre: ({ children }) => (
-                          <pre className="bg-cream-200 dark:bg-gray-700 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
+                          <pre className="my-3 max-w-full overflow-x-auto rounded-lg bg-cream-200 p-3 dark:bg-gray-700 sm:p-4">
                             {children}
                           </pre>
                         ),
@@ -400,10 +386,10 @@ export function SharedConversation() {
                 )}
                 {message.sources && message.sources.length > 0 && (
                   <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-gray-700">
-                    <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-500 mb-1">Sources:</p>
+                    <p className="mb-1 text-xs text-brown-500 dark:text-gray-400">Sources:</p>
                     <div className="flex flex-wrap gap-1">
                       {message.sources.map((source, i) => {
-                        const className = "text-[10px] sm:text-xs bg-cream-100 dark:bg-gray-700 text-brown-600 dark:text-gray-400 px-1.5 sm:px-2 py-0.5 rounded";
+                        const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-gray-700 dark:text-gray-300";
                         const label = `${source.name}${typeof source.page === 'number' ? ` (p.${source.page})` : ''}`;
                         return source.url ? (
                           <a
@@ -427,10 +413,16 @@ export function SharedConversation() {
               </div>
             </div>
           ))}
+          {data.messages.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
+              <MessageSquare className="mx-auto h-7 w-7 text-brown-400 dark:text-gray-500" aria-hidden="true" />
+              <h2 className="mt-3 font-bold text-brown-950 dark:text-white">No messages were shared</h2>
+              <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">This link is active, but the shared conversation is empty.</p>
+            </div>
+          )}
         </div>
 
-        {/* CTA Banner - properly styled for both light and dark modes */}
-        <div className="mt-6 sm:mt-8 rounded-2xl p-4 sm:p-6 text-center border bg-gradient-to-r from-coral-100 to-teal-100 border-coral-200/50 dark:bg-gradient-to-r dark:from-gray-800 dark:to-gray-800 dark:border-gray-700">
+        <div className="mt-6 rounded-3xl border border-coral-200 bg-coral-50 p-5 text-center dark:border-teal-900 dark:bg-teal-950/20 sm:mt-8 sm:p-7">
           <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-2">
             Learn Chamorro with AI
           </h2>
@@ -440,57 +432,57 @@ export function SharedConversation() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
             <Link
               to="/chat"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-coral-500 dark:bg-ocean-500 text-white rounded-xl hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors font-medium text-sm sm:text-base shadow-md"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700 sm:w-auto"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               Start Chatting
             </Link>
             <Link
               to="/"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-gray-700 text-brown-700 dark:text-gray-200 rounded-xl hover:bg-cream-50 dark:hover:bg-gray-600 transition-colors font-medium border border-cream-300 dark:border-gray-600 text-sm sm:text-base"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-700 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700 sm:w-auto"
             >
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
               Explore Features
             </Link>
           </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="border-t border-cream-300 dark:border-gray-800 py-4 sm:py-6 mt-6 sm:mt-8 bg-cream-50/50 dark:bg-gray-900/50">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 text-center">
-          <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-500">
-            Shared from{' '}
-            <Link to="/" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
-              HåfaGPT
-            </Link>
-            {' '}• Your AI Chamorro Language Partner
-          </p>
-        </div>
-      </footer>
+      </section>
+    </PublicPage>
 
       {/* Image Preview Modal */}
       {imagePreview && (
-        <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setImagePreview(null)}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={closeImagePreview}
+          onKeyDown={(event) => {
+            if (event.key === 'Tab') {
+              event.preventDefault();
+              imageCloseRef.current?.focus();
+            }
+          }}
         >
-          <div className="relative max-w-4xl max-h-[90vh]">
+          <div className="relative max-h-[90vh] max-w-4xl" onClick={(event) => event.stopPropagation()}>
             <button
-              onClick={() => setImagePreview(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+              type="button"
+              ref={imageCloseRef}
+              autoFocus
+              onClick={closeImagePreview}
+              aria-label="Close image preview"
+              className="absolute -top-12 right-0 flex h-11 w-11 items-center justify-center rounded-xl text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              <span className="text-2xl">×</span>
+              <X className="h-6 w-6" aria-hidden="true" />
             </button>
             <img
               src={imagePreview}
               alt="Preview"
               className="max-w-full max-h-[85vh] object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

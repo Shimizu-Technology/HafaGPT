@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth, SignInButton, PricingTable, useClerk } from '@clerk/clerk-react';
 import { 
-  ArrowLeft, 
   Check, 
   Sparkles, 
   MessageSquare, 
@@ -18,6 +16,7 @@ import {
   Clock
 } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
+import { PublicPage } from './PublicPage';
 
 const features = {
   free: [
@@ -45,28 +44,13 @@ export function PricingPage() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header - Not sticky to allow Clerk checkout panel full visibility */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-cream-200 dark:border-slate-700">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link 
-            to="/" 
-            className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Back to Home</span>
-          </Link>
-          <div className="flex-1 text-center">
-            <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">
-              Choose Your Plan
-            </h1>
-          </div>
-          <div className="w-20 sm:w-24" /> {/* Spacer for centering */}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+    <PublicPage
+      title="Plans"
+      subtitle="Compare current access and subscription options"
+      icon={Crown}
+      maxWidthClassName="max-w-5xl"
+      stickyHeader={false}
+    >
         {/* Hero Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-coral-100 dark:bg-ocean-900/30 rounded-full text-coral-600 dark:text-ocean-400 text-sm font-medium mb-4">
@@ -85,7 +69,7 @@ export function PricingPage() {
         {/* Pricing Cards */}
         <div className="grid md:grid-cols-2 gap-6 mb-12 items-stretch">
           {/* Free Plan */}
-          <div className="flex flex-col bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-cream-200 dark:border-slate-700 shadow-lg">
+          <div className="flex flex-col rounded-3xl border border-cream-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800 sm:p-8">
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-1">
                 Free
@@ -129,17 +113,17 @@ export function PricingPage() {
                 </div>
               ) : (
                 <div className="w-full px-6 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-semibold rounded-xl text-center">
-                  ✓ Current Plan
+                  <span className="inline-flex items-center justify-center gap-2"><Check className="h-4 w-4" aria-hidden="true" />Current plan</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Premium Plan */}
-          <div className="relative flex flex-col bg-gradient-to-br from-coral-50 to-coral-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 sm:p-8 border-2 border-coral-300 dark:border-ocean-400 shadow-xl dark:shadow-ocean-500/20">
+          <div className="relative flex flex-col rounded-3xl border-2 border-coral-300 bg-coral-50 p-6 dark:border-teal-500 dark:bg-slate-800 sm:p-8">
             {/* Early Adopter badge */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <div className="flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full shadow-lg">
+              <div className="flex items-center gap-1 rounded-full bg-amber-600 px-3 py-1 text-xs font-semibold text-white">
                 <Clock className="w-3 h-3" />
                 EARLY ADOPTER PRICING
               </div>
@@ -210,7 +194,7 @@ export function PricingPage() {
             <div className="mt-8">
               {!isSignedIn ? (
                 <SignInButton mode="modal">
-                  <button className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity shadow-lg">
+                  <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
                     <Zap className="w-5 h-5" />
                     Sign Up & Upgrade
                   </button>
@@ -218,8 +202,8 @@ export function PricingPage() {
               ) : isPremium ? (
                 /* Already subscribed - show current plan status */
                 <div className="space-y-3">
-                  <div className="w-full px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-semibold rounded-xl text-center">
-                    ✓ Current Plan
+                  <div className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white dark:bg-teal-600">
+                    <Check className="h-4 w-4" aria-hidden="true" /> Current plan
                   </div>
                   <button
                     onClick={() => openUserProfile()}
@@ -240,7 +224,9 @@ export function PricingPage() {
                   {/* Upgrade Button */}
                   <button 
                     onClick={() => setShowCheckout(!showCheckout)}
-                    className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg"
+                    aria-expanded={showCheckout}
+                    aria-controls="pricing-checkout"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
                   >
                     <Zap className="w-5 h-5" />
                     {showCheckout ? 'Hide Options' : 'Upgrade Now'}
@@ -248,10 +234,8 @@ export function PricingPage() {
                   </button>
                   
                   {/* Expandable Checkout Section */}
-                  <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    showCheckout ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="pt-2">
+                  {showCheckout && (
+                    <div id="pricing-checkout" className="pt-2">
                       <div className="pricing-table-compact bg-white/60 dark:bg-slate-800/60 rounded-xl p-3">
                         <style>{`
                           .pricing-table-compact [data-localization-key*="free"],
@@ -262,7 +246,7 @@ export function PricingPage() {
                         <PricingTable />
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
@@ -308,7 +292,7 @@ export function PricingPage() {
                 How does my subscription help?
               </h4>
               <p className="text-sm text-brown-600 dark:text-gray-400">
-                Every chat message, game, and quiz uses AI that costs real money to run. Your subscription helps cover these costs (AI, servers, and development) so we can keep HåfaGPT accessible and continue improving it. Si Yu'us Ma'åse'! 🌺
+                Every chat message, game, and quiz uses services that cost money to run. Your subscription helps cover AI, servers, and development so we can keep HåfaGPT accessible and continue improving it. Si Yu&apos;os Ma&apos;åse&apos;!
               </p>
             </div>
           </div>
@@ -319,15 +303,14 @@ export function PricingPage() {
           <p className="text-brown-600 dark:text-gray-400 text-sm mb-4">
             Questions? Contact us at{' '}
             <a 
-              href="mailto:shimizutechnology@gmail.com" 
+              href="mailto:support@shimizutechnology.com"
               className="text-coral-600 dark:text-ocean-400 hover:underline"
             >
-              shimizutechnology@gmail.com
+              support@shimizutechnology.com
             </a>
           </p>
         </div>
-      </div>
-    </div>
+    </PublicPage>
   );
 }
 

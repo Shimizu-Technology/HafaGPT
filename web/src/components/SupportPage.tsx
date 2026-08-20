@@ -1,161 +1,81 @@
+import { ArrowRight, BookOpen, ExternalLink, HelpCircle, Mail, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Mail, MessageCircle, BookOpen, HelpCircle, ExternalLink } from 'lucide-react';
+import { PublicPage } from './PublicPage';
+
+const faqs = [
+  {
+    question: 'Is HåfaGPT free to use?',
+    answer: 'A free plan is available. Visit the plans page for the current limits and options; those details may change as the service and its operating costs evolve.',
+  },
+  {
+    question: 'How accurate is the AI tutor?',
+    answer: 'HåfaGPT retrieves from governed Chamorro references and shows citations when sources are available, but AI can still misunderstand a phrase or make a mistake. Check important school, cultural, medical, legal, or official information with the cited source or a knowledgeable speaker.',
+  },
+  {
+    question: 'Can I use HåfaGPT offline?',
+    answer: 'Some pages and assets may remain available after you load them, but AI chat, account syncing, and any content that has not already loaded require an internet connection.',
+  },
+  {
+    question: 'How do I request account deletion?',
+    answer: 'Email support@shimizutechnology.com from the address connected to your account. We will confirm the request and explain the next steps.',
+  },
+];
+
+const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cream-200 px-4 py-3 font-semibold text-brown-700 hover:border-coral-300 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:text-gray-200 dark:hover:border-teal-700 dark:hover:bg-slate-700/50';
 
 export default function SupportPage() {
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/" 
-              className="p-2 -ml-2 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <h1 className="text-lg font-semibold text-brown-800 dark:text-gray-100">
-                Support
-              </h1>
-            </div>
+    <PublicPage title="Support" subtitle="Answers, account help, and a direct way to reach us" icon={HelpCircle}>
+      <section className="rounded-3xl border border-coral-200 bg-coral-50 p-6 dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
+        <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">A real person will read your message</p>
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
+          Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
+        </p>
+        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700">
+          <Mail className="h-5 w-5" aria-hidden="true" />
+          Email support
+        </a>
+        <p className="mt-3 break-all text-sm text-brown-500 dark:text-gray-400">support@shimizutechnology.com</p>
+      </section>
+
+      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-teal-300">
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Quick answers</p>
+            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Frequently asked questions</h2>
           </div>
         </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
-        
-        {/* Hero Section */}
-        <div className="bg-gradient-to-br from-coral-500 to-teal-500 dark:from-ocean-600 dark:to-teal-600 rounded-xl p-6 md:p-8 text-white mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">
-            How can we help? 🌺
-          </h2>
-          <p className="text-white/90">
-            We're here to help you on your Chamorro learning journey.
-          </p>
+        <div className="mt-5 divide-y divide-cream-200 border-y border-cream-200 dark:divide-slate-700 dark:border-slate-700">
+          {faqs.map((faq) => (
+            <details key={faq.question} className="group py-1">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-brown-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white [&::-webkit-details-marker]:hidden">
+                {faq.question}
+                <span className="text-xl font-normal text-coral-600 transition-transform group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
+              </summary>
+              <p className="pb-4 pr-8 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{faq.answer}</p>
+            </details>
+          ))}
         </div>
+      </section>
 
-        {/* Contact Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-cream-200 dark:border-gray-700 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-brown-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-            Contact Us
-          </h3>
-          <p className="text-brown-700 dark:text-gray-300 mb-4">
-            Have a question, found a bug, or want to suggest a feature? 
-            We'd love to hear from you!
-          </p>
-          <a 
-            href="mailto:support@shimizutechnology.com"
-            className="inline-flex items-center gap-2 bg-coral-500 dark:bg-ocean-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors"
-          >
-            <Mail className="w-4 h-4" />
-            support@shimizutechnology.com
+      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+        <div className="mb-4 flex items-center gap-3">
+          <BookOpen className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+          <h2 className="text-xl font-bold text-brown-950 dark:text-white">Helpful links</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link to="/about" className={resourceLinkClass}>About HåfaGPT <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+          <Link to="/privacy" className={resourceLinkClass}>Privacy policy <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+          <Link to="/pricing" className={resourceLinkClass}>Plans and limits <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+          <a href="https://shimizutechnology.com" target="_blank" rel="noopener noreferrer" className={resourceLinkClass}>
+            Shimizu Technology <ExternalLink className="h-4 w-4" aria-hidden="true" />
           </a>
         </div>
-
-        {/* FAQ Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-cream-200 dark:border-gray-700 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-brown-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <MessageCircle className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-            Frequently Asked Questions
-          </h3>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-brown-800 dark:text-gray-200 mb-1">
-                Is HåfaGPT free to use?
-              </h4>
-              <p className="text-brown-600 dark:text-gray-400 text-sm">
-                Yes! We're currently in beta and all features are free. 
-                In the future, we'll have a freemium model with daily limits for free users 
-                and unlimited access for premium subscribers.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-brown-800 dark:text-gray-200 mb-1">
-                How accurate is the AI tutor?
-              </h4>
-              <p className="text-brown-600 dark:text-gray-400 text-sm">
-                Our AI is trained on authentic Chamorro resources including dictionaries, 
-                grammar guides, and educational materials. While it's very accurate, 
-                we recommend also learning from native speakers when possible.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-brown-800 dark:text-gray-200 mb-1">
-                Can I use HåfaGPT offline?
-              </h4>
-              <p className="text-brown-600 dark:text-gray-400 text-sm">
-                The AI chat requires an internet connection, but flashcards and 
-                stories can be accessed offline once loaded through the PWA.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-brown-800 dark:text-gray-200 mb-1">
-                How do I delete my account?
-              </h4>
-              <p className="text-brown-600 dark:text-gray-400 text-sm">
-                Email us at support@shimizutechnology.com and we'll process your 
-                account deletion request within 48 hours.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Resources */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-cream-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-brown-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-            Helpful Links
-          </h3>
-          
-          <div className="space-y-3">
-            <Link 
-              to="/about" 
-              className="flex items-center justify-between p-3 rounded-lg bg-cream-50 dark:bg-gray-700 hover:bg-cream-100 dark:hover:bg-gray-600 transition-colors"
-            >
-              <span className="text-brown-700 dark:text-gray-300">About HåfaGPT</span>
-              <ArrowLeft className="w-4 h-4 text-brown-500 dark:text-gray-400 rotate-180" />
-            </Link>
-            
-            <Link 
-              to="/privacy" 
-              className="flex items-center justify-between p-3 rounded-lg bg-cream-50 dark:bg-gray-700 hover:bg-cream-100 dark:hover:bg-gray-600 transition-colors"
-            >
-              <span className="text-brown-700 dark:text-gray-300">Privacy Policy</span>
-              <ArrowLeft className="w-4 h-4 text-brown-500 dark:text-gray-400 rotate-180" />
-            </Link>
-            
-            <a 
-              href="https://shimizutechnology.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-3 rounded-lg bg-cream-50 dark:bg-gray-700 hover:bg-cream-100 dark:hover:bg-gray-600 transition-colors"
-            >
-              <span className="text-brown-700 dark:text-gray-300">Shimizu Technology</span>
-              <ExternalLink className="w-4 h-4 text-brown-500 dark:text-gray-400" />
-            </a>
-          </div>
-        </div>
-
-        {/* Back to Home */}
-        <div className="mt-6 text-center">
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 text-coral-600 dark:text-ocean-400 hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </div>
-      </main>
-    </div>
+      </section>
+    </PublicPage>
   );
 }
-
