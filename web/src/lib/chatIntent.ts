@@ -1,11 +1,24 @@
 export function getChatIntentPlaceholder(intent: string | null): string | undefined {
   switch (intent) {
     case 'translate':
-      return 'Paste or type Chamorro to translate...';
+      return 'Paste a message…';
     case 'practice':
-      return 'What daily-life phrase would you like to practice?';
+      return 'Type a phrase to practice…';
     case 'ask':
-      return 'Ask a Chamorro language or culture question...';
+      return 'Ask a question…';
+    default:
+      return undefined;
+  }
+}
+
+export function getChatIntentLabel(intent: string | null): string | undefined {
+  switch (intent) {
+    case 'translate':
+      return 'Translation help';
+    case 'practice':
+      return 'Practice help';
+    case 'ask':
+      return 'Chamorro & Guam questions';
     default:
       return undefined;
   }

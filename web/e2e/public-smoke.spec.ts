@@ -325,9 +325,23 @@ test('translation shortcut selects translation intent without sending a message'
 
   await page.goto('/chat?intent=translate');
   await expect(page).toHaveURL(/\/chat\?intent=translate$/);
-  await expect(page.getByRole('button', { name: 'Translate this sentence' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Translate a message' })).toBeVisible();
   await expect(page.getByPlaceholder('Sign in to chat...')).toBeVisible();
   await expect(page.getByRole('button', { name: /Send message/i })).toBeDisabled();
+  expect(errors).toEqual([]);
+});
+
+test('chat empty state and composer remain readable on a narrow phone', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+
+  await page.goto('/chat?intent=translate');
+  await expect(page.getByRole('heading', { name: 'How can I help?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Translate a message' })).toBeVisible();
+
+  const composer = page.getByLabel('Message input');
+  await expect(composer).toHaveAttribute('placeholder', 'Sign in to chat...');
+  await expect(composer).toHaveCSS('font-size', '16px');
+  await expect.poll(async () => page.locator('html').evaluate((element) => element.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
 
