@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 
+from src.rag.translation_policy import classify_translation_request
+
 
 def _load_should_use_web_search():
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -10,7 +12,9 @@ def _load_should_use_web_search():
         for node in module.body
         if isinstance(node, ast.FunctionDef) and node.name == "should_use_web_search"
     )
-    namespace: dict[str, object] = {}
+    namespace: dict[str, object] = {
+        "classify_translation_request": classify_translation_request,
+    }
     exec(
         compile(ast.Module(body=[node], type_ignores=[]), str(source_path), "exec"),
         namespace,
@@ -47,3 +51,17 @@ def test_actual_current_information_requests_still_use_web() -> None:
         "news",
     )
     assert should_use_web_search("Please look this up online") == (True, "general")
+    assert should_use_web_search("What is the current situation in Guam?") == (
+        True,
+        "news",
+    )
+    assert should_use_web_search("Recent developments in Guam") == (True, "news")
+
+
+def test_translation_intent_wins_when_passage_contains_current_event_words() -> None:
+    should_use_web_search = _load_should_use_web_search()
+
+    assert should_use_web_search(
+        "Translate this to Chamorro: The current schedule was recently updated."
+    ) == (False, None)
+    assert should_use_web_search("How do you say current in Chamorro?") == (False, None)

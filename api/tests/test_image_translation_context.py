@@ -36,6 +36,10 @@ def test_parser_preserves_message_body_but_drops_contact_metadata() -> None:
             visible_language_text=[
                 "parent@example.com",
                 "+1 (671) 480-3595",
+                "Angelana Iriarte",
+                "Today 9:15 AM",
+                "Delivered",
+                "~garridokristenm",
                 "MSY! Kao modan isla pat kulot kåhet na polo på'go?",
                 "MSY! Trabiha. Kada uttemo na Betnes kulot kåhet på'go 🧡",
                 "Esta, SYM!",
@@ -51,6 +55,10 @@ def test_parser_preserves_message_body_but_drops_contact_metadata() -> None:
     assert context.school_announcement is True
     assert "example.com" not in context.visible_language_text
     assert "671" not in context.visible_language_text
+    assert "Angelana" not in context.visible_language_text
+    assert "9:15" not in context.visible_language_text
+    assert "Delivered" not in context.visible_language_text
+    assert "garridokristenm" not in context.visible_language_text
     assert context.visible_language_text.splitlines() == [
         "MSY! Kao modan isla pat kulot kåhet na polo på'go?",
         "MSY! Trabiha. Kada uttemo na Betnes kulot kåhet på'go 🧡",
@@ -86,6 +94,19 @@ def test_parser_accepts_fenced_json_but_not_low_confidence_text() -> None:
 
     assert context.card_ids == ("usage.guam.school.msy_greeting",)
     assert context.visible_language_text == ""
+
+
+def test_short_language_lines_are_not_mistaken_for_sender_names() -> None:
+    context = parse_image_context_response(
+        _response(visible_language_text=["Håfa Adai", "Trabiha", "Si Maria"]),
+        card_ids_by_signal=CARD_IDS,
+    )
+
+    assert context.visible_language_text.splitlines() == [
+        "Håfa Adai",
+        "Trabiha",
+        "Si Maria",
+    ]
 
 
 def test_same_image_chamorro_text_scopes_transcribed_acronyms_deterministically() -> None:

@@ -21,6 +21,31 @@ _CONTACT_METADATA = re.compile(
     r"(?:\+?1[\s.()-]*)?(?:\d[\s.()-]*){10}(?!\d)"
     r")"
 )
+_UI_METADATA_LINE = re.compile(
+    r"(?ix)^(?:"
+    r"(?:today|yesterday)(?:\s+(?:at\s+)?\d{1,2}:\d{2}(?:\s*[ap]m)?)?|"
+    r"\d{1,2}:\d{2}(?:\s*[ap]m)?|"
+    r"(?:sent|delivered|read|edited|forwarded)(?:\s+(?:today|yesterday|at\s+\d{1,2}:\d{2}(?:\s*[ap]m)?))?|"
+    r"typing(?:\.\.\.)?|online|last\s+seen(?:\s+.*)?"
+    r")[.!✓✔\s]*$"
+)
+_PLAIN_SENDER_NAME = re.compile(
+    r"^[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿĀ-ž'’.-]+"
+    r"(?:\s+[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿĀ-ž'’.-]+){0,3}$"
+)
+_LANGUAGE_LINE_MARKERS = (
+    "buenas",
+    "esta",
+    "hafa",
+    "kao",
+    "kulot",
+    "manana",
+    "msy",
+    "si ",
+    "sym",
+    "trabiha",
+    "yu'os",
+)
 _MAX_TEXT_LINES = 40
 _MAX_LINE_CHARS = 500
 _MAX_TOTAL_CHARS = 4_000
@@ -46,6 +71,25 @@ class ImageTranslationContext:
     visible_language_text: str = ""
 
 
+def _looks_like_non_message_metadata(line: str) -> bool:
+    """Identify common chat chrome that should never enter retrieval."""
+
+    if _CONTACT_METADATA.search(line) or _UI_METADATA_LINE.fullmatch(line):
+        return True
+    if line.startswith("~") and " " not in line.strip("~ "):
+        return True
+    normalized = (
+        line.casefold()
+        .replace("’", "'")
+        .replace("å", "a")
+        .strip()
+    )
+    has_language_marker = any(
+        marker in normalized for marker in _LANGUAGE_LINE_MARKERS
+    )
+    return bool(_PLAIN_SENDER_NAME.fullmatch(line)) and not has_language_marker
+
+
 def _clean_language_lines(raw_lines: object, *, confidence: object) -> tuple[str, ...]:
     """Keep message-body language while dropping contact and UI metadata."""
 
@@ -58,7 +102,11 @@ def _clean_language_lines(raw_lines: object, *, confidence: object) -> tuple[str
         if not isinstance(value, str):
             continue
         line = " ".join(value.split()).strip()
-        if not line or len(line) > _MAX_LINE_CHARS or _CONTACT_METADATA.search(line):
+        if (
+            not line
+            or len(line) > _MAX_LINE_CHARS
+            or _looks_like_non_message_metadata(line)
+        ):
             continue
         if line in cleaned:
             continue

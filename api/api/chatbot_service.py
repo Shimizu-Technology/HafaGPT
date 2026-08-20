@@ -279,6 +279,7 @@ from src.rag.school_context import (
     resolve_school_message_context,
 )
 from src.rag.translation_policy import (
+    classify_translation_request,
     is_passage_translation,
     translation_prompt_guidance,
 )
@@ -1049,8 +1050,13 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
     
     # Current events. A bare time word such as "today" is not enough: it is
     # common inside messages being translated and previously hijacked those
-    # requests into web search. Require an actual news/current-event cue.
-    current_keywords = ['happening', 'news', 'current events', 'recent news', 'latest']
+    # requests into web search. Translation intent takes precedence even when
+    # the supplied phrase itself contains words such as "current" or "recent."
+    if classify_translation_request(user_input) != "none":
+        return False, None
+    current_keywords = [
+        'happening', 'news', 'current', 'current events', 'recent', 'recent news', 'latest'
+    ]
     if any(keyword in user_lower for keyword in current_keywords):
         return True, "news"
     
