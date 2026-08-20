@@ -13,13 +13,16 @@
   status = 301
   force = true
 
-# Missing hashed assets must be a real 404. If this rule falls through to the
-# SPA response, browsers receive index.html with a JavaScript URL and reject it
-# for having the wrong MIME type, leaving the app blank.
+# Existing browser profiles may still be controlled by the pre-migration
+# service worker, which can return a cached index.html that references a retired
+# hashed entry module. Serve a stable JavaScript migration bridge for missing
+# build assets so even that older page can unregister its worker, remove only
+# obsolete app caches, and reload the current deploy. Existing assets shadow
+# this rule and continue to be served normally.
 [[redirects]]
   from = "/assets/*"
-  to = "/asset-not-found.txt"
-  status = 404
+  to = "/stale-build-recovery.js"
+  status = 200
 
 # SPA fallback must remain after the domain and static-asset rules.
 [[redirects]]
@@ -47,6 +50,12 @@
   [headers.values]
     Content-Type = "application/javascript"
     Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/stale-build-recovery.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=UTF-8"
+    Cache-Control = "no-store"
 
 [[headers]]
   for = "/*.png"
