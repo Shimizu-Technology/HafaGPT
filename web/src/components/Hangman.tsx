@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Trophy, Sun, Moon, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { RotateCcw, Trophy, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2, Settings2, Target } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
-import { useTheme } from '../hooks/useTheme';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { formatUsageSummary } from '../lib/usageDisplay';
+import { GamePage, GamePageHeader } from './games/GamePage';
 
 interface GameSettings {
   category: string;
@@ -76,7 +76,7 @@ const CHAMORRO_ALPHABET = 'ABCDEFGHIJKLMNÑOPRSTUVWY\'Å'.split('');
 const MAX_WRONG_GUESSES = 6;
 
 export function Hangman() {
-  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -297,6 +297,13 @@ export function Hangman() {
     return 1;
   };
 
+  const handleBackToGames = () => {
+    if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
+      return;
+    }
+    navigate('/games');
+  };
+
   // Render hangman figure
   const renderHangman = () => {
     const parts = [
@@ -339,33 +346,12 @@ export function Hangman() {
     const isLoading = settings.mode === 'challenge' && categoriesLoading;
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
-        {/* Header */}
-        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-            <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Games</span>
-            </Link>
-            <h1 className="text-lg font-bold text-brown-800 dark:text-white">Hangman</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
-            </button>
-          </div>
-        </header>
+      <GamePage>
+        <GamePageHeader title="Hangman" subtitle="Guess the Chamorro word one letter at a time." icon={Target} />
 
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        <main className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8">
           {/* Game Description */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
-                🎯
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-brown-800 dark:text-white">Hangman</h2>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Guess the Chamorro word</p>
-              </div>
-            </div>
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
             <p className="text-brown-600 dark:text-gray-400 text-sm">
               See the English meaning, then guess the Chamorro word one letter at a time. 
               Complete as many words as you can before running out of guesses!
@@ -375,12 +361,13 @@ export function Hangman() {
           {/* Mode Selection */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
             <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <BookOpen className="w-5 h-5 text-coral-500 dark:text-teal-400" />
               Choose Mode
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'beginner', category: 'greetings' }))}
+                aria-pressed={settings.mode === 'beginner'}
                 className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'beginner'
                     ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-lg scale-[1.02]'
@@ -388,13 +375,14 @@ export function Hangman() {
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
-                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-500 dark:text-ocean-400'}`} />
+                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Beginner</p>
                 <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common words</p>
               </button>
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
+                aria-pressed={settings.mode === 'challenge'}
                 className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'challenge'
                     ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg scale-[1.02]'
@@ -412,11 +400,11 @@ export function Hangman() {
 
           {/* Category Selection */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Select Category</h3>
+            <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Choose Topic</h3>
             {isLoading ? (
               <div className="text-center py-4 text-brown-500 dark:text-gray-400">Loading categories...</div>
             ) : (
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {currentCategories.map(catId => {
                   const icon = categoryIcons[catId] || '📚';
                   const name = categoryDisplayNames[catId] || catId;
@@ -431,7 +419,8 @@ export function Hangman() {
                       key={catId}
                       onClick={() => !isDisabled && setSettings(s => ({ ...s, category: catId }))}
                       disabled={isDisabled}
-                      className={`p-3 rounded-xl transition-all duration-200 text-center ${
+                      aria-pressed={settings.category === catId}
+                      className={`min-w-24 flex-none p-3 rounded-xl transition-all duration-200 text-center ${
                         isDisabled
                           ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
@@ -457,7 +446,7 @@ export function Hangman() {
           <button
             onClick={startGame}
             disabled={availableWords.length < MIN_WORDS_TO_PLAY || isStarting}
-            className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
           >
             {isStarting ? (
               <>
@@ -479,7 +468,7 @@ export function Hangman() {
         </main>
         
         {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
-      </div>
+      </GamePage>
     );
   }
 
@@ -488,19 +477,8 @@ export function Hangman() {
     const stars = getStars();
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
-        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-            <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Games</span>
-            </Link>
-            <h1 className="text-lg font-bold text-brown-800 dark:text-white">Hangman</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
-            </button>
-          </div>
-        </header>
+      <GamePage>
+        <GamePageHeader title="Hangman" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
         <main className="max-w-md mx-auto px-4 py-8">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 shadow-lg text-center">
@@ -511,7 +489,7 @@ export function Hangman() {
             
             {gameState === 'lost' && (
               <p className="text-brown-600 dark:text-gray-400 mb-4">
-                The word was: <span className="font-bold text-coral-500 dark:text-ocean-400">{currentWord}</span>
+                The word was: <span className="font-bold text-coral-500 dark:text-teal-400">{currentWord}</span>
               </p>
             )}
             
@@ -541,7 +519,7 @@ export function Hangman() {
                   hasSavedRef.current = false;
                   startGame();
                 }}
-                className="w-full py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -561,37 +539,31 @@ export function Hangman() {
             </div>
           </div>
         </main>
-      </div>
+      </GamePage>
     );
   }
 
   // Playing state
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
+    <GamePage>
+      <GamePageHeader
+        title="Hangman"
+        subtitle={`${totalScore} points · ${wordsCompleted} words`}
+        icon={Target}
+        onBack={handleBackToGames}
+        trailing={(
           <button
+            type="button"
             onClick={() => {
-              if (confirm('Are you sure you want to quit? Your progress will be lost.')) {
-                setGameState('setup');
-              }
+              if (window.confirm('Change settings? Your current progress will be lost.')) setGameState('setup');
             }}
-            className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
+            aria-label="Change game settings"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Quit</span>
+            <Settings2 className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div className="text-center">
-            <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
-            <p className="font-bold text-brown-800 dark:text-white">{totalScore}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs text-brown-500 dark:text-gray-400">Words</p>
-            <p className="font-bold text-brown-800 dark:text-white">{wordsCompleted}</p>
-          </div>
-        </div>
-      </header>
+        )}
+      />
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Hangman Figure */}
@@ -612,7 +584,7 @@ export function Hangman() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
           {/* Hint */}
           <div className="flex items-center justify-center gap-2 mb-4">
-            <HelpCircle className="w-4 h-4 text-coral-500 dark:text-ocean-400" />
+            <HelpCircle className="w-4 h-4 text-coral-500 dark:text-teal-400" />
             <p className="text-brown-600 dark:text-gray-400 text-center">{currentHint}</p>
           </div>
           
@@ -626,7 +598,7 @@ export function Hangman() {
                     ? 'bg-cream-100 dark:bg-slate-700 border-2 border-dashed border-cream-300 dark:border-slate-600'
                     : isWordComplete
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                    : 'bg-coral-100 dark:bg-ocean-900/30 text-coral-600 dark:text-ocean-400'
+                    : 'bg-coral-100 dark:bg-teal-950/30 text-coral-600 dark:text-teal-400'
                 }`}
               >
                 {letter === '_' ? '' : letter}
@@ -674,7 +646,7 @@ export function Hangman() {
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed
                       ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-coral-100 dark:hover:bg-ocean-900/30 hover:text-coral-600 dark:hover:text-ocean-400'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-coral-100 dark:hover:bg-teal-950/30 hover:text-coral-600 dark:hover:text-teal-400'
                   }`}
                 >
                   {letter}
@@ -684,7 +656,7 @@ export function Hangman() {
           </div>
         </div>
       </main>
-    </div>
+    </GamePage>
   );
 }
 

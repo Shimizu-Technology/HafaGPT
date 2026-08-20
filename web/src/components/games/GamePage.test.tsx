@@ -57,4 +57,24 @@ describe('shared game page UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
     expect(screen.getByText('/games')).toBeInTheDocument();
   });
+
+  it('supports guarded navigation and a focused in-game action', () => {
+    const onBack = vi.fn();
+
+    render(
+      <MemoryRouter>
+        <GamePageHeader
+          title="Memory Match"
+          subtitle="Pair the words"
+          icon={Headphones}
+          onBack={onBack}
+          trailing={<button type="button">Change game settings</button>}
+        />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
+    expect(onBack).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Change game settings' })).toBeInTheDocument();
+  });
 });
