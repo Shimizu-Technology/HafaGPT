@@ -13,22 +13,24 @@ interface GameCardProps {
 
 export function GameCard({ to, title, description, icon, difficulty, comingSoon }: GameCardProps) {
   const difficultyColors: Record<string, string> = {
-    'Easy': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    'Medium': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    'Hard': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    'All Ages': 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    'No reading': 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+    'Some reading': 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+    'Fast paced': 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
+    'Challenge': 'bg-coral-50 text-coral-700 dark:bg-coral-900/50 dark:text-coral-200',
+    'All ages': 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300',
+    'All levels': 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300',
   };
 
   if (comingSoon) {
     return (
-      <div className="relative bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-lg border border-cream-200 dark:border-slate-700 opacity-60 cursor-not-allowed">
+      <div className="relative cursor-not-allowed rounded-2xl border border-cream-200 bg-white p-5 opacity-60 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
         {/* Coming Soon Badge */}
         <div className="absolute top-3 right-3 px-2 py-1 bg-cream-200 dark:bg-slate-700 text-brown-600 dark:text-gray-300 text-xs font-medium rounded-full">
           Coming Soon
         </div>
         
         {/* Icon */}
-        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-cream-100 to-cream-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center mb-4 text-coral-500 dark:text-ocean-400">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-teal-300">
           {icon}
         </div>
         
@@ -37,7 +39,7 @@ export function GameCard({ to, title, description, icon, difficulty, comingSoon 
         <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">{description}</p>
         
         {/* Difficulty Badge */}
-        <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${difficultyColors[difficulty] || difficultyColors['Easy']}`}>
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${difficultyColors[difficulty] || difficultyColors['All ages']}`}>
           {difficulty}
         </span>
       </div>
@@ -47,28 +49,26 @@ export function GameCard({ to, title, description, icon, difficulty, comingSoon 
   return (
     <Link
       to={to}
-      className="group bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-lg border border-cream-200 dark:border-slate-700 hover:shadow-xl hover:border-coral-300 dark:hover:border-ocean-500 transition-all duration-300 block"
+      className="group flex min-h-56 flex-col rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 hover:bg-coral-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-600 dark:hover:bg-slate-700 sm:p-6"
     >
       {/* Icon */}
-      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center mb-4 text-coral-600 dark:text-ocean-400 group-hover:scale-110 transition-transform duration-300">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-900/50 dark:text-teal-300">
         {icon}
       </div>
       
       {/* Content */}
-      <h3 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-2 group-hover:text-coral-600 dark:group-hover:text-ocean-400 transition-colors">
+      <h3 className="mb-2 text-lg font-bold text-brown-800 transition-colors group-hover:text-coral-600 dark:text-white dark:group-hover:text-teal-300 sm:text-xl">
         {title}
       </h3>
-      <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">{description}</p>
+      <p className="mb-4 flex-1 text-sm leading-relaxed text-brown-600 dark:text-gray-400">{description}</p>
       
       {/* Footer */}
       <div className="flex items-center justify-between">
-        <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${difficultyColors[difficulty] || difficultyColors['Easy']}`}>
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${difficultyColors[difficulty] || difficultyColors['All ages']}`}>
           {difficulty}
         </span>
-        <ChevronRight className="w-5 h-5 text-coral-500 dark:text-ocean-400 group-hover:translate-x-1 transition-transform" />
+        <ChevronRight className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
       </div>
     </Link>
   );
 }
-
-
