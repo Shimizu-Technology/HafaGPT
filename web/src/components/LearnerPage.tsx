@@ -38,7 +38,7 @@ export function LearnerPageHeader({
   onBack,
   trailing,
   below,
-  iconClassName = 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300',
+  iconClassName = 'bg-coral-100 text-coral-700 dark:bg-teal-900/50 dark:text-teal-300',
   maxWidthClassName = 'max-w-5xl',
 }: LearnerPageHeaderProps) {
   const { theme, toggleTheme } = useTheme();

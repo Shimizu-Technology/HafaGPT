@@ -152,8 +152,11 @@ on the final commit, and production verification after merge.
    conversation entry and session pages now share navigation, progress, large
    interaction targets, calm feedback, and consistent exits. Saved-deck,
    review, and history utilities remain grouped with the progress/account pass.
-5. **Game system.** Redesign the hub and introduce a shared game shell without
-   changing the individual learning mechanics.
+5. **Game system — hub complete.** The game library now recommends one
+   audio-first starting point, groups all 12 existing games by learning style,
+   and labels reading demands without age-gating learners. A shared shell for
+   instructions, progress, exits, and results remains for the individual games;
+   their mechanics and scoring will stay unchanged.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
    information pages.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader

@@ -1,238 +1,152 @@
+import { useState, type ComponentType } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Gamepad2, Puzzle, Sword, Grid3X3 } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  Gamepad2,
+  Grid3X3,
+  Hand,
+  Headphones,
+  Image,
+  Landmark,
+  ListOrdered,
+  Palette,
+  Puzzle,
+  Shuffle,
+  Sparkles,
+  Swords,
+  Target,
+  Zap,
+} from 'lucide-react';
 import { GameCard } from './games/GameCard';
-import { useTheme } from '../hooks/useTheme';
-import { Sun, Moon } from 'lucide-react';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
-export function Games() {
-  const { theme, toggleTheme } = useTheme();
+type GameGroup = 'listen' | 'words' | 'quick' | 'challenge';
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/" 
-              className="p-2 -ml-2 rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Go back home"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center shadow-lg">
-                <Gamepad2 className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">
-                  Chamorro Games
-                </h1>
-                <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400 hidden sm:block">
-                  Learn while playing
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-          >
-            {theme === 'light' ? (
-              <Moon className="w-5 h-5 text-brown-600" />
-            ) : (
-              <Sun className="w-5 h-5 text-yellow-400" />
-            )}
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:py-8 sm:pb-8 animate-page-enter">
-        {/* Welcome Section */}
-        <div className="text-center mb-8 sm:mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 mb-4 shadow-lg">
-            <span className="text-4xl sm:text-5xl">🎮</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
-            Play & Learn Chamorro
-          </h2>
-          <p className="text-brown-600 dark:text-gray-400 max-w-md mx-auto">
-            Fun games for all ages to practice vocabulary and boost your Chamorro skills!
-          </p>
-        </div>
-
-        {/* 👶 For Young Learners (Pre-Reader) */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">👶</span>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white">For Young Learners</h3>
-            <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-xs font-medium rounded-full">No Reading Required!</span>
-          </div>
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Perfect for pre-readers and beginners. Just listen and tap!</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <GameCard
-              to="/games/sound-match"
-              title="Sound Match"
-              description="Hear a Chamorro word, tap the matching emoji! Perfect for pre-readers and beginners."
-              icon={<span className="text-2xl sm:text-3xl">🎵</span>}
-              difficulty="Pre-Reader"
-            />
-            <GameCard
-              to="/games/picture-pairs"
-              title="Picture Pairs"
-              description="Find matching pictures and learn Chamorro words! A memory game with audio."
-              icon={<span className="text-2xl sm:text-3xl">🖼️</span>}
-              difficulty="Pre-Reader"
-            />
-            <GameCard
-              to="/games/color-touch"
-              title="Color Touch"
-              description="Hear a Chamorro color, tap the matching colored square! Learn all the colors."
-              icon={<span className="text-2xl sm:text-3xl">🎨</span>}
-              difficulty="Pre-Reader"
-            />
-            <GameCard
-              to="/games/number-tap"
-              title="Number Tap"
-              description="Count the items and tap the number you hear in Chamorro! Learn to count."
-              icon={<span className="text-2xl sm:text-3xl">🔢</span>}
-              difficulty="Pre-Reader"
-            />
-            <GameCard
-              to="/games/simon-says"
-              title="Simon Says"
-              description="Touch your body parts! Learn Chamorro words for head, eyes, nose, and more."
-              icon={<span className="text-2xl sm:text-3xl">👆</span>}
-              difficulty="Pre-Reader"
-            />
-          </div>
-        </section>
-
-        {/* 📚 Vocabulary Builders */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">📚</span>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Vocabulary Builders</h3>
-          </div>
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Build your Chamorro vocabulary with these classic learning games.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <GameCard
-              to="/games/memory"
-              title="Memory Match"
-              description="Match Chamorro words with their English translations. Great for vocabulary practice!"
-              icon={<Puzzle className="w-7 h-7 sm:w-8 sm:h-8" />}
-              difficulty="All Ages"
-            />
-            <GameCard
-              to="/games/scramble"
-              title="Word Scramble"
-              description="Unscramble the letters to form Chamorro words. Practice your spelling!"
-              icon={<span className="text-2xl sm:text-3xl">🔤</span>}
-              difficulty="Medium"
-            />
-            <GameCard
-              to="/games/hangman"
-              title="Hangman"
-              description="Classic word guessing! See the meaning, guess the Chamorro word letter by letter."
-              icon={<span className="text-2xl sm:text-3xl">🎯</span>}
-              difficulty="Medium"
-            />
-          </div>
-        </section>
-
-        {/* ⚡ Quick Play (Action Games) */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">⚡</span>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Quick Play</h3>
-            <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-medium rounded-full">Fast-Paced!</span>
-          </div>
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Test your reflexes! Great for short practice sessions.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <GameCard
-              to="/games/falling"
-              title="Falling Words"
-              description="Words fall from the sky! Tap the correct translation before they hit bottom. Gets faster!"
-              icon={<span className="text-2xl sm:text-3xl">⬇️</span>}
-              difficulty="Easy → Hard"
-            />
-            <GameCard
-              to="/games/catch"
-              title="Word Catch"
-              description="Catch correct word pairs as they fly by! Avoid the wrong ones for combo points."
-              icon={<Sword className="w-7 h-7 sm:w-8 sm:h-8" />}
-              difficulty="Medium"
-            />
-          </div>
-        </section>
-
-        {/* 🧩 Word Puzzles */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🧩</span>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Word Puzzles</h3>
-            <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-medium rounded-full">Challenge</span>
-          </div>
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Put your Chamorro knowledge to the test with these brain teasers.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <GameCard
-              to="/games/wordle"
-              title="Chamorro Wordle"
-              description="Guess the Chamorro word in 6 tries! Daily challenge or practice mode."
-              icon={<Grid3X3 className="w-7 h-7 sm:w-8 sm:h-8" />}
-              difficulty="Hard"
-            />
-          </div>
-        </section>
-
-        {/* 🎓 Knowledge & Culture */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🎓</span>
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white">Knowledge & Culture</h3>
-          </div>
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-4">Learn about Chamorro history, traditions, and island culture.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            <GameCard
-              to="/games/trivia"
-              title="Cultural Trivia"
-              description="Test your knowledge of Guam history, Chamorro culture, language, and traditions!"
-              icon={<span className="text-2xl sm:text-3xl">🏝️</span>}
-              difficulty="All Levels"
-            />
-          </div>
-        </section>
-
-        {/* Tips Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-lg border border-cream-200 dark:border-slate-700">
-          <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-3 flex items-center gap-2">
-            <span className="text-xl">💡</span> Tips for Learning
-          </h3>
-          <ul className="space-y-2 text-sm text-brown-600 dark:text-gray-400">
-            <li className="flex items-start gap-2">
-              <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Start with <strong>Memory Match</strong> to build vocabulary recognition</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Try <strong>Falling Words</strong> for quick reflex training</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Play daily to reinforce what you've learned</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-              <span>Games work great on phones - play anywhere!</span>
-            </li>
-          </ul>
-        </div>
-      </main>
-    </div>
-  );
+interface GameDefinition {
+  to: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  group: GameGroup;
+  icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
 }
 
+const gameGroups: Array<{ id: 'all' | GameGroup; label: string }> = [
+  { id: 'all', label: 'All games' },
+  { id: 'listen', label: 'Listen & tap' },
+  { id: 'words', label: 'Build words' },
+  { id: 'quick', label: 'Quick play' },
+  { id: 'challenge', label: 'Challenges' },
+];
 
+const games: GameDefinition[] = [
+  { to: '/games/sound-match', title: 'Sound Match', description: 'Hear a Chamorro word and tap the matching picture.', difficulty: 'No reading', group: 'listen', icon: Headphones },
+  { to: '/games/picture-pairs', title: 'Picture Pairs', description: 'Match pictures while hearing and learning each word.', difficulty: 'No reading', group: 'listen', icon: Image },
+  { to: '/games/color-touch', title: 'Color Touch', description: 'Listen for a color, then tap the matching square.', difficulty: 'No reading', group: 'listen', icon: Palette },
+  { to: '/games/number-tap', title: 'Number Tap', description: 'Count the items and choose the number you hear.', difficulty: 'No reading', group: 'listen', icon: ListOrdered },
+  { to: '/games/simon-says', title: 'Simon Says', description: 'Learn body words by listening and following along.', difficulty: 'No reading', group: 'listen', icon: Hand },
+  { to: '/games/memory', title: 'Memory Match', description: 'Pair Chamorro words with their English meanings.', difficulty: 'All ages', group: 'words', icon: Puzzle },
+  { to: '/games/scramble', title: 'Word Scramble', description: 'Put mixed-up letters back into Chamorro words.', difficulty: 'Some reading', group: 'words', icon: Shuffle },
+  { to: '/games/hangman', title: 'Word Guess', description: 'Use the meaning as a clue and reveal the Chamorro word.', difficulty: 'Some reading', group: 'words', icon: Target },
+  { to: '/games/falling', title: 'Falling Words', description: 'Choose the right translation before the word reaches the bottom.', difficulty: 'Fast paced', group: 'quick', icon: Zap },
+  { to: '/games/catch', title: 'Word Catch', description: 'Catch matching word pairs and build a combo.', difficulty: 'Fast paced', group: 'quick', icon: Swords },
+  { to: '/games/wordle', title: 'Chamorro Wordle', description: 'Find the Chamorro word in six tries.', difficulty: 'Challenge', group: 'challenge', icon: Grid3X3 },
+  { to: '/games/trivia', title: 'Cultural Trivia', description: 'Explore Guam history, traditions, language, and culture.', difficulty: 'All levels', group: 'challenge', icon: Landmark },
+];
+
+export function Games() {
+  const [selectedGroup, setSelectedGroup] = useState<'all' | GameGroup>('all');
+  const visibleGames = selectedGroup === 'all' ? games : games.filter((game) => game.group === selectedGroup);
+  const selectedLabel = gameGroups.find((group) => group.id === selectedGroup)?.label || 'All games';
+
+  return (
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Games"
+        subtitle="Short activities for every kind of learner"
+        icon={Gamepad2}
+        backTo="/"
+        backLabel="Back home"
+        maxWidthClassName="max-w-5xl"
+      />
+
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+        <section className="mb-8 overflow-hidden rounded-3xl border border-coral-200 bg-coral-50 p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-xl">
+              <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-coral-700 dark:text-teal-300">
+                <Sparkles className="h-4 w-4" aria-hidden="true" /> A gentle place to start
+              </p>
+              <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Listen, choose, and learn</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">
+                Sound Match works without reading, gives every word an audio cue, and takes only a few minutes.
+              </p>
+            </div>
+            <Link
+              to="/games/sound-match"
+              className="flex min-h-12 flex-none items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 py-3 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+            >
+              Play Sound Match <ArrowRight className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+
+        <section aria-labelledby="game-library-title">
+          <div className="mb-5">
+            <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Choose what feels right</p>
+            <h2 id="game-library-title" className="mt-1 text-2xl font-bold tracking-tight text-brown-950 dark:text-white">Find a game</h2>
+          </div>
+
+          <div className="-mx-4 mb-6 overflow-x-auto px-4 pb-1" aria-label="Filter games by learning style">
+            <div className="flex min-w-max gap-2">
+              {gameGroups.map((group) => (
+                <button
+                  key={group.id}
+                  type="button"
+                  onClick={() => setSelectedGroup(group.id)}
+                  aria-pressed={selectedGroup === group.id}
+                  className={`min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors ${
+                    selectedGroup === group.id
+                      ? 'border-coral-600 bg-coral-600 text-white dark:border-teal-500 dark:bg-teal-600'
+                      : 'border-cream-300 bg-white text-brown-700 hover:border-coral-300 hover:bg-coral-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:border-teal-600 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {group.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-3 flex items-end justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-brown-950 dark:text-white">{selectedLabel}</h3>
+              <p className="text-sm text-brown-500 dark:text-gray-400">{visibleGames.length} {visibleGames.length === 1 ? 'game' : 'games'}</p>
+            </div>
+            {selectedGroup === 'all' && (
+              <p className="hidden items-center gap-2 text-sm text-brown-500 dark:text-gray-400 sm:flex">
+                <BookOpen className="h-4 w-4" aria-hidden="true" /> Pick by skill, not age
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleGames.map((game) => {
+              const Icon = game.icon;
+              return (
+                <GameCard
+                  key={game.to}
+                  to={game.to}
+                  title={game.title}
+                  description={game.description}
+                  icon={<Icon className="h-7 w-7" aria-hidden="true" />}
+                  difficulty={game.difficulty}
+                />
+              );
+            })}
+          </div>
+        </section>
+      </main>
+    </LearnerPageShell>
+  );
+}
