@@ -117,4 +117,28 @@ describe('browserStorage', () => {
 
     expect(browserStorage.get('storage-test-concurrent-update')).toBe('concurrent-external-update');
   });
+
+  it('reconciles an unreadable baseline after persistent storage recovers', () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+
+    expect(browserStorage.set('storage-test-recovered-baseline', 'temporary-fallback')).toBe(false);
+    expect(browserStorage.get('storage-test-recovered-baseline')).toBe('temporary-fallback');
+
+    getItem.mockRestore();
+    setItem.mockRestore();
+    window.localStorage.setItem('storage-test-recovered-baseline', 'durable-external-value');
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'storage-test-recovered-baseline',
+      oldValue: null,
+      newValue: 'durable-external-value',
+      storageArea: window.localStorage,
+    }));
+
+    expect(browserStorage.get('storage-test-recovered-baseline')).toBe('durable-external-value');
+  });
 });

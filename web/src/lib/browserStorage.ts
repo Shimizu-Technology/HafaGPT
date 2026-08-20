@@ -40,12 +40,16 @@ if (typeof window !== 'undefined') {
 
     affectedKeys.forEach((key) => {
       const override = memoryOverrides.get(key);
-      if (!override || override.persistedValueAtAttempt === UNKNOWN_PERSISTED_VALUE) {
+      if (!override) {
         return;
       }
 
       try {
-        if (localStorage.getItem(key) !== override.persistedValueAtAttempt) {
+        const persistedValue = localStorage.getItem(key);
+        if (
+          override.persistedValueAtAttempt === UNKNOWN_PERSISTED_VALUE
+          || persistedValue !== override.persistedValueAtAttempt
+        ) {
           memoryOverrides.delete(key);
         }
       } catch {
