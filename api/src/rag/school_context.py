@@ -162,18 +162,22 @@ def contextual_school_exchange_card_ids(message: str) -> tuple[str, ...]:
     """
 
     text = message or ""
-    if not (
-        _MSY_TURN_OPENING_PATTERN.search(text)
-        and _SYM_TURN_SIGNOFF_PATTERN.search(text)
-    ):
+    greeting_match = _MSY_TURN_OPENING_PATTERN.search(text)
+    signoff_match = _SYM_TURN_SIGNOFF_PATTERN.search(text)
+    if not greeting_match or not signoff_match:
+        return ()
+    if greeting_match.end() >= signoff_match.start():
         return ()
 
     # Count distinct message-body evidence. ``Esta`` is deliberately excluded:
     # when it introduces the accepted SYM sign-off it must not help prove the
-    # school context that authorizes the sign-off card.
+    # school context that authorizes the sign-off card. Framing text outside the
+    # matched exchange is also excluded so user instructions cannot supply the
+    # language evidence for an otherwise generic acronym exchange.
+    exchange_body = text[greeting_match.end() : signoff_match.start()]
     local_markers = {
         match.group(0).casefold()
-        for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(text)
+        for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(exchange_body)
     }
     if len(local_markers) < 2:
         return ()
