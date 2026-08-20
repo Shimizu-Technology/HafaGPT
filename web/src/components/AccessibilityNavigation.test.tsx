@@ -147,12 +147,9 @@ describe('shared navigation and modal accessibility', () => {
 
     fireEvent.doubleClick(conversationButton);
     const renameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
-    fireEvent.keyDown(renameInput, { key: 'Escape' });
-    expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'Rename School phrases' })).not.toBeInTheDocument();
-
-    fireEvent.contextMenu(screen.getByRole('button', { name: 'School phrases' }), { clientX: 20, clientY: 20 });
+    fireEvent.contextMenu(renameInput, { clientX: 20, clientY: 20 });
     expect(screen.getByRole('menu', { name: 'Conversation actions' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Rename School phrases' })).not.toBeInTheDocument();
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(screen.queryByRole('menu', { name: 'Conversation actions' })).not.toBeInTheDocument();

@@ -99,6 +99,8 @@ export function ConversationSidebar({
 
   const handleContextMenu = (e: React.MouseEvent, conversation: Conversation) => {
     e.preventDefault();
+    setEditingId(null);
+    setEditingTitle('');
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
