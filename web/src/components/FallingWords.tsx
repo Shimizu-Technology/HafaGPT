@@ -97,7 +97,23 @@ export function FallingWords() {
 
   // Animation refs
   const animationRef = useRef<number | null>(null);
+  const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const wordIdRef = useRef(0);
+
+  const clearTransitionTimers = useCallback(() => {
+    transitionTimersRef.current.forEach(timer => clearTimeout(timer));
+    transitionTimersRef.current.clear();
+  }, []);
+
+  const scheduleTransition = useCallback((callback: () => void, delay: number) => {
+    const timer = setTimeout(() => {
+      transitionTimersRef.current.delete(timer);
+      callback();
+    }, delay);
+    transitionTimersRef.current.add(timer);
+  }, []);
+
+  useEffect(() => clearTransitionTimers, [clearTransitionTimers]);
 
   // Fetch flashcards data
   const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
@@ -233,7 +249,7 @@ export function FallingWords() {
         
         // WIN CONDITION: Complete 30 words to win!
         if (newCount >= WIN_WORDS) {
-          setTimeout(() => setGameState('complete'), 300);
+          scheduleTransition(() => setGameState('complete'), 300);
           return newCount;
         }
         
@@ -246,7 +262,7 @@ export function FallingWords() {
       });
 
       // Quick transition to next word (only if not won)
-      setTimeout(() => {
+      scheduleTransition(() => {
         if (wordsCompleted + 1 < WIN_WORDS) {
           generateNewWord();
         }
@@ -263,13 +279,13 @@ export function FallingWords() {
       });
 
       // Longer delay for wrong answer
-      setTimeout(() => {
+      scheduleTransition(() => {
         if (lives > 1) {
           generateNewWord();
         }
       }, 500);
     }
-  }, [currentWord, feedback, streak, lives, generateNewWord]);
+  }, [currentWord, feedback, streak, lives, generateNewWord, scheduleTransition]);
 
   // Animation loop
   useEffect(() => {
@@ -293,7 +309,7 @@ export function FallingWords() {
             return newLives;
           });
 
-          setTimeout(() => {
+          scheduleTransition(() => {
             if (lives > 1) {
               generateNewWord();
             }
@@ -315,7 +331,7 @@ export function FallingWords() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, currentWord?.id, lives, generateNewWord]);
+  }, [gameState, currentWord?.id, lives, generateNewWord, scheduleTransition]);
 
   // Timer
   useEffect(() => {
@@ -365,6 +381,7 @@ export function FallingWords() {
       alert('Not enough words in this category. Please try another category.');
       return;
     }
+    clearTransitionTimers();
     hasSavedRef.current = false;
     setLives(MAX_LIVES);
     setScore(0);
@@ -378,10 +395,11 @@ export function FallingWords() {
     setUsedWordIndices(new Set()); // Reset used words for new game
     setGameState('playing');
     generateNewWord();
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers]);
 
   // Reset to setup
   const resetGame = () => {
+    clearTransitionTimers();
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -411,6 +429,7 @@ export function FallingWords() {
     if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
       return;
     }
+    clearTransitionTimers();
     navigate('/games');
   };
 
