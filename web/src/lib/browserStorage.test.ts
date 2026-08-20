@@ -25,16 +25,25 @@ describe('browserStorage', () => {
     expect(browserStorage.get('storage-test-fallback')).toBe('kept');
   });
 
-  it('removes fallback state even when persistent storage is unavailable', () => {
-    browserStorage.set('storage-test-remove', 'temporary');
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-      throw new DOMException('Storage unavailable', 'SecurityError');
+  it('keeps a failed write newer than a stale readable persistent value', () => {
+    window.localStorage.setItem('storage-test-stale-write', 'old');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage is read-only', 'QuotaExceededError');
     });
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+
+    expect(browserStorage.set('storage-test-stale-write', 'new')).toBe(false);
+    expect(window.localStorage.getItem('storage-test-stale-write')).toBe('old');
+    expect(browserStorage.get('storage-test-stale-write')).toBe('new');
+  });
+
+  it('removes fallback state even when persistent storage is unavailable', () => {
+    window.localStorage.setItem('storage-test-remove', 'temporary');
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
       throw new DOMException('Storage unavailable', 'SecurityError');
     });
 
     expect(browserStorage.remove('storage-test-remove')).toBe(false);
+    expect(window.localStorage.getItem('storage-test-remove')).toBe('temporary');
     expect(browserStorage.get('storage-test-remove')).toBeNull();
   });
 });
