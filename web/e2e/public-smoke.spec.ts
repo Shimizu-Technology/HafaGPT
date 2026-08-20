@@ -164,6 +164,29 @@ test('translation shortcut selects translation intent without sending a message'
   expect(errors).toEqual([]);
 });
 
+test('chat keeps its header gutter outside the scrollable messages viewport', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+
+  await page.goto('/chat');
+  const spacing = await page.getByTestId('chat-messages-viewport').evaluate((viewport) => {
+    const scroller = viewport.querySelector<HTMLElement>('[data-testid="chat-messages"]');
+    if (!scroller) throw new Error('Messages scroller is missing');
+
+    const viewportRect = viewport.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    return {
+      gutter: scrollerRect.top - viewportRect.top,
+      viewportPaddingTop: Number.parseFloat(getComputedStyle(viewport).paddingTop),
+      scrollerPaddingTop: Number.parseFloat(getComputedStyle(scroller).paddingTop),
+    };
+  });
+
+  expect(spacing.gutter).toBeGreaterThanOrEqual(20);
+  expect(spacing.gutter).toBeCloseTo(spacing.viewportPaddingTop, 0);
+  expect(spacing.scrollerPaddingTop).toBe(0);
+  expect(errors).toEqual([]);
+});
+
 test('public learner can open stories and protected games fail closed', async ({ page }) => {
   const errors = monitorRuntimeErrors(page);
 
