@@ -25,7 +25,9 @@ registerSW({
     if (registration) {
       window.setInterval(() => {
         if (navigator.onLine) {
-          void registration.update();
+          void registration.update().catch((error: unknown) => {
+            console.warn('[PWA] Service worker update check failed:', error);
+          });
         }
       }, 60 * 60 * 1000);
     }
@@ -155,10 +157,3 @@ createRoot(document.getElementById('root')!).render(
     <ClerkWrapper />
   </StrictMode>
 );
-
-// Clear the one-reload stale-build guard only after the React tree has had a
-// chance to commit. The inline bootstrap remains available when the entry
-// module itself cannot load.
-window.requestAnimationFrame(() => {
-  window.__hafagptMarkBootSuccessful?.();
-});

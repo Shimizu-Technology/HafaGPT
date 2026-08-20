@@ -180,6 +180,22 @@ test('persistent entry failure stops after one recovery attempt', async ({ page 
   await expect(page).toHaveURL(/__hafagpt_recovery=/);
 });
 
+test('persistent initial route failure stops after one recovery attempt', async ({ page }) => {
+  await page.route('**/assets/HomePage-*.js', async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Retired initial route asset',
+    });
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page).toHaveURL(/__hafagpt_recovery=/);
+});
+
 test('public learner can reach the dictionary and search it', async ({ page }) => {
   const errors = monitorRuntimeErrors(page);
 

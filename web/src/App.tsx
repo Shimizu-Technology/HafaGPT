@@ -2,6 +2,7 @@ import {
   Component,
   lazy,
   Suspense,
+  useEffect,
   type ComponentType,
   type ErrorInfo,
   type ReactNode,
@@ -86,6 +87,14 @@ function RouteLoadingFallback() {
       </div>
     </main>
   );
+}
+
+function BootSuccessMarker() {
+  useEffect(() => {
+    window.__hafagptMarkBootSuccessful?.();
+  }, []);
+
+  return null;
 }
 
 interface RouteErrorBoundaryState {
@@ -219,6 +228,8 @@ function App() {
         <Route path="/admin/audio" element={<AdminRoute><AdminAudioReview /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
           </Routes>
+          {/* This commits only after the initial lazy route has loaded. */}
+          <BootSuccessMarker />
         </Suspense>
       </RouteErrorBoundary>
       

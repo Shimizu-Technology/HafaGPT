@@ -74,13 +74,11 @@
         let recoveryStarted = false;
 
         function renderStartupStatus(title, detail, allowRetry) {
-          const root = document.getElementById('root');
-          if (!root) return;
-
           const shell = document.createElement('main');
+          shell.dataset.hafagptStartupStatus = 'true';
           shell.setAttribute('role', allowRetry ? 'alert' : 'status');
           shell.setAttribute('aria-live', allowRetry ? 'assertive' : 'polite');
-          shell.style.cssText = 'min-height:100dvh;display:grid;place-items:center;padding:24px;background:#fdf8f3;color:#3a2a1d;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+          shell.style.cssText = 'position:fixed;inset:0;z-index:2147483647;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#fdf8f3;color:#3a2a1d;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
 
           const card = document.createElement('section');
           card.style.cssText = 'width:min(100%,420px);padding:28px;border:1px solid #ead7c4;border-radius:20px;background:#fffaf5;box-shadow:0 18px 45px rgba(83,55,34,.10);text-align:center;';
@@ -114,7 +112,8 @@
           }
 
           shell.append(card);
-          root.replaceChildren(shell);
+          document.querySelector('[data-hafagpt-startup-status]')?.remove();
+          document.body.append(shell);
         }
 
         function isHashedAppScript(target) {
@@ -185,6 +184,7 @@
 
         window.__hafagptMarkBootSuccessful = function () {
           try { sessionStorage.removeItem(recoveryKey); } catch (_) { /* Storage may be unavailable. */ }
+          document.querySelector('[data-hafagpt-startup-status]')?.remove();
           const currentUrl = new URL(window.location.href);
           if (currentUrl.searchParams.has(recoveryParam)) {
             currentUrl.searchParams.delete(recoveryParam);
