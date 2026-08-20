@@ -5,7 +5,35 @@ type PersistedValue = string | null | typeof UNKNOWN_PERSISTED_VALUE;
 interface MemoryOverride {
   value: string | null;
   persistedValueAtAttempt: PersistedValue;
+  operationVersion: string;
 }
+
+const VERSION_KEY_PREFIX = '__hafagpt_storage_version__:';
+const VERSION_TIME_WIDTH = 16;
+const VERSION_SEQUENCE_WIDTH = 8;
+const tabId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+  ? crypto.randomUUID()
+  : Math.random().toString(36).slice(2);
+let lastVersionTime = 0;
+let versionSequence = 0;
+
+const getVersionKey = (key: string) => `${VERSION_KEY_PREFIX}${key}`;
+
+const nextOperationVersion = (): string => {
+  const currentTime = Math.max(Date.now(), lastVersionTime);
+  if (currentTime === lastVersionTime) {
+    versionSequence += 1;
+  } else {
+    lastVersionTime = currentTime;
+    versionSequence = 0;
+  }
+
+  return [
+    currentTime.toString().padStart(VERSION_TIME_WIDTH, '0'),
+    versionSequence.toString().padStart(VERSION_SEQUENCE_WIDTH, '0'),
+    tabId,
+  ].join(':');
+};
 
 // A null override value is a deletion tombstone. The persisted snapshot lets
 // storage events distinguish a newer cross-tab change from an older event that
@@ -36,7 +64,9 @@ if (typeof window !== 'undefined') {
 
     const affectedKeys = event.key === null
       ? Array.from(memoryOverrides.keys())
-      : [event.key];
+      : [event.key.startsWith(VERSION_KEY_PREFIX)
+        ? event.key.slice(VERSION_KEY_PREFIX.length)
+        : event.key];
 
     affectedKeys.forEach((key) => {
       const override = memoryOverrides.get(key);
@@ -45,10 +75,16 @@ if (typeof window !== 'undefined') {
       }
 
       try {
+        const persistedVersion = localStorage.getItem(getVersionKey(key));
+        if (persistedVersion && persistedVersion > override.operationVersion) {
+          memoryOverrides.delete(key);
+          return;
+        }
+
         const persistedValue = localStorage.getItem(key);
         if (
-          override.persistedValueAtAttempt === UNKNOWN_PERSISTED_VALUE
-          || persistedValue !== override.persistedValueAtAttempt
+          override.persistedValueAtAttempt !== UNKNOWN_PERSISTED_VALUE
+          && persistedValue !== override.persistedValueAtAttempt
         ) {
           memoryOverrides.delete(key);
         }
@@ -78,30 +114,36 @@ export const browserStorage = {
   },
 
   set(key: string, value: string): boolean {
+    const operationVersion = nextOperationVersion();
     const persistedValueAtAttempt = readPersistedValue(key);
     try {
       window.localStorage.setItem(key, value);
+      window.localStorage.setItem(getVersionKey(key), operationVersion);
       memoryOverrides.delete(key);
       return true;
     } catch {
       memoryOverrides.set(key, {
         value,
         persistedValueAtAttempt,
+        operationVersion,
       });
       return false;
     }
   },
 
   remove(key: string): boolean {
+    const operationVersion = nextOperationVersion();
     const persistedValueAtAttempt = readPersistedValue(key);
     try {
       window.localStorage.removeItem(key);
+      window.localStorage.setItem(getVersionKey(key), operationVersion);
       memoryOverrides.delete(key);
       return true;
     } catch {
       memoryOverrides.set(key, {
         value: null,
         persistedValueAtAttempt,
+        operationVersion,
       });
       return false;
     }

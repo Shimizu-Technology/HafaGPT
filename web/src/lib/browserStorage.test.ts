@@ -131,11 +131,26 @@ describe('browserStorage', () => {
 
     getItem.mockRestore();
     setItem.mockRestore();
-    window.localStorage.setItem('storage-test-recovered-baseline', 'durable-external-value');
+    window.localStorage.setItem('storage-test-recovered-baseline', 'older-durable-value');
+    const versionKey = '__hafagpt_storage_version__:storage-test-recovered-baseline';
+    const olderExternalVersion = '0000000000000000:00000000:external-tab';
+    window.localStorage.setItem(versionKey, olderExternalVersion);
     window.dispatchEvent(new StorageEvent('storage', {
-      key: 'storage-test-recovered-baseline',
+      key: versionKey,
       oldValue: null,
-      newValue: 'durable-external-value',
+      newValue: olderExternalVersion,
+      storageArea: window.localStorage,
+    }));
+
+    expect(browserStorage.get('storage-test-recovered-baseline')).toBe('temporary-fallback');
+
+    window.localStorage.setItem('storage-test-recovered-baseline', 'durable-external-value');
+    const newerExternalVersion = '9999999999999999:99999999:external-tab';
+    window.localStorage.setItem(versionKey, newerExternalVersion);
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: versionKey,
+      oldValue: null,
+      newValue: newerExternalVersion,
       storageArea: window.localStorage,
     }));
 
