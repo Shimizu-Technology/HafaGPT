@@ -44,6 +44,7 @@ function CurrentPath() {
 describe('challenge game screens', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     saveResult.mockReset();
   });
 
@@ -87,5 +88,15 @@ describe('challenge game screens', () => {
 
     expect(screen.getByRole('heading', { name: 'Leave this game?' })).toBeInTheDocument();
     expect(screen.getByText('/games/trivia')).toBeInTheDocument();
+
+    const pausedTime = screen.getByLabelText(/seconds remaining/).textContent;
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    expect(screen.getByLabelText(/seconds remaining/)).toHaveTextContent(pausedTime ?? '');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Keep Playing' }));
+    await waitFor(
+      () => expect(screen.getByLabelText(/seconds remaining/).textContent).not.toBe(pausedTime),
+      { timeout: 1500 },
+    );
   });
 });

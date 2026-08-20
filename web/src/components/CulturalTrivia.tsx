@@ -419,10 +419,18 @@ export function CulturalTrivia() {
 
   const handleBack = () => {
     if (gameState === 'playing') {
+      setTimerActive(false);
       setShowQuitConfirm(true);
       return;
     }
     navigate('/games');
+  };
+
+  const keepPlaying = () => {
+    setShowQuitConfirm(false);
+    if (!showResult) {
+      setTimerActive(true);
+    }
   };
 
   // Save game result
@@ -665,7 +673,7 @@ export function CulturalTrivia() {
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowQuitConfirm(false)}
+                onClick={keepPlaying}
                 className="flex-1 py-2 px-4 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Keep Playing
