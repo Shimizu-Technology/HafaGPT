@@ -17,10 +17,18 @@ interface GamePageHeaderProps {
   subtitle: string;
   icon: LucideIcon;
   hasSpeech?: boolean;
+  trailing?: ReactNode;
+  onBack?: () => void;
 }
 
-export function GamePageHeader({ title, subtitle, icon, hasSpeech = false }: GamePageHeaderProps) {
+export function GamePageHeader({ title, subtitle, icon, hasSpeech = false, trailing, onBack }: GamePageHeaderProps) {
   const navigate = useNavigate();
+  const trailingContent = hasSpeech || trailing ? (
+    <div className="flex items-center gap-1">
+      {hasSpeech && <TTSDisclaimer variant="tooltip" />}
+      {trailing}
+    </div>
+  ) : undefined;
 
   return (
     <LearnerPageHeader
@@ -29,9 +37,9 @@ export function GamePageHeader({ title, subtitle, icon, hasSpeech = false }: Gam
       icon={icon}
       backTo="/games"
       backLabel="Back to games"
-      onBack={() => navigate('/games')}
+      onBack={onBack ?? (() => navigate('/games'))}
       maxWidthClassName="max-w-2xl"
-      trailing={hasSpeech ? <TTSDisclaimer variant="tooltip" /> : undefined}
+      trailing={trailingContent}
     />
   );
 }

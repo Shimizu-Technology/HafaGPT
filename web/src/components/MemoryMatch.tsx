@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Trophy, Timer, MousePointer2, Sun, Moon, Settings2, Play, Sparkles, BookOpen } from 'lucide-react';
+import { RotateCcw, Trophy, Timer, MousePointer2, Settings2, Play, Sparkles, BookOpen, Puzzle } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
-import { useTheme } from '../hooks/useTheme';
 import { MemoryCard } from './games/MemoryCard';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
@@ -11,6 +10,7 @@ import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { readLearningGameContext } from '../lib/lessonPractice';
+import { GamePage, GamePageHeader } from './games/GamePage';
 
 interface Card {
   id: number;
@@ -70,7 +70,6 @@ const categoryDisplayNames: Record<string, string> = {
 const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 
 export function MemoryMatch() {
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -206,14 +205,15 @@ export function MemoryMatch() {
   }, [isGameInProgress]);
 
   // Handle back navigation with confirmation
-  const handleBackClick = (e: React.MouseEvent) => {
+  const handleBackClick = () => {
     if (isGameInProgress) {
-      e.preventDefault();
       const confirmed = window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.');
       if (confirmed) {
         navigate('/games');
       }
+      return;
     }
+    navigate('/games');
   };
 
   // Generate cards from flashcards
@@ -374,88 +374,45 @@ export function MemoryMatch() {
   // Loading state
   if (categoriesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full border-4 border-coral-500 dark:border-ocean-500 border-t-transparent animate-spin mx-auto mb-4" />
+      <GamePage>
+        <GamePageHeader title="Memory Match" subtitle="Pair Chamorro words with their meanings." icon={Puzzle} />
+        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
           <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
         </div>
-      </div>
+      </GamePage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link 
-              to="/games" 
-              onClick={handleBackClick}
-              className="p-1.5 sm:p-2 -ml-1 rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center"
-              aria-label="Go back to games"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div>
-              <h1 className="text-base sm:text-xl font-bold text-brown-800 dark:text-white">
-                Memory Match
-              </h1>
-              <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">
-                {settings.mode === 'beginner' ? '🌟 Beginner' : '📚 Challenge'}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {gameState === 'playing' && (
-              <button
-                onClick={() => {
-                  if (isGameInProgress) {
-                    const confirmed = window.confirm('Are you sure you want to change settings? Your progress will be lost.');
-                    if (confirmed) resetGame();
-                  } else {
-                    resetGame();
-                  }
-                }}
-                className="p-1.5 sm:p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-                aria-label="Change settings"
-              >
-                <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brown-600 dark:text-gray-300" />
-              </button>
-            )}
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? (
-                <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-brown-600" />
-              ) : (
-                <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+    <GamePage>
+      <GamePageHeader
+        title="Memory Match"
+        subtitle="Pair Chamorro words with their meanings."
+        icon={Puzzle}
+        onBack={handleBackClick}
+        trailing={gameState === 'playing' ? (
+          <button
+            type="button"
+            onClick={() => {
+              const confirmed = !isGameInProgress || window.confirm('Are you sure you want to change settings? Your progress will be lost.');
+              if (confirmed) resetGame();
+            }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
+            aria-label="Change game settings"
+          >
+            <Settings2 className="h-5 w-5" aria-hidden="true" />
+          </button>
+        ) : undefined}
+      />
 
-      <main className="max-w-5xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {/* Setup Screen */}
         {gameState === 'setup' && (
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
-            {/* Game Title - Compact */}
-            <div className="text-center mb-2">
-              <div className="inline-flex items-center justify-center w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 mb-1 sm:mb-2 shadow-lg">
-                <span className="text-xl sm:text-3xl">🧩</span>
-              </div>
-              <h2 className="text-base sm:text-xl font-bold text-brown-800 dark:text-white">
-                Memory Match
-              </h2>
-            </div>
-
             {learningContext && (
-              <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-ocean-700/40 dark:bg-ocean-900/20">
-                <BookOpen className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />
+              <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-950/20">
+                <BookOpen className="h-5 w-5 flex-none text-coral-600 dark:text-teal-300" aria-hidden="true" />
                 <p className="text-sm text-brown-700 dark:text-gray-200">
                   Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from your lesson.
                 </p>
@@ -474,6 +431,7 @@ export function MemoryMatch() {
                     mode: 'beginner',
                     category: CURATED_CATEGORIES.includes(s.category) ? s.category : 'greetings'
                   }))}
+                  aria-pressed={settings.mode === 'beginner'}
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
@@ -492,6 +450,7 @@ export function MemoryMatch() {
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
+                  aria-pressed={settings.mode === 'challenge'}
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
@@ -514,15 +473,16 @@ export function MemoryMatch() {
             {/* Category Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
-                Choose Category
+                Choose Topic
               </h3>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
                   <button
                     key={catId}
                     onClick={() => setSettings((s) => ({ ...s, category: catId }))}
+                    aria-pressed={settings.category === catId}
                     className={`
-                      p-1.5 sm:p-2 rounded-xl text-center transition-all duration-200
+                      min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
                         ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -559,6 +519,7 @@ export function MemoryMatch() {
                         pairsCount: config.pairs,
                       }))}
                       disabled={isDisabled}
+                      aria-pressed={settings.difficulty === key}
                       className={`
                         p-2 rounded-xl text-center transition-all duration-200
                         ${isDisabled 
@@ -596,7 +557,7 @@ export function MemoryMatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="w-full py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
               {isLoading ? (
                 <>
@@ -630,7 +591,7 @@ export function MemoryMatch() {
                   <span className="font-bold text-xs">{formatTime(elapsedTime)}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-coral-500 dark:text-ocean-400">
+              <div className="flex items-center gap-1 text-coral-500 dark:text-teal-400">
                 <Trophy className="w-3 h-3" />
                 <span className="font-bold text-xs">{matchedPairs.length}/{settings.pairsCount}</span>
               </div>
@@ -670,7 +631,7 @@ export function MemoryMatch() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center shadow-xl animate-bounce">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-coral-400 to-coral-600 dark:from-teal-400 dark:to-teal-600 flex items-center justify-center shadow-xl animate-bounce">
                 <span className="text-2xl sm:text-4xl">🎉</span>
               </div>
             </div>
@@ -702,15 +663,15 @@ export function MemoryMatch() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-ocean-400">{moves}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{moves}</p>
                   <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Moves</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-ocean-400">{formatTime(elapsedTime)}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{formatTime(elapsedTime)}</p>
                   <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-ocean-400">{calculateScore}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{calculateScore}</p>
                   <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
               </div>
@@ -747,7 +708,7 @@ export function MemoryMatch() {
             {/* Back to Games */}
             <Link
               to="/games"
-              className="inline-block text-coral-500 dark:text-ocean-400 hover:underline font-medium text-xs sm:text-sm"
+              className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
             >
               ← Back to Games
             </Link>
@@ -764,6 +725,6 @@ export function MemoryMatch() {
           usageLimit={getLimit('game')}
         />
       )}
-    </div>
+    </GamePage>
   );
 }
