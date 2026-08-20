@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession, useUser } from '@clerk/clerk-react';
+import { FREE_TIER_LIMITS } from '../lib/planConfig';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -230,7 +231,7 @@ export function useSubscription() {
   const getRemaining = (type: UsageType): number => {
     if (!isSignedIn) return 0;
     if (isPremium) return -1;
-    if (!usage) return 5; // Default limit
+    if (!usage) return FREE_TIER_LIMITS[type];
     
     const count = usage[`${type}_count` as keyof UsageData] as number;
     const limit = usage[`${type}_limit` as keyof UsageData] as number;
@@ -245,15 +246,7 @@ export function useSubscription() {
    */
   const getLimit = (type: UsageType): number => {
     if (isPremium) return -1;
-    if (!usage) {
-      // Default limits
-      switch (type) {
-        case 'chat': return 5;
-        case 'game': return 5;
-        case 'quiz': return 3;
-        default: return 5;
-      }
-    }
+    if (!usage) return FREE_TIER_LIMITS[type];
     return usage[`${type}_limit` as keyof UsageData] as number;
   };
 

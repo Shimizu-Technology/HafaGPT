@@ -552,3 +552,39 @@ test('public information and shared-link recovery stay clear without authenticat
 
   expect(errors.filter((error) => !error.includes('/api/share/not-found'))).toEqual([]);
 });
+
+test('shared navigation and reduced-motion behavior follow accessibility preferences', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  const animationDuration = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'animate-bounce';
+    document.body.appendChild(probe);
+    const duration = getComputedStyle(probe).animationDuration;
+    probe.remove();
+    return duration;
+  });
+  expect(animationDuration).toBe('0.001s');
+
+  const primaryNavigation = page.getByRole('navigation', { name: 'Primary' });
+  if ((page.viewportSize()?.width ?? 0) < 640) {
+    await expect(primaryNavigation).toBeVisible();
+    await expect(primaryNavigation.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
+
+    const moreButton = primaryNavigation.getByRole('button', { name: 'More ways to learn' });
+    await moreButton.focus();
+    await moreButton.click();
+    await expect(page.getByRole('dialog', { name: 'More ways to learn' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Close more navigation' })).toBeFocused();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'More ways to learn' })).toBeHidden();
+    await expect(moreButton).toBeFocused();
+  } else {
+    await expect(primaryNavigation).toBeHidden();
+  }
+
+  expect(errors).toEqual([]);
+});

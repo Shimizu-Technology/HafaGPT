@@ -1,5 +1,6 @@
 import { X, Download } from 'lucide-react';
-import { useEffect } from 'react';
+import { useRef } from 'react';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 interface ImageModalProps {
   imageUrl: string;
@@ -7,25 +8,15 @@ interface ImageModalProps {
 }
 
 export function ImageModal({ imageUrl, onClose }: ImageModalProps) {
-  // Close on ESC key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
+  useModalAccessibility({
+    isOpen: true,
+    onClose,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   const handleDownload = () => {
     // Create a temporary link and click it to download
@@ -41,14 +32,24 @@ export function ImageModal({ imageUrl, onClose }: ImageModalProps) {
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
+      role="presentation"
     >
       {/* Modal Content */}
-      <div className="relative max-w-[95vw] max-h-[95vh] p-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Image preview"
+        tabIndex={-1}
+        className="relative max-h-[95vh] max-w-[95vw] p-4"
+        onClick={(event) => event.stopPropagation()}
+      >
         {/* Close Button */}
         <button
+          ref={closeButtonRef}
           onClick={onClose}
           className="absolute -top-12 right-0 p-2 rounded-lg bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-700 transition-all duration-200 shadow-lg"
-          aria-label="Close"
+          aria-label="Close image preview"
         >
           <X className="w-6 h-6" />
         </button>
@@ -77,4 +78,3 @@ export function ImageModal({ imageUrl, onClose }: ImageModalProps) {
     </div>
   );
 }
-

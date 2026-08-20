@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Info, X, Volume2 } from 'lucide-react';
 
 interface TTSDisclaimerProps {
@@ -17,6 +17,20 @@ interface TTSDisclaimerProps {
  */
 export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDisclaimerProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const disclosureId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!showTooltip) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowTooltip(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showTooltip]);
 
   const shortText = "Synthetic AI audio — native-speaker review pending";
   const disclosure = "Most HåfaGPT pronunciation audio is generated with AI and has not yet been approved by a named native Chamorro reviewer. Use it as a listening aid, not as the pronunciation authority.";
@@ -57,11 +71,13 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
     return (
       <div className={`relative inline-flex ${className}`}>
         <button
+          ref={triggerRef}
           onClick={() => setShowTooltip(!showTooltip)}
           className="p-1.5 rounded-lg bg-amber-100/80 dark:bg-amber-900/30 hover:bg-amber-200 dark:hover:bg-amber-800/40 transition-colors"
           aria-label="Audio pronunciation note"
           title="Audio pronunciation note"
           aria-expanded={showTooltip}
+          aria-controls={showTooltip ? disclosureId : undefined}
         >
           <Volume2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
         </button>
@@ -73,7 +89,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
               className="fixed inset-0 z-40 sm:hidden" 
               onClick={() => setShowTooltip(false)} 
             />
-            <div className="absolute z-50 bottom-full right-0 mb-2 w-72 p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-lg shadow-xl">
+            <div id={disclosureId} role="note" className="absolute z-50 bottom-full right-0 mb-2 w-72 p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-lg shadow-xl">
               {/* Arrow */}
               <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-white dark:bg-slate-800 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
               
@@ -85,6 +101,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                   </div>
                   <button 
                     onClick={() => setShowTooltip(false)}
+                    aria-label="Close audio pronunciation note"
                     className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded"
                   >
                     <X className="w-4 h-4 text-brown-400" />
@@ -106,12 +123,14 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
   return (
     <div className={`relative inline-flex ${className}`}>
       <button
+        ref={triggerRef}
         onClick={() => setShowTooltip(!showTooltip)}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         className="p-1 rounded-full hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors group"
         aria-label="Audio quality note"
         aria-expanded={showTooltip}
+        aria-controls={showTooltip ? disclosureId : undefined}
       >
         <Info className="w-4 h-4 text-amber-500 dark:text-amber-400 group-hover:text-amber-600 dark:group-hover:text-amber-300" />
       </button>
@@ -123,7 +142,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
             className="fixed inset-0 z-40 sm:hidden" 
             onClick={() => setShowTooltip(false)} 
           />
-          <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-4 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-xl shadow-xl">
+          <div id={disclosureId} role="note" className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-4 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-xl shadow-xl">
             {/* Arrow */}
             <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-slate-800 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
             
@@ -137,6 +156,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
+                  aria-label="Close audio quality note"
                   className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded sm:hidden"
                 >
                   <X className="w-4 h-4 text-brown-400" />

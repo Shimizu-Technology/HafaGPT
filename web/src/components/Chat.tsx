@@ -1,6 +1,6 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Share2, Link2, Check, Copy, X } from 'lucide-react';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { 
@@ -30,10 +30,10 @@ import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentLabel, getChatIntentPlaceholder } from '../lib/chatIntent';
 import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
 import { browserStorage } from '../lib/browserStorage';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -63,7 +63,7 @@ export function Chat() {
     return null;
   });
   
-  const { sendMessageStream, cancelMessage, resetSession, loading, error, setError } = useChatbot();
+  const { sendMessageStream, cancelMessage, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
@@ -100,6 +100,23 @@ export function Chat() {
   
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const exportDialogRef = useRef<HTMLDivElement>(null);
+  const exportCancelRef = useRef<HTMLButtonElement>(null);
+  const shareDialogRef = useRef<HTMLDivElement>(null);
+  const shareCloseRef = useRef<HTMLButtonElement>(null);
+
+  useModalAccessibility({
+    isOpen: showExportModal,
+    onClose: () => setShowExportModal(false),
+    dialogRef: exportDialogRef,
+    initialFocusRef: exportCancelRef,
+  });
+  useModalAccessibility({
+    isOpen: showShareModal,
+    onClose: () => setShowShareModal(false),
+    dialogRef: shareDialogRef,
+    initialFocusRef: shareCloseRef,
+  });
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
 
@@ -299,15 +316,11 @@ export function Chat() {
         e.preventDefault();
         messageInputRef.current?.focus();
       }
-      // Escape - Close modal
-      if (e.key === 'Escape') {
-        setShowClearConfirm(false);
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [messages.length]);
+  }, []);
 
   const pinInitialExchangeToTop = shouldPinInitialExchangeToTop(messages);
 
@@ -765,26 +778,6 @@ export function Chat() {
     }
   };
 
-  const handleClearChat = async () => {
-    if (activeConversationId) {
-      // Delete the conversation from the database
-      try {
-        await deleteConversationMutation.mutateAsync(activeConversationId);
-        setActiveConversationId(null);
-        browserStorage.remove('active_conversation_id');
-      } catch (err) {
-        console.error('Failed to delete conversation:', err);
-        setError('Failed to clear conversation');
-        return;
-      }
-    }
-    
-    setMessages([]);
-    setShowClearConfirm(false);
-    setError(null);
-    resetSession(); // Start a new conversation session
-  };
-
   const handleRenameConversation = async (conversationId: string, title: string) => {
     try {
       await updateConversationTitleMutation.mutateAsync({ conversationId, title });
@@ -907,7 +900,7 @@ End of Export
   };
 
   return (
-    <div className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
+    <main id="main-content" className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
       {/* Public Banner - Only show if not signed in */}
       {!isSignedIn && (
         <div className="fixed top-0 left-0 right-0 z-50">
@@ -1151,9 +1144,16 @@ End of Export
 
       {/* Export Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Export Chat History</h3>
+        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" role="presentation">
+          <div
+            ref={exportDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="export-chat-title"
+            tabIndex={-1}
+            className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up"
+          >
+            <h2 id="export-chat-title" className="text-lg font-bold text-brown-800 dark:text-white mb-2">Export chat history</h2>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-5">
               Choose your preferred format to download your conversation.
             </p>
@@ -1163,7 +1163,7 @@ End of Export
                 className="w-full px-4 py-3 bg-teal-500 hover:bg-teal-600 dark:bg-ocean-500 dark:hover:bg-ocean-600 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-lg">📄</span>
+                  <FileText className="h-5 w-5" aria-hidden="true" />
                   <span>Text File (.txt)</span>
                 </span>
                 <span className="text-xs opacity-80 group-hover:opacity-100">Readable format</span>
@@ -1173,12 +1173,13 @@ End of Export
                 className="w-full px-4 py-3 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-lg">📊</span>
+                  <Braces className="h-5 w-5" aria-hidden="true" />
                   <span>JSON File (.json)</span>
                 </span>
                 <span className="text-xs opacity-80 group-hover:opacity-100">Structured data</span>
               </button>
               <button
+                ref={exportCancelRef}
                 onClick={() => setShowExportModal(false)}
                 className="w-full px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium mt-2"
               >
@@ -1191,15 +1192,25 @@ End of Export
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowShareModal(false)}>
-          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowShareModal(false)} role="presentation">
+          <div
+            ref={shareDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-chat-title"
+            tabIndex={-1}
+            className="max-h-[calc(100dvh-2rem)] overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
+              <h2 id="share-chat-title" className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
                 <Share2 className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
                 Share Conversation
-              </h3>
+              </h2>
               <button
+                ref={shareCloseRef}
                 onClick={() => setShowShareModal(false)}
+                aria-label="Close share conversation"
                 className="p-1.5 hover:bg-cream-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-brown-500 dark:text-gray-400" />
@@ -1250,7 +1261,7 @@ End of Export
                 {/* View count */}
                 {shareInfo.view_count !== undefined && shareInfo.view_count > 0 && (
                   <p className="text-xs text-brown-500 dark:text-gray-500 flex items-center gap-1">
-                    <span>👁️</span>
+                    <Eye className="h-4 w-4" aria-hidden="true" />
                     {shareInfo.view_count} view{shareInfo.view_count !== 1 ? 's' : ''}
                   </p>
                 )}
@@ -1282,31 +1293,6 @@ End of Export
         </div>
       )}
 
-      {/* Clear Confirmation Modal */}
-      {showClearConfirm && (
-        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up">
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Clear conversation?</h3>
-            <p className="text-sm text-brown-600 dark:text-gray-400 mb-4">
-              This permanently deletes the conversation and its messages. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowClearConfirm(false)}
-                className="flex-1 px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleClearChat}
-                className="flex-1 px-4 py-2.5 bg-hibiscus-600 dark:bg-red-600 text-white rounded-xl hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors font-medium"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
 
       {/* Toast Notification */}
@@ -1336,6 +1322,6 @@ End of Export
           usageLimit={getLimit('chat')}
         />
       )}
-    </div>
+    </main>
   );
 }

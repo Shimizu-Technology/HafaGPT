@@ -379,7 +379,7 @@ gunicorn api.main:app -w 3 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
   - Effect: Rare edge case where cancel doesn't work
   - Impact: Minimal - response still completes, just not cancelled
 
-**Bottom line:** Freemium limits (5 chats/day, etc.) work perfectly. Only anti-abuse rate limiting is slightly relaxed.
+**Bottom line:** Freemium limits (8 chats, 10 games, and 5 quizzes per day) work across workers because usage is stored in PostgreSQL. Only anti-abuse rate limiting is slightly relaxed.
 
 ---
 
@@ -1536,4 +1536,3 @@ Leaderboard showing top 5-10 most active users:
 | **Word of the Day filtering** | Added safe category filtering + blocklist to ensure family-friendly vocabulary (no inappropriate words) |
 | **RAG connection stability** | Added retry logic for database connections to handle Neon serverless cold starts and SSL drops |
 | **Icon centering** | Fixed off-centered icons for theme toggles and speak buttons across all pages |
-
