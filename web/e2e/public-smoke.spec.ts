@@ -181,7 +181,7 @@ test('pre-migration cached page recovers without clearing learner browser data',
 
   await page.goto('/?legacy_profile=1');
 
-  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible({ timeout: 6_000 });
   await expect(page).not.toHaveURL(/__hafagpt_recovery=/);
   expect(legacyShellLoads).toBe(2);
   await expect.poll(() => page.evaluate(async () => ({
@@ -281,6 +281,27 @@ test('persistent initial route failure stops after one recovery attempt', async 
   await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
   await expect(page).toHaveURL(/__hafagpt_recovery=/);
+});
+
+test('returning profile still starts when persistent browser storage is unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('Simulated unavailable profile storage', 'SecurityError');
+      },
+    });
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible({ timeout: 6_000 });
+  await expect(page.locator('[data-hafagpt-startup-status]')).toHaveCount(0);
+  await expect(page.locator('html')).toHaveAttribute('data-hafagpt-booted', 'true');
+
+  await page.goto('/games');
+  await expect(page.getByRole('heading', { name: 'We could not check your sign-in' })).toBeVisible({ timeout: 6_000 });
+  await expect(page.getByRole('link', { name: 'Return home' })).toBeVisible();
 });
 
 test('public learner can reach the dictionary and search it', async ({ page }) => {

@@ -31,6 +31,7 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentPlaceholder } from '../lib/chatIntent';
 import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
+import { browserStorage } from '../lib/browserStorage';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -56,7 +57,7 @@ export function Chat() {
   // If first login, start with new chat. If page refresh, restore their conversation.
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      const savedId = localStorage.getItem('active_conversation_id');
+      const savedId = browserStorage.get('active_conversation_id');
       // Only restore if user is already signed in (page refresh scenario)
       // For fresh login, this will be null and we'll start with new chat
       return savedId;
@@ -119,7 +120,7 @@ export function Chat() {
     if (isLoaded && !isSignedIn) {
       setActiveConversationId(null);
       setMessages([]);
-      localStorage.removeItem('active_conversation_id');
+      browserStorage.remove('active_conversation_id');
     }
   }, [isLoaded, isSignedIn]);
 
@@ -183,7 +184,7 @@ export function Chat() {
     if (isSignedIn === false) {
         setMessages([]);
       setActiveConversationId(null);
-      localStorage.removeItem('active_conversation_id');
+      browserStorage.remove('active_conversation_id');
       // Invalidate all queries to clear cache
       queryClient.clear();
       }
@@ -253,7 +254,7 @@ export function Chat() {
     if (isSignedIn === false) {
       setMessages([]);
       setActiveConversationId(null);
-      localStorage.removeItem('active_conversation_id');
+      browserStorage.remove('active_conversation_id');
       // Invalidate all queries to clear cache
       queryClient.clear();
     }
@@ -279,7 +280,7 @@ export function Chat() {
     // Start a new chat by clearing the active conversation
     setActiveConversationId(null);
     setMessages([]);
-    localStorage.removeItem('active_conversation_id');
+    browserStorage.remove('active_conversation_id');
     
     // Send the message after a brief delay to ensure state is updated
     const messageToSend = messageFromUrl;
@@ -524,7 +525,7 @@ export function Chat() {
         conversationPromise = createConversationMutation.mutateAsync(generatedTitle)
           .then((newConv) => {
             setActiveConversationId(newConv.id);
-            localStorage.setItem('active_conversation_id', newConv.id);
+            browserStorage.set('active_conversation_id', newConv.id);
             return newConv.id;
           });
       }
@@ -658,7 +659,7 @@ export function Chat() {
       // Don't create conversation yet - just clear messages
       // Conversation will be created when user sends first message
       setActiveConversationId(null);
-      localStorage.removeItem('active_conversation_id');
+      browserStorage.remove('active_conversation_id');
       setMessages([]);
       // Ensure switching state is cleared (prevents loading flash)
       setIsSwitchingConversation(false);
@@ -691,7 +692,7 @@ export function Chat() {
     queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     
     setActiveConversationId(conversationId);
-    localStorage.setItem('active_conversation_id', conversationId);
+    browserStorage.set('active_conversation_id', conversationId);
     
     // Always close sidebar for cleaner UX
     setSidebarOpen(false);
@@ -703,7 +704,7 @@ export function Chat() {
       if (conversationId === activeConversationId) {
         setMessages([]);
         setActiveConversationId(null);
-        localStorage.removeItem('active_conversation_id');
+        browserStorage.remove('active_conversation_id');
       }
     } catch (err) {
       console.error('Failed to delete conversation:', err);
@@ -762,7 +763,7 @@ export function Chat() {
       try {
         await deleteConversationMutation.mutateAsync(activeConversationId);
         setActiveConversationId(null);
-        localStorage.removeItem('active_conversation_id');
+        browserStorage.remove('active_conversation_id');
       } catch (err) {
         console.error('Failed to delete conversation:', err);
         setError('Failed to clear conversation');
@@ -818,7 +819,7 @@ export function Chat() {
 
     const exportData = {
       exportedAt: new Date().toISOString(),
-      sessionId: localStorage.getItem('chamorro_session_id'),
+      sessionId: browserStorage.get('chamorro_session_id'),
       messageCount: messages.length,
       mode: mode,
       messages: messages.map(msg => ({
@@ -836,7 +837,7 @@ export function Chat() {
       // Create text format
       const textContent = `Chamorro Language Tutor - Chat Export
 Exported: ${new Date().toLocaleString()}
-Session: ${localStorage.getItem('chamorro_session_id')}
+Session: ${browserStorage.get('chamorro_session_id')}
 Total Messages: ${messages.length}
 Mode: ${mode}
 

@@ -9,6 +9,7 @@ import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuer
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
+import { browserStorage } from '../lib/browserStorage';
 
 interface FlashcardData {
   sourceId?: string;
@@ -85,7 +86,7 @@ export function FlashcardViewer() {
   const saveToLocalStorage = (cards: FlashcardData[]) => {
     if (cardTypeParam === 'custom' && topic) {
       const tempCardsKey = `flashcards_temp_${topic}`;
-      localStorage.setItem(tempCardsKey, JSON.stringify({
+      browserStorage.set(tempCardsKey, JSON.stringify({
         cards: cards,
         timestamp: Date.now()
       }));
@@ -96,7 +97,7 @@ export function FlashcardViewer() {
   const clearLocalStorage = () => {
     if (topic) {
       const tempCardsKey = `flashcards_temp_${topic}`;
-      localStorage.removeItem(tempCardsKey);
+      browserStorage.remove(tempCardsKey);
     }
   };
 
@@ -146,7 +147,7 @@ export function FlashcardViewer() {
     
     // Clean up any stale localStorage data from old "custom" mode
     const tempCardsKey = `flashcards_temp_${topic}`;
-    const tempCardsData = localStorage.getItem(tempCardsKey);
+    const tempCardsData = browserStorage.get(tempCardsKey);
     
     if (tempCardsData) {
       try {
@@ -156,11 +157,11 @@ export function FlashcardViewer() {
         
         // Clear if older than 1 hour
         if (!timestamp || timestamp < oneHourAgo) {
-          localStorage.removeItem(tempCardsKey);
+          browserStorage.remove(tempCardsKey);
         }
       } catch (err) {
         console.error('Failed to parse temp cards:', err);
-        localStorage.removeItem(tempCardsKey);
+        browserStorage.remove(tempCardsKey);
       }
     }
   }, [topic]);

@@ -4,7 +4,9 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
+import { StartupErrorBoundary } from './components/StartupErrorBoundary';
 import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
+import { browserStorage } from './lib/browserStorage';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -20,9 +22,16 @@ window.addEventListener('vite:preloadError', (event) => {
 registerSW({
   immediate: true,
   onRegisteredSW(_serviceWorkerUrl, registration) {
-    // Browsers also perform their own checks, but a bounded hourly check keeps
-    // long-running installed sessions current without requiring a manual refresh.
+    // Ask immediately on every current-page startup. Returning mobile profiles
+    // cannot depend on the browser's delayed background update schedule.
     if (registration) {
+      if (navigator.onLine) {
+        void registration.update().catch((error: unknown) => {
+          console.warn('[PWA] Initial service worker update check failed:', error);
+        });
+      }
+
+      // Keep long-running installed sessions current too.
       window.setInterval(() => {
         if (navigator.onLine) {
           void registration.update().catch((error: unknown) => {
@@ -93,7 +102,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
 function ClerkWrapper() {
   const [isDark, setIsDark] = useState(() => {
     // Check both class and localStorage on initial load
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = browserStorage.get('theme');
     return savedTheme === 'dark' || 
            (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches) ||
            document.documentElement.classList.contains('dark');
@@ -154,6 +163,8 @@ function ClerkWrapper() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ClerkWrapper />
+    <StartupErrorBoundary>
+      <ClerkWrapper />
+    </StartupErrorBoundary>
   </StrictMode>
 );

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Grid3X3, ChevronRight, Check, Sparkles } from 'lucide-react';
+import { browserStorage } from '../lib/browserStorage';
 
 export function DailyWordleCard() {
   const [isPlayed, setIsPlayed] = useState(false);
@@ -9,7 +10,7 @@ export function DailyWordleCard() {
   useEffect(() => {
     // Check if daily wordle was played today
     const dailyKey = `wordle-daily-${new Date().toDateString()}`;
-    const played = localStorage.getItem(dailyKey);
+    const played = browserStorage.get(dailyKey);
     if (played) {
       setIsPlayed(true);
       // Try to parse the number of attempts from stored data

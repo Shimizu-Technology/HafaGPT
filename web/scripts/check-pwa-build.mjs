@@ -28,6 +28,10 @@ assert(
   'The service worker must not provide a cached navigation fallback.',
 );
 assert(
+  !serviceWorker.includes('assets/'),
+  'The service worker must not precache deploy-specific application assets.',
+);
+assert(
   serviceWorker.includes('skipWaiting'),
   'The service worker must activate automatically to migrate older installations.',
 );
@@ -75,4 +79,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('PWA build checks passed: fresh HTML, one registration, legacy migration bridge, and bounded startup recovery.');
+console.log('PWA build checks passed: fresh network assets, one registration, legacy migration bridge, and bounded startup recovery.');

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import { browserStorage } from '../lib/browserStorage';
 
 export type Theme = 'light' | 'dark';
 
@@ -16,7 +17,7 @@ export function useTheme() {
   
   // Initialize from localStorage for fast initial render
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = browserStorage.get('theme');
     if (saved === 'dark' || saved === 'light') return saved;
     return 'light';
   });
@@ -30,7 +31,7 @@ export function useTheme() {
       const clerkTheme = user.unsafeMetadata.preferred_theme as Theme | undefined;
       if (clerkTheme && (clerkTheme === 'light' || clerkTheme === 'dark')) {
         setThemeState(clerkTheme);
-        localStorage.setItem('theme', clerkTheme);
+        browserStorage.set('theme', clerkTheme);
       }
       setHasSyncedWithClerk(true);
     }
@@ -38,7 +39,7 @@ export function useTheme() {
 
   // Apply theme to document
   useEffect(() => {
-    localStorage.setItem('theme', theme);
+    browserStorage.set('theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -49,7 +50,7 @@ export function useTheme() {
   // Set theme and optionally save to Clerk
   const setTheme = useCallback(async (newTheme: Theme, saveToClerk = true) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    browserStorage.set('theme', newTheme);
     
     // Save to Clerk if user is signed in
     if (saveToClerk && isSignedIn && user) {

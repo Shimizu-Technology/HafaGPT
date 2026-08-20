@@ -1,0 +1,40 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { browserStorage } from './browserStorage';
+
+describe('browserStorage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.localStorage.clear();
+  });
+
+  it('uses persistent local storage when it is available', () => {
+    expect(browserStorage.set('storage-test-persistent', 'saved')).toBe(true);
+    expect(browserStorage.get('storage-test-persistent')).toBe('saved');
+    expect(window.localStorage.getItem('storage-test-persistent')).toBe('saved');
+  });
+
+  it('falls back to in-memory state when the browser rejects storage access', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+
+    expect(browserStorage.set('storage-test-fallback', 'kept')).toBe(false);
+    expect(browserStorage.get('storage-test-fallback')).toBe('kept');
+  });
+
+  it('removes fallback state even when persistent storage is unavailable', () => {
+    browserStorage.set('storage-test-remove', 'temporary');
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Storage unavailable', 'SecurityError');
+    });
+
+    expect(browserStorage.remove('storage-test-remove')).toBe(false);
+    expect(browserStorage.get('storage-test-remove')).toBeNull();
+  });
+});

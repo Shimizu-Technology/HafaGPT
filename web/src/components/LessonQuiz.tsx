@@ -3,6 +3,7 @@ import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
 import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
+import { browserStorage } from '../lib/browserStorage';
 
 interface LessonQuizProps {
   topic: LearningTopic;
@@ -27,7 +28,7 @@ function getStorageKey(topicId: string) {
 
 function saveQuizState(state: SavedQuizState) {
   try {
-    localStorage.setItem(getStorageKey(state.topicId), JSON.stringify(state));
+    browserStorage.set(getStorageKey(state.topicId), JSON.stringify(state));
   } catch (e) {
     console.warn('Failed to save quiz state:', e);
   }
@@ -35,7 +36,7 @@ function saveQuizState(state: SavedQuizState) {
 
 function loadQuizState(topicId: string): SavedQuizState | null {
   try {
-    const saved = localStorage.getItem(getStorageKey(topicId));
+    const saved = browserStorage.get(getStorageKey(topicId));
     if (!saved) return null;
     
     const state: SavedQuizState = JSON.parse(saved);
@@ -56,7 +57,7 @@ function loadQuizState(topicId: string): SavedQuizState | null {
 
 function clearQuizState(topicId: string) {
   try {
-    localStorage.removeItem(getStorageKey(topicId));
+    browserStorage.remove(getStorageKey(topicId));
   } catch (e) {
     console.warn('Failed to clear quiz state:', e);
   }
@@ -468,4 +469,3 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     </div>
   );
 }
-
