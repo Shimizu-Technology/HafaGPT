@@ -39,6 +39,8 @@ export function ConversationSidebar({
   const closeSidebarRef = useRef<HTMLButtonElement>(null);
   const deleteDialogRef = useRef<HTMLDivElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
+  const conversationButtonRefs = useRef(new Map<string, HTMLButtonElement>());
+  const restoreConversationFocusRef = useRef<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; conversationId: string } | null>(null);
 
   useModalAccessibility({
@@ -89,6 +91,13 @@ export function ConversationSidebar({
       setEditingTitle('');
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (editingId === null && restoreConversationFocusRef.current) {
+      conversationButtonRefs.current.get(restoreConversationFocusRef.current)?.focus();
+      restoreConversationFocusRef.current = null;
+    }
+  }, [editingId]);
 
   const handleDoubleClick = (e: React.MouseEvent, conversation: Conversation) => {
     e.stopPropagation();
@@ -143,7 +152,8 @@ export function ConversationSidebar({
     setEditingTitle('');
   };
 
-  const handleCancel = () => {
+  const handleCancel = (conversationId: string) => {
+    restoreConversationFocusRef.current = conversationId;
     setEditingId(null);
     setEditingTitle('');
   };
@@ -155,7 +165,7 @@ export function ConversationSidebar({
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
-      handleCancel();
+      handleCancel(conversationId);
     }
   };
   return (
@@ -272,6 +282,13 @@ export function ConversationSidebar({
                           />
                         ) : (
                           <button
+                            ref={(element) => {
+                              if (element) {
+                                conversationButtonRefs.current.set(conversation.id, element);
+                              } else {
+                                conversationButtonRefs.current.delete(conversation.id);
+                              }
+                            }}
                             type="button"
                             onClick={() => onSelectConversation(conversation.id)}
                             aria-current={activeConversationId === conversation.id ? 'true' : undefined}

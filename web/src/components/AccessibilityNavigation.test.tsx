@@ -154,5 +154,10 @@ describe('shared navigation and modal accessibility', () => {
 
     expect(screen.queryByRole('menu', { name: 'Conversation actions' })).not.toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
+
+    fireEvent.doubleClick(screen.getByRole('button', { name: 'School phrases' }));
+    const reopenedRenameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
+    fireEvent.keyDown(reopenedRenameInput, { key: 'Escape' });
+    expect(screen.getByRole('button', { name: 'School phrases' })).toHaveFocus();
   });
 });
