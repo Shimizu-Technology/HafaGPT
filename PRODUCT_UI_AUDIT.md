@@ -159,9 +159,10 @@ on the final commit, and production verification after merge.
    and Simon Says now share navigation, setup,
    progress, audio disclosure, and completion patterns. Memory Match, Word
    Scramble, and Hangman now use the same shell, compact swipeable topic choice,
-   selected-state semantics, and guarded exits. The remaining action and
-   challenge games still need the shared shell; their mechanics and scoring will
-   stay unchanged.
+   selected-state semantics, and guarded exits. Falling Words and Word Catch now
+   use the same compact setup, in-game pause/settings controls, and deterministic
+   exits. The remaining challenge games still need the shared shell; their
+   mechanics and scoring will stay unchanged.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
    information pages.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
