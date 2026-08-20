@@ -22,6 +22,22 @@ _SCHOOL_CARD_TOKEN_PATTERNS = {
     ),
 }
 
+_MSY_TURN_OPENING_PATTERN = re.compile(
+    r"(?:^|\n)\s*(?:[-*>•]\s*)?M(?:[.\t ·_-]{0,3})S"
+    r"(?:[.\t ·_-]{0,3})Y\s*[.,!:;—-]",
+    re.IGNORECASE,
+)
+_SYM_TURN_SIGNOFF_PATTERN = re.compile(
+    r"(?:^|\n)\s*(?:[-*>•]\s*)?(?:esta\s*,?\s*)?"
+    r"S(?:[.\t ·_-]{0,3})Y(?:[.\t ·_-]{0,3})M\s*[.!?]*\s*$",
+    re.IGNORECASE,
+)
+_CHAMORRO_EXCHANGE_MARKER_PATTERN = re.compile(
+    r"\b(?:kao|pat|trabiha|kada|betnes|kulot|polo|na|"
+    r"p[åa]['’]?go|h[åa]fa|familia|yu['’]?os|ma['’]?[åa]se)\b",
+    re.IGNORECASE,
+)
+
 
 _EXPLICIT_SCHOOL_MESSAGE_PATTERNS = (
     re.compile(
@@ -132,6 +148,60 @@ def school_context_card_ids(
         IMAGE_CONTEXT_CARD_IDS[token]
         for token, pattern in _SCHOOL_CARD_TOKEN_PATTERNS.items()
         if pattern.search(text)
+    )
+
+
+def contextual_school_exchange_card_ids(message: str) -> tuple[str, ...]:
+    """Return reviewed cards for a strongly structured pasted school exchange.
+
+    A bare acronym or a generic request mentioning both acronyms is not enough.
+    This narrow path requires MSY in greeting position, SYM in sign-off position,
+    and multiple Chamorro/local-language markers in the intervening exchange. It
+    lets a pasted transcript retain the same reviewed context as a screenshot
+    without labeling every use of these acronyms as Guam school usage.
+    """
+
+    text = message or ""
+    signoff_match = _SYM_TURN_SIGNOFF_PATTERN.search(text)
+    if not signoff_match:
+        return ()
+
+    # Select an MSY boundary only when that same dialogue turn already looks
+    # Chamorro/local. A generic ``MSY!`` line in the user's framing must not
+    # absorb later Chamorro text and become a false exchange opening.
+    greeting_match = None
+    for candidate in _MSY_TURN_OPENING_PATTERN.finditer(text, 0, signoff_match.start()):
+        line_end = text.find("\n", candidate.end(), signoff_match.start())
+        if line_end == -1:
+            line_end = signoff_match.start()
+        greeting_turn = text[candidate.end() : line_end]
+        greeting_markers = {
+            match.group(0).casefold()
+            for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(greeting_turn)
+        }
+        if len(greeting_markers) >= 2:
+            greeting_match = candidate
+            break
+
+    if greeting_match is None:
+        return ()
+
+    # Count distinct message-body evidence. ``Esta`` is deliberately excluded:
+    # when it introduces the accepted SYM sign-off it must not help prove the
+    # school context that authorizes the sign-off card. Framing text outside the
+    # matched exchange is also excluded so user instructions cannot supply the
+    # language evidence for an otherwise generic acronym exchange.
+    exchange_body = text[greeting_match.end() : signoff_match.start()]
+    local_markers = {
+        match.group(0).casefold()
+        for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(exchange_body)
+    }
+    if len(local_markers) < 2:
+        return ()
+
+    return (
+        IMAGE_CONTEXT_CARD_IDS["SYM"],
+        IMAGE_CONTEXT_CARD_IDS["MSY"],
     )
 
 
@@ -323,6 +393,7 @@ def resolve_school_message_context(
                     message,
                     school_announcement=school_announcement,
                 ),
+                *contextual_school_exchange_card_ids(message),
             )
         )
     )
