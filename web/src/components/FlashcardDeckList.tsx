@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Users, Utensils, Hash, Activity, MessageCircle, Zap, Sparkles, Library } from 'lucide-react';
+import { Activity, ArrowRight, BookOpen, Hash, Layers3, Library, MessageCircle, Sparkles, Users, Utensils, Zap } from 'lucide-react';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 interface Deck {
   topic: string;
@@ -100,162 +101,107 @@ const categoryIcons: Record<string, React.ReactNode> = {
 export function FlashcardDeckList() {
   const [cardType, setCardType] = useState<'curated' | 'dictionary'>('curated');
   const { data: vocabCategories } = useVocabularyCategories();
-
-  // Dictionary categories for flashcards
   const dictionaryCategories = vocabCategories?.categories || [];
+  const dictionaryWordCount = vocabCategories?.total_words?.toLocaleString() || '10,000+';
+  const decks = cardType === 'curated' ? curatedDecks : dictionaryCategories;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
-              <h1 className="text-xl font-semibold text-brown-800 dark:text-white">
-                Study Chamorro
-              </h1>
-            </div>
-          </div>
-
-          {/* My Decks Button */}
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Flashcards"
+        subtitle="Build recall with short, focused decks"
+        icon={Layers3}
+        trailing={(
           <Link
             to="/flashcards/my-decks"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-300 hover:bg-coral-200 dark:hover:bg-ocean-800/50 transition-colors font-medium"
+            aria-label="Open my decks"
+            className="flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 dark:text-ocean-300 dark:hover:bg-ocean-950"
           >
-            <Library className="w-4 h-4" />
-            <span className="hidden sm:inline">My Decks</span>
+            <Library className="h-5 w-5" aria-hidden="true" />
+            <span className="hidden sm:inline">My decks</span>
           </Link>
-        </div>
-      </div>
+        )}
+      />
 
-      {/* Content - extra bottom padding on mobile for bottom nav */}
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6 animate-page-enter">
-        {/* Card Type Toggle */}
-        <div className="mb-6">
-          <p className="text-brown-700 dark:text-gray-200 mb-4 font-medium">
-            Choose a topic to start studying flashcards
-          </p>
-          
-          <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-slate-800 rounded-xl border-2 border-coral-200/30 dark:border-ocean-500/30 shadow-sm w-fit">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+        <div className="mb-6 max-w-2xl">
+          <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice</p>
+          <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Build recall one card at a time</h2>
+          <p className="mt-2 text-brown-600 dark:text-gray-300">Choose a ready-made beginner deck or practice words from the full dictionary.</p>
+        </div>
+
+        <div className="mb-7">
+          <div className="grid max-w-xl grid-cols-2 gap-1 rounded-2xl border border-cream-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800" aria-label="Flashcard source">
             <button
+              type="button"
               onClick={() => setCardType('curated')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              aria-pressed={cardType === 'curated'}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'curated'
-                  ? 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-md scale-105'
-                  : 'text-brown-600 dark:text-gray-300 hover:bg-coral-50 dark:hover:bg-ocean-900/20'
+                  ? 'bg-coral-600 text-white'
+                  : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
-              <Zap className="w-4 h-4" />
-              <span>Curated</span>
-              {cardType === 'curated' && <span className="text-xs opacity-90">(Handpicked)</span>}
+              <Zap className="h-4 w-4" aria-hidden="true" />
+              Guided decks
             </button>
-            
             <button
+              type="button"
               onClick={() => setCardType('dictionary')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+              aria-pressed={cardType === 'dictionary'}
+              className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'dictionary'
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md scale-105'
-                  : 'text-brown-600 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                  ? 'bg-coral-600 text-white'
+                  : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
-              <Sparkles className="w-4 h-4" />
-              <span>Dictionary</span>
-              {cardType === 'dictionary' && <span className="text-xs opacity-90">(10,350 words)</span>}
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Dictionary
             </button>
           </div>
-          <p className="text-xs text-brown-500 dark:text-gray-400 mt-2">
-            {cardType === 'curated' 
-              ? 'Handpicked cards with pronunciations for beginners'
-              : 'Random cards from our full dictionary for variety'}
+          <p className="mt-2 text-sm text-brown-500 dark:text-gray-400">
+            {cardType === 'curated'
+              ? 'Handpicked vocabulary with beginner-friendly pronunciations.'
+              : `Random practice from ${dictionaryWordCount} dictionary words.`}
           </p>
         </div>
 
-        {/* Curated Deck Grid */}
-        {cardType === 'curated' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {curatedDecks.map((deck) => (
-              <Link
-                key={deck.topic}
-                to={`/flashcards/${deck.topic}?type=curated`}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-5 hover:shadow-xl transition-all duration-200 group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/40 dark:to-ocean-800/40 text-coral-600 dark:text-ocean-400 group-hover:scale-110 transition-transform shadow-sm">
-                    {deck.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-brown-800 dark:text-white mb-1 text-lg">
-                      {deck.title}
-                    </h3>
-                    <p className="text-sm text-brown-600 dark:text-gray-300 mb-3">
-                      {deck.description}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs font-medium text-brown-500 dark:text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        {deck.cardCount} cards
-                      </span>
-                      <span>•</span>
-                      <span className={`px-2 py-0.5 rounded-full ${
-                        deck.difficulty === 'Beginner' 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                      }`}>
-                        {deck.difficulty}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+        <div className="mb-3 flex items-end justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-brown-950 dark:text-white">{cardType === 'curated' ? 'Choose a guided deck' : 'Choose a dictionary topic'}</h3>
+            <p className="text-sm text-brown-500 dark:text-gray-400">Each session is short enough to finish in a few minutes.</p>
           </div>
-        )}
+          <span className="hidden rounded-full bg-cream-200 px-3 py-1 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline">{decks.length} topics</span>
+        </div>
 
-        {/* Dictionary Deck Grid */}
-        {cardType === 'dictionary' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {dictionaryCategories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/flashcards/${category.id}?type=dictionary`}
-                className="bg-white dark:bg-slate-800 rounded-2xl p-5 hover:shadow-xl transition-all duration-200 group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/40 dark:to-pink-900/40 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform shadow-sm">
-                    {categoryIcons[category.id] || <BookOpen className="w-6 h-6" />}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-brown-800 dark:text-white mb-1 text-lg">
-                      {category.title}
-                    </h3>
-                    <p className="text-sm text-brown-600 dark:text-gray-300 mb-3">
-                      {category.description}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs font-medium text-brown-500 dark:text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        {category.word_count} words
-                      </span>
-                      <span>•</span>
-                      <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                        Random
-                      </span>
-                    </div>
-                  </div>
-                </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {cardType === 'curated'
+            ? curatedDecks.map((deck) => (
+              <Link key={deck.topic} to={`/flashcards/${deck.topic}?type=curated`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
+                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">{deck.icon}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-lg font-bold text-brown-950 dark:text-white">{deck.title}</span>
+                  <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{deck.description}</span>
+                  <span className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-brown-500 dark:text-gray-400">
+                    <span>{deck.cardCount} cards</span><span aria-hidden="true">•</span><span>{deck.difficulty}</span>
+                  </span>
+                </span>
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </Link>
+            ))
+            : dictionaryCategories.map((category) => (
+              <Link key={category.id} to={`/flashcards/${category.id}?type=dictionary`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
+                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-ocean-100 text-ocean-700 dark:bg-ocean-950 dark:text-ocean-300">{categoryIcons[category.id] || <BookOpen className="h-6 w-6" />}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-lg font-bold text-brown-950 dark:text-white">{category.title}</span>
+                  <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{category.description}</span>
+                  <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-gray-400">{category.word_count} words • Random practice</span>
+                </span>
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
             ))}
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </main>
+    </LearnerPageShell>
   );
 }
-
