@@ -1,81 +1,64 @@
-import { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { DailyWord } from './DailyWord';
-import { usePromoStatus } from '../hooks/useSubscription';
+import { GraduationCap, Languages, MessageCircle } from 'lucide-react';
 
-export function WelcomeMessage() {
-  const [showModes, setShowModes] = useState(false);
-  const { data: promo } = usePromoStatus();
-  const isChristmasTheme = promo?.theme === 'christmas';
-  const isNewYearTheme = promo?.theme === 'newyear';
+interface WelcomeMessageProps {
+  onSelect: (intent: 'translate' | 'ask' | 'practice') => void;
+  disabled?: boolean;
+}
 
+const STARTERS = [
+  {
+    label: 'Translate a message',
+    description: 'Understand a phrase or school notice',
+    intent: 'translate' as const,
+    icon: Languages,
+  },
+  {
+    label: 'Ask a question',
+    description: 'Learn about a word, grammar, or culture',
+    intent: 'ask' as const,
+    icon: MessageCircle,
+  },
+  {
+    label: 'Practice together',
+    description: 'Work through a useful everyday phrase',
+    intent: 'practice' as const,
+    icon: GraduationCap,
+  },
+] as const;
+
+export function WelcomeMessage({ onSelect, disabled = false }: WelcomeMessageProps) {
   return (
-    <div className="flex items-start justify-center px-4 py-4 sm:py-6 w-full">
-      <div className="w-full sm:max-w-2xl animate-fade-in">
-        {/* Header */}
-        <div className="text-center mb-4 sm:mb-6">
-          <div className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-4 rounded-2xl flex items-center justify-center text-2xl sm:text-4xl shadow-xl ${
-            isChristmasTheme 
-              ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/30' 
-              : 'bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 shadow-coral-500/30 dark:shadow-ocean-500/30'
-          }`}>
-            {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-          </div>
-          <h1 className="text-xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">Håfa Adai!</h1>
-          <p className="text-sm sm:text-lg text-brown-600 dark:text-gray-400">I'm your Chamorro language tutor.</p>
-        </div>
-
-        {/* Daily Word Widget */}
-        <div className="mb-4 sm:mb-6">
-          <DailyWord />
-        </div>
-
-        {/* Mode Explanations - Collapsible on mobile, always visible on desktop */}
-        <div className="bg-cream-50 dark:bg-gray-800/50 rounded-2xl border border-cream-300 dark:border-gray-700 overflow-hidden">
-          {/* Mobile: Collapsible header */}
-          <button
-            onClick={() => setShowModes(!showModes)}
-            className="sm:hidden w-full p-3 flex items-center justify-between text-left"
-          >
-            <p className="text-xs text-brown-700 dark:text-gray-300 font-medium">
-              Ask me about Chamorro words, phrases, grammar, or culture!
-            </p>
-            <ChevronDown className={`w-4 h-4 text-brown-500 dark:text-gray-400 transition-transform flex-shrink-0 ml-2 ${showModes ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Desktop: Always visible header */}
-          <div className="hidden sm:block p-5 pb-3">
-            <p className="text-sm text-brown-700 dark:text-gray-300 font-medium">
-            Ask me about Chamorro words, phrases, grammar, or culture!
+    <div className="flex w-full items-start justify-center px-1 py-2 sm:px-4 sm:py-8">
+      <div className="w-full max-w-2xl animate-fade-in">
+        <div className="mb-5 text-center sm:mb-7">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">
+            <MessageCircle className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <h1 className="mt-3 text-2xl font-bold text-brown-950 dark:text-white sm:text-3xl">How can I help?</h1>
+          <p className="mx-auto mt-1.5 max-w-lg text-sm leading-relaxed text-brown-600 dark:text-gray-300 sm:text-base">
+            Translate Chamorro, ask about Guam, or learn a phrase step by step.
           </p>
-          </div>
+        </div>
 
-          {/* Mode cards - Collapsible on mobile */}
-          <div className={`${showModes ? 'block' : 'hidden'} sm:block px-3 pb-3 sm:px-5 sm:pb-5`}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-[10px] sm:text-xs">
-              <div className="flex items-center gap-2 p-2 sm:p-2.5 bg-cream-100 dark:bg-gray-800 rounded-xl border border-cream-300 dark:border-gray-700">
-                <span className="text-sm sm:text-base flex-shrink-0">🇺🇸</span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-brown-800 dark:text-white">English</span>
-                  <span className="text-brown-500 dark:text-gray-500"> - with examples</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-2 sm:p-2.5 bg-cream-100 dark:bg-gray-800 rounded-xl border border-cream-300 dark:border-gray-700">
-                <span className="text-sm sm:text-base flex-shrink-0">🇬🇺</span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-brown-800 dark:text-white">Chamorro</span>
-                  <span className="text-brown-500 dark:text-gray-500"> - immersive</span>
-            </div>
-              </div>
-              <div className="flex items-center gap-2 p-2 sm:p-2.5 bg-cream-100 dark:bg-gray-800 rounded-xl border border-cream-300 dark:border-gray-700">
-                <span className="text-sm sm:text-base flex-shrink-0">📚</span>
-                <div className="min-w-0">
-                  <span className="font-semibold text-brown-800 dark:text-white">Learn</span>
-                  <span className="text-brown-500 dark:text-gray-500"> - detailed</span>
-            </div>
-              </div>
-            </div>
-          </div>
+        <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+          {STARTERS.map(({ label, description, intent, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => onSelect(intent)}
+              disabled={disabled}
+              aria-label={label}
+              className="group flex min-h-[84px] items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 text-left transition-colors hover:border-coral-300 hover:bg-coral-50/40 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-700 dark:hover:bg-ocean-950/20 sm:min-h-[132px] sm:flex-col sm:items-start sm:p-4"
+            >
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-cream-100 text-coral-700 group-hover:bg-coral-100 dark:bg-slate-700 dark:text-ocean-300 dark:group-hover:bg-ocean-950">
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-brown-900 dark:text-white">{label}</span>
+                <span className="mt-0.5 block text-xs leading-snug text-brown-500 dark:text-gray-400">{description}</span>
+              </span>
+            </button>
+          ))}
         </div>
       </div>
     </div>

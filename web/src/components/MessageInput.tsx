@@ -1,5 +1,5 @@
 import { useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus, GraduationCap } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus, GraduationCap, Sparkles } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
 
 // Supported file types
@@ -28,6 +28,7 @@ interface MessageInputProps {
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
+  contextLabel?: string;
   onDisabledClick?: () => void;
   loading?: boolean;
   onCancel?: () => void;
@@ -39,7 +40,7 @@ interface FileWithPreview {
   id: string; // Unique ID for React keys
 }
 
-export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabledClick, loading, onCancel }: MessageInputProps) {
+export function MessageInput({ onSend, disabled, inputRef, placeholder, contextLabel, onDisabledClick, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
@@ -78,7 +79,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
   // Auto-focus input on mount (desktop only - don't show keyboard on mobile)
   useEffect(() => {
     // Check if device is likely desktop (has fine pointer like mouse)
-    const isDesktop = window.matchMedia('(pointer: fine)').matches;
+    const isDesktop = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: fine)').matches;
     if (isDesktop && textareaRef.current && !disabled) {
       // Small delay to ensure component is fully rendered
       const timer = setTimeout(() => {
@@ -452,33 +453,40 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
           </div>
         )}
 
-        <div className="flex gap-2 sm:gap-3 items-end">
+        <div className="rounded-2xl border border-cream-300 bg-white p-1.5 shadow-sm transition-colors focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-ocean-400 dark:focus-within:ring-ocean-400/20">
+          {contextLabel && !disabled && (
+            <div className="flex items-center gap-1.5 px-2 pb-0.5 pt-1 text-[11px] font-semibold text-coral-700 dark:text-ocean-300">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>{contextLabel}</span>
+            </div>
+          )}
+          <div className="flex items-end gap-0.5 sm:gap-1">
           {/* Microphone Button */}
           <button
             onClick={isListening ? stopListening : startListening}
             disabled={disabled}
-            className={`p-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
+            className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               isListening
-                ? 'bg-red-500 text-white animate-pulse hover:bg-red-600 shadow-red-500/30'
-                : 'bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50'
+                ? 'animate-pulse bg-red-500 text-white hover:bg-red-600'
+                : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
             }`}
             aria-label={isListening ? 'Stop recording' : 'Start voice input'}
             title={isListening ? 'Stop recording' : 'Start voice input'}
           >
-            {isListening ? <Mic className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <Mic className="h-5 w-5" />
           </button>
 
           {/* Camera/File Upload Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || !canAddMoreFiles}
-            className={`p-2 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg bg-cream-100 dark:bg-gray-700 text-brown-800 dark:text-gray-100 hover:bg-cream-200 dark:hover:bg-gray-600 shadow-cream-200/50 dark:shadow-gray-700/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 self-end ${
-              selectedFiles.length > 0 ? 'ring-2 ring-coral-400 dark:ring-ocean-400' : ''
+            className={`flex h-11 flex-none items-center justify-center rounded-xl px-3 text-brown-600 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-700 ${
+              selectedFiles.length > 0 ? 'bg-coral-50 text-coral-700 ring-1 ring-coral-300 dark:bg-ocean-950 dark:text-ocean-300 dark:ring-ocean-700' : ''
             }`}
             aria-label="Upload files"
             title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
           >
-            <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Camera className="h-5 w-5" />
             {selectedFiles.length > 0 && (
               <span className="ml-1 text-xs font-bold">{selectedFiles.length}</span>
             )}
@@ -500,16 +508,16 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             onPaste={handlePaste}
             placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}
             rows={1}
-            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-[13px] sm:text-base bg-cream-50 dark:bg-gray-800 border-2 border-cream-300 dark:border-gray-700 text-brown-800 dark:text-gray-100 placeholder-brown-500 dark:placeholder-gray-400 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500/50 dark:focus:ring-ocean-400/50 focus:border-teal-500 dark:focus:border-ocean-400 transition-all duration-200 resize-none overflow-y-auto shadow-sm disabled:cursor-pointer max-h-[100px] sm:max-h-[200px]"
+            className="min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-base leading-6 text-brown-900 placeholder-brown-400 focus:outline-none disabled:cursor-pointer dark:text-gray-100 dark:placeholder-gray-500 sm:px-3"
             aria-label="Message input"
             title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            style={{ height: input.trim() ? undefined : '42px', minHeight: '42px' }}
+            style={{ height: input.trim() ? undefined : '44px', minHeight: '44px', maxHeight: '160px' }}
           />
           {loading ? (
             <button
               onClick={onCancel}
-              className="p-2 sm:px-5 sm:py-3 bg-gradient-to-br from-hibiscus-500 to-hibiscus-600 dark:from-red-600 dark:to-red-700 text-white rounded-xl sm:rounded-2xl hover:from-hibiscus-600 hover:to-hibiscus-700 dark:hover:from-red-700 dark:hover:to-red-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-hibiscus-500/20 dark:shadow-red-500/20 hover:shadow-xl hover:shadow-hibiscus-500/30 dark:hover:shadow-red-500/30 active:scale-95 self-end font-medium"
+              className="flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-xl bg-hibiscus-600 px-3 font-medium text-white transition-colors hover:bg-hibiscus-700 dark:bg-red-600 dark:hover:bg-red-700 sm:px-4"
               aria-label="Stop generating"
               title="Stop generating"
             >
@@ -520,18 +528,15 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, onDisabl
             <button
               onClick={handleSend}
               disabled={disabled || (!input.trim() && selectedFiles.length === 0)}
-              className={`p-2 sm:px-5 sm:py-3 bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl sm:rounded-2xl hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-coral-500/20 dark:shadow-ocean-500/20 hover:shadow-xl hover:shadow-coral-500/30 dark:hover:shadow-ocean-500/30 disabled:shadow-none active:scale-95 self-end font-medium ${
-                (input.trim() || selectedFiles.length > 0) && !disabled ? 'animate-scale-in' : ''
-              }`}
+              className="flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-xl bg-coral-600 px-3 font-medium text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-500 dark:hover:bg-ocean-600 sm:px-4"
               aria-label="Send message"
               title="Send message (Enter)"
             >
-              <Send className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 ${
-                (input.trim() || selectedFiles.length > 0) && !disabled ? 'translate-x-0.5' : ''
-              }`} />
+              <Send className="h-5 w-5" />
               <span className="hidden sm:inline">Send</span>
             </button>
           )}
+          </div>
         </div>
         
         {/* Disclaimer */}

@@ -1,9 +1,8 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home, Share2, Link2, Check, Copy, X } from 'lucide-react';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Share2, Link2, Check, Copy, X } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
-import { useRotatingGreeting } from '../hooks/useRotatingGreeting';
 import { 
   useInitUserData, 
   useConversationMessages,
@@ -20,7 +19,6 @@ import { AuthButton } from './AuthButton';
 import { ModeSelector } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
-import { QuickPhrases } from './QuickPhrases';
 import { WelcomeMessage } from './WelcomeMessage';
 import { LoadingIndicator } from './LoadingIndicator';
 import { ConversationSidebar } from './ConversationSidebar';
@@ -29,7 +27,7 @@ import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
-import { getChatIntentPlaceholder } from '../lib/chatIntent';
+import { getChatIntentLabel, getChatIntentPlaceholder } from '../lib/chatIntent';
 import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
 import { browserStorage } from '../lib/browserStorage';
 
@@ -77,6 +75,7 @@ export function Chat() {
   const [searchParams, setSearchParams] = useSearchParams();
   const chatIntent = searchParams.get('intent');
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
+  const intentLabel = getChatIntentLabel(chatIntent);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
   // React Query hooks - replaces old useConversations hook
@@ -99,7 +98,6 @@ export function Chat() {
   const conversations = initData?.conversations || [];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   
-  const greeting = useRotatingGreeting();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
@@ -449,6 +447,16 @@ export function Chat() {
   // Handler to open sign-in modal for unauthenticated users
   const handleSignInClick = () => {
     clerk.openSignIn();
+  };
+
+  const handleStarterSelect = (intent: 'translate' | 'ask' | 'practice') => {
+    if (!isSignedIn) {
+      handleSignInClick();
+      return;
+    }
+
+    setSearchParams({ intent }, { replace: true });
+    requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
   const handleSend = async (message: string, files?: File[]) => {
@@ -930,7 +938,7 @@ End of Export
           data-testid="chat-header"
           className="relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95"
         >
-          <div className="px-3 sm:px-6 py-1.5 sm:py-4">
+          <div className="px-3 py-2 sm:px-6 sm:py-3">
             <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
               <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
                 {/* Sidebar toggle button - only show if signed in */}
@@ -962,29 +970,13 @@ End of Export
                     <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
                       HåfaGPT
                     </h1>
-                    <p className="text-[10px] sm:text-sm text-brown-600 dark:text-gray-400 truncate leading-tight hidden sm:block">
-                      Expert in Chamorro language, culture & Guam
-                    </p>
-                    <p className="text-[9px] sm:text-xs text-brown-500/70 dark:text-gray-500 truncate leading-tight transition-all duration-500 hidden lg:block">
-                      <span className="inline-block animate-slide-in-right">{greeting.chamorro}</span>
-                      <span className="mx-1">•</span>
-                      <span>{greeting.english}</span>
+                    <p className="hidden truncate text-xs leading-tight text-brown-500 dark:text-gray-400 sm:block">
+                      Chamorro language tutor
                     </p>
                   </div>
                 </Link>
               </div>
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {/* Home Button - Hidden on mobile (users can tap logo or use menu) */}
-              <Link
-                to="/"
-                className="hidden sm:flex p-2 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center gap-1.5"
-                aria-label="Go to home"
-                title="Home"
-              >
-                <Home className="w-5 h-5" />
-                <span className="hidden sm:inline text-sm font-medium">Home</span>
-              </Link>
-              
               {/* Auth Button - Always visible */}
               <AuthButton />
               
@@ -1021,13 +1013,6 @@ End of Export
         <ModeSelector mode={mode} onModeChange={setMode} />
       </header>
 
-      {/* Quick Phrases */}
-      {messages.length === 0 && !loading && (
-        <div className="flex-shrink-0">
-          <QuickPhrases onSelect={handleSend} disabled={loading} />
-        </div>
-      )}
-
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
       <div
         data-testid="chat-messages-viewport"
@@ -1063,7 +1048,7 @@ End of Export
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (
-            <WelcomeMessage />
+            <WelcomeMessage onSelect={handleStarterSelect} disabled={loading} />
           ) : (
             <>
               {messages.map((message, index) => {
@@ -1157,6 +1142,7 @@ End of Export
           disabled={!isSignedIn || loading} 
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
+          contextLabel={isSignedIn ? intentLabel : undefined}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
           loading={loading}
           onCancel={cancelMessage}
