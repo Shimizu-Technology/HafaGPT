@@ -27,6 +27,7 @@ interface LearnerPageHeaderProps {
   below?: ReactNode;
   iconClassName?: string;
   maxWidthClassName?: string;
+  showThemeToggle?: boolean;
 }
 
 export function LearnerPageHeader({
@@ -40,6 +41,7 @@ export function LearnerPageHeader({
   below,
   iconClassName = 'bg-coral-100 text-coral-700 dark:bg-teal-900/50 dark:text-teal-300',
   maxWidthClassName = 'max-w-5xl',
+  showThemeToggle = true,
 }: LearnerPageHeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -80,14 +82,16 @@ export function LearnerPageHeader({
           </div>
 
           {trailing && <div className="flex-none">{trailing}</div>}
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
-          >
-            {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
-          </button>
+          {showThemeToggle && (
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
+            >
+              {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
+            </button>
+          )}
         </div>
         {below && <div className="mt-2">{below}</div>}
       </div>
