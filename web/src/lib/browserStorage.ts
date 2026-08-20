@@ -4,12 +4,13 @@ type PersistedValue = string | null | typeof UNKNOWN_PERSISTED_VALUE;
 
 interface MemoryOverride {
   value: string | null;
-  persistedValueAtFailure: PersistedValue;
+  persistedValueAtAttempt: PersistedValue;
 }
 
 // A null override value is a deletion tombstone. The persisted snapshot lets
 // storage events distinguish a newer cross-tab change from an older event that
-// was merely delivered after the failed local operation.
+// was merely delivered after the failed local operation. The snapshot is taken
+// at the operation boundary so concurrent changes after the attempt starts win.
 const memoryOverrides = new Map<string, MemoryOverride>();
 
 const readPersistedValue = (key: string): PersistedValue => {
@@ -39,12 +40,12 @@ if (typeof window !== 'undefined') {
 
     affectedKeys.forEach((key) => {
       const override = memoryOverrides.get(key);
-      if (!override || override.persistedValueAtFailure === UNKNOWN_PERSISTED_VALUE) {
+      if (!override || override.persistedValueAtAttempt === UNKNOWN_PERSISTED_VALUE) {
         return;
       }
 
       try {
-        if (localStorage.getItem(key) !== override.persistedValueAtFailure) {
+        if (localStorage.getItem(key) !== override.persistedValueAtAttempt) {
           memoryOverrides.delete(key);
         }
       } catch {
@@ -73,6 +74,7 @@ export const browserStorage = {
   },
 
   set(key: string, value: string): boolean {
+    const persistedValueAtAttempt = readPersistedValue(key);
     try {
       window.localStorage.setItem(key, value);
       memoryOverrides.delete(key);
@@ -80,13 +82,14 @@ export const browserStorage = {
     } catch {
       memoryOverrides.set(key, {
         value,
-        persistedValueAtFailure: readPersistedValue(key),
+        persistedValueAtAttempt,
       });
       return false;
     }
   },
 
   remove(key: string): boolean {
+    const persistedValueAtAttempt = readPersistedValue(key);
     try {
       window.localStorage.removeItem(key);
       memoryOverrides.delete(key);
@@ -94,7 +97,7 @@ export const browserStorage = {
     } catch {
       memoryOverrides.set(key, {
         value: null,
-        persistedValueAtFailure: readPersistedValue(key),
+        persistedValueAtAttempt,
       });
       return false;
     }

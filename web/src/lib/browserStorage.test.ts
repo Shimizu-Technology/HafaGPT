@@ -96,4 +96,25 @@ describe('browserStorage', () => {
 
     expect(browserStorage.get('storage-test-delayed-event')).toBe('newer-local-fallback');
   });
+
+  it('observes an external update concurrent with a failed local operation', () => {
+    let persistedValue = 'before-attempt';
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => persistedValue);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      persistedValue = 'concurrent-external-update';
+      throw new DOMException('Storage is read-only', 'QuotaExceededError');
+    });
+
+    expect(browserStorage.set('storage-test-concurrent-update', 'failed-local-value')).toBe(false);
+    expect(browserStorage.get('storage-test-concurrent-update')).toBe('failed-local-value');
+
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'storage-test-concurrent-update',
+      oldValue: 'before-attempt',
+      newValue: 'concurrent-external-update',
+      storageArea: window.localStorage,
+    }));
+
+    expect(browserStorage.get('storage-test-concurrent-update')).toBe('concurrent-external-update');
+  });
 });
