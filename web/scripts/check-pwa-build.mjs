@@ -6,9 +6,10 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDirectory, '..');
 const repositoryRoot = path.resolve(webRoot, '..');
 
-const [builtHtml, serviceWorker, sourceHtml, netlifyConfig] = await Promise.all([
+const [builtHtml, serviceWorker, legacyRecovery, sourceHtml, netlifyConfig] = await Promise.all([
   readFile(path.join(webRoot, 'dist/index.html'), 'utf8'),
   readFile(path.join(webRoot, 'dist/sw.js'), 'utf8'),
+  readFile(path.join(webRoot, 'dist/stale-build-recovery.js'), 'utf8'),
   readFile(path.join(webRoot, 'index.html'), 'utf8'),
   readFile(path.join(repositoryRoot, 'netlify.toml'), 'utf8'),
 ]);
@@ -42,6 +43,13 @@ assert(
   !sourceHtml.includes("navigator.serviceWorker.register('/sw.js')"),
   'index.html must not register a second service worker.',
 );
+assert(
+  legacyRecovery.includes('hafagpt:stale-build-recovery')
+    && legacyRecovery.includes('navigator.serviceWorker.getRegistrations()')
+    && legacyRecovery.includes("name.startsWith('workbox-precache')")
+    && legacyRecovery.includes('window.location.replace'),
+  'The stable legacy-profile recovery module must remain data-safe and functional.',
+);
 
 const assetRuleIndex = netlifyConfig.indexOf('from = "/assets/*"');
 const spaRuleIndex = netlifyConfig.indexOf('from = "/*"');
@@ -51,6 +59,15 @@ assert(
   assetRuleIndex >= 0 && spaRuleIndex >= 0 && assetRuleIndex < spaRuleIndex,
   'The Netlify missing-asset rule must come before the SPA fallback.',
 );
+const assetRuleEnd = netlifyConfig.indexOf('[[redirects]]', assetRuleIndex + 1);
+const assetRule = netlifyConfig.slice(
+  assetRuleIndex,
+  assetRuleEnd >= 0 ? assetRuleEnd : netlifyConfig.length,
+);
+assert(
+  assetRule.includes('to = "/stale-build-recovery.js"') && assetRule.includes('status = 200'),
+  'Missing build assets must execute the stable legacy-profile recovery module.',
+);
 
 if (failures.length > 0) {
   console.error('PWA build checks failed:');
@@ -58,4 +75,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log('PWA build checks passed: fresh HTML, one registration, asset 404 guard, and startup recovery.');
+console.log('PWA build checks passed: fresh HTML, one registration, legacy migration bridge, and bounded startup recovery.');

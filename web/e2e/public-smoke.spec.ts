@@ -1,4 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+
+const legacyRecoveryModule = readFile(
+  new URL('../public/stale-build-recovery.js', import.meta.url),
+  'utf8',
+);
+const currentBuiltHtml = readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
 
 const promoStatus = {
   active: false,
@@ -135,6 +142,86 @@ function monitorRuntimeErrors(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await mockPublicApi(page);
+});
+
+test('pre-migration cached page recovers without clearing learner browser data', async ({ page }) => {
+  const runtimeErrors = monitorRuntimeErrors(page);
+  await page.goto('/');
+  await page.evaluate(async () => {
+    localStorage.setItem('hafagpt-recovery-sentinel', 'preserved');
+    document.cookie = 'hafagpt-recovery-sentinel=preserved; path=/';
+    const learnerCache = await caches.open('learner-data-sentinel');
+    await learnerCache.put('/learner-data-sentinel', new Response('preserved'));
+  });
+
+  let legacyShellLoads = 0;
+  await page.route(/\/\?legacy_profile=1/, async (route) => {
+    legacyShellLoads += 1;
+    if (legacyShellLoads === 1) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><html><body><div id="root"></div><script type="module" src="/assets/index-retired.js"></script></body></html>',
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: await currentBuiltHtml,
+    });
+  });
+  await page.route('**/assets/index-retired.js', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: await legacyRecoveryModule,
+    });
+  });
+
+  await page.goto('/?legacy_profile=1');
+
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
+  await expect(page).not.toHaveURL(/__hafagpt_recovery=/);
+  expect(legacyShellLoads).toBe(2);
+  await expect.poll(() => page.evaluate(async () => ({
+    localStorage: localStorage.getItem('hafagpt-recovery-sentinel'),
+    cookie: document.cookie.includes('hafagpt-recovery-sentinel=preserved'),
+    learnerCache: (await caches.keys()).includes('learner-data-sentinel'),
+    recoveryMarker: sessionStorage.getItem('hafagpt:stale-build-recovery'),
+  }))).toEqual({
+    localStorage: 'preserved',
+    cookie: true,
+    learnerCache: true,
+    recoveryMarker: null,
+  });
+  expect(runtimeErrors).toEqual([]);
+});
+
+test('persistent pre-migration asset failure stops after one recovery attempt', async ({ page }) => {
+  let legacyShellLoads = 0;
+  await page.route(/\/\?legacy_profile=1/, async (route) => {
+    legacyShellLoads += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<!doctype html><html><body><div id="root"></div><script type="module" src="/assets/index-retired.js"></script></body></html>',
+    });
+  });
+  await page.route('**/assets/index-retired.js', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: await legacyRecoveryModule,
+    });
+  });
+
+  await page.goto('/?legacy_profile=1');
+
+  await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page).toHaveURL(/__hafagpt_recovery=/);
+  expect(legacyShellLoads).toBe(2);
 });
 
 test('stale entry asset recovers instead of leaving a blank page', async ({ page }) => {
