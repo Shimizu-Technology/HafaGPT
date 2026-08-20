@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
 import { useVocabularyCategories, useVocabularySearch, VocabularyWord } from '../hooks/useVocabularyQuery';
@@ -240,14 +240,10 @@ export function VocabularyList() {
 // Search Result Card Component
 function SearchResultCard({ word }: { word: VocabularyWord }) {
   const [expanded, setExpanded] = useState(false);
+  const examplesId = useId();
   
   return (
-    <button
-      type="button"
-      className="w-full rounded-2xl border border-cream-200 bg-white p-4 text-left transition-colors hover:border-coral-300 hover:bg-coral-50/30 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-700 dark:hover:bg-ocean-950/20"
-      onClick={() => setExpanded(!expanded)}
-      aria-expanded={expanded}
-    >
+    <article className="w-full rounded-2xl border border-cream-200 bg-white p-4 text-left dark:border-slate-700 dark:bg-slate-800">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
@@ -264,30 +260,31 @@ function SearchResultCard({ word }: { word: VocabularyWord }) {
             {word.definition}
           </p>
           
-          {/* Expanded examples */}
-          {expanded && word.examples && word.examples.length > 0 && (
-            <div className="mt-3 space-y-2">
-              {word.examples.map((example, idx) => (
-                <div key={idx} className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3">
-                  <p className="text-brown-800 dark:text-white font-medium text-sm">
-                    {example.chamorro}
-                  </p>
-                  <p className="text-brown-600 dark:text-gray-300 text-sm mt-1">
-                    {example.english}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         
         {word.examples && word.examples.length > 0 && (
-          <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-coral-600 dark:text-ocean-300">
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
+            aria-controls={examplesId}
+            className="inline-flex min-h-11 flex-none items-center gap-1 rounded-xl px-2 text-xs font-medium text-coral-600 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+          >
             {expanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
             {word.examples.length} example{word.examples.length !== 1 ? 's' : ''}
-          </span>
+          </button>
         )}
       </div>
-    </button>
+      {expanded && word.examples && word.examples.length > 0 && (
+        <div id={examplesId} className="mt-3 space-y-2 border-t border-cream-200 pt-3 dark:border-slate-700">
+          {word.examples.map((example, index) => (
+            <div key={index} className="rounded-xl bg-cream-50 p-3 dark:bg-slate-900/60">
+              <p className="font-medium text-brown-800 dark:text-gray-100">{example.chamorro}</p>
+              <p className="mt-1 text-sm text-brown-600 dark:text-gray-400">{example.english}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
   );
 }

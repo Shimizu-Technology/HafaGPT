@@ -317,6 +317,10 @@ test('public learner can reach the dictionary and search it', async ({ page }) =
   await page.getByPlaceholder('Search all Chamorro words...').fill('guåhu');
   await expect(page.getByText('guåhu', { exact: true })).toBeVisible();
   await expect(page.getByText('I; me', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Go back' }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

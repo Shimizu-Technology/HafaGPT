@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft, Moon, Sun, type LucideIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 
 interface LearnerPageShellProps {
@@ -32,23 +32,34 @@ export function LearnerPageHeader({
   subtitle,
   icon: Icon,
   backTo = '/',
-  backLabel = 'Back home',
+  backLabel = 'Go back',
   trailing,
   iconClassName = 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300',
   maxWidthClassName = 'max-w-5xl',
 }: LearnerPageHeaderProps) {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    const historyIndex = window.history.state?.idx;
+    if (typeof historyIndex === 'number' && historyIndex > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(backTo);
+  };
 
   return (
     <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
       <div className={`safe-area-top mx-auto flex items-center gap-2 px-4 py-3 ${maxWidthClassName}`}>
-        <Link
-          to={backTo}
+        <button
+          type="button"
+          onClick={handleBack}
           aria-label={backLabel}
           className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
         >
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-        </Link>
+        </button>
 
         <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
           <Icon className="h-5 w-5" aria-hidden="true" />
