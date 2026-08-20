@@ -83,6 +83,33 @@ describe('learning preference settings', () => {
     expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
   });
 
+  it('restores the previous daily goal when a combined metadata save fails', async () => {
+    settingsMocks.updatePreferencesAsync.mockRejectedValueOnce(new Error('clerk offline'));
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/restored your previous daily session/i);
+    expect(settingsMocks.updateDailyGoal.mock.calls).toEqual([[15], [10]]);
+  });
+
+  it('reports a possible partial save when compensating the daily goal also fails', async () => {
+    settingsMocks.updatePreferencesAsync.mockRejectedValueOnce(new Error('clerk offline'));
+    settingsMocks.updateDailyGoal
+      .mockResolvedValueOnce({ daily_goal_minutes: 15 })
+      .mockRejectedValueOnce(new Error('rollback offline'));
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/daily session may have changed/i);
+    expect(settingsMocks.updateDailyGoal.mock.calls).toEqual([[15], [10]]);
+  });
+
   it('saves a session-only change without a second provider write', async () => {
     render(<MemoryRouter><SettingsPage /></MemoryRouter>);
 

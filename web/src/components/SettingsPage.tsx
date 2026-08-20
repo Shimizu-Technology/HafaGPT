@@ -77,6 +77,7 @@ interface SettingsChoiceProps<T extends string | number> {
   selected: boolean;
   icon: LucideIcon;
   onSelect: (id: T) => void;
+  disabled?: boolean;
 }
 
 function SettingsChoice<T extends string | number>({
@@ -86,13 +87,15 @@ function SettingsChoice<T extends string | number>({
   selected,
   icon: Icon,
   onSelect,
+  disabled = false,
 }: SettingsChoiceProps<T>) {
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(id)}
-      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-teal-400 dark:focus-visible:ring-offset-slate-900 ${
+      disabled={disabled}
+      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 dark:focus-visible:ring-teal-400 dark:focus-visible:ring-offset-slate-900 ${
         selected
           ? 'border-coral-500 bg-coral-50 dark:border-teal-400 dark:bg-teal-950/30'
           : 'border-cream-200 bg-white hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700'
@@ -143,7 +146,6 @@ export function SettingsPage() {
   const savedSessionMinutes = xpData
     ? normalizeDailyGoalMinutes(xpData.daily_goal_minutes)
     : DEFAULT_DAILY_SESSION_MINUTES;
-  const isSaving = isUpdating || updateDailyGoal.isPending;
 
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
@@ -152,6 +154,8 @@ export function SettingsPage() {
   const [sessionMinutes, setSessionMinutes] = useState<DailyGoalMinutes>(savedSessionMinutes);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [isSaveTransactionPending, setIsSaveTransactionPending] = useState(false);
+  const isSaving = isUpdating || updateDailyGoal.isPending || isSaveTransactionPending;
 
   useEffect(() => {
     setSkillLevel(preferences.skill_level);
@@ -181,10 +185,16 @@ export function SettingsPage() {
   const hasChanges = metadataHasChanges || goalHasChanges;
 
   const handleSave = async () => {
+    if (isSaveTransactionPending) return;
+
+    let goalWasUpdated = false;
+    setIsSaveTransactionPending(true);
     try {
       setSaveError('');
+      setSaved(false);
       if (goalHasChanges) {
         await updateDailyGoal.mutateAsync(sessionMinutes);
+        goalWasUpdated = true;
       }
       if (metadataHasChanges) {
         await updatePreferencesAsync({
@@ -196,7 +206,18 @@ export function SettingsPage() {
       }
       setSaved(true);
     } catch {
-      setSaveError('We could not save your preferences. Your previous settings are still safe. Please try again.');
+      if (goalWasUpdated && metadataHasChanges) {
+        try {
+          await updateDailyGoal.mutateAsync(savedSessionMinutes);
+          setSaveError('We could not save all your preferences, so we restored your previous daily session. Reload to confirm your other choices before trying again.');
+        } catch {
+          setSaveError('We could not finish or undo every change. Your daily session may have changed. Reload this page to check your saved settings before trying again.');
+        }
+      } else {
+        setSaveError('We could not save or confirm your changes. Reload this page to check your saved settings before trying again.');
+      }
+    } finally {
+      setIsSaveTransactionPending(false);
     }
   };
 
@@ -238,6 +259,7 @@ export function SettingsPage() {
                   icon={MODE_ICONS[option.id]}
                   selected={learnerMode === option.id}
                   onSelect={setLearnerMode}
+                  disabled={isSaving}
                 />
               ))}
             </div>
@@ -253,6 +275,7 @@ export function SettingsPage() {
                   icon={READING_ICONS[option.id]}
                   selected={readingSupport === option.id}
                   onSelect={setReadingSupport}
+                  disabled={isSaving}
                 />
               ))}
             </div>
@@ -274,6 +297,7 @@ export function SettingsPage() {
                   icon={CONFIDENCE_ICONS[option.id]}
                   selected={skillLevel === option.id}
                   onSelect={setSkillLevel}
+                  disabled={isSaving}
                 />
               ))}
             </div>
@@ -289,6 +313,7 @@ export function SettingsPage() {
                   icon={GOAL_ICONS[option.id]}
                   selected={learningGoal === option.id}
                   onSelect={setLearningGoal}
+                  disabled={isSaving}
                 />
               ))}
             </div>
@@ -304,6 +329,7 @@ export function SettingsPage() {
                   icon={Clock3}
                   selected={sessionMinutes === option.id}
                   onSelect={setSessionMinutes}
+                  disabled={isSaving}
                 />
               ))}
             </div>
