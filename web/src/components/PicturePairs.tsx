@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Trophy, Star, Sun, Moon, Play, Timer } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Image as ImageIcon, RotateCcw, Trophy, Star, Play, Timer } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -9,6 +8,7 @@ import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
+import { GamePage, GamePageHeader } from './games/GamePage';
 
 // Game data: Chamorro words with emoji representations
 interface WordItem {
@@ -106,7 +106,6 @@ const DIFFICULTY_CONFIG = {
 };
 
 export function PicturePairs() {
-  const { theme, toggleTheme } = useTheme();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -290,65 +289,28 @@ export function PicturePairs() {
   const finalStars = getStars(moves, pairsCount);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/games"
-              className="p-2 -ml-2 rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Go back to games"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🖼️</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-brown-800 dark:text-white">Picture Pairs</h1>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Match the pictures!</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <TTSDisclaimer variant="tooltip" />
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5 text-brown-600" /> : <Sun className="w-5 h-5 text-yellow-400" />}
-            </button>
-          </div>
-        </div>
-      </header>
+    <GamePage>
+      <GamePageHeader title="Picture Pairs" subtitle="Match pictures and hear each Chamorro word" icon={ImageIcon} hasSpeech />
 
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="mx-auto max-w-2xl px-4 py-6">
         {/* Setup Screen */}
         {gameState === 'setup' && (
           <div className="animate-fade-in">
-            {/* Welcome */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-green-100 to-teal-100 dark:from-green-900/50 dark:to-teal-900/50 mb-4 shadow-lg">
-                <span className="text-5xl">🖼️</span>
-              </div>
-              <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">Picture Pairs</h2>
-              <p className="text-brown-600 dark:text-gray-400">
-                Find matching pictures and learn Chamorro words!
-              </p>
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
+              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Choose your matching game</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">Find matching pictures and hear each Chamorro word.</p>
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg mb-4">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-3">Choose a Category</h3>
+            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-gray-300">Topic</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {GAME_CATEGORIES.map(category => (
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category)}
+                    aria-pressed={selectedCategory.id === category.id}
                     className={`p-3 rounded-xl border-2 transition-all ${
                       selectedCategory.id === category.id
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
@@ -363,13 +325,14 @@ export function PicturePairs() {
             </div>
 
             {/* Difficulty Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg mb-4">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-3">Choose Difficulty</h3>
+            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-gray-300">Number of pairs</h3>
               <div className="grid grid-cols-3 gap-2">
                 {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, config]) => (
                   <button
                     key={key}
                     onClick={() => setDifficulty(key)}
+                    aria-pressed={difficulty === key}
                     className={`p-3 rounded-xl border-2 transition-all ${
                       difficulty === key
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
@@ -392,7 +355,7 @@ export function PicturePairs() {
             {/* Start Button */}
             <button
               onClick={startGame}
-              className="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-bold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
               <Play className="w-6 h-6" />
               Start Game
@@ -436,6 +399,7 @@ export function PicturePairs() {
                     key={card.id}
                     onClick={() => handleCardClick(card.id)}
                     disabled={isChecking || isMatched || flippedCards.includes(card.id)}
+                    aria-label={isFlipped ? `${card.word.english} picture${isMatched ? ', matched' : ''}` : 'Hidden picture'}
                     className={`aspect-square rounded-xl transition-all duration-300 transform ${
                       isFlipped
                         ? isMatched
@@ -550,6 +514,6 @@ export function PicturePairs() {
           onClose={() => setShowUpgradePrompt(false)}
         />
       )}
-    </div>
+    </GamePage>
   );
 }

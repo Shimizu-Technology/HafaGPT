@@ -152,11 +152,13 @@ on the final commit, and production verification after merge.
    conversation entry and session pages now share navigation, progress, large
    interaction targets, calm feedback, and consistent exits. Saved-deck,
    review, and history utilities remain grouped with the progress/account pass.
-5. **Game system — hub complete.** The game library now recommends one
+5. **Game system — hub and audio-first games complete.** The game library now recommends one
    audio-first starting point, groups all 12 existing games by learning style,
-   and labels reading demands without age-gating learners. A shared shell for
-   instructions, progress, exits, and results remains for the individual games;
-   their mechanics and scoring will stay unchanged.
+   and labels reading demands without age-gating learners. Sound Match, Picture
+   Pairs, Color Touch, Number Tap, and Simon Says now share navigation, setup,
+   progress, audio disclosure, and completion patterns. The remaining word,
+   action, and challenge games still need the shared shell; their mechanics and
+   scoring will stay unchanged.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
    information pages.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
