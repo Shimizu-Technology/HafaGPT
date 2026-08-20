@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import type { SourceInfo } from '../types/source';
+import { browserStorage } from '../lib/browserStorage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -115,7 +116,7 @@ export function useChatbot() {
 
   // Initialize session (check localStorage first)
   useEffect(() => {
-    const existingSession = localStorage.getItem('chamorro_session_id');
+    const existingSession = browserStorage.get('chamorro_session_id');
     
     if (existingSession) {
       // Reuse existing session
@@ -124,7 +125,7 @@ export function useChatbot() {
       // Create new session and save it
       const newSession = generateSessionId();
       setSessionId(newSession);
-      localStorage.setItem('chamorro_session_id', newSession);
+      browserStorage.set('chamorro_session_id', newSession);
     }
   }, []);
 
@@ -254,7 +255,7 @@ export function useChatbot() {
   const resetSession = () => {
     const newSession = generateSessionId();
     setSessionId(newSession);
-    localStorage.setItem('chamorro_session_id', newSession);
+    browserStorage.set('chamorro_session_id', newSession);
   };
 
   /**

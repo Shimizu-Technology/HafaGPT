@@ -25,6 +25,7 @@ import { useHomepageData } from '../hooks/useHomepageData';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
+import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
 import { buildTodayPlan } from '../lib/todayPlan';
 import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
@@ -341,6 +342,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
 
 export function HomePage() {
   const { user, isLoaded } = useUser();
+  const authLoadTimedOut = useAuthLoadTimeout(isLoaded);
   const clerk = useClerk();
   const isSignedIn = Boolean(user);
   useInitUserData(null, isLoaded && isSignedIn);
@@ -389,7 +391,7 @@ export function HomePage() {
     });
   }, [isLoading, preferences, recommended, srSummary, todayUnavailable, weakAreas, xp]);
 
-  if (!isLoaded) {
+  if (!isLoaded && !authLoadTimedOut) {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
         <HomeHeader signedIn={false} />
@@ -404,7 +406,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-cream-50 text-brown-950 dark:bg-slate-900 dark:text-white">
       <HomeHeader signedIn={isSignedIn} />
-      {isSignedIn ? (
+      {isLoaded && isSignedIn ? (
         <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 pb-24 sm:py-8 sm:pb-12">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -452,7 +454,7 @@ export function HomePage() {
         accountKey={user?.id}
       />
 
-      {!isSignedIn && (
+      {isLoaded && !isSignedIn && (
         <div className="fixed above-bottom-nav left-0 right-0 z-30 px-4 pb-2 sm:hidden">
           <button type="button" onClick={() => clerk.openSignUp()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 py-3 font-semibold text-white shadow-lg">
             <Sparkles className="h-4 w-4" aria-hidden="true" /> Start learning free

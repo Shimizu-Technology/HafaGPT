@@ -11,9 +11,11 @@ import {
   Sparkles,
   Check,
   LogIn,
-  UserPlus
+  UserPlus,
+  RefreshCw,
 } from 'lucide-react';
 import { usePromoStatus } from '../hooks/useSubscription';
+import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -108,6 +110,7 @@ const getFeatureInfo = (pathname: string) => {
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isLoaded, isSignedIn } = useUser();
+  const authLoadTimedOut = useAuthLoadTimeout(isLoaded);
   const location = useLocation();
   const featureInfo = getFeatureInfo(location.pathname);
   const FeatureIcon = featureInfo.icon;
@@ -116,7 +119,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isNewYearTheme = promo?.theme === 'newyear';
 
   // Show loading state while Clerk is initializing
-  if (!isLoaded) {
+  if (!isLoaded && !authLoadTimedOut) {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -124,6 +127,34 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           <p className="mt-4 text-brown-800 dark:text-gray-200">Loading...</p>
         </div>
       </div>
+    );
+  }
+
+  if (!isLoaded && authLoadTimedOut) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-cream-50 px-4 pb-24 dark:bg-slate-900">
+        <section className="w-full max-w-md rounded-3xl border border-cream-200 bg-white p-7 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800" role="alert">
+          <h1 className="text-2xl font-bold tracking-tight text-brown-900 dark:text-white">We could not check your sign-in</h1>
+          <p className="mt-3 text-sm leading-relaxed text-brown-600 dark:text-gray-300">
+            This browser is taking too long to read its saved account state. Your account and learning progress are safe.
+          </p>
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => void window.__hafagptRecoverStaleBuild?.()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Repair and reload
+            </button>
+            <Link
+              to="/"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 px-4 py-2.5 text-sm font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:text-white dark:hover:bg-slate-700"
+            >
+              Return home
+            </Link>
+          </div>
+        </section>
+      </main>
     );
   }
 

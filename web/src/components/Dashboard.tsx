@@ -19,6 +19,7 @@ import { useUser } from '@clerk/clerk-react';
 import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { StreakWidget } from './StreakWidget';
+import { browserStorage } from '../lib/browserStorage';
 
 // Types for localStorage quiz data (fallback)
 interface LocalQuizAttempt {
@@ -35,7 +36,7 @@ interface LocalQuizStats {
 // Helper to get quiz stats from localStorage (fallback for offline)
 function getLocalQuizStats(): LocalQuizStats {
   try {
-    const stored = localStorage.getItem('hafagpt_quiz_stats');
+    const stored = browserStorage.get('hafagpt_quiz_stats');
     return stored ? JSON.parse(stored) : { attempts: [] };
   } catch {
     return { attempts: [] };
@@ -55,7 +56,7 @@ export function saveQuizAttempt(categoryId: string, score: number, total: number
   if (stats.attempts.length > 50) {
     stats.attempts = stats.attempts.slice(-50);
   }
-  localStorage.setItem('hafagpt_quiz_stats', JSON.stringify(stats));
+  browserStorage.set('hafagpt_quiz_stats', JSON.stringify(stats));
 }
 
 export function Dashboard() {
@@ -505,4 +506,3 @@ export function Dashboard() {
     </div>
   );
 }
-

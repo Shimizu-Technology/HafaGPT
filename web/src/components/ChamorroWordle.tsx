@@ -10,6 +10,7 @@ import { Sun, Moon } from 'lucide-react';
 import { WordleKeyboard } from './games/WordleKeyboard';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
+import { browserStorage } from '../lib/browserStorage';
 
 // Curated words organized by length
 const CURATED_WORDS = {
@@ -137,7 +138,7 @@ export function ChamorroWordle() {
 
   // Check if daily challenge was already played today
   const dailyKey = `wordle-daily-${new Date().toDateString()}`;
-  const dailyPlayed = typeof window !== 'undefined' && localStorage.getItem(dailyKey);
+  const dailyPlayed = typeof window !== 'undefined' && browserStorage.get(dailyKey);
 
   // Get available words based on mode and difficulty
   const getAvailableWords = useCallback((): WordEntry[] => {
@@ -281,12 +282,12 @@ export function ChamorroWordle() {
     if (currentGuess === targetWord.word) {
       setGameState('won');
       if (gameMode === 'daily') {
-        localStorage.setItem(dailyKey, 'true');
+        browserStorage.set(dailyKey, 'true');
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setGameState('lost');
       if (gameMode === 'daily') {
-        localStorage.setItem(dailyKey, 'true');
+        browserStorage.set(dailyKey, 'true');
       }
     } else {
       setCurrentRow(prev => prev + 1);
@@ -852,4 +853,3 @@ export function ChamorroWordle() {
     </div>
   );
 }
-

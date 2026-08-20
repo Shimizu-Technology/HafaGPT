@@ -89,7 +89,11 @@ export default defineConfig({
         // Navigations must always receive the HTML from the active Netlify
         // deploy. Caching index.html was the root cause of blank startup pages
         // after a deploy removed the hashes referenced by stale markup.
-        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        // HåfaGPT needs the network for authentication, AI, and progress. A
+        // full asset precache adds little offline value but can trap returning
+        // mobile profiles on an obsolete deploy, so keep this worker as an
+        // update/migration worker without an application-shell cache.
+        globPatterns: [],
         navigateFallback: null,
         runtimeCaching: [
           {
