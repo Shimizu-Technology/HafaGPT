@@ -12,6 +12,7 @@ const settingsMocks = vi.hoisted(() => ({
     xp_progress: number;
     daily_goal_minutes: number;
   },
+  xpError: false,
 }));
 
 vi.mock('../hooks/useUserPreferences', () => ({
@@ -37,7 +38,7 @@ vi.mock('../hooks/useSubscription', () => ({
 }));
 
 vi.mock('../hooks/useXP', () => ({
-  useXP: () => ({ data: settingsMocks.xpData, isLoading: false }),
+  useXP: () => ({ data: settingsMocks.xpData, isLoading: false, isError: settingsMocks.xpError }),
   useUpdateDailyGoal: () => ({ mutateAsync: settingsMocks.updateDailyGoal, isPending: false }),
   getLevelInfo: () => ({ emoji: '', title: '' }),
 }));
@@ -50,7 +51,13 @@ describe('learning preference settings', () => {
     settingsMocks.updatePreferencesAsync.mockResolvedValue(undefined);
     settingsMocks.updateDailyGoal.mockReset();
     settingsMocks.updateDailyGoal.mockResolvedValue({ daily_goal_minutes: 15 });
-    settingsMocks.xpData = null;
+    settingsMocks.xpData = {
+      total_xp: 0,
+      level: 1,
+      xp_progress: 0,
+      daily_goal_minutes: 10,
+    };
+    settingsMocks.xpError = false;
   });
 
   it('keeps every capability preference editable and saves the allowlisted values', async () => {
@@ -108,6 +115,21 @@ describe('learning preference settings', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/daily session may have changed/i);
     expect(settingsMocks.updateDailyGoal.mock.calls).toEqual([[15], [10]]);
+  });
+
+  it('never writes a guessed daily goal when the saved goal could not load', async () => {
+    settingsMocks.xpData = null;
+    settingsMocks.xpError = true;
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+
+    expect(screen.getByRole('button', { name: /15 minutes/i })).toBeDisabled();
+    expect(screen.getByRole('alert')).toHaveTextContent(/will not be changed/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+
+    await waitFor(() => expect(settingsMocks.updatePreferencesAsync).toHaveBeenCalled());
+    expect(settingsMocks.updateDailyGoal).not.toHaveBeenCalled();
   });
 
   it('saves a session-only change without a second provider write', async () => {

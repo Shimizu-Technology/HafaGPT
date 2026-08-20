@@ -141,7 +141,7 @@ function SettingsSection({
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
-  const { data: xpData, isLoading: isLoadingXP } = useXP();
+  const { data: xpData, isLoading: isLoadingXP, isError: isXPError } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
   const savedSessionMinutes = xpData
     ? normalizeDailyGoalMinutes(xpData.daily_goal_minutes)
@@ -181,7 +181,8 @@ export function SettingsPage() {
     || learningGoal !== preferences.learning_goal
     || learnerMode !== preferences.learner_mode
     || readingSupport !== preferences.reading_support;
-  const goalHasChanges = sessionMinutes !== savedSessionMinutes;
+  const dailyGoalIsAvailable = Boolean(xpData);
+  const goalHasChanges = dailyGoalIsAvailable && sessionMinutes !== savedSessionMinutes;
   const hasChanges = metadataHasChanges || goalHasChanges;
 
   const handleSave = async () => {
@@ -329,10 +330,15 @@ export function SettingsPage() {
                   icon={Clock3}
                   selected={sessionMinutes === option.id}
                   onSelect={setSessionMinutes}
-                  disabled={isSaving}
+                  disabled={isSaving || !dailyGoalIsAvailable}
                 />
               ))}
             </div>
+            {isXPError && !xpData && (
+              <p role="alert" className="mt-3 text-sm font-medium text-amber-800 dark:text-amber-200">
+                Your saved daily session could not load, so it will not be changed. Reload this page to try again.
+              </p>
+            )}
           </fieldset>
         </SettingsSection>
 
