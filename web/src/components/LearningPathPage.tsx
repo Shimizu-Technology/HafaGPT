@@ -1,79 +1,38 @@
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Map as MapIcon, Trophy } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Clock3, Library, Lightbulb, Map as MapIcon, Trophy } from 'lucide-react';
 import { LearningPathMap } from './LearningPathMap';
 import { LearningProgressStats } from './LearningProgressStats';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 export function LearningPathPage() {
-  const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    // Go back to where user came from, or fallback to home
-    if (window.history.length > 2) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 pb-24 md:pb-8">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <button
-            onClick={handleBack}
-            className="w-10 h-10 rounded-full hover:bg-cream-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-          </button>
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Learning path"
+        subtitle="Build skills one short topic at a time"
+        icon={MapIcon}
+      />
 
-          <div className="flex-1 flex justify-center">
-            <div className="flex items-center gap-2">
-              <MapIcon className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <h1 className="text-lg font-bold text-brown-800 dark:text-white">
-                Learning Path
-              </h1>
-            </div>
-          </div>
-
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 rounded-full hover:bg-cream-100 dark:hover:bg-slate-700 flex items-center justify-center transition-colors"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-amber-400" />
-            ) : (
-              <Moon className="w-5 h-5 text-brown-600" />
-            )}
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-4 sm:py-6">
-        {/* Hero Section - Compact on mobile */}
-        <div className="bg-gradient-to-r from-coral-400 to-teal-500 dark:from-ocean-500 dark:to-teal-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 sm:w-40 h-24 sm:h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          
-          <div className="relative">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg sm:text-2xl font-bold">Beginner Path</h2>
-                <p className="text-white/80 text-xs sm:text-sm mt-1 hidden sm:block max-w-md">
-                  Master the fundamentals of Chamorro through 7 carefully crafted topics.
-                </p>
-                <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm mt-2 sm:mt-4">
-                  <span>⏱ ~35 min</span>
-                  <span>📚 7 topics</span>
-                </div>
+      <main className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
+        <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:mb-7 sm:p-6" aria-labelledby="beginner-path-heading">
+          <div className="flex items-start gap-4">
+            <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">
+              <Trophy className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Beginner</p>
+              <h2 id="beginner-path-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">Build your Chamorro foundation</h2>
+              <p className="mt-1 max-w-2xl text-sm text-brown-600 dark:text-gray-300">Seven focused topics introduce the words and patterns you will use most often.</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-brown-600 dark:text-gray-300">
+                <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-cream-100 px-3 dark:bg-slate-700">
+                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> About 35 minutes
+                </span>
+                <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-cream-100 px-3 dark:bg-slate-700">
+                  <Library className="h-3.5 w-3.5" aria-hidden="true" /> 7 topics
+                </span>
               </div>
-              <Trophy className="w-8 h-8 sm:w-12 sm:h-12 text-white/30 flex-shrink-0" />
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Mobile: Stats first, then path map */}
         <div className="md:hidden space-y-4 mb-4">
@@ -92,9 +51,9 @@ export function LearningPathPage() {
             <LearningProgressStats />
             
             {/* Tips Section - Desktop only */}
-            <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-cream-200 dark:border-gray-700">
-              <h3 className="font-semibold text-brown-800 dark:text-white mb-3">
-                💡 Learning Tips
+            <div className="mt-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold text-brown-900 dark:text-white">
+                <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-300" aria-hidden="true" /> Learning tips
               </h3>
               <ul className="space-y-2 text-sm text-brown-600 dark:text-gray-300">
                 <li className="flex items-start gap-2">
@@ -111,14 +70,13 @@ export function LearningPathPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
-                  <span>Practice daily to maintain your streak!</span>
+                  <span>Practice regularly to build a steady habit</span>
                 </li>
               </ul>
             </div>
           </div>
         </div>
       </main>
-    </div>
+    </LearnerPageShell>
   );
 }
-

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowLeft,
   BookOpen,
   Clock,
   ExternalLink,
@@ -20,6 +19,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { STORY_CATEGORIES, getStoryCount } from '../data/storyData';
 import { useAvailableStories, AvailableStory } from '../hooks/useStoryQuery';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 type StoryMode = 'curated' | 'lengguahita';
 
@@ -68,41 +68,24 @@ export function StoryList() {
   const externalAvailability = lengguahitaData?.availability;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3 safe-area-top">
-          <Link
-            to="/"
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center shadow-lg">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-brown-800 dark:text-white">
-                Chamorro Stories
-              </h1>
-              <p className="text-xs text-brown-500 dark:text-gray-400">
-                {mode === 'curated' ? `${totalCuratedStories} stories • Tap words to translate` : 'Original source access'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Chamorro stories"
+        subtitle={mode === 'curated' ? `${totalCuratedStories} stories · Tap words to translate` : 'Original source access'}
+        icon={BookOpen}
+        iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+      />
 
-      {/* Content - extra bottom padding on mobile for bottom nav */}
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6 space-y-6 animate-page-enter">
+      <main className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:py-8">
         {/* Mode Toggle */}
-        <div className="flex gap-2 p-1 bg-cream-100 dark:bg-slate-800 rounded-xl">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-slate-800" aria-label="Story source">
           <button
+            type="button"
             onClick={() => setMode('curated')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
+            aria-pressed={mode === 'curated'}
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
               mode === 'curated'
-                ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+                ? 'bg-white text-amber-700 shadow-sm ring-1 ring-cream-300 dark:bg-slate-700 dark:text-amber-300 dark:ring-slate-600'
                 : 'text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200'
             }`}
           >
@@ -110,10 +93,12 @@ export function StoryList() {
             <span>Curated ({totalCuratedStories})</span>
           </button>
           <button
+            type="button"
             onClick={() => setMode('lengguahita')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all ${
+            aria-pressed={mode === 'lengguahita'}
+            className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
               mode === 'lengguahita'
-                ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm'
+                ? 'bg-white text-teal-700 shadow-sm ring-1 ring-cream-300 dark:bg-slate-700 dark:text-teal-300 dark:ring-slate-600'
                 : 'text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200'
             }`}
           >
@@ -123,10 +108,10 @@ export function StoryList() {
         </div>
 
         {/* Introduction Card */}
-        <div className={`rounded-2xl p-5 border ${
+        <div className={`rounded-2xl border bg-white p-5 dark:bg-slate-800 ${
           mode === 'curated'
-            ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200/50 dark:border-amber-700/30'
-            : 'bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 border-teal-200/50 dark:border-teal-700/30'
+            ? 'border-amber-200 dark:border-amber-800'
+            : 'border-teal-200 dark:border-teal-800'
         }`}>
           <div className="flex items-start gap-4">
             <div className={`p-2.5 rounded-xl ${mode === 'curated' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-teal-100 dark:bg-teal-900/30'}`}>
@@ -183,11 +168,11 @@ export function StoryList() {
                     <Link
                       key={story.id}
                       to={`/stories/${story.id}`}
-                      className="block bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600 hover:shadow-md transition-all group"
+                      className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-amber-300 hover:bg-amber-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-amber-700 dark:hover:bg-amber-950/10"
                     >
                       <div className="flex items-start gap-4">
                         {/* Story Icon */}
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950">
                           <StoryCategoryIcon category={category.id} className="w-6 h-6 text-amber-700 dark:text-amber-300" />
                         </div>
 
@@ -270,11 +255,11 @@ export function StoryList() {
                       <Link
                         key={story.id}
                         to={`/stories/lengguahita/${story.id}`}
-                        className="block bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-600 hover:shadow-md transition-all group"
+                        className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/10"
                       >
                         <div className="flex items-start gap-4">
                           {/* Story Icon */}
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-950">
                             <StoryCategoryIcon category={story.category} className="w-6 h-6 text-teal-700 dark:text-teal-300" />
                           </div>
 
@@ -344,7 +329,7 @@ export function StoryList() {
         )}
 
         {/* Info Card */}
-        <div className="bg-gradient-to-r from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-700 rounded-xl p-5 border border-cream-300 dark:border-slate-600">
+        <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center gap-3 mb-2">
             {mode === 'curated' ? (
               <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -365,7 +350,7 @@ export function StoryList() {
             )}
           </p>
         </div>
-      </div>
-    </div>
+      </main>
+    </LearnerPageShell>
   );
 }
