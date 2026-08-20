@@ -49,12 +49,15 @@ describe('browserStorage', () => {
 
   it('reconciles a failed operation with a successful update from another tab', () => {
     window.localStorage.setItem('storage-test-external-update', 'old');
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('Storage is read-only', 'QuotaExceededError');
     });
 
     expect(browserStorage.set('storage-test-external-update', 'local-fallback')).toBe(false);
     expect(browserStorage.get('storage-test-external-update')).toBe('local-fallback');
+
+    setItem.mockRestore();
+    window.localStorage.setItem('storage-test-external-update', 'external-update');
 
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'storage-test-external-update',
@@ -65,6 +68,7 @@ describe('browserStorage', () => {
 
     expect(browserStorage.get('storage-test-external-update')).toBe('external-update');
 
+    window.localStorage.removeItem('storage-test-external-update');
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'storage-test-external-update',
       oldValue: 'external-update',
@@ -73,5 +77,23 @@ describe('browserStorage', () => {
     }));
 
     expect(browserStorage.get('storage-test-external-update')).toBeNull();
+  });
+
+  it('does not let a delayed older event overwrite a newer failed operation', () => {
+    window.localStorage.setItem('storage-test-delayed-event', 'external-before-failure');
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage is read-only', 'QuotaExceededError');
+    });
+
+    expect(browserStorage.set('storage-test-delayed-event', 'newer-local-fallback')).toBe(false);
+
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'storage-test-delayed-event',
+      oldValue: 'older-value',
+      newValue: 'external-before-failure',
+      storageArea: window.localStorage,
+    }));
+
+    expect(browserStorage.get('storage-test-delayed-event')).toBe('newer-local-fallback');
   });
 });
