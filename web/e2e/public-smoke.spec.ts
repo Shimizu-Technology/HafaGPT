@@ -498,7 +498,19 @@ test('external story word dialog traps and restores keyboard focus', async ({ pa
 test('critical pages fit the viewport without horizontal overflow', async ({ page }) => {
   const errors = monitorRuntimeErrors(page);
 
-  for (const path of ['/', '/vocabulary', '/vocabulary/greetings', '/stories', '/stories/hafa-adai-maria', '/chat?intent=translate']) {
+  for (const path of [
+    '/',
+    '/vocabulary',
+    '/vocabulary/greetings',
+    '/stories',
+    '/stories/hafa-adai-maria',
+    '/chat?intent=translate',
+    '/about',
+    '/support',
+    '/privacy',
+    '/pricing',
+    '/share/not-found',
+  ]) {
     await page.goto(path);
     await expect(page.locator('body')).toBeVisible();
     await expect.poll(async () => {
@@ -510,5 +522,33 @@ test('critical pages fit the viewport without horizontal overflow', async ({ pag
     }).toBe(true);
   }
 
-  expect(errors).toEqual([]);
+  expect(errors.filter((error) => !error.includes('/api/share/not-found'))).toEqual([]);
+});
+
+test('public information and shared-link recovery stay clear without authentication', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+
+  await page.goto('/about');
+  await expect(page.getByRole('heading', { name: 'Our story' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Ask HåfaGPT' })).toBeVisible();
+
+  await page.goto('/support');
+  await expect(page.getByRole('heading', { name: 'Support' })).toBeVisible();
+  await page.getByText('How accurate is the AI tutor?').click();
+  await expect(page.getByText(/retrieves from governed Chamorro references/i)).toBeVisible();
+
+  await page.goto('/privacy');
+  await expect(page.getByRole('heading', { name: 'Privacy policy' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: "Children's Privacy" })).toBeVisible();
+
+  await page.goto('/pricing');
+  await expect(page.getByRole('heading', { name: 'Plans' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Free', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Premium', exact: true })).toBeVisible();
+
+  await page.goto('/share/not-found');
+  await expect(page.getByRole('alert')).toContainText(/not found/i);
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+
+  expect(errors.filter((error) => !error.includes('/api/share/not-found'))).toEqual([]);
 });

@@ -1,32 +1,10 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield, Eye, Database, Mail, Lock, UserCheck } from 'lucide-react';
+import { Shield, Eye, Database, Mail, Lock, UserCheck } from 'lucide-react';
+import { PublicPage } from './PublicPage';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/" 
-              className="p-2 -ml-2 rounded-lg hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <h1 className="text-lg font-semibold text-brown-800 dark:text-gray-100">
-                Privacy Policy
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6 pb-24">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-cream-200 dark:border-gray-700 p-6 md:p-8">
+    <PublicPage title="Privacy policy" subtitle="What HåfaGPT collects, why, and the choices you have" icon={Shield}>
+        <article className="rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-8">
           
           {/* Last Updated */}
           <p className="text-sm text-brown-500 dark:text-gray-400 mb-6">
@@ -214,19 +192,7 @@ export default function PrivacyPolicy() {
             </p>
           </section>
 
-        </div>
-
-        {/* Back to Home */}
-        <div className="mt-6 text-center">
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-2 text-coral-600 dark:text-ocean-400 hover:underline"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </div>
-      </main>
-    </div>
+        </article>
+    </PublicPage>
   );
 }
