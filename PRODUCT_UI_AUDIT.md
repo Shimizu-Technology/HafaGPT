@@ -148,9 +148,10 @@ on the final commit, and production verification after merge.
 3. **Shared learner shell + core learning — complete.** Lessons, vocabulary,
    and stories now share navigation, title hierarchy, content width, progress,
    and accessible detail interactions.
-4. **Practice system — in progress.** Flashcard, quiz, and conversation entry
-   pages now use the shared shell and progressively disclose choices; session,
-   feedback, and completion states are the next focused pass.
+4. **Practice system — primary flows complete.** Flashcard, quiz, and
+   conversation entry and session pages now share navigation, progress, large
+   interaction targets, calm feedback, and consistent exits. Saved-deck,
+   review, and history utilities remain grouped with the progress/account pass.
 5. **Game system.** Redesign the hub and introduce a shared game shell without
    changing the individual learning mechanics.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
