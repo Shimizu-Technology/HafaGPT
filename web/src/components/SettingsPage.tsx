@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
-  ArrowLeft,
   AudioLines,
   BookOpen,
   Check,
@@ -19,6 +17,7 @@ import {
   RotateCcw,
   Save,
   Shield,
+  SlidersHorizontal,
   Sparkles,
   Sprout,
   Sun,
@@ -27,30 +26,49 @@ import {
   UsersRound,
   Zap,
 } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
-import { useUserPreferences } from '../hooks/useUserPreferences';
-import { useSubscription } from '../hooks/useSubscription';
-import { useXP, useUpdateDailyGoal, getLevelInfo } from '../hooks/useXP';
-import { AuthButton } from './AuthButton';
+import { Link } from 'react-router-dom';
 import {
   CONFIDENCE_OPTIONS,
   DAILY_GOAL_OPTIONS,
+  DEFAULT_DAILY_SESSION_MINUTES,
   LEARNER_MODE_OPTIONS,
   LEARNING_GOAL_OPTIONS,
   READING_SUPPORT_OPTIONS,
-  DailyGoalMinutes,
-  DEFAULT_DAILY_SESSION_MINUTES,
-  LearnerMode,
-  LearningGoal,
-  ReadingSupport,
-  SkillLevel,
+  type DailyGoalMinutes,
+  type LearnerMode,
+  type LearningGoal,
+  type ReadingSupport,
+  type SkillLevel,
   normalizeDailyGoalMinutes,
 } from '../data/learningPreferences';
+import { useTheme } from '../hooks/useTheme';
+import { useUserPreferences } from '../hooks/useUserPreferences';
+import { getLevelInfo, useUpdateDailyGoal, useXP } from '../hooks/useXP';
+import { AuthButton } from './AuthButton';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
-const MODE_ICONS: Record<LearnerMode, LucideIcon> = { self: UserRound, with_child: UsersRound, helping_family: HandHeart };
-const READING_ICONS: Record<ReadingSupport, LucideIcon> = { audio_pictures: Headphones, short_text_audio: AudioLines, independent: BookOpen };
-const CONFIDENCE_ICONS: Record<SkillLevel, LucideIcon> = { beginner: Sprout, intermediate: Leaf, advanced: TreePine };
-const GOAL_ICONS: Record<LearningGoal, LucideIcon> = { conversation: MessageCircle, culture: Landmark, family: HeartHandshake, travel: MapPin, all: Sparkles };
+const MODE_ICONS: Record<LearnerMode, LucideIcon> = {
+  self: UserRound,
+  with_child: UsersRound,
+  helping_family: HandHeart,
+};
+const READING_ICONS: Record<ReadingSupport, LucideIcon> = {
+  audio_pictures: Headphones,
+  short_text_audio: AudioLines,
+  independent: BookOpen,
+};
+const CONFIDENCE_ICONS: Record<SkillLevel, LucideIcon> = {
+  beginner: Sprout,
+  intermediate: Leaf,
+  advanced: TreePine,
+};
+const GOAL_ICONS: Record<LearningGoal, LucideIcon> = {
+  conversation: MessageCircle,
+  culture: Landmark,
+  family: HeartHandshake,
+  travel: MapPin,
+  all: Sparkles,
+};
 
 interface SettingsChoiceProps<T extends string | number> {
   id: T;
@@ -61,41 +79,72 @@ interface SettingsChoiceProps<T extends string | number> {
   onSelect: (id: T) => void;
 }
 
-function SettingsChoice<T extends string | number>({ id, title, description, selected, icon: Icon, onSelect }: SettingsChoiceProps<T>) {
+function SettingsChoice<T extends string | number>({
+  id,
+  title,
+  description,
+  selected,
+  icon: Icon,
+  onSelect,
+}: SettingsChoiceProps<T>) {
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(id)}
-      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900 ${
+      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-teal-400 dark:focus-visible:ring-offset-slate-900 ${
         selected
-          ? 'border-coral-500 bg-coral-50 dark:border-ocean-400 dark:bg-ocean-900/30'
-          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-ocean-600'
+          ? 'border-coral-500 bg-coral-50 dark:border-teal-400 dark:bg-teal-950/30'
+          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700'
       }`}
     >
-      <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-lg ${selected ? 'bg-coral-100 text-coral-700 dark:bg-ocean-800 dark:text-ocean-200' : 'bg-cream-100 text-brown-600 dark:bg-gray-700 dark:text-gray-300'}`}>
+      <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-lg ${
+        selected
+          ? 'bg-coral-100 text-coral-700 dark:bg-teal-900 dark:text-teal-200'
+          : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-300'
+      }`}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-brown-900 dark:text-white">{title}</span>
+        <span className="block text-sm font-bold text-brown-950 dark:text-white">{title}</span>
         <span className="mt-0.5 block text-xs leading-snug text-brown-600 dark:text-gray-300">{description}</span>
       </span>
-      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />}
+      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-teal-300" aria-hidden="true" />}
     </button>
+  );
+}
+
+function SettingsSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+      <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">{eyebrow}</p>
+      <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
+      <p className="mt-1 text-sm leading-relaxed text-brown-600 dark:text-gray-400">{description}</p>
+      <div className="mt-5 space-y-6">{children}</div>
+    </section>
   );
 }
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
-  const { isChristmasTheme, isNewYearTheme } = useSubscription();
   const { data: xpData, isLoading: isLoadingXP } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
   const savedSessionMinutes = xpData
     ? normalizeDailyGoalMinutes(xpData.daily_goal_minutes)
     : DEFAULT_DAILY_SESSION_MINUTES;
   const isSaving = isUpdating || updateDailyGoal.isPending;
-  
+
   const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
   const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
   const [learnerMode, setLearnerMode] = useState<LearnerMode>(preferences.learner_mode);
@@ -103,8 +152,7 @@ export function SettingsPage() {
   const [sessionMinutes, setSessionMinutes] = useState<DailyGoalMinutes>(savedSessionMinutes);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
-  
-  // Sync state when preferences load
+
   useEffect(() => {
     setSkillLevel(preferences.skill_level);
     setLearningGoal(preferences.learning_goal);
@@ -118,8 +166,13 @@ export function SettingsPage() {
     preferences.skill_level,
     savedSessionMinutes,
   ]);
-  
-  // Track if there are unsaved changes
+
+  useEffect(() => {
+    if (!saved) return undefined;
+    const timer = window.setTimeout(() => setSaved(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [saved]);
+
   const metadataHasChanges = skillLevel !== preferences.skill_level
     || learningGoal !== preferences.learning_goal
     || learnerMode !== preferences.learner_mode
@@ -142,9 +195,8 @@ export function SettingsPage() {
         });
       }
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
     } catch {
-      setSaveError('We could not save your preferences. Please try again.');
+      setSaveError('We could not save your preferences. Your previous settings are still safe. Please try again.');
     }
   };
 
@@ -158,268 +210,215 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-gray-700/50 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-2">
-            <Link 
-              to="/"
-              aria-label="Back to home"
-              className="-ml-2 flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-cream-100 dark:hover:bg-gray-700"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <span className="text-lg">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
-            <h1 className="text-lg font-bold text-brown-800 dark:text-white">Settings</h1>
-          </div>
-          
-          <div className="flex items-center gap-1">
+    <LearnerPageShell className={hasChanges ? 'pb-40 sm:pb-28' : ''}>
+      <LearnerPageHeader
+        title="Settings"
+        subtitle="Choose how HåfaGPT supports your learning."
+        icon={SlidersHorizontal}
+        backTo="/"
+        backLabel="Back home"
+        maxWidthClassName="max-w-3xl"
+        trailing={<AuthButton />}
+        showThemeToggle={false}
+      />
+
+      <main className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8">
+        <SettingsSection
+          eyebrow="Learning style"
+          title="Make practice feel right"
+          description="Choose who is learning and how much reading support to show. HåfaGPT does not need a child’s name, age, or school."
+        >
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">How you are learning</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {LEARNER_MODE_OPTIONS.map((option) => (
+                <SettingsChoice
+                  key={option.id}
+                  {...option}
+                  icon={MODE_ICONS[option.id]}
+                  selected={learnerMode === option.id}
+                  onSelect={setLearnerMode}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Reading support</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {READING_SUPPORT_OPTIONS.map((option) => (
+                <SettingsChoice
+                  key={option.id}
+                  {...option}
+                  icon={READING_ICONS[option.id]}
+                  selected={readingSupport === option.id}
+                  onSelect={setReadingSupport}
+                />
+              ))}
+            </div>
+          </fieldset>
+        </SettingsSection>
+
+        <SettingsSection
+          eyebrow="Learning plan"
+          title="Set your pace and focus"
+          description="These choices shape recommendations while keeping every lesson, story, game, and tool available."
+        >
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Chamorro confidence</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {CONFIDENCE_OPTIONS.map((option) => (
+                <SettingsChoice
+                  key={option.id}
+                  {...option}
+                  icon={CONFIDENCE_ICONS[option.id]}
+                  selected={skillLevel === option.id}
+                  onSelect={setSkillLevel}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Primary goal</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {LEARNING_GOAL_OPTIONS.map((option) => (
+                <SettingsChoice
+                  key={option.id}
+                  {...option}
+                  icon={GOAL_ICONS[option.id]}
+                  selected={learningGoal === option.id}
+                  onSelect={setLearningGoal}
+                />
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Preferred daily session</legend>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {DAILY_GOAL_OPTIONS.map((option) => (
+                <SettingsChoice
+                  key={option.id}
+                  {...option}
+                  icon={Clock3}
+                  selected={sessionMinutes === option.id}
+                  onSelect={setSessionMinutes}
+                />
+              ))}
+            </div>
+          </fieldset>
+        </SettingsSection>
+
+        {xpData ? (
+          <Link
+            to="/dashboard"
+            aria-label={`View learning progress, level ${xpData.level}, ${xpData.total_xp} total XP`}
+            className="group flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:border-amber-900 dark:bg-amber-950/20"
+          >
+            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-200">
+              <Zap className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-amber-700 dark:text-amber-300">Learning progress</span>
+              <span className="block font-bold text-brown-950 dark:text-white">
+                Level {xpData.level} · {getLevelInfo(xpData.level).title}
+              </span>
+              <span className="block text-xs text-brown-600 dark:text-gray-400">{xpData.total_xp.toLocaleString()} total XP</span>
+            </span>
+            <span className="text-sm font-semibold text-amber-800 group-hover:underline dark:text-amber-200">View</span>
+          </Link>
+        ) : isLoadingXP ? (
+          <div className="h-24 animate-pulse rounded-2xl bg-cream-200 motion-reduce:animate-none dark:bg-slate-800" aria-label="Loading learning progress" />
+        ) : null}
+
+        <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+          <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Display</p>
+          <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-white">Appearance</h2>
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-teal-300">
+                {theme === 'dark' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
+              </span>
+              <div>
+                <p className="font-bold text-brown-950 dark:text-white">Dark mode</p>
+                <p className="text-sm text-brown-500 dark:text-gray-400">{theme === 'dark' ? 'On' : 'Off'}</p>
+              </div>
+            </div>
             <button
+              type="button"
               onClick={toggleTheme}
-              className="flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-cream-100 dark:hover:bg-gray-700"
-              aria-label="Toggle theme"
+              aria-label="Dark mode"
+              role="switch"
+              aria-checked={theme === 'dark'}
+              className={`flex h-11 w-16 flex-none items-center rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 ${
+                theme === 'dark' ? 'justify-end bg-teal-600' : 'justify-start bg-cream-300'
+              }`}
             >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
-              ) : (
-                <Moon className="w-5 h-5 text-brown-600" />
-              )}
+              <span className="h-9 w-9 rounded-full bg-white shadow-sm" aria-hidden="true" />
             </button>
-            <AuthButton />
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="max-w-2xl mx-auto px-4 py-5 space-y-5">
-        <section className="overflow-hidden rounded-2xl border border-cream-200/70 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="border-b border-cream-200/70 px-4 py-4 dark:border-gray-700">
-            <h2 className="font-semibold text-brown-900 dark:text-white">Your learning setup</h2>
-            <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">
-              These choices personalize pacing and presentation. We do not ask for a child’s name, age, or school.
-            </p>
-          </div>
-
-          <div className="space-y-6 p-4">
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">How you are learning</legend>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {LEARNER_MODE_OPTIONS.map((option) => (
-                  <SettingsChoice key={option.id} {...option} icon={MODE_ICONS[option.id]} selected={learnerMode === option.id} onSelect={setLearnerMode} />
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Reading support</legend>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {READING_SUPPORT_OPTIONS.map((option) => (
-                  <SettingsChoice key={option.id} {...option} icon={READING_ICONS[option.id]} selected={readingSupport === option.id} onSelect={setReadingSupport} />
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Chamorro confidence</legend>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {CONFIDENCE_OPTIONS.map((option) => (
-                  <SettingsChoice key={option.id} {...option} icon={CONFIDENCE_ICONS[option.id]} selected={skillLevel === option.id} onSelect={setSkillLevel} />
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Primary goal</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {LEARNING_GOAL_OPTIONS.map((option) => (
-                  <SettingsChoice key={option.id} {...option} icon={GOAL_ICONS[option.id]} selected={learningGoal === option.id} onSelect={setLearningGoal} />
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className="mb-2 text-sm font-semibold text-brown-800 dark:text-gray-100">Preferred daily session</legend>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {DAILY_GOAL_OPTIONS.map((option) => (
-                  <SettingsChoice key={option.id} {...option} icon={Clock3} selected={sessionMinutes === option.id} onSelect={setSessionMinutes} />
-                ))}
-              </div>
-            </fieldset>
           </div>
         </section>
 
-        {/* Existing XP progress remains visible during the preference rollout. */}
-        {xpData && (
-          <section className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-2xl shadow-sm border border-amber-200 dark:border-amber-700/50 overflow-hidden">
-            <div className="px-4 py-3 border-b border-amber-200/50 dark:border-amber-700/50">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-500" />
-                <h2 className="font-semibold text-brown-800 dark:text-white">Learning progress</h2>
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-4">
-              {/* Current XP Display */}
-              <div className="flex items-center gap-4 p-3 bg-white/60 dark:bg-gray-800/40 rounded-xl">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
-                  <span className="text-2xl">{getLevelInfo(xpData.level).emoji}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-amber-800 dark:text-amber-200">
-                      Level {xpData.level}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 bg-amber-200/60 dark:bg-amber-700/40 rounded-full text-amber-700 dark:text-amber-300 font-medium">
-                      {getLevelInfo(xpData.level).title}
-                    </span>
-                  </div>
-                  <p className="text-sm text-amber-600 dark:text-amber-400">
-                    {xpData.total_xp.toLocaleString()} XP total
-                  </p>
-                  {/* Progress bar */}
-                  <div className="mt-2 h-2 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full transition-all duration-500"
-                      style={{ width: `${xpData.xp_progress}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
+        <section className="overflow-hidden rounded-3xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+          <h2 className="px-4 pt-4 text-lg font-bold text-brown-950 dark:text-white sm:px-6 sm:pt-5">Help and privacy</h2>
+          <div className="mt-2 divide-y divide-cream-100 dark:divide-slate-700">
+            <Link
+              to="/support"
+              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
+            >
+              <HelpCircle className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+              <span className="font-semibold text-brown-800 dark:text-gray-200">Help & support</span>
+            </Link>
+            <Link
+              to="/privacy"
+              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
+            >
+              <Shield className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+              <span className="font-semibold text-brown-800 dark:text-gray-200">Privacy policy</span>
+            </Link>
+          </div>
+        </section>
+      </main>
 
-            </div>
-          </section>
-        )}
-
-        {isLoadingXP && (
-          <section className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 rounded-2xl p-5 border border-amber-200 dark:border-amber-700/50 animate-pulse">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-200 dark:bg-amber-700/50" />
-              <div className="space-y-2">
-                <div className="h-5 w-24 bg-amber-200 dark:bg-amber-700/50 rounded" />
-                <div className="h-3 w-16 bg-amber-100 dark:bg-amber-800/50 rounded" />
-              </div>
-            </div>
-            <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full" />
-          </section>
-        )}
-
-        {/* Save Bar - Fixed at bottom when there are changes */}
-        {hasChanges && (
-          <div className="fixed bottom-16 left-0 right-0 z-30 border-t border-cream-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:bottom-0">
-            <div className="mx-auto max-w-2xl">
-              {saveError && <p role="alert" className="mb-2 text-sm font-medium text-red-700 dark:text-red-300">{saveError}</p>}
-              <div className="flex items-center justify-between gap-3">
+      {hasChanges && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 sm:bottom-0">
+          <div className="mx-auto max-w-3xl">
+            {saveError && <p role="alert" className="mb-2 text-sm font-semibold text-red-700 dark:text-red-300">{saveError}</p>}
+            <div className="flex items-center justify-between gap-3">
               <button
+                type="button"
                 onClick={handleReset}
-                className="flex min-h-11 items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm text-brown-600 transition-colors hover:text-brown-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:text-white"
+                disabled={isSaving}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-brown-600 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-800"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 Reset
               </button>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoadingXP}
-                className="flex min-h-11 max-w-xs flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400"
+                className="inline-flex min-h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
               >
-                {isSaving ? (
-                  'Saving...'
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
-              </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Saved Toast */}
-        {saved && !hasChanges && (
-          <div role="status" className="fixed bottom-20 left-4 right-4 z-30 mx-auto flex max-w-sm items-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-white shadow-lg sm:bottom-4">
-            <Check className="w-5 h-5" />
-            <span className="font-medium">Preferences saved!</span>
-          </div>
-        )}
-
-        {/* Appearance Section */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-cream-200/50 dark:border-gray-700/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-cream-200/50 dark:border-gray-700/50">
-            <h2 className="font-semibold text-brown-800 dark:text-white">Appearance</h2>
-          </div>
-          
-          <div className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-gray-700' : 'bg-cream-100'
-                }`}>
-                  {theme === 'dark' ? (
-                    <Moon className="w-5 h-5 text-ocean-400" />
-                  ) : (
-                    <Sun className="w-5 h-5 text-yellow-500" />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-brown-800 dark:text-white">Dark Mode</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">
-                    {theme === 'dark' ? 'On' : 'Off'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={toggleTheme}
-                aria-label="Dark mode"
-                className={`flex h-11 w-14 flex-shrink-0 items-center rounded-full p-1 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 ${
-                  theme === 'dark' 
-                    ? 'bg-ocean-500 justify-end' 
-                    : 'bg-cream-300 justify-start'
-                }`}
-                role="switch"
-                aria-checked={theme === 'dark'}
-              >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-md transition-all duration-200">
-                  {theme === 'dark' ? (
-                    <Moon className="w-3.5 h-3.5 text-ocean-600" />
-                  ) : (
-                    <Sun className="w-3.5 h-3.5 text-yellow-500" />
-                  )}
-                </span>
+                <Save className="h-4 w-4" aria-hidden="true" />
+                {isSaving ? 'Saving…' : 'Save changes'}
               </button>
             </div>
           </div>
-        </section>
+        </div>
+      )}
 
-        {/* Quick Links Section */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-cream-200/50 dark:border-gray-700/50 overflow-hidden">
-          <div className="px-4 py-3 border-b border-cream-200/50 dark:border-gray-700/50">
-            <h2 className="font-semibold text-brown-800 dark:text-white">More</h2>
-          </div>
-          
-          <div className="divide-y divide-cream-100 dark:divide-gray-700">
-            <Link 
-              to="/support"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-cream-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <HelpCircle className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <span className="text-brown-700 dark:text-gray-300">Help & Support</span>
-            </Link>
-            <Link 
-              to="/privacy"
-              className="flex items-center gap-3 px-4 py-3 hover:bg-cream-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <Shield className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <span className="text-brown-700 dark:text-gray-300">Privacy Policy</span>
-            </Link>
-          </div>
-        </section>
-        
-        {/* Spacer for fixed save bar and bottom nav */}
-        <div className={hasChanges ? "h-28" : "h-20"} />
-      </main>
-    </div>
+      {saved && !hasChanges && (
+        <div
+          role="status"
+          className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-sm items-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-white shadow-lg sm:bottom-4"
+        >
+          <Check className="h-5 w-5" aria-hidden="true" />
+          <span className="font-semibold">Preferences saved</span>
+        </div>
+      )}
+    </LearnerPageShell>
   );
 }
 

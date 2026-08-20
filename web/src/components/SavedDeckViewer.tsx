@@ -1,11 +1,64 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
-import { Flashcard } from './Flashcard';
+import {
+  AlertCircle,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  RotateCw,
+} from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDeckCards, useReviewCard } from '../hooks/useFlashcardsQuery';
 import { type QualityRating } from '../hooks/useSpacedRepetition';
+import { Flashcard } from './Flashcard';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
+
+function DeckState({
+  title,
+  description,
+  action,
+  onRetry,
+  tone = 'neutral',
+}: {
+  title: string;
+  description: string;
+  action: string;
+  onRetry?: () => void;
+  tone?: 'neutral' | 'error';
+}) {
+  const Icon = tone === 'error' ? AlertCircle : BookOpen;
+  return (
+    <section className={`rounded-3xl border bg-white p-6 text-center dark:bg-slate-800 sm:p-8 ${
+      tone === 'error' ? 'border-red-200 dark:border-red-900' : 'border-cream-200 dark:border-slate-700'
+    }`}>
+      <Icon className={`mx-auto h-9 w-9 ${tone === 'error' ? 'text-red-600 dark:text-red-300' : 'text-coral-600 dark:text-teal-300'}`} aria-hidden="true" />
+      <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">{description}</p>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+        >
+          <RotateCw className="h-4 w-4" aria-hidden="true" />
+          {action}
+        </button>
+      ) : (
+        <Link
+          to="/flashcards/my-decks"
+          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+        >
+          {action}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+    </section>
+  );
+}
 
 export function SavedDeckViewer() {
   const { deckId } = useParams<{ deckId: string }>();
@@ -14,254 +67,213 @@ export function SavedDeckViewer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
-
-  // Fetch deck cards with progress
-  const { data, isLoading, isError, error } = useDeckCards(deckId, user?.id, isLoaded && !!user);
-  
-  // Review card mutation
+  const [completionMessage, setCompletionMessage] = useState('');
+  const { data, isLoading, isError, refetch } = useDeckCards(deckId, user?.id, isLoaded && !!user);
   const reviewCardMutation = useReviewCard(deckId || '');
-
   const cards = data?.cards || [];
-  const deckTitle = data?.title || '';
+  const deckTitle = data?.title || 'Saved deck';
   const deckTopic = data?.topic || '';
 
-  // Navigate handlers
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex((index) => {
+      if (index === 0) return index;
       setIsCardFlipped(false);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentIndex < cards.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-      setIsCardFlipped(false);
-    }
-  };
-
-  // Handle card flip
-  const handleCardFlip = (flipped: boolean) => {
-    setIsCardFlipped(flipped);
-  };
-
-  // Handle card rating
-  const handleRating = (quality: QualityRating) => {
-    if (!user || !cards[currentIndex]) return;
-
-    const card = cards[currentIndex];
-    const confidence: 1 | 2 | 3 = quality <= 3 ? 1 : quality === 4 ? 2 : 3;
-    setReviewError(null);
-
-    reviewCardMutation.mutate({
-      user_id: user.id,
-      flashcard_id: card.id,
-      confidence,
-      quality,
-    }, {
-      onSuccess: (data) => {
-        console.log(`✅ Card reviewed: ${data.message}`);
-        // Move to next card
-        handleNext();
-      },
-      onError: (err) => {
-        console.error('Failed to review card:', err);
-        setReviewError('Your review was not saved. Please try again.');
-      }
+      setReviewError(null);
+      setCompletionMessage('');
+      return index - 1;
     });
-  };
+  }, []);
 
-  // Keyboard navigation
+  const handleNext = useCallback(() => {
+    setCurrentIndex((index) => {
+      if (index >= cards.length - 1) return index;
+      setIsCardFlipped(false);
+      setReviewError(null);
+      setCompletionMessage('');
+      return index + 1;
+    });
+  }, [cards.length]);
+
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') handlePrevious();
-      if (e.key === 'ArrowRight') handleNext();
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') handlePrevious();
+      if (event.key === 'ArrowRight') handleNext();
     };
-
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentIndex, cards.length]);
+  }, [handleNext, handlePrevious]);
 
-  // Redirect if not signed in
-  if (isLoaded && !user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-coral-500 dark:text-ocean-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-brown-800 dark:text-white mb-2">
-            Sign in required
-          </h2>
-          <p className="text-brown-600 dark:text-gray-400 mb-6">
-            Please sign in to view your saved decks.
-          </p>
-          <button
-            onClick={() => navigate('/flashcards')}
-            className="px-6 py-3 rounded-lg bg-coral-500 hover:bg-coral-600 text-white font-semibold transition-colors"
-          >
-            Go to Flashcards
-          </button>
-        </div>
-      </div>
+  useEffect(() => {
+    if (currentIndex >= cards.length && cards.length > 0) {
+      setCurrentIndex(cards.length - 1);
+    }
+  }, [cards.length, currentIndex]);
+
+  const handleRating = (quality: QualityRating) => {
+    const card = cards[currentIndex];
+    if (!user || !card) return;
+    const confidence: 1 | 2 | 3 = quality <= 3 ? 1 : quality === 4 ? 2 : 3;
+    setReviewError(null);
+    setCompletionMessage('');
+
+    reviewCardMutation.mutate(
+      {
+        user_id: user.id,
+        flashcard_id: card.id,
+        confidence,
+        quality,
+      },
+      {
+        onSuccess: () => {
+          if (currentIndex === cards.length - 1) {
+            setCompletionMessage('Review saved. You finished this deck.');
+          } else {
+            handleNext();
+          }
+        },
+        onError: () => {
+          setReviewError('Your review was not saved. Please try again.');
+        },
+      },
     );
-  }
+  };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <Loader2 className="w-12 h-12 text-coral-600 dark:text-ocean-400 animate-spin" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-brown-800 dark:text-white mb-2">
-            Failed to load deck
-          </h2>
-          <p className="text-red-600 dark:text-red-400 mb-6">
-            {error?.message || 'Something went wrong'}
-          </p>
-          <button
-            onClick={() => navigate('/flashcards/my-decks')}
-            className="px-6 py-3 rounded-lg bg-coral-500 hover:bg-coral-600 text-white font-semibold transition-colors"
-          >
-            Back to My Decks
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // No cards
-  if (cards.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-coral-500 dark:text-ocean-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-brown-800 dark:text-white mb-2">
-            No cards in this deck
-          </h2>
-          <button
-            onClick={() => navigate('/flashcards/my-decks')}
-            className="mt-4 px-6 py-3 rounded-lg bg-coral-500 hover:bg-coral-600 text-white font-semibold transition-colors"
-          >
-            Back to My Decks
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+  const progress = cards.length > 0 ? ((currentIndex + 1) / cards.length) * 100 : 0;
   const currentCard = cards[currentIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <button
-            onClick={() => navigate('/flashcards/my-decks')}
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors flex-shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </button>
-          
-          <div className="flex-1 text-center">
-            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
-              {deckTitle}
-            </h1>
-            <p className="text-xs text-brown-600 dark:text-gray-400 capitalize">
-              {deckTopic.replace('-', ' ')}
-            </p>
-          </div>
-
-          {/* Card Counter */}
-          <div className="text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title={deckTitle}
+        subtitle={deckTopic ? deckTopic.replace(/-/g, ' ') : 'Saved flashcard practice'}
+        icon={BookOpen}
+        backTo="/flashcards/my-decks"
+        backLabel="Back to saved decks"
+        maxWidthClassName="max-w-3xl"
+        trailing={cards.length > 0 ? (
+          <span className="rounded-full bg-coral-100 px-2.5 py-1 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
             {currentIndex + 1} / {cards.length}
+          </span>
+        ) : undefined}
+        below={cards.length > 0 ? (
+          <div
+            className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
+            role="progressbar"
+            aria-label="Deck progress"
+            aria-valuemin={1}
+            aria-valuemax={cards.length}
+            aria-valuenow={currentIndex + 1}
+          >
+            <div className="h-full rounded-full bg-coral-500 dark:bg-teal-500" style={{ width: `${progress}%` }} />
           </div>
-        </div>
-      </div>
+        ) : undefined}
+      />
 
-      {/* Flashcard Area */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <Flashcard
-            front={currentCard.front}
-            back={currentCard.back}
-            pronunciation={currentCard.pronunciation || undefined}
-            example={currentCard.example || undefined}
-            onFlip={handleCardFlip}
+      <main className="mx-auto max-w-3xl px-4 py-5 sm:py-8">
+        {isLoaded && !user ? (
+          <DeckState
+            title="Sign in to study this deck"
+            description="Saved decks and spaced-repetition progress are connected to your account."
+            action="Back to saved decks"
           />
-        </div>
+        ) : !isLoaded || isLoading ? (
+          <section
+            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
+            aria-live="polite"
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+            <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your deck…</p>
+          </section>
+        ) : isError ? (
+          <DeckState
+            title="This deck is unavailable"
+            description="Your saved cards and review progress have not been changed. Try loading the deck again."
+            action="Try again"
+            onRetry={() => refetch()}
+            tone="error"
+          />
+        ) : cards.length === 0 ? (
+          <DeckState
+            title="This deck has no cards"
+            description="Choose another saved deck or create a new set from the flashcard library."
+            action="Back to saved decks"
+          />
+        ) : currentCard ? (
+          <div className="flex flex-col items-center">
+            <p className="mb-4 text-center text-sm font-medium text-brown-600 dark:text-gray-300">
+              Listen, flip the card, then choose how well you remembered.
+            </p>
+            <div className="w-full max-w-sm">
+              <Flashcard
+                front={currentCard.front}
+                back={currentCard.back}
+                pronunciation={currentCard.pronunciation || undefined}
+                example={currentCard.example || undefined}
+                onFlip={(flipped) => {
+                  setIsCardFlipped(flipped);
+                  setReviewError(null);
+                  setCompletionMessage('');
+                }}
+              />
+            </div>
 
-        {/* Progress Indicator */}
-        {currentCard.progress && (
-          <div className="mt-4 text-center">
-            <p className="text-sm text-brown-600 dark:text-gray-400">
-              Reviewed {currentCard.progress.times_reviewed} time{currentCard.progress.times_reviewed !== 1 ? 's' : ''}
-              {currentCard.progress.last_reviewed && (
-                <> • Last: {new Date(currentCard.progress.last_reviewed).toLocaleDateString()}</>
-              )}
+            {currentCard.progress && (
+              <p className="mt-4 text-center text-sm text-brown-500 dark:text-gray-400">
+                Reviewed {currentCard.progress.times_reviewed} {currentCard.progress.times_reviewed === 1 ? 'time' : 'times'}
+                {currentCard.progress.last_reviewed && (
+                  <> · Last {new Date(currentCard.progress.last_reviewed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
+                )}
+              </p>
+            )}
+
+            {isCardFlipped && !completionMessage && (
+              <ReviewRatingButtons
+                onRate={handleRating}
+                disabled={reviewCardMutation.isPending}
+                error={reviewError}
+              />
+            )}
+
+            {completionMessage && (
+              <div className="mt-6 w-full max-w-xl rounded-2xl border border-green-200 bg-green-50 p-4 text-center dark:border-green-900 dark:bg-green-950/20" role="status">
+                <CheckCircle2 className="mx-auto h-6 w-6 text-green-700 dark:text-green-300" aria-hidden="true" />
+                <p className="mt-2 font-bold text-green-900 dark:text-green-100">{completionMessage}</p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/flashcards/my-decks')}
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-green-700 px-5 font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                >
+                  Back to saved decks
+                </button>
+              </div>
+            )}
+
+            <nav className="mt-6 flex w-full max-w-sm items-center justify-between gap-3" aria-label="Deck navigation">
+              <button
+                type="button"
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+              >
+                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={currentIndex === cards.length - 1}
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+              >
+                Next
+                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </nav>
+            <p className="mt-3 hidden text-sm text-brown-500 dark:text-gray-400 sm:block">
+              You can also use the left and right arrow keys.
             </p>
           </div>
-        )}
-
-        {/* Rating Buttons (show after flip) */}
-        {isCardFlipped && (
-          <ReviewRatingButtons
-            onRate={handleRating}
-            disabled={reviewCardMutation.isPending}
-            error={reviewError}
-          />
-        )}
-
-        {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
-          >
-            <ChevronLeft className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
-          </button>
-
-          <div className="flex gap-2">
-            {cards.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 rounded-full transition-all ${
-                  index === currentIndex
-                    ? 'w-8 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 shadow-sm'
-                    : 'w-2 bg-gray-300 dark:bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={handleNext}
-            disabled={currentIndex === cards.length - 1}
-            className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
-          >
-            <ChevronRight className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
-          </button>
-        </div>
-
-        {/* Desktop hint */}
-        <p className="hidden sm:block text-sm text-brown-600 dark:text-gray-400 mt-6 font-medium">
-          Use arrow keys to navigate • Click card to flip
-        </p>
-
-        {/* Mobile hint */}
-        <p className="sm:hidden text-sm text-brown-600 dark:text-gray-400 mt-6 font-medium">
-          Tap card to flip
-        </p>
-      </div>
-    </div>
+        ) : null}
+      </main>
+    </LearnerPageShell>
   );
 }
