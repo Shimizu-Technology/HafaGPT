@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Volume2, RotateCcw, Trophy, Star, Sun, Moon, Play, Sparkles } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { Palette, Volume2, Play, Sparkles } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -9,6 +7,7 @@ import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
+import { GamePage, GamePageHeader, GameProgress, GameResult } from './games/GamePage';
 
 // Color data with visual representations
 interface ColorItem {
@@ -36,7 +35,6 @@ const ROUNDS_PER_GAME = 10;
 type GameState = 'setup' | 'playing' | 'feedback' | 'complete';
 
 export function ColorTouch() {
-  const { theme, toggleTheme } = useTheme();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -170,58 +168,21 @@ export function ColorTouch() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/games"
-              className="p-2 -ml-2 rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
-              aria-label="Go back to games"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-orange-500 flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🎨</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-brown-800 dark:text-white">Color Touch</h1>
-                <p className="text-[10px] text-brown-500 dark:text-gray-400">Learn Chamorro colors!</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1">
-            <TTSDisclaimer variant="tooltip" />
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5 text-brown-600" /> : <Sun className="w-5 h-5 text-yellow-400" />}
-            </button>
-          </div>
-        </div>
-      </header>
+    <GamePage>
+      <GamePageHeader title="Color Touch" subtitle="Listen and tap the matching color" icon={Palette} hasSpeech />
 
-      <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
+      <main className="mx-auto max-w-2xl px-4 py-6">
         {/* Setup Screen */}
         {gameState === 'setup' && (
           <div className="animate-fade-in">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 mb-4 shadow-lg">
-                <span className="text-5xl">🎨</span>
-              </div>
-              <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">Color Touch</h2>
-              <p className="text-brown-600 dark:text-gray-400">
-                Listen to the Chamorro color and tap the matching one!
-              </p>
+            <div className="mb-6">
+              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
+              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Listen first, then choose</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">Hear a Chamorro color and tap the matching square.</p>
             </div>
 
             {/* Color Preview */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg mb-6">
+            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
               <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-3">Colors you'll learn:</h3>
               <div className="flex flex-wrap gap-2 justify-center">
                 {COLORS.slice(0, 8).map(color => (
@@ -239,7 +200,7 @@ export function ColorTouch() {
 
             <button
               onClick={startGame}
-              className="w-full py-4 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-bold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
               <Play className="w-6 h-6" />
               Start Game
@@ -254,23 +215,7 @@ export function ColorTouch() {
         {/* Playing Screen */}
         {(gameState === 'playing' || gameState === 'feedback') && currentColor && (
           <div className="animate-fade-in">
-            {/* Progress & Score */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-brown-600 dark:text-gray-400">
-                  Round {currentRound}/{ROUNDS_PER_GAME}
-                </span>
-                {streak >= 2 && (
-                  <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-xs font-bold">
-                    🔥 {streak}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <Trophy className="w-4 h-4 text-yellow-500" />
-                <span className="font-bold text-brown-800 dark:text-white">{score}</span>
-              </div>
-            </div>
+            <GameProgress current={currentRound} total={ROUNDS_PER_GAME} score={score} streak={streak} />
 
             {/* Audio Button */}
             <button
@@ -328,6 +273,7 @@ export function ColorTouch() {
                     key={index}
                     onClick={() => handleAnswer(option)}
                     disabled={gameState === 'feedback'}
+                    aria-label={option.english}
                     className={`relative aspect-square rounded-2xl transition-all ${buttonClass} ${overlayClass}`}
                     style={{ 
                       backgroundColor: option.hex,
@@ -387,52 +333,15 @@ export function ColorTouch() {
 
         {/* Complete Screen */}
         {gameState === 'complete' && (
-          <div className="animate-fade-in text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/50 dark:to-yellow-800/50 mb-6 shadow-lg">
-              <Trophy className="w-12 h-12 text-yellow-600" />
-            </div>
-            
-            <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
-              Håfa Adai! Great Job!
-            </h2>
-            
-            <div className="flex justify-center gap-2 mb-4">
-              {[1, 2, 3].map(star => (
-                <Star
-                  key={star}
-                  className={`w-10 h-10 ${
-                    star <= getStars(score)
-                      ? 'text-yellow-400 fill-yellow-400'
-                      : 'text-gray-300 dark:text-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-            
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg mb-6">
-              <div className="text-4xl font-bold text-pink-600 dark:text-pink-400 mb-2">{score}</div>
-              <div className="text-brown-600 dark:text-gray-400">points</div>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setGameState('setup');
-                  hasSavedRef.current = false;
-                }}
-                className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-5 h-5" />
-                Play Again
-              </button>
-              <Link
-                to="/games"
-                className="flex-1 py-3 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
-                More Games
-              </Link>
-            </div>
-          </div>
+          <GameResult
+            score={score}
+            stars={getStars(score)}
+            heading="Håfa adai! Great job!"
+            onReplay={() => {
+              setGameState('setup');
+              hasSavedRef.current = false;
+            }}
+          />
         )}
       </main>
 
@@ -442,6 +351,6 @@ export function ColorTouch() {
           onClose={() => setShowUpgradePrompt(false)}
         />
       )}
-    </div>
+    </GamePage>
   );
 }
