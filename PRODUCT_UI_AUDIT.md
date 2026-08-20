@@ -152,7 +152,7 @@ on the final commit, and production verification after merge.
    conversation entry and session pages now share navigation, progress, large
    interaction targets, calm feedback, and consistent exits. Saved-deck,
    review, and history utilities remain grouped with the progress/account pass.
-5. **Game system — hub, audio-first, and classic word games complete.** The
+5. **Game system — complete.** The
    game library now recommends one audio-first starting point, groups all 12
    existing games by learning style, and labels reading demands without
    age-gating learners. Sound Match, Picture Pairs, Color Touch, Number Tap,
@@ -161,8 +161,10 @@ on the final commit, and production verification after merge.
    Scramble, and Hangman now use the same shell, compact swipeable topic choice,
    selected-state semantics, and guarded exits. Falling Words and Word Catch now
    use the same compact setup, in-game pause/settings controls, and deterministic
-   exits. The remaining challenge games still need the shared shell; their
-   mechanics and scoring will stay unchanged.
+   exits. Chamorro Wordle and Cultural Trivia now complete the system with the
+   shared shell, compact setup and results, accessible selected states, guarded
+   exits, and a single global theme control while preserving their mechanics,
+   scoring, saved results, and daily play behavior.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
    information pages.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
