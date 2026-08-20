@@ -3,6 +3,7 @@ from src.rag.school_context import (
     IMAGE_TRANSLATION_GUIDANCE,
     SCHOOL_ANNOUNCEMENT_GUIDANCE,
     content_analysis_guidance,
+    contextual_school_exchange_card_ids,
     document_analysis_guidance,
     is_school_announcement_context,
     resolve_school_message_context,
@@ -190,6 +191,50 @@ def test_acronym_alone_never_selects_a_guam_school_card() -> None:
         "A generic worksheet asks students to copy S.Y.M.",
         school_announcement=False,
     ) == ()
+
+
+def test_structured_pasted_school_exchange_selects_reviewed_acronym_cards() -> None:
+    message = (
+        "What does this mean?\n\n"
+        "MSY! Kao modan isla pat kulot kåhet na polo på'go?\n"
+        "MSY! Trabiha. Kada uttimo na Betnes. Kulot kåhet på'go.\n"
+        "Esta, SYM!"
+    )
+
+    assert contextual_school_exchange_card_ids(message) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
+    guidance, school_match, card_ids = resolve_school_message_context(
+        message,
+        has_images=False,
+        image_school_signal=False,
+        image_card_ids=(),
+    )
+    assert guidance == ""
+    assert school_match is False
+    assert card_ids == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
+    assert contextual_school_exchange_card_ids(
+        "M.S.Y.! Håfa adai, familia.\nEsta, S Y M!"
+    ) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
+
+def test_generic_acronym_comparison_does_not_select_school_exchange_cards() -> None:
+    for message in (
+        "What do MSY and SYM mean?",
+        "Compare the MSY and SYM project codes.",
+        "MSY! Please review the report.\nEsta, SYM!",
+        "MSY! Kao modan isla pat kulot kåhet na polo på'go?",
+    ):
+        assert contextual_school_exchange_card_ids(message) == ()
 
 
 def test_resolved_school_context_merges_image_and_text_cards_once() -> None:

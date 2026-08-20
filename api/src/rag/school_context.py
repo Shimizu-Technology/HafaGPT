@@ -22,6 +22,22 @@ _SCHOOL_CARD_TOKEN_PATTERNS = {
     ),
 }
 
+_MSY_TURN_OPENING_PATTERN = re.compile(
+    r"(?:^|\n)\s*(?:[-*>•]\s*)?M(?:[.\t ·_-]{0,3})S"
+    r"(?:[.\t ·_-]{0,3})Y\s*[.,!:;—-]",
+    re.IGNORECASE,
+)
+_SYM_TURN_SIGNOFF_PATTERN = re.compile(
+    r"(?:^|\n)\s*(?:[-*>•]\s*)?(?:esta\s*,?\s*)?"
+    r"S(?:[.\t ·_-]{0,3})Y(?:[.\t ·_-]{0,3})M\s*[.!?]*\s*$",
+    re.IGNORECASE,
+)
+_CHAMORRO_EXCHANGE_MARKER_PATTERN = re.compile(
+    r"\b(?:kao|pat|trabiha|esta|kada|betnes|kulot|polo|na|"
+    r"p[åa]['’]?go|h[åa]fa|familia|yu['’]?os|ma['’]?[åa]se)\b",
+    re.IGNORECASE,
+)
+
 
 _EXPLICIT_SCHOOL_MESSAGE_PATTERNS = (
     re.compile(
@@ -132,6 +148,32 @@ def school_context_card_ids(
         IMAGE_CONTEXT_CARD_IDS[token]
         for token, pattern in _SCHOOL_CARD_TOKEN_PATTERNS.items()
         if pattern.search(text)
+    )
+
+
+def contextual_school_exchange_card_ids(message: str) -> tuple[str, ...]:
+    """Return reviewed cards for a strongly structured pasted school exchange.
+
+    A bare acronym or a generic request mentioning both acronyms is not enough.
+    This narrow path requires MSY in greeting position, SYM in sign-off position,
+    and multiple Chamorro/local-language markers in the intervening exchange. It
+    lets a pasted transcript retain the same reviewed context as a screenshot
+    without labeling every use of these acronyms as Guam school usage.
+    """
+
+    text = message or ""
+    if not (
+        _MSY_TURN_OPENING_PATTERN.search(text)
+        and _SYM_TURN_SIGNOFF_PATTERN.search(text)
+    ):
+        return ()
+
+    if len(_CHAMORRO_EXCHANGE_MARKER_PATTERN.findall(text)) < 2:
+        return ()
+
+    return (
+        IMAGE_CONTEXT_CARD_IDS["SYM"],
+        IMAGE_CONTEXT_CARD_IDS["MSY"],
     )
 
 
@@ -323,6 +365,7 @@ def resolve_school_message_context(
                     message,
                     school_announcement=school_announcement,
                 ),
+                *contextual_school_exchange_card_ids(message),
             )
         )
     )
