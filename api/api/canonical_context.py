@@ -11,6 +11,10 @@ from pathlib import Path
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
+from src.rag.translation_policy import (
+    extract_translation_retrieval_payload,
+    is_passage_translation,
+)
 
 
 CANONICAL_VOCABULARY_PATH = (
@@ -28,6 +32,8 @@ EXACT_DICTIONARY_FILES = (
     ),
 )
 MAX_CANONICAL_MATCHES = 8
+MAX_PASSAGE_DICTIONARY_MATCHES = 8
+_PASSAGE_WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
 
 
 def _normalize_for_match(value: str) -> str:
@@ -95,6 +101,134 @@ def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, obje
     return matches
 
 
+@lru_cache(maxsize=1)
+def _exact_dictionary_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
+    """Index governed local dictionaries once for deterministic passage evidence."""
+
+    index: dict[str, list[tuple[str, str, object]]] = {}
+    for display_name, dictionary in _exact_dictionary_data():
+        for entry_headword, definition in dictionary.items():
+            normalized = _normalize_exact_headword(entry_headword)
+            if normalized:
+                index.setdefault(normalized, []).append(
+                    (display_name, entry_headword, definition)
+                )
+    return {key: tuple(values) for key, values in index.items()}
+
+
+@lru_cache(maxsize=1)
+def _near_dictionary_headword_index() -> dict[tuple[str, int], tuple[str, ...]]:
+    """Bucket single-word headwords so OCR-near lookup stays bounded."""
+
+    buckets: dict[tuple[str, int], list[str]] = {}
+    for headword in _exact_dictionary_index():
+        if " " in headword or len(headword) < 4:
+            continue
+        buckets.setdefault((headword[:2], len(headword)), []).append(headword)
+    return {key: tuple(values) for key, values in buckets.items()}
+
+
+def _edit_distance_at_most_one(left: str, right: str) -> bool:
+    """Return true for one substitution, insertion, or deletion at most."""
+
+    if left == right:
+        return True
+    if abs(len(left) - len(right)) > 1:
+        return False
+    if len(left) > len(right):
+        left, right = right, left
+    if len(left) == len(right):
+        return sum(a != b for a, b in zip(left, right, strict=True)) == 1
+    left_index = right_index = differences = 0
+    while left_index < len(left) and right_index < len(right):
+        if left[left_index] == right[right_index]:
+            left_index += 1
+            right_index += 1
+            continue
+        differences += 1
+        if differences > 1:
+            return False
+        right_index += 1
+    return True
+
+
+def _passage_dictionary_matches(
+    user_input: str,
+) -> list[tuple[str, str, str, object, bool]]:
+    """Find exact and conservative near matches for a translation passage.
+
+    The boolean marks a one-edit OCR/spelling candidate. These matches are prompt
+    evidence only and never rewrite the user's or image's supplied text.
+    """
+
+    if not is_passage_translation(user_input):
+        return []
+    payload = extract_translation_retrieval_payload(user_input)
+    if not payload:
+        return []
+
+    raw_words = _PASSAGE_WORD_PATTERN.findall(payload)
+    normalized_words = [_normalize_exact_headword(word) for word in raw_words]
+    index = _exact_dictionary_index()
+    candidates: list[tuple[int, int, int, str, str, bool]] = []
+    for width in range(min(4, len(normalized_words)), 0, -1):
+        for position in range(len(normalized_words) - width + 1):
+            normalized_phrase = " ".join(normalized_words[position:position + width])
+            if len(normalized_phrase.replace(" ", "")) < 4:
+                continue
+            if normalized_phrase in index:
+                candidates.append(
+                    (
+                        width,
+                        len(normalized_phrase),
+                        position,
+                        normalized_phrase,
+                        normalized_phrase,
+                        False,
+                    )
+                )
+
+    exact_single_words = {
+        candidate[3] for candidate in candidates if candidate[0] == 1
+    }
+    near_index = _near_dictionary_headword_index()
+    for position, observed in enumerate(normalized_words):
+        if len(observed) < 5 or observed in exact_single_words:
+            continue
+        bucket_candidates = (
+            headword
+            for candidate_length in range(
+                max(4, len(observed) - 1),
+                len(observed) + 2,
+            )
+            for headword in near_index.get((observed[:2], candidate_length), ())
+        )
+        near_headwords = [
+            headword
+            for headword in bucket_candidates
+            if _edit_distance_at_most_one(observed, headword)
+        ]
+        for headword in near_headwords[:3]:
+            candidates.append((1, len(headword), position, observed, headword, True))
+
+    candidates.sort(key=lambda item: (-item[0], -item[1], item[2], item[4]))
+    matches: list[tuple[str, str, str, object, bool]] = []
+    seen_headwords: set[str] = set()
+    for _width, _length, _position, observed, headword, near_match in candidates:
+        if headword in seen_headwords:
+            continue
+        seen_headwords.add(headword)
+        # One governed definition per passage headword keeps the prompt compact;
+        # exact single-word lookups still return all eligible dictionary sources.
+        for display_name, entry_headword, definition in index[headword][:1]:
+            matches.append(
+                (observed, display_name, entry_headword, definition, near_match)
+            )
+        if len(seen_headwords) >= MAX_PASSAGE_DICTIONARY_MATCHES:
+            break
+    return matches
+
+
 def _format_dictionary_definition(definition: object) -> str:
     if isinstance(definition, str):
         return definition.strip()
@@ -150,8 +284,9 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
 
     requested_headword = _extract_requested_headword(user_input)
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
+    passage_dictionary_matches = _passage_dictionary_matches(user_input)
 
-    if not matches and not dictionary_matches:
+    if not matches and not dictionary_matches and not passage_dictionary_matches:
         return "", []
 
     lines = [
@@ -200,12 +335,39 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             ]
         )
 
+    for (
+        observed,
+        display_name,
+        entry_headword,
+        definition,
+        near_match,
+    ) in passage_dictionary_matches:
+        label = (
+            f"Possible OCR/spelling-near dictionary evidence for {observed}: {entry_headword}"
+            if near_match
+            else f"Exact passage dictionary evidence: {entry_headword}"
+        )
+        lines.extend(
+            [
+                f"[{label}]",
+                f"Source: {display_name}",
+                f"Definition: {_format_dictionary_definition(definition)}",
+                (
+                    "Use this near match only as an interpretation clue. Recheck the image "
+                    "and do not silently replace the supplied spelling."
+                    if near_match
+                    else "This headword occurs exactly in the supplied passage text."
+                ),
+                "",
+            ]
+        )
+
     if matches:
         lines.append(
             "Cite canonical entries as the HåfaGPT canonical vocabulary ledger. "
             "Do not claim native review unless the review status says so."
         )
-    if dictionary_matches:
+    if dictionary_matches or passage_dictionary_matches:
         lines.append(
             "Cite exact headword definitions by the dictionary source name shown above."
         )
@@ -241,6 +403,11 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     sources.extend(
         (display_name, None)
         for display_name, _headword, _definition in dictionary_matches
+    )
+    sources.extend(
+        (display_name, None)
+        for _observed, display_name, _headword, _definition, _near_match
+        in passage_dictionary_matches
     )
     deduplicated_sources: list[object] = []
     seen_source_keys: set[tuple[object, object]] = set()

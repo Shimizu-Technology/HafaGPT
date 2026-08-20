@@ -1,5 +1,6 @@
 from src.rag.school_context import (
     GENERAL_DOCUMENT_ANALYSIS_GUIDANCE,
+    IMAGE_TRANSLATION_GUIDANCE,
     SCHOOL_ANNOUNCEMENT_GUIDANCE,
     content_analysis_guidance,
     document_analysis_guidance,
@@ -127,6 +128,22 @@ def test_content_guidance_routes_school_image_and_generic_image_differently() ->
     assert "## What You Need to Do" not in general_guidance
 
 
+def test_image_translation_uses_concise_privacy_safe_contract() -> None:
+    guidance, school_match = content_analysis_guidance(
+        "What does this say?",
+        has_images=True,
+        image_school_signal=True,
+        image_translation=True,
+    )
+
+    assert school_match is True
+    assert guidance == IMAGE_TRANSLATION_GUIDANCE
+    assert "natural, complete English translation first" in guidance
+    assert "Do not produce a document overview" in guidance
+    assert "phone numbers" in guidance
+    assert "## Key Information" not in guidance
+
+
 def test_text_only_school_message_gets_action_first_guidance() -> None:
     guidance, school_match = content_analysis_guidance(
         "School announcement: classes are cancelled today.",
@@ -189,3 +206,17 @@ def test_resolved_school_context_merges_image_and_text_cards_once() -> None:
         "usage.guam.school.sym_signoff",
         "usage.guam.school.msy_greeting",
     )
+
+
+def test_resolved_image_translation_keeps_cards_without_verbose_school_format() -> None:
+    guidance, school_match, card_ids = resolve_school_message_context(
+        "What does this say?",
+        has_images=True,
+        image_school_signal=True,
+        image_card_ids=("usage.guam.school.msy_greeting",),
+        image_translation=True,
+    )
+
+    assert guidance == IMAGE_TRANSLATION_GUIDANCE
+    assert school_match is True
+    assert card_ids == ("usage.guam.school.msy_greeting",)

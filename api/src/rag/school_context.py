@@ -173,6 +173,37 @@ IMPORTANT: Always use this consistent structure. Be comprehensive but organized!
 """
 
 
+IMAGE_TRANSLATION_GUIDANCE = """
+
+IMAGE TRANSLATION MODE
+The user is asking what visible text in an uploaded image means.
+
+- Put a natural, complete English translation first. For a short conversation,
+  preserve each turn and make omitted words understandable from context.
+- Prefer the meaning of the whole exchange over disconnected word-for-word glosses.
+  Keep contrasts, alternatives, negation, time words, and the scope of each clause
+  attached to the correct idea.
+- In dialogue, resolve short replies and omitted repeated words from the immediately
+  preceding question. For an "A or B?" question, a standalone "not yet/still" plus
+  a recurring schedule normally explains when A applies; a separate B + "today"
+  phrase states the present choice. Do not merge the recurring schedule into B.
+- Use the supplied lexical evidence compositionally. In clothing context, **moda**
+  (fashion/custom of dress) plus a linked descriptor names a style, and **polo**
+  means a polo shirt—not a pole. A color phrase linked with **na polo** describes
+  the polo shirt. Keep those phrases as the alternatives in the dialogue.
+- Be concise and phone-friendly. Do not produce a document overview, metadata table,
+  list of people, or inventory of dates/locations unless the user asks for one.
+- Do not repeat sender names, usernames, phone numbers, email addresses, timestamps,
+  or app-interface text unless the user specifically asks about that metadata.
+- If the text is unclear, mark the exact word or clause as **[unclear]** and translate
+  the rest. Do not turn a local uncertainty into a refusal of the whole translation.
+- After the translation, add only brief language notes that materially help explain
+  the result. Cite governed references only for claims those references support.
+- Preserve names and quoted English terms that are part of the message body. Never
+  infer private facts about the people shown.
+"""
+
+
 SCHOOL_ANNOUNCEMENT_GUIDANCE = """
 
 OPERATIONAL SCHOOL ANNOUNCEMENT MODE
@@ -235,6 +266,7 @@ def content_analysis_guidance(
     *,
     has_images: bool,
     image_school_signal: bool = False,
+    image_translation: bool = False,
 ) -> tuple[str, bool]:
     """Build analysis guidance and expose the routing decision to callers."""
 
@@ -246,6 +278,8 @@ def content_analysis_guidance(
     )
 
     if has_attachment:
+        if has_images and image_translation:
+            return IMAGE_TRANSLATION_GUIDANCE, school_announcement
         if has_images and has_document_text:
             doc_type = "uploaded image(s) and document(s)"
         elif has_images:
@@ -271,6 +305,7 @@ def resolve_school_message_context(
     has_images: bool,
     image_school_signal: bool,
     image_card_ids: tuple[str, ...],
+    image_translation: bool = False,
 ) -> tuple[str, bool, tuple[str, ...]]:
     """Resolve one shared school routing result for prompt and retrieval use."""
 
@@ -278,6 +313,7 @@ def resolve_school_message_context(
         message,
         has_images=has_images,
         image_school_signal=image_school_signal,
+        image_translation=image_translation,
     )
     card_ids = tuple(
         dict.fromkeys(

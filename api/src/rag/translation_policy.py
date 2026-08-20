@@ -27,6 +27,13 @@ MULTI-WORD TRANSLATION REQUEST:
 - Preserve names and quoted English terms. If a word or construction is materially
   ambiguous, identify that exact uncertainty and give the most likely reading or
   concise alternatives instead of withholding everything.
+- For a dialogue, resolve short answers and omitted repeated words from the preceding
+  turn. Preserve the scope of alternatives, negation, recurring schedules, and
+  present-time phrases instead of flattening them into one clause.
+- Interpret familiar loanwords from their local sentence context. In a clothing
+  exchange, for example, "polo" denotes a polo shirt, not a pole; combine dictionary
+  meanings with linkers and surrounding nouns rather than translating each token
+  in isolation.
 - Do not infer a person's gender from Chamorro third-person forms or from their name.
   Use a gender-neutral English pronoun unless the user's context establishes gender.
 - Do not add unrelated etymology, cultural claims, or invented example sentences.
