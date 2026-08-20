@@ -78,6 +78,23 @@ describe('public information pages', () => {
     expect(screen.getByRole('heading', { name: /unlock unlimited learning/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign up & upgrade/i })).toBeInTheDocument();
   });
+
+  it('takes Back home to the home route instead of the previous history entry', () => {
+    render(
+      <MemoryRouter initialEntries={['/settings', '/about']} initialIndex={1}>
+        <Routes>
+          <Route path="/" element={<p>Home destination</p>} />
+          <Route path="/settings" element={<p>Previous destination</p>} />
+          <Route path="/about" element={<AboutPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back home' }));
+
+    expect(screen.getByText('Home destination')).toBeInTheDocument();
+    expect(screen.queryByText('Previous destination')).not.toBeInTheDocument();
+  });
 });
 
 describe('shared conversations', () => {
