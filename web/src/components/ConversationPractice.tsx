@@ -364,7 +364,7 @@ export function ConversationPractice() {
 
   // Main Conversation UI
   return (
-    <LearnerPageShell className="flex flex-col">
+    <LearnerPageShell className="flex min-h-[100dvh] flex-col !pb-0">
       <LearnerPageHeader
         title={scenario.characterName}
         subtitle={`${scenario.title} · Turn ${conversation.turnCount} of about ${scenario.estimatedTurns * 2}`}
