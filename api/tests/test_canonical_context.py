@@ -92,3 +92,38 @@ def test_exact_dictionary_lookup_keeps_para_and_para_with_ring_distinct():
     assert "Exact dictionary headword: para" in para_context
     assert "Exact dictionary headword: påra" not in para_context
     assert "Exact dictionary headword: påra" in para_with_ring_context
+
+
+def test_passage_gets_exact_dictionary_evidence_for_multiple_words() -> None:
+    context, sources = get_canonical_tutor_context(
+        "What does this say?\n\n"
+        "Kao modan isla pat kulot kåhet na polo på'go?\n"
+        "Trabiha. Kada uttimo na Betnes."
+    )
+
+    assert "Exact passage dictionary evidence: kulot kåhet" in context
+    assert "Exact passage dictionary evidence: trabiha" in context
+    assert "Definition: yet, still, not yet" in context
+    assert "Exact passage dictionary evidence: Betnes" in context
+    assert "Exact passage dictionary evidence: uttimo" in context
+    assert ("Chamoru.info dictionary", None) in sources
+    assert ("Topping, Ogo, and Dungca dictionary", None) in sources
+
+
+def test_passage_uses_one_edit_dictionary_clues_without_rewriting_ocr() -> None:
+    context, _sources = get_canonical_tutor_context(
+        "What does this say?\n\nTrabina. Kada uttemo na Betnes. Modan isla."
+    )
+
+    assert "Possible OCR/spelling-near dictionary evidence for trabina: trabiha" in context
+    assert "Possible OCR/spelling-near dictionary evidence for uttemo: uttimo" in context
+    assert "Possible OCR/spelling-near dictionary evidence for modan: moda" in context
+    assert "do not silently replace the supplied spelling" in context
+
+
+def test_non_translation_prose_does_not_trigger_passage_dictionary_scan() -> None:
+    context, _sources = get_canonical_tutor_context(
+        "Tell me about fashion and Friday in Guam."
+    )
+
+    assert "passage dictionary evidence" not in context

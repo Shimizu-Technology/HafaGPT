@@ -125,7 +125,7 @@ def test_passage_translation_combines_scoped_card_and_vector_context() -> None:
         "Reviewed source",
         "Vector source",
     ]
-    assert fake_rag.calls == [(query, 3)]
+    assert fake_rag.calls == [(query, 6)]
 
 
 def test_image_context_card_does_not_suppress_vector_retrieval() -> None:
