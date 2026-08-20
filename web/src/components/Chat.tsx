@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Home, Share2, Link2, Check, Copy, X } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
@@ -30,7 +30,7 @@ import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentPlaceholder } from '../lib/chatIntent';
-import { shouldPinInitialExchangeToTop } from '../lib/chatScroll';
+import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
 
 export function Chat() {
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -99,7 +99,6 @@ export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   
   const greeting = useRotatingGreeting();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
@@ -311,13 +310,28 @@ export function Chat() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [messages.length]);
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
-  };
+  const pinInitialExchangeToTop = shouldPinInitialExchangeToTop(messages);
 
-  const scrollToConversationStart = (behavior: ScrollBehavior = 'auto') => {
-    messagesContainerRef.current?.scrollTo({ top: 0, behavior });
-  };
+  const scrollToBottom = useCallback((
+    behavior: ScrollBehavior = 'smooth',
+    preserveInitialExchange = true,
+  ) => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const paddingBottom = Number.parseFloat(getComputedStyle(container).paddingBottom) || 0;
+    const top = getChatScrollTop({
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight,
+      paddingBottom,
+      isInitialExchange: pinInitialExchangeToTop,
+      preserveInitialExchange,
+    });
+
+    // Scroll only the messages viewport. Element.scrollIntoView() can also move
+    // outer ancestors in mobile Safari, which consumes the fixed header gutter.
+    container.scrollTo({ top, behavior });
+  }, [pinInitialExchangeToTop]);
 
   // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
   const userScrolledUpRef = useRef(false);
@@ -331,8 +345,6 @@ export function Chat() {
     const { scrollTop, scrollHeight, clientHeight } = container;
     return scrollHeight - scrollTop - clientHeight < 150;
   };
-
-  const pinInitialExchangeToTop = shouldPinInitialExchangeToTop(messages);
 
   // Track user scroll behavior - only respond to user-initiated scroll
   useEffect(() => {
@@ -386,16 +398,12 @@ export function Chat() {
       // Always scroll when new message is added (unless user explicitly scrolled up)
       if (!userScrolledUpRef.current) {
         isProgrammaticScrollRef.current = true;
-        if (pinInitialExchangeToTop) {
-          scrollToConversationStart('instant');
-        } else {
-          scrollToBottom();
-        }
+        scrollToBottom();
         setTimeout(() => { isProgrammaticScrollRef.current = false; }, 100);
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [messages.length, pinInitialExchangeToTop]);
+  }, [messages.length, scrollToBottom]);
 
   // Auto-scroll during streaming - but respect user's choice to scroll up
   const isCurrentlyStreaming = messages.some(m => m.id?.startsWith('streaming_'));
@@ -403,14 +411,10 @@ export function Chat() {
     if (isCurrentlyStreaming && !userScrolledUpRef.current) {
       // Use instant scroll during streaming for smoother experience
       isProgrammaticScrollRef.current = true;
-      if (pinInitialExchangeToTop) {
-        scrollToConversationStart('instant');
-      } else {
-        scrollToBottom('instant');
-      }
+      scrollToBottom('instant');
       setTimeout(() => { isProgrammaticScrollRef.current = false; }, 50);
     }
-  }, [messages, isCurrentlyStreaming, pinInitialExchangeToTop]);
+  }, [messages, isCurrentlyStreaming, scrollToBottom]);
   
   // Reset scroll tracking when user sends a new message (they want to see the response)
   const resetScrollTracking = () => {
@@ -1023,13 +1027,17 @@ End of Export
         </div>
       )}
 
-      {/* Messages Area - Scrollable */}
+      {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
       <div
-        ref={messagesContainerRef}
-        data-testid="chat-messages"
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-4 pt-5 sm:pt-6 pb-[200px] sm:pb-[140px] scroll-pt-5 sm:scroll-pt-6 custom-scrollbar"
+        data-testid="chat-messages-viewport"
+        className="min-h-0 flex-1 pt-5 sm:pt-6"
       >
-        <div className="w-full max-w-4xl mx-auto">
+        <div
+          ref={messagesContainerRef}
+          data-testid="chat-messages"
+          className="h-full min-h-0 overflow-y-auto overflow-x-hidden px-4 sm:px-4 pb-[200px] sm:pb-[140px] custom-scrollbar"
+        >
+          <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
           {conversationsLoading ? (
             <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
@@ -1114,9 +1122,9 @@ End of Export
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </>
           )}
+          </div>
         </div>
       </div>
 
@@ -1128,12 +1136,12 @@ End of Export
             <button
               onClick={() => {
                 resetScrollTracking();
-                scrollToBottom();
+                scrollToBottom('smooth', false);
               }}
               onTouchEnd={(e) => {
                 e.preventDefault();
                 resetScrollTracking();
-                scrollToBottom();
+                scrollToBottom('smooth', false);
               }}
               className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
               aria-label="Scroll to bottom"
