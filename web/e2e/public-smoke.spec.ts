@@ -312,7 +312,7 @@ test('public learner can reach the dictionary and search it', async ({ page }) =
 
   await page.getByRole('link', { name: /Search the dictionary/i }).click();
   await expect(page).toHaveURL(/\/vocabulary$/);
-  await expect(page.getByRole('heading', { name: 'Vocabulary' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Dictionary', exact: true })).toBeVisible();
 
   await page.getByPlaceholder('Search all Chamorro words...').fill('guåhu');
   await expect(page.getByText('guåhu', { exact: true })).toBeVisible();
@@ -372,7 +372,8 @@ test('public learner can open stories and protected games fail closed', async ({
   const errors = monitorRuntimeErrors(page);
 
   await page.goto('/stories');
-  await expect(page.getByRole('heading', { name: 'Chamorro Stories' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chamorro stories' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Curated/ })).toHaveAttribute('aria-pressed', 'true');
 
   await page.goto('/games');
   await expect(page.getByRole('heading', { name: 'Learning Games' })).toBeVisible();
