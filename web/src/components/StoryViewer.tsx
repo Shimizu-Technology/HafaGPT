@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info, X } from 'lucide-react';
 import { getStoryById, StoryWord } from '../data/storyData';
 import { PronunciationButton } from './PronunciationButton';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 
@@ -25,14 +26,14 @@ export function StoryViewer() {
 
   if (!story) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
+      <LearnerPageShell className="flex items-center justify-center p-4">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-brown-600 dark:text-gray-400 mb-4">Story not found</p>
           <Link to="/stories" className="text-coral-600 dark:text-ocean-400 hover:underline">
             Back to Stories
           </Link>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
@@ -105,7 +106,7 @@ export function StoryViewer() {
   const renderReading = () => (
     <>
       {/* Story Header */}
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-5 border border-amber-200/50 dark:border-amber-700/30 mb-6">
+      <div className="mb-6 rounded-2xl border border-amber-200 bg-white p-5 dark:border-amber-800 dark:bg-slate-800">
         <div className="flex items-start gap-4">
           <div className="text-4xl">{story.icon}</div>
           <div className="flex-1">
@@ -152,7 +153,7 @@ export function StoryViewer() {
       )}
 
       {/* Reading Area */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700 mb-4">
+      <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
         {/* Chamorro Text - Tappable Words */}
         <div className="mb-6">
           <p className="text-xs text-brown-500 dark:text-gray-400 uppercase tracking-wide mb-2 font-medium">
@@ -163,7 +164,7 @@ export function StoryViewer() {
               <button
                 key={idx}
                 onClick={() => handleWordTap(word)}
-                className={`px-2 py-1 rounded-lg transition-all ${
+                className={`min-h-9 rounded-lg px-2 py-1 transition-colors ${
                   selectedWord?.chamorro === word.chamorro
                     ? 'bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-100 font-semibold'
                     : 'hover:bg-amber-100 dark:hover:bg-amber-900/30 text-brown-800 dark:text-white'
@@ -188,7 +189,7 @@ export function StoryViewer() {
 
       {/* Word Translation Popup */}
       {selectedWord && (
-        <div className="bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 rounded-2xl p-5 mb-4 border border-amber-300 dark:border-amber-700 shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-700 dark:bg-amber-950/40">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -207,10 +208,12 @@ export function StoryViewer() {
               </p>
             </div>
             <button
+              type="button"
               onClick={() => setSelectedWord(null)}
-              className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+              aria-label="Close word translation"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900/40"
             >
-              ✕
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -243,7 +246,7 @@ export function StoryViewer() {
 
         <button
           onClick={goToNextParagraph}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 text-white font-semibold hover:shadow-lg transition-all"
+          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-700"
         >
           {currentParagraph < story.paragraphs.length - 1 ? (
             <>
@@ -366,7 +369,7 @@ export function StoryViewer() {
       {selectedAnswer !== null && (
         <button
           onClick={handleNextQuestion}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 dark:from-purple-600 dark:to-indigo-600 text-white font-semibold hover:shadow-lg transition-all"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-purple-700"
         >
           {currentQuestion < story.questions.length - 1 ? (
             <>
@@ -452,7 +455,7 @@ export function StoryViewer() {
       <div className="space-y-3">
         <button
           onClick={restartStory}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 text-white font-semibold hover:shadow-lg transition-all"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-700"
         >
           <RotateCcw className="w-5 h-5" />
           <span>Read Again</span>
@@ -470,37 +473,25 @@ export function StoryViewer() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/stories"
-              className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-amber-500" />
-              <span className="font-semibold text-brown-800 dark:text-white">
-                {viewMode === 'reading' ? 'Reading' : viewMode === 'quiz' ? 'Quiz' : 'Results'}
-              </span>
-            </div>
-          </div>
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title={viewMode === 'reading' ? 'Read story' : viewMode === 'quiz' ? 'Story quiz' : 'Your results'}
+        subtitle={story.title}
+        icon={BookOpen}
+        backTo="/stories"
+        backLabel="Back to stories"
+        maxWidthClassName="max-w-2xl"
+        iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        trailing={viewMode === 'reading' ? (
+          <PronunciationButton text={paragraph.chamorro} className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
+        ) : undefined}
+      />
 
-          {/* Listen to paragraph button */}
-          {viewMode === 'reading' && (
-            <PronunciationButton text={paragraph.chamorro} showLabel className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
-          )}
-        </div>
-      </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {viewMode === 'reading' && renderReading()}
         {viewMode === 'quiz' && renderQuiz()}
         {viewMode === 'results' && renderResults()}
-      </div>
-    </div>
+      </main>
+    </LearnerPageShell>
   );
 }

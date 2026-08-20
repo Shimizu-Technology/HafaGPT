@@ -43,6 +43,30 @@ async function mockPublicApi(page: Page) {
       return;
     }
 
+    if (url.pathname === '/api/vocabulary/categories/greetings') {
+      await route.fulfill({
+        json: {
+          category: {
+            id: 'greetings',
+            title: 'Greetings & Basics',
+            icon: 'G',
+            description: 'Common greetings',
+            word_count: 1,
+          },
+          total: 1,
+          words: [
+            {
+              chamorro: 'håfa adai',
+              part_of_speech: 'phrase',
+              definition: 'hello',
+              examples: [{ chamorro: 'Håfa adai, Maria!', english: 'Hello, Maria!' }],
+            },
+          ],
+        },
+      });
+      return;
+    }
+
     if (url.pathname === '/api/vocabulary/search') {
       await route.fulfill({
         json: {
@@ -119,6 +143,47 @@ async function mockPublicApi(page: Page) {
             sourceUrl: 'https://example.com',
             message: '',
           },
+        },
+      });
+      return;
+    }
+
+    if (url.pathname === '/api/stories/lengguahita-test') {
+      await route.fulfill({
+        json: {
+          id: 'lengguahita-test',
+          title: 'Keyboard story',
+          titleEnglish: 'Keyboard test',
+          titleChamorro: 'Prueba',
+          author: 'Test author',
+          description: 'A browser test story',
+          difficulty: 'beginner',
+          category: 'test',
+          source: 'test',
+          sourceUrl: 'https://example.com/story',
+          sourceName: 'Test source',
+          attribution: 'Test attribution',
+          paragraphs: [{
+            id: 'paragraph-1',
+            chamorro: 'Håfa adai.',
+            english: 'Hello.',
+            words: [],
+          }],
+          paragraphCount: 1,
+          wordCount: 2,
+          readingTime: 1,
+        },
+      });
+      return;
+    }
+
+    if (decodeURIComponent(url.pathname) === '/api/vocabulary/word/håfa') {
+      await route.fulfill({
+        json: {
+          found: true,
+          chamorro: 'håfa',
+          definition: 'what',
+          examples: [],
         },
       });
       return;
@@ -386,10 +451,54 @@ test('public learner can open stories and protected games fail closed', async ({
   expect(errors).toEqual([]);
 });
 
+test('dictionary category and story reader keep detail interactions accessible', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+
+  await page.goto('/vocabulary/greetings');
+  await expect(page.getByRole('heading', { name: 'Greetings & Basics' })).toBeVisible();
+  await expect(page.getByLabel('Search in Greetings & Basics')).toHaveCSS('font-size', '16px');
+  await page.getByRole('button', { name: 'Show examples for håfa adai' }).click();
+  await expect(page.getByText('Håfa adai, Maria!')).toBeVisible();
+
+  await page.goto('/stories/hafa-adai-maria');
+  await expect(page.getByRole('heading', { name: 'Read story' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Håfa Adai, Maria!' })).toBeVisible();
+  await page.getByRole('button', { name: 'Håfa', exact: true }).click();
+  await expect(page.getByText('what', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Close word translation' }).click();
+
+  await expect.poll(async () => page.locator('html').evaluate((element) => element.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('external story word dialog traps and restores keyboard focus', async ({ page }) => {
+  const errors = monitorRuntimeErrors(page);
+
+  await page.goto('/stories/lengguahita/lengguahita-test');
+  await expect(page.getByRole('heading', { name: 'Keyboard story' })).toBeVisible();
+
+  const wordButton = page.getByRole('button', { name: 'Håfa', exact: true });
+  await wordButton.focus();
+  await page.keyboard.press('Enter');
+
+  const dialog = page.getByRole('dialog', { name: 'håfa' });
+  const closeButton = page.getByRole('button', { name: 'Close word details' });
+  await expect(dialog).toBeVisible();
+  await expect(closeButton).toBeFocused();
+
+  await page.keyboard.press('Shift+Tab');
+  await expect(dialog.getByRole('button', { name: 'Listen: håfa' })).toBeFocused();
+  await page.keyboard.press('Escape');
+
+  await expect(dialog).toBeHidden();
+  await expect(wordButton).toBeFocused();
+  expect(errors).toEqual([]);
+});
+
 test('critical pages fit the viewport without horizontal overflow', async ({ page }) => {
   const errors = monitorRuntimeErrors(page);
 
-  for (const path of ['/', '/vocabulary', '/stories', '/chat?intent=translate']) {
+  for (const path of ['/', '/vocabulary', '/vocabulary/greetings', '/stories', '/stories/hafa-adai-maria', '/chat?intent=translate']) {
     await page.goto(path);
     await expect(page.locator('body')).toBeVisible();
     await expect.poll(async () => {

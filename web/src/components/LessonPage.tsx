@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Layers, Brain, CheckCircle, Moon, Sun } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { BookOpen, Layers, Brain, CheckCircle } from 'lucide-react';
 import { useUpdateProgress } from '../hooks/useLearningPath';
 import { useAwardXP } from '../hooks/useXP';
 import { getTopic, getTopicIndex, getNextTopic, getPath } from '../data/learningPath';
@@ -10,6 +9,7 @@ import { LessonFlashcards } from './LessonFlashcards';
 import { LessonQuiz } from './LessonQuiz';
 import { LessonComplete } from './LessonComplete';
 import { XPToast } from './XPDisplay';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
 
@@ -25,7 +25,6 @@ const STEP_INFO = {
 export function LessonPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
   const updateProgress = useUpdateProgress();
   const awardXP = useAwardXP();
 
@@ -46,19 +45,19 @@ export function LessonPage() {
 
   if (!topic) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-        <div className="text-center">
+      <LearnerPageShell className="flex items-center justify-center p-4">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <h1 className="text-2xl font-bold text-brown-800 dark:text-white mb-4">
             Topic not found
           </h1>
           <Link
             to="/"
-            className="text-coral-600 dark:text-ocean-400 hover:underline"
+            className="inline-flex min-h-11 items-center rounded-xl bg-coral-500 px-5 py-2.5 font-semibold text-white hover:bg-coral-600"
           >
             Return to home
           </Link>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
@@ -203,95 +202,60 @@ export function LessonPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200/50 dark:border-slate-700/50 sticky top-0 z-20">
-        <div className="max-w-3xl mx-auto px-4 py-3 safe-area-top">
-          {/* Top row: Back, Title, Theme */}
-          <div className="flex items-center justify-between mb-3">
-            <button
-              onClick={() => {
-                // Go back to where user came from, or fallback to learning path
-                if (window.history.length > 2) {
-                  navigate(-1);
-                } else {
-                  navigate('/learning');
-                }
-              }}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-            </button>
-            
-            <div className="flex items-center gap-2 flex-1 justify-center min-w-0 px-2">
-              <span className="text-2xl flex-shrink-0">{topic.icon}</span>
-              <h1 className="text-lg font-semibold text-brown-800 dark:text-white truncate">
-                {topic.title}
-              </h1>
-            </div>
-
-            <button
-              onClick={toggleTheme}
-              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-amber-400" />
-              ) : (
-                <Moon className="w-5 h-5 text-brown-600" />
-              )}
-            </button>
-          </div>
-
-          {/* Progress bar */}
-          <div className="h-1.5 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title={topic.title}
+        subtitle={`Step ${currentStepIndex + 1} of ${STEPS.length} · ${STEP_INFO[currentStep].label}`}
+        icon={BookOpen}
+        backTo="/learning"
+        backLabel="Back to learning path"
+        maxWidthClassName="max-w-3xl"
+        below={(
+          <div>
             <div
-              className="h-full bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-400 dark:to-ocean-500 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Step indicators */}
-          <div className="flex justify-between mt-3">
-            {STEPS.map((step, index) => {
-              const StepIcon = STEP_INFO[step].icon;
-              const isCompleted = index < currentStepIndex;
-              const isCurrent = index === currentStepIndex;
-              
-              return (
-                <div
-                  key={step}
-                  className={`flex flex-col items-center gap-1 ${
-                    isCompleted
-                      ? 'text-emerald-500 dark:text-emerald-400'
-                      : isCurrent
-                      ? 'text-coral-600 dark:text-ocean-400'
-                      : 'text-gray-400 dark:text-gray-500'
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+              className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
+              role="progressbar"
+              aria-label="Lesson progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <div className="h-full rounded-full bg-coral-500 transition-all duration-500 dark:bg-ocean-400" style={{ width: `${progress}%` }} />
+            </div>
+            <ol className="mt-2 grid grid-cols-4 gap-2">
+              {STEPS.map((step, index) => {
+                const StepIcon = STEP_INFO[step].icon;
+                const isCompleted = index < currentStepIndex;
+                const isCurrent = index === currentStepIndex;
+                return (
+                  <li
+                    key={step}
+                    aria-current={isCurrent ? 'step' : undefined}
+                    className={`flex min-w-0 items-center justify-center gap-1.5 text-xs font-semibold ${
                       isCompleted
-                        ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                        ? 'text-emerald-600 dark:text-emerald-400'
                         : isCurrent
-                        ? 'bg-coral-100 dark:bg-ocean-900/30 ring-2 ring-coral-500 dark:ring-ocean-400'
-                        : 'bg-gray-100 dark:bg-gray-800'
+                          ? 'text-coral-700 dark:text-ocean-300'
+                          : 'text-brown-400 dark:text-gray-500'
                     }`}
                   >
-                    {isCompleted ? (
-                      <CheckCircle className="w-4 h-4" />
-                    ) : (
-                      <StepIcon className="w-4 h-4" />
-                    )}
-                  </div>
-                  <span className="text-xs font-medium hidden sm:block">
-                    {STEP_INFO[step].label}
-                  </span>
-                </div>
-              );
-            })}
+                    <span className={`flex h-7 w-7 flex-none items-center justify-center rounded-lg ${
+                      isCompleted
+                        ? 'bg-emerald-100 dark:bg-emerald-950'
+                        : isCurrent
+                          ? 'bg-coral-100 dark:bg-ocean-950'
+                          : 'bg-cream-100 dark:bg-slate-800'
+                    }`}>
+                      {isCompleted ? <CheckCircle className="h-4 w-4" aria-hidden="true" /> : <StepIcon className="h-4 w-4" aria-hidden="true" />}
+                    </span>
+                    <span className="hidden truncate sm:inline">{STEP_INFO[step].label}</span>
+                  </li>
+                );
+              })}
+            </ol>
           </div>
-        </div>
-      </header>
+        )}
+      />
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
@@ -331,6 +295,6 @@ export function LessonPage() {
           onClose={() => setXpToast(null)} 
         />
       )}
-    </div>
+    </LearnerPageShell>
   );
 }

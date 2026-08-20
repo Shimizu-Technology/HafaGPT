@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, ExternalLink, Loader2, BookOpen, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ExternalLink, Loader2, BookOpen, X } from 'lucide-react';
 import { useStory } from '../hooks/useStoryQuery';
 import { useVocabularyWord } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 // Word popup component with enhanced morphology support
 function WordPopup({ 
@@ -20,16 +21,65 @@ function WordPopup({
   onAskChatbot?: (word: string, context?: string) => void;
 }) {
   const { data: wordData, isLoading } = useVocabularyWord(word);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+
+    closeButtonRef.current?.focus();
+
+    return () => {
+      previouslyFocused?.focus();
+    };
+  }, []);
+
+  const handleDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+
+    const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+
+    if (!focusableElements?.length) {
+      event.preventDefault();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+    } else if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div 
-        className="bg-white dark:bg-slate-800 rounded-2xl p-5 max-w-sm w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="story-word-heading"
+        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-800"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={handleDialogKeyDown}
       >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 className="text-xl font-bold text-brown-800 dark:text-white">{word}</h3>
+            <h3 id="story-word-heading" className="text-xl font-bold text-brown-800 dark:text-white">{word}</h3>
             {/* Show root word if different */}
             {wordData?.rootWord && wordData.rootWord !== word && (
               <p className="text-sm text-teal-600 dark:text-teal-400">
@@ -43,8 +93,11 @@ function WordPopup({
           <div className="flex items-center gap-2">
             <PronunciationButton text={word} className="bg-teal-100 dark:bg-teal-900/30" />
             <button
+              ref={closeButtonRef}
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Close word details"
+              className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
@@ -117,15 +170,12 @@ function WordPopup({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {wordData.suggestions.map((suggestion, i) => (
-                    <button
+                    <span
                       key={i}
-                      onClick={() => {
-                        // Could trigger a new lookup
-                      }}
-                      className="text-xs px-2 py-1 rounded-full bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                      className="rounded-full bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-slate-700 dark:text-gray-300"
                     >
                       {suggestion}
-                    </button>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -138,8 +188,9 @@ function WordPopup({
             {/* Ask chatbot button */}
             {onAskChatbot && (
               <button
+                type="button"
                 onClick={() => onAskChatbot(word, chamorroContext)}
-                className="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-medium hover:from-teal-600 hover:to-cyan-600 transition-colors text-sm"
+                className="min-h-11 w-full rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
               >
                 Ask HåfaGPT about "{word}"
               </button>
@@ -177,13 +228,14 @@ function TappableText({
         }
         
         return (
-          <span
+          <button
+            type="button"
             key={i}
             onClick={() => onWordTap(cleanWord)}
-            className="cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-400 rounded px-0.5 transition-colors"
+            className="inline min-h-9 rounded bg-transparent px-0.5 py-1 text-left transition-colors hover:bg-teal-100 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-teal-900/30 dark:hover:text-teal-400"
           >
             {word}
-          </span>
+          </button>
         );
       })}
     </span>
@@ -236,19 +288,19 @@ export function LengguahitaStoryViewer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-teal-500 mx-auto mb-4" />
           <p className="text-brown-600 dark:text-gray-400">Loading story...</p>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
   if (error || !story) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-        <div className="text-center">
+      <LearnerPageShell className="flex items-center justify-center p-4">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-red-500 mb-4">Failed to load story</p>
           <Link
             to="/stories"
@@ -257,7 +309,7 @@ export function LengguahitaStoryViewer() {
             ← Back to stories
           </Link>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
@@ -265,52 +317,38 @@ export function LengguahitaStoryViewer() {
   const progress = ((currentParagraph + 1) / story.paragraphs.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-teal-200/20 dark:border-teal-500/20 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-          <Link
-            to="/stories"
-            className="p-2 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-          </Link>
-          
-          <div className="flex-1 mx-4">
-            <h1 className="text-sm font-bold text-brown-800 dark:text-white truncate">
-              {story.title}
-            </h1>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              {currentParagraph + 1} / {story.paragraphs.length} paragraphs
-            </p>
-          </div>
-
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title={story.title}
+        subtitle={`${currentParagraph + 1} of ${story.paragraphs.length} paragraphs`}
+        icon={BookOpen}
+        backTo="/stories"
+        backLabel="Back to stories"
+        iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+        trailing={(
           <a
             href={story.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/30 transition-colors"
-            title="View original on Lengguahi-ta"
+            aria-label="View original on Lengguahi-ta"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-teal-700 hover:bg-teal-100 dark:text-teal-300 dark:hover:bg-teal-950"
           >
-            <ExternalLink className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <ExternalLink className="h-5 w-5" aria-hidden="true" />
           </a>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="h-1 bg-cream-200 dark:bg-slate-700">
-          <div 
-            className="h-full bg-gradient-to-r from-teal-400 to-cyan-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+        )}
+        below={(
+          <div className="h-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Story progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <div className="h-full bg-teal-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+          </div>
+        )}
+      />
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-5 sm:py-8">
         {/* Story Info Card */}
         {currentParagraph === 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-cream-200 dark:border-slate-700">
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/30 dark:to-cyan-900/30 flex items-center justify-center text-3xl flex-shrink-0">
+              <div className="flex h-14 w-14 flex-none items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-950">
                 <BookOpen className="w-7 h-7 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
@@ -347,7 +385,7 @@ export function LengguahitaStoryViewer() {
         )}
 
         {/* Paragraph Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700">
+        <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
           {/* Chamorro Text */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -416,7 +454,7 @@ export function LengguahitaStoryViewer() {
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
                 currentParagraph === story.paragraphs.length - 1
                   ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white hover:from-teal-600 hover:to-cyan-600 shadow-md'
+                  : 'bg-teal-600 text-white hover:bg-teal-700'
               }`}
             >
               <span className="hidden sm:inline">Next</span>
@@ -463,7 +501,7 @@ export function LengguahitaStoryViewer() {
             View original on {story.sourceName}
           </a>
         </div>
-      </div>
+      </main>
 
       {/* Word Popup */}
       {selectedWord && (
@@ -475,6 +513,6 @@ export function LengguahitaStoryViewer() {
           onAskChatbot={handleAskChatbot}
         />
       )}
-    </div>
+    </LearnerPageShell>
   );
 }
