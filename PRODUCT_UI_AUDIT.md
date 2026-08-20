@@ -142,12 +142,15 @@ on the final commit, and production verification after merge.
 
 1. **Startup resilience — complete.** Returning browser profiles recover from
    stale deploy assets and unavailable browser storage without blanking the app.
-2. **Chat clarity — in progress.** Simplify empty state and header, unify the
-   composer, fix narrow-screen guidance, and preserve translation/voice/upload.
-3. **Shared learner shell + core learning.** Standardize navigation, titles,
-   content width, progress, and actions across lessons, vocabulary, and stories.
-4. **Practice system.** Standardize flashcard, quiz, and conversation setup,
-   session, feedback, and completion states.
+2. **Chat clarity — complete.** The empty state, response controls, source
+   presentation, and unified composer now preserve translation, voice, and upload
+   while remaining readable on narrow phones.
+3. **Shared learner shell + core learning — complete.** Lessons, vocabulary,
+   and stories now share navigation, title hierarchy, content width, progress,
+   and accessible detail interactions.
+4. **Practice system — in progress.** Flashcard, quiz, and conversation entry
+   pages now use the shared shell and progressively disclose choices; session,
+   feedback, and completion states are the next focused pass.
 5. **Game system.** Redesign the hub and introduce a shared game shell without
    changing the individual learning mechanics.
 6. **Progress and account.** Clarify progress, quiz history, settings, and public
