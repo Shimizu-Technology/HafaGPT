@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import {
   AlertCircle,
@@ -62,6 +62,10 @@ function DeckState({
 
 export function SavedDeckViewer() {
   const { deckId } = useParams<{ deckId: string }>();
+  return <SavedDeckSession key={deckId || 'missing-deck'} deckId={deckId} />;
+}
+
+function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
   const navigate = useNavigate();
   const { user, isLoaded } = useUser();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -70,11 +74,13 @@ export function SavedDeckViewer() {
   const [completionMessage, setCompletionMessage] = useState('');
   const { data, isLoading, isError, refetch } = useDeckCards(deckId, user?.id, isLoaded && !!user);
   const reviewCardMutation = useReviewCard(deckId || '');
+  const reviewInFlightRef = useRef(false);
   const cards = data?.cards || [];
   const deckTitle = data?.title || 'Saved deck';
   const deckTopic = data?.topic || '';
 
   const handlePrevious = useCallback(() => {
+    if (reviewInFlightRef.current) return;
     setCurrentIndex((index) => {
       if (index === 0) return index;
       setIsCardFlipped(false);
@@ -85,6 +91,7 @@ export function SavedDeckViewer() {
   }, []);
 
   const handleNext = useCallback(() => {
+    if (reviewInFlightRef.current) return;
     setCurrentIndex((index) => {
       if (index >= cards.length - 1) return index;
       setIsCardFlipped(false);
@@ -111,8 +118,9 @@ export function SavedDeckViewer() {
 
   const handleRating = (quality: QualityRating) => {
     const card = cards[currentIndex];
-    if (!user || !card) return;
+    if (!user || !card || reviewInFlightRef.current) return;
     const confidence: 1 | 2 | 3 = quality <= 3 ? 1 : quality === 4 ? 2 : 3;
+    reviewInFlightRef.current = true;
     setReviewError(null);
     setCompletionMessage('');
 
@@ -125,6 +133,7 @@ export function SavedDeckViewer() {
       },
       {
         onSuccess: () => {
+          reviewInFlightRef.current = false;
           if (currentIndex === cards.length - 1) {
             setCompletionMessage('Review saved. You finished this deck.');
           } else {
@@ -132,6 +141,7 @@ export function SavedDeckViewer() {
           }
         },
         onError: () => {
+          reviewInFlightRef.current = false;
           setReviewError('Your review was not saved. Please try again.');
         },
       },
@@ -252,7 +262,7 @@ export function SavedDeckViewer() {
               <button
                 type="button"
                 onClick={handlePrevious}
-                disabled={currentIndex === 0}
+                disabled={currentIndex === 0 || reviewCardMutation.isPending}
                 className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
               >
                 <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -261,7 +271,7 @@ export function SavedDeckViewer() {
               <button
                 type="button"
                 onClick={handleNext}
-                disabled={currentIndex === cards.length - 1}
+                disabled={currentIndex === cards.length - 1 || reviewCardMutation.isPending}
                 className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
               >
                 Next

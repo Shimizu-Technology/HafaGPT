@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MyDecks } from './MyDecks';
 import { SavedDeckViewer } from './SavedDeckViewer';
@@ -40,34 +40,48 @@ vi.mock('../hooks/useFlashcardsQuery', () => ({
     isError: accountMocks.decksError,
     refetch: accountMocks.refetchDecks,
   }),
-  useDeckCards: () => ({
-    data: accountMocks.deckError ? undefined : {
-      deck_id: 'deck-1',
-      title: 'Family words',
-      topic: 'family-words',
-      cards: [
-        {
-          id: 'card-1',
-          front: 'nåna',
-          back: 'mother',
-          pronunciation: null,
-          example: null,
-          progress: { times_reviewed: 2, last_reviewed: '2026-08-19T00:00:00Z' },
-        },
-        {
-          id: 'card-2',
-          front: 'tåta',
-          back: 'father',
-          pronunciation: null,
-          example: null,
-          progress: null,
-        },
-      ],
-    },
-    isLoading: false,
-    isError: accountMocks.deckError,
-    refetch: accountMocks.refetchDeck,
-  }),
+  useDeckCards: (deckId: string) => {
+    const isSecondDeck = deckId === 'deck-2';
+    return {
+      data: accountMocks.deckError ? undefined : {
+        deck_id: deckId,
+        title: isSecondDeck ? 'Greetings' : 'Family words',
+        topic: isSecondDeck ? 'greetings' : 'family-words',
+        cards: isSecondDeck
+          ? [
+            {
+              id: 'card-3',
+              front: 'Håfa adai',
+              back: 'Hello',
+              pronunciation: null,
+              example: null,
+              progress: null,
+            },
+          ]
+          : [
+            {
+              id: 'card-1',
+              front: 'nåna',
+              back: 'mother',
+              pronunciation: null,
+              example: null,
+              progress: { times_reviewed: 2, last_reviewed: '2026-08-19T00:00:00Z' },
+            },
+            {
+              id: 'card-2',
+              front: 'tåta',
+              back: 'father',
+              pronunciation: null,
+              example: null,
+              progress: null,
+            },
+          ],
+      },
+      isLoading: false,
+      isError: accountMocks.deckError,
+      refetch: accountMocks.refetchDeck,
+    };
+  },
   useReviewCard: () => ({
     isPending: false,
     mutate: accountMocks.reviewCard,
@@ -89,6 +103,16 @@ vi.mock('./Flashcard', () => ({
     </button>
   ),
 }));
+
+function DeckRouteHarness() {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate('/flashcards/my-deck/deck-2')}>Open another deck</button>
+      <SavedDeckViewer />
+    </>
+  );
+}
 
 describe('saved decks and account utility pages', () => {
   beforeEach(() => {
@@ -154,5 +178,44 @@ describe('saved decks and account utility pages', () => {
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
     expect(accountMocks.refetchDeck).toHaveBeenCalledOnce();
     expect(screen.getByText(/progress have not been changed/i)).toBeInTheDocument();
+  });
+
+  it('does not skip a card while its review is still pending', () => {
+    accountMocks.reviewCard.mockImplementation(() => undefined);
+    render(
+      <MemoryRouter initialEntries={['/flashcards/my-deck/deck-1']}>
+        <Routes>
+          <Route path="/flashcards/my-deck/:deckId" element={<SavedDeckViewer />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /flip nåna to mother/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^easy/i }));
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^easy/i }));
+
+    expect(screen.getByRole('button', { name: /flip nåna to mother/i })).toBeInTheDocument();
+    expect(accountMocks.reviewCard).toHaveBeenCalledOnce();
+  });
+
+  it('starts a clean session when the route changes to another deck', () => {
+    render(
+      <MemoryRouter initialEntries={['/flashcards/my-deck/deck-1']}>
+        <Routes>
+          <Route path="/flashcards/my-deck/:deckId" element={<DeckRouteHarness />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /flip tåta to father/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^easy/i }));
+    expect(screen.getByRole('status')).toHaveTextContent(/finished this deck/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /open another deck/i }));
+    expect(screen.getByRole('button', { name: /flip håfa adai to hello/i })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: /deck progress/i })).toHaveAttribute('aria-valuenow', '1');
+    expect(screen.queryByText(/finished this deck/i)).not.toBeInTheDocument();
   });
 });
