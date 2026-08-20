@@ -10,7 +10,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
-import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 import { ScrollToTop } from './components/ScrollToTop';
 
 function lazyNamed<TModule>(
@@ -225,9 +224,6 @@ function App() {
       
       {/* Mobile bottom navigation - shows on mobile only */}
       <BottomNav />
-      
-      {/* PWA update notification */}
-      <PWAUpdateBanner />
     </BrowserRouter>
   );
 }

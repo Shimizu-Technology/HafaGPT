@@ -8,13 +8,30 @@ import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
+// A route chunk from an older open tab can disappear after a new atomic
+// deploy. Vite reports that case before React can handle it, so use the same
+// bounded startup recovery as an entry-module failure.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  void window.__hafagptRecoverStaleBuild?.();
+});
+
 // Register service worker for PWA
 registerSW({
-  onNeedRefresh() {
-    console.log('New content available, please refresh.');
+  immediate: true,
+  onRegisteredSW(_serviceWorkerUrl, registration) {
+    // Browsers also perform their own checks, but a bounded hourly check keeps
+    // long-running installed sessions current without requiring a manual refresh.
+    if (registration) {
+      window.setInterval(() => {
+        if (navigator.onLine) {
+          void registration.update();
+        }
+      }, 60 * 60 * 1000);
+    }
   },
-  onOfflineReady() {
-    console.log('App ready to work offline.');
+  onRegisterError(error) {
+    console.warn('[PWA] Service worker registration failed:', error);
   },
 });
 
@@ -138,3 +155,10 @@ createRoot(document.getElementById('root')!).render(
     <ClerkWrapper />
   </StrictMode>
 );
+
+// Clear the one-reload stale-build guard only after the React tree has had a
+// chance to commit. The inline bootstrap remains available when the entry
+// module itself cannot load.
+window.requestAnimationFrame(() => {
+  window.__hafagptMarkBootSuccessful?.();
+});

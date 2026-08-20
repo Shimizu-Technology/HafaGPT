@@ -1,6 +1,11 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
+interface Window {
+  __hafagptMarkBootSuccessful?: () => void;
+  __hafagptRecoverStaleBuild?: () => Promise<void>;
+}
+
 // Web Speech API types
 interface Window {
   SpeechRecognition: typeof SpeechRecognition;

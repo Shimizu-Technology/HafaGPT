@@ -14,6 +14,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      // Keep updates automatic so installations running the previous worker
+      // migrate immediately. HTML is deliberately never cached below, which
+      // prevents a new worker from pairing stale markup with new assets.
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.png'],
       manifest: {
@@ -25,6 +28,9 @@ export default defineConfig({
         display: 'standalone',
         scope: '/',
         start_url: '/',
+        orientation: 'portrait-primary',
+        lang: 'en',
+        categories: ['education', 'lifestyle'],
         icons: [
           {
             src: 'pwa-64x64.png',
@@ -47,10 +53,44 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'maskable'
           }
-        ]
+        ],
+        shortcuts: [
+          {
+            name: 'Chat with HåfaGPT',
+            short_name: 'Chat',
+            description: 'Start a conversation with the Chamorro AI tutor',
+            url: '/chat',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Daily Word',
+            short_name: 'Daily Word',
+            description: "Learn today's Chamorro word",
+            url: '/',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Flashcards',
+            short_name: 'Flashcards',
+            description: 'Practice with flashcards',
+            url: '/flashcards',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+          {
+            name: 'Quiz',
+            short_name: 'Quiz',
+            description: 'Test your Chamorro knowledge',
+            url: '/quiz',
+            icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }],
+          },
+        ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Navigations must always receive the HTML from the active Netlify
+        // deploy. Caching index.html was the root cause of blank startup pages
+        // after a deploy removed the hashes referenced by stale markup.
+        globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2}'],
+        navigateFallback: null,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,

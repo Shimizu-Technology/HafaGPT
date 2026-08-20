@@ -13,7 +13,15 @@
   status = 301
   force = true
 
-# SPA fallback must remain after the domain redirect.
+# Missing hashed assets must be a real 404. If this rule falls through to the
+# SPA response, browsers receive index.html with a JavaScript URL and reject it
+# for having the wrong MIME type, leaving the app blank.
+[[redirects]]
+  from = "/assets/*"
+  to = "/asset-not-found.txt"
+  status = 404
+
+# SPA fallback must remain after the domain and static-asset rules.
 [[redirects]]
   from = "/*"
   to = "/index.html"
