@@ -226,6 +226,15 @@ def test_structured_pasted_school_exchange_selects_reviewed_acronym_cards() -> N
         "usage.guam.school.msy_greeting",
     )
 
+    assert contextual_school_exchange_card_ids(
+        "MSY! is a project code in my notes.\n"
+        "MSY! Kao modan isla pat kulot kåhet na polo på'go?\n"
+        "Esta, SYM!"
+    ) == (
+        "usage.guam.school.sym_signoff",
+        "usage.guam.school.msy_greeting",
+    )
+
 
 def test_generic_acronym_comparison_does_not_select_school_exchange_cards() -> None:
     for message in (
@@ -237,6 +246,10 @@ def test_generic_acronym_comparison_does_not_select_school_exchange_cards() -> N
         (
             "My question mentions Håfa and familia. Translate this code exchange:\n"
             "MSY! Please review the report.\nEsta, SYM!"
+        ),
+        (
+            "MSY! is a project code in my notes.\n"
+            "Kao pat kulot na polo på'go?\nEsta, SYM!"
         ),
         "MSY! Kao modan isla pat kulot kåhet na polo på'go?",
     ):

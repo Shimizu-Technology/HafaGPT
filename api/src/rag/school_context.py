@@ -162,11 +162,28 @@ def contextual_school_exchange_card_ids(message: str) -> tuple[str, ...]:
     """
 
     text = message or ""
-    greeting_match = _MSY_TURN_OPENING_PATTERN.search(text)
     signoff_match = _SYM_TURN_SIGNOFF_PATTERN.search(text)
-    if not greeting_match or not signoff_match:
+    if not signoff_match:
         return ()
-    if greeting_match.end() >= signoff_match.start():
+
+    # Select an MSY boundary only when that same dialogue turn already looks
+    # Chamorro/local. A generic ``MSY!`` line in the user's framing must not
+    # absorb later Chamorro text and become a false exchange opening.
+    greeting_match = None
+    for candidate in _MSY_TURN_OPENING_PATTERN.finditer(text, 0, signoff_match.start()):
+        line_end = text.find("\n", candidate.end(), signoff_match.start())
+        if line_end == -1:
+            line_end = signoff_match.start()
+        greeting_turn = text[candidate.end() : line_end]
+        greeting_markers = {
+            match.group(0).casefold()
+            for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(greeting_turn)
+        }
+        if len(greeting_markers) >= 2:
+            greeting_match = candidate
+            break
+
+    if greeting_match is None:
         return ()
 
     # Count distinct message-body evidence. ``Esta`` is deliberately excluded:
