@@ -23,6 +23,7 @@ interface LearnerPageHeaderProps {
   backTo?: string;
   backLabel?: string;
   trailing?: ReactNode;
+  below?: ReactNode;
   iconClassName?: string;
   maxWidthClassName?: string;
 }
@@ -34,6 +35,7 @@ export function LearnerPageHeader({
   backTo = '/',
   backLabel = 'Go back',
   trailing,
+  below,
   iconClassName = 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300',
   maxWidthClassName = 'max-w-5xl',
 }: LearnerPageHeaderProps) {
@@ -51,34 +53,37 @@ export function LearnerPageHeader({
 
   return (
     <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
-      <div className={`safe-area-top mx-auto flex items-center gap-2 px-4 py-3 ${maxWidthClassName}`}>
-        <button
-          type="button"
-          onClick={handleBack}
-          aria-label={backLabel}
-          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
-        >
-          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-        </button>
+      <div className={`safe-area-top mx-auto px-4 py-3 ${maxWidthClassName}`}>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label={backLabel}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
 
-        <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
-        </span>
+          <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </span>
 
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-bold leading-tight text-brown-950 dark:text-white">{title}</h1>
-          {subtitle && <p className="hidden truncate text-xs text-brown-500 dark:text-gray-400 sm:block">{subtitle}</p>}
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-lg font-bold leading-tight text-brown-950 dark:text-white">{title}</h1>
+            {subtitle && <p className="hidden truncate text-xs text-brown-500 dark:text-gray-400 sm:block">{subtitle}</p>}
+          </div>
+
+          {trailing && <div className="flex-none">{trailing}</div>}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
+          >
+            {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
+          </button>
         </div>
-
-        {trailing && <div className="flex-none">{trailing}</div>}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
-        >
-          {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
-        </button>
+        {below && <div className="mt-2">{below}</div>}
       </div>
     </header>
   );

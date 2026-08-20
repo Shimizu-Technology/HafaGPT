@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, ChevronUp, Search, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 const PAGE_SIZE = 50;
 
@@ -70,26 +71,29 @@ export function VocabularyCategory() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" />
-      </div>
+      <LearnerPageShell className="flex items-center justify-center">
+        <div className="flex items-center gap-3 text-brown-600 dark:text-gray-300" role="status">
+          <Loader2 className="h-6 w-6 animate-spin text-coral-500 dark:text-ocean-400" aria-hidden="true" />
+          <span>Loading words…</span>
+        </div>
+      </LearnerPageShell>
     );
   }
 
   // Error or not found
   if (error || !category) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
+      <LearnerPageShell className="flex items-center justify-center p-4">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-brown-600 dark:text-gray-400 mb-4">Category not found</p>
           <button
             onClick={() => navigate('/vocabulary')}
-            className="px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors"
+            className="min-h-11 rounded-xl bg-coral-500 px-5 py-2.5 font-semibold text-white hover:bg-coral-600"
           >
             Back to Vocabulary
           </button>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
@@ -98,49 +102,40 @@ export function VocabularyCategory() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Link
-                to="/vocabulary"
-                className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-              </Link>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{category.icon}</span>
-                <h1 className="text-xl font-semibold text-brown-800 dark:text-white">
-                  {category.title}
-                </h1>
-              </div>
-            </div>
-            <div className="text-sm text-brown-500 dark:text-gray-400">
-              {filteredWords.length} word{filteredWords.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-      </div>
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title={category.title}
+        subtitle="Dictionary category"
+        icon={Library}
+        backTo="/vocabulary"
+        backLabel="Back to dictionary"
+        trailing={(
+          <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline-flex">
+            {filteredWords.length} word{filteredWords.length !== 1 ? 's' : ''}
+          </span>
+        )}
+      />
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
         {/* Search within category */}
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-400 dark:text-gray-500" />
             <input
+              aria-label={`Search in ${category.title}`}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search in ${category.title}...`}
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-cream-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 text-sm"
+              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-400 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-gray-500"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+                aria-label="Clear category search"
+                className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700"
               >
                 <X className="w-3 h-3 text-brown-400 dark:text-gray-500" />
               </button>
@@ -155,18 +150,15 @@ export function VocabularyCategory() {
             const hasExamples = word.examples && word.examples.length > 0;
             
             return (
-              <div
+              <article
                 key={`${word.chamorro}-${index}`}
-                className="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-cream-200/50 dark:border-slate-700/50"
+                className="overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800"
               >
                 {/* Main Word Row */}
-                <div
-                  className={`p-4 ${hasExamples ? 'cursor-pointer hover:bg-cream-50 dark:hover:bg-slate-700/50' : ''} transition-colors`}
-                  onClick={() => hasExamples && toggleExpand(index)}
-                >
+                <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* Speak Button */}
-                    <span className="flex-shrink-0" onClick={(event) => event.stopPropagation()}>
+                    <span className="flex-shrink-0">
                       <PronunciationButton text={word.chamorro} className="mt-0.5 bg-coral-50 text-coral-600 hover:bg-coral-100 dark:bg-ocean-900/30 dark:text-ocean-400" />
                     </span>
 
@@ -189,20 +181,27 @@ export function VocabularyCategory() {
 
                     {/* Expand Icon */}
                     {hasExamples && (
-                      <div className="flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(index)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`category-examples-${index}`}
+                        aria-label={`${isExpanded ? 'Hide' : 'Show'} examples for ${word.chamorro}`}
+                        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-400 dark:hover:bg-slate-700"
+                      >
                         {isExpanded ? (
                           <ChevronUp className="w-4 h-4 text-brown-400 dark:text-gray-500" />
                         ) : (
                           <ChevronDown className="w-4 h-4 text-brown-400 dark:text-gray-500" />
                         )}
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
 
                 {/* Expanded Content */}
                 {isExpanded && hasExamples && (
-                  <div className="px-4 pb-4 pt-0 border-t border-cream-100 dark:border-slate-700">
+                  <div id={`category-examples-${index}`} className="border-t border-cream-200 px-4 pb-4 pt-0 dark:border-slate-700">
                     <div className="pt-3 space-y-2">
                       <p className="text-xs font-medium text-brown-500 dark:text-gray-400 mb-2">
                         Examples
@@ -220,7 +219,7 @@ export function VocabularyCategory() {
                     </div>
                   </div>
                 )}
-              </div>
+              </article>
             );
           })}
         </div>
@@ -263,7 +262,7 @@ export function VocabularyCategory() {
         {/* All Loaded Indicator */}
         {!hasMore && words.length > PAGE_SIZE && !searchQuery && (
           <div className="mt-6 text-center text-brown-500 dark:text-gray-400 text-sm">
-            ✓ All {totalWords} words loaded
+            All {totalWords} words loaded
           </div>
         )}
 
@@ -277,7 +276,7 @@ export function VocabularyCategory() {
             All Categories
           </Link>
         </div>
-      </div>
-    </div>
+      </main>
+    </LearnerPageShell>
   );
 }
