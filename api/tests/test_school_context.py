@@ -232,6 +232,8 @@ def test_generic_acronym_comparison_does_not_select_school_exchange_cards() -> N
         "What do MSY and SYM mean?",
         "Compare the MSY and SYM project codes.",
         "MSY! Please review the report.\nEsta, SYM!",
+        "MSY! Please remind familia about the meeting.\nEsta, SYM!",
+        "MSY! Familia, please remind familia.\nEsta, SYM!",
         "MSY! Kao modan isla pat kulot kåhet na polo på'go?",
     ):
         assert contextual_school_exchange_card_ids(message) == ()

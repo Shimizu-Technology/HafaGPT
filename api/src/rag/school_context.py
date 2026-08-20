@@ -33,7 +33,7 @@ _SYM_TURN_SIGNOFF_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _CHAMORRO_EXCHANGE_MARKER_PATTERN = re.compile(
-    r"\b(?:kao|pat|trabiha|esta|kada|betnes|kulot|polo|na|"
+    r"\b(?:kao|pat|trabiha|kada|betnes|kulot|polo|na|"
     r"p[åa]['’]?go|h[åa]fa|familia|yu['’]?os|ma['’]?[åa]se)\b",
     re.IGNORECASE,
 )
@@ -168,7 +168,14 @@ def contextual_school_exchange_card_ids(message: str) -> tuple[str, ...]:
     ):
         return ()
 
-    if len(_CHAMORRO_EXCHANGE_MARKER_PATTERN.findall(text)) < 2:
+    # Count distinct message-body evidence. ``Esta`` is deliberately excluded:
+    # when it introduces the accepted SYM sign-off it must not help prove the
+    # school context that authorizes the sign-off card.
+    local_markers = {
+        match.group(0).casefold()
+        for match in _CHAMORRO_EXCHANGE_MARKER_PATTERN.finditer(text)
+    }
+    if len(local_markers) < 2:
         return ()
 
     return (
