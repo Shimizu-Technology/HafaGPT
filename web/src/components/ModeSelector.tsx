@@ -8,7 +8,7 @@ interface ModeSelectorProps {
 export function ModeSelector({ mode, onModeChange }: ModeSelectorProps) {
   const modes = [
     { id: 'english' as const, label: 'English', icon: MessageCircle, description: 'English responses with Chamorro examples' },
-    { id: 'chamorro' as const, label: 'Chamorro', icon: Languages, description: 'Chamorro-first responses' },
+    { id: 'chamorro' as const, label: 'Chamorro', icon: Languages, description: 'Chamorro-only responses' },
     { id: 'learn' as const, label: 'Learn', icon: GraduationCap, description: 'Step-by-step learning explanations' },
   ];
 
