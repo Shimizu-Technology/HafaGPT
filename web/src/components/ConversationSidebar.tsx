@@ -139,7 +139,7 @@ export function ConversationSidebar({
     setDeleteConfirmId(null);
   };
 
-  const handleSave = async (conversationId: string) => {
+  const handleSave = async (conversationId: string, restoreFocus = false) => {
     const trimmedTitle = editingTitle.trim();
     if (trimmedTitle && trimmedTitle !== conversations.find(c => c.id === conversationId)?.title) {
       try {
@@ -147,6 +147,9 @@ export function ConversationSidebar({
       } catch (err) {
         console.error('Failed to rename conversation:', err);
       }
+    }
+    if (restoreFocus) {
+      restoreConversationFocusRef.current = conversationId;
     }
     setEditingId(null);
     setEditingTitle('');
@@ -161,7 +164,7 @@ export function ConversationSidebar({
   const handleKeyDown = (e: React.KeyboardEvent, conversationId: string) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleSave(conversationId);
+      void handleSave(conversationId, true);
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();

@@ -141,7 +141,7 @@ describe('shared navigation and modal accessibility', () => {
     expect(deleteButton).toHaveFocus();
   });
 
-  it('closes only the active sidebar layer when Escape is pressed', () => {
+  it('closes only the active sidebar layer and restores rename focus', async () => {
     render(<MemoryRouter><SidebarHarness /></MemoryRouter>);
     const conversationButton = screen.getByRole('button', { name: 'School phrases' });
 
@@ -159,5 +159,11 @@ describe('shared navigation and modal accessibility', () => {
     const reopenedRenameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
     fireEvent.keyDown(reopenedRenameInput, { key: 'Escape' });
     expect(screen.getByRole('button', { name: 'School phrases' })).toHaveFocus();
+
+    fireEvent.doubleClick(screen.getByRole('button', { name: 'School phrases' }));
+    const saveInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
+    fireEvent.change(saveInput, { target: { value: 'Updated school phrases' } });
+    fireEvent.keyDown(saveInput, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'School phrases' })).toHaveFocus());
   });
 });
