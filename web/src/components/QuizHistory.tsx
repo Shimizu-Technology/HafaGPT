@@ -1,197 +1,186 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Trophy, Clock, Calendar, Loader2 } from 'lucide-react';
+import { Brain, Calendar, ChevronLeft, ChevronRight, Clock, History, Loader2, RefreshCw, Trophy } from 'lucide-react';
 import { useQuizHistory } from '../hooks/useQuizQuery';
-import { QUIZ_CATEGORIES } from '../data/quizData';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function formatTime(seconds: number | null) {
+  if (!seconds) return 'Time not recorded';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+function scoreTone(percentage: number) {
+  if (percentage >= 80) return 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-300';
+  if (percentage >= 60) return 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300';
+  return 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+}
 
 export function QuizHistory() {
   const [page, setPage] = useState(1);
   const perPage = 20;
-  
-  const { data, isLoading, error } = useQuizHistory(page, perPage);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+  const { data, isLoading, error, refetch } = useQuizHistory(page, perPage);
+  const pagination = data?.pagination ?? {
+    page: 1,
+    total_pages: 1,
+    total_count: 0,
+    has_next: false,
+    has_prev: false,
+    per_page: perPage,
   };
-
-  const formatTime = (seconds: number | null) => {
-    if (!seconds) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-          <p className="text-brown-600 dark:text-gray-400">Loading quiz history...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-brown-600 dark:text-gray-400 mb-4">Failed to load quiz history</p>
-          <Link to="/dashboard" className="text-coral-600 dark:text-ocean-400 hover:underline">
-            Back to Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const { results, pagination } = data || { results: [], pagination: { page: 1, total_pages: 1, total_count: 0, has_next: false, has_prev: false, per_page: 20 } };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3 safe-area-top">
-          <Link
-            to="/dashboard"
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center shadow-lg">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-brown-800 dark:text-white">
-                Quiz History
-              </h1>
-              <p className="text-xs text-brown-500 dark:text-gray-400">
-                {pagination.total_count} {pagination.total_count === 1 ? 'quiz' : 'quizzes'} taken
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Quiz history"
+        subtitle={`${pagination.total_count} ${pagination.total_count === 1 ? 'quiz' : 'quizzes'} completed`}
+        icon={History}
+        backTo="/dashboard"
+        backLabel="Back to progress"
+        maxWidthClassName="max-w-4xl"
+      />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {results.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Trophy className="w-10 h-10 text-purple-500 dark:text-purple-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
-              No Quizzes Yet
-            </h3>
-            <p className="text-brown-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-              Take your first quiz to start tracking your progress!
+      <main className="mx-auto max-w-4xl px-4 py-5 sm:py-8">
+        {isLoading ? (
+          <section
+            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
+            aria-live="polite"
+          >
+            <Loader2
+              className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300"
+              aria-hidden="true"
+            />
+            <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your quiz history…</p>
+          </section>
+        ) : error ? (
+          <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-slate-800">
+            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Quiz history is unavailable</h2>
+            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
+              Your results are still saved. Try loading this page again.
+            </p>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
+            </button>
+          </section>
+        ) : !data || data.results.length === 0 ? (
+          <section className="rounded-3xl border border-purple-200 bg-white p-6 text-center dark:border-purple-900 dark:bg-slate-800">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+              <Trophy className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No quizzes yet</h2>
+            <p className="mx-auto mt-2 max-w-sm text-brown-600 dark:text-gray-400">
+              Take a short quiz and your results will appear here.
             </p>
             <Link
               to="/quiz"
-              className="px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
-              Take a Quiz
+              Choose a quiz
             </Link>
-          </div>
+          </section>
         ) : (
           <>
-            {/* Results List */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700 mb-6">
-              {results.map((result) => {
-                const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id.replace('dict-', ''));
-                const percentage = Math.round(result.percentage);
-                const isDictionary = result.category_id.startsWith('dict-');
-                
-                return (
-                  <Link
-                    key={result.id}
-                    to={`/quiz/review/${result.id}`}
-                    className="flex items-center justify-between p-4 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl">{category?.icon || '📝'}</span>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-brown-800 dark:text-white">
-                            {result.category_title || category?.title || 'Quiz'}
-                          </p>
-                          {isDictionary && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                              Dictionary
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-brown-500 dark:text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {formatDate(result.created_at)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {formatTime(result.time_spent_seconds)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${
-                          percentage >= 80 
-                            ? 'text-green-600 dark:text-green-400'
-                            : percentage >= 60
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          {percentage}%
-                        </div>
-                        <p className="text-xs text-brown-500 dark:text-gray-400">
-                          {result.score}/{result.total}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <section aria-labelledby="quiz-results-title">
+              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Past practice</p>
+              <h2 id="quiz-results-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-white">
+                Review your results
+              </h2>
+              <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
+                {data.results.map((result) => {
+                  const percentage = Math.round(result.percentage);
+                  const isDictionary = result.category_id.startsWith('dict-');
 
-            {/* Pagination */}
+                  return (
+                    <Link
+                      key={result.id}
+                      to={`/quiz/review/${result.id}`}
+                      className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                          <Brain className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2">
+                            <span className="truncate font-bold text-brown-950 dark:text-white">
+                              {result.category_title || 'Quiz'}
+                            </span>
+                            {isDictionary && (
+                              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                                Dictionary
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-1 flex flex-col gap-1 text-xs text-brown-500 dark:text-gray-400 sm:flex-row sm:gap-4">
+                            <time className="flex items-center gap-1" dateTime={result.created_at}>
+                              <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                              {formatDate(result.created_at)}
+                            </time>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                              {formatTime(result.time_spent_seconds)}
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                      <span className="flex flex-none items-center gap-2">
+                        <span className={`rounded-full px-3 py-1 text-sm font-bold ${scoreTone(percentage)}`}>
+                          {percentage}%
+                        </span>
+                        <ChevronRight
+                          className="h-5 w-5 text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+
             {pagination.total_pages > 1 && (
-              <div className="flex items-center justify-between">
+              <nav className="mt-6 flex items-center justify-between gap-3" aria-label="Quiz history pages">
                 <p className="text-sm text-brown-600 dark:text-gray-400">
                   Page {pagination.page} of {pagination.total_pages}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    type="button"
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
                     disabled={!pagination.has_prev}
-                    className="flex items-center gap-1 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Previous
                   </button>
                   <button
-                    onClick={() => setPage(p => p + 1)}
+                    type="button"
+                    onClick={() => setPage((current) => current + 1)}
                     disabled={!pagination.has_next}
-                    className="flex items-center gap-1 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
                   >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
+                    Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
-              </div>
+              </nav>
             )}
           </>
         )}
-      </div>
-    </div>
+      </main>
+    </LearnerPageShell>
   );
 }
-

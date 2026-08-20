@@ -165,8 +165,13 @@ on the final commit, and production verification after merge.
    shared shell, compact setup and results, accessible selected states, guarded
    exits, and a single global theme control while preserving their mechanics,
    scoring, saved results, and daily play behavior.
-6. **Progress and account.** Clarify progress, quiz history, settings, and public
-   information pages.
+6. **Progress and account — progress views complete.** The dashboard now leads
+   with a compact learning overview, readable activity summary, direct quiz
+   history access, and clear next actions without speculative “coming soon”
+   content. Quiz history and detailed review now share the learner shell,
+   responsive result rows, explicit answer labels, and recoverable loading,
+   empty, and error states. Saved decks and settings remain in the next focused
+   account pass, followed by the public information pages.
 7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
    behavior, reduced motion, contrast, audio/text parity, early-reader affordance,
    and responsive behavior across the complete learner route matrix.

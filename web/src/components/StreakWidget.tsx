@@ -1,10 +1,8 @@
 import { Flame, MessageSquare, Gamepad2, GraduationCap, Trophy, CheckCircle2, Circle } from 'lucide-react';
 import { useStreak } from '../hooks/useStreak';
-import { useSubscription } from '../hooks/useSubscription';
 
 export function StreakWidget() {
   const { streak, isLoading } = useStreak();
-  const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   if (isLoading) {
     return (
@@ -34,7 +32,7 @@ export function StreakWidget() {
       {/* Header with streak count */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`relative ${is_today_active ? 'animate-pulse' : ''}`}>
+          <div className={`relative ${is_today_active ? 'motion-safe:animate-pulse' : ''}`}>
             <Flame className={`w-7 h-7 ${streakColor}`} />
             {is_today_active && (
               <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
@@ -156,16 +154,16 @@ export function StreakWidget() {
         {/* Encouragement message */}
         {totalTodayActivities === 0 && (
           <p className="text-xs text-center text-brown-500 dark:text-gray-400 mt-2">
-            {current_streak > 0 
-              ? `${isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'} Chat, play, or quiz to keep your streak!`
-              : `${isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'} Start your streak today!`
+            {current_streak > 0
+              ? 'Chat, play, or take a quiz to keep your streak.'
+              : 'Complete an activity to start your streak.'
             }
           </p>
         )}
         
         {is_today_active && (
-          <p className="text-xs text-center text-green-600 dark:text-green-400 mt-2">
-            ✓ You're on track today!
+          <p className="mt-2 flex items-center justify-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> You're on track today.
           </p>
         )}
       </div>
