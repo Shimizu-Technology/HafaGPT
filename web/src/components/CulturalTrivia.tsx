@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Sun, Moon, Play, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame } from 'lucide-react';
-import { useTheme } from '../hooks/useTheme';
+import { useNavigate } from 'react-router-dom';
+import { RotateCcw, Play, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame, Target, Drama, ScrollText, Map, Languages, UtensilsCrossed, Flower2, Landmark, Building2, Trophy, Star, Lightbulb, type LucideIcon } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { formatUsageSummary } from '../lib/usageDisplay';
+import { GamePage, GamePageHeader, GameProgress } from './games/GamePage';
 
 interface TriviaQuestion {
   question: string;
@@ -260,19 +260,19 @@ const DIFFICULTY_CONFIG: Record<Difficulty, { time: number; label: string; descr
 };
 
 // Category configuration
-const CATEGORY_CONFIG: Record<string, { label: string; icon: string }> = {
-  all: { label: 'All Categories', icon: '🎯' },
-  culture: { label: 'Culture', icon: '🎭' },
-  history: { label: 'History', icon: '📜' },
-  geography: { label: 'Geography', icon: '🗺️' },
-  language: { label: 'Language', icon: '🗣️' },
-  food: { label: 'Food', icon: '🍽️' },
-  nature: { label: 'Nature', icon: '🌺' },
-  modern: { label: 'Modern', icon: '🏛️' },
+const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
+  all: { label: 'All Categories', icon: Target },
+  culture: { label: 'Culture', icon: Drama },
+  history: { label: 'History', icon: ScrollText },
+  geography: { label: 'Geography', icon: Map },
+  language: { label: 'Language', icon: Languages },
+  food: { label: 'Food', icon: UtensilsCrossed },
+  nature: { label: 'Nature', icon: Flower2 },
+  modern: { label: 'Modern', icon: Building2 },
 };
 
 export function CulturalTrivia() {
-  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -297,23 +297,15 @@ export function CulturalTrivia() {
   const [timeLeft, setTimeLeft] = useState(DIFFICULTY_CONFIG.medium.time);
   const [timerActive, setTimerActive] = useState(false);
 
-  // Timer effect
   useEffect(() => {
-    if (!timerActive || timeLeft <= 0) return;
-    
-    const timer = setTimeout(() => {
-      setTimeLeft(prev => prev - 1);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, [timerActive, timeLeft]);
-
-  // Handle time running out
-  useEffect(() => {
-    if (timerActive && timeLeft === 0 && !showResult) {
-      handleAnswer(-1); // -1 indicates timeout
-    }
-  }, [timeLeft, timerActive, showResult]);
+    const timer = window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [gameState]);
 
   // Shuffle and pick questions based on category
   const pickQuestions = useCallback(() => {
@@ -361,6 +353,9 @@ export function CulturalTrivia() {
       setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
       setTimerActive(true);
       hasSavedRef.current = false;
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       setGameState('playing');
     } finally {
       setIsStarting(false);
@@ -393,6 +388,22 @@ export function CulturalTrivia() {
     }
   }, [showResult, questions, currentQuestionIndex, timeLeft, streak]);
 
+  useEffect(() => {
+    if (!timerActive || timeLeft <= 0) return;
+
+    const timer = setTimeout(() => {
+      setTimeLeft(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [timerActive, timeLeft]);
+
+  useEffect(() => {
+    if (timerActive && timeLeft === 0 && !showResult) {
+      handleAnswer(-1);
+    }
+  }, [timeLeft, timerActive, showResult, handleAnswer]);
+
   // Move to next question
   const nextQuestion = useCallback(() => {
     if (currentQuestionIndex < questions.length - 1) {
@@ -405,6 +416,22 @@ export function CulturalTrivia() {
       setGameState('complete');
     }
   }, [currentQuestionIndex, questions.length, difficulty]);
+
+  const handleBack = () => {
+    if (gameState === 'playing') {
+      setTimerActive(false);
+      setShowQuitConfirm(true);
+      return;
+    }
+    navigate('/games');
+  };
+
+  const keepPlaying = () => {
+    setShowQuitConfirm(false);
+    if (!showResult) {
+      setTimerActive(true);
+    }
+  };
 
   // Save game result
   useEffect(() => {
@@ -440,129 +467,110 @@ export function CulturalTrivia() {
   // Setup screen
   if (gameState === 'setup') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
-        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-            <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Games</span>
-            </Link>
-            <h1 className="text-lg font-bold text-brown-800 dark:text-white">Cultural Trivia</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
-            </button>
-          </div>
-        </header>
+      <GamePage>
+        <GamePageHeader
+          title="Cultural Trivia"
+          subtitle="Test what you know about Guam and Chamorro culture."
+          icon={Landmark}
+          onBack={handleBack}
+        />
 
-        <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-          {/* Game Description */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
-                🏝️
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-brown-800 dark:text-white">Cultural Trivia</h2>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Test your Guam knowledge!</p>
-              </div>
-            </div>
-            <p className="text-brown-600 dark:text-gray-400 text-sm">
-              Answer questions about Chamorro culture, Guam history, geography, and language. 
-              Answer quickly for bonus points and build streaks for even more!
-            </p>
-          </div>
-
-          {/* Difficulty Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+        <main className="mx-auto max-w-2xl space-y-4 px-3 py-4 sm:px-4 sm:py-6">
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h2 className="mb-3 flex items-center gap-2 font-semibold text-brown-800 dark:text-white">
+              <Zap className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
               Choose Difficulty
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
               <button
+                type="button"
                 onClick={() => setDifficulty('easy')}
-                className={`p-3 rounded-xl transition-all duration-200 text-center ${
+                aria-pressed={difficulty === 'easy'}
+                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
                   difficulty === 'easy'
-                    ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-emerald-600 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <div className="flex items-center justify-center mb-1">
-                  <Sparkles className={`w-5 h-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-500'}`} />
-                </div>
+                <Sparkles className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-600'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'easy' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Easy</p>
                 <p className={`text-xs ${difficulty === 'easy' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>30s</p>
               </button>
               <button
+                type="button"
                 onClick={() => setDifficulty('medium')}
-                className={`p-3 rounded-xl transition-all duration-200 text-center ${
+                aria-pressed={difficulty === 'medium'}
+                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
                   difficulty === 'medium'
-                    ? 'bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-amber-600 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <div className="flex items-center justify-center mb-1">
-                  <Zap className={`w-5 h-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-500'}`} />
-                </div>
+                <Zap className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-600'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'medium' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Medium</p>
                 <p className={`text-xs ${difficulty === 'medium' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>20s</p>
               </button>
               <button
+                type="button"
                 onClick={() => setDifficulty('hard')}
-                className={`p-3 rounded-xl transition-all duration-200 text-center ${
+                aria-pressed={difficulty === 'hard'}
+                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
                   difficulty === 'hard'
-                    ? 'bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-red-600 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <div className="flex items-center justify-center mb-1">
-                  <Flame className={`w-5 h-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-500'}`} />
-                </div>
+                <Flame className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-600'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'hard' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Hard</p>
                 <p className={`text-xs ${difficulty === 'hard' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>10s</p>
               </button>
             </div>
-          </div>
+          </section>
 
-          {/* Category Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Select Category</h3>
-            <div className="grid grid-cols-4 gap-2">
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h2 className="mb-3 font-semibold text-brown-800 dark:text-white">Choose a topic</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a trivia topic">
               {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon }]) => {
                 const count = key === 'all' 
                   ? TRIVIA_QUESTIONS.length 
                   : TRIVIA_QUESTIONS.filter(q => q.category === key).length;
                 const isDisabled = count === 0;
+                const CategoryIcon = icon;
                 
                 return (
                   <button
+                    type="button"
                     key={key}
                     onClick={() => !isDisabled && setSelectedCategory(key)}
                     disabled={isDisabled}
-                    className={`p-2 rounded-xl transition-all duration-200 text-center ${
+                    aria-pressed={selectedCategory === key}
+                    className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-all duration-200 ${
                       isDisabled
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
-                          ? 'bg-emerald-500 dark:bg-teal-500 text-white shadow-lg scale-105'
+                          ? 'bg-coral-600 text-white shadow-lg dark:bg-teal-600'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }`}
                   >
-                    <div className="flex items-center justify-center">
-                    <span className="text-lg">{icon}</span>
-                    </div>
-                    <p className={`text-[10px] font-medium mt-0.5 truncate ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{label}</p>
-                    <p className={`text-[9px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count}q</p>
+                    <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
+                    <p className="truncate text-xs font-medium">{label}</p>
+                    <p className={`text-[10px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count} questions</p>
                   </button>
                 );
               })}
             </div>
-          </div>
+          </section>
 
-          {/* Start Button */}
+          <details className="rounded-2xl border border-cream-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
+            <summary className="cursor-pointer font-semibold text-brown-800 dark:text-white">How scoring works</summary>
+            <p className="mt-3 leading-relaxed text-brown-600 dark:text-gray-400">Correct answers earn points. Faster answers and answer streaks earn bonuses.</p>
+          </details>
+
           <button
+            type="button"
             onClick={startGame}
             disabled={availableQuestionCount === 0 || isStarting}
-            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
           >
             {isStarting ? (
               <>
@@ -577,14 +585,13 @@ export function CulturalTrivia() {
             )}
           </button>
           
-          {/* Daily limit indicator */}
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
         
         {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
-      </div>
+      </GamePage>
     );
   }
 
@@ -593,159 +600,115 @@ export function CulturalTrivia() {
     const stars = getStars();
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
-        <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between safe-area-top">
-            <Link to="/games" className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Games</span>
-            </Link>
-            <h1 className="text-lg font-bold text-brown-800 dark:text-white">Cultural Trivia</h1>
-            <button onClick={toggleTheme} className="p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center">
-              {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-brown-600" />}
-            </button>
-          </div>
-        </header>
+      <GamePage>
+        <GamePageHeader title="Cultural Trivia" subtitle="Your results" icon={Landmark} onBack={handleBack} />
+        <main className="mx-auto max-w-md px-3 py-6 sm:px-4">
+          <section className="text-center" aria-labelledby="trivia-result-title">
+            <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+              <Trophy className="h-10 w-10" aria-hidden="true" />
+            </span>
+            <p className="mb-1 text-sm font-semibold text-coral-700 dark:text-teal-300">Game complete</p>
+            <h2 id="trivia-result-title" className="text-2xl font-bold text-brown-950 dark:text-white">Trivia complete</h2>
 
-        <main className="max-w-md mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 shadow-lg text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">Trivia Complete!</h2>
-            
-            {/* Stars */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="my-5 flex justify-center gap-1" aria-label={`${stars} out of 3 stars`}>
               {[1, 2, 3].map(star => (
-                <span key={star} className={`text-4xl ${star <= stars ? '' : 'opacity-20'}`}>⭐</span>
+                <Star key={star} className={`h-9 w-9 ${star <= stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`} aria-hidden="true" />
               ))}
             </div>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">{score}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Score</p>
+
+            <div className="mb-5 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+                <p className="text-2xl font-bold text-brown-950 dark:text-white">{score}</p>
+                <p className="text-sm text-brown-500 dark:text-gray-400">Points</p>
               </div>
-              <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">{maxStreak}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Best Streak</p>
+              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+                <p className="text-2xl font-bold text-brown-950 dark:text-white">{maxStreak}</p>
+                <p className="text-sm text-brown-500 dark:text-gray-400">Best streak</p>
               </div>
             </div>
-            
-            {/* Message based on score */}
-            <p className="text-brown-600 dark:text-gray-400 mb-6">
-              {stars === 3 
-                ? "Excellent! You're a Guam expert! 🏆"
-                : stars === 2 
-                ? "Great job! Keep learning about Chamorro culture! 📚"
-                : "Good start! Play again to learn more about Guam! 🌺"}
+
+            <p className="mb-6 text-brown-600 dark:text-gray-400">
+              {stars === 3
+                ? "Excellent—you know Guam well."
+                : stars === 2
+                  ? 'Great work. Keep exploring Chamorro culture.'
+                  : 'Good start. Play again to learn more about Guam.'}
             </p>
-            
-            {/* Actions */}
-            <div className="space-y-3">
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
+                type="button"
                 onClick={() => {
                   hasSavedRef.current = false;
                   startGame();
                 }}
-                className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
               >
-                <RotateCcw className="w-5 h-5" />
-                Play Again
+                <RotateCcw className="h-5 w-5" aria-hidden="true" />
+                Play again
               </button>
-              <Link
-                to="/games"
-                className="block w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
-              >
-                Back to Games
-              </Link>
+              <button type="button" onClick={() => navigate('/games')} className="min-h-12 rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
+                More games
+              </button>
             </div>
-          </div>
+          </section>
         </main>
-      </div>
+      </GamePage>
     );
   }
 
   // Playing state
   const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-slate-900 transition-colors duration-300">
+    <GamePage>
       {/* Quit Confirmation Modal */}
       {showQuitConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg font-bold text-brown-800 dark:text-white mb-2">Quit Game?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" role="dialog" aria-modal="true" aria-labelledby="quit-trivia-title">
+            <h2 id="quit-trivia-title" className="mb-2 text-lg font-bold text-brown-800 dark:text-white">Leave this game?</h2>
             <p className="text-brown-600 dark:text-gray-400 mb-6">
               Your progress will be lost and this game won't count towards your stats.
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowQuitConfirm(false)}
+                type="button"
+                onClick={keepPlaying}
                 className="flex-1 py-2 px-4 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Keep Playing
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setShowQuitConfirm(false);
-                  setGameState('setup');
                   setTimerActive(false);
+                  navigate('/games');
                 }}
                 className="flex-1 py-2 px-4 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
               >
-                Quit
+                Leave game
               </button>
             </div>
           </div>
         </div>
       )}
       
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-cream-200 dark:border-slate-700 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center justify-between mb-2">
-            <button
-              onClick={() => setShowQuitConfirm(true)}
-              className="flex items-center gap-1 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Quit</span>
-            </button>
-            <div className="text-center">
-              <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
-              <p className="font-bold text-brown-800 dark:text-white">{score}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-brown-500 dark:text-gray-400">Streak</p>
-              <p className="font-bold text-coral-500 dark:text-ocean-400">{streak}🔥</p>
-            </div>
+      <GamePageHeader
+        title="Cultural Trivia"
+        subtitle={`Question ${currentQuestionIndex + 1} of ${questions.length}`}
+        icon={Landmark}
+        onBack={handleBack}
+        trailing={(
+          <div className={`flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold ${timeLeft <= 5 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200'}`} aria-label={`${timeLeft} seconds remaining`}>
+            <Timer className="h-4 w-4" aria-hidden="true" />
+            {timeLeft}s
           </div>
-          {/* Progress bar with question indicator */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs text-brown-500 dark:text-gray-400">{currentQuestionIndex + 1}/{questions.length}</span>
-            <div className="flex-1 h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </header>
+        )}
+      />
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Timer */}
-        <div className="flex justify-center">
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
-            timeLeft <= 5 
-              ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 animate-pulse' 
-              : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300'
-          }`}>
-            <Timer className="w-5 h-5" />
-            <span className="font-bold text-lg">{timeLeft}s</span>
-          </div>
-        </div>
+      <main className="mx-auto max-w-lg space-y-4 px-3 py-4 sm:px-4 sm:py-6">
+        <GameProgress current={currentQuestionIndex + 1} total={questions.length} score={score} streak={streak} />
 
         {/* Question Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
@@ -768,16 +731,18 @@ export function CulturalTrivia() {
               
               return (
                 <button
+                  type="button"
                   key={index}
                   onClick={() => handleAnswer(index)}
                   disabled={showResult}
+                  aria-pressed={isSelected}
                   className={`w-full p-4 rounded-xl text-left font-medium transition-all flex items-center gap-3 ${
                     showCorrect
                       ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 text-green-800 dark:text-green-300'
                       : showWrong
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-800 dark:text-red-300'
                       : isSelected
-                      ? 'bg-coral-100 dark:bg-ocean-900/30 border-2 border-coral-500 dark:border-ocean-400 text-brown-800 dark:text-white'
+                      ? 'bg-coral-100 dark:bg-teal-950/30 border-2 border-coral-500 dark:border-teal-400 text-brown-800 dark:text-white'
                       : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-cream-300 dark:hover:border-slate-600 text-brown-700 dark:text-gray-300'
                   }`}
                 >
@@ -805,7 +770,7 @@ export function CulturalTrivia() {
               : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
           }`}>
             <p className="text-sm text-brown-700 dark:text-gray-300">
-              <span className="font-bold">💡 </span>
+              <Lightbulb className="mr-1 inline h-4 w-4" aria-hidden="true" />
               {currentQuestion.explanation}
             </p>
           </div>
@@ -814,14 +779,15 @@ export function CulturalTrivia() {
         {/* Next Button */}
         {showResult && (
           <button
+            type="button"
             onClick={nextQuestion}
-            className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+            className="min-h-12 w-full rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
           </button>
         )}
       </main>
-    </div>
+    </GamePage>
   );
 }
 
