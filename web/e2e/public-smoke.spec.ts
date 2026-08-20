@@ -137,6 +137,65 @@ test.beforeEach(async ({ page }) => {
   await mockPublicApi(page);
 });
 
+test('stale entry asset recovers instead of leaving a blank page', async ({ page }) => {
+  let simulatedMissingAsset = false;
+
+  await page.route('**/assets/index-*.js', async (route) => {
+    if (!simulatedMissingAsset) {
+      simulatedMissingAsset = true;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<!doctype html><title>Stale SPA fallback</title>',
+      });
+      return;
+    }
+
+    await route.continue();
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
+  expect(simulatedMissingAsset).toBe(true);
+  await expect.poll(() => page.evaluate(() => (
+    sessionStorage.getItem('hafagpt:stale-build-recovery')
+  ))).toBeNull();
+  await expect(page).not.toHaveURL(/__hafagpt_recovery=/);
+});
+
+test('persistent entry failure stops after one recovery attempt', async ({ page }) => {
+  await page.route('**/assets/index-*.js', async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Retired application asset',
+    });
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page).toHaveURL(/__hafagpt_recovery=/);
+});
+
+test('persistent initial route failure stops after one recovery attempt', async ({ page }) => {
+  await page.route('**/assets/HomePage-*.js', async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: 'text/plain',
+      body: 'Retired initial route asset',
+    });
+  });
+
+  await page.goto('/');
+
+  await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page).toHaveURL(/__hafagpt_recovery=/);
+});
+
 test('public learner can reach the dictionary and search it', async ({ page }) => {
   const errors = monitorRuntimeErrors(page);
 

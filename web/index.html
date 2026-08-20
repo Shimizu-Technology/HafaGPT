@@ -9,8 +9,7 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- The production PWA manifest is injected by vite-plugin-pwa. -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -64,21 +63,153 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-    
-    <!-- Register Service Worker for PWA -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('SW registered:', registration.scope);
-            })
-            .catch((error) => {
-              console.log('SW registration failed:', error);
+      // A cached page can outlive the hashed JavaScript file it references.
+      // Recover before React starts so an asset mismatch never becomes an
+      // unexplained white screen. This does not touch accounts, progress,
+      // cookies, localStorage, IndexedDB, or database data.
+      (function () {
+        const recoveryKey = 'hafagpt:stale-build-recovery';
+        const recoveryParam = '__hafagpt_recovery';
+        let recoveryStarted = false;
+
+        function renderStartupStatus(title, detail, allowRetry) {
+          const shell = document.createElement('main');
+          shell.dataset.hafagptStartupStatus = 'true';
+          shell.setAttribute('role', allowRetry ? 'alert' : 'status');
+          shell.setAttribute('aria-live', allowRetry ? 'assertive' : 'polite');
+          shell.style.cssText = 'position:fixed;inset:0;z-index:2147483647;min-height:100dvh;display:grid;place-items:center;padding:24px;background:#fdf8f3;color:#3a2a1d;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+
+          const card = document.createElement('section');
+          card.style.cssText = 'width:min(100%,420px);padding:28px;border:1px solid #ead7c4;border-radius:20px;background:#fffaf5;box-shadow:0 18px 45px rgba(83,55,34,.10);text-align:center;';
+
+          const brand = document.createElement('p');
+          brand.textContent = 'HåfaGPT';
+          brand.style.cssText = 'margin:0 0 18px;color:#e85d4b;font-size:15px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;';
+
+          const heading = document.createElement('h1');
+          heading.textContent = title;
+          heading.style.cssText = 'margin:0;font-size:24px;line-height:1.2;';
+
+          const message = document.createElement('p');
+          message.textContent = detail;
+          message.style.cssText = 'margin:12px 0 0;color:#6b5d52;font-size:16px;line-height:1.6;';
+
+          card.append(brand, heading, message);
+
+          if (allowRetry) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = 'Try again';
+            button.style.cssText = 'min-height:44px;margin-top:20px;padding:10px 20px;border:0;border-radius:12px;background:#e85d4b;color:white;font:inherit;font-weight:700;cursor:pointer;';
+            button.addEventListener('click', function () {
+              try { sessionStorage.removeItem(recoveryKey); } catch (_) { /* Storage may be unavailable. */ }
+              const retryUrl = new URL(window.location.href);
+              retryUrl.searchParams.delete(recoveryParam);
+              window.location.assign(retryUrl.toString());
             });
-        });
-      }
+            card.append(button);
+          }
+
+          shell.append(card);
+          document.querySelector('[data-hafagpt-startup-status]')?.remove();
+          document.body.append(shell);
+        }
+
+        function isHashedAppScript(target) {
+          if (!(target instanceof HTMLScriptElement) || !target.src) return false;
+          try {
+            const url = new URL(target.src, window.location.href);
+            return url.origin === window.location.origin && url.pathname.startsWith('/assets/');
+          } catch (_) {
+            return false;
+          }
+        }
+
+        async function recoverFromStaleBuild() {
+          if (recoveryStarted) return;
+          recoveryStarted = true;
+
+          let alreadyAttempted = false;
+          try {
+            alreadyAttempted = sessionStorage.getItem(recoveryKey) === '1';
+          } catch (_) {
+            // Recovery still works when private browsing blocks storage.
+          }
+          alreadyAttempted = alreadyAttempted || new URL(window.location.href).searchParams.has(recoveryParam);
+
+          if (alreadyAttempted) {
+            renderStartupStatus(
+              'HåfaGPT could not start',
+              'Please try again. If the problem continues, close this tab and reopen HåfaGPT.',
+              true,
+            );
+            return;
+          }
+
+          try { sessionStorage.setItem(recoveryKey, '1'); } catch (_) { /* Storage may be unavailable. */ }
+          renderStartupStatus('Updating HåfaGPT', 'Getting the newest version ready. This should only take a moment.', false);
+
+          if ('serviceWorker' in navigator) {
+            try {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(registrations.map(function (registration) {
+                return registration.unregister();
+              }));
+            } catch (error) {
+              console.warn('[startup] Could not unregister the obsolete service worker:', error);
+            }
+          }
+
+          if ('caches' in window) {
+            try {
+              const cacheNames = await caches.keys();
+              const obsoleteAppCaches = cacheNames.filter(function (name) {
+                return name.startsWith('workbox-precache') || name.startsWith('hafagpt-');
+              });
+              await Promise.all(obsoleteAppCaches.map(function (name) {
+                return caches.delete(name);
+              }));
+            } catch (error) {
+              console.warn('[startup] Could not clear the obsolete app cache:', error);
+            }
+          }
+
+          const nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set(recoveryParam, String(Date.now()));
+          window.location.replace(nextUrl.toString());
+        }
+
+        window.__hafagptRecoverStaleBuild = recoverFromStaleBuild;
+
+        window.__hafagptMarkBootSuccessful = function () {
+          try { sessionStorage.removeItem(recoveryKey); } catch (_) { /* Storage may be unavailable. */ }
+          document.querySelector('[data-hafagpt-startup-status]')?.remove();
+          const currentUrl = new URL(window.location.href);
+          if (currentUrl.searchParams.has(recoveryParam)) {
+            currentUrl.searchParams.delete(recoveryParam);
+            window.history.replaceState(window.history.state, '', currentUrl.toString());
+          }
+          document.documentElement.dataset.hafagptBooted = 'true';
+        };
+
+        window.addEventListener('error', function (event) {
+          if (isHashedAppScript(event.target)) {
+            void recoverFromStaleBuild();
+          }
+        }, true);
+
+        window.setTimeout(function () {
+          if (document.documentElement.dataset.hafagptBooted !== 'true' && !recoveryStarted) {
+            renderStartupStatus(
+              'HåfaGPT is taking too long to start',
+              'Check your connection, then try loading the app again.',
+              true,
+            );
+          }
+        }, 12000);
+      })();
     </script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

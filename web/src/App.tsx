@@ -2,6 +2,7 @@ import {
   Component,
   lazy,
   Suspense,
+  useEffect,
   type ComponentType,
   type ErrorInfo,
   type ReactNode,
@@ -10,7 +11,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
-import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 import { ScrollToTop } from './components/ScrollToTop';
 
 function lazyNamed<TModule>(
@@ -87,6 +87,14 @@ function RouteLoadingFallback() {
       </div>
     </main>
   );
+}
+
+function BootSuccessMarker() {
+  useEffect(() => {
+    window.__hafagptMarkBootSuccessful?.();
+  }, []);
+
+  return null;
 }
 
 interface RouteErrorBoundaryState {
@@ -220,14 +228,13 @@ function App() {
         <Route path="/admin/audio" element={<AdminRoute><AdminAudioReview /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
           </Routes>
+          {/* This commits only after the initial lazy route has loaded. */}
+          <BootSuccessMarker />
         </Suspense>
       </RouteErrorBoundary>
       
       {/* Mobile bottom navigation - shows on mobile only */}
       <BottomNav />
-      
-      {/* PWA update notification */}
-      <PWAUpdateBanner />
     </BrowserRouter>
   );
 }
