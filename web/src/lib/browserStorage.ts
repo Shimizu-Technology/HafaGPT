@@ -3,6 +3,30 @@
 // be observed normally.
 const memoryOverrides = new Map<string, string | null>();
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    let localStorage: Storage;
+    try {
+      localStorage = window.localStorage;
+    } catch {
+      return;
+    }
+
+    if (event.storageArea !== localStorage) {
+      return;
+    }
+
+    if (event.key === null) {
+      memoryOverrides.clear();
+      return;
+    }
+
+    if (memoryOverrides.has(event.key)) {
+      memoryOverrides.set(event.key, event.newValue);
+    }
+  });
+}
+
 /**
  * Browser storage is optional. Safari and Chrome profiles can temporarily
  * reject access (privacy settings, a damaged profile, or quota failures), so
