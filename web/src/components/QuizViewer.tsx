@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
-import { saveQuizAttempt } from './Dashboard';
+import { saveQuizAttempt } from '../lib/quizLocalStats';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
 import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabularyQuery';
 import { useUser } from '@clerk/clerk-react';

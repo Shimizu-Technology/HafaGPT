@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  MessageSquare, 
-  Brain, 
-  BookOpen, 
-  Calendar,
+import {
+  MessageSquare,
+  Brain,
+  BookOpen,
   Trophy,
   TrendingUp,
   Flame,
   ChevronRight,
   Gamepad2,
-  Star
+  Star,
+  Flower2,
+  TreePine,
+  Sparkles,
+  History,
 } from 'lucide-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useQuizStats } from '../hooks/useQuizQuery';
@@ -19,45 +21,7 @@ import { useUser } from '@clerk/clerk-react';
 import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { StreakWidget } from './StreakWidget';
-import { browserStorage } from '../lib/browserStorage';
-
-// Types for localStorage quiz data (fallback)
-interface LocalQuizAttempt {
-  categoryId: string;
-  score: number;
-  total: number;
-  timestamp: number;
-}
-
-interface LocalQuizStats {
-  attempts: LocalQuizAttempt[];
-}
-
-// Helper to get quiz stats from localStorage (fallback for offline)
-function getLocalQuizStats(): LocalQuizStats {
-  try {
-    const stored = browserStorage.get('hafagpt_quiz_stats');
-    return stored ? JSON.parse(stored) : { attempts: [] };
-  } catch {
-    return { attempts: [] };
-  }
-}
-
-// Helper to save quiz attempt to localStorage (always save locally too)
-export function saveQuizAttempt(categoryId: string, score: number, total: number) {
-  const stats = getLocalQuizStats();
-  stats.attempts.push({
-    categoryId,
-    score,
-    total,
-    timestamp: Date.now()
-  });
-  // Keep only last 50 attempts to prevent localStorage bloat
-  if (stats.attempts.length > 50) {
-    stats.attempts = stats.attempts.slice(-50);
-  }
-  browserStorage.set('hafagpt_quiz_stats', JSON.stringify(stats));
-}
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 export function Dashboard() {
   const { user, isLoaded } = useUser();
@@ -67,442 +31,359 @@ export function Dashboard() {
   const { data: promo } = usePromoStatus();
   const isChristmasTheme = promo?.theme === 'christmas';
   const isNewYearTheme = promo?.theme === 'newyear';
-  
+
   const isLoading = conversationsLoading || quizLoading || gamesLoading;
-  
+
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
-  
+
   // Use API quiz stats (or 0 if not loaded yet)
   const totalQuizzes = quizStatsData?.total_quizzes || 0;
   const averageScore = Math.round(quizStatsData?.average_score || 0);
-  
+
   // Best category from API
-  const bestCategory = quizStatsData?.best_category ? {
-    id: quizStatsData.best_category,
-    percentage: Math.round(quizStatsData.best_category_percentage || 0),
-    count: 1 // API doesn't return count, but we don't display it
-  } : null;
-  
-  const bestCategoryInfo = bestCategory 
-    ? QUIZ_CATEGORIES.find(c => c.id === bestCategory.id)
+  const bestCategory = quizStatsData?.best_category
+    ? {
+        id: quizStatsData.best_category,
+        percentage: Math.round(quizStatsData.best_category_percentage || 0),
+        count: 1, // API doesn't return count, but we don't display it
+      }
     : null;
-  
+
+  const bestCategoryInfo = bestCategory ? QUIZ_CATEGORIES.find((c) => c.id === bestCategory.id) : null;
+
   // Use API game stats
   const totalGames = gameStatsData?.total_games || 0;
   const averageStars = gameStatsData?.average_stars || 0;
-  
+
   // Calculate streak (days with activity)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   // Member since date
-  const memberSince = user?.createdAt 
+  const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : 'Recently';
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3 safe-area-top">
-          <Link
-            to="/"
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </Link>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-coral-400 to-coral-600 dark:from-ocean-400 dark:to-ocean-600 flex items-center justify-center shadow-lg">
-              <TrendingUp className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-brown-800 dark:text-white">
-                Your Progress
-              </h1>
-              <p className="text-xs text-brown-500 dark:text-gray-400">
-                Track your Chamorro learning journey
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+  const SeasonalIcon = isChristmasTheme ? TreePine : isNewYearTheme ? Sparkles : Flower2;
 
-      {/* Content - extra bottom padding on mobile for bottom nav */}
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-20 sm:pb-6 space-y-6">
-        {/* Welcome Card */}
-        <div className={`rounded-2xl p-6 text-white shadow-xl ${
-          isChristmasTheme 
-            ? 'bg-gradient-to-br from-red-600 to-green-600' 
-            : 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600'
-        }`}>
+  const stats = [
+    {
+      label: 'Chats',
+      value: isLoading ? '…' : totalConversations,
+      icon: MessageSquare,
+      tone: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50',
+    },
+    {
+      label: 'Quizzes',
+      value: totalQuizzes,
+      icon: Brain,
+      tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
+    },
+    {
+      label: 'Average quiz',
+      value: totalQuizzes > 0 ? `${averageScore}%` : '—',
+      icon: Trophy,
+      tone: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/50',
+    },
+    {
+      label: 'Games',
+      value: totalGames,
+      icon: Gamepad2,
+      tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
+    },
+    {
+      label: 'Average stars',
+      value: totalGames > 0 ? averageStars.toFixed(1) : '—',
+      icon: Star,
+      tone: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950/50',
+    },
+  ];
+
+  const learningActions = [
+    {
+      to: '/chat',
+      title: 'Ask HåfaGPT',
+      description: 'Get help with a word or phrase',
+      icon: MessageSquare,
+      tone: 'text-coral-700 bg-coral-100 dark:text-teal-300 dark:bg-teal-950/50',
+    },
+    {
+      to: '/quiz',
+      title: 'Take a quiz',
+      description: 'Check what you remember',
+      icon: Brain,
+      tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
+    },
+    {
+      to: '/flashcards',
+      title: 'Study flashcards',
+      description: 'Review useful vocabulary',
+      icon: BookOpen,
+      tone: 'text-teal-700 bg-teal-100 dark:text-teal-300 dark:bg-teal-950/50',
+    },
+    {
+      to: '/games',
+      title: 'Play a game',
+      description: 'Practice through play',
+      icon: Gamepad2,
+      tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
+    },
+  ];
+
+  return (
+    <LearnerPageShell>
+      <LearnerPageHeader
+        title="Your progress"
+        subtitle="See what you have practiced and choose what to do next."
+        icon={TrendingUp}
+        backTo="/"
+        backLabel="Back home"
+        maxWidthClassName="max-w-5xl"
+      />
+
+      <main className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:py-8">
+        <section
+          className={`rounded-3xl border p-5 sm:p-6 ${isChristmasTheme ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-coral-200 bg-white dark:border-ocean-800 dark:bg-slate-800'}`}
+        >
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-3xl">
-              {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">
+            <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
+              <SeasonalIcon className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Learning overview</p>
+              <h2 className="text-lg font-bold leading-snug text-brown-950 dark:text-white sm:text-xl">
                 Håfa Adai, {user?.firstName || 'Learner'}!
               </h2>
-              <p className="text-white/80 text-sm">
-                Member since {memberSince}
-              </p>
+              <p className="mt-1 text-sm text-brown-500 dark:text-gray-400">Member since {memberSince}</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Learning Streak */}
         <StreakWidget />
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {/* Conversations */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <MessageSquare className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              </div>
+        <section aria-labelledby="progress-summary-title">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">At a glance</p>
+              <h2 id="progress-summary-title" className="text-xl font-bold text-brown-950 dark:text-white">
+                Your activity
+              </h2>
             </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">
-              {isLoading ? '...' : totalConversations}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Chats
-            </p>
+            <Link
+              to="/dashboard/quiz-history"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+            >
+              <History className="h-4 w-4" aria-hidden="true" /> Quiz history
+            </Link>
           </div>
-
-          {/* Quizzes */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Brain className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {stats.map(({ label, value, icon: Icon, tone }) => (
+              <div
+                key={label}
+                className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
+              >
+                <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                </span>
+                <p className="text-2xl font-bold text-brown-950 dark:text-white">{value}</p>
+                <p className="mt-1 text-xs text-brown-500 dark:text-gray-400">{label}</p>
               </div>
-            </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">
-              {totalQuizzes}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Quizzes
-            </p>
+            ))}
           </div>
+        </section>
 
-          {/* Avg Score */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <Trophy className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">
-              {totalQuizzes > 0 ? `${averageScore}%` : '-'}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Avg Score
-            </p>
-          </div>
-
-          {/* Games Played */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Gamepad2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">
-              {totalGames}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Games
-            </p>
-          </div>
-
-          {/* Avg Stars */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                <Star className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white flex items-center gap-1">
-              {totalGames > 0 ? averageStars.toFixed(1) : '-'}
-              {totalGames > 0 && <span className="text-yellow-500 text-lg">⭐</span>}
-            </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
-              Avg Stars
-            </p>
-          </div>
-        </div>
-
-        {/* Best Category Card */}
         {bestCategory && bestCategoryInfo && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-cream-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 flex items-center justify-center text-2xl">
-                  {bestCategoryInfo.icon}
-                </div>
-                <div>
-                  <p className="text-xs text-brown-500 dark:text-gray-400 uppercase tracking-wide font-medium">
-                    Best Category
-                  </p>
-                  <p className="text-lg font-bold text-brown-800 dark:text-white">
-                    {bestCategoryInfo.title}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {bestCategory.percentage}%
+          <section
+            className="flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"
+            aria-label="Best quiz category"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+                <Trophy className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                  Strongest quiz topic
                 </p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">
-                  {bestCategory.count} {bestCategory.count === 1 ? 'quiz' : 'quizzes'}
-                </p>
+                <p className="truncate font-bold text-brown-950 dark:text-white">{bestCategoryInfo.title}</p>
               </div>
             </div>
-          </div>
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{bestCategory.percentage}%</p>
+          </section>
         )}
 
-        {/* Quick Actions */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide px-1">
-            Continue Learning
-          </h3>
-          
-          <Link
-            to="/chat"
-            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-coral-100 dark:bg-coral-900/30 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-coral-600 dark:text-coral-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-brown-800 dark:text-white">Chat with HåfaGPT</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Ask questions, practice phrases</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
-          </Link>
+        <section aria-labelledby="continue-learning-title">
+          <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Keep going</p>
+          <h2 id="continue-learning-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">
+            Choose your next activity
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {learningActions.map(({ to, title, description, icon: Icon, tone }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group flex min-h-20 items-center gap-3 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700"
+              >
+                <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${tone}`}>
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-brown-950 dark:text-white">{title}</span>
+                  <span className="block text-sm text-brown-500 dark:text-gray-400">{description}</span>
+                </span>
+                <ChevronRight
+                  className="h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                  aria-hidden="true"
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
 
-          <Link
-            to="/quiz"
-            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Brain className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-brown-800 dark:text-white">Take a Quiz</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Test your knowledge</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
-          </Link>
-
-          <Link
-            to="/flashcards"
-            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-brown-800 dark:text-white">Study Flashcards</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Review vocabulary</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
-          </Link>
-
-          <Link
-            to="/games"
-            className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Gamepad2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <div>
-                <p className="font-semibold text-brown-800 dark:text-white">Play Games</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">Memory match & more</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-brown-400 dark:text-gray-500 group-hover:text-coral-500 dark:group-hover:text-ocean-400 transition-colors" />
-          </Link>
-        </div>
-
-        {/* Recent Quiz History */}
         {quizStatsData && quizStatsData.recent_results.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide">
-                Recent Quizzes
-              </h3>
+          <section aria-labelledby="recent-quizzes-title">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="recent-quizzes-title" className="text-xl font-bold text-brown-950 dark:text-white">
+                Recent quizzes
+              </h2>
               <Link
                 to="/dashboard/quiz-history"
-                className="text-sm text-coral-600 dark:text-ocean-400 hover:underline font-medium"
+                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
               >
-                View All
+                View all
               </Link>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
+            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
               {quizStatsData.recent_results.slice(0, 5).map((result, idx) => {
-                const category = QUIZ_CATEGORIES.find(c => c.id === result.category_id.replace('dict-', ''));
                 const percentage = Math.round(result.percentage);
                 const date = new Date(result.created_at);
                 const isDictionary = result.category_id.startsWith('dict-');
-                
+
                 return (
-                  <Link 
-                    key={idx} 
+                  <Link
+                    key={idx}
                     to={`/quiz/review/${result.id}`}
-                    className="flex items-center justify-between p-4 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                    className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{category?.icon || '📝'}</span>
-                      <div>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                        <Brain className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-brown-800 dark:text-white text-sm">
-                            {result.category_title || category?.title || 'Quiz'}
+                          <p className="truncate text-sm font-bold text-brown-950 dark:text-white">
+                            {result.category_title || 'Quiz'}
                           </p>
                           {isDictionary && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                              Dict
+                            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                              Dictionary
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-brown-500 dark:text-gray-400">
+                        <time className="text-xs text-brown-500 dark:text-gray-400" dateTime={result.created_at}>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
+                        </time>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        percentage >= 80 
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : percentage >= 60
-                          ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                          : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      }`}>
+                    <div className="flex flex-none items-center gap-2">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-bold ${
+                          percentage >= 80
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : percentage >= 60
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        }`}
+                      >
                         {percentage}%
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-brown-400 dark:text-gray-500" />
+                      </span>
+                      <ChevronRight
+                        className="h-4 w-4 text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                        aria-hidden="true"
+                      />
                     </div>
                   </Link>
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Recent Game History */}
         {gameStatsData && gameStatsData.recent_results.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 uppercase tracking-wide">
-                Recent Games
-              </h3>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-cream-200 dark:border-slate-700 divide-y divide-cream-100 dark:divide-slate-700">
+          <section aria-labelledby="recent-games-title">
+            <h2 id="recent-games-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">
+              Recent games
+            </h2>
+            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
               {gameStatsData.recent_results.slice(0, 5).map((result, idx) => {
                 const date = new Date(result.created_at);
-                const gameIcons: Record<string, string> = {
-                  memory_match: '🧩',
-                  word_scramble: '🔤',
-                  speed_round: '⚡',
-                };
-                
+
                 return (
-                  <div 
-                    key={idx} 
-                    className="flex items-center justify-between p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl">{gameIcons[result.game_type] || '🎮'}</span>
-                      <div>
+                  <div key={idx} className="flex min-h-20 items-center justify-between gap-3 p-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        <Gamepad2 className="h-5 w-5" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-brown-800 dark:text-white text-sm">
+                          <p className="truncate text-sm font-bold text-brown-950 dark:text-white">
                             {result.category_title || result.category_id}
                           </p>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                            result.mode === 'beginner' 
-                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                              : 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
-                          }`}>
-                            {result.mode === 'beginner' ? '🌟' : '📚'} {result.difficulty}
+                          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-brown-600 dark:bg-slate-700 dark:text-gray-300">
+                            {result.difficulty}
                           </span>
                         </div>
-                        <p className="text-xs text-brown-500 dark:text-gray-400">
+                        <time className="text-xs text-brown-500 dark:text-gray-400" dateTime={result.created_at}>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {result.moves} moves
-                        </p>
+                        </time>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-0.5">
+                    <div className="flex flex-none items-center gap-2">
+                      <div className="flex items-center gap-0.5" aria-label={`${result.stars || 0} out of 3 stars`}>
                         {[1, 2, 3].map((star) => (
-                          <span
+                          <Star
                             key={star}
-                            className={`text-sm ${
-                              star <= (result.stars || 0) ? 'opacity-100' : 'opacity-30'
-                            }`}
-                          >
-                            ⭐
-                          </span>
+                            className={`h-4 w-4 ${star <= (result.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`}
+                            aria-hidden="true"
+                          />
                         ))}
                       </div>
-                      <span className="text-sm font-semibold text-brown-600 dark:text-gray-300">
-                        {result.score}
-                      </span>
+                      <span className="text-sm font-bold text-brown-700 dark:text-gray-200">{result.score}</span>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Empty State */}
         {totalConversations === 0 && totalQuizzes === 0 && totalGames === 0 && (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-coral-100 dark:bg-ocean-900/30 flex items-center justify-center">
-              <Flame className="w-10 h-10 text-coral-500 dark:text-ocean-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
-              Start Your Journey!
-            </h3>
-            <p className="text-brown-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-              Chat with HåfaGPT or take a quiz to begin tracking your Chamorro learning progress.
+          <section className="rounded-3xl border border-coral-200 bg-white p-6 text-center dark:border-ocean-800 dark:bg-slate-800">
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
+              <Flame className="h-7 w-7" aria-hidden="true" />
+            </span>
+            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Start your learning record</h2>
+            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
+              Complete any activity and your progress will appear here.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 to="/chat"
-                className="px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
               >
-                Start Chatting
+                Ask a question
               </Link>
               <Link
                 to="/quiz"
-                className="px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-all"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
               >
-                Take a Quiz
+                Take a quiz
               </Link>
             </div>
-          </div>
+          </section>
         )}
-
-        {/* Coming Soon */}
-        <div className="bg-gradient-to-r from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-700 rounded-xl p-5 border border-cream-300 dark:border-slate-600">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-            <h3 className="font-semibold text-brown-800 dark:text-white">Coming Soon</h3>
-          </div>
-          <p className="text-sm text-brown-600 dark:text-gray-400">
-            🏆 Achievements • 📊 Detailed analytics • 📚 Flashcard progress
-          </p>
-        </div>
-      </div>
-    </div>
+      </main>
+    </LearnerPageShell>
   );
 }
