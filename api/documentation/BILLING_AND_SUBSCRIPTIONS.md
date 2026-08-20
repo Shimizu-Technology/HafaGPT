@@ -15,8 +15,8 @@
 | Daily Word | ✅ Unlimited | ✅ Unlimited |
 
 **Pricing:**
-- Monthly: $4.99/month
-- Annual: $39.99/year (save 33%)
+- Monthly: $2.99/month
+- Annual: $23.88/year (save 33%)
 
 ---
 
@@ -170,9 +170,9 @@ Response:
   "chat_count": 3,
   "game_count": 2,
   "quiz_count": 1,
-  "chat_limit": 5,
-  "game_limit": 5,
-  "quiz_limit": 3,
+  "chat_limit": 8,
+  "game_limit": 10,
+  "quiz_limit": 5,
   "is_premium": false
 }
 ```
@@ -312,12 +312,12 @@ import { UpgradePrompt } from '../components/UpgradePrompt';
 
 **Premium Monthly:**
 - Name: `Premium Monthly`
-- Price: $4.99/month
+- Price: $2.99/month
 - Features: `unlimited_chat`, `unlimited_games`, `unlimited_quizzes`
 
 **Premium Annual:**
 - Name: `Premium Annual`
-- Price: $39.99/year (or $3.33/month equivalent)
+- Price: $23.88/year (or $1.99/month equivalent)
 - Features: `unlimited_chat`, `unlimited_games`, `unlimited_quizzes`
 
 ### 3. Configure Webhook (Production Only)
@@ -431,4 +431,3 @@ CREATE INDEX idx_user_daily_usage_user_id ON user_daily_usage(user_id);
 - ✅ Hide "Upgrade" button for premium users
 - ✅ Change dropdown to "Manage Subscription" for premium users
 - ✅ Fixed "Manage Subscription" button to open Clerk user profile
-

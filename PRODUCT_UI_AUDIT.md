@@ -178,9 +178,18 @@ on the final commit, and production verification after merge.
    readable content widths, consistent actions and footers, and recoverable
    loading/error behavior. Shared conversations also preserve source links and
    attachments while adding retry and an accessible image preview.
-7. **Accessibility and age-range pass.** Verify keyboard and screen-reader
-   behavior, reduced motion, contrast, audio/text parity, early-reader affordance,
-   and responsive behavior across the complete learner route matrix.
+7. **Accessibility and age-range pass — complete.** The mobile navigation now
+   reports the current route, exposes its More panel as a labeled dialog, traps
+   keyboard focus, closes with Escape, and restores the learner's prior focus.
+   The same dialog contract now covers chat sharing/export, conversation
+   deletion, image previews, and upgrade prompts. Audio-quality disclosures are
+   keyboard dismissible, and the global reduced-motion preference disables
+   decorative movement without hiding status text. Plan limits and prices now
+   come from one frontend configuration shared by pricing, offline usage
+   fallbacks, and upgrade prompts, eliminating the old child-facing mismatch.
+   Unit coverage and the desktop/mobile route matrix verify navigation labels,
+   focus recovery, motion preferences, responsive containment, audio/text
+   disclosure, and the primary signed-out recovery states.
 
 ## Release checklist for every UI pull request
 

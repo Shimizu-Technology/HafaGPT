@@ -16,13 +16,14 @@ import {
   Clock
 } from 'lucide-react';
 import { useSubscription } from '../hooks/useSubscription';
+import { getFreeLimitLabel, PREMIUM_PRICING } from '../lib/planConfig';
 import { PublicPage } from './PublicPage';
 
 const features = {
   free: [
-    { text: "8 AI chat messages per day", icon: MessageSquare },
-    { text: "10 learning games per day", icon: Gamepad2 },
-    { text: "5 quizzes per day", icon: GraduationCap },
+    { text: getFreeLimitLabel('chat'), icon: MessageSquare },
+    { text: getFreeLimitLabel('game'), icon: Gamepad2 },
+    { text: getFreeLimitLabel('quiz'), icon: GraduationCap },
     { text: "Unlimited vocabulary browsing", icon: BookOpen },
     { text: "Daily word & stories", icon: BookOpen },
   ],
@@ -140,15 +141,15 @@ export function PricingPage() {
             </div>
 
             <div className="mb-2">
-              <span className="text-4xl font-bold text-brown-800 dark:text-white">$2.99</span>
+              <span className="text-4xl font-bold text-brown-800 dark:text-white">{PREMIUM_PRICING.monthly}</span>
               <span className="text-brown-600 dark:text-gray-400">/month</span>
             </div>
             <div className="mb-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-brown-600 dark:text-gray-400">
-                or $23.88/year
+                or {PREMIUM_PRICING.annual}/year
               </span>
               <span className="text-xs px-2 py-0.5 bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-full font-medium">
-                Save 33%
+                Save {PREMIUM_PRICING.annualSavings}
               </span>
             </div>
             

@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { X, Sparkles, MessageSquare, Gamepad2, GraduationCap, Check, Zap } from 'lucide-react';
+import { useModalAccessibility } from '../hooks/useModalAccessibility';
+import { FREE_TIER_LIMITS, PREMIUM_PRICING } from '../lib/planConfig';
 
 interface UpgradePromptProps {
   feature: 'chat' | 'game' | 'quiz';
@@ -13,21 +15,21 @@ const featureInfo = {
   chat: {
     icon: MessageSquare,
     title: "You've reached your daily chat limit",
-    description: "You've used all 5 free AI chat messages for today.",
+    unit: 'AI chat messages',
     benefit: "Get unlimited conversations with our AI Chamorro tutor",
     color: "coral",
   },
   game: {
     icon: Gamepad2,
     title: "You've reached your daily game limit",
-    description: "You've played all 5 free games for today.",
+    unit: 'learning games',
     benefit: "Play unlimited learning games to master Chamorro",
     color: "teal",
   },
   quiz: {
     icon: GraduationCap,
     title: "You've reached your daily quiz limit",
-    description: "You've taken all 3 free quizzes for today.",
+    unit: 'quizzes',
     benefit: "Take unlimited quizzes to test your knowledge",
     color: "ocean",
   },
@@ -44,59 +46,55 @@ const premiumBenefits = [
 export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: UpgradePromptProps) {
   const info = featureInfo[feature];
   const Icon = info.icon;
+  const displayedLimit = usageLimit ?? FREE_TIER_LIMITS[feature];
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Close on ESC key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
+  useModalAccessibility({
+    isOpen: true,
+    onClose,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="relative bg-gradient-to-br from-cream-50 to-cream-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upgrade-prompt-title"
+        tabIndex={-1}
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 shadow-xl animate-scale-in dark:border-slate-700 dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
+          ref={closeButtonRef}
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-lg bg-cream-200/50 dark:bg-gray-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-gray-600 transition-colors z-10"
-          aria-label="Close"
+          aria-label="Close upgrade offer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 px-6 py-8 text-center">
+        <div className="bg-coral-600 px-6 py-8 text-center dark:bg-teal-700">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
             <Icon className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">
+          <h2 id="upgrade-prompt-title" className="text-xl font-bold text-white mb-2">
             {info.title}
           </h2>
           <p className="text-white/90 text-sm">
-            {info.description}
+            You have used all {displayedLimit} free {info.unit} for today.
           </p>
-          {usageCount !== undefined && usageLimit !== undefined && (
+          {usageCount !== undefined && (
             <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full text-white text-sm">
-              <span>{usageCount}/{usageLimit} used today</span>
+              <span>{usageCount}/{displayedLimit} used today</span>
             </div>
           )}
         </div>
@@ -129,15 +127,15 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
           <div className="bg-cream-100 dark:bg-gray-800 rounded-xl p-4 mb-6">
             <div className="flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-bold text-brown-800 dark:text-white">$4.99</span>
+                <span className="text-2xl font-bold text-brown-800 dark:text-white">{PREMIUM_PRICING.monthly}</span>
                 <span className="text-brown-600 dark:text-gray-400 text-sm">/month</span>
               </div>
               <div className="text-right">
                 <span className="text-sm text-brown-600 dark:text-gray-400">or</span>
                 <div className="text-brown-800 dark:text-white font-semibold">
-                  $39.99<span className="text-sm font-normal text-brown-600 dark:text-gray-400">/year</span>
+                  {PREMIUM_PRICING.annual}<span className="text-sm font-normal text-brown-600 dark:text-gray-400">/year</span>
                 </div>
-                <span className="text-xs text-teal-600 dark:text-teal-400">Save 33%</span>
+                <span className="text-xs text-teal-600 dark:text-teal-400">Save {PREMIUM_PRICING.annualSavings}</span>
               </div>
             </div>
           </div>
@@ -146,7 +144,8 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
           <div className="space-y-3">
             <Link
               to="/pricing"
-              className="flex items-center justify-center gap-2 w-full px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity shadow-lg"
+              onClick={onClose}
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
               <Zap className="w-5 h-5" />
               Upgrade Now
@@ -172,4 +171,3 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
 }
 
 export default UpgradePrompt;
-
