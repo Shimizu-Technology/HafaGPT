@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2, Layers3 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -10,6 +10,7 @@ import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetitio
 import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { browserStorage } from '../lib/browserStorage';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 interface FlashcardData {
   sourceId?: string;
@@ -426,128 +427,81 @@ export function FlashcardViewer() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center px-4">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 mb-4 font-medium">{error}</p>
           <button
             onClick={() => navigate('/flashcards')}
-            className="px-6 py-2.5 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+            className="min-h-11 rounded-xl bg-coral-600 px-6 py-2.5 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
           >
             Back to Decks
           </button>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
   // Show loading state for dictionary flashcards
   if (cardType === 'dictionary' && isDictionaryLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-2" />
           <p className="text-brown-600 dark:text-gray-300">Loading dictionary flashcards...</p>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
   // Show loading state when no cards yet
   if (flashcards.length === 0 || !flashcards[currentIndex]) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-2" />
           <p className="text-brown-600 dark:text-gray-300">Loading flashcards...</p>
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
   const currentCard = flashcards[currentIndex];
+  const deckTitle = topicTitles[topic || ''] || dictionaryData?.category?.title || topic || 'Flashcards';
+  const progress = ((currentIndex + 1) / flashcards.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-4 safe-area-top">
-          <button
-            onClick={() => navigate('/flashcards')}
-            className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors flex-shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-          </button>
-          
-          <div className="flex-1 text-center">
-            <div className="flex items-center justify-center gap-1">
-            <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
-              {topicTitles[topic || ''] || dictionaryData?.category?.title || topic}
-            </h1>
-              <TTSDisclaimer variant="tooltip" />
+    <LearnerPageShell className="flex flex-col">
+      <LearnerPageHeader
+        title={deckTitle}
+        subtitle={`${cardType === 'curated' ? 'Guided deck' : 'Dictionary deck'} · Card ${currentIndex + 1} of ${flashcards.length}`}
+        icon={Layers3}
+        backTo="/flashcards"
+        backLabel="Back to flashcard decks"
+        trailing={(
+          <div className="flex items-center gap-1">
+            <TTSDisclaimer variant="tooltip" />
+            {cardTypeParam === 'custom' && flashcards.length > 0 && (
+              <button type="button" onClick={handleSaveDeck} disabled={saveDeckMutation.isPending || isGeneratingMore || isDeckSaved} aria-label={isDeckSaved ? 'Deck saved' : 'Save this deck'} className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
+                {saveDeckMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+              </button>
+            )}
+            {cardType === 'dictionary' && (
+              <button type="button" onClick={() => { setCardsStudied(prev => prev + flashcards.length); setCurrentIndex(0); setIsCardFlipped(false); void refetchDictionary(); }} disabled={isDictionaryLoading} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
+                <RefreshCw className={`h-5 w-5 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
+              </button>
+            )}
+          </div>
+        )}
+        below={(
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Flashcard progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+              <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              cardType === 'curated'
-                ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-300'
-                : 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-            }`}>
-              {cardType === 'curated' ? 'Curated' : 'Dictionary'}
-            </span>
+            <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {flashcards.length}</span>
           </div>
-          
-          {/* Save Deck Button (legacy - for custom AI cards only) */}
-          {cardTypeParam === 'custom' && flashcards.length > 0 && (
-            <button
-              onClick={handleSaveDeck}
-              disabled={saveDeckMutation.isPending || isGeneratingMore || isDeckSaved}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all disabled:cursor-not-allowed flex-shrink-0 ${
-                isDeckSaved 
-                  ? 'bg-green-500 dark:bg-green-600 text-white opacity-90' 
-                  : 'bg-coral-500 hover:bg-coral-600 dark:bg-ocean-600 dark:hover:bg-ocean-700 text-white disabled:opacity-50'
-              }`}
-              title={
-                isDeckSaved 
-                  ? "Deck saved! View in My Decks" 
-                  : isGeneratingMore 
-                    ? "Wait for all cards to finish generating" 
-                    : "Save this deck"
-              }
-            >
-              {saveDeckMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">
-                {isDeckSaved ? 'Saved' : isGeneratingMore ? 'Generating...' : 'Save'}
-              </span>
-            </button>
-          )}
-
-          {/* Shuffle Button (for dictionary cards) */}
-          {cardType === 'dictionary' && (
-            <button
-              onClick={() => {
-                setCardsStudied(prev => prev + flashcards.length);
-                setCurrentIndex(0);
-                setIsCardFlipped(false);
-                refetchDictionary();
-              }}
-              disabled={isDictionaryLoading}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/50 transition-colors font-medium text-sm disabled:opacity-50 flex-shrink-0"
-              title="Get new cards"
-            >
-              <RefreshCw className={`w-4 h-4 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">New Cards</span>
-            </button>
-          )}
-
-          {/* Card Counter */}
-          <div className="text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
-            {currentIndex + 1} / {flashcards.length}
-          </div>
-        </div>
-      </div>
+        )}
+      />
 
       {/* Flashcard Area */}
       <div
@@ -699,6 +653,6 @@ export function FlashcardViewer() {
           </div>
         </div>
       )}
-    </div>
+    </LearnerPageShell>
   );
 }

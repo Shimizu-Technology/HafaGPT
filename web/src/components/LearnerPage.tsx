@@ -22,6 +22,7 @@ interface LearnerPageHeaderProps {
   icon: LucideIcon;
   backTo?: string;
   backLabel?: string;
+  onBack?: () => void;
   trailing?: ReactNode;
   below?: ReactNode;
   iconClassName?: string;
@@ -34,6 +35,7 @@ export function LearnerPageHeader({
   icon: Icon,
   backTo = '/',
   backLabel = 'Go back',
+  onBack,
   trailing,
   below,
   iconClassName = 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300',
@@ -43,6 +45,10 @@ export function LearnerPageHeader({
   const navigate = useNavigate();
 
   const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
     const historyIndex = window.history.state?.idx;
     if (typeof historyIndex === 'number' && historyIndex > 0) {
       navigate(-1);

@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
 import { PronunciationButton } from './PronunciationButton';
+import { Check, Languages, Lightbulb, MessageCircle, Play, RotateCcw, Send, Target, UserRound } from 'lucide-react';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 interface Message {
   id: string;
@@ -227,44 +229,22 @@ export function ConversationPractice() {
   // Introduction Screen
   if (showIntro) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
-          <div className="max-w-2xl mx-auto px-4 py-3 safe-area-top">
-            <div className="flex items-center gap-4">
-              <Link
-                to="/practice"
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white">
-                  {scenario.icon} {scenario.title}
-                </h1>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {scenario.titleChamorro}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <LearnerPageShell>
+        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo="/practice" backLabel="Back to conversation scenarios" maxWidthClassName="max-w-2xl" />
 
         {/* Content */}
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+        <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
           {/* Scenario Card */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">
-              📖 Scenario
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
+              <MessageCircle className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Scenario
             </h2>
             <p className="text-slate-600 dark:text-slate-300 mb-4">
               {scenario.setting}
             </p>
             
             <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-              <div className="text-3xl">🗣️</div>
+              <UserRound className="h-7 w-7 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
               <div>
                 <p className="font-medium text-slate-900 dark:text-white">
                   {scenario.characterName}
@@ -277,14 +257,14 @@ export function ConversationPractice() {
           </div>
 
           {/* Objectives */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">
-              🎯 Objectives
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
+              <Target className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Goals for this practice
             </h2>
             <ul className="space-y-2">
               {scenario.objectives.map((obj, i) => (
                 <li key={i} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                  <span className="text-slate-400">○</span>
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />
                   {obj}
                 </li>
               ))}
@@ -292,9 +272,9 @@ export function ConversationPractice() {
           </div>
 
           {/* Useful Phrases */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-            <h2 className="font-semibold text-slate-900 dark:text-white mb-3">
-              💡 Useful Phrases
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
+              <Lightbulb className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Useful phrases
             </h2>
             <div className="space-y-3">
               {scenario.usefulPhrases.map((phrase, i) => (
@@ -306,21 +286,22 @@ export function ConversationPractice() {
           {/* Start Button */}
           <button
             onClick={startConversation}
-            className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 text-white font-semibold rounded-xl hover:from-coral-600 hover:to-coral-700 transition-all shadow-lg hover:shadow-xl"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 py-4 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
           >
-            ▶️ Start Conversation
+            <Play className="h-5 w-5" aria-hidden="true" /> Start conversation
           </button>
-        </div>
-      </div>
+        </main>
+      </LearnerPageShell>
     );
   }
 
   // Conversation Complete Screen
   if (conversation.isComplete) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg border border-slate-200 dark:border-slate-700 text-center">
+      <LearnerPageShell>
+        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo="/practice" backLabel="Back to conversation scenarios" maxWidthClassName="max-w-2xl" />
+        <main className="mx-auto max-w-2xl px-4 py-8">
+          <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
             <div className="text-6xl mb-4">🎉</div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Conversation Complete!
@@ -364,75 +345,65 @@ export function ConversationPractice() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={restartConversation}
-                className="flex-1 py-3 px-4 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-cream-100 px-4 py-3 font-semibold text-brown-700 hover:bg-cream-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
               >
-                🔄 Try Again
+                <RotateCcw className="h-5 w-5" aria-hidden="true" /> Try again
               </button>
               <Link
                 to="/practice"
-                className="flex-1 py-3 px-4 bg-coral-500 text-white font-medium rounded-lg hover:bg-coral-600 transition-colors text-center"
+                className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-600 px-4 py-3 text-center font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
               >
-                📚 More Scenarios
+                More scenarios
               </Link>
             </div>
           </div>
-        </div>
-      </div>
+        </main>
+      </LearnerPageShell>
     );
   }
 
   // Main Conversation UI
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-2xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+    <LearnerPageShell className="flex min-h-[100dvh] flex-col !pb-0">
+      <LearnerPageHeader
+        title={scenario.characterName}
+        subtitle={`${scenario.title} · Turn ${conversation.turnCount} of about ${scenario.estimatedTurns * 2}`}
+        icon={MessageCircle}
+        backTo="/practice"
+        backLabel="Leave conversation"
+        onBack={() => {
+          if (conversation.messages.length > 1 && !window.confirm('Leave this conversation? Your progress will be lost.')) return;
+          navigate('/practice');
+        }}
+        maxWidthClassName="max-w-2xl"
+        trailing={(
+          <div className="flex items-center gap-1">
               <button
-                onClick={() => {
-                  if (conversation.messages.length > 1 && !window.confirm('Leave this conversation? Your progress will be lost.')) {
-                    return;
-                  }
-                  navigate('/practice');
-                }}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div>
-                <p className="font-medium text-slate-900 dark:text-white text-sm">
-                  {scenario.icon} {scenario.characterName}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Turn {conversation.turnCount}/{scenario.estimatedTurns * 2}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <button
+                type="button"
                 onClick={() => setShowTranslations(!showTranslations)}
-                className={`p-2 rounded-lg transition-colors ${showTranslations ? 'bg-coral-100 dark:bg-coral-900/30 text-coral-600' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500'}`}
-                title={showTranslations ? 'Hide translations' : 'Show translations'}
+                aria-label={showTranslations ? 'Hide translations' : 'Show translations'}
+                aria-pressed={showTranslations}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showTranslations ? 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300' : 'text-brown-500 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800'}`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
+                <Languages className="h-5 w-5" aria-hidden="true" />
               </button>
               <button
+                type="button"
                 onClick={() => setShowPhrases(!showPhrases)}
-                className={`p-2 rounded-lg transition-colors ${showPhrases ? 'bg-coral-100 dark:bg-coral-900/30 text-coral-600' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500'}`}
-                title="Useful phrases"
+                aria-label={showPhrases ? 'Hide useful phrases' : 'Show useful phrases'}
+                aria-pressed={showPhrases}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showPhrases ? 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300' : 'text-brown-500 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800'}`}
               >
-                💡
+                <Lightbulb className="h-5 w-5" aria-hidden="true" />
               </button>
-            </div>
           </div>
-        </div>
-      </div>
+        )}
+        below={(
+          <div className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Conversation progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, (conversation.turnCount / (scenario.estimatedTurns * 2)) * 100)}>
+            <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${Math.min(100, (conversation.turnCount / (scenario.estimatedTurns * 2)) * 100)}%` }} />
+          </div>
+        )}
+      />
 
       {/* Phrases Panel (collapsible) */}
       {showPhrases && (
@@ -478,7 +449,7 @@ export function ConversationPractice() {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+      <div className="sticky bottom-0 border-t border-cream-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
         <div className="max-w-2xl mx-auto">
           <div className="flex gap-2">
             <input
@@ -486,24 +457,25 @@ export function ConversationPractice() {
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your response in Chamorro..."
-              className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-coral-500"
+              onKeyDown={handleKeyPress}
+              aria-label="Conversation response"
+              placeholder="Write in Chamorro..."
+              className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-slate-700 dark:text-white dark:placeholder-gray-400"
               disabled={isLoading}
             />
             <button
+              type="button"
               onClick={sendMessage}
               disabled={!userInput.trim() || isLoading}
-              className="px-4 py-3 bg-coral-500 text-white rounded-xl hover:bg-coral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              aria-label="Send response"
+              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-600 text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-600 dark:hover:bg-ocean-700"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
+              <Send className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </LearnerPageShell>
   );
 }
 

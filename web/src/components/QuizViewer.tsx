@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
+import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from './Dashboard';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
@@ -10,6 +10,7 @@ import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useSpeech } from '../hooks/useSpeech';
 import { TTSDisclaimer } from './TTSDisclaimer';
+import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -451,30 +452,17 @@ export function QuizViewer() {
   // Results Screen
   if (showResults) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-        {/* Header */}
-        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm">
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3 safe-area-top">
-            <Link
-              to="/quiz"
-              className="p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-            </Link>
-            <h1 className="text-xl font-semibold text-brown-800 dark:text-white">
-              Quiz Complete!
-            </h1>
-          </div>
-        </div>
+      <LearnerPageShell>
+        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo="/quiz" backLabel="Back to quizzes" maxWidthClassName="max-w-2xl" />
 
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}
-          <div className={`rounded-2xl p-6 mb-6 text-center ${
+          <div className={`mb-6 rounded-2xl border p-6 text-center ${
             scorePercent >= 80 
-              ? 'bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30'
+              ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/40'
               : scorePercent >= 60
-              ? 'bg-gradient-to-br from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30'
-              : 'bg-gradient-to-br from-red-100 to-orange-100 dark:from-red-900/30 dark:to-orange-900/30'
+              ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40'
+              : 'border-coral-200 bg-coral-50 dark:border-coral-800 dark:bg-coral-950/40'
           }`}>
             <Trophy className={`w-16 h-16 mx-auto mb-4 ${
               scorePercent >= 80 
@@ -543,7 +531,7 @@ export function QuizViewer() {
             <button
               onClick={handleRestart}
               disabled={isRestarting}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold hover:shadow-lg transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 py-3 font-semibold text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-ocean-600 dark:hover:bg-ocean-700"
             >
               <RotateCcw className="w-5 h-5" />
               {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
@@ -582,50 +570,30 @@ export function QuizViewer() {
             </div>
           )}
         </div>
-      </div>
+      </LearnerPageShell>
     );
   }
 
   // Quiz Screen
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex flex-col">
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-10 shadow-sm flex-shrink-0">
-        <div className="max-w-2xl mx-auto px-4 py-3 safe-area-top">
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={handleBack}
-                className="p-1.5 sm:p-2 rounded-lg hover:bg-coral-50 dark:hover:bg-ocean-900/30 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-coral-600 dark:text-ocean-400" />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className="text-xl sm:text-2xl">{category?.icon || '📚'}</span>
-                <h1 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white">
-                  {categoryTitle || 'Quiz'}
-                </h1>
-                {isDictionaryQuiz && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                    Dictionary
-                  </span>
-                )}
-              </div>
+    <LearnerPageShell className="flex flex-col">
+      <LearnerPageHeader
+        title={categoryTitle || 'Quiz'}
+        subtitle={`${isDictionaryQuiz ? 'Dictionary quiz' : 'Guided quiz'} · Question ${currentIndex + 1} of ${questions.length}`}
+        icon={Brain}
+        backTo="/quiz"
+        backLabel="Leave quiz"
+        onBack={handleBack}
+        maxWidthClassName="max-w-2xl"
+        below={(
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Quiz progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+              <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
             </div>
-            <div className="text-sm font-medium text-brown-600 dark:text-gray-400">
-              {currentIndex + 1} / {questions.length}
-            </div>
+            <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {questions.length}</span>
           </div>
-          
-          {/* Progress Bar */}
-          <div className="h-1.5 sm:h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      </div>
+        )}
+      />
 
       {/* Question Content - scrollable area */}
       <div className="flex-1 overflow-y-auto">
@@ -648,13 +616,14 @@ export function QuizViewer() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <TTSDisclaimer variant="tooltip" />
                   <button
+                    type="button"
                     onClick={() => isSpeaking ? stop() : speak(formatQuestionForSpeech(currentQuestion))}
-                    className={`p-2 rounded-full transition-all ${
+                    aria-label={isSpeaking ? 'Stop reading question' : 'Read question aloud'}
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
                       isSpeaking 
                         ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse' 
                         : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
                     }`}
-                    title={isSpeaking ? 'Stop' : 'Read question aloud'}
                   >
                     <div className="flex items-center justify-center">
                       <Volume2 className="w-5 h-5" />
@@ -714,51 +683,39 @@ export function QuizViewer() {
                     }
                     
                     return (
-                      <button
-                        key={idx}
-                        onClick={() => handleAnswer(option)}
-                        disabled={answerState !== 'unanswered'}
-                        className={`p-3 sm:p-4 rounded-xl text-left transition-all ${buttonClass} ${
-                          answerState === 'unanswered' ? 'active:scale-98' : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 sm:gap-3">
+                      <div key={idx} className="flex items-stretch gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAnswer(option)}
+                          disabled={answerState !== 'unanswered'}
+                          className={`min-h-12 flex-1 rounded-xl p-3 text-left transition-colors sm:p-4 ${buttonClass}`}
+                        >
+                          <div className="flex items-center gap-2 sm:gap-3">
                           <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
                             {String.fromCharCode(65 + idx)}
                           </span>
-                                          <span className="font-medium text-brown-800 dark:text-white text-sm sm:text-base flex-1">
+                          <span className="flex-1 text-sm font-medium text-brown-800 dark:text-white sm:text-base">
                             {option}
                           </span>
-                                          {/* Speaker icon for option - use span to avoid button-in-button */}
-                                          {answerState === 'unanswered' && (
-                                            <span
-                                              role="button"
-                                              tabIndex={0}
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                speak(option);
-                                              }}
-                                              onKeyDown={(e) => {
-                                                if (e.key === 'Enter' || e.key === ' ') {
-                                                  e.stopPropagation();
-                                                  e.preventDefault();
-                                                  speak(option);
-                                                }
-                                              }}
-                                              className="w-8 h-8 rounded-full bg-cream-100 dark:bg-slate-700 text-brown-500 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex-shrink-0 flex items-center justify-center cursor-pointer"
-                                              title="Read option aloud"
-                                            >
-                                              <Volume2 className="w-4 h-4" />
-                                            </span>
-                                          )}
                           {answerState !== 'unanswered' && isCorrectOption && (
-                                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                            <Check className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                           )}
                           {answerState !== 'unanswered' && isSelected && !isCorrectOption && (
-                                            <X className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                            <X className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
                           )}
-                        </div>
-                      </button>
+                          </div>
+                        </button>
+                        {answerState === 'unanswered' && (
+                          <button
+                            type="button"
+                            onClick={() => void speak(option)}
+                            aria-label={`Read answer ${String.fromCharCode(65 + idx)} aloud`}
+                            className="flex min-h-12 w-12 flex-none items-center justify-center rounded-xl border-2 border-cream-200 bg-white text-brown-500 transition-colors hover:border-coral-300 hover:text-coral-700 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300 dark:hover:border-ocean-600"
+                          >
+                            <Volume2 className="h-5 w-5" aria-hidden="true" />
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -801,7 +758,7 @@ export function QuizViewer() {
                       <button
                         onClick={() => handleAnswer(userAnswer)}
                         disabled={!userAnswer.trim()}
-                        className="flex-1 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all active:scale-98"
+                        className="min-h-12 flex-1 rounded-xl bg-coral-600 py-3 font-semibold text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-600 dark:hover:bg-ocean-700"
                       >
                         Submit Answer
                       </button>
@@ -841,7 +798,7 @@ export function QuizViewer() {
                 
                 <button
                   onClick={handleNext}
-                  className="w-full py-3 sm:py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:shadow-lg transition-all active:scale-98"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 py-3 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700 sm:py-4"
                 >
                   {currentIndex < questions.length - 1 ? (
                     <>
@@ -861,7 +818,6 @@ export function QuizViewer() {
         )}
         </div>
       </div>
-    </div>
+    </LearnerPageShell>
   );
 }
-
