@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
-import { useTheme } from '../hooks/useTheme';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
-import { Sun, Moon } from 'lucide-react';
+import { GamePage, GamePageHeader } from './games/GamePage';
 
 interface GameSettings {
   category: string;
@@ -76,7 +75,7 @@ const CORRECT_PAIR_RATIO = 0.65; // 65% of pairs are correct (slightly easier)
 const MAX_LIVES = 3;
 
 export function WordCatch() {
-  const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
@@ -422,6 +421,13 @@ export function WordCatch() {
     }
   };
 
+  const handleBack = () => {
+    if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
+      return;
+    }
+    navigate('/games');
+  };
+
   // Calculate stars
   const getStars = () => {
     if (caught >= 20) return 3;
@@ -434,98 +440,39 @@ export function WordCatch() {
 
   if (categoriesLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full border-4 border-coral-500 dark:border-ocean-500 border-t-transparent animate-spin mx-auto mb-4" />
+      <GamePage>
+        <GamePageHeader title="Word Catch" subtitle="Catch matching Chamorro and English word pairs." icon={MousePointerClick} />
+        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
           <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
         </div>
-      </div>
+      </GamePage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
-      {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-coral-200/20 dark:border-ocean-500/20 sticky top-0 z-20">
-        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between safe-area-top">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/games"
-              onClick={(e) => {
-                if (gameState === 'playing') {
-                  e.preventDefault();
-                  if (window.confirm('Leave game? Your progress will be lost.')) {
-                    resetGame();
-                    window.location.href = '/games';
-                  }
-                }
-              }}
-              className="p-1.5 sm:p-2 -ml-1 rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center"
-            >
-              <ArrowLeft className="w-5 h-5 text-brown-600 dark:text-gray-300" />
-            </Link>
-            <div>
-              <h1 className="text-base sm:text-xl font-bold text-brown-800 dark:text-white">
-                Word Catch
-              </h1>
-              <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">
-                {settings.mode === 'beginner' ? '🌟 Beginner' : '📚 Challenge'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {gameState === 'playing' && (
-              <button
-                onClick={togglePause}
-                className="p-1.5 sm:p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-              >
-                <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-brown-600 dark:text-gray-300" />
-              </button>
-            )}
-            {(gameState === 'playing' || gameState === 'paused') && (
-              <button
-                onClick={() => {
-                  if (window.confirm('Restart game? Your progress will be lost.')) {
-                    resetGame();
-                  }
-                }}
-                className="p-1.5 sm:p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-              >
-                <Settings2 className="w-4 h-4 sm:w-5 sm:h-5 text-brown-600 dark:text-gray-300" />
-              </button>
-            )}
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 sm:p-2 rounded-xl bg-cream-100 dark:bg-slate-700 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center"
-            >
-              {theme === 'light' ? (
-                <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-brown-600" />
-              ) : (
-                <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
-              )}
+    <GamePage>
+      <GamePageHeader
+        title="Word Catch"
+        subtitle={gameState === 'setup' ? 'Catch matching Chamorro and English word pairs.' : `${timeLeft} seconds · ${score} points`}
+        icon={MousePointerClick}
+        onBack={handleBack}
+        trailing={(gameState === 'playing' || gameState === 'paused') ? (
+          <>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+              {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-          </div>
-        </div>
-      </header>
+            <button type="button" onClick={() => { if (window.confirm('Change settings? Your progress will be lost.')) resetGame(); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
+              <Settings2 className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </>
+        ) : undefined}
+      />
 
       <main className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
         {/* Setup Screen */}
         {gameState === 'setup' && (
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
-            {/* Game Title */}
-            <div className="text-center mb-2">
-              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 mb-2 sm:mb-3 shadow-xl animate-bounce">
-                <span className="text-3xl sm:text-5xl">🗡️</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-brown-800 dark:text-white mb-1">
-                Word Catch
-              </h2>
-              <p className="text-brown-600 dark:text-gray-400 text-sm">
-                Catch matching word pairs! Avoid the wrong ones!
-              </p>
-            </div>
-
             {/* Mode Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
@@ -536,6 +483,7 @@ export function WordCatch() {
                     mode: 'beginner',
                     category: CURATED_CATEGORIES.includes(s.category) ? s.category : 'greetings'
                   }))}
+                  aria-pressed={settings.mode === 'beginner'}
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
@@ -550,6 +498,7 @@ export function WordCatch() {
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
+                  aria-pressed={settings.mode === 'challenge'}
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
@@ -558,7 +507,7 @@ export function WordCatch() {
                     }
                   `}
                 >
-                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-500 dark:text-ocean-400'}`} />
+                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
                   <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
                 </button>
@@ -567,14 +516,15 @@ export function WordCatch() {
 
             {/* Category Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Category</h3>
-              <div className="grid grid-cols-4 gap-1.5">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Topic</h3>
+              <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
                   <button
                     key={catId}
                     onClick={() => setSettings((s) => ({ ...s, category: catId }))}
+                    aria-pressed={settings.category === catId}
                     className={`
-                      p-1.5 sm:p-2 rounded-xl text-center transition-all duration-200
+                      min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
                         ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -591,9 +541,9 @@ export function WordCatch() {
             </div>
 
             {/* How to Play */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">How to Play</h3>
-              <ul className="space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
+            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
+              <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
                 <li className="flex items-center gap-2">
                   <span className="text-green-500">✅</span> Tap <strong className="text-green-600 dark:text-green-400">GREEN</strong> pairs (matching!)
                 </li>
@@ -604,16 +554,16 @@ export function WordCatch() {
                   <span className="text-yellow-500">⚡</span> Build combos for bonus points
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-coral-500 dark:text-ocean-400">⏱️</span> 60 seconds - catch as many as you can!
+                  <span className="text-coral-500 dark:text-teal-400">⏱️</span> 60 seconds - catch as many as you can!
                 </li>
               </ul>
-            </div>
+            </details>
 
             {/* Start Button */}
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="w-full py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
             >
               {isLoading ? (
                 <>
@@ -652,7 +602,7 @@ export function WordCatch() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-coral-500 dark:text-ocean-400">{score}</p>
+                  <p className="text-lg sm:text-xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
                   <p className="text-[10px] text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
@@ -739,7 +689,7 @@ export function WordCatch() {
           <div className="max-w-sm mx-auto text-center space-y-4 sm:space-y-6">
             {/* Game Over */}
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center shadow-xl">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-coral-100 to-coral-200 dark:from-teal-950/50 dark:to-teal-800/50 flex items-center justify-center shadow-xl">
                 <span className="text-4xl sm:text-5xl">
                   {caught >= 20 ? '🏆' : caught >= 10 ? '⭐' : '👍'}
                 </span>
@@ -772,7 +722,7 @@ export function WordCatch() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-coral-500 dark:text-ocean-400">{score}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
                   <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div>
@@ -806,7 +756,7 @@ export function WordCatch() {
 
             <Link
               to="/games"
-              className="inline-block text-coral-500 dark:text-ocean-400 hover:text-coral-600 dark:hover:text-ocean-300 hover:underline font-medium text-sm"
+              className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
             >
               ← Back to Games
             </Link>
@@ -823,7 +773,6 @@ export function WordCatch() {
           usageLimit={getLimit('game')}
         />
       )}
-    </div>
+    </GamePage>
   );
 }
-
