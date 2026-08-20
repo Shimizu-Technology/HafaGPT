@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { RotateCcw, Star, Trophy, type LucideIcon } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from '../LearnerPage';
 import { TTSDisclaimer } from '../TTSDisclaimer';
@@ -20,6 +20,8 @@ interface GamePageHeaderProps {
 }
 
 export function GamePageHeader({ title, subtitle, icon, hasSpeech = false }: GamePageHeaderProps) {
+  const navigate = useNavigate();
+
   return (
     <LearnerPageHeader
       title={title}
@@ -27,6 +29,7 @@ export function GamePageHeader({ title, subtitle, icon, hasSpeech = false }: Gam
       icon={icon}
       backTo="/games"
       backLabel="Back to games"
+      onBack={() => navigate('/games')}
       maxWidthClassName="max-w-2xl"
       trailing={hasSpeech ? <TTSDisclaimer variant="tooltip" /> : undefined}
     />

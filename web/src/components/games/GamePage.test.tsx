@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { Headphones } from 'lucide-react';
 import { describe, expect, it, vi } from 'vitest';
 import { GamePageHeader, GameProgress, GameResult } from './GamePage';
@@ -40,5 +40,21 @@ describe('shared game page UI', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(onReplay).toHaveBeenCalledOnce();
     expect(screen.getByRole('link', { name: 'More games' })).toHaveAttribute('href', '/games');
+  });
+
+  it('always returns to the game library instead of an unrelated history entry', () => {
+    function CurrentPath() {
+      return <output>{useLocation().pathname}</output>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/settings', '/games/sound-match']} initialIndex={1}>
+        <GamePageHeader title="Sound Match" subtitle="Listen and choose" icon={Headphones} />
+        <CurrentPath />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
+    expect(screen.getByText('/games')).toBeInTheDocument();
   });
 });

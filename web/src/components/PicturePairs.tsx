@@ -399,7 +399,7 @@ export function PicturePairs() {
                     key={card.id}
                     onClick={() => handleCardClick(card.id)}
                     disabled={isChecking || isMatched || flippedCards.includes(card.id)}
-                    aria-label={isFlipped ? `${card.word.english} picture` : 'Hidden picture'}
+                    aria-label={isFlipped ? `${card.word.english} picture${isMatched ? ', matched' : ''}` : 'Hidden picture'}
                     className={`aspect-square rounded-xl transition-all duration-300 transform ${
                       isFlipped
                         ? isMatched
