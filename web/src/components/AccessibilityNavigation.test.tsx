@@ -140,4 +140,22 @@ describe('shared navigation and modal accessibility', () => {
     expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
     expect(deleteButton).toHaveFocus();
   });
+
+  it('closes only the active sidebar layer when Escape is pressed', () => {
+    render(<MemoryRouter><SidebarHarness /></MemoryRouter>);
+    const conversationButton = screen.getByRole('button', { name: 'School phrases' });
+
+    fireEvent.doubleClick(conversationButton);
+    const renameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
+    fireEvent.keyDown(renameInput, { key: 'Escape' });
+    expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Rename School phrases' })).not.toBeInTheDocument();
+
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'School phrases' }), { clientX: 20, clientY: 20 });
+    expect(screen.getByRole('menu', { name: 'Conversation actions' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+
+    expect(screen.queryByRole('menu', { name: 'Conversation actions' })).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
+  });
 });

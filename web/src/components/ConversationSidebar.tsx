@@ -43,7 +43,18 @@ export function ConversationSidebar({
 
   useModalAccessibility({
     isOpen,
-    onClose: onToggle,
+    onClose: () => {
+      if (editingId) {
+        setEditingId(null);
+        setEditingTitle('');
+        return;
+      }
+      if (contextMenu) {
+        setContextMenu(null);
+        return;
+      }
+      onToggle();
+    },
     dialogRef: sidebarRef,
     initialFocusRef: closeSidebarRef,
   });
@@ -70,6 +81,14 @@ export function ConversationSidebar({
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [contextMenu]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setContextMenu(null);
+      setEditingId(null);
+      setEditingTitle('');
+    }
+  }, [isOpen]);
 
   const handleDoubleClick = (e: React.MouseEvent, conversation: Conversation) => {
     e.stopPropagation();
@@ -133,6 +152,7 @@ export function ConversationSidebar({
       handleSave(conversationId);
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      e.stopPropagation();
       handleCancel();
     }
   };
@@ -349,6 +369,8 @@ export function ConversationSidebar({
       {/* Context Menu */}
       {contextMenu && (
         <div
+          role="menu"
+          aria-label="Conversation actions"
           className="fixed z-[100] bg-cream-50 dark:bg-gray-800 rounded-lg shadow-xl border border-cream-300 dark:border-gray-700 py-1 min-w-[160px]"
           style={{
             left: `${contextMenu.x}px`,
