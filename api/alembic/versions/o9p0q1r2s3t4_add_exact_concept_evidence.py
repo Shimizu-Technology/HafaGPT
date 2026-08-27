@@ -139,7 +139,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Remove the additive exact-evidence structures."""
+    """Remove exact evidence; production requires the documented table backup."""
 
     op.drop_index(
         "idx_lesson_exposures_user_concept_last",

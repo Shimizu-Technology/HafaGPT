@@ -48,6 +48,33 @@ Shows which migration you're currently on (like `rails db:migrate:status`).
 
 ### Rollback Last Migration
 
+Production rollbacks require a reviewed backup plan before this command runs.
+In particular, downgrading through revision
+`o9p0q1r2s3t4_add_exact_concept_evidence` irreversibly deletes concept/topic
+attempt rows and drops exact-evidence columns. Before that production downgrade:
+
+1. Record the current revision with `uv run alembic current`.
+2. Create a restricted logical backup of `learning_attempts`, `quiz_results`,
+   and `quiz_answers` from the production database:
+
+   ```bash
+   pg_dump "$DATABASE_URL" \
+     --format=custom \
+     --file=hafagpt-exact-evidence-before-downgrade.dump \
+     --table=learning_attempts \
+     --table=quiz_results \
+     --table=quiz_answers
+   pg_restore --list hafagpt-exact-evidence-before-downgrade.dump >/dev/null
+   ```
+
+3. Store the verified dump in encrypted, access-controlled storage under the
+   incident/change record. Do not commit it to this repository.
+4. Prefer Neon's point-in-time restore or recovery branch when exact evidence
+   written after the upgrade may need to be retained. Treat the Alembic
+   downgrade itself as data-destructive.
+
+Only then run:
+
 ```bash
 uv run alembic downgrade -1
 ```

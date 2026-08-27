@@ -9,6 +9,11 @@ MIGRATION_PATH = (
     / "versions"
     / "p0q1r2s3t4u5_build_evidence_indexes_concurrently.py"
 )
+MIGRATION_RUNBOOK_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "documentation"
+    / "HOW_MIGRATIONS_WORK.md"
+)
 
 
 def load_migration_module():
@@ -113,6 +118,18 @@ def test_large_table_uniqueness_is_built_concurrently_then_attached():
             source_migration,
             re.DOTALL,
         ) is None
+
+
+def test_exact_evidence_downgrade_runbook_requires_a_verified_table_backup():
+    runbook = MIGRATION_RUNBOOK_PATH.read_text(encoding="utf-8")
+
+    assert "o9p0q1r2s3t4_add_exact_concept_evidence" in runbook
+    assert "pg_dump" in runbook
+    assert "pg_restore --list" in runbook
+    assert "--table=learning_attempts" in runbook
+    assert "--table=quiz_results" in runbook
+    assert "--table=quiz_answers" in runbook
+    assert "Do not commit it to this repository" in runbook
 
 
 def test_upgrade_builds_unique_indexes_in_autocommit_before_attachment():
