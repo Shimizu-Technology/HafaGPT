@@ -5,7 +5,7 @@ import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { getCuratedConceptId } from '../data/conceptEvidence';
-import { useSaveGameResult } from '../hooks/useGamesQuery';
+import { useSaveGameResult, type GameResultCreate } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
@@ -66,8 +66,9 @@ export function WordScramble() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSignedIn } = useUser();
-  const saveGameResultMutation = useSaveGameResult();
+  const { mutateAsync: saveGameResult } = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const submissionStartedRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
@@ -95,6 +96,9 @@ export function WordScramble() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [pendingGameResult, setPendingGameResult] = useState<GameResultCreate | null>(null);
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [resultSaveFailed, setResultSaveFailed] = useState(false);
 
   // Only fetch dictionary flashcards in challenge mode
   const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
@@ -184,20 +188,35 @@ export function WordScramble() {
     return 1;
   }, [correctAnswers, settings.wordsPerRound]);
 
+  const persistGameResult = useCallback(async (payload: GameResultCreate) => {
+    setPendingGameResult(payload);
+    setIsSavingResult(true);
+    setResultSaveFailed(false);
+    try {
+      await saveGameResult(payload);
+      hasSavedRef.current = true;
+      setPendingGameResult(null);
+    } catch (error) {
+      console.warn('Failed to save word scramble result:', error);
+      setResultSaveFailed(true);
+    } finally {
+      setIsSavingResult(false);
+    }
+  }, [saveGameResult]);
+
   // Check for game completion
   useEffect(() => {
     if (gameState === 'playing' && currentWordIndex >= settings.wordsPerRound) {
       setGameState('complete');
       
       // Save result if signed in
-      if (isSignedIn && !hasSavedRef.current) {
-        hasSavedRef.current = true;
-        
+      if (isSignedIn && !hasSavedRef.current && !submissionStartedRef.current) {
+        submissionStartedRef.current = true;
         const categoryTitle = settings.mode === 'beginner'
           ? DEFAULT_FLASHCARD_DECKS[settings.category]?.displayName
           : categoriesData?.categories.find(c => c.id === settings.category)?.title;
         
-        saveGameResultMutation.mutate({
+        void persistGameResult({
           game_type: 'word_scramble',
           mode: settings.mode,
           category_id: settings.category,
@@ -213,7 +232,7 @@ export function WordScramble() {
         });
       }
     }
-  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, saveGameResultMutation, categoriesData, words]);
+  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, persistGameResult, categoriesData, words]);
 
   // Generate words for the game
   const generateWords = useCallback((): WordData[] => {
@@ -260,7 +279,11 @@ export function WordScramble() {
     }
     
     hasSavedRef.current = false;
+    submissionStartedRef.current = false;
     gameAttemptIdRef.current = createClientAttemptId();
+    setPendingGameResult(null);
+    setResultSaveFailed(false);
+    setIsSavingResult(false);
     setWords(newWords);
     setCurrentWordIndex(0);
     setScore(0);
@@ -801,9 +824,32 @@ export function WordScramble() {
             </p>
 
             {/* Action Buttons */}
+            {pendingGameResult && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              >
+                <p className="font-semibold">
+                  {resultSaveFailed
+                    ? 'Game result has not saved yet.'
+                    : 'Saving your game result…'}
+                </p>
+                {resultSaveFailed && (
+                  <button
+                    type="button"
+                    onClick={() => void persistGameResult(pendingGameResult)}
+                    disabled={isSavingResult}
+                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSavingResult ? 'Saving…' : 'Retry saving game result'}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 justify-center">
               <button
                 onClick={startGame}
+                disabled={isSavingResult || Boolean(pendingGameResult)}
                 className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -811,6 +857,7 @@ export function WordScramble() {
               </button>
               <button
                 onClick={resetGame}
+                disabled={isSavingResult || Boolean(pendingGameResult)}
                 className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />

@@ -85,7 +85,7 @@ vi.mock('../hooks/useSpacedRepetition', () => ({
 }));
 
 vi.mock('../hooks/useQuizQuery', () => ({
-  useSaveQuizResult: () => ({ mutate: mocks.saveQuizResult, isPending: false }),
+  useSaveQuizResult: () => ({ mutateAsync: mocks.saveQuizResult, isPending: false }),
 }));
 
 vi.mock('../hooks/useVocabularyQuery', () => ({
@@ -182,6 +182,7 @@ describe('topic surface navigation', () => {
     mocks.tryUse.mockResolvedValue(true);
     mocks.recordLessonExposure.mockReset();
     mocks.saveQuizResult.mockReset();
+    mocks.saveQuizResult.mockResolvedValue({});
     mocks.userId = 'user_123';
     window.localStorage.clear();
   });
@@ -357,6 +358,9 @@ describe('topic surface navigation', () => {
     await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
 
     completeCuratedGreetingQuiz();
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(mocks.saveQuizResult).toHaveBeenCalledOnce();
     const first = mocks.saveQuizResult.mock.calls[0][0];
     expect(first.learning_context).toEqual({
@@ -371,6 +375,9 @@ describe('topic surface navigation', () => {
       );
     expect(first.client_attempt_id).toMatch(/^[0-9a-f-]{36}$/i);
 
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled();
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
     await waitFor(() => expect(screen.queryByText('Quiz complete')).not.toBeInTheDocument());
     completeCuratedGreetingQuiz();
@@ -378,6 +385,39 @@ describe('topic surface navigation', () => {
     expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
     expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id)
       .not.toBe(first.client_attempt_id);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled();
+    });
+  });
+
+  it('retains a rejected quiz result and retries the exact attempt before replay', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mocks.saveQuizResult
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({});
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      `/quiz/greetings?${topicQuery}`,
+    );
+    await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
+
+    completeCuratedGreetingQuiz();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Quiz result has not saved yet.',
+    );
+    const firstPayload = mocks.saveQuizResult.mock.calls[0][0];
+    expect(screen.getByRole('button', { name: 'Try Again' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saving quiz result' }));
+
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2));
+    expect(mocks.saveQuizResult.mock.calls[1][0]).toEqual(firstPayload);
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled();
+    });
   });
 
   it('returns a related story to its workspace', () => {

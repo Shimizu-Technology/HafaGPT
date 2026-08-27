@@ -23,7 +23,7 @@ vi.mock('../hooks/useFlashcardsQuery', () => ({
 }));
 
 vi.mock('../hooks/useGamesQuery', () => ({
-  useSaveGameResult: () => ({ mutate: mocks.saveGameResult }),
+  useSaveGameResult: () => ({ mutateAsync: mocks.saveGameResult }),
 }));
 
 vi.mock('../hooks/useSubscription', () => ({
@@ -184,6 +184,7 @@ describe('contextual learning game navigation', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
     mocks.isSignedIn = false;
     mocks.saveGameResult.mockReset();
+    mocks.saveGameResult.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -251,4 +252,39 @@ describe('contextual learning game navigation', () => {
         .not.toBe(first.client_attempt_id);
     },
   );
+
+  it.each([
+    launchCases.find((candidate) => candidate.game === 'memory' && candidate.source === 'topic')!,
+    launchCases.find((candidate) => candidate.game === 'scramble' && candidate.source === 'topic')!,
+  ])('$game retains and retries its exact result after a rejected save', async (testCase) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mocks.isSignedIn = true;
+    mocks.saveGameResult
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({});
+    renderGame(testCase);
+
+    await completeGame(testCase.game);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Game result has not saved yet.',
+    );
+    const firstPayload = mocks.saveGameResult.mock.calls[0][0];
+    expect(screen.getByRole('button', { name: 'Play Again' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saving game result' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mocks.saveGameResult).toHaveBeenCalledTimes(2);
+    expect(mocks.saveGameResult.mock.calls[1][0]).toEqual(firstPayload);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play Again' })).toBeEnabled();
+  });
 });

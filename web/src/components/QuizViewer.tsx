@@ -3,7 +3,7 @@ import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from '../lib/quizLocalStats';
-import { useSaveQuizResult } from '../hooks/useQuizQuery';
+import { useSaveQuizResult, type SaveQuizResultParams } from '../hooks/useQuizQuery';
 import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabularyQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -95,6 +95,9 @@ export function QuizViewer() {
   const [showResults, setShowResults] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
+  const [pendingQuizResult, setPendingQuizResult] = useState<SaveQuizResultParams | null>(null);
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [resultSaveFailed, setResultSaveFailed] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
   const curatedTopic = !isDictionaryQuiz
@@ -357,7 +360,22 @@ export function QuizViewer() {
     setResults([...results, { question: currentQuestion, userAnswer: "I don't know", isCorrect: false }]);
   };
 
-  const handleNext = () => {
+  const persistQuizResult = async (payload: SaveQuizResultParams) => {
+    setPendingQuizResult(payload);
+    setIsSavingResult(true);
+    setResultSaveFailed(false);
+    try {
+      await saveQuizResultMutation.mutateAsync(payload);
+      setPendingQuizResult(null);
+    } catch (error) {
+      console.warn('Failed to save quiz result:', error);
+      setResultSaveFailed(true);
+    } finally {
+      setIsSavingResult(false);
+    }
+  };
+
+  const handleNext = async () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setUserAnswer('');
@@ -388,7 +406,7 @@ export function QuizViewer() {
               : getQuestionConceptId(r.question.id),
           }));
           
-          saveQuizResultMutation.mutate({
+          const payload: SaveQuizResultParams = {
             category_id: categoryId,
             category_title: categoryTitle,
             score: finalScore,
@@ -402,7 +420,10 @@ export function QuizViewer() {
                 source: 'topic' as const,
               },
             } : {}),
-          });
+          };
+          setShowResults(true);
+          await persistQuizResult(payload);
+          return;
         }
       }
       setShowResults(true);
@@ -456,6 +477,8 @@ export function QuizViewer() {
       setResults([]);
       setShowResults(false);
       setShowHint(false);
+      setPendingQuizResult(null);
+      setResultSaveFailed(false);
       clientAttemptIdRef.current = createClientAttemptId();
       startTimeRef.current = Date.now(); // Reset timer
     } finally {
@@ -558,10 +581,32 @@ export function QuizViewer() {
           </div>
 
           {/* Actions */}
+          {pendingQuizResult && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+            >
+              <p className="font-semibold">
+                {resultSaveFailed
+                  ? 'Quiz result has not saved yet.'
+                  : 'Saving your quiz result…'}
+              </p>
+              {resultSaveFailed && (
+                <button
+                  type="button"
+                  onClick={() => void persistQuizResult(pendingQuizResult)}
+                  disabled={isSavingResult}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-4 py-2 font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSavingResult ? 'Saving…' : 'Retry saving quiz result'}
+                </button>
+              )}
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleRestart}
-              disabled={isRestarting}
+              disabled={isRestarting || isSavingResult || Boolean(pendingQuizResult)}
               className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 py-3 font-semibold text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-ocean-600 dark:hover:bg-ocean-700"
             >
               <RotateCcw className="w-5 h-5" />

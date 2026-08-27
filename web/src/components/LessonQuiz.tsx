@@ -45,7 +45,49 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
     const saved = browserStorage.get(getStorageKey(topicId, ownerId));
     if (!saved) return null;
     
-    const state: SavedQuizState = JSON.parse(saved);
+    const state: unknown = JSON.parse(saved);
+    if (
+      typeof state !== 'object'
+      || state === null
+      || !('topicId' in state)
+      || state.topicId !== topicId
+      || !('questionIds' in state)
+      || !Array.isArray(state.questionIds)
+      || state.questionIds.length === 0
+      || !state.questionIds.every((questionId) => typeof questionId === 'string')
+      || !('currentIndex' in state)
+      || typeof state.currentIndex !== 'number'
+      || !Number.isInteger(state.currentIndex)
+      || state.currentIndex < 0
+      || state.currentIndex >= state.questionIds.length
+      || !('correctCount' in state)
+      || typeof state.correctCount !== 'number'
+      || !Number.isInteger(state.correctCount)
+      || state.correctCount < 0
+      || state.correctCount > state.questionIds.length
+      || !('answeredQuestions' in state)
+      || typeof state.answeredQuestions !== 'object'
+      || state.answeredQuestions === null
+      || Array.isArray(state.answeredQuestions)
+      || !Object.values(state.answeredQuestions).every((answer) => (
+        typeof answer === 'object'
+        && answer !== null
+        && 'userAnswer' in answer
+        && typeof answer.userAnswer === 'string'
+        && 'isCorrect' in answer
+        && typeof answer.isCorrect === 'boolean'
+      ))
+      || !('timestamp' in state)
+      || typeof state.timestamp !== 'number'
+      || !Number.isFinite(state.timestamp)
+      || ('attemptId' in state && state.attemptId !== undefined && typeof state.attemptId !== 'string')
+      || ('startedAt' in state && state.startedAt !== undefined && (
+        typeof state.startedAt !== 'number' || !Number.isFinite(state.startedAt)
+      ))
+    ) {
+      clearQuizState(topicId, ownerId);
+      return null;
+    }
     
     // Check if state is older than 1 hour (stale)
     const ONE_HOUR = 60 * 60 * 1000;
@@ -54,9 +96,10 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
       return null;
     }
     
-    return state;
+    return state as SavedQuizState;
   } catch (e) {
     console.warn('Failed to load quiz state:', e);
+    clearQuizState(topicId, ownerId);
     return null;
   }
 }
