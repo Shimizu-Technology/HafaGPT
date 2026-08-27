@@ -44,7 +44,8 @@ export function safeInternalReturnPath(value: string | null, fallback: string): 
   try {
     const parsed = new URL(value, INTERNAL_ORIGIN);
     if (parsed.origin !== INTERNAL_ORIGIN) return fallback;
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    const normalizedPath = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return normalizedPath.length <= MAX_APP_URL_LENGTH ? normalizedPath : fallback;
   } catch {
     return fallback;
   }

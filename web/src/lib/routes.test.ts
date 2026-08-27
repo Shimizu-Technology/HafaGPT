@@ -44,4 +44,8 @@ describe('connected learner routes', () => {
     expect(safeInternalReturnPath(`/learning?return_to=${'a'.repeat(2048)}`, '/games'))
       .toBe('/games');
   });
+
+  it('rejects a path that exceeds the limit after Unicode normalization', () => {
+    expect(safeInternalReturnPath(`/${'é'.repeat(1024)}`, '/games')).toBe('/games');
+  });
 });

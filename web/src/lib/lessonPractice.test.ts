@@ -22,13 +22,13 @@ describe('lesson practice handoff', () => {
     const topic = getTopic('greetings');
     expect(topic).toBeDefined();
 
-    const practice = getLessonPractice(topic!, { source: 'today', returnTo: '/?section=today' });
+    const practice = getLessonPractice(topic!, { source: 'today', returnTo: '/' });
     expect(readLearningGameContext(practice?.href.split('?')[1] || '')).toEqual({
       topicId: 'greetings',
       categoryId: 'greetings',
       topicTitle: 'Greetings & Basics',
       source: 'today',
-      returnTo: '/?section=today',
+      returnTo: '/',
     });
   });
 
@@ -41,14 +41,14 @@ describe('lesson practice handoff', () => {
 
   it('restores an allowlisted internal source and rejects open redirects', () => {
     const today = readLearningGameContext(
-      '?topic=greetings&category=greetings&source=today&return_to=%2F%3Fsection%3Dtoday',
+      '?topic=greetings&category=greetings&source=today&return_to=%2F',
     );
     const hostile = readLearningGameContext(
       '?topic=greetings&category=greetings&source=today&return_to=%2F%2Fevil.example',
     );
 
     expect(getLearningGameReturn(today)).toEqual({
-      to: '/?section=today',
+      to: '/',
       label: 'Back to Today',
     });
     expect(getLearningGameReturn(hostile)).toEqual({
@@ -79,5 +79,22 @@ describe('lesson practice handoff', () => {
       .toBe('/learning');
     expect(readLearningGameContext(hostile?.href.split('?')[1] || '')?.returnTo)
       .toBe('/');
+  });
+
+  it('does not carry arbitrary same-origin or personal query context', () => {
+    const topic = getTopic('greetings');
+    expect(topic).toBeDefined();
+
+    const launched = getLessonPractice(topic!, {
+      source: 'today',
+      returnTo: '/?email=learner@example.com',
+    });
+    const parsed = readLearningGameContext(
+      '?topic=greetings&category=greetings&source=lesson&return_to=%2Flearning%3Fuser_id%3Dprivate',
+    );
+
+    expect(launched?.href).not.toContain('email');
+    expect(readLearningGameContext(launched?.href.split('?')[1] || '')?.returnTo).toBe('/');
+    expect(parsed?.returnTo).toBe('/learning');
   });
 });

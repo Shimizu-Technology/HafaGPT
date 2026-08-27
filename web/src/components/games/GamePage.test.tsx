@@ -64,7 +64,7 @@ describe('shared game page UI', () => {
       return <output>{`${location.pathname}${location.search}`}</output>;
     }
 
-    const contextualGame = '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F%3Fsection%3Dtoday';
+    const contextualGame = '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F';
     render(
       <MemoryRouter initialEntries={[contextualGame]}>
         <GamePageHeader title="Memory Match" subtitle="Pair the words" icon={Headphones} />
@@ -74,9 +74,9 @@ describe('shared game page UI', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Back to Today' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/?section=today');
+    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/');
     fireEvent.click(screen.getByRole('button', { name: 'Back to Today' }));
-    expect(screen.getByText('/?section=today')).toBeInTheDocument();
+    expect(screen.getByText('/')).toBeInTheDocument();
   });
 
   it('falls back safely when contextual return data is hostile', () => {

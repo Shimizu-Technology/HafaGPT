@@ -38,6 +38,16 @@ const PRACTICE_GAMES: Record<string, PracticeGame> = {
   },
 };
 
+function safeLearningReturnPath(value: string | null, source: LearningSource): string {
+  const canonicalDestination = source === 'today' ? appRoutes.home : appRoutes.learning;
+  const normalizedPath = safeInternalReturnPath(value, canonicalDestination);
+
+  // Learning handoffs intentionally carry no arbitrary path or query state.
+  // This prevents personal or unrelated URL context from being copied into
+  // the game URL and browser history.
+  return normalizedPath === canonicalDestination ? normalizedPath : canonicalDestination;
+}
+
 export function getLessonPractice(
   topic: LearningTopic,
   context: { source?: LearningSource; returnTo?: string } = {},
@@ -47,7 +57,7 @@ export function getLessonPractice(
 
   const source = context.source ?? 'lesson';
   const fallbackReturn = source === 'today' ? appRoutes.home : appRoutes.learning;
-  const returnTo = safeInternalReturnPath(context.returnTo ?? fallbackReturn, fallbackReturn);
+  const returnTo = safeLearningReturnPath(context.returnTo ?? fallbackReturn, source);
 
   const buildHref = (returnPath: string) => {
     const params = new URLSearchParams({
@@ -83,10 +93,7 @@ export function readLearningGameContext(search: string): LearningGameContext | n
     categoryId,
     topicTitle: topic.title,
     source,
-    returnTo: safeInternalReturnPath(
-      params.get('return_to'),
-      source === 'today' ? appRoutes.home : appRoutes.learning,
-    ),
+    returnTo: safeLearningReturnPath(params.get('return_to'), source),
   };
 }
 
