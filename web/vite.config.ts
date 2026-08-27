@@ -10,7 +10,8 @@ export default defineConfig({
         // React Router's data-router implementation is required by the
         // retry-safe navigation blockers. Keep it in a stable shared chunk so
         // platform-specific Rollup heuristics cannot fold it into the entry
-        // bundle and push an otherwise identical Linux build over budget.
+        // bundle. The bundle gate counts this eager preload together with the
+        // entry, so the split cannot hide initial-payload growth.
         manualChunks(id) {
           if (
             id.includes('/node_modules/react-router/') ||

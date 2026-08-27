@@ -5,7 +5,6 @@ from api.learning_attempts import (
     build_game_learning_attempts,
     build_retry_safe_game_learning_attempts,
     duration_bucket,
-    insert_learning_attempt,
     insert_learning_attempts,
     persist_game_result,
 )
@@ -92,41 +91,6 @@ def test_attempt_rejects_unknown_or_mismatched_context():
             score=100,
             time_seconds=30,
         )
-
-
-def test_attempt_insert_uses_only_allowlisted_values_in_the_game_transaction():
-    class Cursor:
-        execution = None
-
-        def execute(self, query, params):
-            self.execution = (query, params)
-
-    cursor = Cursor()
-    insert_learning_attempt(
-        cursor,
-        user_id="user_123",
-        game_result_id="result_123",
-        attempt={
-            "concept_id": "v1:topic:greetings",
-            "activity_type": "game:memory_match",
-            "success": True,
-            "duration_bucket": "under_2m",
-            "source": "lesson",
-            "evidence_scope": "topic",
-        },
-    )
-
-    assert "INSERT INTO learning_attempts" in cursor.execution[0]
-    assert cursor.execution[1] == (
-        "user_123",
-        "v1:topic:greetings",
-        "game:memory_match",
-        True,
-        "under_2m",
-        "lesson",
-        "topic",
-        "result_123",
-    )
 
 
 def test_exact_game_attempts_preserve_broad_evidence_and_deduplicate_concepts():
@@ -221,6 +185,7 @@ def test_attempt_batch_uses_one_idempotent_insert():
     )
 
     assert len(cursor.executions) == 1
+    assert "INSERT INTO learning_attempts" in cursor.executions[0][0]
     assert all(
         "ON CONFLICT (game_result_id, concept_id) DO NOTHING" in query
         for query, _params in cursor.executions

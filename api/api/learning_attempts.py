@@ -124,31 +124,6 @@ def build_retry_safe_game_learning_attempts(request: Any) -> tuple[dict, ...]:
     return attempts if request.client_attempt_id is not None else ()
 
 
-def insert_learning_attempt(cursor, *, user_id: str, game_result_id, attempt: dict) -> None:
-    """Insert the minimal attempt in the caller's game-result transaction."""
-
-    cursor.execute(
-        """
-        INSERT INTO learning_attempts (
-            user_id, concept_id, activity_type, success,
-            duration_bucket, source, evidence_scope, game_result_id
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT (game_result_id, concept_id) DO NOTHING
-        """,
-        (
-            user_id,
-            attempt["concept_id"],
-            attempt["activity_type"],
-            attempt["success"],
-            attempt["duration_bucket"],
-            attempt["source"],
-            attempt["evidence_scope"],
-            game_result_id,
-        ),
-    )
-
-
 def insert_learning_attempts(
     cursor,
     *,

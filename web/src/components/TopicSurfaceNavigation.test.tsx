@@ -505,9 +505,11 @@ describe('topic surface navigation', () => {
     await waitFor(() => expect(screen.queryByText('Quiz complete')).not.toBeInTheDocument());
     completeCuratedGreetingQuiz();
 
-    expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
-    expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id)
-      .not.toBe(first.client_attempt_id);
+    await waitFor(() => {
+      expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
+      expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id)
+        .not.toBe(first.client_attempt_id);
+    });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Try Again' })).toBeEnabled();
     });

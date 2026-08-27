@@ -1,4 +1,5 @@
 import importlib.util
+import re
 from pathlib import Path
 
 
@@ -103,8 +104,15 @@ def test_large_table_uniqueness_is_built_concurrently_then_attached():
         / "versions"
         / "o9p0q1r2s3t4_add_exact_concept_evidence.py"
     ).read_text(encoding="utf-8")
-    assert 'op.create_unique_constraint(\n        "uq_quiz_results_user_client_attempt"' not in source_migration
-    assert 'op.create_unique_constraint(\n        "uq_game_results_user_client_attempt"' not in source_migration
+    for constraint_name in (
+        "uq_quiz_results_user_client_attempt",
+        "uq_game_results_user_client_attempt",
+    ):
+        assert re.search(
+            rf"op\.create_unique_constraint\s*\(\s*['\"]{constraint_name}['\"]",
+            source_migration,
+            re.DOTALL,
+        ) is None
 
 
 def test_upgrade_builds_unique_indexes_in_autocommit_before_attachment():
