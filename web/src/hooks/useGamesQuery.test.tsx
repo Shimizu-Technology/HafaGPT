@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCuratedConceptId } from '../data/conceptEvidence';
-import { useGameStats, useSaveGameResult } from './useGamesQuery';
+import { useGameHistory, useGameStats, useSaveGameResult } from './useGamesQuery';
 
 
 const mocks = vi.hoisted(() => ({
@@ -159,5 +159,53 @@ describe('useSaveGameResult concept context', () => {
       await Promise.resolve();
     });
     await waitFor(() => expect(result.current.data?.total_games).toBe(0));
+  });
+
+  it('does not show one account game history while another account loads', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const scopedWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const pagination = {
+      page: 1,
+      per_page: 10,
+      total_count: 1,
+      total_pages: 1,
+      has_next: false,
+      has_prev: false,
+    };
+    let resolveSecondFetch: ((value: Response | PromiseLike<Response>) => void) | undefined;
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ results: [gameResult()], pagination }),
+      } as Response)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveSecondFetch = resolve;
+      }));
+
+    const { result, rerender } = renderHook(() => useGameHistory(), {
+      wrapper: scopedWrapper,
+    });
+    await waitFor(() => expect(result.current.data?.results).toHaveLength(1));
+
+    mocks.userId = 'user_2';
+    rerender();
+    expect(result.current.data).toBeUndefined();
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      resolveSecondFetch?.({
+        ok: true,
+        json: async () => ({
+          results: [],
+          pagination: { ...pagination, total_count: 0, total_pages: 0 },
+        }),
+      } as Response);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.data?.results).toEqual([]));
   });
 });
