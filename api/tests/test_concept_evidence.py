@@ -173,22 +173,23 @@ def test_sync_writer_closes_the_connection_after_query_failure():
     assert connection.rolled_back is True
 
 
-def test_default_connection_factory_bounds_connection_and_query_waits(monkeypatch):
+def test_default_connection_factory_retries_and_bounds_connection_and_query_waits(
+    monkeypatch,
+):
     captured = {}
 
-    class Psycopg:
-        @staticmethod
-        def connect(database_url, **kwargs):
-            captured.update(database_url=database_url, **kwargs)
-            return object()
+    def connect_with_retry(**kwargs):
+        captured.update(kwargs)
+        return object()
 
-    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/hafagpt")
-    monkeypatch.setitem(__import__("sys").modules, "psycopg", Psycopg)
+    monkeypatch.setattr(
+        "api.concept_evidence.get_db_connection_with_retry",
+        connect_with_retry,
+    )
 
     default_connection_factory()
 
     assert captured == {
-        "database_url": "postgresql://example.invalid/hafagpt",
         "connect_timeout": DATABASE_CONNECT_TIMEOUT_SECONDS,
         "options": f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}",
     }

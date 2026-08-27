@@ -5,13 +5,12 @@ Simple CRUD operations for conversations.
 """
 
 import uuid
-import psycopg
-import os
 from contextlib import closing
 from datetime import datetime
 from typing import Optional
 import logging
 
+from .database_connections import get_db_connection, get_db_connection_with_retry
 from .models import (
     ConversationCreate,
     ConversationResponse,
@@ -24,63 +23,6 @@ from .source_citations import format_source_citations
 from .upload_storage import delete_private_upload_references, resolve_private_upload_reference
 
 logger = logging.getLogger(__name__)
-
-
-def get_db_connection():
-    """Get database connection (simple, no retry)"""
-    database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
-    return psycopg.connect(database_url)
-
-
-def get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5):
-    """
-    Get a database connection with retry logic for serverless PostgreSQL.
-    
-    Neon and other serverless databases can drop connections after idle periods.
-    This function retries connection on SSL/connection errors.
-    
-    Args:
-        max_retries: Maximum number of retry attempts
-        retry_delay: Base delay between retries (doubles each attempt)
-    
-    Returns:
-        A psycopg connection object
-    
-    Raises:
-        Exception: If all retries fail
-    """
-    import time
-    
-    database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
-    last_error = None
-    
-    for attempt in range(max_retries):
-        try:
-            conn = psycopg.connect(database_url)
-            return conn
-        except Exception as e:
-            last_error = e
-            error_msg = str(e).lower()
-            
-            # Check if it's a connection error worth retrying
-            is_connection_error = any(term in error_msg for term in [
-                'ssl', 'connection', 'server closed', 'broken pipe',
-                'connection reset', 'timeout', 'network', 'eof'
-            ])
-            
-            if is_connection_error and attempt < max_retries - 1:
-                if attempt == 0:
-                    logger.warning(f"⚠️  Database connection issue, reconnecting...")
-                time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
-                continue
-            
-            # If not a connection error or max retries reached, raise
-            raise
-    
-    # Should never reach here, but just in case
-    if last_error:
-        raise last_error
-    raise Exception("Failed to connect to database after retries")
 
 
 def conversation_belongs_to_user(

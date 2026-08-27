@@ -122,14 +122,33 @@ def test_large_table_uniqueness_is_built_concurrently_then_attached():
 
 def test_exact_evidence_downgrade_runbook_requires_a_verified_table_backup():
     runbook = MIGRATION_RUNBOOK_PATH.read_text(encoding="utf-8")
+    production_rollback = runbook[
+        runbook.index("Production rollbacks require") : runbook.index(
+            "### Rollback to Specific Version"
+        )
+    ]
+    backup_position = production_rollback.index("pg_dump")
+    restore_position = production_rollback.index(
+        'pg_restore --dbname="$RECOVERY_DATABASE_URL"'
+    )
+    downgrade_position = production_rollback.index("uv run alembic downgrade -1")
 
-    assert "o9p0q1r2s3t4_add_exact_concept_evidence" in runbook
-    assert "pg_dump" in runbook
-    assert "pg_restore --list" in runbook
-    assert "--table=learning_attempts" in runbook
-    assert "--table=quiz_results" in runbook
-    assert "--table=quiz_answers" in runbook
-    assert "Do not commit it to this repository" in runbook
+    assert backup_position < restore_position < downgrade_position
+    assert "o9p0q1r2s3t4_add_exact_concept_evidence" in production_rollback
+    assert "pg_restore --list" in production_rollback
+    for table_name in (
+        "learning_attempts",
+        "lesson_concept_exposures",
+        "quiz_results",
+        "quiz_answers",
+        "game_results",
+    ):
+        assert f"--table={table_name}" in production_rollback
+        assert f"count(*) FROM {table_name}" in production_rollback
+    assert "isolated recovery database or Neon recovery branch" in production_rollback
+    assert "exact-evidence columns" in production_rollback
+    assert re.search(r"every restored row\s+count matches", production_rollback)
+    assert "Do not commit it to this repository" in production_rollback
 
 
 def test_upgrade_builds_unique_indexes_in_autocommit_before_attachment():

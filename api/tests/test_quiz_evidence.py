@@ -206,3 +206,7 @@ def test_idempotent_retry_returns_the_stored_attempt_without_duplicate_answers()
     assert result == existing
     assert len(cursor.executions) == 2
     assert "FROM quiz_results" in cursor.executions[1][0]
+    assert cursor.executions[1][1] == (
+        "user_123",
+        UUID("018f6a6e-9c3d-7b2a-a1c4-8e9f12345678"),
+    )

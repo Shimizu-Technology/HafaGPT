@@ -2,13 +2,13 @@
 
 import asyncio
 import logging
-import os
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from .database_connections import get_db_connection_with_retry
 from .learning_concepts import (
     LEARNING_TOPIC_CATEGORIES,
     validate_curated_concept_ids,
@@ -40,11 +40,7 @@ def lesson_cards_id(topic_id: str) -> str:
 
 
 def default_connection_factory():
-    import psycopg
-
-    database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
-    return psycopg.connect(
-        database_url,
+    return get_db_connection_with_retry(
         connect_timeout=DATABASE_CONNECT_TIMEOUT_SECONDS,
         options=f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}",
     )
