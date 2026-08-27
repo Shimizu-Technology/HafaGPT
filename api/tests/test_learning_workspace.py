@@ -1,4 +1,5 @@
 import sys
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -152,6 +153,58 @@ def test_progress_loader_bounds_query_wait_and_propagates_timeout(monkeypatch):
 
     with pytest.raises(TimeoutError, match="statement timed out"):
         _load_topic_progress_sync("user_123", "greetings")
+
+
+def test_progress_loader_maps_a_persisted_row_to_the_workspace_contract(monkeypatch):
+    started_at = datetime(2026, 8, 20, 9, 30, tzinfo=timezone.utc)
+    completed_at = datetime(2026, 8, 21, 10, 45, tzinfo=timezone.utc)
+    last_activity_at = datetime(2026, 8, 22, 11, 15, tzinfo=timezone.utc)
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def execute(self, _query: str, _params: tuple[str, str]):
+            return None
+
+        def fetchone(self):
+            return (
+                "greetings",
+                started_at,
+                completed_at,
+                90,
+                12,
+                last_activity_at,
+            )
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def cursor(self):
+            return Cursor()
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/hafagpt")
+    monkeypatch.setitem(
+        sys.modules,
+        "psycopg2",
+        SimpleNamespace(connect=lambda *_args, **_kwargs: Connection()),
+    )
+
+    assert _load_topic_progress_sync("user_123", "greetings") == {
+        "topic_id": "greetings",
+        "started_at": started_at.isoformat(),
+        "completed_at": completed_at.isoformat(),
+        "best_quiz_score": 90,
+        "flashcards_viewed": 12,
+        "last_activity_at": last_activity_at.isoformat(),
+    }
 
 
 def test_alignment_catalog_contains_only_explicit_first_party_ids():
