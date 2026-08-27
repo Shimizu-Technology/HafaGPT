@@ -123,7 +123,11 @@ def get_conversations(
         ConversationListResponse with list of conversations
     """
     try:
-        logger.info(f"🔍 get_conversations called with user_id: {user_id}")
+        logger.info(
+            "Fetching conversations: topic_filter=%s limit=%s",
+            learning_topic_id is not None,
+            limit,
+        )
         with closing(get_db_connection_with_retry()) as conn:
             with closing(conn.cursor()) as cursor:
                 # Get conversations (excluding soft-deleted) without a costly COUNT.
@@ -149,7 +153,6 @@ def get_conversations(
                 """
                 params.append(limit)
 
-                logger.info(f"📝 Executing query with params: {params}")
                 cursor.execute(query, tuple(params))
                 rows = cursor.fetchall()
                 logger.info(f"📊 Query returned {len(rows)} rows")

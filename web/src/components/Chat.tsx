@@ -612,6 +612,17 @@ export function Chat() {
       let conversationPromise: Promise<string> | null = null;
       let currentConversationId = activeConversationId;
 
+      // Check usage before creating a durable record so a denied send cannot
+      // leave an empty conversation or trigger late navigation.
+      if (isSignedIn) {
+        const allowed = await tryUse('chat');
+        if (!allowed) {
+          removeOptimisticMessages();
+          setShowUpgradePrompt(true);
+          return;
+        }
+      }
+
       if (!currentConversationId) {
         const generatedTitle = message.trim().slice(0, 50);
         conversationPromise = createConversationMutation.mutateAsync({
@@ -627,16 +638,6 @@ export function Chat() {
             }), { replace: true });
             return newConv.id;
           });
-      }
-
-      // Run usage check in parallel (for signed-in users)
-      if (isSignedIn) {
-        const allowed = await tryUse('chat');
-        if (!allowed) {
-          removeOptimisticMessages();
-          setShowUpgradePrompt(true);
-          return;
-        }
       }
 
       // Wait for conversation to be created if needed

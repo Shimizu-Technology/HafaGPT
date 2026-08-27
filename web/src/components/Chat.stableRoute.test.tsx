@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
@@ -21,6 +21,8 @@ const state = vi.hoisted(() => ({
   initData: { conversations: [] as never[] },
   refetchMessages: vi.fn(),
   refetchConversation: vi.fn(),
+  tryUse: vi.fn(async () => true),
+  createConversation: vi.fn(),
   openSignIn: vi.fn(),
 }));
 
@@ -48,7 +50,7 @@ vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleT
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
-    tryUse: vi.fn(async () => true),
+    tryUse: state.tryUse,
     getCount: () => 0,
     getLimit: () => 8,
     isChristmasTheme: false,
@@ -69,7 +71,7 @@ vi.mock('../hooks/useConversationsQuery', () => ({
     refetch: state.refetchMessages,
   }),
   useConversation: () => ({ ...state.conversation, refetch: state.refetchConversation }),
-  useCreateConversation: () => ({ mutateAsync: vi.fn() }),
+  useCreateConversation: () => ({ mutateAsync: state.createConversation }),
   useDeleteConversation: () => ({ mutateAsync: vi.fn() }),
   useUpdateConversationTitle: () => ({ mutateAsync: vi.fn() }),
 }));
@@ -80,8 +82,14 @@ vi.mock('./ModeSelector', () => ({ ModeSelector: () => null }));
 vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: () => null }));
 vi.mock('./PublicBanner', () => ({ PublicBanner: () => <div>Public tutor</div> }));
 vi.mock('./MessageInput', () => ({
-  MessageInput: ({ disabled }: { disabled: boolean }) => (
-    <button type="button" disabled={disabled}>Chat input</button>
+  MessageInput: ({
+    disabled,
+    onSend,
+  }: {
+    disabled: boolean;
+    onSend: (message: string) => void;
+  }) => (
+    <button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>
   ),
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
@@ -114,6 +122,9 @@ describe('Chat stable conversation route', () => {
     state.conversation = { data: undefined, isLoading: false, isError: false };
     state.messagesError = false;
     state.openSignIn.mockClear();
+    state.tryUse.mockReset();
+    state.tryUse.mockResolvedValue(true);
+    state.createConversation.mockReset();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
@@ -151,5 +162,15 @@ describe('Chat stable conversation route', () => {
       .toBeInTheDocument();
     expect(screen.getByText(/belong to another account/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+  });
+
+  it('does not create an empty record when chat usage is denied', async () => {
+    state.tryUse.mockResolvedValue(false);
+    renderChat('/chat?topic=greetings&return_to=%2Flearning%2Fgreetings');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+
+    await waitFor(() => expect(state.tryUse).toHaveBeenCalledWith('chat'));
+    expect(state.createConversation).not.toHaveBeenCalled();
   });
 });

@@ -48,9 +48,9 @@ def _drop_invalid_preview_index() -> None:
 
 def upgrade() -> None:
     """Add an optional topic relationship and its bounded-preview index."""
-    op.add_column(
-        "conversations",
-        sa.Column("learning_topic_id", sa.String(length=64), nullable=True),
+    op.execute(
+        "ALTER TABLE conversations "
+        "ADD COLUMN IF NOT EXISTS learning_topic_id VARCHAR(64)"
     )
     with op.get_context().autocommit_block():
         _drop_invalid_preview_index()
