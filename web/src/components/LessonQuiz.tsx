@@ -139,6 +139,8 @@ function LessonQuizSession({
   const [showResumePrompt, setShowResumePrompt] = useState(
     savedState !== null && savedState.currentIndex > 0
   );
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Save state whenever it changes
   const persistState = useCallback(() => {
@@ -201,6 +203,8 @@ function LessonQuizSession({
     attemptIdRef.current = createClientAttemptId();
     startedAtRef.current = Date.now();
     completionStartedRef.current = false;
+    setIsSavingResult(false);
+    setSaveError(null);
     setCurrentIndex(0);
     setCorrectCount(0);
     setAnsweredQuestions({});
@@ -305,13 +309,11 @@ function LessonQuizSession({
     setIsAnswered(true);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (isLastQuestion) {
       if (completionStartedRef.current) return;
       completionStartedRef.current = true;
-
-      // Clear saved state on completion
-      clearQuizState(topic.id, ownerId);
+      setSaveError(null);
       
       // Calculate final score
       const score = Math.round((correctCount / allQuestions.length) * 100);
@@ -335,25 +337,35 @@ function LessonQuizSession({
           const categoryTitle = QUIZ_CATEGORIES.find(
             (category) => category.id === topic.quizCategory,
           )?.title ?? topic.title;
-          saveQuizResult.mutate({
-            category_id: topic.quizCategory,
-            category_title: categoryTitle,
-            score: correctCount,
-            total: allQuestions.length,
-            time_spent_seconds: Math.max(
-              0,
-              Math.round((Date.now() - startedAtRef.current) / 1000),
-            ),
-            answers,
-            client_attempt_id: attemptIdRef.current,
-            learning_context: {
-              topic_id: topic.id,
-              source: 'lesson',
-              assessment_id: `v1:lesson:${topic.id}:embedded-quiz`,
-            },
-          });
+          setIsSavingResult(true);
+          try {
+            await saveQuizResult.mutateAsync({
+              category_id: topic.quizCategory,
+              category_title: categoryTitle,
+              score: correctCount,
+              total: allQuestions.length,
+              time_spent_seconds: Math.max(
+                0,
+                Math.round((Date.now() - startedAtRef.current) / 1000),
+              ),
+              answers,
+              client_attempt_id: attemptIdRef.current,
+              learning_context: {
+                topic_id: topic.id,
+                source: 'lesson',
+                assessment_id: `v1:lesson:${topic.id}:embedded-quiz`,
+              },
+            });
+          } catch {
+            completionStartedRef.current = false;
+            setIsSavingResult(false);
+            setSaveError('We could not save your result. Your progress is safe—try again.');
+            return;
+          }
         }
       }
+      clearQuizState(topic.id, ownerId);
+      setIsSavingResult(false);
       onComplete(score);
     } else {
       setCurrentIndex(currentIndex + 1);
@@ -525,6 +537,15 @@ function LessonQuizSession({
       </div>
 
       {/* Action button */}
+      {saveError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+        >
+          {saveError}
+        </div>
+      )}
+
       {!isAnswered ? (
         <button
           onClick={checkAnswer}
@@ -540,13 +561,20 @@ function LessonQuizSession({
       ) : (
         <button
           onClick={handleNext}
+          disabled={isSavingResult}
           className={`w-full py-4 font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 ${
             isCorrect
               ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
               : 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white hover:from-coral-600 hover:to-coral-700'
-          }`}
+          } disabled:cursor-not-allowed disabled:opacity-60`}
         >
-          {isLastQuestion ? 'See Results' : 'Next Question'}
+          {isSavingResult
+            ? 'Saving Result…'
+            : saveError
+              ? 'Retry Saving Result'
+              : isLastQuestion
+                ? 'See Results'
+                : 'Next Question'}
           <ArrowRight className="w-5 h-5" />
         </button>
       )}

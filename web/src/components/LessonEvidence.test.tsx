@@ -16,7 +16,7 @@ vi.mock('@clerk/clerk-react', () => ({
 }));
 
 vi.mock('../hooks/useQuizQuery', () => ({
-  useSaveQuizResult: () => ({ mutate: mocks.saveQuizResult }),
+  useSaveQuizResult: () => ({ mutateAsync: mocks.saveQuizResult }),
 }));
 
 vi.mock('../hooks/useSpeech', () => ({
@@ -55,6 +55,7 @@ function saveResumableGreetingQuiz(attemptId: string, startedAt: number) {
 describe('lesson concept evidence', () => {
   beforeEach(() => {
     mocks.saveQuizResult.mockReset();
+    mocks.saveQuizResult.mockResolvedValue({});
     mocks.userId = 'user_123';
     window.localStorage.clear();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
@@ -85,7 +86,7 @@ describe('lesson concept evidence', () => {
     );
   });
 
-  it('persists the embedded quiz as one identified, retry-safe lesson assessment', () => {
+  it('persists the embedded quiz as one identified, retry-safe lesson assessment', async () => {
     const onComplete = vi.fn();
     render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
 
@@ -99,9 +100,8 @@ describe('lesson concept evidence', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
     answerLessonQuestion('How are you?');
     fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
-    fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
 
-    expect(onComplete).toHaveBeenCalledOnce();
+    await waitFor(() => expect(onComplete).toHaveBeenCalledOnce());
     expect(onComplete).toHaveBeenCalledWith(100);
     expect(mocks.saveQuizResult).toHaveBeenCalledOnce();
     const saved = mocks.saveQuizResult.mock.calls[0][0];
@@ -126,7 +126,7 @@ describe('lesson concept evidence', () => {
     ]);
   });
 
-  it('resumes the same assessment identity and preserves its original start time', () => {
+  it('resumes the same assessment identity and preserves its original start time', async () => {
     const attemptId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
     const now = 2_000_000;
     vi.spyOn(Date, 'now').mockReturnValue(now);
@@ -144,10 +144,47 @@ describe('lesson concept evidence', () => {
     answerLessonQuestion('How are you?');
     fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
 
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledOnce());
     const saved = mocks.saveQuizResult.mock.calls[0][0];
     expect(saved.client_attempt_id).toBe(attemptId);
     expect(saved.time_spent_seconds).toBe(60);
     expect(saved.answers).toHaveLength(5);
+    expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).toBeNull();
+  });
+
+  it('keeps a failed result resumable and retries with the same assessment identity', async () => {
+    const onComplete = vi.fn();
+    mocks.saveQuizResult
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({});
+    render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
+
+    answerLessonQuestion('Hello / Hi');
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion("Si Yu'os Ma'åse'");
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adios', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adai', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('How are you?');
+    fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Your progress is safe—try again.',
+    );
+    expect(onComplete).not.toHaveBeenCalled();
+    const firstAttemptId = mocks.saveQuizResult.mock.calls[0][0].client_attempt_id;
+    const storedAfterFailure = JSON.parse(
+      window.localStorage.getItem('hafagpt_quiz_user_123_greetings') ?? '{}',
+    );
+    expect(storedAfterFailure.attemptId).toBe(firstAttemptId);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Saving Result' }));
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalledWith(100));
+    expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
+    expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id).toBe(firstAttemptId);
     expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).toBeNull();
   });
 
