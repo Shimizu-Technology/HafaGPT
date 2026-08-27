@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen,
@@ -20,8 +19,10 @@ import type { LucideIcon } from 'lucide-react';
 import { STORY_CATEGORIES, getStoryCount } from '../data/storyData';
 import { useAvailableStories, AvailableStory } from '../hooks/useStoryQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { useRestorableViewParam } from '../hooks/useRestorableViewParam';
 
 type StoryMode = 'curated' | 'lengguahita';
+const STORY_SOURCES: readonly StoryMode[] = ['curated', 'lengguahita'];
 
 // Category icons
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -59,7 +60,7 @@ const DIFFICULTY_STYLES: Record<string, string> = {
 };
 
 export function StoryList() {
-  const [mode, setMode] = useState<StoryMode>('curated');
+  const [mode, setMode] = useRestorableViewParam('source', STORY_SOURCES, 'curated');
   const totalCuratedStories = getStoryCount();
   
   // Fetch pre-extracted stories from Lengguahi-ta
