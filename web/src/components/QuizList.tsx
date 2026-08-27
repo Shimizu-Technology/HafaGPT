@@ -1,13 +1,24 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Brain, History, Keyboard, ListChecks, Sparkles, Zap } from 'lucide-react';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { useRestorableViewParam } from '../hooks/useRestorableViewParam';
+
+const QUIZ_SOURCES = ['curated', 'dictionary'] as const;
+const QUIZ_LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
 export function QuizList() {
-  const [quizMode, setQuizMode] = useState<'curated' | 'dictionary'>('curated');
-  const [quizLevel, setQuizLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+  const [quizMode, setQuizMode] = useRestorableViewParam(
+    'source',
+    QUIZ_SOURCES,
+    'curated',
+  );
+  const [quizLevel, setQuizLevel] = useRestorableViewParam(
+    'level',
+    QUIZ_LEVELS,
+    'Beginner',
+  );
   const { data: vocabCategories } = useVocabularyCategories();
   const dictionaryCategories = vocabCategories?.categories?.filter(c => c.word_count >= 10) || [];
   const dictionaryWordCount = vocabCategories?.total_words?.toLocaleString() || '10,000+';
@@ -75,7 +86,7 @@ export function QuizList() {
           <div className="mb-7">
             <p className="mb-2 text-sm font-bold text-brown-800 dark:text-white">Choose your level</p>
             <div className="grid max-w-xl grid-cols-3 gap-2" aria-label="Quiz difficulty">
-              {(['Beginner', 'Intermediate', 'Advanced'] as const).map((level) => (
+              {QUIZ_LEVELS.map((level) => (
                 <button
                   key={level}
                   type="button"

@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from 'react';
+import { type ComponentType } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -22,6 +22,7 @@ import { GameCard } from './games/GameCard';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { GAME_CONTENT_TRUST } from '../data/contentTrust';
+import { useRestorableViewParam } from '../hooks/useRestorableViewParam';
 
 type GameGroup = 'listen' | 'words' | 'quick' | 'challenge';
 
@@ -41,6 +42,7 @@ const gameGroups: Array<{ id: 'all' | GameGroup; label: string }> = [
   { id: 'quick', label: 'Quick play' },
   { id: 'challenge', label: 'Challenges' },
 ];
+const GAME_GROUP_IDS = gameGroups.map((group) => group.id);
 
 const games: GameDefinition[] = [
   { to: '/games/sound-match', title: 'Sound Match', description: 'Hear a Chamorro word and tap the matching picture.', difficulty: 'No reading', group: 'listen', icon: Headphones },
@@ -59,7 +61,11 @@ const games: GameDefinition[] = [
 
 /** Present vocabulary games with the trust level inherited from their content. */
 export function Games() {
-  const [selectedGroup, setSelectedGroup] = useState<'all' | GameGroup>('all');
+  const [selectedGroup, setSelectedGroup] = useRestorableViewParam(
+    'group',
+    GAME_GROUP_IDS,
+    'all',
+  );
   const visibleGames = selectedGroup === 'all' ? games : games.filter((game) => game.group === selectedGroup);
   const selectedLabel = gameGroups.find((group) => group.id === selectedGroup)?.label || 'All games';
 

@@ -1,9 +1,11 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Activity, ArrowRight, BookOpen, Hash, Layers3, Library, MessageCircle, Sparkles, Users, Utensils, Zap } from 'lucide-react';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { useRestorableViewParam } from '../hooks/useRestorableViewParam';
+
+const FLASHCARD_SOURCES = ['curated', 'dictionary'] as const;
 
 interface Deck {
   topic: string;
@@ -99,7 +101,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 export function FlashcardDeckList() {
-  const [cardType, setCardType] = useState<'curated' | 'dictionary'>('curated');
+  const [cardType, setCardType] = useRestorableViewParam(
+    'source',
+    FLASHCARD_SOURCES,
+    'curated',
+  );
   const { data: vocabCategories } = useVocabularyCategories();
   const dictionaryCategories = vocabCategories?.categories || [];
   const dictionaryWordCount = vocabCategories?.total_words?.toLocaleString() || '10,000+';
