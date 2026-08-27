@@ -2,7 +2,7 @@
 
 - **Status:** approved direction, delivered in small reversible releases
 - **Last reviewed:** August 28, 2026
-- **Delivered through:** Release 4b — stable conversations
+- **Delivered through:** Release 5a — stable game results and topic result previews
 
 ## Decision
 
@@ -51,6 +51,10 @@ These sources support the learning and navigation model. They do not validate Ch
 - The language-resource and accuracy programs separate source trust from product presentation.
 - Conversations now have owner-scoped stable routes, optional source-topic
   relationships, and bounded metadata-only previews in topic workspaces.
+- Game rounds now have owner-scoped stable result routes and a restorable,
+  filterable learner history. Exact concept evidence and broad topic evidence
+  remain visibly distinct, and legacy results stay available without an
+  invented relationship.
 
 ### What is disconnected
 
@@ -63,7 +67,6 @@ These sources support the learning and navigation model. They do not validate Ch
 - Quiz answers identify questions, not the canonical concept/card they assess.
 - A game result creates one topic-level attempt; it does not record the exact cards or words used in that round.
 - Quiz misses cannot yet open the exact card or add it to review.
-- Game results have persisted IDs but no learner-facing result detail or history.
 - Vocabulary search, quiz-history pagination, and some administrative list context are local-only and cannot be restored from the URL.
 - `api/api/main.py` is 8,817 lines with 84 directly declared routes. New connected-learning endpoints should enter through a focused router seam rather than extending the monolith.
 
@@ -150,14 +153,25 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 - Serve new read-side record endpoints through a focused injectable router and
   keep the web safe during staggered API/web deployments.
 
-### Release 5 — results and restorable secondary context
+### Release 5a — stable game results and reciprocal topic evidence
 
-- Add learner-facing game history and result detail.
+- Delivered a learner-facing game history with URL-backed pagination and game
+  filters, plus stable owner-scoped game-result detail routes.
+- Connected game result → source topic and exact cards only when those
+  relationships were saved at write time; legacy results remain unclassified.
+- Added bounded, metadata-only recent quiz/game previews to topic workspaces and
+  preserved validated topic return context through both result types.
+- Linked dashboard game summaries to their exact saved records and invalidated
+  result previews after new quiz and game writes.
+- Kept points, stars, exposure, and completion explicitly separate from
+  proficiency or mastery claims.
+
+### Release 5b — restorable secondary context
+
 - Preserve useful vocabulary filters/search and quiz-history pagination in URL state.
-- Complete reciprocal links for result → topic/concept and topic → recent result.
 - Carry validated return context through the administrative user list/detail journey if it remains a demonstrated need.
 
-The final release audit may split this slice if a smaller vertical release is safer. It may also add a narrowly scoped follow-up when the tested journeys reveal a real gap.
+The final release audit may add a narrowly scoped follow-up when the tested journeys reveal a real gap.
 
 ## Explicit non-goals
 

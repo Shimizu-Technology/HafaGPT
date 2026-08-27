@@ -162,6 +162,7 @@ export function useSaveQuizResult() {
       // Invalidate quiz stats and history to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['quizStats'] });
       queryClient.invalidateQueries({ queryKey: ['quizHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-results'] });
     },
   });
 }

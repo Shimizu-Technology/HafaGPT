@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   Brain,
   Calendar,
@@ -17,6 +17,7 @@ import { useQuizResultDetail } from '../hooks/useQuizQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ALL_TOPICS } from '../data/learningPath';
 import { withConceptReview } from '../lib/conceptReview';
+import { appRoutes, safeInternalReturnPath } from '../lib/routes';
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -43,7 +44,12 @@ function resultMessage(percentage: number) {
 
 export function QuizReview() {
   const { resultId } = useParams<{ resultId: string }>();
+  const [searchParams] = useSearchParams();
   const { data: result, isLoading, error, refetch } = useQuizResultDetail(resultId);
+  const backTo = safeInternalReturnPath(
+    searchParams.get('return_to'),
+    '/dashboard/quiz-history',
+  );
   const isDictionaryQuiz = result?.category_id?.startsWith('dict-');
   const resultTopic = result
     ? ALL_TOPICS.find((topic) => topic.id === result.learning_topic_id)
@@ -57,8 +63,8 @@ export function QuizReview() {
         title={result?.category_title || 'Quiz review'}
         subtitle="See what you knew and what to practice next."
         icon={ClipboardCheck}
-        backTo="/dashboard/quiz-history"
-        backLabel="Back to quiz history"
+        backTo={backTo}
+        backLabel={backTo.startsWith(appRoutes.topic('')) ? 'Back to topic' : 'Back to quiz history'}
         maxWidthClassName="max-w-2xl"
         trailing={
           isDictionaryQuiz ? (

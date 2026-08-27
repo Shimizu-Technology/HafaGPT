@@ -57,6 +57,7 @@ vi.mock('../hooks/useGamesQuery', () => ({
       average_stars: 2.5,
       recent_results: [
         {
+          id: '018f6a6e-9c3d-7b2a-a1c4-8e9f87654321',
           game_type: 'memory_match',
           category_id: 'greetings',
           category_title: 'Greetings & Basics',
@@ -159,6 +160,11 @@ describe('progress pages', () => {
     expect(screen.getByRole('heading', { name: 'Your progress' })).toBeInTheDocument();
     expect(screen.getByText('Håfa Adai, Stassie!')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Quiz history/ })).toHaveAttribute('href', '/dashboard/quiz-history');
+    expect(screen.getByRole('link', { name: /Game history/ })).toHaveAttribute('href', '/dashboard/game-history');
+    expect(screen.getByRole('link', { name: /Greetings & Basics easy Aug 18/ })).toHaveAttribute(
+      'href',
+      '/games/results/018f6a6e-9c3d-7b2a-a1c4-8e9f87654321?return_to=%2Fdashboard',
+    );
     expect(screen.getByRole('link', { name: /Ask HåfaGPT/ })).toHaveAttribute('href', '/chat');
     expect(screen.getByRole('link', { name: /Study flashcards/ })).toHaveAttribute('href', '/flashcards');
     expect(screen.queryByText('Coming Soon')).not.toBeInTheDocument();

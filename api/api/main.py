@@ -99,6 +99,7 @@ from .learning_attempts import (
 )
 from .learning_workspace import create_learning_workspace_router
 from .conversation_records import create_conversation_records_router
+from .activity_results import create_activity_results_router
 from .concept_evidence import create_concept_evidence_router
 from .vocabulary_records import create_vocabulary_records_router
 from .quiz_evidence import persist_quiz_result, validate_quiz_result_request
@@ -7831,6 +7832,9 @@ app.include_router(
 )
 app.include_router(
     create_conversation_records_router(topics=ALL_TOPICS, verify_user=verify_user)
+)
+app.include_router(
+    create_activity_results_router(topics=ALL_TOPICS, verify_user=verify_user)
 )
 app.include_router(create_concept_evidence_router(verify_user=verify_user))
 app.include_router(create_vocabulary_records_router())

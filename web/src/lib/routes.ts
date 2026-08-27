@@ -41,6 +41,11 @@ export const appRoutes = {
     context,
   ),
   games: '/games' as const,
+  gameHistory: '/dashboard/game-history' as const,
+  gameResult: (resultId: string, context: ReturnContext = {}): string => withReturnContext(
+    `/games/results/${encodeURIComponent(resultId)}`,
+    context,
+  ),
   learning: '/learning' as const,
   vocabulary: '/vocabulary' as const,
   vocabularyCategory: (categoryId: string): string => (
@@ -54,7 +59,10 @@ export const appRoutes = {
   lesson: (topicId: string): string => `/learn/${encodeURIComponent(topicId)}`,
   flashcards: (categoryId: string): string => `/flashcards/${encodeURIComponent(categoryId)}`,
   quiz: (categoryId: string): string => `/quiz/${encodeURIComponent(categoryId)}`,
-  quizReview: (resultId: string): string => `/quiz/review/${encodeURIComponent(resultId)}`,
+  quizReview: (resultId: string, context: ReturnContext = {}): string => withReturnContext(
+    `/quiz/review/${encodeURIComponent(resultId)}`,
+    context,
+  ),
   scenario: (scenarioId: string): string => `/practice/${encodeURIComponent(scenarioId)}`,
   story: (storyId: string): string => `/stories/${encodeURIComponent(storyId)}`,
   memoryGame: (context: ReturnContext = {}): string => withReturnContext('/games/memory', context),

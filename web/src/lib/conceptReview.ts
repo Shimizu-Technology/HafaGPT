@@ -16,10 +16,19 @@ export interface ConceptReviewContext {
   label: string;
 }
 
-export function withConceptReview(
+type ResultType = 'quiz' | 'game';
+
+function resultPath(resultType: ResultType, resultId: string): string {
+  return resultType === 'game'
+    ? appRoutes.gameResult(resultId)
+    : appRoutes.quizReview(resultId);
+}
+
+function withResultConceptReview(
   categoryId: string,
   conceptId: string,
   resultId: string,
+  resultType: ResultType,
 ): string {
   const flashcardsPath = appRoutes.flashcards(categoryId);
   if (
@@ -29,16 +38,33 @@ export function withConceptReview(
     return flashcardsPath;
   }
 
-  const returnTo = appRoutes.quizReview(resultId);
+  const returnTo = resultPath(resultType, resultId);
   const contextualPath = setAppQueryParams(flashcardsPath, {
     type: 'curated',
     concept: conceptId,
     result_id: resultId,
+    result_type: resultType,
     return_to: returnTo,
   });
   return contextualPath && contextualPath.length <= MAX_APP_URL_LENGTH
     ? contextualPath
     : flashcardsPath;
+}
+
+export function withConceptReview(
+  categoryId: string,
+  conceptId: string,
+  resultId: string,
+): string {
+  return withResultConceptReview(categoryId, conceptId, resultId, 'quiz');
+}
+
+export function withGameConceptReview(
+  categoryId: string,
+  conceptId: string,
+  resultId: string,
+): string {
+  return withResultConceptReview(categoryId, conceptId, resultId, 'game');
 }
 
 export function readConceptReview(
@@ -48,16 +74,17 @@ export function readConceptReview(
   const params = new URLSearchParams(search);
   const conceptId = params.get('concept') ?? '';
   const resultId = params.get('result_id') ?? '';
+  const resultType = params.get('result_type') === 'game' ? 'game' : 'quiz';
   const cardIndex = findCuratedConceptIndex(categoryId, conceptId);
   if (cardIndex === null || !UUID_PATTERN.test(resultId)) return null;
 
-  const canonicalReturn = appRoutes.quizReview(resultId);
+  const canonicalReturn = resultPath(resultType, resultId);
   if (safeInternalReturnPath(params.get('return_to'), '') !== canonicalReturn) return null;
 
   return {
     conceptId,
     cardIndex,
     to: canonicalReturn,
-    label: 'Back to quiz review',
+    label: resultType === 'game' ? 'Back to game result' : 'Back to quiz review',
   };
 }
