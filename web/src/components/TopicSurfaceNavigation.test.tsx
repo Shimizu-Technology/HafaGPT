@@ -123,9 +123,15 @@ function LocationProbe() {
   return <output data-testid="current-location">{`${location.pathname}${location.search}`}</output>;
 }
 
-function SameRouteNavigator({ to }: { to: string }) {
+function SameRouteNavigator({
+  to,
+  label = 'Open another missed card',
+}: {
+  to: string;
+  label?: string;
+}) {
   const navigate = useNavigate();
-  return <button onClick={() => navigate(to)}>Open another missed card</button>;
+  return <button onClick={() => navigate(to)}>{label}</button>;
 }
 
 function renderSurface(
@@ -264,6 +270,51 @@ describe('topic surface navigation', () => {
     expect(window.localStorage.getItem(
       'hafagpt_lesson_exposure_v1_user_123_greetings',
     )).toBeNull();
+  });
+
+  it('keeps a new lesson retry queue when an earlier lesson save resolves late', async () => {
+    const familyPayload = {
+      topicId: 'family',
+      conceptIds: getCuratedDeckConceptIds('family'),
+    };
+    window.localStorage.setItem(
+      'hafagpt_lesson_exposure_v1_user_123_family',
+      JSON.stringify(familyPayload),
+    );
+    renderSurface(
+      <>
+        <LessonPage />
+        <SameRouteNavigator to="/learn/family" label="Open family lesson" />
+      </>,
+      '/learn/:topicId',
+      '/learn/greetings',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Flashcards' }));
+    for (let cardNumber = 2; cardNumber <= 14; cardNumber += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `View card ${cardNumber}` }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Quiz' }));
+    await waitFor(() => expect(mocks.recordLessonExposure).toHaveBeenCalledOnce());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open family lesson' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Card activity has not saved yet',
+    );
+    expect(screen.getByRole('button', { name: 'Start Flashcards' })).toBeInTheDocument();
+
+    act(() => {
+      mocks.recordLessonExposure.mock.calls[0][1].onSuccess();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
+    expect(window.localStorage.getItem(
+      'hafagpt_lesson_exposure_v1_user_123_family',
+    )).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saving card activity' }));
+    expect(mocks.recordLessonExposure).toHaveBeenCalledTimes(2);
+    expect(mocks.recordLessonExposure.mock.calls[1][0]).toEqual(familyPayload);
   });
 
   it('skips authenticated lesson exposure persistence for a signed-out session', async () => {

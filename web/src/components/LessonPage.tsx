@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, BookOpen, Layers, Brain, CheckCircle, RefreshCw } from 'lucide-react';
@@ -81,6 +81,8 @@ export function LessonPage() {
   const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
   const [pendingLessonExposure, setPendingLessonExposure] = useState<PendingLessonExposure | null>(null);
   const [lessonExposureSaveFailed, setLessonExposureSaveFailed] = useState(false);
+  const lessonExposureRequestRef = useRef(0);
+  const lessonExposureScopeRef = useRef<string | null>(null);
 
   const topic = topicId ? getTopic(topicId) : undefined;
   const topicIndex = topicId ? getTopicIndex(topicId) : 0;
@@ -90,15 +92,33 @@ export function LessonPage() {
   const ownerId = user?.id ?? null;
 
   useEffect(() => {
+    const scope = ownerId && topicId ? `${ownerId}:${topicId}` : null;
+    lessonExposureScopeRef.current = scope;
+    lessonExposureRequestRef.current += 1;
     setPendingLessonExposure(null);
     setLessonExposureSaveFailed(false);
-    if (!ownerId || !topicId) return;
-    const queuedExposure = loadQueuedLessonExposure(ownerId, topicId);
-    if (queuedExposure) {
-      setPendingLessonExposure(queuedExposure);
-      setLessonExposureSaveFailed(true);
+    if (ownerId && topicId) {
+      const queuedExposure = loadQueuedLessonExposure(ownerId, topicId);
+      if (queuedExposure) {
+        setPendingLessonExposure(queuedExposure);
+        setLessonExposureSaveFailed(true);
+      }
     }
+
+    return () => {
+      if (lessonExposureScopeRef.current === scope) {
+        lessonExposureScopeRef.current = null;
+        lessonExposureRequestRef.current += 1;
+      }
+    };
   }, [ownerId, topicId]);
+
+  useEffect(() => {
+    setCurrentStep('intro');
+    setFlashcardsCompleted(false);
+    setQuizScore(null);
+    setXpToast(null);
+  }, [topicId]);
 
   // Mark topic as started when entering
   useEffect(() => {
@@ -135,6 +155,10 @@ export function LessonPage() {
 
   const saveLessonExposure = (payload: PendingLessonExposure) => {
     if (!ownerId) return;
+    const requestScope = `${ownerId}:${payload.topicId}`;
+    const requestId = lessonExposureRequestRef.current + 1;
+    lessonExposureRequestRef.current = requestId;
+    lessonExposureScopeRef.current = requestScope;
     setPendingLessonExposure(payload);
     setLessonExposureSaveFailed(false);
     browserStorage.set(
@@ -143,6 +167,10 @@ export function LessonPage() {
     );
     recordLessonExposure.mutate(payload, {
       onSuccess: () => {
+        if (
+          lessonExposureScopeRef.current !== requestScope
+          || lessonExposureRequestRef.current !== requestId
+        ) return;
         browserStorage.remove(
           getLessonExposureQueueKey(ownerId, payload.topicId),
         );
@@ -151,6 +179,10 @@ export function LessonPage() {
       },
       onError: (error) => {
         console.warn('Failed to record lesson concept exposure:', error);
+        if (
+          lessonExposureScopeRef.current !== requestScope
+          || lessonExposureRequestRef.current !== requestId
+        ) return;
         setLessonExposureSaveFailed(true);
       },
     });
