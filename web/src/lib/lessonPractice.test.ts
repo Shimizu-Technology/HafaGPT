@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_TOPICS, getTopic } from '../data/learningPath';
-import { getLearningGameReturn, getLessonPractice, readLearningGameContext } from './lessonPractice';
+import {
+  getLearningGameReturn,
+  getLessonPractice,
+  readLearningGameContext,
+  withLearningContext,
+} from './lessonPractice';
 
 describe('lesson practice handoff', () => {
   it('gives every configured lesson a supported, allowlisted practice destination', () => {
@@ -30,6 +35,39 @@ describe('lesson practice handoff', () => {
       source: 'today',
       returnTo: '/',
     });
+  });
+
+  it('returns topic-launched practice to the exact topic workspace', () => {
+    const topic = getTopic('greetings');
+    expect(topic).toBeDefined();
+
+    const practice = getLessonPractice(topic!, {
+      source: 'topic',
+      returnTo: '/learning/greetings',
+    });
+    const context = readLearningGameContext(practice?.href.split('?')[1] || '');
+
+    expect(context).toEqual({
+      topicId: 'greetings',
+      categoryId: 'greetings',
+      topicTitle: 'Greetings & Basics',
+      source: 'topic',
+      returnTo: '/learning/greetings',
+    });
+    expect(getLearningGameReturn(context)).toEqual({
+      to: '/learning/greetings',
+      label: 'Back to topic',
+    });
+    expect(withLearningContext('/learn/greetings', topic!, {
+      source: 'topic',
+      returnTo: '/learning/greetings',
+    })).toBe(
+      '/learn/greetings?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(withLearningContext('//evil.example', topic!, { source: 'topic' }))
+      .toBe('/learning/greetings');
+    expect(withLearningContext(`/${'a'.repeat(2048)}`, topic!, { source: 'topic' }))
+      .toBe('/learning/greetings');
   });
 
   it('rejects arbitrary, mismatched, or personal query context', () => {
@@ -92,9 +130,13 @@ describe('lesson practice handoff', () => {
     const parsed = readLearningGameContext(
       '?topic=greetings&category=greetings&source=lesson&return_to=%2Flearning%3Fuser_id%3Dprivate',
     );
+    const mismatchedTopic = readLearningGameContext(
+      '?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Ffamily',
+    );
 
     expect(launched?.href).not.toContain('email');
     expect(readLearningGameContext(launched?.href.split('?')[1] || '')?.returnTo).toBe('/');
     expect(parsed?.returnTo).toBe('/learning');
+    expect(mismatchedTopic?.returnTo).toBe('/learning/greetings');
   });
 });

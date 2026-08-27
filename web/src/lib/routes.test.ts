@@ -3,7 +3,12 @@ import { appRoutes, currentAppPath, safeInternalReturnPath } from './routes';
 
 describe('connected learner routes', () => {
   it('builds canonical lesson and contextual game destinations', () => {
+    expect(appRoutes.topic('body parts')).toBe('/learning/body%20parts');
     expect(appRoutes.lesson('body parts')).toBe('/learn/body%20parts');
+    expect(appRoutes.flashcards('common phrases')).toBe('/flashcards/common%20phrases');
+    expect(appRoutes.quiz('common phrases')).toBe('/quiz/common%20phrases');
+    expect(appRoutes.scenario('meeting someone')).toBe('/practice/meeting%20someone');
+    expect(appRoutes.story('a story')).toBe('/stories/a%20story');
     expect(appRoutes.memoryGame({ returnTo: '/?section=today' }))
       .toBe('/games/memory?return_to=%2F%3Fsection%3Dtoday');
   });

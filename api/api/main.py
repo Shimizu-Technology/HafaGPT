@@ -93,6 +93,7 @@ from .spaced_repetition import (
 )
 from .site_theme import resolve_site_theme, validate_site_theme_configuration
 from .learning_attempts import build_game_learning_attempt, insert_learning_attempt
+from .learning_workspace import create_learning_workspace_router
 from .conversation_practice_models import (
     ConversationPracticeRequest,
     GroundingStatus,
@@ -7840,6 +7841,10 @@ ADVANCED_PATH = [
 
 # Combined all topics for lookups
 ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH + ADVANCED_PATH
+
+app.include_router(
+    create_learning_workspace_router(topics=ALL_TOPICS, verify_user=verify_user)
+)
 
 
 @app.get("/api/learning/recommended", tags=["Learning Path"])
