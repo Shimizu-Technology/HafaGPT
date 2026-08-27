@@ -5,6 +5,13 @@ interface CardIdentityInput {
   sourceId: string;
 }
 
+/** Preserve the loaded card's source when recording a review from any route. */
+export function resolveReviewSourceKind(
+  card: { contentSource: CardSourceKind },
+): CardSourceKind {
+  return card.contentSource;
+}
+
 function normalizeIdentityPart(value: string): string {
   return value.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ');
 }

@@ -7,7 +7,7 @@ import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
-import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
+import { createCardIdentity, resolveReviewSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { browserStorage } from '../lib/browserStorage';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
@@ -333,7 +333,7 @@ export function FlashcardViewer() {
 
     setReviewError(null);
     setReviewSaved(false);
-    const sourceKind: CardSourceKind = cardTypeParam === 'custom' ? 'custom' : cardType;
+    const sourceKind = resolveReviewSourceKind(currentCard);
 
     try {
       await recordReviewMutation.mutateAsync({
