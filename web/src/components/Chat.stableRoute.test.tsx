@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
 
@@ -23,6 +23,7 @@ const state = vi.hoisted(() => ({
   refetchConversation: vi.fn(),
   tryUse: vi.fn(async () => true),
   createConversation: vi.fn(),
+  setError: vi.fn(),
   openSignIn: vi.fn(),
 }));
 
@@ -43,7 +44,7 @@ vi.mock('../hooks/useChatbot', () => ({
     cancelMessage: vi.fn(async () => undefined),
     loading: false,
     error: null,
-    setError: vi.fn(),
+    setError: state.setError,
   }),
 }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
@@ -94,10 +95,25 @@ vi.mock('./MessageInput', () => ({
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
-vi.mock('./Message', () => ({ Message: () => null }));
+vi.mock('./Message', () => ({
+  Message: ({ content }: { content: string }) => <div>{content || 'Thinking'}</div>,
+}));
 vi.mock('./Toast', () => ({ Toast: () => null }));
 vi.mock('./ImageModal', () => ({ ImageModal: () => null }));
 vi.mock('./UpgradePrompt', () => ({ UpgradePrompt: () => null }));
+
+function ChatRouteHarness() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <>
+      <Chat />
+      <button type="button" onClick={() => navigate('/chat')}>Leave saved chat</button>
+      <div data-testid="chat-path">{location.pathname}</div>
+    </>
+  );
+}
 
 function renderChat(path: string) {
   const queryClient = new QueryClient({
@@ -107,8 +123,8 @@ function renderChat(path: string) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/chat/:conversationId" element={<Chat />} />
+          <Route path="/chat" element={<ChatRouteHarness />} />
+          <Route path="/chat/:conversationId" element={<ChatRouteHarness />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -125,6 +141,8 @@ describe('Chat stable conversation route', () => {
     state.tryUse.mockReset();
     state.tryUse.mockResolvedValue(true);
     state.createConversation.mockReset();
+    state.setError.mockReset();
+    window.localStorage.clear();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
@@ -172,5 +190,28 @@ describe('Chat stable conversation route', () => {
 
     await waitFor(() => expect(state.tryUse).toHaveBeenCalledWith('chat'));
     expect(state.createConversation).not.toHaveBeenCalled();
+  });
+
+  it('cleans up an optimistic send when the usage check fails', async () => {
+    state.tryUse.mockRejectedValue(new Error('usage service unavailable'));
+    renderChat('/chat');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+
+    await waitFor(() => expect(state.setError).toHaveBeenCalledWith(
+      'Unable to verify chat usage. Please try again.',
+    ));
+    expect(screen.queryByText('Test message')).not.toBeInTheDocument();
+    expect(screen.queryByText('Thinking')).not.toBeInTheDocument();
+    expect(state.createConversation).not.toHaveBeenCalled();
+  });
+
+  it('does not restore a stale record after navigating back to the base chat route', async () => {
+    renderChat('/chat/conv-1');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
+
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat'));
+    expect(screen.getByTestId('chat-path')).not.toHaveTextContent('/chat/conv-1');
   });
 });

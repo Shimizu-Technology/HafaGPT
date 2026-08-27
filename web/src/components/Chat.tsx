@@ -58,12 +58,14 @@ export function Chat() {
   
   // On mount, check if user has an active conversation from a previous session (page refresh)
   // If first login, start with new chat. If page refresh, restore their conversation.
+  const restoredConversationIdRef = useRef<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
     if (routeConversationId) return routeConversationId;
     if (typeof window !== 'undefined') {
       const savedId = browserStorage.get('active_conversation_id');
       // Only restore if user is already signed in (page refresh scenario)
       // For fresh login, this will be null and we'll start with new chat
+      restoredConversationIdRef.current = savedId;
       return savedId;
     }
     return null;
@@ -185,14 +187,19 @@ export function Chat() {
 
   // Upgrade the legacy restored-chat state to a stable, refreshable record URL.
   useEffect(() => {
+    const restoredConversationId = restoredConversationIdRef.current;
     if (
       isLoaded
       && isSignedIn
-      && activeConversationId
+      && restoredConversationId
+      && activeConversationId === restoredConversationId
       && !routeConversationId
       && !searchParams.has('message')
     ) {
-      navigate(appRoutes.conversation(activeConversationId), { replace: true });
+      // Consume the one-time restoration before navigating. A later browser
+      // Back action to /chat must remain a new-chat route.
+      restoredConversationIdRef.current = null;
+      navigate(appRoutes.conversation(restoredConversationId), { replace: true });
     }
   }, [activeConversationId, isLoaded, isSignedIn, navigate, routeConversationId, searchParams]);
 
@@ -603,19 +610,22 @@ export function Chat() {
       isSendingMessageRef.current = false;
     };
 
-    // ========================================================================
-    // PARALLEL OPERATIONS: Run usage check and conversation creation together
-    // ========================================================================
-    
     try {
-      // Start conversation creation in background if needed
       let conversationPromise: Promise<string> | null = null;
       let currentConversationId = activeConversationId;
 
       // Check usage before creating a durable record so a denied send cannot
       // leave an empty conversation or trigger late navigation.
       if (isSignedIn) {
-        const allowed = await tryUse('chat');
+        let allowed: boolean;
+        try {
+          allowed = await tryUse('chat');
+        } catch (usageError) {
+          console.error('Failed to verify chat usage:', usageError);
+          removeOptimisticMessages();
+          setError('Unable to verify chat usage. Please try again.');
+          return;
+        }
         if (!allowed) {
           removeOptimisticMessages();
           setShowUpgradePrompt(true);
