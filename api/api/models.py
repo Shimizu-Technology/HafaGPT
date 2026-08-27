@@ -107,6 +107,11 @@ class ErrorResponse(BaseModel):
 class ConversationCreate(BaseModel):
     """Request to create a new conversation"""
     title: Optional[str] = Field(default="New Chat", description="Conversation title")
+    learning_topic_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Stable learning topic that started this conversation",
+    )
 
 
 class ConversationResponse(BaseModel):
@@ -117,6 +122,10 @@ class ConversationResponse(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     message_count: int = Field(default=0, description="Number of messages in conversation")
+    learning_topic_id: Optional[str] = Field(
+        default=None,
+        description="Stable learning topic associated with this conversation",
+    )
 
 
 class ConversationListResponse(BaseModel):

@@ -5,6 +5,10 @@ interface ReturnContext {
   returnTo?: string;
 }
 
+interface ChatContext extends ReturnContext {
+  topicId?: string;
+}
+
 function withReturnContext(path: string, context: ReturnContext = {}): string {
   if (!context.returnTo) return path;
 
@@ -16,9 +20,26 @@ function withReturnContext(path: string, context: ReturnContext = {}): string {
   return contextualPath.length <= MAX_APP_URL_LENGTH ? contextualPath : path;
 }
 
+function withChatContext(path: string, context: ChatContext = {}): string {
+  const params = new URLSearchParams();
+  if (context.topicId) params.set('topic', context.topicId);
+
+  const returnTo = safeInternalReturnPath(context.returnTo ?? null, '');
+  if (returnTo) params.set('return_to', returnTo);
+
+  const search = params.toString();
+  const contextualPath = search ? `${path}?${search}` : path;
+  return contextualPath.length <= MAX_APP_URL_LENGTH ? contextualPath : path;
+}
+
 /** Canonical destinations for connected learner records and workflows. */
 export const appRoutes = {
   home: '/' as const,
+  chat: (context: ChatContext = {}): string => withChatContext('/chat', context),
+  conversation: (conversationId: string, context: ChatContext = {}): string => withChatContext(
+    `/chat/${encodeURIComponent(conversationId)}`,
+    context,
+  ),
   games: '/games' as const,
   learning: '/learning' as const,
   vocabulary: '/vocabulary' as const,

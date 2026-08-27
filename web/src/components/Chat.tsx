@@ -1,10 +1,11 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useTheme } from '../hooks/useTheme';
 import { 
   useInitUserData, 
+  useConversation,
   useConversationMessages,
   useCreateConversation, 
   useDeleteConversation, 
@@ -31,8 +32,12 @@ import { getChatIntentLabel, getChatIntentPlaceholder } from '../lib/chatIntent'
 import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
 import { browserStorage } from '../lib/browserStorage';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
+import { getTopic } from '../data/learningPath';
+import { appRoutes, safeInternalReturnPath } from '../lib/routes';
 
 export function Chat() {
+  const navigate = useNavigate();
+  const { conversationId: routeConversationId } = useParams<{ conversationId: string }>();
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -53,11 +58,14 @@ export function Chat() {
   
   // On mount, check if user has an active conversation from a previous session (page refresh)
   // If first login, start with new chat. If page refresh, restore their conversation.
+  const restoredConversationIdRef = useRef<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
+    if (routeConversationId) return routeConversationId;
     if (typeof window !== 'undefined') {
       const savedId = browserStorage.get('active_conversation_id');
       // Only restore if user is already signed in (page refresh scenario)
       // For fresh login, this will be null and we'll start with new chat
+      restoredConversationIdRef.current = savedId;
       return savedId;
     }
     return null;
@@ -73,6 +81,11 @@ export function Chat() {
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTopic = getTopic(searchParams.get('topic') || '');
+  const requestedReturnPath = safeInternalReturnPath(
+    searchParams.get('return_to'),
+    requestedTopic ? appRoutes.topic(requestedTopic.id) : '',
+  );
   const chatIntent = searchParams.get('intent');
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
   const intentLabel = getChatIntentLabel(chatIntent);
@@ -86,16 +99,39 @@ export function Chat() {
   );
   
   // Separate query for messages of the active conversation (for fast switching)
-  const { data: conversationMessages } = useConversationMessages(
+  const {
+    data: conversationMessages,
+    isError: messagesError,
+    refetch: refetchMessages,
+  } = useConversationMessages(
     activeConversationId
   );
+  const {
+    data: conversationRecord,
+    isLoading: conversationLoading,
+    refetch: refetchConversation,
+  } = useConversation(routeConversationId || null);
+  const conversations = initData?.conversations || [];
+  const resolvedConversationRecord = conversationRecord
+    || conversations.find((conversation) => conversation.id === routeConversationId);
+  const linkedTopic = getTopic(
+    resolvedConversationRecord?.learning_topic_id
+      || (!routeConversationId ? requestedTopic?.id : '')
+      || '',
+  );
+  const topicReturnPath = linkedTopic
+    ? safeInternalReturnPath(searchParams.get('return_to'), appRoutes.topic(linkedTopic.id))
+    : '';
+  const savedConversationRequiresSignIn = !!routeConversationId && isLoaded && !isSignedIn;
+  const conversationUnavailable = !!routeConversationId
+    && isSignedIn === true
+    && messagesError;
   
   const createConversationMutation = useCreateConversation();
   const deleteConversationMutation = useDeleteConversation();
   const updateConversationTitleMutation = useUpdateConversationTitle();
   
   // Extract data from React Query
-  const conversations = initData?.conversations || [];
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -119,6 +155,7 @@ export function Chat() {
   });
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
+  const previousRouteConversationIdRef = useRef(routeConversationId);
 
   const getModeDetails = (modeName: 'english' | 'chamorro' | 'learn') => {
     const modes = {
@@ -128,6 +165,43 @@ export function Chat() {
     };
     return modes[modeName];
   };
+
+  // Keep the stable route and active record synchronized during back/forward navigation.
+  useEffect(() => {
+    if (routeConversationId && isSignedIn) {
+      setActiveConversationId(routeConversationId);
+    } else if (previousRouteConversationIdRef.current) {
+      setActiveConversationId(null);
+      setMessages([]);
+      browserStorage.remove('active_conversation_id');
+    }
+    previousRouteConversationIdRef.current = routeConversationId;
+  }, [isSignedIn, routeConversationId]);
+
+  // Persist a direct record ID only after the owner-scoped message request succeeds.
+  useEffect(() => {
+    if (routeConversationId && isSignedIn && conversationMessages && !messagesError) {
+      browserStorage.set('active_conversation_id', routeConversationId);
+    }
+  }, [conversationMessages, isSignedIn, messagesError, routeConversationId]);
+
+  // Upgrade the legacy restored-chat state to a stable, refreshable record URL.
+  useEffect(() => {
+    const restoredConversationId = restoredConversationIdRef.current;
+    if (
+      isLoaded
+      && isSignedIn
+      && restoredConversationId
+      && activeConversationId === restoredConversationId
+      && !routeConversationId
+      && !searchParams.has('message')
+    ) {
+      // Consume the one-time restoration before navigating. A later browser
+      // Back action to /chat must remain a new-chat route.
+      restoredConversationIdRef.current = null;
+      navigate(appRoutes.conversation(restoredConversationId), { replace: true });
+    }
+  }, [activeConversationId, isLoaded, isSignedIn, navigate, routeConversationId, searchParams]);
 
 
   // Clear active conversation and messages when user signs out (for fresh login next time)
@@ -289,8 +363,10 @@ export function Chat() {
     // Mark as processed FIRST to prevent any race conditions
     hasProcessedUrlMessage.current = true;
     
-    // Clear URL params immediately to prevent re-processing on navigation
-    setSearchParams({}, { replace: true });
+    // Remove only the one-shot message; preserve topic and return context.
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('message');
+    setSearchParams(nextParams, { replace: true });
     
     // Start a new chat by clearing the active conversation
     setActiveConversationId(null);
@@ -468,7 +544,9 @@ export function Chat() {
       return;
     }
 
-    setSearchParams({ intent }, { replace: true });
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('intent', intent);
+    setSearchParams(nextParams, { replace: true });
     requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
@@ -532,33 +610,44 @@ export function Chat() {
       isSendingMessageRef.current = false;
     };
 
-    // ========================================================================
-    // PARALLEL OPERATIONS: Run usage check and conversation creation together
-    // ========================================================================
-    
     try {
-      // Start conversation creation in background if needed
       let conversationPromise: Promise<string> | null = null;
       let currentConversationId = activeConversationId;
 
-      if (!currentConversationId) {
-        const generatedTitle = message.trim().slice(0, 50);
-        conversationPromise = createConversationMutation.mutateAsync(generatedTitle)
-          .then((newConv) => {
-            setActiveConversationId(newConv.id);
-            browserStorage.set('active_conversation_id', newConv.id);
-            return newConv.id;
-          });
-      }
-
-      // Run usage check in parallel (for signed-in users)
+      // Check usage before creating a durable record so a denied send cannot
+      // leave an empty conversation or trigger late navigation.
       if (isSignedIn) {
-        const allowed = await tryUse('chat');
+        let allowed: boolean;
+        try {
+          allowed = await tryUse('chat');
+        } catch (usageError) {
+          console.error('Failed to verify chat usage:', usageError);
+          removeOptimisticMessages();
+          setError('Unable to verify chat usage. Please try again.');
+          return;
+        }
         if (!allowed) {
           removeOptimisticMessages();
           setShowUpgradePrompt(true);
           return;
         }
+      }
+
+      if (!currentConversationId) {
+        const generatedTitle = message.trim().slice(0, 50);
+        conversationPromise = createConversationMutation.mutateAsync({
+          title: generatedTitle,
+          learningTopicId: requestedTopic?.id,
+        })
+          .then((newConv) => {
+            setActiveConversationId(newConv.id);
+            browserStorage.set('active_conversation_id', newConv.id);
+            navigate(appRoutes.conversation(newConv.id, {
+              topicId: newConv.learning_topic_id || requestedTopic?.id,
+              returnTo: requestedReturnPath,
+            }), { replace: true });
+            return newConv.id;
+          });
       }
 
       // Wait for conversation to be created if needed
@@ -686,6 +775,10 @@ export function Chat() {
       setIsSwitchingConversation(false);
       // Always close sidebar for cleaner UX
       setSidebarOpen(false);
+      navigate(appRoutes.chat({
+        topicId: linkedTopic?.id,
+        returnTo: topicReturnPath,
+      }));
     } catch (err) {
       console.error('Failed to create conversation:', err);
     }
@@ -714,6 +807,12 @@ export function Chat() {
     
     setActiveConversationId(conversationId);
     browserStorage.set('active_conversation_id', conversationId);
+    const selectedConversation = conversations.find((item) => item.id === conversationId);
+    const selectedTopic = getTopic(selectedConversation?.learning_topic_id || '');
+    navigate(appRoutes.conversation(conversationId, {
+      topicId: selectedTopic?.id,
+      returnTo: selectedTopic?.id === linkedTopic?.id ? topicReturnPath : undefined,
+    }));
     
     // Always close sidebar for cleaner UX
     setSidebarOpen(false);
@@ -726,6 +825,10 @@ export function Chat() {
         setMessages([]);
         setActiveConversationId(null);
         browserStorage.remove('active_conversation_id');
+        navigate(appRoutes.chat({
+          topicId: linkedTopic?.id,
+          returnTo: topicReturnPath,
+        }), { replace: true });
       }
     } catch (err) {
       console.error('Failed to delete conversation:', err);
@@ -1004,6 +1107,22 @@ End of Export
           </div>
         </div>
         <ModeSelector mode={mode} onModeChange={setMode} />
+        {linkedTopic && (
+          <div className="border-t border-cream-200 px-3 py-2 dark:border-gray-800 sm:px-6">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+              <Link
+                to={topicReturnPath}
+                className="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-coral-700 hover:text-coral-800 dark:text-ocean-300 dark:hover:text-ocean-200"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                Back to {linkedTopic.title}
+              </Link>
+              <span className="hidden text-xs text-brown-500 dark:text-gray-400 sm:inline">
+                Saved with this topic
+              </span>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
@@ -1018,7 +1137,22 @@ End of Export
         >
           <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
-          {conversationsLoading ? (
+          {savedConversationRequiresSignIn ? (
+            <div className="mx-auto max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
+              <h2 className="text-lg font-bold text-brown-900 dark:text-white">Sign in to open this saved chat</h2>
+              <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">Saved conversations are private to their owner.</p>
+              <button type="button" onClick={handleSignInClick} className="mt-5 min-h-11 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700">Sign in</button>
+            </div>
+          ) : conversationUnavailable ? (
+            <div className="mx-auto max-w-md rounded-2xl border border-hibiscus-200 bg-hibiscus-50 p-6 text-center dark:border-red-800 dark:bg-red-950/30">
+              <h2 className="text-lg font-bold text-hibiscus-900 dark:text-red-200">Conversation unavailable</h2>
+              <p className="mt-2 text-sm text-hibiscus-700 dark:text-red-300">It may have been deleted, or it may belong to another account.</p>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <button type="button" onClick={() => void Promise.all([refetchConversation(), refetchMessages()])} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-hibiscus-600 px-4 font-semibold text-white hover:bg-hibiscus-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+                <Link to={appRoutes.chat()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 font-semibold text-brown-800 hover:bg-cream-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700">Start a new chat</Link>
+              </div>
+            </div>
+          ) : conversationsLoading || (!!routeConversationId && conversationLoading) ? (
             <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
               <div className="w-16 h-16 border-4 border-teal-200 dark:border-ocean-900 border-t-teal-600 dark:border-t-ocean-400 rounded-full animate-spin"></div>
               <p className="mt-6 text-brown-600 dark:text-gray-400 text-lg font-medium">
@@ -1132,7 +1266,7 @@ End of Export
         )}
         <MessageInput 
           onSend={handleSend} 
-          disabled={!isSignedIn || loading} 
+          disabled={!isSignedIn || loading || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           contextLabel={isSignedIn ? intentLabel : undefined}

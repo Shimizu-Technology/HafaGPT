@@ -20,6 +20,12 @@ describe('connected learner routes', () => {
       .toBe('/vocabulary/body%20parts');
     expect(appRoutes.word('word/id', { returnTo: '/vocabulary?q=water' }))
       .toBe('/words/word%2Fid?return_to=%2Fvocabulary%3Fq%3Dwater');
+    expect(appRoutes.chat({ topicId: 'greetings', returnTo: '/learning/greetings' }))
+      .toBe('/chat?topic=greetings&return_to=%2Flearning%2Fgreetings');
+    expect(appRoutes.conversation('conversation/id', {
+      topicId: 'greetings',
+      returnTo: '/learning/greetings',
+    })).toBe('/chat/conversation%2Fid?topic=greetings&return_to=%2Flearning%2Fgreetings');
     expect(appRoutes.memoryGame({ returnTo: '/?section=today' }))
       .toBe('/games/memory?return_to=%2F%3Fsection%3Dtoday');
   });
@@ -37,6 +43,7 @@ describe('connected learner routes', () => {
   it('omits unsafe return context when constructing a route', () => {
     expect(appRoutes.memoryGame({ returnTo: '//evil.example' })).toBe('/games/memory');
     expect(appRoutes.scrambleGame({ returnTo: 'https://evil.example' })).toBe('/games/scramble');
+    expect(appRoutes.conversation('one', { returnTo: '//evil.example' })).toBe('/chat/one');
   });
 
   it('preserves internal search and hash context', () => {

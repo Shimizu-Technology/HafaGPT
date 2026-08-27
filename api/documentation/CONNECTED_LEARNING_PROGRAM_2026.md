@@ -1,7 +1,8 @@
 # Connected Learning Program
 
-**Status:** approved direction, delivered in small reversible releases  
-**Last reviewed:** August 28, 2026
+- **Status:** approved direction, delivered in small reversible releases
+- **Last reviewed:** August 28, 2026
+- **Delivered through:** Release 4b — stable conversations
 
 ## Decision
 
@@ -48,6 +49,8 @@ These sources support the learning and navigation model. They do not validate Ch
 - Today is deterministic, budget-aware, and based on first-party learner state.
 - The app already records a coarse topic-level learning attempt for contextual games.
 - The language-resource and accuracy programs separate source trust from product presentation.
+- Conversations now have owner-scoped stable routes, optional source-topic
+  relationships, and bounded metadata-only previews in topic workspaces.
 
 ### What is disconnected
 
@@ -60,7 +63,6 @@ These sources support the learning and navigation model. They do not validate Ch
 - Quiz answers identify questions, not the canonical concept/card they assess.
 - A game result creates one topic-level attempt; it does not record the exact cards or words used in that round.
 - Quiz misses cannot yet open the exact card or add it to review.
-- Conversations have data identities but no stable learner-facing record routes.
 - Game results have persisted IDs but no learner-facing result detail or history.
 - Vocabulary search, quiz-history pagination, and some administrative list context are local-only and cannot be restored from the URL.
 - `api/api/main.py` is 8,817 lines with 84 directly declared routes. New connected-learning endpoints should enter through a focused router seam rather than extending the monolith.
@@ -137,9 +139,16 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 
 ### Release 4b — stable conversations
 
-- Add stable conversation routes.
-- Store an optional `learning_topic_id` when a conversation starts from a topic.
-- Show recent topic conversations in the topic workspace and provide a clear return to the topic.
+- Delivered owner-scoped `/chat/:conversationId` routes while preserving the
+  public `/chat` tutor entry point.
+- Store a validated optional `learning_topic_id` when a conversation starts
+  from a canonical topic; existing unlinked conversations remain available.
+- Show at most three recent topic conversations as private metadata-only
+  previews, with explicit topic return paths and no message-body disclosure.
+- Advance conversation recency when messages are persisted so recent previews
+  reflect real activity rather than only creation or renaming.
+- Serve new read-side record endpoints through a focused injectable router and
+  keep the web safe during staggered API/web deployments.
 
 ### Release 5 — results and restorable secondary context
 
