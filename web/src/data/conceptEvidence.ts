@@ -4,6 +4,7 @@ import { createCardIdentity, normalizeIdentityPart } from '../lib/cardIdentity';
 interface CuratedConceptManifest {
   version: number;
   deck_card_counts: Record<string, number>;
+  // Distinct assessment prompts may intentionally test the same card concept.
   question_concepts: Record<string, [categoryId: string, cardIndex: number]>;
 }
 

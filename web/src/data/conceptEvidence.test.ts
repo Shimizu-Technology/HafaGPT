@@ -53,6 +53,13 @@ describe('curated concept evidence', () => {
     }
   });
 
+  it('allows distinct prompts to assess the same underlying card concept', () => {
+    expect(getQuestionConceptId('greet-1')).toBe(getQuestionConceptId('greet-4'));
+    expect(getQuestionConceptId('food-1')).toBe(getQuestionConceptId('food-5'));
+    expect(getQuestionConceptId('num-5')).toBe(getQuestionConceptId('num-8'));
+    expect(getQuestionConceptId('shop-5')).toBe(getQuestionConceptId('shop-6'));
+  });
+
   it('round-trips exact card identities without accepting another deck', () => {
     const conceptId = getCuratedConceptId('greetings', 0);
     expect(conceptId).toBe('v1:curated:1psmtc9');

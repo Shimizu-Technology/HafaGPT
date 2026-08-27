@@ -95,7 +95,12 @@ def curated_concept_id(category_id: str, card_index: int) -> str:
 
 
 def validate_curated_concept_manifest(manifest: object) -> None:
-    """Fail fast when authored deck and question relationships are malformed."""
+    """Fail fast when authored deck and question relationships are malformed.
+
+    Question relationships are intentionally many-to-one: distinct assessment
+    prompts can test the same underlying card concept (for example, recognition
+    and fill-in-the-blank questions for one word).
+    """
 
     if not isinstance(manifest, dict) or manifest.get("version") != 1:
         raise ValueError("Curated concept manifest must use version 1")

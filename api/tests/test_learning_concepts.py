@@ -24,6 +24,13 @@ def test_question_relationships_resolve_to_exact_curated_concepts():
     assert question_concept_id("dictionary-generated") is None
 
 
+def test_distinct_questions_can_intentionally_assess_the_same_concept():
+    assert question_concept_id("greet-1") == question_concept_id("greet-4")
+    assert question_concept_id("food-1") == question_concept_id("food-5")
+    assert question_concept_id("num-5") == question_concept_id("num-8")
+    assert question_concept_id("shop-5") == question_concept_id("shop-6")
+
+
 def test_curated_concepts_are_deduplicated_and_category_scoped():
     first = curated_concept_id("greetings", 0)
     assert validate_curated_concept_ids("greetings", [first, first]) == (first,)
