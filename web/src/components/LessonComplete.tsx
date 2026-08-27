@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Trophy, Star, ArrowRight, Home, RotateCcw, Sparkles, Gamepad2 } from 'lucide-react';
 import { LearningTopic, getNextTopic } from '../data/learningPath';
-import { getLessonPractice } from '../lib/lessonPractice';
+import { getLessonPractice, readLearningGameContext } from '../lib/lessonPractice';
 
 interface LessonCompleteProps {
   topic: LearningTopic;
@@ -14,13 +14,17 @@ interface LessonCompleteProps {
 
 export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNextTopic }: LessonCompleteProps) {
   const [showConfetti, setShowConfetti] = useState(false);
+  const location = useLocation();
   
   const nextTopic = getNextTopic(topic.id);
   const isPassing = quizScore >= 70;
   const isPerfect = quizScore === 100;
   const isLastTopic = topicIndex === totalTopics;
   const levelLabel = `${topic.level.charAt(0).toUpperCase()}${topic.level.slice(1)}`;
-  const practice = getLessonPractice(topic);
+  const launchContext = readLearningGameContext(location.search);
+  const practice = getLessonPractice(topic, launchContext
+    ? { source: launchContext.source, returnTo: launchContext.returnTo }
+    : undefined);
 
   // Calculate stars (1-3 based on score)
   const stars = quizScore >= 90 ? 3 : quizScore >= 70 ? 2 : 1;

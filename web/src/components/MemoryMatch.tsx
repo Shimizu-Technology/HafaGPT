@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { RotateCcw, Trophy, Timer, MousePointer2, Settings2, Play, Sparkles, BookOpen, Puzzle } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
@@ -9,7 +9,7 @@ import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
-import { readLearningGameContext } from '../lib/lessonPractice';
+import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 
 interface Card {
@@ -71,13 +71,15 @@ const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 
 export function MemoryMatch() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const learningContext = useMemo(() => readLearningGameContext(window.location.search), []);
+  const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
+  const gameReturn = getLearningGameReturn(learningContext);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
@@ -209,11 +211,11 @@ export function MemoryMatch() {
     if (isGameInProgress) {
       const confirmed = window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.');
       if (confirmed) {
-        navigate('/games');
+        navigate(gameReturn.to);
       }
       return;
     }
-    navigate('/games');
+    navigate(gameReturn.to);
   };
 
   // Generate cards from flashcards
@@ -414,7 +416,7 @@ export function MemoryMatch() {
               <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-950/20">
                 <BookOpen className="h-5 w-5 flex-none text-coral-600 dark:text-teal-300" aria-hidden="true" />
                 <p className="text-sm text-brown-700 dark:text-gray-200">
-                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from your lesson.
+                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from {learningContext.source === 'today' ? 'Today' : 'your lesson'}.
                 </p>
               </div>
             )}
@@ -707,10 +709,10 @@ export function MemoryMatch() {
 
             {/* Back to Games */}
             <Link
-              to="/games"
+              to={gameReturn.to}
               className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
             >
-              ← Back to Games
+              {gameReturn.label}
             </Link>
           </div>
         )}

@@ -4,7 +4,13 @@ import { buildLearningActivityProperties, getLearningDurationBucket } from './le
 describe('learning analytics allowlist', () => {
   it('emits only stable, answer-text-free properties', () => {
     const properties = buildLearningActivityProperties(
-      { topicId: 'greetings', categoryId: 'greetings', topicTitle: 'Greetings & Basics', source: 'lesson' },
+      {
+        topicId: 'greetings',
+        categoryId: 'greetings',
+        topicTitle: 'Greetings & Basics',
+        source: 'lesson',
+        returnTo: '/learning',
+      },
       { game_type: 'memory_match', score: 400, stars: 3, time_seconds: 74 },
     );
 

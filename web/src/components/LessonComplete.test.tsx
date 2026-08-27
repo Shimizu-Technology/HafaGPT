@@ -43,7 +43,30 @@ describe('LessonComplete level copy', () => {
     expect(screen.getByText('Practice what you learned')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: `Practice ${topic.title}` })).toHaveAttribute(
       'href',
-      '/games/memory?topic=greetings&category=greetings&source=lesson',
+      '/games/memory?topic=greetings&category=greetings&source=lesson&return_to=%2Flearning',
+    );
+  });
+
+  it('keeps a Today launch connected through lesson practice', () => {
+    const topic = BEGINNER_PATH[0];
+
+    render(
+      <MemoryRouter initialEntries={[
+        '/learn/greetings?topic=greetings&category=greetings&source=today&return_to=%2F',
+      ]}>
+        <LessonComplete
+          topic={topic}
+          topicIndex={1}
+          totalTopics={BEGINNER_PATH.length}
+          quizScore={90}
+          onNextTopic={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: `Practice ${topic.title}` })).toHaveAttribute(
+      'href',
+      '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F',
     );
   });
 });

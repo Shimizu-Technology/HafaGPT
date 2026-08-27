@@ -6,6 +6,7 @@ import type {
 } from '../hooks/useHomepageData';
 import type { UserPreferences } from '../hooks/useUserPreferences';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
+import { appRoutes } from './routes';
 
 export type TodayActivityKind = 'review' | 'lesson' | 'listen' | 'practice' | 'play';
 
@@ -43,6 +44,7 @@ function withTodayContext(path: string, topic: NonNullable<RecommendedData['topi
     topic: topic.id,
     category: topic.flashcard_category,
     source: 'today',
+    return_to: appRoutes.home,
   });
   return `${path}?${params.toString()}`;
 }
@@ -196,7 +198,7 @@ export function buildTodayPlan({
       : `Learn ${topic.title}`,
     description: topic.description,
     minutes: Math.min(8, Math.max(3, topic.estimated_minutes)),
-    to: `/learn/${topic.id}`,
+    to: withTodayContext(appRoutes.lesson(topic.id), topic),
   } : null;
 
   const listenActivity: TodayActivity | null = topic ? {
@@ -226,7 +228,7 @@ export function buildTodayPlan({
       title: `Play with ${topic.title}`,
       description: 'End with a quick memory challenge.',
       minutes: 3,
-      to: withTodayContext('/games/memory', topic),
+      to: withTodayContext(appRoutes.memoryGame(), topic),
     });
   }
 

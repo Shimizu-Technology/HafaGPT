@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { RotateCcw, Star, Trophy, type LucideIcon } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from '../LearnerPage';
 import { TTSDisclaimer } from '../TTSDisclaimer';
+import { getLearningGameReturn, readLearningGameContext } from '../../lib/lessonPractice';
 
 interface GamePageProps {
   children: ReactNode;
@@ -23,6 +24,8 @@ interface GamePageHeaderProps {
 
 export function GamePageHeader({ title, subtitle, icon, hasSpeech = false, trailing, onBack }: GamePageHeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const gameReturn = getLearningGameReturn(readLearningGameContext(location.search));
   const trailingContent = hasSpeech || trailing ? (
     <div className="flex items-center gap-1">
       {hasSpeech && <TTSDisclaimer variant="tooltip" />}
@@ -35,9 +38,9 @@ export function GamePageHeader({ title, subtitle, icon, hasSpeech = false, trail
       title={title}
       subtitle={subtitle}
       icon={icon}
-      backTo="/games"
-      backLabel="Back to games"
-      onBack={onBack ?? (() => navigate('/games'))}
+      backTo={gameReturn.to}
+      backLabel={gameReturn.label}
+      onBack={onBack ?? (() => navigate(gameReturn.to))}
       maxWidthClassName="max-w-2xl"
       trailing={trailingContent}
     />
@@ -84,6 +87,10 @@ interface GameResultProps {
 }
 
 export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: GameResultProps) {
+  const location = useLocation();
+  const learningContext = readLearningGameContext(location.search);
+  const gameReturn = getLearningGameReturn(learningContext);
+
   return (
     <section className="mx-auto max-w-md py-4 text-center" aria-labelledby="game-result-title">
       <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
@@ -116,10 +123,10 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: 
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again
         </button>
         <Link
-          to="/games"
+          to={gameReturn.to}
           className="flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
         >
-          More games
+          {learningContext ? gameReturn.label : 'More games'}
         </Link>
       </div>
     </section>

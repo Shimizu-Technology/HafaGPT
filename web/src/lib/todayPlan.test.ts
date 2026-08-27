@@ -63,6 +63,9 @@ describe('deterministic Today planner', () => {
 
     expect(audioFirst.activities[0].kind).toBe('listen');
     expect(independent.activities[0].kind).toBe('lesson');
+    expect(independent.activities[0].to).toBe(
+      '/learn/greetings?topic=greetings&category=greetings&source=today&return_to=%2F',
+    );
   });
 
   it('uses the remaining daily budget and returns a useful completion state', () => {
