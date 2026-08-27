@@ -3,16 +3,22 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
 import { PronunciationButton } from './PronunciationButton';
-import { Check, Languages, Lightbulb, MessageCircle, Play, RotateCcw, Send, Target, UserRound } from 'lucide-react';
+import { BookOpenCheck, Check, Circle, Languages, Lightbulb, MessageCircle, PartyPopper, Play, RotateCcw, Send, Sparkles, Target, UserRound } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { TTSDisclaimer } from './TTSDisclaimer';
+import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
+import { hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
 
 interface Message {
   id: string;
   role: 'character' | 'user' | 'system';
   chamorro: string;
   english?: string;
+  groundingStatus?: 'canonical_support' | 'source_support' | 'ai_only';
   feedback?: {
     corrections?: string[];
+    suggestions?: string[];
     encouragement?: string;
   };
 }
@@ -25,6 +31,7 @@ interface ConversationState {
   finalScore?: number;
 }
 
+/** Run a guided scenario while distinguishing authored content from AI feedback. */
 export function ConversationPractice() {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const navigate = useNavigate();
@@ -117,10 +124,7 @@ export function ConversationPractice() {
             objectives: scenario.objectives,
             useful_phrases: scenario.usefulPhrases.map(p => p.chamorro)
           },
-          conversation_history: conversation.messages.map(m => ({
-            role: m.role,
-            content: m.chamorro
-          })),
+          conversation_history: serializeConversationHistory(conversation.messages),
           user_message: userInput.trim(),
           turn_count: conversation.turnCount,
           user_id: user?.id
@@ -138,7 +142,12 @@ export function ConversationPractice() {
         role: 'character',
         chamorro: data.chamorro_response,
         english: data.english_translation,
-        feedback: data.feedback
+        feedback: data.feedback,
+        groundingStatus: data.grounding_status === 'canonical_support'
+          ? 'canonical_support'
+          : data.grounding_status === 'source_support'
+            ? 'source_support'
+            : 'ai_only',
       };
 
       setConversation(prev => ({
@@ -200,7 +209,7 @@ export function ConversationPractice() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 p-4">
         <div className="max-w-2xl mx-auto pt-20 text-center">
-          <div className="text-6xl mb-4">💬</div>
+          <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             Sign in Required
           </h1>
@@ -234,6 +243,7 @@ export function ConversationPractice() {
 
         {/* Content */}
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
+          <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} />
           {/* Scenario Card */}
           <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
             <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
@@ -281,6 +291,7 @@ export function ConversationPractice() {
                 <PhraseCard key={i} phrase={phrase} />
               ))}
             </div>
+            <TTSDisclaimer variant="inline" className="mt-4" />
           </div>
 
           {/* Start Button */}
@@ -302,7 +313,7 @@ export function ConversationPractice() {
         <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo="/practice" backLabel="Back to conversation scenarios" maxWidthClassName="max-w-2xl" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
-            <div className="text-6xl mb-4">🎉</div>
+            <PartyPopper className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Conversation Complete!
             </h1>
@@ -310,19 +321,19 @@ export function ConversationPractice() {
               {scenario.title}
             </p>
 
-            {/* Score */}
+            {/* AI practice estimate */}
             {conversation.finalScore !== undefined && (
               <div className="mb-6">
                 <div className="text-4xl font-bold text-coral-500 mb-2">
-                  {conversation.finalScore}/5 ⭐
+                  {conversation.finalScore}/5
                 </div>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {conversation.finalScore >= 4 ? 'Excellent work!' : 
-                   conversation.finalScore >= 3 ? 'Good job!' : 
-                   'Keep practicing!'}
+                  AI practice estimate—not a proficiency grade
                 </p>
               </div>
             )}
+
+            <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} className="mb-6 text-left" compact />
 
             {/* Objectives Completed */}
             <div className="text-left mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
@@ -334,7 +345,7 @@ export function ConversationPractice() {
                   const completed = conversation.objectivesCompleted.includes(obj);
                   return (
                     <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`}>
-                      {completed ? '✅' : '○'} {obj}
+                      {completed ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />} {obj}
                     </li>
                   );
                 })}
@@ -409,7 +420,7 @@ export function ConversationPractice() {
       {showPhrases && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
           <div className="max-w-2xl mx-auto">
-            <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200 mb-2">💡 Useful Phrases:</p>
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-yellow-800 dark:text-yellow-200"><Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />Useful phrases</p>
             <div className="flex flex-wrap gap-2">
               {scenario.usefulPhrases.slice(0, 5).map((phrase, i) => (
                 <button
@@ -439,7 +450,7 @@ export function ConversationPractice() {
           
           {isLoading && (
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-              <div className="animate-pulse">💬</div>
+              <MessageCircle className="h-4 w-4 animate-pulse" aria-hidden="true" />
               <span className="text-sm">{scenario.characterName} is typing...</span>
             </div>
           )}
@@ -479,7 +490,7 @@ export function ConversationPractice() {
   );
 }
 
-// Phrase Card Component
+/** Display an authored useful phrase with translation and pronunciation support. */
 function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   return (
     <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
@@ -501,8 +512,8 @@ function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   );
 }
 
-// Message Bubble Component
-function MessageBubble({ 
+/** Render one practice message and any non-authoritative AI feedback. */
+function MessageBubble({
   message, 
   characterName,
   showTranslation 
@@ -523,6 +534,11 @@ function MessageBubble({
       </div>
     );
   }
+
+  const feedbackSuggestions = [
+    ...(message.feedback?.suggestions ?? []),
+    ...(message.feedback?.corrections ?? []),
+  ];
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -553,22 +569,34 @@ function MessageBubble({
           )}
         </div>
 
+        {!isUser && message.groundingStatus && (
+          <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+            {message.groundingStatus === 'canonical_support' ? (
+              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Canonical term matches included</>
+            ) : message.groundingStatus === 'source_support' ? (
+              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Dictionary source matches included</>
+            ) : (
+              <><Sparkles className="h-3 w-3" aria-hidden="true" />AI-generated practice response</>
+            )}
+          </p>
+        )}
+
         {/* Feedback (for character messages after user input) */}
-        {message.feedback && (
+        {message.feedback && hasVisiblePracticeFeedback(feedbackSuggestions, message.feedback.encouragement) && (
           <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            {message.feedback.corrections && message.feedback.corrections.length > 0 && (
+            {feedbackSuggestions.length > 0 && (
               <div className="mb-2">
-                <p className="text-xs font-medium text-blue-800 dark:text-blue-200 mb-1">📝 Suggestions:</p>
-                <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                  {message.feedback.corrections.map((c, i) => (
-                    <li key={i}>• {c}</li>
+                <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />AI suggestions</p>
+                <ul className="list-disc space-y-1 pl-4 text-sm text-blue-700 dark:text-blue-300">
+                  {feedbackSuggestions.map((suggestion, index) => (
+                    <li key={index}>{suggestion}</li>
                   ))}
                 </ul>
               </div>
             )}
             {message.feedback.encouragement && (
-              <p className="text-sm text-green-700 dark:text-green-300">
-                ✨ {message.feedback.encouragement}
+              <p className="flex items-start gap-1.5 text-sm text-green-700 dark:text-green-300">
+                <Sparkles className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />{message.feedback.encouragement}
               </p>
             )}
           </div>

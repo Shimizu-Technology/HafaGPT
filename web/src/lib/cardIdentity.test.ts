@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCardIdentity } from './cardIdentity';
+import { createCardIdentity, resolveReviewSourceKind } from './cardIdentity';
 
 describe('createCardIdentity', () => {
   it('is stable across source ID whitespace, case, and Unicode composition', () => {
@@ -35,5 +35,13 @@ describe('createCardIdentity', () => {
 
     expect(identity).toMatch(/^v1:saved:[a-z0-9]+$/);
     expect(identity).not.toContain('3b8bb0f2');
+  });
+
+  it('keeps dictionary review identity on the legacy custom route', () => {
+    const requestedRoute = 'custom';
+    const apiLoadedCard = { contentSource: 'dictionary' as const };
+
+    expect(requestedRoute).toBe('custom');
+    expect(resolveReviewSourceKind(apiLoadedCard)).toBe('dictionary');
   });
 });

@@ -710,9 +710,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('days', 1),
         type: 'multiple_choice',
         question: 'What is "Sunday" in Chamorro?',
-        options: ['Lunes', 'Såbalu', 'Dåmenggo', 'Betnes'],
-        correctAnswer: 'Dåmenggo',
-        explanation: '"Dåmenggo" means Sunday — it\'s the traditional first day of the week.'
+        options: ['Lunes', 'Sǻbalu', 'Damenggo', 'Betnes'],
+        correctAnswer: 'Damenggo',
+        explanation: '"Damenggo" is the current modern Guåhan form for Sunday; "Hachåni" is the traditional form.'
       },
       {
         id: id('days', 2),
@@ -735,10 +735,10 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('days', 4),
         type: 'fill_blank',
         question: 'Complete: "___ " (Saturday)',
-        correctAnswer: 'Såbalu',
-        acceptableAnswers: ['Såbalu', 'Sabalu', 'såbalu', 'sabalu'],
+        correctAnswer: 'Sǻbalu',
+        acceptableAnswers: ['Sǻbalu', 'Såbalu', 'Sabalu', 'sǻbalu', 'såbalu', 'sabalu'],
         hint: 'Similar to Spanish "Sábado"',
-        explanation: '"Såbalu" means Saturday.'
+        explanation: '"Sǻbalu" is the current modern Guåhan form for Saturday; "Fitåni" is the traditional form.'
       },
       {
         id: id('days', 5),
@@ -777,9 +777,9 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('month', 1),
         type: 'multiple_choice',
         question: 'What is "January" in Chamorro?',
-        options: ['Febreru', 'Eneru', 'Mårso', 'Abrit'],
-        correctAnswer: 'Eneru',
-        explanation: '"Eneru" means January.'
+        options: ['Fibreru', 'Ineru', 'Måtso', 'Abrít'],
+        correctAnswer: 'Ineru',
+        explanation: '"Ineru" is January in the Kumisión\'s current Guåhan list.'
       },
       {
         id: id('month', 2),
@@ -793,35 +793,35 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
         id: id('month', 3),
         type: 'type_answer',
         question: 'Type the Chamorro word for "July"',
-        correctAnswer: 'Huliu',
-        acceptableAnswers: ['Huliu', 'huliu', 'HULIU'],
+        correctAnswer: 'Hulio',
+        acceptableAnswers: ['Hulio', 'hulio', 'HULIO', 'Huliu', 'huliu'],
         hint: 'Similar to Spanish "Julio"',
-        explanation: '"Huliu" means July.'
+        explanation: '"Hulio" is July in the Kumisión\'s current Guåhan list.'
       },
       {
         id: id('month', 4),
         type: 'fill_blank',
         question: 'Complete: "___" (June)',
-        correctAnswer: 'Huniu',
-        acceptableAnswers: ['Huniu', 'huniu', 'HUNIU'],
-        hint: 'Liberation Day is in this month',
-        explanation: '"Huniu" means June — Liberation Day is June 21.'
+        correctAnswer: 'Hunño',
+        acceptableAnswers: ['Hunño', 'hunño', 'HUNÑO', 'Huniu', 'huniu'],
+        hint: 'It begins with H',
+        explanation: '"Hunño" is June in the Kumisión\'s current Guåhan list.'
       },
       {
         id: id('month', 5),
         type: 'multiple_choice',
-        question: 'Which month is "Oktubre"?',
+        question: 'Which month is "Oktubri"?',
         options: ['August', 'September', 'October', 'November'],
         correctAnswer: 'October',
-        explanation: '"Oktubre" means October.'
+        explanation: '"Oktubri" is October in the Kumisión\'s current Guåhan list.'
       },
       {
         id: id('month', 6),
         type: 'multiple_choice',
-        question: 'What is "Ågosto" in English?',
+        question: 'What is "Agosto" in English?',
         options: ['July', 'August', 'September', 'October'],
         correctAnswer: 'August',
-        explanation: '"Ågosto" means August.'
+        explanation: '"Agosto" is August in the Kumisión\'s current Guåhan list.'
       }
     ]
   },
@@ -1503,4 +1503,3 @@ export function checkAnswer(question: QuizQuestion, userAnswer: string): boolean
   
   return result.isCorrect;
 }
-

@@ -7,12 +7,18 @@ import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
-import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
+import { createCardIdentity, resolveReviewSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { browserStorage } from '../lib/browserStorage';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import {
+  getFlashcardTrustForCard,
+  type FlashcardContentSource,
+} from '../data/contentTrust';
 
 interface FlashcardData {
+  contentSource: FlashcardContentSource;
   sourceId?: string;
   front: string;
   back: string;
@@ -22,7 +28,7 @@ interface FlashcardData {
 }
 
 interface FlashcardsResponse {
-  flashcards: FlashcardData[];
+  flashcards: Array<Omit<FlashcardData, 'contentSource'>>;
   topic: string;
   count: number;
 }
@@ -39,6 +45,7 @@ const topicTitles: Record<string, string> = {
   'common-phrases': 'Everyday Phrases'
 };
 
+/** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();
@@ -127,6 +134,7 @@ export function FlashcardViewer() {
     const deck = DEFAULT_FLASHCARD_DECKS[topic];
     if (deck) {
       const formattedCards: FlashcardData[] = deck.cards.map((card, index) => ({
+        contentSource: 'curated',
         sourceId: `curated:${topic}:${index}`,
         front: card.front,
         back: card.back,
@@ -173,6 +181,7 @@ export function FlashcardViewer() {
     if (cardType === 'dictionary' && dictionaryData?.cards && dictionaryData.cards.length > 0) {
       // Map dictionary cards to FlashcardData format
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
+        contentSource: 'dictionary',
         sourceId: card.source_id,
         front: card.front,
         back: card.back,
@@ -242,14 +251,18 @@ export function FlashcardViewer() {
       const existingFronts = new Set(cardsToCheck.map(c => c.front.toLowerCase().trim()));
       const existingBacks = new Set(cardsToCheck.map(c => c.back.toLowerCase().trim()));
       
-      const uniqueNewCards = data.flashcards.filter(card => {
+      const generatedCards: FlashcardData[] = data.flashcards.map((card) => ({
+        ...card,
+        contentSource: 'custom',
+      }));
+      const uniqueNewCards = generatedCards.filter(card => {
         const frontLower = card.front.toLowerCase().trim();
         const backLower = card.back.toLowerCase().trim();
         return !existingFronts.has(frontLower) && !existingBacks.has(backLower);
       });
       
-      if (uniqueNewCards.length < data.flashcards.length) {
-        console.warn(`🎴 [FRONTEND] Filtered out ${data.flashcards.length - uniqueNewCards.length} duplicate(s) from batch ${batchCountRef.current + 1}`);
+      if (uniqueNewCards.length < generatedCards.length) {
+        console.warn(`🎴 [FRONTEND] Filtered out ${generatedCards.length - uniqueNewCards.length} duplicate(s) from batch ${batchCountRef.current + 1}`);
       }
       
       setNewCards(uniqueNewCards);
@@ -320,7 +333,7 @@ export function FlashcardViewer() {
 
     setReviewError(null);
     setReviewSaved(false);
-    const sourceKind: CardSourceKind = cardTypeParam === 'custom' ? 'custom' : cardType;
+    const sourceKind = resolveReviewSourceKind(currentCard);
 
     try {
       await recordReviewMutation.mutateAsync({
@@ -469,12 +482,22 @@ export function FlashcardViewer() {
   const currentCard = flashcards[currentIndex];
   const deckTitle = topicTitles[topic || ''] || dictionaryData?.category?.title || topic || 'Flashcards';
   const progress = ((currentIndex + 1) / flashcards.length) * 100;
+  const contentTrust = getFlashcardTrustForCard(
+    currentCard,
+    topic || '',
+    dictionaryData?.trust,
+  );
+  const deckSourceLabel = currentCard.contentSource === 'curated'
+    ? 'Guided deck'
+    : currentCard.contentSource === 'custom'
+      ? 'Custom practice deck'
+      : 'Dictionary deck';
 
   return (
     <LearnerPageShell className="flex flex-col">
       <LearnerPageHeader
         title={deckTitle}
-        subtitle={`${cardType === 'curated' ? 'Guided deck' : 'Dictionary deck'} · Card ${currentIndex + 1} of ${flashcards.length}`}
+        subtitle={`${deckSourceLabel} · Card ${currentIndex + 1} of ${flashcards.length}`}
         icon={Layers3}
         backTo="/flashcards"
         backLabel="Back to flashcard decks"
@@ -511,6 +534,7 @@ export function FlashcardViewer() {
         onTouchEnd={onTouchEnd}
       >
         <div className="w-full max-w-md">
+          <ContentTrustNote trust={contentTrust} className="mb-4" compact />
           <Flashcard
             front={currentCard.front}
             back={currentCard.back}

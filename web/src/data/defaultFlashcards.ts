@@ -739,10 +739,10 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Learn the days of the week in Chamorro',
     cards: [
       {
-        front: 'Dåmenggo',
+        front: 'Damenggo',
         back: 'Sunday',
         pronunciation: 'dah-MENG-goh',
-        example: 'The traditional first day of the week'
+        example: 'Modern Guåhan form; traditional form: Hachåni'
       },
       {
         front: 'Lunes',
@@ -757,7 +757,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'From Spanish "Martes"'
       },
       {
-        front: 'Metkoles',
+        front: 'Métkoles',
         back: 'Wednesday',
         pronunciation: 'meht-KOH-lehs',
         example: 'From Spanish "Miércoles"'
@@ -775,7 +775,7 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'From Spanish "Viernes"'
       },
       {
-        front: 'Såbalu',
+        front: 'Sǻbalu',
         back: 'Saturday',
         pronunciation: 'SAH-bah-loo',
         example: 'From Spanish "Sábado"'
@@ -807,25 +807,25 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
     description: 'Learn the months and seasons in Chamorro',
     cards: [
       {
-        front: 'Eneru',
+        front: 'Ineru',
         back: 'January',
         pronunciation: 'eh-NEH-roo',
-        example: 'Traditional name: Tumaiguini'
+        example: 'Current Guåhan form in the Kumisión list'
       },
       {
-        front: 'Febreru',
+        front: 'Fibreru',
         back: 'February',
         pronunciation: 'feh-BREH-roo',
-        example: 'Also spelled Fibreru'
+        example: 'Current Guåhan form in the Kumisión list'
       },
       {
-        front: 'Mårso',
+        front: 'Måtso',
         back: 'March',
         pronunciation: 'MAHR-soh',
-        example: 'Beginning of dry season'
+        example: 'Current Guåhan form in the Kumisión list'
       },
       {
-        front: 'Abrit',
+        front: 'Abrít',
         back: 'April',
         pronunciation: 'AH-breet',
         example: 'From Spanish "Abril"'
@@ -837,19 +837,19 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Month of fiestas and celebrations'
       },
       {
-        front: 'Huniu',
+        front: 'Hunño',
         back: 'June',
-        pronunciation: 'HOO-nee-oo',
-        example: 'Liberation Day is June 21'
+        pronunciation: 'HOON-nyoh',
+        example: 'Current Guåhan form in the Kumisión list'
       },
       {
-        front: 'Huliu',
+        front: 'Hulio',
         back: 'July',
-        pronunciation: 'HOO-lee-oo',
-        example: 'Start of rainy season (Umåtto)'
+        pronunciation: 'HOO-lyoh',
+        example: 'Guam Liberation Day is July 21'
       },
       {
-        front: 'Ågosto',
+        front: 'Agosto',
         back: 'August',
         pronunciation: 'ah-GOHS-toh',
         example: 'From Spanish "Agosto"'
@@ -861,16 +861,16 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Peak typhoon season'
       },
       {
-        front: 'Oktubre',
+        front: 'Oktubri',
         back: 'October',
         pronunciation: 'ohk-TOO-breh',
-        example: 'Traditional name: Faguålo\''
+        example: 'Current Guåhan form in the Kumisión list'
       },
       {
-        front: 'Nobiembre',
+        front: 'Nubiembre',
         back: 'November',
         pronunciation: 'noh-bee-EHM-breh',
-        example: 'Traditional name: Sumongsong'
+        example: 'Nubembre is also listed as a current variant'
       },
       {
         front: 'Disiembre',
@@ -1159,10 +1159,10 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         example: 'Bunitu i flores. — The flower is beautiful.'
       },
       {
-        front: 'Fanomnågan',
+        front: 'Fañomnåkan',
         back: 'Dry Season',
-        pronunciation: 'fah-nohm-NAH-gahn',
-        example: 'Maolek i tiempo gi fanomnågan. — The weather is good in dry season.'
+        pronunciation: 'fah-nyohm-NAH-kahn',
+        example: 'Maolek i tiempo gi fañomnåkan. — The weather is good in dry season.'
       }
     ]
   },
@@ -1522,4 +1522,3 @@ export const hasDefaultCards = (topic: string): boolean => {
 export const getDefaultCards = (topic: string): DefaultFlashcard[] | null => {
   return DEFAULT_FLASHCARD_DECKS[topic]?.cards || null;
 };
-

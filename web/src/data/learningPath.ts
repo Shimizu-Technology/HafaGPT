@@ -58,7 +58,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     flashcardCategory: 'numbers',
     quizCategory: 'numbers',
     intro: {
-      culturalContext: 'Chamorro numbers have roots in the ancient counting system used by the Chamorro people. While Spanish numbers are also used in daily life, learning the traditional Chamorro numbers connects you to the island\'s heritage.',
+      culturalContext: 'This lesson teaches the modern Chamorro number forms used in everyday counting, including Unu, Dos, and Tres. Guåhan also has a distinct traditional counting system with forms such as Håcha and Hugua.',
       keyPhrases: ['Unu — One', 'Dos — Two', 'Tres — Three'],
       tip: 'Practice counting everyday objects around you — mangga (mangoes), niyok (coconuts), or palao\'an (women)!',
     },
@@ -90,7 +90,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     flashcardCategory: 'family',
     quizCategory: 'family',
     intro: {
-      culturalContext: 'Family (familia) is the foundation of Chamorro society. Extended family gatherings, called "fiestas," bring together multiple generations. Respect for elders (manamko\') is deeply valued.',
+      culturalContext: 'Family (familia) is central to Chamorro society. Extended-family gatherings bring together multiple generations, while village fiestas are community celebrations commonly connected to a patron saint. Respect for elders (manamko\') is deeply valued.',
       keyPhrases: ['Nåna — Mother', 'Tåta — Father', 'Che\'lu — Sibling'],
       tip: 'In Chamorro culture, cousins are often called "che\'lu" (sibling) because family bonds are so close!',
     },
@@ -124,7 +124,7 @@ export const BEGINNER_PATH: LearningTopic[] = [
     intro: {
       culturalContext: 'Guam is home to unique wildlife. The ko\'ko\' (Guam rail) is an endemic bird that nearly went extinct. Carabao (water buffalo) are symbols of Chamorro heritage, once used for farming.',
       keyPhrases: ['Ga\'lågu — Dog', 'Guihan — Fish', 'Paluma — Bird'],
-      tip: 'The ko\'ko\' bird is so special to Guam that it\'s featured on the island\'s seal. It\'s called "totot" in Chamorro after its call!',
+      tip: 'The ko\'ko\' is the Guam rail, an endemic bird brought back from the edge of extinction. The totot is a different native bird: the Mariana fruit dove.',
     },
     suggestedGames: ['memory', 'sound-match'],
   },
@@ -159,7 +159,7 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     flashcardCategory: 'questions',
     quizCategory: 'questions',
     intro: {
-      culturalContext: 'Asking questions is essential for any conversation. In Chamorro, question words are placed at the beginning of sentences, similar to English. Mastering these opens up real dialogue!',
+      culturalContext: 'Asking questions is essential for conversation. Chamorro question words often introduce the information being requested, but sentence structure and agreement do not simply follow English patterns.',
       keyPhrases: ['Håfa — What', 'Hayi — Who', 'Manu — Where'],
       tip: 'Notice how "Håfa" appears in "Håfa Adai" — the full phrase is the source-backed everyday greeting for hello/hi.',
     },
@@ -191,9 +191,9 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     flashcardCategory: 'days',
     quizCategory: 'days',
     intro: {
-      culturalContext: 'The Chamorro days of the week come from Spanish, reflecting centuries of colonial influence. Sunday (Dåmenggo) is especially important as the day for church and family gatherings.',
-      keyPhrases: ['Lunes — Monday', 'Betnes — Friday', 'Dåmenggo — Sunday'],
-      tip: 'The week starts with "Dåmenggo" (Sunday) in traditional Chamorro calendars, reflecting the importance of church and rest.',
+      culturalContext: 'Current Guåhan references record both traditional and modern day names. This lesson starts with modern forms such as Damenggo and Lunes, while keeping traditional forms such as Hachåni and Huguåni visible as part of the language\'s history.',
+      keyPhrases: ['Lunes — Monday', 'Betnes — Friday', 'Damenggo — Sunday'],
+      tip: 'The Kumisión list pairs each traditional form with a modern form: Hachåni/Damenggo for Sunday, Huguåni/Lunes for Monday, and so on.',
     },
     suggestedGames: ['memory', 'falling'],
   },
@@ -207,8 +207,8 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     flashcardCategory: 'months',
     quizCategory: 'months',
     intro: {
-      culturalContext: 'Guam has two seasons: the dry season (Fañomnåkan) from January to June, and the rainy season (Umåtto) from July to December. Month names come from Spanish but are adapted to Chamorro pronunciation.',
-      keyPhrases: ['Eneru — January', 'Huliu — July', 'Disiembre — December'],
+      culturalContext: 'Guåhan has two broad seasons: fañomnåkan (dry season) and fanuchånan (wet season). The modern month names reflect Spanish influence and the forms in this lesson follow the Kumisión\'s current Guåhan list.',
+      keyPhrases: ['Ineru — January', 'Hulio — July', 'Disiembre — December'],
       tip: 'Guam\'s festive season peaks in December (Disiembre) with fiestas, Christmas celebrations, and community gatherings.',
     },
     suggestedGames: ['memory', 'scramble'],
@@ -255,7 +255,7 @@ export const INTERMEDIATE_PATH: LearningTopic[] = [
     flashcardCategory: 'sentences',
     quizCategory: 'sentences',
     intro: {
-      culturalContext: 'Now it\'s time to combine everything! Chamorro sentences follow patterns similar to English but with some unique features. Modal words like "siña" (can) and "malago\'" (want) are essential.',
+      culturalContext: 'Now it\'s time to combine vocabulary into short sentences. Chamorro commonly uses predicate-first patterns and has agreement and focus features that differ from English. Modal words like "siña" (can) and "malago\'" (want) are useful starting points.',
       keyPhrases: ['Guahu si... — I am...', 'Malago\' yu\' — I want', 'Ti siña — Cannot'],
       tip: 'Practice saying "Malago\' yu\' + noun" for "I want (something)." It\'s one of the most practical patterns!',
     },
@@ -291,7 +291,7 @@ export const ADVANCED_PATH: LearningTopic[] = [
     flashcardCategory: 'weather',
     quizCategory: 'weather',
     intro: {
-      culturalContext: 'Weather is a constant topic on island! Guam has two main seasons: dry season (fanomnågan) and rainy season (fanuchanan). Typhoons are also part of island life.',
+      culturalContext: 'Weather is a constant topic on island! Guam has two broad seasons: dry season (fañomnåkan) and wet season (fanuchånan). Typhoons are also part of island life.',
       keyPhrases: ['Atdao — Sun', 'Uchan — Rain', 'Manglo\' — Wind'],
       tip: 'Start conversations about weather: "Maolek i tiempo!" (The weather is nice!)',
     },

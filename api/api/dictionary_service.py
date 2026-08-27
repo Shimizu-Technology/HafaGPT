@@ -10,12 +10,120 @@ import os
 import logging
 import unicodedata
 import re
+from functools import lru_cache
 from typing import Optional
 from pathlib import Path
 
 from .time_utils import get_guam_date
 
 logger = logging.getLogger(__name__)
+
+API_ROOT = Path(__file__).resolve().parents[1]
+CANONICAL_VOCABULARY_PATH = API_ROOT / "language_content" / "canonical_vocabulary.json"
+
+DICTIONARY_TRUST = {
+    "level": "source_backed",
+    "label": "Source-backed",
+    "summary": (
+        "This entry comes from the Local Revised Chamorro Dictionary snapshot. "
+        "Guåhan spelling may differ, so regional variants remain discoverable."
+    ),
+    "sources": [
+        {
+            "name": "Local Revised Chamorro Dictionary snapshot",
+            "url": "https://natibunmarianas.org/dictionary-introduction/",
+        }
+    ],
+    "region": "CNMI",
+    "orthography": "CNMI 2010",
+    "independentlyReviewed": False,
+    "notes": ["Snapshot provenance and reuse permission are still being completed."],
+}
+
+DEVELOPING_CORPUS_TRUST = {
+    "level": "developing",
+    "label": "Developing material",
+    "summary": (
+        "This word remains available from HåfaGPT's learning corpus while its exact "
+        "source lineage and regional form are being strengthened."
+    ),
+    "sources": [{"name": "HåfaGPT learning corpus"}],
+    "region": "Mixed or not yet fully labeled",
+    "orthography": "Source-specific",
+    "independentlyReviewed": False,
+}
+
+
+def _word_of_day_pools(words: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Partition daily words without dropping developing canonical entries."""
+
+    preferred = [
+        word
+        for word in words
+        if word["canonical_entry"]
+        and word["canonical_entry"].get("review_status")
+        in {"verified", "source_backed", "variant"}
+        and word["canonical_entry"].get("confidence") in {"high", "medium"}
+    ]
+    broader = [word for word in words if word not in preferred]
+    return preferred, broader
+
+
+@lru_cache(maxsize=1)
+def _canonical_trust_index() -> dict[str, dict]:
+    """Index canonical terms and safe recorded variants for learner-facing trust metadata."""
+
+    if not CANONICAL_VOCABULARY_PATH.exists():
+        return {}
+    payload = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
+    index: dict[str, dict] = {}
+    for entry in payload.get("entries", []):
+        terms = [entry.get("canonical_chamorro"), entry.get("recommended_teaching_term")]
+        terms.extend(
+            variant.get("term")
+            for variant in entry.get("variants", [])
+            if variant.get("status") == "source_backed"
+        )
+        for term in terms:
+            if term:
+                index.setdefault(normalize_chamorro(term), entry)
+    return index
+
+
+def _canonical_trust(entry: dict) -> dict:
+    """Convert a canonical vocabulary entry into learner-facing trust metadata."""
+
+    review_status = entry.get("review_status", "needs_review")
+    source_names = []
+    for citation in entry.get("source_citations", []):
+        source_name = citation.get("source")
+        if source_name and source_name not in source_names:
+            source_names.append(source_name)
+
+    is_source_backed = review_status in {"verified", "source_backed", "variant"}
+    trust = {
+        "level": "source_backed" if is_source_backed else "developing",
+        "label": "Source-backed" if is_source_backed else "Developing material",
+        "summary": (
+            "This word matches a HåfaGPT canonical entry supported by named references."
+            if is_source_backed
+            else "This word is recorded in HåfaGPT's canonical layer with a concern that still needs resolution."
+        ),
+        "sources": [{"name": name} for name in source_names[:3]]
+        or [{"name": "HåfaGPT canonical vocabulary"}],
+        "region": "Guåhan and CNMI source lineage",
+        "orthography": "Entry-specific",
+        # Canonical/source verification is not the same thing as an independent
+        # educator or native-speaker review of the learner-facing material.
+        "independentlyReviewed": False,
+        "notes": [
+            f"Canonical confidence: {entry.get('confidence', 'unknown')}.",
+            "The canonical entry is source-verified; independent educator or native-speaker review has not been completed."
+            if review_status == "verified"
+            else "Independent educator or native-speaker review has not been completed.",
+        ],
+    }
+    return trust
 
 
 def normalize_chamorro(text: str) -> str:
@@ -203,7 +311,8 @@ class DictionaryService:
                         "chamorro": word,
                         "part_of_speech": data.get("PartOfSpeech", ""),
                         "definition": data.get("Definition", ""),
-                        "examples": self._extract_examples(data.get("Other", []))
+                        "examples": self._extract_examples(data.get("Other", [])),
+                        "trust": DICTIONARY_TRUST,
                     }
                 else:
                     # Simple string definition
@@ -212,7 +321,8 @@ class DictionaryService:
                         "chamorro": word,
                         "part_of_speech": "",
                         "definition": str(data),
-                        "examples": []
+                        "examples": [],
+                        "trust": DICTIONARY_TRUST,
                     }
                 self._word_list.append(entry)
             
@@ -313,12 +423,26 @@ class DictionaryService:
             color_words = ["red", "blue", "green", "yellow", "white", "black", "orange", "pink", "purple", "brown", "gray", "grey"]
             for color in color_words:
                 # Definition starts with or is primarily about the color
-                if definition.startswith(color) or f"color: {color}" in definition or f"colour: {color}" in definition:
+                if re.match(rf"^{re.escape(color)}\b", definition) or f"color: {color}" in definition or f"colour: {color}" in definition:
                     return True
                 # Or the word is a color adjective
-                if part_of_speech in ["adj.", "adj"] and color in definition[:30]:
+                if part_of_speech in ["adj.", "adj"] and re.search(rf"\b{re.escape(color)}\b", definition[:40]):
                     return True
             return False
+
+        # === GREETINGS: Match greeting meanings, not plants such as "morning glory" ===
+        if category_id == "greetings":
+            greeting_meanings = (
+                "hello", "hi", "goodbye", "farewell", "thank you", "thanks",
+                "please", "excuse me", "sorry", "welcome", "good morning",
+                "good afternoon", "good evening", "good night", "greeting",
+            )
+            primary_meaning = re.split(r"[;,]", definition, maxsplit=1)[0].strip()
+            return any(
+                primary_meaning == meaning
+                or re.match(rf"^{re.escape(meaning)}\b", definition)
+                for meaning in greeting_meanings
+            )
         
         # === FAMILY: Strict matching - must be about actual family relationships ===
         if category_id == "family":
@@ -382,6 +506,8 @@ class DictionaryService:
         
         # === ANIMALS: Strict matching ===
         if category_id == "animals":
+            if definition.startswith(("fish trap", "fishing line", "fishing pole", "fish net", "fish spear")):
+                return False
             # Must be about an actual animal
             animal_terms = ["dog", "cat", "bird", "pig", "chicken", "cow", "horse", "buffalo",
                            "crab", "turtle", "lizard", "gecko", "fish", "goat", "deer", "rat", "mouse",
@@ -420,6 +546,17 @@ class DictionaryService:
                     if keyword in definition:
                         return True
             return False
+
+        # === PHRASES: Keep interjections and complete meanings, not broad substrings ===
+        if category_id == "phrases":
+            phrase_meanings = {
+                "yes", "no", "maybe", "perhaps", "where", "what", "when",
+                "why", "how", "who", "cannot", "can not", "help", "thank you",
+                "you're welcome", "you are welcome", "i understand", "i don't understand",
+                "i do not understand", "excuse me", "please", "sorry",
+            }
+            primary_meaning = re.split(r"[;,]", definition, maxsplit=1)[0].strip(" .")
+            return primary_meaning in phrase_meanings
         
         # === DEFAULT: Standard keyword matching with filtering ===
         for keyword in keywords:
@@ -612,14 +749,16 @@ class DictionaryService:
                     "chamorro": word,
                     "part_of_speech": data.get("PartOfSpeech", ""),
                     "definition": data.get("Definition", ""),
-                    "examples": self._extract_examples(data.get("Other", []))
+                    "examples": self._extract_examples(data.get("Other", [])),
+                    "trust": DICTIONARY_TRUST,
                 }
             else:
                 return {
                     "chamorro": word,
                     "part_of_speech": "",
                     "definition": str(data),
-                    "examples": []
+                    "examples": [],
+                    "trust": DICTIONARY_TRUST,
                 }
         
         # Try case-insensitive match
@@ -766,12 +905,14 @@ class DictionaryService:
                 "front": word["chamorro"],
                 "back": word["definition"],
                 "part_of_speech": word.get("part_of_speech", ""),
-                "example": example
+                "example": example,
+                "trust": word.get("trust", DICTIONARY_TRUST),
             })
         
         return {
             "cards": flashcards,
             "total": len(good_words),
+            "trust": DICTIONARY_TRUST,
             "category": {
                 "id": category_id,
                 "title": cat_info.get("title", ""),
@@ -820,6 +961,7 @@ class DictionaryService:
         # Build list of good words directly from manifest
         # This ensures we ONLY use pre-generated audio words
         good_words = []
+        canonical_index = _canonical_trust_index()
         for chamorro, word_data in manifest_words.items():
             # Skip blocklisted words
             if chamorro.lower() in blocklist:
@@ -842,6 +984,13 @@ class DictionaryService:
             # Skip proper names
             if 'nickname' in english_lower or 'proper name' in english_lower:
                 continue
+
+            canonical_entry = canonical_index.get(normalize_chamorro(chamorro))
+            trust = (
+                _canonical_trust(canonical_entry)
+                if canonical_entry
+                else DEVELOPING_CORPUS_TRUST
+            )
             
             # Create entry compatible with existing format
             good_words.append({
@@ -849,7 +998,10 @@ class DictionaryService:
                 "definition": english,
                 "category": word_data.get("category", "vocabulary"),
                 "part_of_speech": "",
-                "examples": []
+                "examples": [],
+                "trust": trust,
+                "canonical_entry": canonical_entry,
+                "audio_review_status": word_data.get("review_status", "unknown"),
             })
         
         logger.info(f"📢 [WOTD] {len(good_words)} words available for Word of the Day")
@@ -866,15 +1018,24 @@ class DictionaryService:
                     "english": "Hello! How are you?"
                 },
                 "category": "Greetings & Basics",
-                "date": today.isoformat()
+                "date": today.isoformat(),
+                "trust": DEVELOPING_CORPUS_TRUST,
+                "audio_review_status": "unknown",
             }
         
-        # Use hash of year + day to get consistent but varied selection
-        # This ensures the same word shows for everyone on the same day
+        # Prefer canonical source-backed terms on most days without removing the
+        # broader learning corpus from the rotation. Every fifth Guam calendar day
+        # intentionally draws from the broader pool when one is available.
+        preferred_words, broader_words = _word_of_day_pools(good_words)
+        use_broader_pool = day_of_year % 5 == 0 and bool(broader_words)
+        selection_pool = broader_words if use_broader_pool else (preferred_words or good_words)
+
+        # Use hash of year + day to get a deterministic selection so everyone
+        # sees the same word on the same Guam calendar day.
         seed = hashlib.md5(f"{year}-{day_of_year}".encode()).hexdigest()
-        index = int(seed, 16) % len(good_words)
+        index = int(seed, 16) % len(selection_pool)
         
-        word = good_words[index]
+        word = selection_pool[index]
         
         logger.info(f"📢 [WOTD] Selected: {word['chamorro']} = {word['definition']}")
         
@@ -884,7 +1045,9 @@ class DictionaryService:
             "part_of_speech": word.get("part_of_speech", ""),
             "example": None,  # Manifest words don't have examples
             "category": word.get("category", "Vocabulary"),
-            "date": today.isoformat()
+            "date": today.isoformat(),
+            "trust": word["trust"],
+            "audio_review_status": word["audio_review_status"],
         }
     
     def generate_quiz_questions(self, category_id: str, count: int = 10, question_types: list = None) -> dict:
@@ -934,20 +1097,33 @@ class DictionaryService:
         random.shuffle(good_words)
         selected_words = good_words[:count]
         
+        def primary_definition(entry: dict) -> str:
+            """Use a concise primary gloss so quiz choices stay readable and distinct."""
+            return re.split(r"[;,]", entry["definition"], maxsplit=1)[0].strip()
+
         questions = []
         for i, word in enumerate(selected_words):
             q_type = question_types[i % len(question_types)]
+            correct_gloss = primary_definition(word)
             
             if q_type == "multiple_choice":
-                # Generate wrong answers from other words
-                other_words = [w for w in good_words if w != word]
-                random.shuffle(other_words)
-                wrong_answers = [w["definition"][:50] for w in other_words[:3]]
-                
+                # Generate unique, concise distractors from other entries.
+                other_glosses_by_key: dict[str, str] = {}
+                for other in good_words:
+                    if other == word:
+                        continue
+                    other_gloss = primary_definition(other)
+                    other_key = other_gloss.casefold()
+                    if other_key != correct_gloss.casefold():
+                        other_glosses_by_key.setdefault(other_key, other_gloss)
+                other_glosses = list(other_glosses_by_key.values())
+                random.shuffle(other_glosses)
+                if len(other_glosses) < 3:
+                    continue
                 # Create options with correct answer
-                options = wrong_answers + [word["definition"][:50]]
+                options = other_glosses[:3] + [correct_gloss]
                 random.shuffle(options)
-                correct_index = options.index(word["definition"][:50])
+                correct_index = options.index(correct_gloss)
                 
                 questions.append({
                     "id": f"q{i+1}",
@@ -957,12 +1133,13 @@ class DictionaryService:
                     "correct_answer": correct_index,
                     "explanation": f"'{word['chamorro']}' means '{word['definition']}'",
                     "chamorro_word": word["chamorro"],
-                    "english_meaning": word["definition"]
+                    "english_meaning": correct_gloss,
+                    "trust": word.get("trust", DICTIONARY_TRUST),
                 })
             
             elif q_type == "type_answer":
                 # Simplify the definition for the question
-                simple_def = word["definition"].split(",")[0].split(";")[0].strip()
+                simple_def = correct_gloss
                 
                 questions.append({
                     "id": f"q{i+1}",
@@ -976,14 +1153,16 @@ class DictionaryService:
                     "hint": f"Starts with '{word['chamorro'][0]}'",
                     "explanation": f"'{simple_def}' in Chamorro is '{word['chamorro']}'",
                     "chamorro_word": word["chamorro"],
-                    "english_meaning": word["definition"]
+                    "english_meaning": simple_def,
+                    "trust": word.get("trust", DICTIONARY_TRUST),
                 })
         
         return {
             "questions": questions,
             "total": len(questions),
             "category": category_title,
-            "available_words": len(good_words)
+            "available_words": len(good_words),
+            "trust": DICTIONARY_TRUST,
         }
 
 

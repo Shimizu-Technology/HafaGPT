@@ -11,10 +11,12 @@ import {
   MessageCircle,
   Mic2,
   Rocket,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PublicPage } from './PublicPage';
+import { TRUST_LABELS, TRUST_LEVEL_SURFACE_CLASSES, type ContentTrustLevel } from '../data/contentTrust';
 
 const capabilities: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'AI chat', icon: MessageCircle },
@@ -27,6 +29,7 @@ const capabilities: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Progress', icon: BarChart3 },
 ];
 
+/** Render one consistently styled section of the public product story. */
 function StorySection({
   title,
   icon: Icon,
@@ -51,6 +54,7 @@ function StorySection({
   );
 }
 
+/** Explain why HåfaGPT exists, how it works, and how content trust is labeled. */
 export function AboutPage() {
   return (
     <PublicPage title="Our story" subtitle="Why HåfaGPT exists and who it is for" icon={Heart} maxWidthClassName="max-w-4xl">
@@ -88,12 +92,12 @@ export function AboutPage() {
 
         <StorySection title="How it grew" icon={Rocket} iconClassName="bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
           <p>
-            I indexed Chamorro dictionaries, grammar guides, and learning resources so the tutor could retrieve and cite relevant material. Sources include{' '}
+            HåfaGPT&apos;s source registry includes Chamorro dictionaries, grammar guides, and learning resources that can support retrieval, comparison, and citations when their usage policy allows it. Registered sources include{' '}
             <a href="https://www.guampedia.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Guampedia</a>,{' '}
             <a href="https://lengguahita.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Lengguahi-ta</a>,{' '}
             <a href="https://www.guampdn.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Pacific Daily News</a>,{' '}
             <a href="http://www.chamoru.info" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Chamoru.info</a>, the{' '}
-            <a href="https://natibunmarianas.org/chamorro-dictionary/" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">IKNM/KAM Dictionary</a>, Dr. Sandra Chung&apos;s grammar and orthography research, and Topping&apos;s dictionary.
+            <a href="https://natibunmarianas.org/dictionary-introduction/" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Natibu Marianas Revised Chamorro-English Dictionary</a>, Dr. Sandra Chung&apos;s grammar and orthography research, and Topping&apos;s dictionary.
           </p>
           <p>The translator became a broader learning platform with stories, vocabulary, flashcards, quizzes, games, conversation practice, and progress tools. Each source is still treated as a reference with its own context—not as interchangeable proof.</p>
           <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
@@ -104,6 +108,19 @@ export function AboutPage() {
               </div>
             ))}
           </div>
+        </StorySection>
+
+        <StorySection title="How to read our content labels" icon={ShieldCheck} iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+          <p>HåfaGPT keeps useful material available while showing how strongly each learning surface is supported. A source-backed label does not mean a person has independently approved every example.</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(Object.entries(TRUST_LABELS) as Array<[ContentTrustLevel, (typeof TRUST_LABELS)[ContentTrustLevel]]>).map(([level, details]) => (
+              <div key={level} className={`rounded-2xl border p-4 ${TRUST_LEVEL_SURFACE_CLASSES[level]}`}>
+                <h3 className="font-bold text-brown-950 dark:text-white">{details.label}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-brown-700 dark:text-gray-300">{details.description}</p>
+              </div>
+            ))}
+          </div>
+          <p>Confirmed errors are corrected. Regional variants remain discoverable and are labeled instead of being treated as mistakes. Human review can be added later without withholding the rest of the learning library.</p>
         </StorySection>
 
         <StorySection title="Built for every kind of learner" icon={Users} iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">

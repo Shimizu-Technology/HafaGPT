@@ -2,9 +2,9 @@
 """Check app/API content for canonical vocabulary terms that need action.
 
 This script is a Phase 2 bridge between the canonical vocabulary file and the
-existing scattered content. It scans text/JSON/TS files for terms listed as
-`deprecated_app_terms`, `needs_review_terms`, or non-source-backed variants in
-canonical_vocabulary.json and writes an action report.
+existing scattered content. It scans text/JSON/TS files for canonical entries
+whose own status needs review, terms listed as `deprecated_app_terms` or
+`needs_review_terms`, and non-source-backed variants in canonical_vocabulary.json.
 """
 
 from __future__ import annotations
@@ -50,14 +50,22 @@ def normalized_contains(haystack: str, needle: str) -> bool:
 
 
 def exact_contains(haystack: str, needle: str) -> bool:
+    """Match a standalone source form while excluding compounds and possessives."""
+
     needle = needle.strip()
     if not needle:
         return False
+    # TypeScript single-quoted strings escape a Chamorro glottal-stop
+    # apostrophe. Compare their rendered text so the audit sees the term users
+    # actually see instead of the source-code escape character.
+    haystack = haystack.replace("\\'", "'")
     # Use token-ish boundaries so app-specific exact matches like `Tata` do not
     # fire on longer words such as `Tata'ao` or possessed forms such as
     # `tata-hu`. Exact mode is primarily for diacritic-only replacement pairs.
-    boundary_chars = r"\w'’\-"
-    pattern = rf"(?<![{boundary_chars}]){re.escape(needle)}(?![{boundary_chars}])"
+    # A leading apostrophe is commonly just the quote around a string literal,
+    # so only a word character blocks the start. At the end, apostrophes and
+    # hyphens still block a match to avoid flagging longer or possessed forms.
+    pattern = rf"(?<!\w)(?<!-){re.escape(needle)}(?!\w|['’\-]\w)"
     return re.search(pattern, haystack, flags=re.IGNORECASE) is not None
 
 
@@ -91,6 +99,8 @@ def iter_scan_files(root: Path):
 
 
 def load_rules(vocabulary_path: Path) -> list[TermRule]:
+    """Build audit rules from canonical entries, variants, and review status."""
+
     data = json.loads(vocabulary_path.read_text(encoding="utf-8"))
     rules: list[TermRule] = []
     for entry in data.get("entries", []):
@@ -100,6 +110,19 @@ def load_rules(vocabulary_path: Path) -> list[TermRule]:
             "english": entry["english"],
             "recommended_teaching_term": entry["recommended_teaching_term"],
         }
+        if entry.get("review_status") == "needs_review":
+            rules.append(
+                TermRule(
+                    **entry_context,
+                    term=entry["recommended_teaching_term"],
+                    action="review_canonical_entry_before_teaching",
+                    reason=entry.get(
+                        "notes",
+                        "The canonical entry itself still needs review before it is taught as settled.",
+                    ),
+                    match_mode="exact",
+                )
+            )
         for variant in entry.get("variants", []) or []:
             status = variant.get("status")
             if status == "needs_review":

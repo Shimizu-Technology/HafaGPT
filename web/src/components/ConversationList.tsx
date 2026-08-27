@@ -2,6 +2,8 @@ import { ArrowRight, Check, Clock3, MessageCircle, Sparkles } from 'lucide-react
 import { Link } from 'react-router-dom';
 import { conversationScenarios, type ConversationScenario } from '../data/conversationScenarios';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
 
 const difficultyStyles = {
   beginner: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
@@ -15,6 +17,7 @@ const difficultyLabels = {
   advanced: 'Advanced',
 };
 
+/** Present a single conversation scenario as an accessible practice link. */
 function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
   return (
     <Link
@@ -45,6 +48,7 @@ function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
   );
 }
 
+/** Group available scenarios by difficulty and omit empty groups. */
 function ScenarioSection({ title, description, scenarios }: { title: string; description: string; scenarios: ConversationScenario[] }) {
   if (!scenarios.length) return null;
   const headingId = `scenario-${title.toLowerCase()}`;
@@ -62,6 +66,7 @@ function ScenarioSection({ title, description, scenarios }: { title: string; des
   );
 }
 
+/** List guided conversation scenarios alongside their AI-practice trust notice. */
 export function ConversationList() {
   const beginnerScenarios = conversationScenarios.filter((scenario) => scenario.difficulty === 'beginner');
   const intermediateScenarios = conversationScenarios.filter((scenario) => scenario.difficulty === 'intermediate');
@@ -86,11 +91,13 @@ export function ConversationList() {
               <div className="mt-3 grid gap-2 text-sm text-brown-700 dark:text-gray-300 sm:grid-cols-3">
                 <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Follow one clear goal.</p>
                 <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Open hints when needed.</p>
-                <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Get gentle language feedback.</p>
+                <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Get gentle AI suggestions.</p>
               </div>
             </div>
           </div>
         </section>
+
+        <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} />
 
         <ScenarioSection title="Beginner" description="Start with greetings, introductions, and familiar exchanges." scenarios={beginnerScenarios} />
         <ScenarioSection title="Intermediate" description="Handle longer exchanges with less guidance." scenarios={intermediateScenarios} />

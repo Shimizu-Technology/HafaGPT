@@ -4,9 +4,13 @@ import { ArrowLeft, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from '
 import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { TTSDisclaimer } from './TTSDisclaimer';
+import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
 
 const PAGE_SIZE = 50;
 
+/** Show a dictionary category and the trust metadata returned for its entries. */
 export function VocabularyCategory() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
@@ -118,6 +122,8 @@ export function VocabularyCategory() {
 
       {/* Content */}
       <main className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
+        <ContentTrustNote trust={DICTIONARY_CONTENT_TRUST} className="mb-4" />
+        <TTSDisclaimer variant="inline" className="mb-4" />
         {/* Search within category */}
         <div className="mb-4">
           <div className="relative">

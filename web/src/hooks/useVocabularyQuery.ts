@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { ContentTrust } from '../data/contentTrust';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -19,6 +20,7 @@ export interface VocabularyWord {
     chamorro: string;
     english: string;
   }[];
+  trust?: ContentTrust;
 }
 
 export interface CategoriesResponse {
@@ -111,6 +113,7 @@ export interface WordOfTheDay {
   } | null;
   category: string;
   date: string;
+  trust?: ContentTrust;
 }
 
 async function fetchWordOfTheDay(): Promise<WordOfTheDay> {
@@ -149,6 +152,7 @@ export interface DictionaryQuizResponse {
   total: number;
   category: string;
   available_words: number;
+  trust?: ContentTrust;
 }
 
 async function fetchDictionaryQuiz(
@@ -248,4 +252,3 @@ export function useVocabularyWord(word: string | undefined) {
     retry: false, // Don't retry if word not found
   });
 }
-

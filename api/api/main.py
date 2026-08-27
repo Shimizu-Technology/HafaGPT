@@ -7,6 +7,7 @@ A simple API wrapper around the chatbot core logic.
 from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, Field
 import time
 import os
 import logging
@@ -20,7 +21,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import Any, Dict, List, Optional
 import json
 import re
 import zipfile
@@ -92,6 +93,12 @@ from .spaced_repetition import (
 )
 from .site_theme import resolve_site_theme, validate_site_theme_configuration
 from .learning_attempts import build_game_learning_attempt, insert_learning_attempt
+from .conversation_practice_models import (
+    ConversationPracticeRequest,
+    GroundingStatus,
+    build_conversation_system_prompt,
+    grounding_status_from_sources,
+)
 
 # Clerk for authentication
 try:
@@ -6102,24 +6109,15 @@ async def get_story_endpoint(story_id: str):
 # CONVERSATION PRACTICE ENDPOINTS
 # =====================================================
 
-from pydantic import BaseModel
-from typing import List, Dict, Any
-
-class ConversationPracticeRequest(BaseModel):
-    scenario_id: str
-    scenario_context: Dict[str, Any]
-    conversation_history: List[Dict[str, str]]
-    user_message: str
-    turn_count: int
-    user_id: Optional[str] = None
-
 class ConversationPracticeResponse(BaseModel):
     chamorro_response: str
     english_translation: str
     feedback: Optional[Dict[str, Any]] = None
-    objectives_completed: List[str] = []
+    objectives_completed: List[str] = Field(default_factory=list)
     is_complete: bool = False
-    final_score: Optional[int] = None
+    final_score: Optional[int] = Field(default=None, ge=1, le=5)
+    grounding_status: GroundingStatus = "ai_only"
+    practice_notice: str = "AI-generated practice; suggestions and scores are not authoritative language review."
 
 @app.post("/api/conversation-practice", response_model=ConversationPracticeResponse, tags=["Learning"])
 async def conversation_practice(request: ConversationPracticeRequest):
@@ -6131,63 +6129,30 @@ async def conversation_practice(request: ConversationPracticeRequest):
     """
     try:
         import openai
+        from api.canonical_context import get_canonical_tutor_context
         
         client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
         # Build the system prompt for the character
         context = request.scenario_context
-        system_prompt = f"""You are playing the role of {context.get('character_name', 'a Chamorro speaker')} in a Chamorro language learning conversation.
-
-SETTING: {context.get('setting', 'A conversation in Guam')}
-YOUR ROLE: {context.get('character_role', 'A friendly local')}
-
-IMPORTANT INSTRUCTIONS:
-1. ALWAYS respond in Chamorro first, then provide English translation
-2. Keep responses SHORT (1-3 sentences in Chamorro)
-3. Stay in character - you are {context.get('character_name', 'the character')}
-4. Be encouraging and patient - the user is learning
-5. If the user makes mistakes, gently continue the conversation (don't correct harshly)
-6. Use simple, common Chamorro phrases when possible
-7. The conversation should feel natural and flow like a real interaction
-
-OBJECTIVES the user should accomplish:
-{chr(10).join('- ' + obj for obj in context.get('objectives', []))}
-
-USEFUL PHRASES the user might use:
-{chr(10).join('- ' + p for p in context.get('useful_phrases', [])[:5])}
-
-Turn count: {request.turn_count}
-Expected turns: ~10-14
-
-If the conversation has naturally concluded (user has accomplished most objectives and said goodbye), 
-set is_complete to true in your response.
-
-RESPONSE FORMAT (JSON):
-{{
-    "chamorro_response": "Your response in Chamorro",
-    "english_translation": "English translation of your response",
-    "feedback": {{
-        "corrections": ["List of gentle spelling/grammar suggestions for the USER's message, if any"],
-        "encouragement": "Brief encouraging comment about their Chamorro"
-    }},
-    "objectives_completed": ["List of objectives the user has now completed"],
-    "is_complete": false,
-    "final_score": null
-}}
-
-When is_complete is true, set final_score to 1-5 based on:
-- 5: Excellent - completed all objectives, good Chamorro usage
-- 4: Good - completed most objectives, minor issues
-- 3: Satisfactory - completed some objectives
-- 2: Needs practice - struggled with objectives
-- 1: Keep trying - minimal completion"""
+        grounding_input = "\n".join(
+            [request.user_message]
+            + context.useful_phrases[:10]
+        )
+        canonical_context, canonical_sources = get_canonical_tutor_context(grounding_input)
+        grounding_status = grounding_status_from_sources(canonical_sources)
+        system_prompt = build_conversation_system_prompt(
+            context,
+            canonical_context,
+            request.turn_count,
+        )
 
         # Build conversation history for context
         messages = [{"role": "system", "content": system_prompt}]
         
         for msg in request.conversation_history:
-            role = "assistant" if msg["role"] == "character" else "user"
-            messages.append({"role": role, "content": msg["content"]})
+            role = "assistant" if msg.role == "character" else "user"
+            messages.append({"role": role, "content": msg.content})
         
         # Add the new user message
         messages.append({"role": "user", "content": request.user_message})
@@ -6196,7 +6161,7 @@ When is_complete is true, set final_score to 1-5 based on:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            temperature=0.7,
+            temperature=0.3,
             max_tokens=500,
             response_format={"type": "json_object"}
         )
@@ -6211,7 +6176,8 @@ When is_complete is true, set final_score to 1-5 based on:
             feedback=response_data.get("feedback"),
             objectives_completed=response_data.get("objectives_completed", []),
             is_complete=response_data.get("is_complete", False),
-            final_score=response_data.get("final_score")
+            final_score=response_data.get("final_score"),
+            grounding_status=grounding_status,
         )
         
     except Exception as e:

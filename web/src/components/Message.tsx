@@ -1,4 +1,4 @@
-import { BookOpen, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw } from 'lucide-react';
+import { BookOpen, BookOpenCheck, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles } from 'lucide-react';
 import { useState, memo, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown from 'react-markdown';
@@ -70,7 +70,7 @@ function cleanMarkdownContent(content: string): string {
   return cleanedLines.join('\n');
 }
 
-// Helper to determine file type from URL
+/** Infer the supported attachment type from a URL without fetching it. */
 function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'unknown' {
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/)) return 'image';
@@ -80,7 +80,7 @@ function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'un
   return 'unknown';
 }
 
-// Helper to get filename from URL
+/** Derive a readable attachment name from its encoded URL path. */
 function getFilenameFromUrl(url: string): string {
   const parts = url.split('/');
   const filename = parts[parts.length - 1].split('?')[0];
@@ -674,6 +674,16 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           >
             <SourceCitation sources={sources} />
           </div>
+        )}
+
+        {!isUser && !isSystem && !isStreaming && (
+          <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-brown-500 dark:text-gray-400" role="note">
+            {sources && sources.length > 0 ? (
+              <><BookOpenCheck className="h-3.5 w-3.5 flex-none" aria-hidden="true" />AI answer with supporting sources listed above</>
+            ) : (
+              <><Sparkles className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Best-effort AI answer—no supporting source attached</>
+            )}
+          </p>
         )}
         
         {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete (with staggered delay) */}

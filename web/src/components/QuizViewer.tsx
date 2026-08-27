@@ -11,6 +11,9 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { useSpeech } from '../hooks/useSpeech';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
+import { ALL_TOPICS } from '../data/learningPath';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -20,7 +23,7 @@ interface QuestionResult {
   isCorrect: boolean;
 }
 
-// Convert dictionary quiz question to standard format
+/** Adapt an API-generated dictionary question to the shared quiz model. */
 function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   if (dq.type === 'multiple_choice') {
     return {
@@ -44,6 +47,7 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   }
 }
 
+/** Run curated or dictionary quizzes with matching source-trust context. */
 export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [searchParams] = useSearchParams();
@@ -89,6 +93,13 @@ export function QuizViewer() {
   const [isRestarting, setIsRestarting] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
+  const curatedTopic = !isDictionaryQuiz
+    ? ALL_TOPICS.find((topic) => topic.quizCategory === categoryId)
+    : undefined;
+  const curatedTrustCategory = curatedTopic?.flashcardCategory ?? categoryId ?? '';
+  const contentTrust = isDictionaryQuiz
+    ? dictQuizData?.trust ?? DICTIONARY_CONTENT_TRUST
+    : getLessonTrust(curatedTrustCategory);
 
   // Format question for TTS based on question type
   const formatQuestionForSpeech = (question: QuizQuestion): string => {
@@ -479,10 +490,10 @@ export function QuizViewer() {
             </p>
             <p className="text-sm text-brown-600 dark:text-gray-400 mt-2">
               {scorePercent >= 80 
-                ? '🎉 Excellent work! You\'re mastering Chamorro!'
+                ? 'Excellent work on this set.'
                 : scorePercent >= 60
-                ? '👍 Good job! Keep practicing!'
-                : '💪 Keep learning! You\'ll get better!'}
+                ? 'Good work. Keep practicing.'
+                : 'Keep learning. Another round will help.'}
             </p>
           </div>
 
@@ -598,6 +609,7 @@ export function QuizViewer() {
       {/* Question Content - scrollable area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
+        <ContentTrustNote trust={contentTrust} className="mb-4" compact />
         {currentQuestion && (
           <>
             {/* Question */}
@@ -646,7 +658,7 @@ export function QuizViewer() {
                     </button>
                     {showHint && (
                       <p className="mt-2 text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
-                        💡 {currentQuestion.hint}
+                        {currentQuestion.hint}
                       </p>
                     )}
                   </>
