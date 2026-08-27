@@ -42,6 +42,8 @@ export interface GameResultCreate {
   pairs?: number;
   time_seconds?: number;
   stars?: number;
+  concept_ids?: string[];
+  client_attempt_id?: string;
 }
 
 export interface GameHistoryResponse {
@@ -66,6 +68,7 @@ export function useSaveGameResult() {
       const token = await getToken();
       const learningContext = readLearningGameContext(window.location.search);
       const shouldRecordLearning = learningContext?.categoryId === params.category_id;
+      const { concept_ids: conceptIds = [], ...resultParams } = params;
       
       const response = await fetch(`${API_URL}/api/games/results`, {
         method: 'POST',
@@ -74,11 +77,12 @@ export function useSaveGameResult() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          ...params,
+          ...resultParams,
           ...(shouldRecordLearning ? {
             learning_context: {
               topic_id: learningContext.topicId,
               source: learningContext.source,
+              concept_ids: conceptIds,
             },
           } : {}),
         }),
@@ -90,7 +94,7 @@ export function useSaveGameResult() {
 
       const result = await response.json();
       if (shouldRecordLearning) {
-        captureLearningActivity(buildLearningActivityProperties(learningContext, params));
+        captureLearningActivity(buildLearningActivityProperties(learningContext, resultParams));
       }
       return result;
     },
@@ -164,4 +168,3 @@ export function useGameHistory(
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
-

@@ -1,32 +1,13 @@
 """Privacy-minimized learning-attempt derivation."""
 
-from typing import Optional
+from typing import Any, Optional
 
+from .learning_concepts import (
+    LEARNING_TOPIC_CATEGORIES,
+    validate_curated_concept_ids,
+)
 
-LEARNING_TOPIC_CATEGORIES = {
-    "greetings": "greetings",
-    "numbers": "numbers",
-    "colors": "colors",
-    "family": "family",
-    "food": "food",
-    "animals": "animals",
-    "phrases": "phrases",
-    "questions": "questions",
-    "body-parts": "body",
-    "days": "days",
-    "months": "months",
-    "verbs": "verbs",
-    "adjectives": "adjectives",
-    "sentences": "sentences",
-    "places": "places",
-    "weather": "weather",
-    "household": "household",
-    "directions": "directions",
-    "shopping": "shopping",
-    "daily-life": "daily-life",
-    "culture": "culture",
-}
-LEARNING_SOURCES = {"lesson", "today"}
+LEARNING_SOURCES = {"lesson", "today", "topic"}
 LEARNING_GAME_TYPES = {
     "chamorro_wordle",
     "color_touch",
@@ -84,7 +65,42 @@ def build_game_learning_attempt(
         "success": success,
         "duration_bucket": duration_bucket(time_seconds),
         "source": source,
+        "evidence_scope": "topic",
     }
+
+
+def build_game_learning_attempts(
+    *,
+    topic_id: str,
+    category_id: str,
+    source: str,
+    game_type: str,
+    stars: Optional[int],
+    score: int,
+    time_seconds: Optional[int],
+    concept_ids: tuple[str, ...] = (),
+) -> tuple[dict, ...]:
+    """Build broad evidence plus any exact, server-validated concepts used."""
+
+    broad_attempt = build_game_learning_attempt(
+        topic_id=topic_id,
+        category_id=category_id,
+        source=source,
+        game_type=game_type,
+        stars=stars,
+        score=score,
+        time_seconds=time_seconds,
+    )
+    exact_concepts = validate_curated_concept_ids(category_id, concept_ids)
+    exact_attempts = tuple(
+        {
+            **broad_attempt,
+            "concept_id": concept_id,
+            "evidence_scope": "concept",
+        }
+        for concept_id in exact_concepts
+    )
+    return (broad_attempt, *exact_attempts)
 
 
 def insert_learning_attempt(cursor, *, user_id: str, game_result_id, attempt: dict) -> None:
@@ -94,9 +110,10 @@ def insert_learning_attempt(cursor, *, user_id: str, game_result_id, attempt: di
         """
         INSERT INTO learning_attempts (
             user_id, concept_id, activity_type, success,
-            duration_bucket, source, game_result_id
+            duration_bucket, source, evidence_scope, game_result_id
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (game_result_id, concept_id) DO NOTHING
         """,
         (
             user_id,
@@ -105,6 +122,76 @@ def insert_learning_attempt(cursor, *, user_id: str, game_result_id, attempt: di
             attempt["success"],
             attempt["duration_bucket"],
             attempt["source"],
+            attempt["evidence_scope"],
             game_result_id,
         ),
     )
+
+
+def insert_learning_attempts(
+    cursor,
+    *,
+    user_id: str,
+    game_result_id,
+    attempts: tuple[dict, ...],
+) -> None:
+    for attempt in attempts:
+        insert_learning_attempt(
+            cursor,
+            user_id=user_id,
+            game_result_id=game_result_id,
+            attempt=attempt,
+        )
+
+
+def persist_game_result(cursor: Any, *, user_id: str, request: Any) -> tuple[tuple, bool]:
+    """Insert a game round once and return whether this call created it."""
+
+    cursor.execute(
+        """
+        INSERT INTO game_results (
+            user_id, game_type, mode, category_id, category_title,
+            difficulty, score, moves, pairs, time_seconds, stars,
+            client_attempt_id
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (user_id, client_attempt_id) DO NOTHING
+        RETURNING id, game_type, mode, category_id, category_title,
+                  difficulty, score, moves, pairs, time_seconds, stars,
+                  created_at
+        """,
+        (
+            user_id,
+            request.game_type,
+            request.mode,
+            request.category_id,
+            request.category_title,
+            request.difficulty,
+            request.score,
+            request.moves,
+            request.pairs,
+            request.time_seconds,
+            request.stars,
+            request.client_attempt_id,
+        ),
+    )
+    result_row = cursor.fetchone()
+    if result_row is not None:
+        return result_row, True
+
+    if request.client_attempt_id is None:
+        raise RuntimeError("Game result insert returned no row")
+    cursor.execute(
+        """
+        SELECT id, game_type, mode, category_id, category_title,
+               difficulty, score, moves, pairs, time_seconds, stars,
+               created_at
+        FROM game_results
+        WHERE user_id = %s AND client_attempt_id = %s
+        """,
+        (user_id, request.client_attempt_id),
+    )
+    result_row = cursor.fetchone()
+    if result_row is None:
+        raise RuntimeError("Idempotent game result could not be loaded")
+    return result_row, False

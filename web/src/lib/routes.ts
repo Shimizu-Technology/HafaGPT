@@ -25,6 +25,7 @@ export const appRoutes = {
   lesson: (topicId: string): string => `/learn/${encodeURIComponent(topicId)}`,
   flashcards: (categoryId: string): string => `/flashcards/${encodeURIComponent(categoryId)}`,
   quiz: (categoryId: string): string => `/quiz/${encodeURIComponent(categoryId)}`,
+  quizReview: (resultId: string): string => `/quiz/review/${encodeURIComponent(resultId)}`,
   scenario: (scenarioId: string): string => `/practice/${encodeURIComponent(scenarioId)}`,
   story: (storyId: string): string => `/stories/${encodeURIComponent(storyId)}`,
   memoryGame: (context: ReturnContext = {}): string => withReturnContext('/games/memory', context),

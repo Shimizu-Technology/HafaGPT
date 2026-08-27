@@ -4,12 +4,14 @@ import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 
 interface GameSettings {
   category: string;
@@ -20,6 +22,7 @@ interface GameSettings {
 interface WordData {
   chamorro: string;
   english: string;
+  conceptId?: string;
 }
 
 // Icon mapping for categories
@@ -65,6 +68,7 @@ export function WordScramble() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -105,9 +109,10 @@ export function WordScramble() {
     if (settings.mode !== 'beginner') return null;
     const deck = DEFAULT_FLASHCARD_DECKS[settings.category];
     if (!deck) return null;
-    return deck.cards.map(card => ({
+    return deck.cards.map((card, cardIndex) => ({
       front: card.front,
       back: card.back,
+      conceptId: getCuratedConceptId(settings.category, cardIndex),
     }));
   }, [settings.category, settings.mode]);
 
@@ -203,10 +208,12 @@ export function WordScramble() {
           pairs: correctAnswers,
           time_seconds: elapsedTime,
           stars: getFinalStars(),
+          concept_ids: words.flatMap((word) => word.conceptId ? [word.conceptId] : []),
+          client_attempt_id: gameAttemptIdRef.current,
         });
       }
     }
-  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, saveGameResultMutation, categoriesData]);
+  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, saveGameResultMutation, categoriesData, words]);
 
   // Generate words for the game
   const generateWords = useCallback((): WordData[] => {
@@ -228,6 +235,7 @@ export function WordScramble() {
     return filtered.slice(0, settings.wordsPerRound).map(card => ({
       chamorro: card.front,
       english: card.back,
+      conceptId: 'conceptId' in card ? card.conceptId : undefined,
     }));
   }, [settings.mode, settings.wordsPerRound, curatedFlashcards, flashcardsData]);
 
@@ -252,6 +260,7 @@ export function WordScramble() {
     }
     
     hasSavedRef.current = false;
+    gameAttemptIdRef.current = createClientAttemptId();
     setWords(newWords);
     setCurrentWordIndex(0);
     setScore(0);

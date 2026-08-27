@@ -5,12 +5,14 @@ import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { MemoryCard } from './games/MemoryCard';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 
 interface Card {
   id: number;
@@ -75,6 +77,8 @@ export function MemoryMatch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const playedConceptIdsRef = useRef<string[]>([]);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -112,9 +116,10 @@ export function MemoryMatch() {
     if (settings.mode !== 'beginner') return null;
     const deck = DEFAULT_FLASHCARD_DECKS[settings.category];
     if (!deck) return null;
-    return deck.cards.map(card => ({
+    return deck.cards.map((card, cardIndex) => ({
       front: card.front,
       back: card.back,
+      conceptId: getCuratedConceptId(settings.category, cardIndex),
     }));
   }, [settings.category, settings.mode]);
 
@@ -185,6 +190,8 @@ export function MemoryMatch() {
           pairs: settings.pairsCount,
           time_seconds: elapsedTime,
           stars: getFinalStars(),
+          concept_ids: playedConceptIdsRef.current,
+          client_attempt_id: gameAttemptIdRef.current,
         });
       }
     }
@@ -237,6 +244,9 @@ export function MemoryMatch() {
 
     // Take the required number of cards
     const cardsToUse = shuffledSource.slice(0, settings.pairsCount);
+    playedConceptIdsRef.current = settings.mode === 'beginner'
+      ? cardsToUse.flatMap((card) => 'conceptId' in card ? [card.conceptId] : [])
+      : [];
 
     return createCardPairs(cardsToUse);
   }, [settings.mode, settings.pairsCount, curatedFlashcards, flashcardsData]);
@@ -289,6 +299,7 @@ export function MemoryMatch() {
     
     // Reset save flag for new game
     hasSavedRef.current = false;
+    gameAttemptIdRef.current = createClientAttemptId();
     
     setCards(newCards);
     setFlippedCards([]);

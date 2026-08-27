@@ -7,6 +7,7 @@ import { getTopic, getTopicIndex, getNextTopic, getPath } from '../data/learning
 import { LessonIntro } from './LessonIntro';
 import { LessonFlashcards } from './LessonFlashcards';
 import { LessonQuiz } from './LessonQuiz';
+import { useRecordLessonExposure } from '../hooks/useConceptEvidence';
 import { LessonComplete } from './LessonComplete';
 import { XPToast } from './XPDisplay';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
@@ -31,6 +32,7 @@ export function LessonPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const updateProgress = useUpdateProgress();
+  const recordLessonExposure = useRecordLessonExposure();
   const awardXP = useAwardXP();
 
   const [currentStep, setCurrentStep] = useState<LessonStep>('intro');
@@ -81,7 +83,7 @@ export function LessonPage() {
     goToStep('flashcards');
   };
 
-  const handleFlashcardsComplete = (cardsCount: number) => {
+  const handleFlashcardsComplete = (cardsCount: number, conceptIds: string[]) => {
     setFlashcardsCompleted(true);
     // Always proceed to quiz, even if API calls fail
     goToStep('quiz');
@@ -89,6 +91,15 @@ export function LessonPage() {
     // Track flashcard completion with actual card count (non-blocking)
     if (topicId) {
       setTimeout(() => {
+        recordLessonExposure.mutate(
+          { topicId, conceptIds },
+          {
+            onError: (error) => {
+              console.warn('Failed to record lesson concept exposure:', error);
+            },
+          },
+        );
+
         updateProgress.mutate(
           { topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount },
           {

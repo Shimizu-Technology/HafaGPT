@@ -8,6 +8,10 @@ if [[ ! -x "$api_python" ]]; then
   api_python="python3"
 fi
 
+cmp \
+  "$repository_root/api/language_content/curated_concept_manifest.json" \
+  "$repository_root/web/src/data/curated_concept_manifest.json"
+
 (
   cd "$repository_root/api"
   PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 "$api_python" -m pytest -q tests

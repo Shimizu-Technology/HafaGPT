@@ -7,6 +7,8 @@ import { FlashcardViewer } from './FlashcardViewer';
 import { LessonPage } from './LessonPage';
 import { QuizViewer } from './QuizViewer';
 import { StoryViewer } from './StoryViewer';
+import { getCuratedConceptId } from '../data/conceptEvidence';
+import { withConceptReview } from '../lib/conceptReview';
 
 const mocks = vi.hoisted(() => ({
   dictionaryFlashcards: {
@@ -44,6 +46,10 @@ vi.mock('../hooks/useTheme', () => ({
 
 vi.mock('../hooks/useLearningPath', () => ({
   useUpdateProgress: () => ({ mutate: vi.fn() }),
+}));
+
+vi.mock('../hooks/useConceptEvidence', () => ({
+  useRecordLessonExposure: () => ({ mutate: vi.fn() }),
 }));
 
 vi.mock('../hooks/useXP', () => ({
@@ -149,6 +155,23 @@ describe('topic surface navigation', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Back to Greetings & Basics' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
+  });
+
+  it('opens an exact missed concept and returns to its quiz review', async () => {
+    const resultId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
+    const path = withConceptReview(
+      'greetings',
+      getCuratedConceptId('greetings', 3),
+      resultId,
+    );
+    renderSurface(<FlashcardViewer />, '/flashcards/:topic', path);
+
+    expect(await screen.findByText("Si Yu'os Ma'åse'")).toBeInTheDocument();
+    expect(screen.getByText(/Card 4 of 14/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to quiz review' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      `/quiz/review/${resultId}`,
+    );
   });
 
   it('returns a topic quiz to its workspace', async () => {

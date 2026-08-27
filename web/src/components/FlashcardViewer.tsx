@@ -18,6 +18,7 @@ import {
 } from '../data/contentTrust';
 import { ALL_TOPICS } from '../data/learningPath';
 import { readTopicReturn } from '../lib/topicReturn';
+import { readConceptReview } from '../lib/conceptReview';
 
 interface FlashcardData {
   contentSource: FlashcardContentSource;
@@ -63,6 +64,10 @@ export function FlashcardViewer() {
   const topicReturn = connectedTopic
     ? readTopicReturn(searchParams.toString(), connectedTopic.id)
     : null;
+  const conceptReview = cardType === 'curated' && topic
+    ? readConceptReview(searchParams.toString(), topic)
+    : null;
+  const returnContext = conceptReview ?? topicReturn;
   
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);
@@ -149,7 +154,7 @@ export function FlashcardViewer() {
         category: deck.displayName
       }));
       setFlashcards(formattedCards);
-      setCurrentIndex(0);
+      setCurrentIndex(conceptReview?.cardIndex ?? 0);
       setError(null);
     } else {
       setError(`No curated cards found for topic: ${topic}`);
@@ -505,9 +510,9 @@ export function FlashcardViewer() {
         title={deckTitle}
         subtitle={`${deckSourceLabel} · Card ${currentIndex + 1} of ${flashcards.length}`}
         icon={Layers3}
-        backTo={topicReturn?.to ?? '/flashcards'}
-        backLabel={topicReturn?.label ?? 'Back to flashcard decks'}
-        onBack={topicReturn ? () => navigate(topicReturn.to) : undefined}
+        backTo={returnContext?.to ?? '/flashcards'}
+        backLabel={returnContext?.label ?? 'Back to flashcard decks'}
+        onBack={returnContext ? () => navigate(returnContext.to) : undefined}
         trailing={(
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />

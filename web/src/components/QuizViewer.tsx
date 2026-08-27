@@ -14,7 +14,9 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
 import { ALL_TOPICS } from '../data/learningPath';
+import { getQuestionConceptId } from '../data/conceptEvidence';
 import { readTopicReturn } from '../lib/topicReturn';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -57,6 +59,7 @@ export function QuizViewer() {
   const { isSignedIn } = useUser();
   const saveQuizResultMutation = useSaveQuizResult();
   const startTimeRef = useRef<number>(Date.now());
+  const clientAttemptIdRef = useRef(createClientAttemptId());
   const { canUse, tryUse, getCount, getLimit, isLoading: subscriptionLoading } = useSubscription();
   const { speak, isSpeaking, stop } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -380,6 +383,9 @@ export function QuizViewer() {
             correct_answer: r.question.correctAnswer,
             is_correct: r.isCorrect,
             explanation: r.question.explanation,
+            concept_id: isDictionaryQuiz
+              ? undefined
+              : getQuestionConceptId(r.question.id),
           }));
           
           saveQuizResultMutation.mutate({
@@ -389,6 +395,13 @@ export function QuizViewer() {
             total: questions.length,
             time_spent_seconds: timeSpent,
             answers,
+            client_attempt_id: clientAttemptIdRef.current,
+            ...(topicReturn && curatedTopic ? {
+              learning_context: {
+                topic_id: curatedTopic.id,
+                source: 'topic' as const,
+              },
+            } : {}),
           });
         }
       }
@@ -443,6 +456,7 @@ export function QuizViewer() {
       setResults([]);
       setShowResults(false);
       setShowHint(false);
+      clientAttemptIdRef.current = createClientAttemptId();
       startTimeRef.current = Date.now(); // Reset timer
     } finally {
       setIsRestarting(false);

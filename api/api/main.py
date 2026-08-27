@@ -92,8 +92,14 @@ from .spaced_repetition import (
     upsert_spaced_repetition_review,
 )
 from .site_theme import resolve_site_theme, validate_site_theme_configuration
-from .learning_attempts import build_game_learning_attempt, insert_learning_attempt
+from .learning_attempts import (
+    build_game_learning_attempts,
+    insert_learning_attempts,
+    persist_game_result,
+)
 from .learning_workspace import create_learning_workspace_router
+from .concept_evidence import create_concept_evidence_router
+from .quiz_evidence import persist_quiz_result, validate_quiz_result_request
 from .conversation_practice_models import (
     ConversationPracticeRequest,
     GroundingStatus,
@@ -3209,9 +3215,16 @@ async def save_quiz_result(
     
     Requires authentication. Optionally includes individual question answers.
     """
+    conn = None
+    cursor = None
     try:
         # Verify user
         user_id = await verify_user(authorization)
+
+        try:
+            learning_context = validate_quiz_result_request(request)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
         
         # Calculate percentage
         percentage = (request.score / request.total) * 100 if request.total > 0 else 0
@@ -3220,63 +3233,31 @@ async def save_quiz_result(
         conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
-        # Insert quiz result
-        cursor.execute("""
-            INSERT INTO quiz_results (
-                user_id, category_id, category_title, score, total, percentage, time_spent_seconds
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, created_at
-        """, (
-            user_id,
-            request.category_id,
-            request.category_title,
-            request.score,
-            request.total,
-            percentage,
-            request.time_spent_seconds
-        ))
-        
-        result = cursor.fetchone()
-        result_id = result[0]
-        created_at = result[1]
-        
-        # Insert individual answers if provided
-        if request.answers:
-            for answer in request.answers:
-                cursor.execute("""
-                    INSERT INTO quiz_answers (
-                        quiz_result_id, question_id, question_text, question_type,
-                        user_answer, correct_answer, is_correct, explanation
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    result_id,
-                    answer.question_id,
-                    answer.question_text,
-                    answer.question_type,
-                    answer.user_answer,
-                    answer.correct_answer,
-                    answer.is_correct,
-                    answer.explanation
-                ))
+        result = persist_quiz_result(
+            cursor,
+            user_id=user_id,
+            request=request,
+            percentage=percentage,
+            context=learning_context,
+        )
         
         conn.commit()
-        cursor.close()
-        conn.close()
         
         answers_count = len(request.answers) if request.answers else 0
         logger.info(f"✅ [QUIZ] Saved result for user {user_id}: {request.score}/{request.total} ({percentage:.1f}%) in {request.category_id} with {answers_count} answers")
         
         return QuizResultResponse(
-            id=str(result_id),
-            category_id=request.category_id,
-            category_title=request.category_title,
-            score=request.score,
-            total=request.total,
-            percentage=percentage,
-            time_spent_seconds=request.time_spent_seconds,
-            created_at=created_at
+            id=str(result[0]),
+            category_id=result[1],
+            category_title=result[2],
+            score=result[3],
+            total=result[4],
+            percentage=float(result[5]),
+            time_spent_seconds=result[6],
+            created_at=result[7],
+            learning_topic_id=result[8],
+            learning_source=result[9],
+            assessment_id=result[10],
         )
         
     except HTTPException:
@@ -3285,8 +3266,13 @@ async def save_quiz_result(
         logger.error(f"❌ [QUIZ] Failed to save result: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to save quiz result: {str(e)}"
+            detail="Failed to save quiz result"
         )
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 @app.get("/api/quiz/results/{result_id}", response_model=QuizResultDetailResponse, tags=["Quiz"])
@@ -3309,7 +3295,9 @@ async def get_quiz_result_detail(
         
         # Get quiz result (verify ownership)
         cursor.execute("""
-            SELECT id, category_id, category_title, score, total, percentage, time_spent_seconds, created_at
+            SELECT id, category_id, category_title, score, total, percentage,
+                   time_spent_seconds, created_at, learning_topic_id,
+                   learning_source, assessment_id
             FROM quiz_results
             WHERE id = %s AND user_id = %s
         """, (result_id, user_id))
@@ -3322,7 +3310,8 @@ async def get_quiz_result_detail(
         
         # Get individual answers
         cursor.execute("""
-            SELECT id, question_id, question_text, question_type, user_answer, correct_answer, is_correct, explanation
+            SELECT id, question_id, question_text, question_type, user_answer,
+                   correct_answer, is_correct, explanation, concept_id
             FROM quiz_answers
             WHERE quiz_result_id = %s
             ORDER BY created_at ASC
@@ -3343,7 +3332,8 @@ async def get_quiz_result_detail(
                 user_answer=row[4],
                 correct_answer=row[5],
                 is_correct=row[6],
-                explanation=row[7]
+                explanation=row[7],
+                concept_id=row[8],
             )
             for row in answer_rows
         ]
@@ -3357,6 +3347,9 @@ async def get_quiz_result_detail(
             percentage=float(result_row[5]),
             time_spent_seconds=result_row[6],
             created_at=result_row[7],
+            learning_topic_id=result_row[8],
+            learning_source=result_row[9],
+            assessment_id=result_row[10],
             answers=answers
         )
         
@@ -3637,14 +3630,21 @@ async def save_game_result(
     
     Requires authentication.
     """
+    conn = None
+    cursor = None
     try:
         # Verify user
         user_id = await verify_user(authorization)
 
-        learning_attempt = None
+        learning_attempts = ()
         if request.learning_context:
+            if request.client_attempt_id is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Contextual games require a client attempt ID",
+                )
             try:
-                learning_attempt = build_game_learning_attempt(
+                learning_attempts = build_game_learning_attempts(
                     topic_id=request.learning_context.topic_id,
                     category_id=request.category_id,
                     source=request.learning_context.source,
@@ -3652,6 +3652,7 @@ async def save_game_result(
                     stars=request.stars,
                     score=request.score,
                     time_seconds=request.time_seconds,
+                    concept_ids=tuple(request.learning_context.concept_ids),
                 )
             except ValueError as error:
                 raise HTTPException(status_code=400, detail=str(error)) from error
@@ -3660,59 +3661,37 @@ async def save_game_result(
         conn = conversations.get_db_connection_with_retry()
         cursor = conn.cursor()
         
-        # Insert game result
-        cursor.execute("""
-            INSERT INTO game_results (
-                user_id, game_type, mode, category_id, category_title,
-                difficulty, score, moves, pairs, time_seconds, stars
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, created_at
-        """, (
-            user_id,
-            request.game_type,
-            request.mode,
-            request.category_id,
-            request.category_title,
-            request.difficulty,
-            request.score,
-            request.moves,
-            request.pairs,
-            request.time_seconds,
-            request.stars
-        ))
-        
-        result = cursor.fetchone()
+        result, inserted = persist_game_result(
+            cursor,
+            user_id=user_id,
+            request=request,
+        )
         result_id = result[0]
-        created_at = result[1]
 
-        if learning_attempt:
-            insert_learning_attempt(
+        if inserted and learning_attempts:
+            insert_learning_attempts(
                 cursor,
                 user_id=user_id,
                 game_result_id=result_id,
-                attempt=learning_attempt,
+                attempts=learning_attempts,
             )
         
         conn.commit()
-        cursor.close()
-        conn.close()
-        
         logger.info(f"✅ [GAME] Saved {request.game_type} result for user {user_id}: {request.score} pts, {request.stars} stars")
         
         return GameResultResponse(
             id=str(result_id),
-            game_type=request.game_type,
-            mode=request.mode,
-            category_id=request.category_id,
-            category_title=request.category_title,
-            difficulty=request.difficulty,
-            score=request.score,
-            moves=request.moves,
-            pairs=request.pairs,
-            time_seconds=request.time_seconds,
-            stars=request.stars,
-            created_at=created_at
+            game_type=result[1],
+            mode=result[2],
+            category_id=result[3],
+            category_title=result[4],
+            difficulty=result[5],
+            score=result[6],
+            moves=result[7],
+            pairs=result[8],
+            time_seconds=result[9],
+            stars=result[10],
+            created_at=result[11],
         )
         
     except HTTPException:
@@ -3721,8 +3700,13 @@ async def save_game_result(
         logger.error(f"❌ [GAME] Failed to save result: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to save game result: {str(e)}"
+            detail="Failed to save game result"
         )
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 @app.get("/api/games/stats", response_model=GameStatsResponse, tags=["Games"])
@@ -5724,6 +5708,7 @@ async def clerk_webhook(request: Request):
                 delete_optional_user_rows("xp_history", "xp_history")
                 delete_optional_user_rows("user_xp", "xp")
                 delete_optional_user_rows("learning_activities", "learning_activities")
+                delete_optional_user_rows("lesson_concept_exposures", "lesson_concept_exposures")
                 delete_optional_user_rows("topic_progress", "topic_progress")
                 delete_optional_user_rows("user_topic_progress", "user_topic_progress")
                 
@@ -7845,6 +7830,7 @@ ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH + ADVANCED_PATH
 app.include_router(
     create_learning_workspace_router(topics=ALL_TOPICS, verify_user=verify_user)
 )
+app.include_router(create_concept_evidence_router(verify_user=verify_user))
 
 
 @app.get("/api/learning/recommended", tags=["Learning Path"])

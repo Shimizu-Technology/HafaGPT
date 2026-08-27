@@ -1,9 +1,13 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
+import { getQuestionConceptId } from '../data/conceptEvidence';
 import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
 import { browserStorage } from '../lib/browserStorage';
+import { createClientAttemptId } from '../lib/clientAttemptId';
+import { useSaveQuizResult } from '../hooks/useQuizQuery';
 
 interface LessonQuizProps {
   topic: LearningTopic;
@@ -15,6 +19,8 @@ const STORAGE_KEY_PREFIX = 'hafagpt_quiz_';
 
 interface SavedQuizState {
   topicId: string;
+  attemptId?: string;
+  startedAt?: number;
   questionIds: string[];  // Preserve the randomized order
   currentIndex: number;
   correctCount: number;
@@ -64,8 +70,13 @@ function clearQuizState(topicId: string) {
 }
 
 export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
+  const { isSignedIn } = useUser();
+  const saveQuizResult = useSaveQuizResult();
   // Try to restore saved state first
   const savedState = useMemo(() => loadQuizState(topic.id), [topic.id]);
+  const attemptIdRef = useRef(savedState?.attemptId ?? createClientAttemptId());
+  const startedAtRef = useRef(savedState?.startedAt ?? Date.now());
+  const completionStartedRef = useRef(false);
   
   // Get questions for this topic - preserve order if we have saved state
   const allQuestions = useMemo(() => {
@@ -109,6 +120,8 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     
     const state: SavedQuizState = {
       topicId: topic.id,
+      attemptId: attemptIdRef.current,
+      startedAt: startedAtRef.current,
       questionIds: allQuestions.map(q => q.id),
       currentIndex,
       correctCount,
@@ -159,6 +172,9 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
 
   const handleStartFresh = () => {
     clearQuizState(topic.id);
+    attemptIdRef.current = createClientAttemptId();
+    startedAtRef.current = Date.now();
+    completionStartedRef.current = false;
     setCurrentIndex(0);
     setCorrectCount(0);
     setAnsweredQuestions({});
@@ -265,11 +281,53 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
 
   const handleNext = () => {
     if (isLastQuestion) {
+      if (completionStartedRef.current) return;
+      completionStartedRef.current = true;
+
       // Clear saved state on completion
       clearQuizState(topic.id);
       
       // Calculate final score
       const score = Math.round((correctCount / allQuestions.length) * 100);
+      if (isSignedIn) {
+        const answers = allQuestions.flatMap((question) => {
+          const answer = answeredQuestions[question.id];
+          if (!answer) return [];
+          return [{
+            question_id: question.id,
+            question_text: question.question,
+            question_type: question.type,
+            user_answer: answer.userAnswer,
+            correct_answer: question.correctAnswer,
+            is_correct: answer.isCorrect,
+            explanation: question.explanation,
+            concept_id: getQuestionConceptId(question.id),
+          }];
+        });
+
+        if (answers.length === allQuestions.length) {
+          const categoryTitle = QUIZ_CATEGORIES.find(
+            (category) => category.id === topic.quizCategory,
+          )?.title ?? topic.title;
+          saveQuizResult.mutate({
+            category_id: topic.quizCategory,
+            category_title: categoryTitle,
+            score: correctCount,
+            total: allQuestions.length,
+            time_spent_seconds: Math.max(
+              0,
+              Math.round((Date.now() - startedAtRef.current) / 1000),
+            ),
+            answers,
+            client_attempt_id: attemptIdRef.current,
+            learning_context: {
+              topic_id: topic.id,
+              source: 'lesson',
+              assessment_id: `v1:lesson:${topic.id}:embedded-quiz`,
+            },
+          });
+        }
+      }
       onComplete(score);
     } else {
       setCurrentIndex(currentIndex + 1);

@@ -7,6 +7,7 @@ Request and response models for the FastAPI endpoints.
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
 from datetime import datetime
+from uuid import UUID
 
 
 class ChatRequest(BaseModel):
@@ -319,6 +320,23 @@ class QuizAnswerCreate(BaseModel):
     correct_answer: str = Field(..., description="The correct answer")
     is_correct: bool = Field(..., description="Whether the answer was correct")
     explanation: Optional[str] = Field(None, description="Optional explanation")
+    concept_id: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Authored curated concept assessed by this question",
+    )
+
+    model_config = {"extra": "forbid"}
+
+
+class QuizLearningContextCreate(BaseModel):
+    """Allowlisted topic context for a curated quiz attempt."""
+
+    topic_id: str = Field(..., min_length=1, max_length=64)
+    source: Literal["lesson", "today", "topic"]
+    assessment_id: Optional[str] = Field(None, max_length=128)
+
+    model_config = {"extra": "forbid"}
 
 
 class QuizResultCreate(BaseModel):
@@ -329,6 +347,13 @@ class QuizResultCreate(BaseModel):
     total: int = Field(..., gt=0, description="Total number of questions")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz in seconds")
     answers: Optional[list[QuizAnswerCreate]] = Field(None, description="Individual question answers")
+    client_attempt_id: Optional[UUID] = Field(
+        None,
+        description="Client-generated idempotency key for this completed attempt",
+    )
+    learning_context: Optional[QuizLearningContextCreate] = None
+
+    model_config = {"extra": "forbid"}
 
 
 class QuizAnswerResponse(BaseModel):
@@ -341,6 +366,7 @@ class QuizAnswerResponse(BaseModel):
     correct_answer: str = Field(..., description="The correct answer")
     is_correct: bool = Field(..., description="Whether the answer was correct")
     explanation: Optional[str] = Field(None, description="Optional explanation")
+    concept_id: Optional[str] = Field(None, description="Authored curated concept ID")
 
 
 class QuizResultResponse(BaseModel):
@@ -353,6 +379,9 @@ class QuizResultResponse(BaseModel):
     percentage: float = Field(..., description="Score percentage")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz")
     created_at: datetime = Field(..., description="When the quiz was taken")
+    learning_topic_id: Optional[str] = Field(None, description="Connected learning topic")
+    learning_source: Optional[str] = Field(None, description="Lesson, Today, or topic launch source")
+    assessment_id: Optional[str] = Field(None, description="Stable assessment identity")
 
 
 class QuizResultDetailResponse(BaseModel):
@@ -383,7 +412,8 @@ class QuizStatsResponse(BaseModel):
 class LearningContextCreate(BaseModel):
     """Allowlisted learning context; never contains answers or learner-entered text."""
     topic_id: str = Field(..., min_length=1, max_length=64)
-    source: Literal["lesson", "today"]
+    source: Literal["lesson", "today", "topic"]
+    concept_ids: list[str] = Field(default_factory=list, max_length=20)
 
     model_config = {"extra": "forbid"}
 
@@ -400,6 +430,10 @@ class GameResultCreate(BaseModel):
     pairs: Optional[int] = Field(None, description="Number of pairs matched")
     time_seconds: Optional[int] = Field(None, description="Time to complete in seconds")
     stars: Optional[int] = Field(None, ge=1, le=3, description="Star rating (1-3)")
+    client_attempt_id: Optional[UUID] = Field(
+        None,
+        description="Client-generated idempotency key for a contextual game round",
+    )
     learning_context: Optional[LearningContextCreate] = Field(
         None,
         description="Privacy-minimized lesson or Today context for concept progress",
