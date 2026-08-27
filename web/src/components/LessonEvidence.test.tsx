@@ -154,10 +154,13 @@ describe('lesson concept evidence', () => {
 
   it('keeps a failed result resumable and retries with the same assessment identity', async () => {
     const onComplete = vi.fn();
+    vi.spyOn(Date, 'now').mockReturnValue(2_000_000);
     mocks.saveQuizResult
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({});
-    render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
+    const { unmount } = render(
+      <LessonQuiz topic={greetings} onComplete={onComplete} />,
+    );
 
     answerLessonQuestion('Hello / Hi');
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
@@ -180,11 +183,16 @@ describe('lesson concept evidence', () => {
     );
     expect(storedAfterFailure.attemptId).toBe(firstAttemptId);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry Saving Result' }));
+    unmount();
+    render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue Where I Left Off' }));
+    fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
 
     await waitFor(() => expect(onComplete).toHaveBeenCalledWith(100));
     expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
-    expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id).toBe(firstAttemptId);
+    expect(mocks.saveQuizResult.mock.calls[1][0]).toEqual(
+      mocks.saveQuizResult.mock.calls[0][0],
+    );
     expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).toBeNull();
   });
 

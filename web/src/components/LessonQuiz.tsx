@@ -126,11 +126,26 @@ function LessonQuizSession({
     return shuffled.slice(0, QUESTIONS_PER_QUIZ);
   }, [topic.quizCategory, savedState]);
 
+  const restoredCurrentQuestion = savedState
+    ? allQuestions[savedState.currentIndex]
+    : undefined;
+  const restoredCurrentAnswer = restoredCurrentQuestion
+    ? savedState?.answeredQuestions[restoredCurrentQuestion.id]
+    : undefined;
+
   // Initialize state from saved or fresh
   const [currentIndex, setCurrentIndex] = useState(savedState?.currentIndex ?? 0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [typedAnswer, setTypedAnswer] = useState('');
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(
+    restoredCurrentQuestion?.type === 'multiple_choice'
+      ? restoredCurrentAnswer?.userAnswer ?? null
+      : null,
+  );
+  const [typedAnswer, setTypedAnswer] = useState(
+    restoredCurrentQuestion?.type !== 'multiple_choice'
+      ? restoredCurrentAnswer?.userAnswer ?? ''
+      : '',
+  );
+  const [isAnswered, setIsAnswered] = useState(Boolean(restoredCurrentAnswer));
   const [correctCount, setCorrectCount] = useState(savedState?.correctCount ?? 0);
   const [showHint, setShowHint] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { userAnswer: string; isCorrect: boolean }>>(
