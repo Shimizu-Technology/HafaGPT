@@ -8,6 +8,7 @@ import {
   getCuratedConceptId,
   getCuratedDeckConceptIds,
   getQuestionConceptId,
+  validateCuratedConceptManifest,
 } from './conceptEvidence';
 
 describe('curated concept evidence', () => {
@@ -58,5 +59,21 @@ describe('curated concept evidence', () => {
     expect(findCuratedConceptIndex('greetings', conceptId)).toBe(0);
     expect(findCuratedConceptIndex('family', conceptId)).toBeNull();
     expect(getCuratedDeckConceptIds('greetings')).toHaveLength(14);
+  });
+
+  it('rejects malformed and out-of-range manifest relationships at runtime', () => {
+    expect(() => validateCuratedConceptManifest({ version: 1 })).toThrow(
+      'missing its relationship maps',
+    );
+    expect(() => validateCuratedConceptManifest({
+      version: 1,
+      deck_card_counts: { greetings: 1 },
+      question_concepts: { 'greet-1': ['greetings', 1] },
+    })).toThrow('Out-of-range curated concept relationship');
+    expect(() => validateCuratedConceptManifest({
+      version: 1,
+      deck_card_counts: { greetings: 1 },
+      question_concepts: { 'greet-1': ['family', 0] },
+    })).toThrow('Out-of-range curated concept relationship');
   });
 });

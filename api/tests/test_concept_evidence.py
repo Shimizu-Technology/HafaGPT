@@ -29,11 +29,17 @@ class Connection:
     def __init__(self):
         self.cursor_instance = Cursor()
         self.closed = False
+        self.committed = False
+        self.rolled_back = False
 
     def __enter__(self):
         return self
 
-    def __exit__(self, *_args):
+    def __exit__(self, exc_type, *_args):
+        if exc_type is None:
+            self.committed = True
+        else:
+            self.rolled_back = True
         return False
 
     def cursor(self):
@@ -79,11 +85,24 @@ def test_lesson_exposure_route_records_only_valid_exact_concepts():
         "lesson_id": "v1:lesson:greetings:flashcards",
         "recorded_concepts": 2,
     }
-    assert len(connection.cursor_instance.executions) == 2
+    assert len(connection.cursor_instance.executions) == 1
     assert all(
         "ON CONFLICT (user_id, lesson_id, concept_id)" in query
         for query, _params in connection.cursor_instance.executions
     )
+    params = connection.cursor_instance.executions[0][1]
+    assert params == (
+        "user_123",
+        "greetings",
+        "v1:lesson:greetings:flashcards",
+        concept_ids[0],
+        "user_123",
+        "greetings",
+        "v1:lesson:greetings:flashcards",
+        concept_ids[1],
+    )
+    assert connection.committed is True
+    assert connection.rolled_back is False
     assert connection.closed is True
 
 
@@ -152,6 +171,8 @@ def test_sync_writer_closes_the_connection_after_query_failure():
         raise AssertionError("Expected the query timeout to propagate")
 
     assert connection.closed is True
+    assert connection.committed is False
+    assert connection.rolled_back is True
 
 
 def test_default_connection_factory_bounds_connection_and_query_waits(monkeypatch):

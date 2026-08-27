@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createClientAttemptId } from './clientAttemptId';
 
 describe('createClientAttemptId', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('creates distinct UUIDs suitable for idempotency keys', () => {
     const first = createClientAttemptId();
     const second = createClientAttemptId();
@@ -10,5 +14,16 @@ describe('createClientAttemptId', () => {
     expect(first).toMatch(uuidPattern);
     expect(second).toMatch(uuidPattern);
     expect(first).not.toBe(second);
+  });
+
+  it('creates a valid v4 UUID when randomUUID is unavailable', () => {
+    const getRandomValues = vi.fn((bytes: Uint8Array) => {
+      bytes.set(Array.from({ length: 16 }, (_value, index) => index));
+      return bytes;
+    });
+    vi.stubGlobal('crypto', { getRandomValues });
+
+    expect(createClientAttemptId()).toBe('00010203-0405-4607-8809-0a0b0c0d0e0f');
+    expect(getRandomValues).toHaveBeenCalledOnce();
   });
 });

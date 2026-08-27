@@ -63,7 +63,6 @@ def test_lesson_quiz_context_and_exact_answer_relationship_are_validated():
     [
         ({"score": 0}, "score must match"),
         ({"total": 2}, "total must match"),
-        ({"client_attempt_id": None}, "client attempt ID"),
         (
             {
                 "learning_context": {
@@ -89,6 +88,16 @@ def test_lesson_quiz_context_and_exact_answer_relationship_are_validated():
 def test_invalid_quiz_evidence_is_rejected(overrides, message):
     with pytest.raises(ValueError, match=message):
         validate_quiz_result_request(request_data(**overrides))
+
+
+def test_valid_legacy_quiz_context_without_retry_key_is_accepted():
+    request = request_data(client_attempt_id=None)
+
+    assert validate_quiz_result_request(request) == {
+        "topic_id": "greetings",
+        "source": "lesson",
+        "assessment_id": "v1:lesson:greetings:embedded-quiz",
+    }
 
 
 class Cursor:

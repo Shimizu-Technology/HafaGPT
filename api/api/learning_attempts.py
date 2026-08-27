@@ -103,6 +103,27 @@ def build_game_learning_attempts(
     return (broad_attempt, *exact_attempts)
 
 
+def build_retry_safe_game_learning_attempts(request: Any) -> tuple[dict, ...]:
+    """Validate optional context and emit evidence only with a retry key."""
+
+    context = request.learning_context
+    if context is None:
+        return ()
+    attempts = build_game_learning_attempts(
+        topic_id=context.topic_id,
+        category_id=request.category_id,
+        source=context.source,
+        game_type=request.game_type,
+        stars=request.stars,
+        score=request.score,
+        time_seconds=request.time_seconds,
+        concept_ids=tuple(context.concept_ids),
+    )
+    # Cached clients from before client attempt IDs remain able to save a game,
+    # while their potentially retried request cannot duplicate learning rows.
+    return attempts if request.client_attempt_id is not None else ()
+
+
 def insert_learning_attempt(cursor, *, user_id: str, game_result_id, attempt: dict) -> None:
     """Insert the minimal attempt in the caller's game-result transaction."""
 

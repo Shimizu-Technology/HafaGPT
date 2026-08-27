@@ -7,7 +7,12 @@ import { FlashcardViewer } from './FlashcardViewer';
 import { LessonPage } from './LessonPage';
 import { QuizViewer } from './QuizViewer';
 import { StoryViewer } from './StoryViewer';
-import { getCuratedConceptId } from '../data/conceptEvidence';
+import {
+  getCuratedConceptId,
+  getCuratedDeckConceptIds,
+  getQuestionConceptId,
+} from '../data/conceptEvidence';
+import { getQuizCategory } from '../data/quizData';
 import { withConceptReview } from '../lib/conceptReview';
 
 const mocks = vi.hoisted(() => ({
@@ -33,6 +38,8 @@ const mocks = vi.hoisted(() => ({
     }],
   },
   tryUse: vi.fn(async () => true),
+  recordLessonExposure: vi.fn(),
+  saveQuizResult: vi.fn(),
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
@@ -49,7 +56,7 @@ vi.mock('../hooks/useLearningPath', () => ({
 }));
 
 vi.mock('../hooks/useConceptEvidence', () => ({
-  useRecordLessonExposure: () => ({ mutate: vi.fn() }),
+  useRecordLessonExposure: () => ({ mutate: mocks.recordLessonExposure }),
 }));
 
 vi.mock('../hooks/useXP', () => ({
@@ -71,7 +78,7 @@ vi.mock('../hooks/useSpacedRepetition', () => ({
 }));
 
 vi.mock('../hooks/useQuizQuery', () => ({
-  useSaveQuizResult: () => ({ mutate: vi.fn(), isPending: false }),
+  useSaveQuizResult: () => ({ mutate: mocks.saveQuizResult, isPending: false }),
 }));
 
 vi.mock('../hooks/useVocabularyQuery', () => ({
@@ -133,10 +140,36 @@ function renderSurface(
 const topicQuery = 'topic=greetings&return_to=%2Flearning%2Fgreetings';
 const learningQuery = `topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings`;
 
+function completeCuratedGreetingQuiz() {
+  const quiz = getQuizCategory('greetings')!;
+  for (let questionNumber = 0; questionNumber < quiz.questions.length; questionNumber += 1) {
+    const question = quiz.questions.find((candidate) =>
+      screen.queryByText(candidate.question),
+    );
+    expect(question).toBeDefined();
+    if (question?.type === 'multiple_choice') {
+      const answerText = screen.getByText(question.correctAnswer);
+      fireEvent.click(answerText.closest('button')!);
+    } else {
+      fireEvent.change(screen.getByPlaceholderText('Type your answer...'), {
+        target: { value: question?.correctAnswer },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Submit Answer' }));
+    }
+    fireEvent.click(screen.getByRole('button', {
+      name: questionNumber === quiz.questions.length - 1
+        ? 'See Results'
+        : 'Next Question',
+    }));
+  }
+}
+
 describe('topic surface navigation', () => {
   beforeEach(() => {
     mocks.tryUse.mockReset();
     mocks.tryUse.mockResolvedValue(true);
+    mocks.recordLessonExposure.mockReset();
+    mocks.saveQuizResult.mockReset();
   });
 
   afterEach(() => {
@@ -148,6 +181,27 @@ describe('topic surface navigation', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to topic' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
+  });
+
+  it('records the exact completed lesson deck before advancing to its quiz', async () => {
+    renderSurface(<LessonPage />, '/learn/:topicId', '/learn/greetings');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Flashcards' }));
+    for (let cardNumber = 2; cardNumber <= 14; cardNumber += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `View card ${cardNumber}` }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Quiz' }));
+
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mocks.recordLessonExposure).toHaveBeenCalledWith(
+        {
+          topicId: 'greetings',
+          conceptIds: getCuratedDeckConceptIds('greetings'),
+        },
+        expect.objectContaining({ onError: expect.any(Function) }),
+      );
+    });
   });
 
   it('returns topic flashcards to their workspace', async () => {
@@ -182,6 +236,39 @@ describe('topic surface navigation', () => {
     });
     fireEvent.click(back);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
+  });
+
+  it('saves exact contextual quiz evidence and uses a fresh identity on retry', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      `/quiz/greetings?${topicQuery}`,
+    );
+    await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
+
+    completeCuratedGreetingQuiz();
+    expect(mocks.saveQuizResult).toHaveBeenCalledOnce();
+    const first = mocks.saveQuizResult.mock.calls[0][0];
+    expect(first.learning_context).toEqual({
+      topic_id: 'greetings',
+      source: 'topic',
+    });
+    expect(first.answers.map((answer: { concept_id: string }) => answer.concept_id).sort())
+      .toEqual(
+        getQuizCategory('greetings')!.questions
+          .map((question) => getQuestionConceptId(question.id))
+          .sort(),
+      );
+    expect(first.client_attempt_id).toMatch(/^[0-9a-f-]{36}$/i);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Try Again' }));
+    await waitFor(() => expect(screen.queryByText('Quiz complete')).not.toBeInTheDocument());
+    completeCuratedGreetingQuiz();
+
+    expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2);
+    expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id)
+      .not.toBe(first.client_attempt_id);
   });
 
   it('returns a related story to its workspace', () => {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTopic } from '../data/learningPath';
 import { getCuratedDeckConceptIds, getQuestionConceptId } from '../data/conceptEvidence';
@@ -24,6 +24,32 @@ vi.mock('../hooks/useSpeech', () => ({
 
 
 const greetings = getTopic('greetings')!;
+
+function answerLessonQuestion(answer: string, typed = false) {
+  if (typed) {
+    fireEvent.change(screen.getByPlaceholderText('Type your answer...'), {
+      target: { value: answer },
+    });
+  } else {
+    fireEvent.click(screen.getByRole('button', { name: answer }));
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'Check Answer' }));
+}
+
+function saveResumableGreetingQuiz(attemptId: string, startedAt: number) {
+  window.localStorage.setItem('hafagpt_quiz_greetings', JSON.stringify({
+    topicId: 'greetings',
+    attemptId,
+    startedAt,
+    questionIds: ['greet-1', 'greet-2', 'greet-3', 'greet-4', 'greet-5'],
+    currentIndex: 1,
+    correctCount: 1,
+    answeredQuestions: {
+      'greet-1': { userAnswer: 'Hello / Hi', isCorrect: true },
+    },
+    timestamp: Date.now(),
+  }));
+}
 
 describe('lesson concept evidence', () => {
   beforeEach(() => {
@@ -61,26 +87,15 @@ describe('lesson concept evidence', () => {
     const onComplete = vi.fn();
     render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
 
-    const answerQuestion = (answer: string, typed = false) => {
-      if (typed) {
-        fireEvent.change(screen.getByPlaceholderText('Type your answer...'), {
-          target: { value: answer },
-        });
-      } else {
-        fireEvent.click(screen.getByRole('button', { name: answer }));
-      }
-      fireEvent.click(screen.getByRole('button', { name: 'Check Answer' }));
-    };
-
-    answerQuestion('Hello / Hi');
+    answerLessonQuestion('Hello / Hi');
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
-    answerQuestion("Si Yu'os Ma'åse'");
+    answerLessonQuestion("Si Yu'os Ma'åse'");
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
-    answerQuestion('Adios', true);
+    answerLessonQuestion('Adios', true);
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
-    answerQuestion('Adai', true);
+    answerLessonQuestion('Adai', true);
     fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
-    answerQuestion('How are you?');
+    answerLessonQuestion('How are you?');
     fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
     fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
 
@@ -107,5 +122,49 @@ describe('lesson concept evidence', () => {
       getQuestionConceptId('greet-4'),
       getQuestionConceptId('greet-5'),
     ]);
+  });
+
+  it('resumes the same assessment identity and preserves its original start time', () => {
+    const attemptId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
+    const now = 2_000_000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    saveResumableGreetingQuiz(attemptId, now - 60_000);
+
+    render(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue Where I Left Off' }));
+
+    answerLessonQuestion("Si Yu'os Ma'åse'");
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adios', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adai', true);
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('How are you?');
+    fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
+
+    const saved = mocks.saveQuizResult.mock.calls[0][0];
+    expect(saved.client_attempt_id).toBe(attemptId);
+    expect(saved.time_spent_seconds).toBe(60);
+    expect(saved.answers).toHaveLength(5);
+    expect(window.localStorage.getItem('hafagpt_quiz_greetings')).toBeNull();
+  });
+
+  it('abandons saved progress with a new retry identity when starting fresh', async () => {
+    const priorAttemptId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
+    saveResumableGreetingQuiz(priorAttemptId, Date.now() - 60_000);
+
+    render(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start Fresh' }));
+
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    await waitFor(() => {
+      const fresh = JSON.parse(
+        window.localStorage.getItem('hafagpt_quiz_greetings') ?? '{}',
+      );
+      expect(fresh.currentIndex).toBe(0);
+      expect(fresh.attemptId).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(fresh.attemptId).not.toBe(priorAttemptId);
+      expect(fresh.answeredQuestions).toEqual({});
+    });
   });
 });

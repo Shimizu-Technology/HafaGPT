@@ -93,7 +93,7 @@ from .spaced_repetition import (
 )
 from .site_theme import resolve_site_theme, validate_site_theme_configuration
 from .learning_attempts import (
-    build_game_learning_attempts,
+    build_retry_safe_game_learning_attempts,
     insert_learning_attempts,
     persist_game_result,
 )
@@ -3638,22 +3638,8 @@ async def save_game_result(
 
         learning_attempts = ()
         if request.learning_context:
-            if request.client_attempt_id is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Contextual games require a client attempt ID",
-                )
             try:
-                learning_attempts = build_game_learning_attempts(
-                    topic_id=request.learning_context.topic_id,
-                    category_id=request.category_id,
-                    source=request.learning_context.source,
-                    game_type=request.game_type,
-                    stars=request.stars,
-                    score=request.score,
-                    time_seconds=request.time_seconds,
-                    concept_ids=tuple(request.learning_context.concept_ids),
-                )
+                learning_attempts = build_retry_safe_game_learning_attempts(request)
             except ValueError as error:
                 raise HTTPException(status_code=400, detail=str(error)) from error
         

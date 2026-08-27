@@ -3,6 +3,7 @@ import pytest
 from api.learning_attempts import (
     build_game_learning_attempt,
     build_game_learning_attempts,
+    build_retry_safe_game_learning_attempts,
     duration_bucket,
     insert_learning_attempt,
     insert_learning_attempts,
@@ -168,6 +169,28 @@ def test_exact_game_attempts_reject_a_concept_from_another_category():
             time_seconds=75,
             concept_ids=(curated_concept_id("family", 0),),
         )
+
+
+def test_valid_legacy_game_context_without_retry_key_saves_no_learning_rows():
+    request = GameResultCreate(
+        game_type="memory_match",
+        mode="beginner",
+        category_id="greetings",
+        score=400,
+        stars=3,
+        client_attempt_id=None,
+        learning_context={
+            "topic_id": "greetings",
+            "source": "topic",
+            "concept_ids": [curated_concept_id("greetings", 0)],
+        },
+    )
+
+    assert build_retry_safe_game_learning_attempts(request) == ()
+
+    request.learning_context.topic_id = "family"
+    with pytest.raises(ValueError, match="match the played category"):
+        build_retry_safe_game_learning_attempts(request)
 
 
 def test_attempt_batch_uses_idempotent_per_concept_inserts():

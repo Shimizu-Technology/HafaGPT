@@ -89,7 +89,6 @@ export function useQuizStats() {
 
   return useQuery({
     queryKey: ['quizStats', userId],
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
     queryFn: async (): Promise<QuizStats> => {
       const token = await getToken();
       

@@ -111,6 +111,13 @@ def upgrade() -> None:
         "learning_attempts",
         ["game_result_id", "concept_id"],
     )
+    op.create_index(
+        "uq_learning_attempts_game_result_broad",
+        "learning_attempts",
+        ["game_result_id"],
+        unique=True,
+        postgresql_where=sa.text("evidence_scope = 'topic'"),
+    )
 
     op.create_table(
         "lesson_concept_exposures",
@@ -172,6 +179,9 @@ def downgrade() -> None:
         "learning_attempts",
         type_="unique",
     )
+    # IF EXISTS keeps local/preview databases recoverable if this unreleased
+    # migration was exercised before the partial index was added.
+    op.execute("DROP INDEX IF EXISTS uq_learning_attempts_game_result_broad")
     op.drop_constraint(
         "ck_learning_attempts_source",
         "learning_attempts",

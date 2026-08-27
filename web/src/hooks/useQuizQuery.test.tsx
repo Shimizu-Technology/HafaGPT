@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useQuizResultDetail } from './useQuizQuery';
+import { useQuizResultDetail, useQuizStats } from './useQuizQuery';
 
 
 const mocks = vi.hoisted(() => ({ userId: 'user_1' }));
@@ -60,5 +60,50 @@ describe('quiz query ownership', () => {
 
     expect(queryClient.getQueryState(['quizResult', 'user_1', 'result_1'])).toBeDefined();
     expect(queryClient.getQueryState(['quizResult', 'user_2', 'result_1'])).toBeDefined();
+  });
+
+  it('does not show one account quiz stats while another account loads', async () => {
+    let resolveSecondFetch: ((value: Response | PromiseLike<Response>) => void) | undefined;
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total_quizzes: 3,
+          average_score: 90,
+          best_category: 'greetings',
+          best_category_title: 'Greetings & Basics',
+          best_category_percentage: 100,
+          recent_results: [],
+        }),
+      } as Response)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveSecondFetch = resolve;
+      }));
+
+    const { result, rerender } = renderHook(() => useQuizStats(), { wrapper });
+    await waitFor(() => expect(result.current.data?.total_quizzes).toBe(3));
+
+    mocks.userId = 'user_2';
+    rerender();
+
+    expect(result.current.data).toBeUndefined();
+    expect(result.current.isPending).toBe(true);
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      resolveSecondFetch?.({
+        ok: true,
+        json: async () => ({
+          total_quizzes: 0,
+          average_score: 0,
+          best_category: null,
+          best_category_title: null,
+          best_category_percentage: null,
+          recent_results: [],
+        }),
+      } as Response);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.data?.total_quizzes).toBe(0));
   });
 });

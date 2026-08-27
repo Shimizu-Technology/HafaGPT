@@ -1,17 +1,22 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCuratedConceptId } from '../data/conceptEvidence';
-import { useSaveGameResult } from './useGamesQuery';
+import { useGameStats, useSaveGameResult } from './useGamesQuery';
 
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
+  userId: 'user_1',
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useAuth: () => ({ getToken: async () => 'test-token' }),
+  useAuth: () => ({
+    getToken: async () => 'test-token',
+    isSignedIn: true,
+    userId: mocks.userId,
+  }),
 }));
 
 vi.mock('../lib/learningAnalytics', async (importOriginal) => {
@@ -41,6 +46,7 @@ function gameResult() {
 describe('useSaveGameResult concept context', () => {
   beforeEach(() => {
     mocks.capture.mockReset();
+    mocks.userId = 'user_1';
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
       json: async () => gameResult(),
@@ -106,5 +112,52 @@ describe('useSaveGameResult concept context', () => {
       score: 400,
     });
     expect(mocks.capture).not.toHaveBeenCalled();
+  });
+
+  it('does not show one account game stats while another account loads', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const scopedWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    let resolveSecondFetch: ((value: Response | PromiseLike<Response>) => void) | undefined;
+    vi.mocked(fetch)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total_games: 3,
+          average_score: 90,
+          average_stars: 3,
+          recent_results: [],
+        }),
+      } as Response)
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        resolveSecondFetch = resolve;
+      }));
+
+    const { result, rerender } = renderHook(() => useGameStats(), {
+      wrapper: scopedWrapper,
+    });
+    await waitFor(() => expect(result.current.data?.total_games).toBe(3));
+
+    mocks.userId = 'user_2';
+    rerender();
+    expect(result.current.data).toBeUndefined();
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      resolveSecondFetch?.({
+        ok: true,
+        json: async () => ({
+          total_games: 0,
+          average_score: 0,
+          average_stars: 0,
+          recent_results: [],
+        }),
+      } as Response);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(result.current.data?.total_games).toBe(0));
   });
 });

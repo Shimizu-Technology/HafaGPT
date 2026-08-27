@@ -59,23 +59,30 @@ def record_lesson_exposures_sync(
 ) -> int:
     """Upsert one row per exact concept; retries cannot duplicate evidence."""
 
+    if not concept_ids:
+        return 0
     lesson_id = lesson_cards_id(topic_id)
     connection = connection_factory()
     try:
         with connection:
             with connection.cursor() as cursor:
-                for concept_id in concept_ids:
-                    cursor.execute(
-                        """
-                        INSERT INTO lesson_concept_exposures (
-                            user_id, topic_id, lesson_id, concept_id
-                        )
-                        VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (user_id, lesson_id, concept_id)
-                        DO UPDATE SET last_exposed_at = EXCLUDED.last_exposed_at
-                        """,
-                        (user_id, topic_id, lesson_id, concept_id),
+                values = ", ".join(["(%s, %s, %s, %s)"] * len(concept_ids))
+                params = tuple(
+                    value
+                    for concept_id in concept_ids
+                    for value in (user_id, topic_id, lesson_id, concept_id)
+                )
+                cursor.execute(
+                    f"""
+                    INSERT INTO lesson_concept_exposures (
+                        user_id, topic_id, lesson_id, concept_id
                     )
+                    VALUES {values}
+                    ON CONFLICT (user_id, lesson_id, concept_id)
+                    DO UPDATE SET last_exposed_at = EXCLUDED.last_exposed_at
+                    """,
+                    params,
+                )
     finally:
         connection.close()
     return len(concept_ids)

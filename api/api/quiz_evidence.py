@@ -38,8 +38,6 @@ def validate_quiz_result_request(request: QuizResultCreate) -> dict | None:
             raise ValueError("Unknown learning topic")
         if request.category_id != expected_quiz_category:
             raise ValueError("Learning topic must match the quiz category")
-        if request.client_attempt_id is None:
-            raise ValueError("Contextual quizzes require a client attempt ID")
         if context.source == "lesson":
             if context.assessment_id != lesson_assessment_id(context.topic_id):
                 raise ValueError("Lesson quiz must use its authored assessment ID")

@@ -108,10 +108,10 @@ export function useSaveGameResult() {
 
 // Hook to get game stats
 export function useGameStats(enabled: boolean = true) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery<GameStats>({
-    queryKey: ['game-stats'],
+    queryKey: ['game-stats', userId],
     queryFn: async () => {
       const token = await getToken();
       
@@ -129,7 +129,6 @@ export function useGameStats(enabled: boolean = true) {
     },
     enabled: enabled && isSignedIn,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
@@ -140,10 +139,10 @@ export function useGameHistory(
   gameType?: string,
   enabled: boolean = true
 ) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery<GameHistoryResponse>({
-    queryKey: ['game-history', page, perPage, gameType],
+    queryKey: ['game-history', userId, page, perPage, gameType],
     queryFn: async () => {
       const token = await getToken();
       
