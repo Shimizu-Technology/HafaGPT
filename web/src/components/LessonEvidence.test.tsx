@@ -86,6 +86,26 @@ describe('lesson concept evidence', () => {
     );
   });
 
+  it('does not report curated concepts after only part of the lesson deck is viewed', () => {
+    const onComplete = vi.fn();
+    const onSkip = vi.fn();
+    render(
+      <LessonFlashcards
+        topic={greetings}
+        onComplete={onComplete}
+        onSkip={onSkip}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'View card 2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'View card 3' }));
+    expect(screen.getByRole('button', { name: 'View all cards first' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip to Quiz' }));
+    expect(onSkip).toHaveBeenCalledOnce();
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
   it('persists the embedded quiz as one identified, retry-safe lesson assessment', async () => {
     const onComplete = vi.fn();
     render(<LessonQuiz topic={greetings} onComplete={onComplete} />);

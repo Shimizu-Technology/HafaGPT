@@ -145,7 +145,7 @@ export function QuizViewer() {
   // Browser warning when leaving mid-quiz
   const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
   const isResultNavigationBlocked = pendingQuizResult !== null;
-  usePendingNavigationBlocker(isResultNavigationBlocked);
+  const blockedNavigationCount = usePendingNavigationBlocker(isResultNavigationBlocked);
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -596,6 +596,7 @@ export function QuizViewer() {
               className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
             >
               <p className="font-semibold">
+                {blockedNavigationCount > 0 && 'Navigation paused. '}
                 {resultSaveFailed
                   ? 'Quiz result has not saved yet.'
                   : 'Saving your quiz result…'}

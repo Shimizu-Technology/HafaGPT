@@ -299,6 +299,9 @@ describe('contextual learning game navigation', () => {
       await router.navigate(-1);
     });
     expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Navigation paused. Game result has not saved yet.',
+    );
     expect(screen.getByRole('button', { name: 'Retry saving game result' }))
       .toBeInTheDocument();
 

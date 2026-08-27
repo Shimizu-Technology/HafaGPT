@@ -364,7 +364,7 @@ export function WordScramble() {
 
   const isGameInProgress = gameState === 'playing';
   const isResultNavigationBlocked = pendingGameResult !== null;
-  usePendingNavigationBlocker(isResultNavigationBlocked);
+  const blockedNavigationCount = usePendingNavigationBlocker(isResultNavigationBlocked);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -849,6 +849,7 @@ export function WordScramble() {
                 className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
               >
                 <p className="font-semibold">
+                  {blockedNavigationCount > 0 && 'Navigation paused. '}
                   {resultSaveFailed
                     ? 'Game result has not saved yet.'
                     : 'Saving your game result…'}

@@ -554,6 +554,9 @@ describe('topic surface navigation', () => {
     expect(screen.getByTestId('current-location')).toHaveTextContent(
       `/quiz/greetings?${topicQuery}`,
     );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Navigation paused. Quiz result has not saved yet.',
+    );
     expect(screen.getByRole('button', { name: 'Retry saving quiz result' }))
       .toBeInTheDocument();
 
