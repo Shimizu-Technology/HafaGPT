@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
   ChevronLeft,
@@ -47,7 +47,8 @@ function formatDate(value: string): string {
 /** Show a restorable, filterable list of the learner's saved game rounds. */
 export function GameHistory() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const page = positivePageFromSearch(searchParams.get('page'));
   const requestedGameType = searchParams.get('game') || '';
   const gameType = GAME_TYPES.some(([value]) => value === requestedGameType)
@@ -70,7 +71,12 @@ export function GameHistory() {
     else next.delete('page');
     if (nextGameType) next.set('game', nextGameType);
     else next.delete('game');
-    setSearchParams(next);
+    const nextSearch = next.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ));
   };
 
   useEffect(() => {
@@ -80,9 +86,14 @@ export function GameHistory() {
       const next = new URLSearchParams(searchParams);
       if (lastPage > 1) next.set('page', String(lastPage));
       else next.delete('page');
-      setSearchParams(next, { replace: true });
+      const nextSearch = next.toString();
+      navigate(currentAppPath(
+        location.pathname,
+        nextSearch ? `?${nextSearch}` : '',
+        location.hash,
+      ), { replace: true });
     }
-  }, [data, page, searchParams, setSearchParams]);
+  }, [data, location.hash, location.pathname, navigate, page, searchParams]);
 
   return (
     <LearnerPageShell>
@@ -135,7 +146,9 @@ export function GameHistory() {
                 {data.results.map((result) => (
                   <Link
                     key={result.id}
-                    to={appRoutes.gameResult(result.id, { returnTo: currentAppPath(location.pathname, location.search) })}
+                    to={appRoutes.gameResult(result.id, {
+                      returnTo: currentAppPath(location.pathname, location.search, location.hash),
+                    })}
                     className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
                   >
                     <span className="flex min-w-0 items-center gap-3">

@@ -207,11 +207,11 @@ describe('progress pages', () => {
 
     function LocationProbe() {
       const location = useLocation();
-      return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
+      return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
     }
 
     render(
-      <MemoryRouter initialEntries={['/dashboard/quiz-history?page=2']}>
+      <MemoryRouter initialEntries={['/dashboard/quiz-history?page=2#results']}>
         <QuizHistory />
         <LocationProbe />
       </MemoryRouter>,
@@ -220,10 +220,10 @@ describe('progress pages', () => {
     expect(mocks.quizHistory).toHaveBeenCalledWith(2, 20);
     expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute(
       'href',
-      '/quiz/review/quiz-21?return_to=%2Fdashboard%2Fquiz-history%3Fpage%3D2',
+      '/quiz/review/quiz-21?return_to=%2Fdashboard%2Fquiz-history%3Fpage%3D2%23results',
     );
     fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
-    expect(screen.getByTestId('location')).toHaveTextContent('/dashboard/quiz-history');
+    expect(screen.getByTestId('location')).toHaveTextContent('/dashboard/quiz-history#results');
   });
 
   it('repairs an out-of-range quiz-history page using the last known page', () => {

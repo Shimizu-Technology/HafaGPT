@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Brain, Calendar, ChevronLeft, ChevronRight, Clock, History, Loader2, RefreshCw, Trophy } from 'lucide-react';
 import { useQuizHistory } from '../hooks/useQuizQuery';
 import { appRoutes, currentAppPath, positivePageFromSearch } from '../lib/routes';
@@ -30,7 +30,8 @@ function scoreTone(percentage: number) {
 
 export function QuizHistory() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const page = positivePageFromSearch(searchParams.get('page'));
   const perPage = 20;
   const { data, isLoading, error, refetch } = useQuizHistory(page, perPage);
@@ -48,8 +49,13 @@ export function QuizHistory() {
     const next = new URLSearchParams(searchParams);
     if (nextPage > 1) next.set('page', String(nextPage));
     else next.delete('page');
-    setSearchParams(next, { replace });
-  }, [searchParams, setSearchParams]);
+    const nextSearch = next.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace });
+  }, [location.hash, location.pathname, navigate, searchParams]);
 
   useEffect(() => {
     if (!data || data.pagination.total_count === 0) return;

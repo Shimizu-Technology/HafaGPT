@@ -83,7 +83,7 @@ describe('activity result pages', () => {
 
   it('restores game-history page and filter state from the URL', () => {
     render(
-      <MemoryRouter initialEntries={['/dashboard/game-history?page=2&game=memory_match']}>
+      <MemoryRouter initialEntries={['/dashboard/game-history?page=2&game=memory_match#results']}>
         <GameHistory />
       </MemoryRouter>,
     );
@@ -92,7 +92,7 @@ describe('activity result pages', () => {
     expect(screen.getByRole('combobox', { name: 'Game type' })).toHaveValue('memory_match');
     expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute(
       'href',
-      `/games/results/${RESULT_ID}?return_to=%2Fdashboard%2Fgame-history%3Fpage%3D2%26game%3Dmemory_match`,
+      `/games/results/${RESULT_ID}?return_to=%2Fdashboard%2Fgame-history%3Fpage%3D2%26game%3Dmemory_match%23results`,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Previous' }));

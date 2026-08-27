@@ -51,7 +51,7 @@ vi.mock('./AdminLayout', () => ({
 
 function LocationProbe() {
   const location = useLocation();
-  return <output data-testid="location">{`${location.pathname}${location.search}`}</output>;
+  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
 }
 
 describe('restorable admin user navigation', () => {
@@ -67,7 +67,7 @@ describe('restorable admin user navigation', () => {
 
   it('restores search and page state and carries the exact list context into detail', () => {
     render(
-      <MemoryRouter initialEntries={['/admin/users?page=2&search=ada']}>
+      <MemoryRouter initialEntries={['/admin/users?page=2&search=ada#users']}>
         <AdminUsers />
         <LocationProbe />
       </MemoryRouter>,
@@ -77,13 +77,13 @@ describe('restorable admin user navigation', () => {
     expect(screen.getByRole('textbox', { name: 'Search users' })).toHaveValue('ada');
     fireEvent.click(screen.getAllByText('Ada Lovelace')[0]);
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/admin/users/user%2Fada?return_to=%2Fadmin%2Fusers%3Fpage%3D2%26search%3Dada',
+      '/admin/users/user%2Fada?return_to=%2Fadmin%2Fusers%3Fpage%3D2%26search%3Dada%23users',
     );
   });
 
   it('writes a debounced search to the URL and resets pagination', async () => {
     render(
-      <MemoryRouter initialEntries={['/admin/users?page=2']}>
+      <MemoryRouter initialEntries={['/admin/users?page=2#users']}>
         <AdminUsers />
         <LocationProbe />
       </MemoryRouter>,
@@ -94,7 +94,7 @@ describe('restorable admin user navigation', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('location')).toHaveTextContent('/admin/users?search=ada');
+      expect(screen.getByTestId('location')).toHaveTextContent('/admin/users?search=ada#users');
     });
     expect(mocks.useAdminUsers).toHaveBeenLastCalledWith(1, 20, 'ada');
   });

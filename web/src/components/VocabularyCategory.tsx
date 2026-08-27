@@ -16,7 +16,7 @@ export function VocabularyCategory() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const searchQuery = searchParams.get('q') ?? '';
   
@@ -46,7 +46,12 @@ export function VocabularyCategory() {
     const nextParams = new URLSearchParams(searchParams);
     if (query) nextParams.set('q', query);
     else nextParams.delete('q');
-    setSearchParams(nextParams, { replace: true });
+    const nextSearch = nextParams.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace: true });
   };
   
   const hasMore = words.length < totalWords;

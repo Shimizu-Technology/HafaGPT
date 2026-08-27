@@ -255,7 +255,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewD
 
 export function AdminUsers() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlSearch = searchParams.get('search') || '';
   const [search, setSearch] = useState(urlSearch);
@@ -273,10 +273,15 @@ export function AdminUsers() {
       if (search) next.set('search', search);
       else next.delete('search');
       next.delete('page');
-      setSearchParams(next, { replace: true });
+      const nextSearch = next.toString();
+      navigate(currentAppPath(
+        location.pathname,
+        nextSearch ? `?${nextSearch}` : '',
+        location.hash,
+      ), { replace: true });
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, searchParams, setSearchParams, urlSearch]);
+  }, [location.hash, location.pathname, navigate, search, searchParams, urlSearch]);
   
   useEffect(() => {
     setSearch(urlSearch);
@@ -286,8 +291,13 @@ export function AdminUsers() {
     const next = new URLSearchParams(searchParams);
     if (nextPage > 1) next.set('page', String(nextPage));
     else next.delete('page');
-    setSearchParams(next, { replace });
-  }, [searchParams, setSearchParams]);
+    const nextSearch = next.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace });
+  }, [location.hash, location.pathname, navigate, searchParams]);
 
   useEffect(() => {
     if (!data || data.total === 0) return;
