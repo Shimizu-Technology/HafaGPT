@@ -179,3 +179,7 @@ def test_render_capacity_is_intentionally_unchanged():
     assert "plan: standard" in config
     assert "gunicorn api.main:app -w 3" in config
     assert "healthCheckPath: /api/health" in config
+    assert (
+        "preDeployCommand: alembic upgrade head && alembic current --check-heads"
+        in config
+    )

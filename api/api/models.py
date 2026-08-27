@@ -346,7 +346,11 @@ class QuizResultCreate(BaseModel):
     score: int = Field(..., ge=0, description="Number of correct answers")
     total: int = Field(..., gt=0, description="Total number of questions")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz in seconds")
-    answers: Optional[list[QuizAnswerCreate]] = Field(None, description="Individual question answers")
+    answers: Optional[list[QuizAnswerCreate]] = Field(
+        None,
+        max_length=100,
+        description="Individual question answers",
+    )
     client_attempt_id: Optional[UUID] = Field(
         None,
         description="Client-generated idempotency key for this completed attempt",

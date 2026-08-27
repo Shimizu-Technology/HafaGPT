@@ -210,6 +210,12 @@ describe('progress pages', () => {
       'href',
       expect.stringContaining('/flashcards/greetings?'),
     );
+    const exactCardHref = screen
+      .getByRole('link', { name: 'Review this exact card' })
+      .getAttribute('href');
+    expect(new URL(exactCardHref!, 'https://hafagpt.local').searchParams.get('concept')).toBe(
+      getCuratedConceptId('greetings', 3),
+    );
     expect(screen.getByRole('link', { name: 'Review this exact card' })).toHaveAttribute(
       'href',
       expect.stringContaining('return_to=%2Fquiz%2Freview%2F018f6a6e-9c3d-7b2a-a1c4-8e9f12345678'),

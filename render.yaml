@@ -8,6 +8,6 @@ services:
     branch: main
     autoDeployTrigger: commit
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    preDeployCommand: alembic upgrade head
+    preDeployCommand: alembic upgrade head && alembic current --check-heads
     startCommand: gunicorn api.main:app -w 3 -k uvicorn_worker.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 300
     healthCheckPath: /api/health

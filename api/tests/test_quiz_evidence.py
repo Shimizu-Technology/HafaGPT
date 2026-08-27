@@ -137,6 +137,9 @@ class Cursor:
     def execute(self, query, params):
         self.executions.append((query, params))
 
+    def executemany(self, query, params):
+        self.executions.append((query, list(params)))
+
     def fetchone(self):
         return self.fetches.pop(0)
 
@@ -176,7 +179,15 @@ def test_quiz_result_and_exact_answers_are_inserted_in_one_transaction_scope():
     assert "ON CONFLICT (user_id, client_attempt_id) DO NOTHING" in result_query
     assert result_params[7] == UUID("018f6a6e-9c3d-7b2a-a1c4-8e9f12345678")
     assert "concept_id" in answer_query
-    assert answer_params[-1] == curated_concept_id("greetings", 0)
+    assert len(answer_params) == 1
+    assert answer_params[0][-1] == curated_concept_id("greetings", 0)
+
+
+def test_quiz_result_bounds_individual_answer_count():
+    answer = request_data().answers[0].model_dump()
+
+    with pytest.raises(ValueError, match="at most 100 items"):
+        request_data(answers=[answer] * 101)
 
 
 def test_idempotent_retry_returns_the_stored_attempt_without_duplicate_answers():

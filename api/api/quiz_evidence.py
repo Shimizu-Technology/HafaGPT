@@ -127,8 +127,22 @@ def persist_quiz_result(
 
     if inserted:
         result_id = result_row[0]
-        for answer in request.answers or []:
-            cursor.execute(
+        answer_rows = [
+            (
+                result_id,
+                answer.question_id,
+                answer.question_text,
+                answer.question_type,
+                answer.user_answer,
+                answer.correct_answer,
+                answer.is_correct,
+                answer.explanation,
+                answer.concept_id,
+            )
+            for answer in request.answers or []
+        ]
+        if answer_rows:
+            cursor.executemany(
                 """
                 INSERT INTO quiz_answers (
                     quiz_result_id, question_id, question_text, question_type,
@@ -137,17 +151,7 @@ def persist_quiz_result(
                 )
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (
-                    result_id,
-                    answer.question_id,
-                    answer.question_text,
-                    answer.question_type,
-                    answer.user_answer,
-                    answer.correct_answer,
-                    answer.is_correct,
-                    answer.explanation,
-                    answer.concept_id,
-                ),
+                answer_rows,
             )
 
     return result_row

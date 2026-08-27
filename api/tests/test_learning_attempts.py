@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 
 from api.learning_attempts import (
@@ -249,3 +251,7 @@ def test_contextual_game_retry_reuses_the_stored_result():
     assert inserted is False
     assert "ON CONFLICT (user_id, client_attempt_id) DO NOTHING" in cursor.executions[0][0]
     assert "FROM game_results" in cursor.executions[1][0]
+    assert cursor.executions[1][1] == (
+        "user_123",
+        UUID("018f6a6e-9c3d-7b2a-a1c4-8e9f12345678"),
+    )
