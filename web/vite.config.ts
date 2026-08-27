@@ -4,6 +4,25 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        // React Router's data-router implementation is required by the
+        // retry-safe navigation blockers. Keep it in a stable shared chunk so
+        // platform-specific Rollup heuristics cannot fold it into the entry
+        // bundle. The bundle gate counts this eager preload together with the
+        // entry, so the split cannot hide initial-payload growth.
+        manualChunks(id) {
+          if (
+            id.includes('/node_modules/react-router/') ||
+            id.includes('/node_modules/react-router-dom/')
+          ) {
+            return 'react-router';
+          }
+        },
+      },
+    },
+  },
   server: {
     host: '127.0.0.1',
     port: 5173,

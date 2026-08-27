@@ -1,9 +1,13 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
+import { getQuestionConceptId } from '../data/conceptEvidence';
 import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
 import { browserStorage } from '../lib/browserStorage';
+import { createClientAttemptId } from '../lib/clientAttemptId';
+import { useSaveQuizResult } from '../hooks/useQuizQuery';
 
 interface LessonQuizProps {
   topic: LearningTopic;
@@ -15,6 +19,8 @@ const STORAGE_KEY_PREFIX = 'hafagpt_quiz_';
 
 interface SavedQuizState {
   topicId: string;
+  attemptId?: string;
+  startedAt?: number;
   questionIds: string[];  // Preserve the randomized order
   currentIndex: number;
   correctCount: number;
@@ -22,50 +28,158 @@ interface SavedQuizState {
   timestamp: number;
 }
 
-function getStorageKey(topicId: string) {
-  return `${STORAGE_KEY_PREFIX}${topicId}`;
+function getStorageKey(topicId: string, ownerId: string) {
+  return `${STORAGE_KEY_PREFIX}${ownerId}_${topicId}`;
 }
 
-function saveQuizState(state: SavedQuizState) {
+function saveQuizState(state: SavedQuizState, ownerId: string) {
   try {
-    browserStorage.set(getStorageKey(state.topicId), JSON.stringify(state));
+    browserStorage.set(getStorageKey(state.topicId, ownerId), JSON.stringify(state));
   } catch (e) {
     console.warn('Failed to save quiz state:', e);
   }
 }
 
-function loadQuizState(topicId: string): SavedQuizState | null {
+function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null {
   try {
-    const saved = browserStorage.get(getStorageKey(topicId));
+    const saved = browserStorage.get(getStorageKey(topicId, ownerId));
     if (!saved) return null;
     
-    const state: SavedQuizState = JSON.parse(saved);
+    const state: unknown = JSON.parse(saved);
+    if (
+      typeof state !== 'object'
+      || state === null
+      || !('topicId' in state)
+      || state.topicId !== topicId
+      || !('questionIds' in state)
+      || !Array.isArray(state.questionIds)
+      || state.questionIds.length === 0
+      || state.questionIds.length > QUESTIONS_PER_QUIZ
+      || !state.questionIds.every((questionId) => typeof questionId === 'string')
+      || new Set(state.questionIds).size !== state.questionIds.length
+      || !('currentIndex' in state)
+      || typeof state.currentIndex !== 'number'
+      || !Number.isInteger(state.currentIndex)
+      || state.currentIndex < 0
+      || state.currentIndex >= state.questionIds.length
+      || !('correctCount' in state)
+      || typeof state.correctCount !== 'number'
+      || !Number.isInteger(state.correctCount)
+      || state.correctCount < 0
+      || state.correctCount > state.questionIds.length
+      || !('answeredQuestions' in state)
+      || typeof state.answeredQuestions !== 'object'
+      || state.answeredQuestions === null
+      || Array.isArray(state.answeredQuestions)
+      || !Object.values(state.answeredQuestions).every((answer) => (
+        typeof answer === 'object'
+        && answer !== null
+        && 'userAnswer' in answer
+        && typeof answer.userAnswer === 'string'
+        && 'isCorrect' in answer
+        && typeof answer.isCorrect === 'boolean'
+      ))
+      || !((state.questionIds as string[]).slice(0, state.currentIndex)).every(
+        (questionId) => questionId in (state.answeredQuestions as Record<string, unknown>),
+      )
+      || !Object.keys(state.answeredQuestions).every((questionId) =>
+        (state.questionIds as string[])
+          .slice(0, (state.currentIndex as number) + 1)
+          .includes(questionId),
+      )
+      || ![
+        state.currentIndex,
+        state.currentIndex + 1,
+      ].includes(Object.keys(state.answeredQuestions).length)
+      || state.correctCount !== Object.values(state.answeredQuestions)
+        .filter((answer) => (
+          typeof answer === 'object'
+          && answer !== null
+          && 'isCorrect' in answer
+          && answer.isCorrect === true
+        )).length
+      || !('timestamp' in state)
+      || typeof state.timestamp !== 'number'
+      || !Number.isFinite(state.timestamp)
+      || ('attemptId' in state && state.attemptId !== undefined && typeof state.attemptId !== 'string')
+      || ('startedAt' in state && state.startedAt !== undefined && (
+        typeof state.startedAt !== 'number' || !Number.isFinite(state.startedAt)
+      ))
+    ) {
+      clearQuizState(topicId, ownerId);
+      return null;
+    }
     
     // Check if state is older than 1 hour (stale)
     const ONE_HOUR = 60 * 60 * 1000;
     if (Date.now() - state.timestamp > ONE_HOUR) {
-      clearQuizState(topicId);
+      clearQuizState(topicId, ownerId);
       return null;
     }
     
-    return state;
+    return state as SavedQuizState;
   } catch (e) {
     console.warn('Failed to load quiz state:', e);
+    clearQuizState(topicId, ownerId);
     return null;
   }
 }
 
-function clearQuizState(topicId: string) {
+function clearQuizState(topicId: string, ownerId: string) {
   try {
-    browserStorage.remove(getStorageKey(topicId));
+    browserStorage.remove(getStorageKey(topicId, ownerId));
   } catch (e) {
     console.warn('Failed to clear quiz state:', e);
   }
 }
 
 export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
+  const { isSignedIn, user } = useUser();
+  const ownerId = user?.id ?? 'anonymous';
+  return (
+    <LessonQuizSession
+      key={ownerId}
+      topic={topic}
+      onComplete={onComplete}
+      isSignedIn={Boolean(isSignedIn)}
+      ownerId={ownerId}
+    />
+  );
+}
+
+interface LessonQuizSessionProps extends LessonQuizProps {
+  isSignedIn: boolean;
+  ownerId: string;
+}
+
+function LessonQuizSession({
+  topic,
+  onComplete,
+  isSignedIn,
+  ownerId,
+}: LessonQuizSessionProps) {
+  const saveQuizResult = useSaveQuizResult();
   // Try to restore saved state first
-  const savedState = useMemo(() => loadQuizState(topic.id), [topic.id]);
+  const savedState = useMemo(() => {
+    const state = loadQuizState(topic.id, ownerId);
+    if (!state) return null;
+
+    const category = QUIZ_CATEGORIES.find((candidate) => candidate.id === topic.quizCategory);
+    const validQuestionIds = new Set(category?.questions.map((question) => question.id) ?? []);
+    const expectedQuestionCount = Math.min(QUESTIONS_PER_QUIZ, validQuestionIds.size);
+    if (
+      state.questionIds.length !== expectedQuestionCount
+      || !state.questionIds.every((questionId) => validQuestionIds.has(questionId))
+    ) {
+      clearQuizState(topic.id, ownerId);
+      return null;
+    }
+
+    return state;
+  }, [topic.id, topic.quizCategory, ownerId]);
+  const attemptIdRef = useRef(savedState?.attemptId ?? createClientAttemptId());
+  const startedAtRef = useRef(savedState?.startedAt ?? Date.now());
+  const completionStartedRef = useRef(false);
   
   // Get questions for this topic - preserve order if we have saved state
   const allQuestions = useMemo(() => {
@@ -89,11 +203,29 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     return shuffled.slice(0, QUESTIONS_PER_QUIZ);
   }, [topic.quizCategory, savedState]);
 
+  const restoredCurrentQuestion = savedState
+    ? allQuestions[savedState.currentIndex]
+    : undefined;
+  const restoredCurrentAnswer = restoredCurrentQuestion
+    ? savedState?.answeredQuestions[restoredCurrentQuestion.id]
+    : undefined;
+
   // Initialize state from saved or fresh
   const [currentIndex, setCurrentIndex] = useState(savedState?.currentIndex ?? 0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [typedAnswer, setTypedAnswer] = useState('');
-  const [isAnswered, setIsAnswered] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(
+    restoredCurrentQuestion?.type === 'multiple_choice'
+      ? restoredCurrentAnswer?.userAnswer ?? null
+      : null,
+  );
+  const [typedAnswer, setTypedAnswer] = useState(
+    restoredCurrentQuestion?.type !== 'multiple_choice'
+      ? restoredCurrentAnswer?.userAnswer ?? ''
+      : '',
+  );
+  const [isAnswered, setIsAnswered] = useState(Boolean(restoredCurrentAnswer));
+  const [restoredIsCorrect, setRestoredIsCorrect] = useState<boolean | null>(
+    restoredCurrentAnswer?.isCorrect ?? null,
+  );
   const [correctCount, setCorrectCount] = useState(savedState?.correctCount ?? 0);
   const [showHint, setShowHint] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { userAnswer: string; isCorrect: boolean }>>(
@@ -102,6 +234,8 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   const [showResumePrompt, setShowResumePrompt] = useState(
     savedState !== null && savedState.currentIndex > 0
   );
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Save state whenever it changes
   const persistState = useCallback(() => {
@@ -109,14 +243,16 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     
     const state: SavedQuizState = {
       topicId: topic.id,
+      attemptId: attemptIdRef.current,
+      startedAt: startedAtRef.current,
       questionIds: allQuestions.map(q => q.id),
       currentIndex,
       correctCount,
       answeredQuestions,
       timestamp: Date.now(),
     };
-    saveQuizState(state);
-  }, [topic.id, allQuestions, currentIndex, correctCount, answeredQuestions]);
+    saveQuizState(state, ownerId);
+  }, [topic.id, ownerId, allQuestions, currentIndex, correctCount, answeredQuestions]);
 
   // Persist on state changes
   useEffect(() => {
@@ -146,6 +282,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   // Calculate if answer is correct (must be before early returns to satisfy Rules of Hooks)
   const isCorrect = useMemo(() => {
     if (!isAnswered || !currentQuestion) return false;
+    if (restoredIsCorrect !== null) return restoredIsCorrect;
     
     if (currentQuestion.type === 'multiple_choice') {
       return selectedAnswer === currentQuestion.correctAnswer;
@@ -155,16 +292,22 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       const correct = currentQuestion.correctAnswer.toLowerCase();
       return answer === correct || acceptable.includes(answer);
     }
-  }, [isAnswered, selectedAnswer, typedAnswer, currentQuestion]);
+  }, [isAnswered, restoredIsCorrect, selectedAnswer, typedAnswer, currentQuestion]);
 
   const handleStartFresh = () => {
-    clearQuizState(topic.id);
+    clearQuizState(topic.id, ownerId);
+    attemptIdRef.current = createClientAttemptId();
+    startedAtRef.current = Date.now();
+    completionStartedRef.current = false;
+    setIsSavingResult(false);
+    setSaveError(null);
     setCurrentIndex(0);
     setCorrectCount(0);
     setAnsweredQuestions({});
     setSelectedAnswer(null);
     setTypedAnswer('');
     setIsAnswered(false);
+    setRestoredIsCorrect(null);
     setShowHint(false);
     setShowResumePrompt(false);
     // Note: questions will stay the same since we don't re-shuffle on fresh start
@@ -231,6 +374,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
 
   const checkAnswer = () => {
     if (!currentQuestion) return;
+    setRestoredIsCorrect(null);
 
     let correct = false;
     let userAnswer = '';
@@ -263,19 +407,70 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
     setIsAnswered(true);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (isLastQuestion) {
-      // Clear saved state on completion
-      clearQuizState(topic.id);
+      if (completionStartedRef.current) return;
+      completionStartedRef.current = true;
+      setSaveError(null);
       
       // Calculate final score
       const score = Math.round((correctCount / allQuestions.length) * 100);
+      if (isSignedIn) {
+        const answers = allQuestions.flatMap((question) => {
+          const answer = answeredQuestions[question.id];
+          if (!answer) return [];
+          return [{
+            question_id: question.id,
+            question_text: question.question,
+            question_type: question.type,
+            user_answer: answer.userAnswer,
+            correct_answer: question.correctAnswer,
+            is_correct: answer.isCorrect,
+            explanation: question.explanation,
+            concept_id: getQuestionConceptId(question.id),
+          }];
+        });
+
+        if (answers.length === allQuestions.length) {
+          const categoryTitle = QUIZ_CATEGORIES.find(
+            (category) => category.id === topic.quizCategory,
+          )?.title ?? topic.title;
+          setIsSavingResult(true);
+          try {
+            await saveQuizResult.mutateAsync({
+              category_id: topic.quizCategory,
+              category_title: categoryTitle,
+              score: correctCount,
+              total: allQuestions.length,
+              time_spent_seconds: Math.max(
+                0,
+                Math.round((Date.now() - startedAtRef.current) / 1000),
+              ),
+              answers,
+              client_attempt_id: attemptIdRef.current,
+              learning_context: {
+                topic_id: topic.id,
+                source: 'lesson',
+                assessment_id: `v1:lesson:${topic.id}:embedded-quiz`,
+              },
+            });
+          } catch {
+            completionStartedRef.current = false;
+            setIsSavingResult(false);
+            setSaveError('We could not save your result. Your progress is safe—try again.');
+            return;
+          }
+        }
+      }
+      clearQuizState(topic.id, ownerId);
+      setIsSavingResult(false);
       onComplete(score);
     } else {
       setCurrentIndex(currentIndex + 1);
       setSelectedAnswer(null);
       setTypedAnswer('');
       setIsAnswered(false);
+      setRestoredIsCorrect(null);
       setShowHint(false);
     }
   };
@@ -441,6 +636,15 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       </div>
 
       {/* Action button */}
+      {saveError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+        >
+          {saveError}
+        </div>
+      )}
+
       {!isAnswered ? (
         <button
           onClick={checkAnswer}
@@ -456,13 +660,20 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       ) : (
         <button
           onClick={handleNext}
+          disabled={isSavingResult}
           className={`w-full py-4 font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 ${
             isCorrect
               ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
               : 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white hover:from-coral-600 hover:to-coral-700'
-          }`}
+          } disabled:cursor-not-allowed disabled:opacity-60`}
         >
-          {isLastQuestion ? 'See Results' : 'Next Question'}
+          {isSavingResult
+            ? 'Saving Result…'
+            : saveError
+              ? 'Retry Saving Result'
+              : isLastQuestion
+                ? 'See Results'
+                : 'Next Question'}
           <ArrowRight className="w-5 h-5" />
         </button>
       )}

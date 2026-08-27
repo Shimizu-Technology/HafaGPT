@@ -4,10 +4,11 @@ import { LearningTopic } from '../data/learningPath';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSpeech } from '../hooks/useSpeech';
 import { TTSDisclaimer } from './TTSDisclaimer';
+import { getCuratedDeckConceptIds } from '../data/conceptEvidence';
 
 interface LessonFlashcardsProps {
   topic: LearningTopic;
-  onComplete: (cardsCount: number) => void;
+  onComplete: (cardsCount: number, conceptIds: string[]) => void;
   onSkip: () => void;
 }
 
@@ -182,6 +183,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip }: LessonFlashcards
           {cards.map((_, idx) => (
             <button
               key={idx}
+              aria-label={`View card ${idx + 1}`}
               onClick={() => {
                 setCurrentIndex(idx);
                 setIsFlipped(false);
@@ -222,7 +224,10 @@ export function LessonFlashcards({ topic, onComplete, onSkip }: LessonFlashcards
         </button>
 
         <button
-          onClick={() => onComplete(cards.length)}
+          onClick={() => onComplete(
+            cards.length,
+            getCuratedDeckConceptIds(topic.flashcardCategory),
+          )}
           disabled={!allViewed}
           className={`flex-1 py-3 px-4 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
             allViewed

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Dashboard } from './Dashboard';
 import { QuizHistory } from './QuizHistory';
 import { QuizReview } from './QuizReview';
+import { getCuratedConceptId } from '../data/conceptEvidence';
 
 const mocks = vi.hoisted(() => ({
   refetchHistory: vi.fn(),
@@ -107,7 +108,7 @@ describe('progress pages', () => {
     });
     mocks.quizReview.mockReturnValue({
       data: {
-        id: 'quiz-1',
+        id: '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678',
         category_id: 'greetings',
         category_title: 'Greetings & Basics',
         score: 1,
@@ -115,6 +116,9 @@ describe('progress pages', () => {
         percentage: 50,
         time_spent_seconds: 25,
         created_at: '2026-08-19T08:00:00Z',
+        learning_topic_id: 'greetings',
+        learning_source: 'lesson',
+        assessment_id: 'v1:lesson:greetings:embedded-quiz',
         answers: [
           {
             id: 'answer-1',
@@ -135,6 +139,7 @@ describe('progress pages', () => {
             correct_answer: "Si Yu'os Ma'åse'",
             is_correct: false,
             explanation: null,
+            concept_id: getCuratedConceptId('greetings', 3),
           },
         ],
       },
@@ -201,5 +206,19 @@ describe('progress pages', () => {
     expect(screen.getByText('It is a common Chamorro greeting.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Try again' })).toHaveAttribute('href', '/quiz/greetings');
     expect(screen.getByRole('link', { name: 'Choose another quiz' })).toHaveAttribute('href', '/quiz');
+    expect(screen.getByRole('link', { name: 'Review this exact card' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/flashcards/greetings?'),
+    );
+    const exactCardHref = screen
+      .getByRole('link', { name: 'Review this exact card' })
+      .getAttribute('href');
+    expect(new URL(exactCardHref!, 'https://hafagpt.local').searchParams.get('concept')).toBe(
+      getCuratedConceptId('greetings', 3),
+    );
+    expect(screen.getByRole('link', { name: 'Review this exact card' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('return_to=%2Fquiz%2Freview%2F018f6a6e-9c3d-7b2a-a1c4-8e9f12345678'),
+    );
   });
 });

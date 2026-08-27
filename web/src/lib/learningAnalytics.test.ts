@@ -20,11 +20,13 @@ describe('learning analytics allowlist', () => {
       success: true,
       duration_bucket: 'under_2m',
       source: 'lesson',
+      evidence_scope: 'topic',
     });
     expect(Object.keys(properties).sort()).toEqual([
       'activity_type',
       'concept_id',
       'duration_bucket',
+      'evidence_scope',
       'source',
       'success',
     ]);

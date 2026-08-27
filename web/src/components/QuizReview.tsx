@@ -7,6 +7,7 @@ import {
   Clock,
   Lightbulb,
   Loader2,
+  Layers3,
   RefreshCw,
   RotateCcw,
   Trophy,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useQuizResultDetail } from '../hooks/useQuizQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ALL_TOPICS } from '../data/learningPath';
+import { withConceptReview } from '../lib/conceptReview';
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -42,6 +45,11 @@ export function QuizReview() {
   const { resultId } = useParams<{ resultId: string }>();
   const { data: result, isLoading, error, refetch } = useQuizResultDetail(resultId);
   const isDictionaryQuiz = result?.category_id?.startsWith('dict-');
+  const resultTopic = result
+    ? ALL_TOPICS.find((topic) => topic.id === result.learning_topic_id)
+      ?? ALL_TOPICS.find((topic) => topic.quizCategory === result.category_id)
+    : undefined;
+  const conceptCategory = resultTopic?.flashcardCategory;
 
   return (
     <LearnerPageShell>
@@ -192,6 +200,19 @@ export function QuizReview() {
                               />
                               <p>{answer.explanation}</p>
                             </div>
+                          )}
+                          {!answer.is_correct && answer.concept_id && conceptCategory && (
+                            <Link
+                              to={withConceptReview(
+                                conceptCategory,
+                                answer.concept_id,
+                                result.id,
+                              )}
+                              className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-300 bg-white px-4 text-sm font-semibold text-red-800 hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-red-800 dark:bg-slate-800 dark:text-red-200 dark:hover:bg-red-950/40"
+                            >
+                              <Layers3 className="h-4 w-4" aria-hidden="true" />
+                              Review this exact card
+                            </Link>
                           )}
                         </div>
                       </div>

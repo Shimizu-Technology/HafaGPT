@@ -4,12 +4,15 @@ import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
-import { useSaveGameResult } from '../hooks/useGamesQuery';
+import { getCuratedConceptId } from '../data/conceptEvidence';
+import { useSaveGameResult, type GameResultCreate } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
+import { createClientAttemptId } from '../lib/clientAttemptId';
+import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 interface GameSettings {
   category: string;
@@ -20,6 +23,7 @@ interface GameSettings {
 interface WordData {
   chamorro: string;
   english: string;
+  conceptId?: string;
 }
 
 // Icon mapping for categories
@@ -63,8 +67,10 @@ export function WordScramble() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isSignedIn } = useUser();
-  const saveGameResultMutation = useSaveGameResult();
+  const { mutateAsync: saveGameResult } = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const submissionStartedRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -91,6 +97,9 @@ export function WordScramble() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [pendingGameResult, setPendingGameResult] = useState<GameResultCreate | null>(null);
+  const [isSavingResult, setIsSavingResult] = useState(false);
+  const [resultSaveFailed, setResultSaveFailed] = useState(false);
 
   // Only fetch dictionary flashcards in challenge mode
   const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
@@ -105,9 +114,10 @@ export function WordScramble() {
     if (settings.mode !== 'beginner') return null;
     const deck = DEFAULT_FLASHCARD_DECKS[settings.category];
     if (!deck) return null;
-    return deck.cards.map(card => ({
+    return deck.cards.map((card, cardIndex) => ({
       front: card.front,
       back: card.back,
+      conceptId: getCuratedConceptId(settings.category, cardIndex),
     }));
   }, [settings.category, settings.mode]);
 
@@ -179,20 +189,35 @@ export function WordScramble() {
     return 1;
   }, [correctAnswers, settings.wordsPerRound]);
 
+  const persistGameResult = useCallback(async (payload: GameResultCreate) => {
+    setPendingGameResult(payload);
+    setIsSavingResult(true);
+    setResultSaveFailed(false);
+    try {
+      await saveGameResult(payload);
+      hasSavedRef.current = true;
+      setPendingGameResult(null);
+    } catch (error) {
+      console.warn('Failed to save word scramble result:', error);
+      setResultSaveFailed(true);
+    } finally {
+      setIsSavingResult(false);
+    }
+  }, [saveGameResult]);
+
   // Check for game completion
   useEffect(() => {
     if (gameState === 'playing' && currentWordIndex >= settings.wordsPerRound) {
       setGameState('complete');
       
       // Save result if signed in
-      if (isSignedIn && !hasSavedRef.current) {
-        hasSavedRef.current = true;
-        
+      if (isSignedIn && !hasSavedRef.current && !submissionStartedRef.current) {
+        submissionStartedRef.current = true;
         const categoryTitle = settings.mode === 'beginner'
           ? DEFAULT_FLASHCARD_DECKS[settings.category]?.displayName
           : categoriesData?.categories.find(c => c.id === settings.category)?.title;
         
-        saveGameResultMutation.mutate({
+        void persistGameResult({
           game_type: 'word_scramble',
           mode: settings.mode,
           category_id: settings.category,
@@ -203,10 +228,12 @@ export function WordScramble() {
           pairs: correctAnswers,
           time_seconds: elapsedTime,
           stars: getFinalStars(),
+          concept_ids: words.flatMap((word) => word.conceptId ? [word.conceptId] : []),
+          client_attempt_id: gameAttemptIdRef.current,
         });
       }
     }
-  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, saveGameResultMutation, categoriesData]);
+  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, persistGameResult, categoriesData, words]);
 
   // Generate words for the game
   const generateWords = useCallback((): WordData[] => {
@@ -228,6 +255,7 @@ export function WordScramble() {
     return filtered.slice(0, settings.wordsPerRound).map(card => ({
       chamorro: card.front,
       english: card.back,
+      conceptId: 'conceptId' in card ? card.conceptId : undefined,
     }));
   }, [settings.mode, settings.wordsPerRound, curatedFlashcards, flashcardsData]);
 
@@ -252,6 +280,11 @@ export function WordScramble() {
     }
     
     hasSavedRef.current = false;
+    submissionStartedRef.current = false;
+    gameAttemptIdRef.current = createClientAttemptId();
+    setPendingGameResult(null);
+    setResultSaveFailed(false);
+    setIsSavingResult(false);
     setWords(newWords);
     setCurrentWordIndex(0);
     setScore(0);
@@ -329,8 +362,26 @@ export function WordScramble() {
     setElapsedTime(0);
   };
 
+  const isGameInProgress = gameState === 'playing';
+  const isResultNavigationBlocked = pendingGameResult !== null;
+  const blockedNavigationCount = usePendingNavigationBlocker(isResultNavigationBlocked);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isGameInProgress || isResultNavigationBlocked) {
+        event.preventDefault();
+        event.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isGameInProgress, isResultNavigationBlocked]);
+
   const handleBack = () => {
-    if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
+    if (isResultNavigationBlocked) return;
+    if (isGameInProgress && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
       return;
     }
     navigate(gameReturn.to);
@@ -792,9 +843,33 @@ export function WordScramble() {
             </p>
 
             {/* Action Buttons */}
+            {pendingGameResult && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-left text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"
+              >
+                <p className="font-semibold">
+                  {blockedNavigationCount > 0 && 'Navigation paused. '}
+                  {resultSaveFailed
+                    ? 'Game result has not saved yet.'
+                    : 'Saving your game result…'}
+                </p>
+                {resultSaveFailed && (
+                  <button
+                    type="button"
+                    onClick={() => void persistGameResult(pendingGameResult)}
+                    disabled={isSavingResult}
+                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSavingResult ? 'Saving…' : 'Retry saving game result'}
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 justify-center">
               <button
                 onClick={startGame}
+                disabled={isSavingResult || Boolean(pendingGameResult)}
                 className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -802,6 +877,7 @@ export function WordScramble() {
               </button>
               <button
                 onClick={resetGame}
+                disabled={isSavingResult || Boolean(pendingGameResult)}
                 className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -810,12 +886,22 @@ export function WordScramble() {
             </div>
 
             {/* Back to Games */}
-            <Link
-              to={gameReturn.to}
-              className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
-            >
-              {gameReturn.label}
-            </Link>
+            {isResultNavigationBlocked ? (
+              <button
+                type="button"
+                disabled
+                className="inline-block cursor-not-allowed text-xs font-medium text-purple-500 opacity-60 dark:text-purple-400 sm:text-sm"
+              >
+                {gameReturn.label}
+              </button>
+            ) : (
+              <Link
+                to={gameReturn.to}
+                className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
+              >
+                {gameReturn.label}
+              </Link>
+            )}
           </div>
         )}
       </main>

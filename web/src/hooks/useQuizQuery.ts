@@ -13,6 +13,7 @@ export interface QuizAnswer {
   correct_answer: string;
   is_correct: boolean;
   explanation: string | null;
+  concept_id: string | null;
 }
 
 export interface QuizResult {
@@ -24,6 +25,9 @@ export interface QuizResult {
   percentage: number;
   time_spent_seconds: number | null;
   created_at: string;
+  learning_topic_id: string | null;
+  learning_source: 'lesson' | 'today' | 'topic' | null;
+  assessment_id: string | null;
 }
 
 export interface QuizResultDetail extends QuizResult {
@@ -47,6 +51,7 @@ export interface QuizAnswerInput {
   correct_answer: string;
   is_correct: boolean;
   explanation?: string;
+  concept_id?: string;
 }
 
 export interface SaveQuizResultParams {
@@ -56,6 +61,12 @@ export interface SaveQuizResultParams {
   total: number;
   time_spent_seconds?: number;
   answers?: QuizAnswerInput[];
+  client_attempt_id?: string;
+  learning_context?: {
+    topic_id: string;
+    source: 'lesson' | 'today' | 'topic';
+    assessment_id?: string;
+  };
 }
 
 export interface QuizHistoryPagination {
@@ -74,11 +85,10 @@ export interface QuizHistoryResponse {
 
 // Hook to get quiz stats
 export function useQuizStats() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['quizStats'],
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
+    queryKey: ['quizStats', userId],
     queryFn: async (): Promise<QuizStats> => {
       const token = await getToken();
       
@@ -101,10 +111,10 @@ export function useQuizStats() {
 
 // Hook to get quiz result detail with answers
 export function useQuizResultDetail(resultId: string | undefined) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['quizResult', resultId],
+    queryKey: ['quizResult', userId, resultId],
     queryFn: async (): Promise<QuizResultDetail> => {
       const token = await getToken();
       
@@ -158,10 +168,10 @@ export function useSaveQuizResult() {
 
 // Hook to get paginated quiz history
 export function useQuizHistory(page: number = 1, perPage: number = 20) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['quizHistory', page, perPage],
+    queryKey: ['quizHistory', userId, page, perPage],
     queryFn: async (): Promise<QuizHistoryResponse> => {
       const token = await getToken();
       
@@ -203,10 +213,10 @@ export interface WeakAreasResponse {
 
 // Hook to get weak areas (categories where user struggles)
 export function useWeakAreas() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['weakAreas'],
+    queryKey: ['weakAreas', userId],
     queryFn: async (): Promise<WeakAreasResponse> => {
       const token = await getToken();
       
@@ -226,4 +236,3 @@ export function useWeakAreas() {
     staleTime: 1000 * 60 * 10, // 10 minutes
   });
 }
-

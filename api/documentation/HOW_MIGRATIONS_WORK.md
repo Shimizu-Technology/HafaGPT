@@ -48,6 +48,68 @@ Shows which migration you're currently on (like `rails db:migrate:status`).
 
 ### Rollback Last Migration
 
+Production rollbacks require a reviewed backup plan before this command runs.
+In particular, downgrading through revision
+`o9p0q1r2s3t4_add_exact_concept_evidence` irreversibly deletes concept/topic
+attempt rows and drops exact-evidence columns. Before that production downgrade:
+
+1. Record the current revision with `uv run alembic current`.
+2. Record source row counts for every table changed by the migration in the
+   incident/change record:
+
+   ```bash
+   psql "$DATABASE_URL" -c "
+     SELECT 'learning_attempts' AS table_name, count(*) FROM learning_attempts
+     UNION ALL SELECT 'lesson_concept_exposures', count(*) FROM lesson_concept_exposures
+     UNION ALL SELECT 'quiz_results', count(*) FROM quiz_results
+     UNION ALL SELECT 'quiz_answers', count(*) FROM quiz_answers
+     UNION ALL SELECT 'game_results', count(*) FROM game_results;"
+   ```
+
+3. Create a restricted logical backup of all five affected tables from the
+   production database:
+
+   ```bash
+   pg_dump "$DATABASE_URL" \
+     --format=custom \
+     --file=hafagpt-exact-evidence-before-downgrade.dump \
+     --table=learning_attempts \
+     --table=lesson_concept_exposures \
+     --table=quiz_results \
+     --table=quiz_answers \
+     --table=game_results
+   pg_restore --list hafagpt-exact-evidence-before-downgrade.dump >/dev/null
+   ```
+
+4. Restore the dump into an isolated recovery database or Neon recovery branch,
+   never into production. Run the application's migrations there first so the
+   destination has the expected schema, then restore and verify the schema and
+   row counts for all five tables against the source counts from step 2:
+
+   ```bash
+   pg_restore --dbname="$RECOVERY_DATABASE_URL" \
+     --data-only \
+     hafagpt-exact-evidence-before-downgrade.dump
+   psql "$RECOVERY_DATABASE_URL" -c "
+     SELECT 'learning_attempts' AS table_name, count(*) FROM learning_attempts
+     UNION ALL SELECT 'lesson_concept_exposures', count(*) FROM lesson_concept_exposures
+     UNION ALL SELECT 'quiz_results', count(*) FROM quiz_results
+     UNION ALL SELECT 'quiz_answers', count(*) FROM quiz_answers
+     UNION ALL SELECT 'game_results', count(*) FROM game_results;"
+   ```
+
+   Confirm that `lesson_concept_exposures` exists and that the exact-evidence
+   columns added by revision `o9p0q1r2s3t4_add_exact_concept_evidence` are
+   present in the other four tables. Do not proceed unless every restored row
+   count matches its recorded source count.
+5. Store the verified dump in encrypted, access-controlled storage under the
+   incident/change record. Do not commit it to this repository.
+6. Prefer Neon's point-in-time restore or recovery branch when exact evidence
+   written after the upgrade may need to be retained. Treat the Alembic
+   downgrade itself as data-destructive.
+
+Only then run:
+
 ```bash
 uv run alembic downgrade -1
 ```

@@ -3,11 +3,17 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useState,
   type ComponentType,
   type ErrorInfo,
   type ReactNode,
 } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Route,
+  RouterProvider,
+  Routes,
+} from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
@@ -140,9 +146,9 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 }
 
-function App() {
+function AppRoutes() {
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
       <RouteErrorBoundary>
         <Suspense fallback={<RouteLoadingFallback />}>
@@ -239,8 +245,22 @@ function App() {
       
       {/* Mobile bottom navigation - shows on mobile only */}
       <BottomNav />
-    </BrowserRouter>
+    </>
   );
+}
+
+function App() {
+  const [router, setRouter] = useState<ReturnType<typeof createBrowserRouter> | null>(null);
+
+  useEffect(() => {
+    const nextRouter = createBrowserRouter([
+      { path: '*', element: <AppRoutes /> },
+    ]);
+    setRouter(nextRouter);
+    return () => nextRouter.dispose();
+  }, []);
+
+  return router ? <RouterProvider router={router} /> : <RouteLoadingFallback />;
 }
 
 export default App;

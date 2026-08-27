@@ -12,7 +12,7 @@ export function resolveReviewSourceKind(
   return card.contentSource;
 }
 
-function normalizeIdentityPart(value: string): string {
+export function normalizeIdentityPart(value: string): string {
   return value.normalize('NFC').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 

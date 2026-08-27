@@ -9,6 +9,7 @@ export interface LearningActivityProperties {
   success: boolean;
   duration_bucket: LearningDurationBucket;
   source: LearningGameContext['source'];
+  evidence_scope: 'topic';
 }
 
 export function getLearningDurationBucket(seconds?: number): LearningDurationBucket {
@@ -28,6 +29,7 @@ export function buildLearningActivityProperties(
     success: result.stars !== undefined ? result.stars >= 2 : result.score > 0,
     duration_bucket: getLearningDurationBucket(result.time_seconds),
     source: context.source,
+    evidence_scope: 'topic',
   };
 }
 

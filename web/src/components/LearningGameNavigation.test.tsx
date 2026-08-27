@@ -1,11 +1,17 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryMatch } from './MemoryMatch';
 import { WordScramble } from './WordScramble';
+import { getCuratedDeckConceptIds } from '../data/conceptEvidence';
+
+const mocks = vi.hoisted(() => ({
+  isSignedIn: false,
+  saveGameResult: vi.fn(),
+}));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useUser: () => ({ isSignedIn: false }),
+  useUser: () => ({ isSignedIn: mocks.isSignedIn }),
 }));
 
 vi.mock('../hooks/useVocabularyQuery', () => ({
@@ -17,7 +23,7 @@ vi.mock('../hooks/useFlashcardsQuery', () => ({
 }));
 
 vi.mock('../hooks/useGamesQuery', () => ({
-  useSaveGameResult: () => ({ mutate: vi.fn() }),
+  useSaveGameResult: () => ({ mutateAsync: mocks.saveGameResult }),
 }));
 
 vi.mock('../hooks/useSubscription', () => ({
@@ -122,20 +128,31 @@ function LocationProbe() {
 
 function renderGame(testCase: LaunchCase) {
   const Component = testCase.component;
-  render(
-    <MemoryRouter initialEntries={[testCase.path]}>
+  const router = createMemoryRouter([{
+    path: '*',
+    element: (
+      <>
       <Component />
       <LocationProbe />
-    </MemoryRouter>,
-  );
+      </>
+    ),
+  }], {
+    initialEntries: ['/prior', testCase.path],
+    initialIndex: 1,
+  });
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
-function startGame() {
-  fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+async function startGame() {
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+    await Promise.resolve();
+  });
 }
 
-function makeGameInProgress(game: LaunchCase['game']) {
-  startGame();
+async function makeGameInProgress(game: LaunchCase['game']) {
+  await startGame();
   if (game === 'memory') {
     const cards = screen.getAllByRole('button', { name: 'Reveal memory card' });
     fireEvent.click(cards[0]);
@@ -143,9 +160,7 @@ function makeGameInProgress(game: LaunchCase['game']) {
   }
 }
 
-async function completeGame(game: LaunchCase['game']) {
-  startGame();
-
+async function advanceGameToCompletion(game: LaunchCase['game']) {
   if (game === 'memory') {
     for (let pair = 0; pair < 4; pair += 1) {
       const cards = screen.getAllByRole('button', { name: 'Reveal memory card' });
@@ -166,10 +181,18 @@ async function completeGame(game: LaunchCase['game']) {
   }
 }
 
+async function completeGame(game: LaunchCase['game']) {
+  await startGame();
+  await advanceGameToCompletion(game);
+}
+
 describe('contextual learning game navigation', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    mocks.isSignedIn = false;
+    mocks.saveGameResult.mockReset();
+    mocks.saveGameResult.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -184,7 +207,7 @@ describe('contextual learning game navigation', () => {
         .mockReturnValueOnce(false)
         .mockReturnValueOnce(true);
       renderGame(testCase);
-      makeGameInProgress(testCase.game);
+      await makeGameInProgress(testCase.game);
 
       fireEvent.click(screen.getByRole('button', { name: testCase.label }));
       expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
@@ -207,4 +230,92 @@ describe('contextual learning game navigation', () => {
       );
     },
   );
+
+  it.each([
+    launchCases.find((testCase) => testCase.game === 'memory' && testCase.source === 'topic')!,
+    launchCases.find((testCase) => testCase.game === 'scramble' && testCase.source === 'topic')!,
+  ])(
+    '$game saves only played concepts and rotates its retry identity on replay',
+    async (testCase) => {
+      mocks.isSignedIn = true;
+      renderGame(testCase);
+      await completeGame(testCase.game);
+
+      expect(mocks.saveGameResult).toHaveBeenCalledOnce();
+      const first = mocks.saveGameResult.mock.calls[0][0];
+      const playedCount = testCase.game === 'memory' ? 4 : 5;
+      expect(first.concept_ids).toEqual(
+        getCuratedDeckConceptIds('greetings').slice(0, playedCount),
+      );
+      expect(first.client_attempt_id).toMatch(/^[0-9a-f-]{36}$/i);
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Play Again' }));
+        await Promise.resolve();
+      });
+      await advanceGameToCompletion(testCase.game);
+
+      expect(mocks.saveGameResult).toHaveBeenCalledTimes(2);
+      expect(mocks.saveGameResult.mock.calls[1][0].client_attempt_id)
+        .not.toBe(first.client_attempt_id);
+    },
+  );
+
+  it.each([
+    launchCases.find((candidate) => candidate.game === 'memory' && candidate.source === 'topic')!,
+    launchCases.find((candidate) => candidate.game === 'scramble' && candidate.source === 'topic')!,
+  ])('$game retains and retries its exact result after a rejected save', async (testCase) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mocks.isSignedIn = true;
+    mocks.saveGameResult
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({});
+    const router = renderGame(testCase);
+
+    await completeGame(testCase.game);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Game result has not saved yet.',
+    );
+    const firstPayload = mocks.saveGameResult.mock.calls[0][0];
+    expect(screen.getByRole('button', { name: 'Play Again' })).toBeDisabled();
+    const returnButtons = screen.getAllByRole('button', { name: testCase.label });
+    const headerBack = returnButtons.find((button) => !button.hasAttribute('disabled'));
+    const disabledCompletionBack = returnButtons.find((button) => button.hasAttribute('disabled'));
+    expect(headerBack).toBeDefined();
+    expect(disabledCompletionBack).toBeDisabled();
+
+    fireEvent.click(headerBack!);
+    expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
+
+    const beforeUnload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Navigation paused. Game result has not saved yet.',
+    );
+    expect(screen.getByRole('button', { name: 'Retry saving game result' }))
+      .toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saving game result' }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(mocks.saveGameResult).toHaveBeenCalledTimes(2);
+    expect(mocks.saveGameResult.mock.calls[1][0]).toEqual(firstPayload);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play Again' })).toBeEnabled();
+  });
 });
