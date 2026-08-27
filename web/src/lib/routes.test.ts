@@ -16,6 +16,10 @@ describe('connected learner routes', () => {
       .toBe('/quiz/review/result%2Fid%3F%23%20value');
     expect(appRoutes.scenario('meeting someone')).toBe('/practice/meeting%20someone');
     expect(appRoutes.story('a story')).toBe('/stories/a%20story');
+    expect(appRoutes.vocabularyCategory('body parts'))
+      .toBe('/vocabulary/body%20parts');
+    expect(appRoutes.word('word/id', { returnTo: '/vocabulary?q=water' }))
+      .toBe('/words/word%2Fid?return_to=%2Fvocabulary%3Fq%3Dwater');
     expect(appRoutes.memoryGame({ returnTo: '/?section=today' }))
       .toBe('/games/memory?return_to=%2F%3Fsection%3Dtoday');
   });

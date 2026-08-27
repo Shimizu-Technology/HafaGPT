@@ -13,6 +13,8 @@ export interface VocabularyCategory {
 }
 
 export interface VocabularyWord {
+  word_id?: string;
+  source_id?: string;
   chamorro: string;
   part_of_speech: string;
   definition: string;
@@ -104,6 +106,7 @@ export function useVocabularySearch(query: string) {
 
 // Word of the Day types and hook
 export interface WordOfTheDay {
+  word_id?: string;
   chamorro: string;
   english: string;
   part_of_speech: string;
@@ -136,6 +139,7 @@ export function useWordOfTheDay() {
 // Dictionary Quiz types and hook
 export interface DictionaryQuizQuestion {
   id: string;
+  word_id?: string;
   type: 'multiple_choice' | 'type_answer';
   question: string;
   options?: string[];
@@ -189,6 +193,8 @@ export interface EnhancedWordResponse {
   found: boolean;
   word: string;
   definition: {
+    word_id?: string;
+    source_id?: string;
     chamorro: string;
     definition: string;
     part_of_speech: string;
@@ -250,5 +256,31 @@ export function useVocabularyWord(word: string | undefined) {
     staleTime: 1000 * 60 * 60, // 1 hour - word definitions don't change
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     retry: false, // Don't retry if word not found
+  });
+}
+
+async function fetchVocabularyWordById(wordId: string): Promise<VocabularyWord> {
+  const response = await fetch(
+    `${API_URL}/api/vocabulary/words/${encodeURIComponent(wordId)}`,
+  );
+  if (!response.ok) {
+    throw new Error(
+      response.status === 404
+        ? 'Dictionary word not found'
+        : 'Failed to fetch dictionary word',
+    );
+  }
+  return response.json();
+}
+
+/** Load the one exact dictionary record addressed by a stable word ID. */
+export function useVocabularyWordById(wordId: string | undefined) {
+  return useQuery({
+    queryKey: ['vocabulary', 'word-id', wordId],
+    queryFn: () => fetchVocabularyWordById(wordId!),
+    enabled: !!wordId,
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 24,
+    retry: false,
   });
 }

@@ -24,6 +24,7 @@ import { withConceptReview } from '../lib/conceptReview';
 const mocks = vi.hoisted(() => ({
   dictionaryFlashcards: {
     cards: [{
+      word_id: 'revised-word-v1-flashcard',
       source_id: 'dictionary:test',
       front: 'Test front',
       back: 'Test back',
@@ -36,6 +37,7 @@ const mocks = vi.hoisted(() => ({
   dictionaryQuiz: {
     questions: [{
       id: 'dictionary-question',
+      word_id: 'revised-word-v1-quiz',
       type: 'multiple_choice',
       question: 'Test question',
       options: ['One', 'Two'],
@@ -647,6 +649,34 @@ describe('topic surface navigation', () => {
       .not.toBeInTheDocument();
     fireEvent.click(quizBack);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/quiz');
+  });
+
+  it('links dictionary flashcards and answered quiz questions to exact word records', async () => {
+    const { unmount } = renderSurface(
+      <FlashcardViewer />,
+      '/flashcards/:topic',
+      '/flashcards/unmapped?type=dictionary',
+    );
+
+    expect(await screen.findByRole('link', { name: 'Open this dictionary entry' }))
+      .toHaveAttribute(
+        'href',
+        '/words/revised-word-v1-flashcard?return_to=%2Fflashcards%2Funmapped%3Ftype%3Ddictionary',
+      );
+    unmount();
+
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      '/quiz/dict-greetings',
+    );
+    fireEvent.click((await screen.findByText('One')).closest('button')!);
+
+    expect(screen.getByRole('link', { name: 'Open dictionary entry' }))
+      .toHaveAttribute(
+        'href',
+        '/words/revised-word-v1-quiz?return_to=%2Fquiz%2Fdict-greetings',
+      );
   });
 
   it('keeps a validated topic return when quiz startup fails', async () => {

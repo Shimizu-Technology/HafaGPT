@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
+import { appRoutes, currentAppPath } from '../lib/routes';
 
 const PAGE_SIZE = 50;
 
 /** Show a dictionary category and the trust metadata returned for its entries. */
 export function VocabularyCategory() {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,6 +73,7 @@ export function VocabularyCategory() {
           word.definition.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : words;
+  const returnTo = currentAppPath(location.pathname, location.search, location.hash);
 
   // Loading state
   if (isLoading) {
@@ -157,7 +160,7 @@ export function VocabularyCategory() {
             
             return (
               <article
-                key={`${word.chamorro}-${index}`}
+                key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
                 className="overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800"
               >
                 {/* Main Word Row */}
@@ -171,9 +174,18 @@ export function VocabularyCategory() {
                     {/* Word Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <h3 className="font-bold text-brown-800 dark:text-white text-lg">
-                          {word.chamorro}
-                        </h3>
+                        {word.word_id ? (
+                          <Link
+                            to={appRoutes.word(word.word_id, { returnTo })}
+                            className="rounded font-bold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
+                          >
+                            {word.chamorro}
+                          </Link>
+                        ) : (
+                          <h3 className="font-bold text-brown-800 dark:text-white text-lg">
+                            {word.chamorro}
+                          </h3>
+                        )}
                         {word.part_of_speech && (
                           <span className="text-xs text-brown-400 dark:text-gray-500 italic">
                             {word.part_of_speech}
@@ -183,6 +195,15 @@ export function VocabularyCategory() {
                       <p className="text-brown-600 dark:text-gray-300 mt-0.5">
                         {word.definition}
                       </p>
+                      {word.word_id && (
+                        <Link
+                          to={appRoutes.word(word.word_id, { returnTo })}
+                          className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300"
+                        >
+                          Open entry
+                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                        </Link>
+                      )}
                     </div>
 
                     {/* Expand Icon */}

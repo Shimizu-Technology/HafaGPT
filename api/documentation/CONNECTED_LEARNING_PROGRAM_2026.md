@@ -1,7 +1,7 @@
 # Connected Learning Program
 
 **Status:** approved direction, delivered in small reversible releases  
-**Last reviewed:** August 27, 2026
+**Last reviewed:** August 28, 2026
 
 ## Decision
 
@@ -60,7 +60,7 @@ These sources support the learning and navigation model. They do not validate Ch
 - Quiz answers identify questions, not the canonical concept/card they assess.
 - A game result creates one topic-level attempt; it does not record the exact cards or words used in that round.
 - Quiz misses cannot yet open the exact card or add it to review.
-- Conversations and words have data identities but no stable learner-facing record routes.
+- Conversations have data identities but no stable learner-facing record routes.
 - Game results have persisted IDs but no learner-facing result detail or history.
 - Vocabulary search, quiz-history pagination, and some administrative list context are local-only and cannot be restored from the URL.
 - `api/api/main.py` is 8,817 lines with 84 directly declared routes. New connected-learning endpoints should enter through a focused router seam rather than extending the monolith.
@@ -125,9 +125,18 @@ Acceptance journeys:
 
 All writes must be idempotent or protected from duplicate retries. A completion event is evidence, not automatically mastery.
 
-### Release 4 — stable words and conversations
+### Release 4a — stable words
 
-- Add stable word detail routes backed by canonical/dictionary identities.
+- Add source-order-independent dictionary word identities while preserving the
+  existing source IDs used for provenance.
+- Add stable `/words/:wordId` detail routes backed by exact dictionary records.
+- Carry the same word identity through search, categories, flashcards,
+  dictionary quizzes, and mapped Word-of-the-Day entries.
+- Preserve bounded return context and keep older API responses usable during a
+  staggered web/API deployment.
+
+### Release 4b — stable conversations
+
 - Add stable conversation routes.
 - Store an optional `learning_topic_id` when a conversation starts from a topic.
 - Show recent topic conversations in the topic workspace and provide a clear return to the topic.

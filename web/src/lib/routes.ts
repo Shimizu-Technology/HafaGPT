@@ -21,6 +21,14 @@ export const appRoutes = {
   home: '/' as const,
   games: '/games' as const,
   learning: '/learning' as const,
+  vocabulary: '/vocabulary' as const,
+  vocabularyCategory: (categoryId: string): string => (
+    `/vocabulary/${encodeURIComponent(categoryId)}`
+  ),
+  word: (wordId: string, context: ReturnContext = {}): string => withReturnContext(
+    `/words/${encodeURIComponent(wordId)}`,
+    context,
+  ),
   topic: (topicId: string): string => `/learning/${encodeURIComponent(topicId)}`,
   lesson: (topicId: string): string => `/learn/${encodeURIComponent(topicId)}`,
   flashcards: (categoryId: string): string => `/flashcards/${encodeURIComponent(categoryId)}`,

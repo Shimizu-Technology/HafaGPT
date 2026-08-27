@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Volume2, Plus, Sparkles, ChevronRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useWordOfTheDay, WordOfTheDay } from '../hooks/useVocabularyQuery';
 import { useSpeech } from '../hooks/useSpeech';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
+import { appRoutes, currentAppPath } from '../lib/routes';
 
 interface DailyWordProps {
   onAddToFlashcards?: (word: WordOfTheDay) => void;
@@ -21,13 +23,32 @@ function WordTrustFooter({ word, className }: { word: WordOfTheDay; className: s
   );
 }
 
+function WordDetailsLink({ word, returnTo, className }: {
+  word: WordOfTheDay;
+  returnTo: string;
+  className: string;
+}) {
+  if (!word.word_id) return null;
+  return (
+    <Link
+      to={appRoutes.word(word.word_id, { returnTo })}
+      className={`${className} inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300`}
+    >
+      Open dictionary entry
+      <ChevronRight className="h-4 w-4" aria-hidden="true" />
+    </Link>
+  );
+}
+
 /** Display the daily dictionary entry with its source status and learning actions. */
 export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyWordProps) {
+  const location = useLocation();
   const { data: word, isLoading, error } = useWordOfTheDay();
   const { speak, isSpeaking, isSupported } = useSpeech();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
   const [added, setAdded] = useState(false);
+  const returnTo = currentAppPath(location.pathname, location.search, location.hash);
 
   // Loading state - skeleton loader
   if (isLoading) {
@@ -168,6 +189,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                   <p className="text-brown-600 dark:text-gray-300 italic">"{word.example.english}"</p>
                 </div>
               )}
+              <WordDetailsLink word={word} returnTo={returnTo} className="mt-3" />
               <WordTrustFooter word={word} className="mt-3" />
             </div>
           )}
@@ -232,6 +254,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 )}
               </div>
             )}
+            <WordDetailsLink word={word} returnTo={returnTo} className="mb-3" />
             <WordTrustFooter word={word} className="mb-3" />
             {onAddToFlashcards && (
               <button
@@ -334,6 +357,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
           </div>
         )}
 
+        <WordDetailsLink word={word} returnTo={returnTo} className="mb-3" />
         <WordTrustFooter word={word} className="mb-3" />
 
         {/* Add to Flashcards Button */}

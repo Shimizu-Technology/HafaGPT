@@ -5,6 +5,7 @@ export type QuizType = 'multiple_choice' | 'type_answer' | 'fill_blank';
 
 export interface QuizQuestion {
   id: string;
+  wordId?: string;
   type: QuizType;
   question: string;
   options?: string[];  // For multiple choice

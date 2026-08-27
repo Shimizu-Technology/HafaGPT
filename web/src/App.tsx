@@ -46,6 +46,7 @@ const QuizReview = lazyNamed(() => import('./components/QuizReview'), 'QuizRevie
 const QuizHistory = lazyNamed(() => import('./components/QuizHistory'), 'QuizHistory');
 const VocabularyList = lazyNamed(() => import('./components/VocabularyList'), 'VocabularyList');
 const VocabularyCategory = lazyNamed(() => import('./components/VocabularyCategory'), 'VocabularyCategory');
+const VocabularyWordPage = lazyNamed(() => import('./components/VocabularyWordPage'), 'VocabularyWordPage');
 const StoryList = lazyNamed(() => import('./components/StoryList'), 'StoryList');
 const StoryViewer = lazyNamed(() => import('./components/StoryViewer'), 'StoryViewer');
 const LengguahitaStoryViewer = lazyNamed(() => import('./components/LengguahitaStoryViewer'), 'LengguahitaStoryViewer');
@@ -183,6 +184,7 @@ function AppRoutes() {
         {/* Vocabulary routes - public (no auth required) */}
         <Route path="/vocabulary" element={<VocabularyList />} />
         <Route path="/vocabulary/:categoryId" element={<VocabularyCategory />} />
+        <Route path="/words/:wordId" element={<VocabularyWordPage />} />
         
         {/* Story routes - public (no auth required) */}
         <Route path="/stories" element={<StoryList />} />

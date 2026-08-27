@@ -23,6 +23,9 @@ vi.mock('./components/ScrollToTop', () => ({ ScrollToTop: () => null }));
 vi.mock('./components/TopicWorkspacePage', () => ({
   TopicWorkspacePage: () => <h1>Connected topic workspace</h1>,
 }));
+vi.mock('./components/VocabularyWordPage', () => ({
+  VocabularyWordPage: () => <h1>Stable word record</h1>,
+}));
 
 describe('App topic workspace route', () => {
   beforeEach(() => {
@@ -50,5 +53,14 @@ describe('App topic workspace route', () => {
       .toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connected topic workspace' }))
       .not.toBeInTheDocument();
+  });
+
+  it('keeps stable word records public', async () => {
+    auth.isSignedIn = false;
+    window.history.replaceState({}, '', '/words/revised-word-v1-stable');
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Stable word record' }))
+      .toBeInTheDocument();
   });
 });
