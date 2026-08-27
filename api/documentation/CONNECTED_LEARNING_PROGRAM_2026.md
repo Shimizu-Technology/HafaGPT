@@ -1,8 +1,8 @@
 # Connected Learning Program
 
-- **Status:** approved direction, delivered in small reversible releases
-- **Last reviewed:** August 28, 2026
-- **Delivered through:** Release 5b — restorable secondary context
+- **Status:** complete — final cross-surface audit passed
+- **Last reviewed:** August 28, 2026 (Pacific/Guam)
+- **Delivered through:** Release 5d and final audit
 
 ## Decision
 
@@ -14,7 +14,7 @@ This program is additive. Existing source-backed resources remain available. We 
 
 ## Why this fits HåfaGPT
 
-The current product already has the right activities: guided lessons, flashcards, quizzes, games, chat, scenarios, stories, progress, and Today recommendations. The main gap is continuity. A learner can start from a topic and move into another activity, but the destination often forgets the topic or where the learner came from. Results are usually stored by activity type rather than connected back to the exact concept that was practiced.
+When this program was approved, the product already had the right activities: guided lessons, flashcards, quizzes, games, chat, scenarios, stories, progress, and Today recommendations. The missing layer was continuity: destinations often forgot the topic or the learner's entry point, and results were usually stored by activity type instead of connecting to the exact concept practiced. Releases 1–5d supplied that layer without replacing the activities or overstating their evidence.
 
 The architecture review compared HåfaGPT with the canonical Brain Dump starter-app guide and the connected implementations in Code School of Guam, Håfa Recipes, and Cornerstone Payroll. The reusable pattern is consistent:
 
@@ -56,18 +56,25 @@ These sources support the learning and navigation model. They do not validate Ch
   remain visibly distinct, and legacy results stay available without an
   invented relationship.
 
-### What is disconnected
+### What the program resolved
 
-- Shared game headers and results return to `/games`, even when Today or a lesson launched the game.
-- Today previously carried context into a direct game but not through Today → lesson → game.
-- Routes and return behavior are assembled in individual components.
-- A topic has a lesson route but no stable topic workspace that joins its lesson, cards, quiz, games, related stories/scenarios, conversations, and recent evidence.
-- Lesson card views count progress but do not create concept evidence.
-- The embedded lesson quiz is browser-only and does not create a durable quiz result.
-- Quiz answers identify questions, not the canonical concept/card they assess.
-- A game result creates one topic-level attempt; it does not record the exact cards or words used in that round.
-- Quiz misses cannot yet open the exact card or add it to review.
-- `api/api/main.py` is 8,817 lines with 84 directly declared routes. New connected-learning endpoints should enter through a focused router seam rather than extending the monolith.
+- Contextual games return to Today or the originating topic. Today context also survives Today → lesson → card, quiz, or configured game.
+- Canonical route construction and bounded internal returns live in shared, tested helpers instead of being rebuilt on each screen.
+- Each topic has a stable workspace that joins its lesson, cards, quiz, games, explicitly aligned stories and scenarios, conversations, and recent evidence.
+- Lesson exposure, embedded assessments, supported quiz answers, and contextual game rounds can record exact concept evidence. Writes are retry-safe, and older or inherently broad evidence remains honestly topic-level.
+- Supported quiz mistakes can open the exact card or add it to review.
+- Words, conversations, quiz results, game results, and saved decks have stable, owner-appropriate homes and reciprocal return paths.
+- Vocabulary, learner histories, administrative user diagnostics, and learner-library choices restore their relevant view state from the URL.
+
+### Remaining boundaries and maintenance risks
+
+- HåfaGPT does not have a human language-review team. Source-backed, registered, and reviewed states therefore remain explicit; the absence of a reviewer is not grounds for removing useful material or claiming independent human validation.
+- External Lengguahita stories remain intentionally unmapped until permission and trusted alignment metadata support a relationship.
+- Games opened from the game library or general Today goals correctly remain game-centric and return to `/games`. They are not topic launches, so the application does not invent a topic relationship.
+- Historical and inherently broad evidence remains broad. Completion, exposure, points, and stars are not rewritten or presented as exact concept mastery.
+- Saved decks preserve their stored topic label, cards, and review state. User-created or generated cards do not acquire inferred canonical concepts or source-topic relationships after the fact.
+- `api/api/main.py` remains a large module at 8,815 lines with 80 directly declared routes. Connected-learning endpoints now use focused routers, and future work should continue that seam; reducing the older monolith was not required to deliver learner continuity.
+- Audio review filters are operational administration tooling, not a learner list/detail journey. Administrative user diagnostics are URL-restorable; the audio tool remains outside this program's continuity scope.
 
 ## Stable records and relationship rules
 
@@ -81,7 +88,7 @@ These sources support the learning and navigation model. They do not validate Ch
 | Conversation | conversation ID | `/chat/:conversationId` | optional source topic, messages, return to topic |
 | Scenario | scenario ID | existing scenario route | curated topic when explicit |
 | Story | story ID | existing story route | curated topic when explicit |
-| Saved deck | deck ID | existing deck route | contained concepts and source topics |
+| Saved deck | deck ID | owner-scoped `/flashcards/my-deck/:deckId` | stored topic label, contained cards, review state |
 
 Topic-level attempts remain valid fallback evidence for historical or inherently broad activities. They must not be presented as concept mastery. Exact concept evidence is additive and should be written only when the activity can name the concepts it actually used.
 
@@ -99,11 +106,10 @@ Each release branches from the latest merged `main`, passes focused tests and `.
 
 ### Release 1 — navigation and return foundation
 
-- Add tested canonical learner route builders.
-- Validate and bound internal return paths.
-- Preserve Today context through Today → lesson → game.
-- Make contextual game headers, guarded exits, and completion actions return to Today or Learning.
-- Preserve existing `/games` behavior for games opened from the game library.
+- Delivered tested canonical learner route builders and bounded internal return paths.
+- Preserved Today context through Today → lesson → game.
+- Made contextual game headers, guarded exits, and completion actions return to Today or Learning.
+- Preserved `/games` behavior for games opened from the game library.
 
 Acceptance journeys:
 
@@ -114,29 +120,29 @@ Acceptance journeys:
 
 ### Release 2 — stable topic workspace
 
-- Add `/learning/:topicId` as the topic home while preserving `/learn/:topicId` as the lesson experience.
-- Add a focused learning-workspace API router instead of adding more endpoints directly to `main.py`.
-- Join lesson, flashcard category, quiz, suggested games, progress, and explicitly aligned stories/scenarios.
-- Link each participating surface back to the topic with contextual return behavior.
+- Delivered `/learning/:topicId` as the topic home while preserving `/learn/:topicId` as the lesson experience.
+- Added a focused learning-workspace API router instead of adding more endpoints directly to `main.py`.
+- Joined the lesson, flashcard category, quiz, suggested games, progress, and explicitly aligned stories and scenarios.
+- Linked each participating surface back to the topic with contextual return behavior.
 
 ### Release 3 — exact concept evidence
 
-- Record lesson exposure using deterministic concept IDs.
-- Persist the embedded lesson quiz as an identified lesson assessment.
-- Add optional concept IDs to quiz answers and contextual game attempts.
-- Preserve legacy topic-level attempts and label them as broad evidence.
-- Let a learner open or review the exact concept behind a supported quiz mistake.
+- Recorded lesson exposure using deterministic concept IDs.
+- Persisted the embedded lesson quiz as an identified lesson assessment.
+- Added optional concept IDs to quiz answers and contextual game attempts.
+- Preserved legacy topic-level attempts and labeled them as broad evidence.
+- Let learners open or review the exact concept behind a supported quiz mistake.
 
 All writes must be idempotent or protected from duplicate retries. A completion event is evidence, not automatically mastery.
 
 ### Release 4a — stable words
 
-- Add source-order-independent dictionary word identities while preserving the
+- Delivered source-order-independent dictionary word identities while preserving the
   existing source IDs used for provenance.
-- Add stable `/words/:wordId` detail routes backed by exact dictionary records.
-- Carry the same word identity through search, categories, flashcards,
+- Added stable `/words/:wordId` detail routes backed by exact dictionary records.
+- Carried the same word identity through search, categories, flashcards,
   dictionary quizzes, and mapped Word-of-the-Day entries.
-- Preserve bounded return context and keep older API responses usable during a
+- Preserved bounded return context and kept older API responses usable during a
   staggered web/API deployment.
 
 ### Release 4b — stable conversations
@@ -174,7 +180,48 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 - Normalized invalid page values and repaired stale out-of-range history and
   user-list URLs to the last available page without inventing an empty state.
 
-The final release audit may add a narrowly scoped follow-up when the tested journeys reveal a real gap.
+### Release 5c — Today continuity
+
+- Preserved canonical topic, category, source, and bounded return context when Today launches its listening flashcards or weak-area quiz.
+- Added explicit return-to-Today actions to both activity viewers.
+- Persisted `today` as the quiz launch source without changing topic evidence or making a mastery claim.
+
+### Release 5d — restorable learner-library views
+
+- Made flashcard source, quiz source and level, game group, and story source URL-backed so library views survive reloads and can be shared.
+- Preserved unrelated query parameters and hashes when a view changes.
+- Normalized invalid and empty values to the documented default without leaving misleading URL state behind.
+
+## Final cross-surface audit — August 28, 2026 (Pacific/Guam)
+
+| Surface | Verified continuity | Result |
+| --- | --- | --- |
+| Today | Topic lessons, listening cards, weak-area quizzes, and contextual games preserve their source and return path. General goals remain top-level activities by design. | Pass |
+| Topic workspace | Lesson, cards, quiz, chat, games, aligned stories and scenarios, conversations, and recent quiz/game evidence meet at one stable topic home. | Pass |
+| Lessons and cards | Stable topic and concept identities support exact exposure, durable embedded assessments, exact mistake-to-card actions, word detail, and contextual return. | Pass |
+| Quizzes | Results and history have stable routes; supported answers carry exact concept IDs; writes are retry-safe; topic and Today launch context survives. | Pass |
+| Games | Contextual memory and scramble rounds save their topic, exact concepts, and source; results and history are stable. Library games remain honestly game-centric. | Pass |
+| Chat and conversations | Conversations have owner-scoped stable routes, an optional validated topic relationship, privacy-minimized topic previews, and bounded return behavior. | Pass |
+| Stories and scenarios | Only authored topic mappings appear. External stories remain intentionally unmapped, and story-library view state is URL-restorable. | Pass |
+| Vocabulary | Stable word IDs and routes span dictionary search, categories, cards, and supported quizzes; search and exact return context restore from the URL. | Pass |
+| Progress and saved decks | Progress links reach exact saved quiz/game results. Decks preserve owner scope, stored topic labels, contained cards, and review state without inferred concepts. | Pass |
+| Administrative diagnostics | User search, pagination, details, and returns restore correctly. Audio review is documented as an operational boundary. | Pass with boundary |
+
+No high-value disconnected journey remains inside the approved program scope as of August 28, 2026 (Pacific/Guam). New list/detail workflows and new cross-surface launches should meet the same stable-identity, write-time-relationship, bounded-return, and restorable-view requirements.
+
+Passing this audit validates the product architecture and tested continuity. It does not independently validate Chamorro wording; the language-resource and accuracy programs remain authoritative for content.
+
+### Implementation record
+
+- Release 1: [PR #51](https://github.com/Shimizu-Technology/HafaGPT/pull/51)
+- Release 2: [PR #52](https://github.com/Shimizu-Technology/HafaGPT/pull/52)
+- Release 3: [PR #53](https://github.com/Shimizu-Technology/HafaGPT/pull/53)
+- Release 4a: [PR #54](https://github.com/Shimizu-Technology/HafaGPT/pull/54)
+- Release 4b: [PR #55](https://github.com/Shimizu-Technology/HafaGPT/pull/55)
+- Release 5a: [PR #56](https://github.com/Shimizu-Technology/HafaGPT/pull/56)
+- Release 5b: [PR #57](https://github.com/Shimizu-Technology/HafaGPT/pull/57)
+- Release 5c: [PR #58](https://github.com/Shimizu-Technology/HafaGPT/pull/58)
+- Release 5d: [PR #59](https://github.com/Shimizu-Technology/HafaGPT/pull/59)
 
 ## Explicit non-goals
 
@@ -190,6 +237,6 @@ The final release audit may add a narrowly scoped follow-up when the tested jour
 
 ## Program completion gate
 
-The connected-learning program is complete only when the supported journeys are coherent in both directions, persisted relationships survive reloads, legacy records still render honestly, unsafe return paths are rejected, URL-backed views restore correctly, and the final cross-program audit finds no high-value disconnected journey left inside the approved scope.
+The program met its completion gate on August 28, 2026 (Pacific/Guam). Supported journeys are coherent in both directions, persisted relationships survive reloads, legacy records render honestly, unsafe return paths are rejected, URL-backed views restore correctly, and the final audit found no high-value disconnected journey inside the approved scope.
 
-The final audit will compare lessons, flashcards, quizzes, games, chat, scenarios, stories, Today, progress, and administrative diagnostics against this record model. Any remaining gap must be either implemented in a reviewed release or documented with a concrete reason for deferral.
+A future regression or a newly introduced workflow can reopen this work. Completion does not create a human-review requirement, certify Chamorro language content, or turn broad activity evidence into mastery.
