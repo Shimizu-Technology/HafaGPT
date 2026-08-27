@@ -70,8 +70,7 @@ def test_upgrade_adds_nullable_relationship_and_concurrent_preview_index():
     add_call, index_call = operations.calls
     assert add_call == (
         "execute",
-        "ALTER TABLE conversations ADD COLUMN IF NOT EXISTS "
-        + "learning_topic_id VARCHAR(64)",
+        "ALTER TABLE conversations ADD COLUMN IF NOT EXISTS learning_topic_id VARCHAR(64)",
     )
     assert index_call[0:4] == (
         "create_index",

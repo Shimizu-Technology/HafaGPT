@@ -207,7 +207,10 @@ describe('Chat stable conversation route', () => {
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {
-    renderChat('/chat/conv-1');
+    window.localStorage.setItem('active_conversation_id', 'conv-1');
+    renderChat('/chat');
+
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-1'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
 
