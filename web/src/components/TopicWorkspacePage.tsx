@@ -9,6 +9,7 @@ import {
   MessageCircle,
   RefreshCw,
   Sparkles,
+  Trophy,
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { getScenarioById } from '../data/conversationScenarios';
@@ -17,6 +18,7 @@ import { getStoryById } from '../data/storyData';
 import { TOPIC_SCENARIO_IDS, TOPIC_STORY_IDS } from '../data/topicRelationships';
 import { useTopicWorkspace } from '../hooks/useLearningPath';
 import { useTopicConversations } from '../hooks/useConversationsQuery';
+import { useTopicActivityResults } from '../hooks/useActivityResults';
 import { withLearningContext } from '../lib/lessonPractice';
 import { appRoutes } from '../lib/routes';
 import { withTopicReturn } from '../lib/topicReturn';
@@ -67,6 +69,11 @@ export function TopicWorkspacePage() {
   const localTopic = getTopic(topicId || '');
   const { data, isLoading, isError, refetch } = useTopicWorkspace(localTopic?.id);
   const { data: recentConversations = [] } = useTopicConversations(localTopic?.id, 3);
+  const {
+    data: recentResults = [],
+    isError: areRecentResultsUnavailable,
+    refetch: refetchRecentResults,
+  } = useTopicActivityResults(localTopic?.id, 3);
 
   if (!localTopic) {
     return (
@@ -200,6 +207,36 @@ export function TopicWorkspacePage() {
                     topicId: localTopic.id,
                     returnTo: topicHome,
                   })}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {areRecentResultsUnavailable ? (
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800" aria-labelledby="topic-results-unavailable-heading">
+            <h2 id="topic-results-unavailable-heading" className="font-bold text-brown-950 dark:text-white">Recent topic results are unavailable</h2>
+            <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">The rest of this topic is still ready to use.</p>
+            <button type="button" onClick={() => void refetchRecentResults()} className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 text-sm font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:text-white dark:hover:bg-slate-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Retry recent results</button>
+          </section>
+        ) : recentResults.length > 0 && (
+          <section aria-labelledby="topic-results-heading">
+            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Review recent evidence</p>
+            <h2 id="topic-results-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic results</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {recentResults.map((result) => (
+                <WorkspaceLink
+                  key={`${result.result_type}-${result.id}`}
+                  icon={Trophy}
+                  title={result.title}
+                  description={result.result_type === 'quiz'
+                    ? `${result.percentage === null
+                      ? `${result.score}${result.total === null ? ' points' : ` of ${result.total}`}`
+                      : `${Math.round(result.percentage)}%`} · ${formatDate(result.created_at) || 'recently'}`
+                    : `${result.score} points · ${formatDate(result.created_at) || 'recently'}`}
+                  to={result.result_type === 'quiz'
+                    ? appRoutes.quizReview(result.id, { returnTo: topicHome })
+                    : appRoutes.gameResult(result.id, { returnTo: topicHome })}
                 />
               ))}
             </div>

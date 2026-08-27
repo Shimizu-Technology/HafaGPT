@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { getCuratedConceptId } from '../data/conceptEvidence';
-import { readConceptReview, withConceptReview } from './conceptReview';
+import {
+  readConceptReview,
+  withConceptReview,
+  withGameConceptReview,
+} from './conceptReview';
 
 
 const resultId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
@@ -17,6 +21,19 @@ describe('concept review navigation', () => {
       cardIndex: 3,
       to: `/quiz/review/${resultId}`,
       label: 'Back to quiz review',
+    });
+  });
+
+  it('round-trips an exact game card to the stable game result', () => {
+    const conceptId = getCuratedConceptId('greetings', 1);
+    const path = withGameConceptReview('greetings', conceptId, resultId);
+    const search = path.slice(path.indexOf('?') + 1);
+
+    expect(readConceptReview(search, 'greetings')).toEqual({
+      conceptId,
+      cardIndex: 1,
+      to: `/games/results/${resultId}`,
+      label: 'Back to game result',
     });
   });
 

@@ -102,6 +102,7 @@ export function useSaveGameResult() {
       // Invalidate game stats to refetch
       queryClient.invalidateQueries({ queryKey: ['game-stats'] });
       queryClient.invalidateQueries({ queryKey: ['game-history'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-results'] });
     },
   });
 }

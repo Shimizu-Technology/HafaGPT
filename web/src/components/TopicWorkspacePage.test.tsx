@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TopicWorkspacePage } from './TopicWorkspacePage';
@@ -6,6 +6,8 @@ import { TopicWorkspacePage } from './TopicWorkspacePage';
 const mocks = vi.hoisted(() => ({
   useTopicWorkspace: vi.fn(),
   useTopicConversations: vi.fn(),
+  useTopicActivityResults: vi.fn(),
+  refetchTopicResults: vi.fn(),
 }));
 
 vi.mock('../hooks/useLearningPath', () => ({
@@ -14,6 +16,10 @@ vi.mock('../hooks/useLearningPath', () => ({
 
 vi.mock('../hooks/useConversationsQuery', () => ({
   useTopicConversations: mocks.useTopicConversations,
+}));
+
+vi.mock('../hooks/useActivityResults', () => ({
+  useTopicActivityResults: mocks.useTopicActivityResults,
 }));
 
 vi.mock('../hooks/useTheme', () => ({
@@ -59,13 +65,74 @@ function renderWorkspace(path = '/learning/greetings') {
 
 describe('TopicWorkspacePage', () => {
   beforeEach(() => {
+    mocks.refetchTopicResults.mockReset();
     mocks.useTopicConversations.mockReturnValue({ data: [] });
+    mocks.useTopicActivityResults.mockReturnValue({
+      data: [],
+      isError: false,
+      refetch: mocks.refetchTopicResults,
+    });
     mocks.useTopicWorkspace.mockReturnValue({
       data: workspace,
       isLoading: false,
       isError: false,
       refetch: vi.fn(),
     });
+  });
+
+  it('links recent topic results back to their stable records', () => {
+    mocks.useTopicActivityResults.mockReturnValue({
+      data: [
+        {
+          id: '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678',
+          result_type: 'game',
+          title: 'Greetings & Basics',
+          created_at: '2026-08-28T00:00:00Z',
+          score: 375,
+          total: null,
+          percentage: null,
+          stars: 3,
+        },
+        {
+          id: '018f6a6e-9c3d-7b2a-a1c4-8e9f12345679',
+          result_type: 'quiz',
+          title: 'Greetings quiz',
+          created_at: '2026-08-27T00:00:00Z',
+          score: 9,
+          total: 10,
+          percentage: 90,
+          stars: null,
+        },
+      ],
+      isError: false,
+      refetch: mocks.refetchTopicResults,
+    });
+
+    renderWorkspace();
+
+    expect(screen.getByRole('heading', { name: 'Recent topic results' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute(
+      'href',
+      '/games/results/018f6a6e-9c3d-7b2a-a1c4-8e9f12345678?return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Greetings quiz/ })).toHaveAttribute(
+      'href',
+      '/quiz/review/018f6a6e-9c3d-7b2a-a1c4-8e9f12345679?return_to=%2Flearning%2Fgreetings',
+    );
+  });
+
+  it('distinguishes an unavailable recent-results preview and retries it', () => {
+    mocks.useTopicActivityResults.mockReturnValue({
+      data: undefined,
+      isError: true,
+      refetch: mocks.refetchTopicResults,
+    });
+
+    renderWorkspace();
+
+    expect(screen.getByRole('heading', { name: 'Recent topic results are unavailable' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry recent results' }));
+    expect(mocks.refetchTopicResults).toHaveBeenCalledOnce();
   });
 
   it('joins the lesson, cards, quiz, games, scenario, and story with topic return context', () => {

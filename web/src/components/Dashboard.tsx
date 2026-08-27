@@ -22,6 +22,7 @@ import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { StreakWidget } from './StreakWidget';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { appRoutes } from '../lib/routes';
 
 export function Dashboard() {
   const { user, isLoaded } = useUser();
@@ -170,12 +171,20 @@ export function Dashboard() {
                 Your activity
               </h2>
             </div>
-            <Link
-              to="/dashboard/quiz-history"
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
-            >
-              <History className="h-4 w-4" aria-hidden="true" /> Quiz history
-            </Link>
+            <div className="flex flex-wrap justify-end gap-1">
+              <Link
+                to="/dashboard/quiz-history"
+                className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+              >
+                <History className="h-4 w-4" aria-hidden="true" /> Quiz history
+              </Link>
+              <Link
+                to={appRoutes.gameHistory}
+                className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+              >
+                <History className="h-4 w-4" aria-hidden="true" /> Game history
+              </Link>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {stats.map(({ label, value, icon: Icon, tone }) => (
@@ -312,15 +321,16 @@ export function Dashboard() {
 
         {gameStatsData && gameStatsData.recent_results.length > 0 && (
           <section aria-labelledby="recent-games-title">
-            <h2 id="recent-games-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">
-              Recent games
-            </h2>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="recent-games-title" className="text-xl font-bold text-brown-950 dark:text-white">Recent games</h2>
+              <Link to={appRoutes.gameHistory} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-teal-300 dark:hover:bg-teal-950/30">View all</Link>
+            </div>
             <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
               {gameStatsData.recent_results.slice(0, 5).map((result, idx) => {
                 const date = new Date(result.created_at);
 
                 return (
-                  <div key={idx} className="flex min-h-20 items-center justify-between gap-3 p-4">
+                  <Link key={result.id || idx} to={appRoutes.gameResult(result.id, { returnTo: '/dashboard' })} className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                         <Gamepad2 className="h-5 w-5" aria-hidden="true" />
@@ -351,7 +361,8 @@ export function Dashboard() {
                       </div>
                       <span className="text-sm font-bold text-brown-700 dark:text-gray-200">{result.score}</span>
                     </div>
-                  </div>
+                    <ChevronRight className="h-4 w-4 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
+                  </Link>
                 );
               })}
             </div>

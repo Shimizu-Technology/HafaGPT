@@ -14,6 +14,8 @@ describe('connected learner routes', () => {
     expect(appRoutes.quiz('common phrases')).toBe('/quiz/common%20phrases');
     expect(appRoutes.quizReview('result/id?# value'))
       .toBe('/quiz/review/result%2Fid%3F%23%20value');
+    expect(appRoutes.gameResult('result/id', { returnTo: '/dashboard/game-history?page=2' }))
+      .toBe('/games/results/result%2Fid?return_to=%2Fdashboard%2Fgame-history%3Fpage%3D2');
     expect(appRoutes.scenario('meeting someone')).toBe('/practice/meeting%20someone');
     expect(appRoutes.story('a story')).toBe('/stories/a%20story');
     expect(appRoutes.vocabularyCategory('body parts'))
@@ -44,6 +46,8 @@ describe('connected learner routes', () => {
     expect(appRoutes.memoryGame({ returnTo: '//evil.example' })).toBe('/games/memory');
     expect(appRoutes.scrambleGame({ returnTo: 'https://evil.example' })).toBe('/games/scramble');
     expect(appRoutes.conversation('one', { returnTo: '//evil.example' })).toBe('/chat/one');
+    expect(appRoutes.gameResult('one', { returnTo: 'https://evil.example' }))
+      .toBe('/games/results/one');
   });
 
   it('preserves internal search and hash context', () => {

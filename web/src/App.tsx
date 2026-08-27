@@ -44,6 +44,8 @@ const QuizList = lazyNamed(() => import('./components/QuizList'), 'QuizList');
 const QuizViewer = lazyNamed(() => import('./components/QuizViewer'), 'QuizViewer');
 const QuizReview = lazyNamed(() => import('./components/QuizReview'), 'QuizReview');
 const QuizHistory = lazyNamed(() => import('./components/QuizHistory'), 'QuizHistory');
+const GameHistory = lazyNamed(() => import('./components/GameHistory'), 'GameHistory');
+const GameResultDetail = lazyNamed(() => import('./components/GameResultDetail'), 'GameResultDetail');
 const VocabularyList = lazyNamed(() => import('./components/VocabularyList'), 'VocabularyList');
 const VocabularyCategory = lazyNamed(() => import('./components/VocabularyCategory'), 'VocabularyCategory');
 const VocabularyWordPage = lazyNamed(() => import('./components/VocabularyWordPage'), 'VocabularyWordPage');
@@ -195,6 +197,8 @@ function AppRoutes() {
         {/* Dashboard routes - detailed progress */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/quiz-history" element={<ProtectedRoute><QuizHistory /></ProtectedRoute>} />
+        <Route path="/dashboard/game-history" element={<ProtectedRoute><GameHistory /></ProtectedRoute>} />
+        <Route path="/games/results/:resultId" element={<ProtectedRoute><GameResultDetail /></ProtectedRoute>} />
         
         {/* Conversation Practice routes */}
         <Route path="/practice" element={<ProtectedRoute><ConversationList /></ProtectedRoute>} />
