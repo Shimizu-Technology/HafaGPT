@@ -63,6 +63,29 @@ describe('deterministic Today planner', () => {
 
     expect(audioFirst.activities[0].kind).toBe('listen');
     expect(independent.activities[0].kind).toBe('lesson');
+    expect(independent.activities[0].to).toBe(
+      '/learn/greetings?topic=greetings&category=greetings&source=today&return_to=%2F',
+    );
+  });
+
+  it('keeps full Today context on the direct game activity', () => {
+    const plan = buildTodayPlan(input({
+      xp: {
+        total_xp: 100,
+        level: 2,
+        xp_for_current_level: 100,
+        xp_for_next_level: 250,
+        xp_progress: 0,
+        daily_goal_minutes: 20,
+        today_minutes: 0,
+        daily_goal_complete: false,
+      },
+    }));
+    const playActivity = plan.activities.find((activity) => activity.id === 'play-greetings');
+
+    expect(playActivity?.to).toBe(
+      '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F',
+    );
   });
 
   it('uses the remaining daily budget and returns a useful completion state', () => {

@@ -1,4 +1,5 @@
 import { getTopic, LearningTopic } from '../data/learningPath';
+import { appRoutes, MAX_APP_URL_LENGTH, safeInternalReturnPath } from './routes';
 
 export type LearningSource = 'lesson' | 'today';
 
@@ -7,6 +8,12 @@ export interface LearningGameContext {
   categoryId: string;
   topicTitle: string;
   source: LearningSource;
+  returnTo: string;
+}
+
+export interface LearningGameReturn {
+  to: string;
+  label: string;
 }
 
 interface PracticeGame {
@@ -21,27 +28,54 @@ const PRACTICE_GAMES: Record<string, PracticeGame> = {
     id: 'memory',
     label: 'Memory Match',
     description: 'Pair the Chamorro words with their meanings.',
-    path: '/games/memory',
+    path: appRoutes.memoryGame(),
   },
   scramble: {
     id: 'scramble',
     label: 'Word Scramble',
     description: 'Build the words you just practiced.',
-    path: '/games/scramble',
+    path: appRoutes.scrambleGame(),
   },
 };
 
-export function getLessonPractice(topic: LearningTopic): (PracticeGame & { href: string }) | null {
+function safeLearningReturnPath(value: string | null, source: LearningSource): string {
+  const canonicalDestination = source === 'today' ? appRoutes.home : appRoutes.learning;
+  const normalizedPath = safeInternalReturnPath(value, canonicalDestination);
+
+  // Learning handoffs intentionally carry no arbitrary path or query state.
+  // This prevents personal or unrelated URL context from being copied into
+  // the game URL and browser history.
+  return normalizedPath === canonicalDestination ? normalizedPath : canonicalDestination;
+}
+
+export function getLessonPractice(
+  topic: LearningTopic,
+  context: { source?: LearningSource; returnTo?: string } = {},
+): (PracticeGame & { href: string }) | null {
   const game = topic.suggestedGames?.map((id) => PRACTICE_GAMES[id]).find(Boolean);
   if (!game) return null;
 
-  const params = new URLSearchParams({
-    topic: topic.id,
-    category: topic.flashcardCategory,
-    source: 'lesson',
-  });
+  const source = context.source ?? 'lesson';
+  const fallbackReturn = source === 'today' ? appRoutes.home : appRoutes.learning;
+  const returnTo = safeLearningReturnPath(context.returnTo ?? fallbackReturn, source);
 
-  return { ...game, href: `${game.path}?${params}` };
+  const buildHref = (returnPath: string) => {
+    const params = new URLSearchParams({
+      topic: topic.id,
+      category: topic.flashcardCategory,
+      source,
+      return_to: returnPath,
+    });
+    return `${game.path}?${params}`;
+  };
+  const contextualHref = buildHref(returnTo);
+
+  return {
+    ...game,
+    href: contextualHref.length <= MAX_APP_URL_LENGTH
+      ? contextualHref
+      : buildHref(fallbackReturn),
+  };
 }
 
 export function readLearningGameContext(search: string): LearningGameContext | null {
@@ -59,5 +93,16 @@ export function readLearningGameContext(search: string): LearningGameContext | n
     categoryId,
     topicTitle: topic.title,
     source,
+    returnTo: safeLearningReturnPath(params.get('return_to'), source),
   };
+}
+
+export function getLearningGameReturn(context: LearningGameContext | null): LearningGameReturn {
+  if (context?.source === 'today') {
+    return { to: context.returnTo, label: 'Back to Today' };
+  }
+  if (context?.source === 'lesson') {
+    return { to: context.returnTo, label: 'Back to learning' };
+  }
+  return { to: appRoutes.games, label: 'Back to games' };
 }

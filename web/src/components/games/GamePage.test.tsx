@@ -58,6 +58,37 @@ describe('shared game page UI', () => {
     expect(screen.getByText('/games')).toBeInTheDocument();
   });
 
+  it('returns a contextual game to its validated Today source', () => {
+    function CurrentLocation() {
+      const location = useLocation();
+      return <output>{`${location.pathname}${location.search}`}</output>;
+    }
+
+    const contextualGame = '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F';
+    render(
+      <MemoryRouter initialEntries={[contextualGame]}>
+        <GamePageHeader title="Memory Match" subtitle="Pair the words" icon={Headphones} />
+        <GameResult score={850} stars={3} onReplay={vi.fn()} />
+        <CurrentLocation />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Back to Today' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/');
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Today' }));
+    expect(screen.getByText('/')).toBeInTheDocument();
+  });
+
+  it('falls back safely when contextual return data is hostile', () => {
+    render(
+      <MemoryRouter initialEntries={['/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F%2Fevil.example']}>
+        <GameResult score={850} stars={3} onReplay={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/');
+  });
+
   it('supports guarded navigation and a focused in-game action', () => {
     const onBack = vi.fn();
 

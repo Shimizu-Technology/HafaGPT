@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
@@ -8,7 +8,7 @@ import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
-import { readLearningGameContext } from '../lib/lessonPractice';
+import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 
 interface GameSettings {
@@ -61,13 +61,15 @@ const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 
 export function WordScramble() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const learningContext = useMemo(() => readLearningGameContext(window.location.search), []);
+  const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
+  const gameReturn = getLearningGameReturn(learningContext);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
@@ -331,7 +333,7 @@ export function WordScramble() {
     if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
       return;
     }
-    navigate('/games');
+    navigate(gameReturn.to);
   };
 
   // Format time as mm:ss
@@ -389,7 +391,7 @@ export function WordScramble() {
               <div className="flex items-center gap-3 rounded-xl border border-purple-200 bg-purple-50 p-3 text-left dark:border-purple-700/40 dark:bg-purple-900/20">
                 <BookOpen className="h-5 w-5 flex-none text-purple-600 dark:text-purple-300" aria-hidden="true" />
                 <p className="text-sm text-brown-700 dark:text-gray-200">
-                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from your lesson.
+                  Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from {learningContext.source === 'today' ? 'Today' : 'your lesson'}.
                 </p>
               </div>
             )}
@@ -809,10 +811,10 @@ export function WordScramble() {
 
             {/* Back to Games */}
             <Link
-              to="/games"
+              to={gameReturn.to}
               className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
             >
-              ← Back to Games
+              {gameReturn.label}
             </Link>
           </div>
         )}
