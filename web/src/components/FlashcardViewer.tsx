@@ -67,6 +67,7 @@ export function FlashcardViewer() {
   const conceptReview = cardType === 'curated' && topic
     ? readConceptReview(searchParams.toString(), topic)
     : null;
+  const conceptReviewCardIndex = conceptReview?.cardIndex;
   const returnContext = conceptReview ?? topicReturn;
   
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
@@ -137,6 +138,12 @@ export function FlashcardViewer() {
       // Otherwise, dictionary data will be handled by the separate useEffect
     }
   }, [topic, cardType, dictionaryError]);
+
+  useEffect(() => {
+    if (cardType !== 'curated' || conceptReviewCardIndex === undefined) return;
+    setCurrentIndex(conceptReviewCardIndex);
+    setIsCardFlipped(false);
+  }, [cardType, conceptReviewCardIndex]);
 
   // Load curated (hardcoded) cards
   const loadCuratedCards = () => {

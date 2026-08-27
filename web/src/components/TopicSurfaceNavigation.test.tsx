@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationPractice } from './ConversationPractice';
 import { FlashcardViewer } from './FlashcardViewer';
@@ -40,11 +40,18 @@ const mocks = vi.hoisted(() => ({
   tryUse: vi.fn(async () => true),
   recordLessonExposure: vi.fn(),
   saveQuizResult: vi.fn(),
+  userId: 'user_123' as string | null,
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useAuth: () => ({ getToken: async () => 'test-token', isSignedIn: true }),
-  useUser: () => ({ isSignedIn: true, user: { id: 'user_123' } }),
+  useAuth: () => ({
+    getToken: async () => mocks.userId ? 'test-token' : null,
+    isSignedIn: Boolean(mocks.userId),
+  }),
+  useUser: () => ({
+    isSignedIn: Boolean(mocks.userId),
+    user: mocks.userId ? { id: mocks.userId } : null,
+  }),
 }));
 
 vi.mock('../hooks/useTheme', () => ({
@@ -116,6 +123,11 @@ function LocationProbe() {
   return <output data-testid="current-location">{`${location.pathname}${location.search}`}</output>;
 }
 
+function SameRouteNavigator({ to }: { to: string }) {
+  const navigate = useNavigate();
+  return <button onClick={() => navigate(to)}>Open another missed card</button>;
+}
+
 function renderSurface(
   component: ReactNode,
   routePath: string,
@@ -170,6 +182,7 @@ describe('topic surface navigation', () => {
     mocks.tryUse.mockResolvedValue(true);
     mocks.recordLessonExposure.mockReset();
     mocks.saveQuizResult.mockReset();
+    mocks.userId = 'user_123';
     window.localStorage.clear();
   });
 
@@ -252,6 +265,28 @@ describe('topic surface navigation', () => {
     )).toBeNull();
   });
 
+  it('skips authenticated lesson exposure persistence for a signed-out session', async () => {
+    mocks.userId = null;
+    renderSurface(<LessonPage />, '/learn/:topicId', '/learn/greetings');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Flashcards' }));
+    for (let cardNumber = 2; cardNumber <= 14; cardNumber += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `View card ${cardNumber}` }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Quiz' }));
+
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mocks.recordLessonExposure).not.toHaveBeenCalled();
+    });
+    expect(
+      Array.from({ length: window.localStorage.length }, (_, index) =>
+        window.localStorage.key(index),
+      ).some((key) => key?.startsWith('hafagpt_lesson_exposure_v1_')),
+    ).toBe(false);
+    expect(screen.queryByText('Card activity has not saved yet')).not.toBeInTheDocument();
+  });
+
   it('returns topic flashcards to their workspace', async () => {
     renderSurface(<FlashcardViewer />, '/flashcards/:topic', `/flashcards/greetings?${topicQuery}`);
 
@@ -274,6 +309,32 @@ describe('topic surface navigation', () => {
     expect(screen.getByTestId('current-location')).toHaveTextContent(
       `/quiz/review/${resultId}`,
     );
+  });
+
+  it('synchronizes the exact card when review context changes on the same route', async () => {
+    const resultId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
+    const firstPath = withConceptReview(
+      'greetings',
+      getCuratedConceptId('greetings', 0),
+      resultId,
+    );
+    const nextPath = withConceptReview(
+      'greetings',
+      getCuratedConceptId('greetings', 3),
+      resultId,
+    );
+    renderSurface(
+      <>
+        <FlashcardViewer />
+        <SameRouteNavigator to={nextPath} />
+      </>,
+      '/flashcards/:topic',
+      firstPath,
+    );
+
+    expect(await screen.findByText(/Card 1 of 14/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Open another missed card' }));
+    expect(await screen.findByText(/Card 4 of 14/)).toBeInTheDocument();
   });
 
   it('returns a topic quiz to its workspace', async () => {

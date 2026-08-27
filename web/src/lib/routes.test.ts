@@ -12,6 +12,8 @@ describe('connected learner routes', () => {
     expect(appRoutes.lesson('body parts')).toBe('/learn/body%20parts');
     expect(appRoutes.flashcards('common phrases')).toBe('/flashcards/common%20phrases');
     expect(appRoutes.quiz('common phrases')).toBe('/quiz/common%20phrases');
+    expect(appRoutes.quizReview('result/id?# value'))
+      .toBe('/quiz/review/result%2Fid%3F%23%20value');
     expect(appRoutes.scenario('meeting someone')).toBe('/practice/meeting%20someone');
     expect(appRoutes.story('a story')).toBe('/stories/a%20story');
     expect(appRoutes.memoryGame({ returnTo: '/?section=today' }))

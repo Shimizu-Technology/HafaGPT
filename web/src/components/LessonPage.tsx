@@ -134,21 +134,18 @@ export function LessonPage() {
   };
 
   const saveLessonExposure = (payload: PendingLessonExposure) => {
+    if (!ownerId) return;
     setPendingLessonExposure(payload);
     setLessonExposureSaveFailed(false);
-    if (ownerId) {
-      browserStorage.set(
-        getLessonExposureQueueKey(ownerId, payload.topicId),
-        JSON.stringify(payload),
-      );
-    }
+    browserStorage.set(
+      getLessonExposureQueueKey(ownerId, payload.topicId),
+      JSON.stringify(payload),
+    );
     recordLessonExposure.mutate(payload, {
       onSuccess: () => {
-        if (ownerId) {
-          browserStorage.remove(
-            getLessonExposureQueueKey(ownerId, payload.topicId),
-          );
-        }
+        browserStorage.remove(
+          getLessonExposureQueueKey(ownerId, payload.topicId),
+        );
         setPendingLessonExposure(null);
         setLessonExposureSaveFailed(false);
       },

@@ -21,7 +21,12 @@ def load_migration_module():
 def test_invalid_concurrent_indexes_are_dropped_before_retry():
     class ScalarRows:
         def scalars(self):
-            return iter(("idx_quiz_answers_concept_id",))
+            return iter(
+                (
+                    "idx_quiz_answers_concept_id",
+                    "idx_quiz_results_user_learning_topic_created",
+                )
+            )
 
     class Bind:
         def __init__(self):
@@ -52,11 +57,19 @@ def test_invalid_concurrent_indexes_are_dropped_before_retry():
     assert "indisvalid = false" in operations.bind.statement
     assert operations.drops == [
         (
+            "idx_quiz_results_user_learning_topic_created",
+            {
+                "table_name": "quiz_results",
+                "if_exists": True,
+                "postgresql_concurrently": True,
+            },
+        ),
+        (
             "idx_quiz_answers_concept_id",
             {
                 "table_name": "quiz_answers",
                 "if_exists": True,
                 "postgresql_concurrently": True,
             },
-        )
+        ),
     ]
