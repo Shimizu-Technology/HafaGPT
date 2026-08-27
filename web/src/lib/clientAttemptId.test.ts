@@ -3,6 +3,7 @@ import { createClientAttemptId } from './clientAttemptId';
 
 describe('createClientAttemptId', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
