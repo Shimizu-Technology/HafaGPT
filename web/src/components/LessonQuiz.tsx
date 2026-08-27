@@ -79,11 +79,18 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
         && 'isCorrect' in answer
         && typeof answer.isCorrect === 'boolean'
       ))
-      || !Object.keys(state.answeredQuestions).every((questionId) =>
-        (state.questionIds as string[]).includes(questionId),
+      || !((state.questionIds as string[]).slice(0, state.currentIndex)).every(
+        (questionId) => questionId in (state.answeredQuestions as Record<string, unknown>),
       )
-      || Object.keys(state.answeredQuestions).length < state.currentIndex
-      || Object.keys(state.answeredQuestions).length > state.currentIndex + 1
+      || !Object.keys(state.answeredQuestions).every((questionId) =>
+        (state.questionIds as string[])
+          .slice(0, (state.currentIndex as number) + 1)
+          .includes(questionId),
+      )
+      || ![
+        state.currentIndex,
+        state.currentIndex + 1,
+      ].includes(Object.keys(state.answeredQuestions).length)
       || state.correctCount !== Object.values(state.answeredQuestions)
         .filter((answer) => (
           typeof answer === 'object'
