@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { BookOpen, Layers, Brain, CheckCircle } from 'lucide-react';
+import { AlertCircle, BookOpen, Layers, Brain, CheckCircle, RefreshCw } from 'lucide-react';
 import { useUpdateProgress } from '../hooks/useLearningPath';
 import { useAwardXP } from '../hooks/useXP';
 import { getTopic, getTopicIndex, getNextTopic, getPath } from '../data/learningPath';
@@ -14,6 +15,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { getLessonTrust } from '../data/contentTrust';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
+import { browserStorage } from '../lib/browserStorage';
 
 type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
 
@@ -26,11 +28,49 @@ const STEP_INFO = {
   complete: { icon: CheckCircle, label: 'Done' },
 };
 
+interface PendingLessonExposure {
+  topicId: string;
+  conceptIds: string[];
+}
+
+const LESSON_EXPOSURE_QUEUE_PREFIX = 'hafagpt_lesson_exposure_v1_';
+
+function getLessonExposureQueueKey(ownerId: string, topicId: string) {
+  return `${LESSON_EXPOSURE_QUEUE_PREFIX}${ownerId}_${topicId}`;
+}
+
+function loadQueuedLessonExposure(
+  ownerId: string,
+  topicId: string,
+): PendingLessonExposure | null {
+  const rawValue = browserStorage.get(getLessonExposureQueueKey(ownerId, topicId));
+  if (!rawValue) return null;
+  try {
+    const value: unknown = JSON.parse(rawValue);
+    if (
+      typeof value === 'object'
+      && value !== null
+      && 'topicId' in value
+      && value.topicId === topicId
+      && 'conceptIds' in value
+      && Array.isArray(value.conceptIds)
+      && value.conceptIds.every((conceptId) => typeof conceptId === 'string')
+    ) {
+      return { topicId, conceptIds: [...value.conceptIds] };
+    }
+  } catch {
+    // Invalid optional browser state is discarded below.
+  }
+  browserStorage.remove(getLessonExposureQueueKey(ownerId, topicId));
+  return null;
+}
+
 /** Orchestrate lesson instruction, practice, quiz, and completion stages. */
 export function LessonPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useUser();
   const updateProgress = useUpdateProgress();
   const recordLessonExposure = useRecordLessonExposure();
   const awardXP = useAwardXP();
@@ -39,12 +79,26 @@ export function LessonPage() {
   const [, setFlashcardsCompleted] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
+  const [pendingLessonExposure, setPendingLessonExposure] = useState<PendingLessonExposure | null>(null);
+  const [lessonExposureSaveFailed, setLessonExposureSaveFailed] = useState(false);
 
   const topic = topicId ? getTopic(topicId) : undefined;
   const topicIndex = topicId ? getTopicIndex(topicId) : 0;
   const parsedLaunchContext = readLearningGameContext(location.search);
   const launchContext = parsedLaunchContext?.topicId === topicId ? parsedLaunchContext : null;
   const lessonReturn = getLearningGameReturn(launchContext);
+  const ownerId = user?.id ?? null;
+
+  useEffect(() => {
+    setPendingLessonExposure(null);
+    setLessonExposureSaveFailed(false);
+    if (!ownerId || !topicId) return;
+    const queuedExposure = loadQueuedLessonExposure(ownerId, topicId);
+    if (queuedExposure) {
+      setPendingLessonExposure(queuedExposure);
+      setLessonExposureSaveFailed(true);
+    }
+  }, [ownerId, topicId]);
 
   // Mark topic as started when entering
   useEffect(() => {
@@ -79,6 +133,32 @@ export function LessonPage() {
     setCurrentStep(step);
   };
 
+  const saveLessonExposure = (payload: PendingLessonExposure) => {
+    setPendingLessonExposure(payload);
+    setLessonExposureSaveFailed(false);
+    if (ownerId) {
+      browserStorage.set(
+        getLessonExposureQueueKey(ownerId, payload.topicId),
+        JSON.stringify(payload),
+      );
+    }
+    recordLessonExposure.mutate(payload, {
+      onSuccess: () => {
+        if (ownerId) {
+          browserStorage.remove(
+            getLessonExposureQueueKey(ownerId, payload.topicId),
+          );
+        }
+        setPendingLessonExposure(null);
+        setLessonExposureSaveFailed(false);
+      },
+      onError: (error) => {
+        console.warn('Failed to record lesson concept exposure:', error);
+        setLessonExposureSaveFailed(true);
+      },
+    });
+  };
+
   const handleIntroComplete = () => {
     goToStep('flashcards');
   };
@@ -91,14 +171,7 @@ export function LessonPage() {
     // Track flashcard completion with actual card count (non-blocking)
     if (topicId) {
       setTimeout(() => {
-        recordLessonExposure.mutate(
-          { topicId, conceptIds },
-          {
-            onError: (error) => {
-              console.warn('Failed to record lesson concept exposure:', error);
-            },
-          },
-        );
+        saveLessonExposure({ topicId, conceptIds: [...conceptIds] });
 
         updateProgress.mutate(
           { topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount },
@@ -281,6 +354,31 @@ export function LessonPage() {
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
         <ContentTrustNote trust={contentTrust} className="mb-6" />
+        {lessonExposureSaveFailed && pendingLessonExposure && (
+          <div
+            role="alert"
+            className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-none" aria-hidden="true" />
+              <div>
+                <p className="font-semibold">Card activity has not saved yet</p>
+                <p className="mt-0.5 text-sm">You can keep taking the quiz and retry this save here.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => saveLessonExposure(pendingLessonExposure)}
+              disabled={recordLessonExposure.isPending}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              {recordLessonExposure.isPending
+                ? 'Saving card activity…'
+                : 'Retry saving card activity'}
+            </button>
+          </div>
+        )}
         {currentStep === 'intro' && (
           <LessonIntro topic={topic} onComplete={handleIntroComplete} />
         )}

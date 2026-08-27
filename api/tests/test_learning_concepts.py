@@ -13,6 +13,8 @@ from api.learning_concepts import (
 
 def test_python_identity_matches_the_established_frontend_fingerprint():
     assert curated_concept_id("greetings", 0) == "v1:curated:1psmtc9"
+    assert curated_concept_id(" Greetings ", 0) == "v1:curated:1psmtc9"
+    assert curated_concept_id("DAILY\t  LIFE", 3) == "v1:curated:bd2m4z"
     assert len(curated_concept_ids("greetings")) == CURATED_DECK_CARD_COUNTS["greetings"]
 
 
@@ -76,4 +78,16 @@ def test_manifest_integrity_rejects_missing_decks_and_invalid_card_indexes():
             "version": 1,
             "deck_card_counts": deck_counts,
             "question_concepts": {"greet-1": ["greetings", -1]},
+        })
+
+
+def test_manifest_integrity_rejects_concept_identity_collisions(monkeypatch):
+    monkeypatch.setattr("api.learning_concepts.curated_concept_id", lambda *_args: "same")
+    deck_counts = dict(CURATED_DECK_CARD_COUNTS)
+
+    with pytest.raises(ValueError, match="identity collision"):
+        validate_curated_concept_manifest({
+            "version": 1,
+            "deck_card_counts": deck_counts,
+            "question_concepts": {},
         })

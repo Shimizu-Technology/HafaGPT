@@ -1,5 +1,5 @@
 import manifestJson from './curated_concept_manifest.json';
-import { createCardIdentity } from '../lib/cardIdentity';
+import { createCardIdentity, normalizeIdentityPart } from '../lib/cardIdentity';
 
 interface CuratedConceptManifest {
   version: number;
@@ -21,7 +21,7 @@ export function validateCuratedConceptManifest(
     throw new Error('Curated concept manifest is missing its relationship maps');
   }
 
-  const deckCardCounts: Record<string, number> = {};
+  const deckCardCounts: Record<string, number> = Object.create(null);
   for (const [categoryId, cardCount] of Object.entries(value.deck_card_counts)) {
     if (!Number.isInteger(cardCount) || (cardCount as number) < 0) {
       throw new Error(`Invalid curated deck card count for ${categoryId}`);
@@ -29,7 +29,7 @@ export function validateCuratedConceptManifest(
     deckCardCounts[categoryId] = cardCount as number;
   }
 
-  const questionConcepts: Record<string, [string, number]> = {};
+  const questionConcepts: Record<string, [string, number]> = Object.create(null);
   for (const [questionId, relationship] of Object.entries(value.question_concepts)) {
     if (
       !Array.isArray(relationship)
@@ -42,8 +42,12 @@ export function validateCuratedConceptManifest(
       throw new Error(`Invalid curated concept relationship for ${questionId}`);
     }
     const [categoryId, cardIndex] = relationship;
+    const hasCategory = Object.prototype.hasOwnProperty.call(
+      deckCardCounts,
+      categoryId,
+    );
     const cardCount = deckCardCounts[categoryId];
-    if (cardCount === undefined || cardIndex >= cardCount) {
+    if (!hasCategory || cardCount === undefined || cardIndex >= cardCount) {
       throw new Error(`Out-of-range curated concept relationship for ${questionId}`);
     }
     questionConcepts[questionId] = [categoryId, cardIndex];
@@ -59,9 +63,10 @@ export function validateCuratedConceptManifest(
 export const CURATED_CONCEPT_MANIFEST = validateCuratedConceptManifest(manifestJson);
 
 export function getCuratedConceptId(categoryId: string, cardIndex: number): string {
+  const normalizedCategoryId = normalizeIdentityPart(categoryId);
   return createCardIdentity({
     sourceKind: 'curated',
-    sourceId: `curated:${categoryId}:${cardIndex}`,
+    sourceId: `curated:${normalizedCategoryId}:${cardIndex}`,
   });
 }
 

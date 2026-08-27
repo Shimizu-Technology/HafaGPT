@@ -193,7 +193,7 @@ def test_valid_legacy_game_context_without_retry_key_saves_no_learning_rows():
         build_retry_safe_game_learning_attempts(request)
 
 
-def test_attempt_batch_uses_idempotent_per_concept_inserts():
+def test_attempt_batch_uses_one_idempotent_insert():
     class Cursor:
         def __init__(self):
             self.executions = []
@@ -228,6 +228,10 @@ def test_attempt_batch_uses_idempotent_per_concept_inserts():
     params = cursor.executions[0][1]
     assert params[0:2] == ("user_123", "result_123")
     assert params[2] == [attempt["concept_id"] for attempt in attempts]
+    assert params[5] == [attempt["duration_bucket"] for attempt in attempts]
+    assert params[6] == [attempt["source"] for attempt in attempts]
+    assert params[7] == [attempt["evidence_scope"] for attempt in attempts]
+    assert params[7] == ["topic", "concept"]
 
 
 def test_contextual_game_retry_reuses_the_stored_result():

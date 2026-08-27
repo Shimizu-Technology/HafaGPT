@@ -45,7 +45,10 @@ def test_lesson_quiz_context_and_exact_answer_relationship_are_validated():
         "assessment_id": "v1:lesson:greetings:embedded-quiz",
     }
 
-    with pytest.raises(ValueError, match="authored relationship"):
+    with pytest.raises(
+        ValueError,
+        match="Question concept does not match the authored relationship",
+    ):
         validate_quiz_result_request(
             request_data(
                 answers=[

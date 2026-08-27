@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -170,6 +170,7 @@ describe('topic surface navigation', () => {
     mocks.tryUse.mockResolvedValue(true);
     mocks.recordLessonExposure.mockReset();
     mocks.saveQuizResult.mockReset();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
@@ -199,9 +200,56 @@ describe('topic surface navigation', () => {
           topicId: 'greetings',
           conceptIds: getCuratedDeckConceptIds('greetings'),
         },
-        expect.objectContaining({ onError: expect.any(Function) }),
+        expect.objectContaining({
+          onError: expect.any(Function),
+          onSuccess: expect.any(Function),
+        }),
       );
     });
+  });
+
+  it('retains and retries the exact lesson exposure after a transient failure', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { unmount } = renderSurface(
+      <LessonPage />,
+      '/learn/:topicId',
+      '/learn/greetings',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Flashcards' }));
+    for (let cardNumber = 2; cardNumber <= 14; cardNumber += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `View card ${cardNumber}` }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Quiz' }));
+
+    await waitFor(() => expect(mocks.recordLessonExposure).toHaveBeenCalledOnce());
+    const firstPayload = mocks.recordLessonExposure.mock.calls[0][0];
+    act(() => {
+      mocks.recordLessonExposure.mock.calls[0][1].onError(new Error('offline'));
+    });
+
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
+    expect(window.localStorage.getItem(
+      'hafagpt_lesson_exposure_v1_user_123_greetings',
+    )).not.toBeNull();
+
+    unmount();
+    renderSurface(<LessonPage />, '/learn/:topicId', '/learn/greetings');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Card activity has not saved yet',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Retry saving card activity' }));
+
+    expect(mocks.recordLessonExposure).toHaveBeenCalledTimes(2);
+    expect(mocks.recordLessonExposure.mock.calls[1][0]).toEqual(firstPayload);
+    act(() => {
+      mocks.recordLessonExposure.mock.calls[1][1].onSuccess();
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem(
+      'hafagpt_lesson_exposure_v1_user_123_greetings',
+    )).toBeNull();
   });
 
   it('returns topic flashcards to their workspace', async () => {

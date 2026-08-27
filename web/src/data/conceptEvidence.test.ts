@@ -56,6 +56,8 @@ describe('curated concept evidence', () => {
   it('round-trips exact card identities without accepting another deck', () => {
     const conceptId = getCuratedConceptId('greetings', 0);
     expect(conceptId).toBe('v1:curated:1psmtc9');
+    expect(getCuratedConceptId(' Greetings ', 0)).toBe('v1:curated:1psmtc9');
+    expect(getCuratedConceptId('DAILY\t  LIFE', 3)).toBe('v1:curated:bd2m4z');
     expect(findCuratedConceptIndex('greetings', conceptId)).toBe(0);
     expect(findCuratedConceptIndex('family', conceptId)).toBeNull();
     expect(getCuratedDeckConceptIds('greetings')).toHaveLength(14);
@@ -75,5 +77,12 @@ describe('curated concept evidence', () => {
       deck_card_counts: { greetings: 1 },
       question_concepts: { 'greet-1': ['family', 0] },
     })).toThrow('Out-of-range curated concept relationship');
+    for (const inheritedName of ['toString', '__proto__']) {
+      expect(() => validateCuratedConceptManifest({
+        version: 1,
+        deck_card_counts: { greetings: 1 },
+        question_concepts: { 'greet-1': [inheritedName, 0] },
+      })).toThrow('Out-of-range curated concept relationship');
+    }
   });
 });

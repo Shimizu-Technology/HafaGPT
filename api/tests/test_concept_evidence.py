@@ -104,7 +104,8 @@ def test_lesson_exposure_route_records_only_valid_exact_concepts():
 
 def test_lesson_exposure_route_rejects_unknown_topics_and_cross_topic_concepts():
     family_concept = curated_concept_id("family", 0)
-    client = make_client(Connection())
+    connection = Connection()
+    client = make_client(connection)
 
     unknown = client.post(
         "/api/learning/lessons/not-a-topic/exposures",
@@ -122,6 +123,7 @@ def test_lesson_exposure_route_rejects_unknown_topics_and_cross_topic_concepts()
     assert mismatch.json() == {
         "detail": "Concept does not belong to the curated category"
     }
+    assert connection.cursor_instance.executions == []
 
 
 def test_lesson_exposure_route_requires_auth_and_hides_storage_failures():

@@ -1,6 +1,7 @@
 """Authoritative identities and alignments for curated learning concepts."""
 
 import json
+import unicodedata
 from pathlib import Path
 from typing import Iterable
 
@@ -59,6 +60,40 @@ LEARNING_TOPIC_QUIZ_CATEGORIES = {
 }
 
 
+def _normalize_identity_part(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", value).strip().lower().split())
+
+
+def _base36(value: int) -> str:
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
+    if value == 0:
+        return "0"
+
+    digits: list[str] = []
+    while value:
+        value, remainder = divmod(value, 36)
+        digits.append(alphabet[remainder])
+    return "".join(reversed(digits))
+
+
+def _fnv1a(value: str) -> str:
+    hash_value = 0x811C9DC5
+    utf16_value = value.encode("utf-16-le")
+    for offset in range(0, len(utf16_value), 2):
+        code_unit = int.from_bytes(utf16_value[offset : offset + 2], "little")
+        hash_value ^= code_unit
+        hash_value = (hash_value * 0x01000193) & 0xFFFFFFFF
+    return _base36(hash_value)
+
+
+def curated_concept_id(category_id: str, card_index: int) -> str:
+    """Match the established frontend card identity for a curated card."""
+
+    normalized_category_id = _normalize_identity_part(category_id)
+    source_id = f"curated:{normalized_category_id}:{card_index}"
+    return f"v1:curated:{_fnv1a(_normalize_identity_part(source_id))}"
+
+
 def validate_curated_concept_manifest(manifest: object) -> None:
     """Fail fast when authored deck and question relationships are malformed."""
 
@@ -81,6 +116,18 @@ def validate_curated_concept_manifest(manifest: object) -> None:
     missing_topic_categories = set(LEARNING_TOPIC_CATEGORIES.values()) - set(deck_counts)
     if missing_topic_categories:
         raise ValueError("Learning topic category is missing from the curated manifest")
+
+    concept_relationships: dict[str, tuple[str, int]] = {}
+    for category_id, card_count in deck_counts.items():
+        for card_index in range(card_count):
+            concept_id = curated_concept_id(category_id, card_index)
+            prior_relationship = concept_relationships.get(concept_id)
+            if prior_relationship is not None:
+                raise ValueError(
+                    "Curated concept identity collision between "
+                    f"{prior_relationship} and {(category_id, card_index)}"
+                )
+            concept_relationships[concept_id] = (category_id, card_index)
 
     for relationship in question_concepts.values():
         if (
@@ -106,33 +153,6 @@ QUESTION_CONCEPTS: dict[str, tuple[str, int]] = {
     question_id: (value[0], value[1])
     for question_id, value in _MANIFEST["question_concepts"].items()
 }
-
-
-def _base36(value: int) -> str:
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyz"
-    if value == 0:
-        return "0"
-
-    digits: list[str] = []
-    while value:
-        value, remainder = divmod(value, 36)
-        digits.append(alphabet[remainder])
-    return "".join(reversed(digits))
-
-
-def _fnv1a(value: str) -> str:
-    hash_value = 0x811C9DC5
-    for character in value:
-        hash_value ^= ord(character)
-        hash_value = (hash_value * 0x01000193) & 0xFFFFFFFF
-    return _base36(hash_value)
-
-
-def curated_concept_id(category_id: str, card_index: int) -> str:
-    """Match the established frontend card identity for a curated card."""
-
-    source_id = f"curated:{category_id}:{card_index}"
-    return f"v1:curated:{_fnv1a(source_id)}"
 
 
 def curated_concept_ids(category_id: str) -> tuple[str, ...]:

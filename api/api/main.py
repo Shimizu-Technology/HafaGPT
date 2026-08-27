@@ -3285,6 +3285,8 @@ async def get_quiz_result_detail(
     
     Requires authentication. User can only view their own quiz results.
     """
+    conn = None
+    cursor = None
     try:
         # Verify user
         user_id = await verify_user(authorization)
@@ -3304,8 +3306,6 @@ async def get_quiz_result_detail(
         
         result_row = cursor.fetchone()
         if not result_row:
-            cursor.close()
-            conn.close()
             raise HTTPException(status_code=404, detail="Quiz result not found")
         
         # Get individual answers
@@ -3318,9 +3318,6 @@ async def get_quiz_result_detail(
         """, (result_id,))
         
         answer_rows = cursor.fetchall()
-        
-        cursor.close()
-        conn.close()
         
         # Build response
         answers = [
@@ -3361,6 +3358,11 @@ async def get_quiz_result_detail(
             status_code=500,
             detail=f"Failed to get quiz result: {str(e)}"
         )
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 @app.get("/api/quiz/stats", response_model=QuizStatsResponse, tags=["Quiz"])
