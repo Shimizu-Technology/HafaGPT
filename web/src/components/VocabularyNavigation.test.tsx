@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { VocabularyCategory } from './VocabularyCategory';
 import { VocabularyList } from './VocabularyList';
@@ -57,6 +57,11 @@ const word = {
   },
 };
 
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
+}
+
 describe('stable vocabulary records', () => {
   beforeEach(() => {
     mocks.searchResults = { results: [word], query: 'water', total: 1 };
@@ -91,18 +96,23 @@ describe('stable vocabulary records', () => {
 
   it('links category words to the same record with a category return path', () => {
     render(
-      <MemoryRouter initialEntries={['/vocabulary/greetings']}>
+      <MemoryRouter initialEntries={['/vocabulary/greetings?q=water#words']}>
         <Routes>
           <Route path="/vocabulary/:categoryId" element={<VocabularyCategory />} />
         </Routes>
+        <LocationProbe />
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole('textbox', { name: 'Search in Greetings & Basics' }))
+      .toHaveValue('water');
     expect(screen.getByRole('link', { name: 'Open entry' }))
       .toHaveAttribute(
         'href',
-        '/words/revised-word-v1-stable?return_to=%2Fvocabulary%2Fgreetings',
+        '/words/revised-word-v1-stable?return_to=%2Fvocabulary%2Fgreetings%3Fq%3Dwater%23words',
       );
+    fireEvent.click(screen.getByRole('button', { name: 'Clear category search' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/vocabulary/greetings#words');
   });
 
   it('renders exact entry details and returns to the preserved internal context', () => {

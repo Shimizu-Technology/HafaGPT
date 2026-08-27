@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Brain, Calendar, ChevronLeft, ChevronRight, Clock, History, Loader2, RefreshCw, Trophy } from 'lucide-react';
 import { useQuizHistory } from '../hooks/useQuizQuery';
+import { appRoutes, currentAppPath, positivePageFromSearch } from '../lib/routes';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 function formatDate(dateString: string) {
@@ -28,7 +29,10 @@ function scoreTone(percentage: number) {
 }
 
 export function QuizHistory() {
-  const [page, setPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const page = positivePageFromSearch(searchParams.get('page'));
   const perPage = 20;
   const { data, isLoading, error, refetch } = useQuizHistory(page, perPage);
   const pagination = data?.pagination ?? {
@@ -39,6 +43,25 @@ export function QuizHistory() {
     has_prev: false,
     per_page: perPage,
   };
+  const returnTo = currentAppPath(location.pathname, location.search, location.hash);
+
+  const setPage = useCallback((nextPage: number, replace = false) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextPage > 1) next.set('page', String(nextPage));
+    else next.delete('page');
+    const nextSearch = next.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace });
+  }, [location.hash, location.pathname, navigate, searchParams]);
+
+  useEffect(() => {
+    if (!data || data.pagination.total_count === 0) return;
+    const lastPage = Math.max(1, data.pagination.total_pages);
+    if (page > lastPage) setPage(lastPage, true);
+  }, [data, page, setPage]);
 
   return (
     <LearnerPageShell>
@@ -108,7 +131,7 @@ export function QuizHistory() {
                   return (
                     <Link
                       key={result.id}
-                      to={`/quiz/review/${result.id}`}
+                      to={appRoutes.quizReview(result.id, { returnTo })}
                       className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
                     >
                       <span className="flex min-w-0 items-center gap-3">
@@ -161,7 +184,7 @@ export function QuizHistory() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                    onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={!pagination.has_prev}
                     className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
                   >
@@ -169,7 +192,7 @@ export function QuizHistory() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPage((current) => current + 1)}
+                    onClick={() => setPage(page + 1)}
                     disabled={!pagination.has_next}
                     className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
                   >

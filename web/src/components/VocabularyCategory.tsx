@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
@@ -16,8 +16,9 @@ export function VocabularyCategory() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const searchQuery = searchParams.get('q') ?? '';
   
   // Pagination state - track additional words loaded beyond initial fetch
   const [additionalWords, setAdditionalWords] = useState<VocabularyWord[]>([]);
@@ -38,9 +39,20 @@ export function VocabularyCategory() {
   useEffect(() => {
     setAdditionalWords([]);
     setCurrentOffset(PAGE_SIZE);
-    setSearchQuery('');
     setExpandedWord(null);
   }, [categoryId]);
+
+  const setSearchQuery = (query: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (query) nextParams.set('q', query);
+    else nextParams.delete('q');
+    const nextSearch = nextParams.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace: true });
+  };
   
   const hasMore = words.length < totalWords;
   

@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useCallback, useState, useEffect } from 'react';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Search, Crown, Shield, Loader2, AlertCircle, Ban, Eye,
   ChevronLeft, ChevronRight, X, MoreVertical, UserMinus, Star
 } from 'lucide-react';
 import { useAdminUsers, useUpdateUser, AdminUser } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
+import { appRoutes, currentAppPath, positivePageFromSearch } from '../../lib/routes';
 
 interface UserActionsMenuProps {
   user: AdminUser;
@@ -253,25 +254,56 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewD
 }
 
 export function AdminUsers() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [debouncedSearch, setDebouncedSearch] = useState(search);
-  const [page, setPage] = useState(1);
+  const urlSearch = searchParams.get('search') || '';
+  const [search, setSearch] = useState(urlSearch);
+  const page = positivePageFromSearch(searchParams.get('page'));
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   
-  const { data, isLoading, error } = useAdminUsers(page, 20, debouncedSearch);
+  const { data, isLoading, error } = useAdminUsers(page, 20, urlSearch);
   const updateUser = useUpdateUser();
+  const returnTo = currentAppPath(location.pathname, location.search, location.hash);
   
   useEffect(() => {
-    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 300);
+    if (search === urlSearch) return;
+    const timer = setTimeout(() => {
+      const next = new URLSearchParams(searchParams);
+      if (search) next.set('search', search);
+      else next.delete('search');
+      next.delete('page');
+      const nextSearch = next.toString();
+      navigate(currentAppPath(
+        location.pathname,
+        nextSearch ? `?${nextSearch}` : '',
+        location.hash,
+      ), { replace: true });
+    }, 300);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [location.hash, location.pathname, navigate, search, searchParams, urlSearch]);
   
   useEffect(() => {
-    if (debouncedSearch) setSearchParams({ search: debouncedSearch });
-    else setSearchParams({});
-  }, [debouncedSearch, setSearchParams]);
+    setSearch(urlSearch);
+  }, [urlSearch]);
+
+  const setPage = useCallback((nextPage: number, replace = false) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextPage > 1) next.set('page', String(nextPage));
+    else next.delete('page');
+    const nextSearch = next.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace });
+  }, [location.hash, location.pathname, navigate, searchParams]);
+
+  useEffect(() => {
+    if (!data || data.total === 0) return;
+    const lastPage = Math.max(1, data.total_pages);
+    if (page > lastPage) setPage(lastPage, true);
+  }, [data, page, setPage]);
   
   const handleUpdate = async (userId: string, data: { is_premium?: boolean; is_whitelisted?: boolean }) => {
     try { await updateUser.mutateAsync({ userId, data }); setActiveMenu(null); }
@@ -279,7 +311,7 @@ export function AdminUsers() {
   };
   
   const handleViewDetails = (userId: string) => {
-    navigate(`/admin/users/${userId}`);
+    navigate(appRoutes.adminUser(userId, { returnTo }));
   };
   
   useEffect(() => {
@@ -312,6 +344,7 @@ export function AdminUsers() {
         <div className="relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400 dark:text-gray-500" />
           <input
+            aria-label="Search users"
             type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email or name..."
             className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 text-brown-800 dark:text-white placeholder:text-brown-400 dark:placeholder:text-gray-500"
@@ -355,10 +388,10 @@ export function AdminUsers() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-brown-600 dark:text-gray-400">Page {data.page} of {data.total_pages}</p>
             <div className="flex items-center gap-2">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button aria-label="Previous users page" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <ChevronLeft className="w-5 h-5 text-brown-600 dark:text-gray-400" />
               </button>
-              <button onClick={() => setPage(p => Math.min(data.total_pages, p + 1))} disabled={page === data.total_pages} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button aria-label="Next users page" onClick={() => setPage(Math.min(data.total_pages, page + 1))} disabled={page === data.total_pages} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <ChevronRight className="w-5 h-5 text-brown-600 dark:text-gray-400" />
               </button>
             </div>
@@ -379,4 +412,3 @@ export function AdminUsers() {
 }
 
 export default AdminUsers;
-

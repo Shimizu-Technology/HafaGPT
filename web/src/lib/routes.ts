@@ -1,4 +1,5 @@
 export const MAX_APP_URL_LENGTH = 2048;
+export const MAX_APP_PAGE = 1_000_000;
 const INTERNAL_ORIGIN = 'https://hafagpt.local';
 
 interface ReturnContext {
@@ -44,6 +45,11 @@ export const appRoutes = {
   gameHistory: '/dashboard/game-history' as const,
   gameResult: (resultId: string, context: ReturnContext = {}): string => withReturnContext(
     `/games/results/${encodeURIComponent(resultId)}`,
+    context,
+  ),
+  adminUsers: '/admin/users' as const,
+  adminUser: (userId: string, context: ReturnContext = {}): string => withReturnContext(
+    `/admin/users/${encodeURIComponent(userId)}`,
     context,
   ),
   learning: '/learning' as const,
@@ -111,4 +117,10 @@ export function setAppQueryParams(
 
 export function currentAppPath(pathname: string, search = '', hash = ''): string {
   return `${pathname}${search}${hash}`;
+}
+
+/** Read a one-based page number from URL state without accepting floats or unsafe integers. */
+export function positivePageFromSearch(value: string | null): number {
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 && page <= MAX_APP_PAGE ? page : 1;
 }

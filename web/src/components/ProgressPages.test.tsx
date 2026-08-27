@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Dashboard } from './Dashboard';
 import { QuizHistory } from './QuizHistory';
@@ -172,14 +172,88 @@ describe('progress pages', () => {
 
   it('shows quiz history as an accessible review list', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/dashboard/quiz-history']}>
         <QuizHistory />
       </MemoryRouter>
     );
 
     expect(screen.getByRole('heading', { name: 'Quiz history' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute('href', '/quiz/review/quiz-1');
+    expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute(
+      'href',
+      '/quiz/review/quiz-1?return_to=%2Fdashboard%2Fquiz-history',
+    );
     expect(screen.getByText('90%')).toBeInTheDocument();
+  });
+
+  it('restores quiz-history pagination and carries the exact list URL into review', () => {
+    mocks.quizHistory.mockReturnValue({
+      data: {
+        results: [{
+          id: 'quiz-21',
+          category_id: 'greetings',
+          category_title: 'Greetings & Basics',
+          score: 8,
+          total: 10,
+          percentage: 80,
+          time_spent_seconds: 60,
+          created_at: '2026-08-18T08:00:00Z',
+        }],
+        pagination: { page: 2, per_page: 20, total_count: 21, total_pages: 2, has_next: false, has_prev: true },
+      },
+      isLoading: false,
+      error: null,
+      refetch: mocks.refetchHistory,
+    });
+
+    function LocationProbe() {
+      const location = useLocation();
+      return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
+    }
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/quiz-history?page=2#results']}>
+        <QuizHistory />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+
+    expect(mocks.quizHistory).toHaveBeenCalledWith(2, 20);
+    expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute(
+      'href',
+      '/quiz/review/quiz-21?return_to=%2Fdashboard%2Fquiz-history%3Fpage%3D2%23results',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/dashboard/quiz-history#results');
+  });
+
+  it('repairs an out-of-range quiz-history page using the last known page', () => {
+    mocks.quizHistory.mockReturnValue({
+      data: {
+        results: [{
+          id: 'quiz-21',
+          category_id: 'greetings',
+          category_title: 'Greetings & Basics',
+          score: 8,
+          total: 10,
+          percentage: 80,
+          time_spent_seconds: 60,
+          created_at: '2026-08-18T08:00:00Z',
+        }],
+        pagination: { page: 99, per_page: 20, total_count: 21, total_pages: 2, has_next: false, has_prev: true },
+      },
+      isLoading: false,
+      error: null,
+      refetch: mocks.refetchHistory,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/quiz-history?page=99']}>
+        <QuizHistory />
+      </MemoryRouter>,
+    );
+
+    expect(mocks.quizHistory).toHaveBeenCalledWith(99, 20);
+    expect(mocks.quizHistory).toHaveBeenLastCalledWith(2, 20);
   });
 
   it('offers a recovery action when quiz history cannot load', () => {

@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
 import { useVocabularyCategories, useVocabularySearch, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { appRoutes, currentAppPath } from '../lib/routes';
@@ -7,7 +7,8 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 export function VocabularyList() {
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') ?? '';
   
   // Fetch categories from API
@@ -23,7 +24,12 @@ export function VocabularyList() {
     const nextParams = new URLSearchParams(searchParams);
     if (query) nextParams.set('q', query);
     else nextParams.delete('q');
-    setSearchParams(nextParams, { replace: true });
+    const nextSearch = nextParams.toString();
+    navigate(currentAppPath(
+      location.pathname,
+      nextSearch ? `?${nextSearch}` : '',
+      location.hash,
+    ), { replace: true });
   };
 
   const returnTo = currentAppPath(location.pathname, location.search, location.hash);
