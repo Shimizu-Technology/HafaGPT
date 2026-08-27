@@ -6,6 +6,8 @@ import type {
 } from '../hooks/useHomepageData';
 import type { UserPreferences } from '../hooks/useUserPreferences';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
+import { ALL_TOPICS, getTopic } from '../data/learningPath';
+import { withLearningContext } from './lessonPractice';
 import { appRoutes } from './routes';
 
 export type TodayActivityKind = 'review' | 'lesson' | 'listen' | 'practice' | 'play';
@@ -40,13 +42,15 @@ export interface TodayPlanInput {
 }
 
 function withTodayContext(path: string, topic: NonNullable<RecommendedData['topic']>) {
-  const params = new URLSearchParams({
-    topic: topic.id,
-    category: topic.flashcard_category,
-    source: 'today',
-    return_to: appRoutes.home,
-  });
-  return `${path}?${params.toString()}`;
+  const canonicalTopic = getTopic(topic.id);
+  if (
+    !canonicalTopic
+    || canonicalTopic.flashcardCategory !== topic.flashcard_category
+    || canonicalTopic.quizCategory !== topic.quiz_category
+  ) {
+    return path;
+  }
+  return withLearningContext(path, canonicalTopic, { source: 'today' });
 }
 
 function goalActivity(preferences: UserPreferences): TodayActivity {
@@ -180,13 +184,18 @@ export function buildTodayPlan({
   }
 
   if (weakArea) {
+    const weakTopic = ALL_TOPICS.find(
+      (candidate) => candidate.quizCategory === weakArea.category_id,
+    );
     candidates.push({
       id: `weak-${weakArea.category_id}`,
       kind: 'review',
       title: `Strengthen ${weakArea.category_title || weakArea.category_id}`,
       description: 'Use a short quiz to revisit a weaker area.',
       minutes: 4,
-      to: `/quiz/${encodeURIComponent(weakArea.category_id)}`,
+      to: weakTopic
+        ? withLearningContext(appRoutes.quiz(weakArea.category_id), weakTopic, { source: 'today' })
+        : appRoutes.quiz(weakArea.category_id),
     });
   }
 
@@ -207,7 +216,7 @@ export function buildTodayPlan({
     title: `Listen to ${topic.title}`,
     description: 'Hear the words, then reveal their meanings.',
     minutes: 3,
-    to: `/flashcards/${encodeURIComponent(topic.flashcard_category)}`,
+    to: withTodayContext(appRoutes.flashcards(topic.flashcard_category), topic),
   } : null;
 
   if (preferences.reading_support === 'audio_pictures') {
