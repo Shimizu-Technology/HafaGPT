@@ -36,11 +36,6 @@ def upgrade() -> None:
         "quiz_results",
         sa.Column("assessment_id", sa.String(128), nullable=True),
     )
-    op.create_unique_constraint(
-        "uq_quiz_results_user_client_attempt",
-        "quiz_results",
-        ["user_id", "client_attempt_id"],
-    )
     op.create_check_constraint(
         "ck_quiz_results_learning_source",
         "quiz_results",
@@ -55,11 +50,6 @@ def upgrade() -> None:
     op.add_column(
         "game_results",
         sa.Column("client_attempt_id", sa.UUID(), nullable=True),
-    )
-    op.create_unique_constraint(
-        "uq_game_results_user_client_attempt",
-        "game_results",
-        ["user_id", "client_attempt_id"],
     )
 
     op.add_column(
@@ -157,11 +147,6 @@ def downgrade() -> None:
     )
     op.drop_table("lesson_concept_exposures")
 
-    op.drop_constraint(
-        "uq_game_results_user_client_attempt",
-        "game_results",
-        type_="unique",
-    )
     op.drop_column("game_results", "client_attempt_id")
 
     op.drop_constraint(
@@ -212,11 +197,6 @@ def downgrade() -> None:
         "ck_quiz_results_learning_source",
         "quiz_results",
         type_="check",
-    )
-    op.drop_constraint(
-        "uq_quiz_results_user_client_attempt",
-        "quiz_results",
-        type_="unique",
     )
     op.drop_column("quiz_results", "assessment_id")
     op.drop_column("quiz_results", "learning_source")

@@ -223,6 +223,9 @@ function LessonQuizSession({
       : '',
   );
   const [isAnswered, setIsAnswered] = useState(Boolean(restoredCurrentAnswer));
+  const [restoredIsCorrect, setRestoredIsCorrect] = useState<boolean | null>(
+    restoredCurrentAnswer?.isCorrect ?? null,
+  );
   const [correctCount, setCorrectCount] = useState(savedState?.correctCount ?? 0);
   const [showHint, setShowHint] = useState(false);
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { userAnswer: string; isCorrect: boolean }>>(
@@ -279,6 +282,7 @@ function LessonQuizSession({
   // Calculate if answer is correct (must be before early returns to satisfy Rules of Hooks)
   const isCorrect = useMemo(() => {
     if (!isAnswered || !currentQuestion) return false;
+    if (restoredIsCorrect !== null) return restoredIsCorrect;
     
     if (currentQuestion.type === 'multiple_choice') {
       return selectedAnswer === currentQuestion.correctAnswer;
@@ -288,7 +292,7 @@ function LessonQuizSession({
       const correct = currentQuestion.correctAnswer.toLowerCase();
       return answer === correct || acceptable.includes(answer);
     }
-  }, [isAnswered, selectedAnswer, typedAnswer, currentQuestion]);
+  }, [isAnswered, restoredIsCorrect, selectedAnswer, typedAnswer, currentQuestion]);
 
   const handleStartFresh = () => {
     clearQuizState(topic.id, ownerId);
@@ -303,6 +307,7 @@ function LessonQuizSession({
     setSelectedAnswer(null);
     setTypedAnswer('');
     setIsAnswered(false);
+    setRestoredIsCorrect(null);
     setShowHint(false);
     setShowResumePrompt(false);
     // Note: questions will stay the same since we don't re-shuffle on fresh start
@@ -369,6 +374,7 @@ function LessonQuizSession({
 
   const checkAnswer = () => {
     if (!currentQuestion) return;
+    setRestoredIsCorrect(null);
 
     let correct = false;
     let userAnswer = '';
@@ -464,6 +470,7 @@ function LessonQuizSession({
       setSelectedAnswer(null);
       setTypedAnswer('');
       setIsAnswered(false);
+      setRestoredIsCorrect(null);
       setShowHint(false);
     }
   };

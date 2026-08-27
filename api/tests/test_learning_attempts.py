@@ -228,6 +228,8 @@ def test_attempt_batch_uses_one_idempotent_insert():
     params = cursor.executions[0][1]
     assert params[0:2] == ("user_123", "result_123")
     assert params[2] == [attempt["concept_id"] for attempt in attempts]
+    assert params[3] == [attempt["activity_type"] for attempt in attempts]
+    assert params[4] == [attempt["success"] for attempt in attempts]
     assert params[5] == [attempt["duration_bucket"] for attempt in attempts]
     assert params[6] == [attempt["source"] for attempt in attempts]
     assert params[7] == [attempt["evidence_scope"] for attempt in attempts]

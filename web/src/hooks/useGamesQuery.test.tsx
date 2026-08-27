@@ -25,9 +25,10 @@ vi.mock('../lib/learningAnalytics', async (importOriginal) => {
 });
 
 
+let queryClient: QueryClient;
 function wrapper({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={queryClient}>
       {children}
     </QueryClientProvider>
   );
@@ -45,6 +46,9 @@ function gameResult() {
 
 describe('useSaveGameResult concept context', () => {
   beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
     mocks.capture.mockReset();
     mocks.userId = 'user_1';
     vi.stubGlobal('fetch', vi.fn(async () => ({

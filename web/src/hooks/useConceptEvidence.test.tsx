@@ -6,8 +6,12 @@ import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useRecordLessonExposure } from './useConceptEvidence';
 
 
+const mocks = vi.hoisted(() => ({
+  getToken: vi.fn(),
+}));
+
 vi.mock('@clerk/clerk-react', () => ({
-  useAuth: () => ({ getToken: async () => 'test-token' }),
+  useAuth: () => ({ getToken: mocks.getToken }),
 }));
 
 
@@ -19,6 +23,8 @@ function wrapper({ children }: { children: ReactNode }) {
 describe('useRecordLessonExposure', () => {
   beforeEach(() => {
     queryClient.clear();
+    mocks.getToken.mockReset();
+    mocks.getToken.mockResolvedValue('test-token');
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
       json: async () => ({
@@ -37,11 +43,11 @@ describe('useRecordLessonExposure', () => {
     const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync({ topicId: 'greetings', conceptIds });
+      await result.current.mutateAsync({ topicId: 'greetings/family?', conceptIds });
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/learning/lessons/greetings/exposures',
+      'http://localhost:8000/api/learning/lessons/greetings%2Ffamily%3F/exposures',
       expect.objectContaining({
         method: 'POST',
         headers: {
@@ -51,5 +57,26 @@ describe('useRecordLessonExposure', () => {
         body: JSON.stringify({ concept_ids: conceptIds }),
       }),
     );
+  });
+
+  it('rejects when the authenticated session has no token', async () => {
+    mocks.getToken.mockResolvedValue(null);
+    const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });
+
+    await expect(result.current.mutateAsync({
+      topicId: 'greetings',
+      conceptIds: [getCuratedConceptId('greetings', 0)],
+    })).rejects.toThrow('Authentication required');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a rejected evidence response', async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: false } as Response);
+    const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });
+
+    await expect(result.current.mutateAsync({
+      topicId: 'greetings',
+      conceptIds: [getCuratedConceptId('greetings', 0)],
+    })).rejects.toThrow('Failed to record lesson evidence');
   });
 });

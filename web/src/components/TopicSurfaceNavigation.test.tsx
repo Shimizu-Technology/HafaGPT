@@ -436,6 +436,34 @@ describe('topic surface navigation', () => {
     expect(await screen.findByText(/Card 4 of 14/)).toBeInTheDocument();
   });
 
+  it('resets the card and flip state when same-route review context is removed', async () => {
+    const resultId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
+    const reviewPath = withConceptReview(
+      'greetings',
+      getCuratedConceptId('greetings', 3),
+      resultId,
+    );
+    renderSurface(
+      <>
+        <FlashcardViewer />
+        <SameRouteNavigator to="/flashcards/greetings?type=curated" label="Finish review" />
+      </>,
+      '/flashcards/:topic',
+      reviewPath,
+    );
+
+    expect(await screen.findByText(/Card 4 of 14/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {
+      name: "Show the meaning of Si Yu'os Ma'åse'",
+    }));
+    expect(screen.getByText('Thank you')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Finish review' }));
+
+    expect(await screen.findByText(/Card 1 of 14/)).toBeInTheDocument();
+    expect(screen.getByText('Håfa Adai')).toBeInTheDocument();
+    expect(screen.queryByText('Hello')).not.toBeInTheDocument();
+  });
+
   it('returns a topic quiz to its workspace', async () => {
     renderSurface(<QuizViewer />, '/quiz/:categoryId', `/quiz/greetings?${topicQuery}`, true);
 
@@ -456,10 +484,7 @@ describe('topic surface navigation', () => {
     await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
 
     completeCuratedGreetingQuiz();
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(mocks.saveQuizResult).toHaveBeenCalledOnce();
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledOnce());
     const first = mocks.saveQuizResult.mock.calls[0][0];
     expect(first.learning_context).toEqual({
       topic_id: 'greetings',

@@ -140,8 +140,8 @@ export function FlashcardViewer() {
   }, [topic, cardType, dictionaryError]);
 
   useEffect(() => {
-    if (cardType !== 'curated' || conceptReviewCardIndex === undefined) return;
-    setCurrentIndex(conceptReviewCardIndex);
+    if (cardType !== 'curated') return;
+    setCurrentIndex(conceptReviewCardIndex ?? 0);
     setIsCardFlipped(false);
   }, [cardType, conceptReviewCardIndex]);
 

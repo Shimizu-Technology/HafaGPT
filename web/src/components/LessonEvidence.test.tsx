@@ -152,6 +152,28 @@ describe('lesson concept evidence', () => {
     expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).toBeNull();
   });
 
+  it('restores the recorded correctness of a fuzzy-matched current answer', () => {
+    window.localStorage.setItem(`hafagpt_quiz_${mocks.userId}_greetings`, JSON.stringify({
+      topicId: 'greetings',
+      questionIds: ['greet-1', 'greet-2', 'greet-3', 'greet-4', 'greet-5'],
+      currentIndex: 2,
+      correctCount: 3,
+      answeredQuestions: {
+        'greet-1': { userAnswer: 'Hello / Hi', isCorrect: true },
+        'greet-2': { userAnswer: 'Good morning', isCorrect: true },
+        'greet-3': { userAnswer: 'Adio', isCorrect: true },
+      },
+      timestamp: Date.now(),
+    }));
+
+    render(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue Where I Left Off' }));
+
+    expect(screen.getByDisplayValue('Adio')).toHaveClass('border-emerald-500');
+    expect(screen.queryByText(/Correct answer:/)).not.toBeInTheDocument();
+    expect(screen.getByText('3 correct')).toBeInTheDocument();
+  });
+
   it('keeps a failed result resumable and retries with the same assessment identity', async () => {
     const onComplete = vi.fn();
     vi.spyOn(Date, 'now').mockReturnValue(2_000_000);
