@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, Crown, Star, Shield, Ban, Loader2, AlertCircle,
   MessageSquare, Gamepad2, GraduationCap, Calendar, Clock,
@@ -7,10 +7,13 @@ import {
 } from 'lucide-react';
 import { useAdminUser, useUpdateUser, useResetOnboarding, useUpdateUserPreferences } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
+import { appRoutes, safeInternalReturnPath } from '../../lib/routes';
 
 export function AdminUserDetail() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backTo = safeInternalReturnPath(searchParams.get('return_to'), appRoutes.adminUsers);
   const { data: user, isLoading, error } = useAdminUser(userId || '');
   const updateUser = useUpdateUser();
   const resetOnboarding = useResetOnboarding();
@@ -110,7 +113,7 @@ export function AdminUserDetail() {
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">User Not Found</h2>
             <p className="text-brown-600 dark:text-gray-400 mb-4">{error?.message || 'Unable to load user'}</p>
-            <button onClick={() => navigate('/admin/users')} className="text-coral-500 dark:text-ocean-400 hover:underline">
+            <button onClick={() => navigate(backTo)} className="text-coral-500 dark:text-ocean-400 hover:underline">
               ← Back to Users
             </button>
           </div>
@@ -155,7 +158,7 @@ export function AdminUserDetail() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Back button */}
-        <button onClick={() => navigate('/admin/users')} className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
+        <button onClick={() => navigate(backTo)} className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Users
         </button>
@@ -567,4 +570,3 @@ export function AdminUserDetail() {
 }
 
 export default AdminUserDetail;
-

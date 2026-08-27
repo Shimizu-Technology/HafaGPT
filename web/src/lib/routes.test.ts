@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   appRoutes,
   currentAppPath,
+  positivePageFromSearch,
   safeInternalReturnPath,
   setAppQueryParams,
 } from './routes';
@@ -16,6 +17,8 @@ describe('connected learner routes', () => {
       .toBe('/quiz/review/result%2Fid%3F%23%20value');
     expect(appRoutes.gameResult('result/id', { returnTo: '/dashboard/game-history?page=2' }))
       .toBe('/games/results/result%2Fid?return_to=%2Fdashboard%2Fgame-history%3Fpage%3D2');
+    expect(appRoutes.adminUser('user/id', { returnTo: '/admin/users?page=2&search=ada' }))
+      .toBe('/admin/users/user%2Fid?return_to=%2Fadmin%2Fusers%3Fpage%3D2%26search%3Dada');
     expect(appRoutes.scenario('meeting someone')).toBe('/practice/meeting%20someone');
     expect(appRoutes.story('a story')).toBe('/stories/a%20story');
     expect(appRoutes.vocabularyCategory('body parts'))
@@ -55,6 +58,19 @@ describe('connected learner routes', () => {
       .toBe('/learning?level=beginner#topics');
     expect(currentAppPath('/learning', '?level=beginner', '#topics'))
       .toBe('/learning?level=beginner#topics');
+  });
+
+  it.each([
+    ['2', 2],
+    ['1', 1],
+    ['0', 1],
+    ['-1', 1],
+    ['1.5', 1],
+    ['1000001', 1],
+    ['9007199254740992', 1],
+    [null, 1],
+  ])('reads a safe one-based page from %s', (value, expected) => {
+    expect(positivePageFromSearch(value)).toBe(expected);
   });
 
   it.each([

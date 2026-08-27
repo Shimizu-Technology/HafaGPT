@@ -99,6 +99,17 @@ describe('activity result pages', () => {
     expect(mocks.useGameHistory).toHaveBeenLastCalledWith(1, 20, 'memory_match');
   });
 
+  it('repairs an out-of-range game-history page using the last known page', () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard/game-history?page=99&game=memory_match']}>
+        <GameHistory />
+      </MemoryRouter>,
+    );
+
+    expect(mocks.useGameHistory).toHaveBeenCalledWith(99, 20, 'memory_match');
+    expect(mocks.useGameHistory).toHaveBeenLastCalledWith(2, 20, 'memory_match');
+  });
+
   it('connects an exact game result to its topic and cards', () => {
     render(
       <MemoryRouter initialEntries={[`/games/results/${RESULT_ID}?return_to=%2Flearning%2Fgreetings`]}>

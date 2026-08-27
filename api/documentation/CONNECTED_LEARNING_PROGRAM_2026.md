@@ -2,7 +2,7 @@
 
 - **Status:** approved direction, delivered in small reversible releases
 - **Last reviewed:** August 28, 2026
-- **Delivered through:** Release 5a — stable game results and topic result previews
+- **Delivered through:** Release 5b — restorable secondary context
 
 ## Decision
 
@@ -67,7 +67,6 @@ These sources support the learning and navigation model. They do not validate Ch
 - Quiz answers identify questions, not the canonical concept/card they assess.
 - A game result creates one topic-level attempt; it does not record the exact cards or words used in that round.
 - Quiz misses cannot yet open the exact card or add it to review.
-- Vocabulary search, quiz-history pagination, and some administrative list context are local-only and cannot be restored from the URL.
 - `api/api/main.py` is 8,817 lines with 84 directly declared routes. New connected-learning endpoints should enter through a focused router seam rather than extending the monolith.
 
 ## Stable records and relationship rules
@@ -168,8 +167,12 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 
 ### Release 5b — restorable secondary context
 
-- Preserve useful vocabulary filters/search and quiz-history pagination in URL state.
-- Carry validated return context through the administrative user list/detail journey if it remains a demonstrated need.
+- Delivered URL-backed dictionary and category search plus quiz-history
+  pagination, including exact list return context on word and result details.
+- Preserved administrative user search and pagination in the URL and carried a
+  bounded, validated list return path through user detail and error states.
+- Normalized invalid page values and repaired stale out-of-range history and
+  user-list URLs to the last available page without inventing an empty state.
 
 The final release audit may add a narrowly scoped follow-up when the tested journeys reveal a real gap.
 

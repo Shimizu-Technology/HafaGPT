@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import {
   Calendar,
@@ -10,7 +11,7 @@ import {
   Star,
 } from 'lucide-react';
 import { useGameHistory } from '../hooks/useGamesQuery';
-import { appRoutes, currentAppPath } from '../lib/routes';
+import { appRoutes, currentAppPath, positivePageFromSearch } from '../lib/routes';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 const GAME_TYPES = [
@@ -33,11 +34,6 @@ function readableGameType(gameType: string): string {
     ?? gameType.replace(/_/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 }
 
-function pageFromSearch(value: string | null): number {
-  const page = Number(value);
-  return Number.isSafeInteger(page) && page > 0 ? page : 1;
-}
-
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString('en-US', {
     month: 'short',
@@ -52,7 +48,7 @@ function formatDate(value: string): string {
 export function GameHistory() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = pageFromSearch(searchParams.get('page'));
+  const page = positivePageFromSearch(searchParams.get('page'));
   const requestedGameType = searchParams.get('game') || '';
   const gameType = GAME_TYPES.some(([value]) => value === requestedGameType)
     ? requestedGameType
@@ -76,6 +72,17 @@ export function GameHistory() {
     else next.delete('game');
     setSearchParams(next);
   };
+
+  useEffect(() => {
+    if (!data || data.pagination.total_count === 0) return;
+    const lastPage = Math.max(1, data.pagination.total_pages);
+    if (page > lastPage) {
+      const next = new URLSearchParams(searchParams);
+      if (lastPage > 1) next.set('page', String(lastPage));
+      else next.delete('page');
+      setSearchParams(next, { replace: true });
+    }
+  }, [data, page, searchParams, setSearchParams]);
 
   return (
     <LearnerPageShell>
