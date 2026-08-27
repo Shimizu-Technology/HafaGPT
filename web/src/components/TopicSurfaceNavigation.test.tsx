@@ -8,6 +8,30 @@ import { LessonPage } from './LessonPage';
 import { QuizViewer } from './QuizViewer';
 import { StoryViewer } from './StoryViewer';
 
+const mocks = vi.hoisted(() => ({
+  dictionaryFlashcards: {
+    cards: [{
+      source_id: 'dictionary:test',
+      front: 'Test front',
+      back: 'Test back',
+      part_of_speech: 'noun',
+      example: null,
+    }],
+    total: 1,
+    category: { id: 'unmapped', title: 'Unmapped deck', icon: '', description: '' },
+  },
+  dictionaryQuiz: {
+    questions: [{
+      id: 'dictionary-question',
+      type: 'multiple_choice',
+      question: 'Test question',
+      options: ['One', 'Two'],
+      correct_answer: 0,
+      explanation: 'Test explanation',
+    }],
+  },
+}));
+
 vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ getToken: async () => 'test-token', isSignedIn: true }),
   useUser: () => ({ isSignedIn: true, user: { id: 'user_123' } }),
@@ -28,7 +52,7 @@ vi.mock('../hooks/useXP', () => ({
 vi.mock('../hooks/useFlashcardsQuery', () => ({
   useSaveDeck: () => ({ mutate: vi.fn(), isPending: false }),
   useDictionaryFlashcards: () => ({
-    data: null,
+    data: mocks.dictionaryFlashcards,
     isLoading: false,
     error: null,
     refetch: vi.fn(),
@@ -45,7 +69,7 @@ vi.mock('../hooks/useQuizQuery', () => ({
 
 vi.mock('../hooks/useVocabularyQuery', () => ({
   useDictionaryQuiz: () => ({
-    data: null,
+    data: mocks.dictionaryQuiz,
     isLoading: false,
     isFetching: false,
     isError: false,
@@ -178,5 +202,31 @@ describe('topic surface navigation', () => {
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Back to conversation scenarios' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/practice');
+  });
+
+  it('rejects topic context on unmapped flashcard and dictionary quiz surfaces', async () => {
+    const { unmount } = renderSurface(
+      <FlashcardViewer />,
+      '/flashcards/:topic',
+      `/flashcards/unmapped?type=dictionary&${topicQuery}`,
+    );
+
+    const flashcardBack = await screen.findByRole('button', { name: 'Back to flashcard decks' });
+    expect(screen.queryByRole('button', { name: 'Back to Greetings & Basics' }))
+      .not.toBeInTheDocument();
+    fireEvent.click(flashcardBack);
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/flashcards');
+    unmount();
+
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      `/quiz/dict-greetings?${topicQuery}`,
+    );
+    const quizBack = await screen.findByRole('button', { name: 'Leave quiz' });
+    expect(screen.queryByRole('button', { name: /return to Greetings & Basics/ }))
+      .not.toBeInTheDocument();
+    fireEvent.click(quizBack);
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/quiz');
   });
 });

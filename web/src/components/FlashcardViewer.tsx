@@ -60,7 +60,9 @@ export function FlashcardViewer() {
                  : cardTypeParam === 'custom' || cardTypeParam === 'dictionary' ? 'dictionary' 
                  : 'curated';
   const connectedTopic = ALL_TOPICS.find((candidate) => candidate.flashcardCategory === topic);
-  const topicReturn = readTopicReturn(searchParams.toString(), connectedTopic?.id);
+  const topicReturn = connectedTopic
+    ? readTopicReturn(searchParams.toString(), connectedTopic.id)
+    : null;
   
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);

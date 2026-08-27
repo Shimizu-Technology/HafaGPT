@@ -98,7 +98,9 @@ export function QuizViewer() {
     ? ALL_TOPICS.find((topic) => topic.quizCategory === categoryId)
     : undefined;
   const curatedTrustCategory = curatedTopic?.flashcardCategory ?? categoryId ?? '';
-  const topicReturn = readTopicReturn(searchParams.toString(), curatedTopic?.id);
+  const topicReturn = curatedTopic
+    ? readTopicReturn(searchParams.toString(), curatedTopic.id)
+    : null;
   const quizReturnTo = topicReturn?.to ?? '/quiz';
   const quizReturnLabel = topicReturn?.label ?? 'Back to quizzes';
   const contentTrust = isDictionaryQuiz

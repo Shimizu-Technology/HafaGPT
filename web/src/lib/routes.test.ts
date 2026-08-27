@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { appRoutes, currentAppPath, safeInternalReturnPath } from './routes';
+import {
+  appRoutes,
+  currentAppPath,
+  safeInternalReturnPath,
+  setAppQueryParams,
+} from './routes';
 
 describe('connected learner routes', () => {
   it('builds canonical lesson and contextual game destinations', () => {
@@ -53,4 +58,24 @@ describe('connected learner routes', () => {
   it('rejects a path that exceeds the limit after Unicode normalization', () => {
     expect(safeInternalReturnPath(`/${'é'.repeat(1024)}`, '/games')).toBe('/games');
   });
+
+  it('replaces owned query keys while preserving unrelated query state and hashes', () => {
+    const updated = setAppQueryParams('/stories/one?topic=family&mode=reading#quiz', {
+      topic: 'greetings',
+      return_to: '/learning/greetings',
+    });
+    const parsed = new URL(updated!, 'https://hafagpt.local');
+
+    expect(parsed.searchParams.getAll('topic')).toEqual(['greetings']);
+    expect(parsed.searchParams.get('return_to')).toBe('/learning/greetings');
+    expect(parsed.searchParams.get('mode')).toBe('reading');
+    expect(parsed.hash).toBe('#quiz');
+  });
+
+  it.each(['//evil.example/path', 'https://evil.example/path', 'not-a-path']) (
+    'rejects an unsafe query-parameter destination: %s',
+    (path) => {
+      expect(setAppQueryParams(path, { topic: 'greetings' })).toBeNull();
+    },
+  );
 });
