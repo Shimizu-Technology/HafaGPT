@@ -156,13 +156,37 @@ def insert_learning_attempts(
     game_result_id,
     attempts: tuple[dict, ...],
 ) -> None:
-    for attempt in attempts:
-        insert_learning_attempt(
-            cursor,
-            user_id=user_id,
-            game_result_id=game_result_id,
-            attempt=attempt,
+    if not attempts:
+        return
+    cursor.execute(
+        """
+        INSERT INTO learning_attempts (
+            user_id, concept_id, activity_type, success,
+            duration_bucket, source, evidence_scope, game_result_id
         )
+        SELECT %s, attempt.concept_id, attempt.activity_type, attempt.success,
+               attempt.duration_bucket, attempt.source,
+               attempt.evidence_scope, %s
+        FROM unnest(
+            %s::text[], %s::text[], %s::boolean[], %s::text[],
+            %s::text[], %s::text[]
+        ) AS attempt(
+            concept_id, activity_type, success, duration_bucket,
+            source, evidence_scope
+        )
+        ON CONFLICT (game_result_id, concept_id) DO NOTHING
+        """,
+        (
+            user_id,
+            game_result_id,
+            [attempt["concept_id"] for attempt in attempts],
+            [attempt["activity_type"] for attempt in attempts],
+            [attempt["success"] for attempt in attempts],
+            [attempt["duration_bucket"] for attempt in attempts],
+            [attempt["source"] for attempt in attempts],
+            [attempt["evidence_scope"] for attempt in attempts],
+        ),
+    )
 
 
 def persist_game_result(cursor: Any, *, user_id: str, request: Any) -> tuple[tuple, bool]:

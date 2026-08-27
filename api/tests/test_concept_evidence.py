@@ -95,11 +95,7 @@ def test_lesson_exposure_route_records_only_valid_exact_concepts():
         "user_123",
         "greetings",
         "v1:lesson:greetings:flashcards",
-        concept_ids[0],
-        "user_123",
-        "greetings",
-        "v1:lesson:greetings:flashcards",
-        concept_ids[1],
+        concept_ids[:2],
     )
     assert connection.committed is True
     assert connection.rolled_back is False

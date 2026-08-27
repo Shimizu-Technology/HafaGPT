@@ -5,6 +5,7 @@ from api.learning_concepts import (
     curated_concept_id,
     curated_concept_ids,
     question_concept_id,
+    validate_curated_concept_manifest,
     validate_curated_concept_ids,
     validate_question_concept,
 )
@@ -52,3 +53,27 @@ def test_question_relationship_rejects_invented_and_cross_topic_concepts():
             concept_id=curated_concept_id("greetings", 0),
             expected_category_id="family",
         )
+
+
+def test_manifest_integrity_rejects_missing_decks_and_invalid_card_indexes():
+    with pytest.raises(ValueError, match="missing from the curated manifest"):
+        validate_curated_concept_manifest({
+            "version": 1,
+            "deck_card_counts": {},
+            "question_concepts": {},
+        })
+
+    deck_counts = dict(CURATED_DECK_CARD_COUNTS)
+    with pytest.raises(ValueError, match="out of range"):
+        validate_curated_concept_manifest({
+            "version": 1,
+            "deck_card_counts": deck_counts,
+            "question_concepts": {"greet-1": ["greetings", deck_counts["greetings"]]},
+        })
+
+    with pytest.raises(ValueError, match="out of range"):
+        validate_curated_concept_manifest({
+            "version": 1,
+            "deck_card_counts": deck_counts,
+            "question_concepts": {"greet-1": ["greetings", -1]},
+        })

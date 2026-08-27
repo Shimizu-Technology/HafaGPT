@@ -195,7 +195,8 @@ def test_valid_legacy_game_context_without_retry_key_saves_no_learning_rows():
 
 def test_attempt_batch_uses_idempotent_per_concept_inserts():
     class Cursor:
-        executions = []
+        def __init__(self):
+            self.executions = []
 
         def execute(self, query, params):
             self.executions.append((query, params))
@@ -219,11 +220,14 @@ def test_attempt_batch_uses_idempotent_per_concept_inserts():
         attempts=attempts,
     )
 
-    assert len(cursor.executions) == 2
+    assert len(cursor.executions) == 1
     assert all(
         "ON CONFLICT (game_result_id, concept_id) DO NOTHING" in query
         for query, _params in cursor.executions
     )
+    params = cursor.executions[0][1]
+    assert params[0:2] == ("user_123", "result_123")
+    assert params[2] == [attempt["concept_id"] for attempt in attempts]
 
 
 def test_contextual_game_retry_reuses_the_stored_result():

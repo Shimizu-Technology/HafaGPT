@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 
 from api.learning_concepts import curated_concept_id
-from api.models import QuizResultCreate
+from api.models import QuizResultCreate, QuizResultDetailResponse
 from api.quiz_evidence import persist_quiz_result, validate_quiz_result_request
 
 
@@ -98,6 +98,32 @@ def test_valid_legacy_quiz_context_without_retry_key_is_accepted():
         "source": "lesson",
         "assessment_id": "v1:lesson:greetings:embedded-quiz",
     }
+
+
+def test_score_cannot_exceed_total_without_answer_details():
+    with pytest.raises(ValueError, match="cannot exceed"):
+        validate_quiz_result_request(request_data(score=2, answers=None))
+
+
+def test_quiz_detail_contract_retains_connected_learning_metadata():
+    detail = QuizResultDetailResponse(
+        id="result_123",
+        category_id="greetings",
+        score=1,
+        total=1,
+        percentage=100,
+        created_at=datetime(2026, 8, 28, tzinfo=timezone.utc),
+        learning_topic_id="greetings",
+        learning_source="lesson",
+        assessment_id="v1:lesson:greetings:embedded-quiz",
+        answers=[],
+    )
+
+    assert detail.model_dump()["learning_topic_id"] == "greetings"
+    assert detail.model_dump()["learning_source"] == "lesson"
+    assert detail.model_dump()["assessment_id"] == (
+        "v1:lesson:greetings:embedded-quiz"
+    )
 
 
 class Cursor:

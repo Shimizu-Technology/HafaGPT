@@ -21,6 +21,8 @@ def validate_quiz_result_request(request: QuizResultCreate) -> dict | None:
     """Verify score integrity and every client-supplied relationship."""
 
     answers = request.answers or []
+    if request.score > request.total:
+        raise ValueError("Quiz score cannot exceed the quiz total")
     if answers:
         question_ids = [answer.question_id for answer in answers]
         if len(question_ids) != len(set(question_ids)):

@@ -10,15 +10,6 @@ _MANIFEST_PATH = (
     / "language_content"
     / "curated_concept_manifest.json"
 )
-with _MANIFEST_PATH.open(encoding="utf-8") as manifest_file:
-    _MANIFEST = json.load(manifest_file)
-
-CURATED_DECK_CARD_COUNTS: dict[str, int] = _MANIFEST["deck_card_counts"]
-QUESTION_CONCEPTS: dict[str, tuple[str, int]] = {
-    question_id: (value[0], value[1])
-    for question_id, value in _MANIFEST["question_concepts"].items()
-}
-
 LEARNING_TOPIC_CATEGORIES = {
     "greetings": "greetings",
     "numbers": "numbers",
@@ -65,6 +56,55 @@ LEARNING_TOPIC_QUIZ_CATEGORIES = {
     "shopping": "shopping",
     "daily-life": "daily-life",
     "culture": "culture",
+}
+
+
+def validate_curated_concept_manifest(manifest: object) -> None:
+    """Fail fast when authored deck and question relationships are malformed."""
+
+    if not isinstance(manifest, dict) or manifest.get("version") != 1:
+        raise ValueError("Curated concept manifest must use version 1")
+    deck_counts = manifest.get("deck_card_counts")
+    question_concepts = manifest.get("question_concepts")
+    if not isinstance(deck_counts, dict) or not isinstance(question_concepts, dict):
+        raise ValueError("Curated concept manifest is missing relationship maps")
+
+    for category_id, card_count in deck_counts.items():
+        if (
+            not isinstance(category_id, str)
+            or not isinstance(card_count, int)
+            or isinstance(card_count, bool)
+            or card_count < 0
+        ):
+            raise ValueError("Curated deck card counts must be non-negative integers")
+
+    missing_topic_categories = set(LEARNING_TOPIC_CATEGORIES.values()) - set(deck_counts)
+    if missing_topic_categories:
+        raise ValueError("Learning topic category is missing from the curated manifest")
+
+    for relationship in question_concepts.values():
+        if (
+            not isinstance(relationship, list)
+            or len(relationship) != 2
+            or not isinstance(relationship[0], str)
+            or not isinstance(relationship[1], int)
+            or isinstance(relationship[1], bool)
+        ):
+            raise ValueError("Curated question relationship is malformed")
+        category_id, card_index = relationship
+        card_count = deck_counts.get(category_id)
+        if card_count is None or card_index < 0 or card_index >= card_count:
+            raise ValueError("Curated question relationship is out of range")
+
+
+with _MANIFEST_PATH.open(encoding="utf-8") as manifest_file:
+    _MANIFEST = json.load(manifest_file)
+
+validate_curated_concept_manifest(_MANIFEST)
+CURATED_DECK_CARD_COUNTS: dict[str, int] = _MANIFEST["deck_card_counts"]
+QUESTION_CONCEPTS: dict[str, tuple[str, int]] = {
+    question_id: (value[0], value[1])
+    for question_id, value in _MANIFEST["question_concepts"].items()
 }
 
 

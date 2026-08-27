@@ -28,21 +28,21 @@ interface SavedQuizState {
   timestamp: number;
 }
 
-function getStorageKey(topicId: string) {
-  return `${STORAGE_KEY_PREFIX}${topicId}`;
+function getStorageKey(topicId: string, ownerId: string) {
+  return `${STORAGE_KEY_PREFIX}${ownerId}_${topicId}`;
 }
 
-function saveQuizState(state: SavedQuizState) {
+function saveQuizState(state: SavedQuizState, ownerId: string) {
   try {
-    browserStorage.set(getStorageKey(state.topicId), JSON.stringify(state));
+    browserStorage.set(getStorageKey(state.topicId, ownerId), JSON.stringify(state));
   } catch (e) {
     console.warn('Failed to save quiz state:', e);
   }
 }
 
-function loadQuizState(topicId: string): SavedQuizState | null {
+function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null {
   try {
-    const saved = browserStorage.get(getStorageKey(topicId));
+    const saved = browserStorage.get(getStorageKey(topicId, ownerId));
     if (!saved) return null;
     
     const state: SavedQuizState = JSON.parse(saved);
@@ -50,7 +50,7 @@ function loadQuizState(topicId: string): SavedQuizState | null {
     // Check if state is older than 1 hour (stale)
     const ONE_HOUR = 60 * 60 * 1000;
     if (Date.now() - state.timestamp > ONE_HOUR) {
-      clearQuizState(topicId);
+      clearQuizState(topicId, ownerId);
       return null;
     }
     
@@ -61,19 +61,45 @@ function loadQuizState(topicId: string): SavedQuizState | null {
   }
 }
 
-function clearQuizState(topicId: string) {
+function clearQuizState(topicId: string, ownerId: string) {
   try {
-    browserStorage.remove(getStorageKey(topicId));
+    browserStorage.remove(getStorageKey(topicId, ownerId));
   } catch (e) {
     console.warn('Failed to clear quiz state:', e);
   }
 }
 
 export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
+  const ownerId = user?.id ?? 'anonymous';
+  return (
+    <LessonQuizSession
+      key={ownerId}
+      topic={topic}
+      onComplete={onComplete}
+      isSignedIn={Boolean(isSignedIn)}
+      ownerId={ownerId}
+    />
+  );
+}
+
+interface LessonQuizSessionProps extends LessonQuizProps {
+  isSignedIn: boolean;
+  ownerId: string;
+}
+
+function LessonQuizSession({
+  topic,
+  onComplete,
+  isSignedIn,
+  ownerId,
+}: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
   // Try to restore saved state first
-  const savedState = useMemo(() => loadQuizState(topic.id), [topic.id]);
+  const savedState = useMemo(
+    () => loadQuizState(topic.id, ownerId),
+    [topic.id, ownerId],
+  );
   const attemptIdRef = useRef(savedState?.attemptId ?? createClientAttemptId());
   const startedAtRef = useRef(savedState?.startedAt ?? Date.now());
   const completionStartedRef = useRef(false);
@@ -128,8 +154,8 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       answeredQuestions,
       timestamp: Date.now(),
     };
-    saveQuizState(state);
-  }, [topic.id, allQuestions, currentIndex, correctCount, answeredQuestions]);
+    saveQuizState(state, ownerId);
+  }, [topic.id, ownerId, allQuestions, currentIndex, correctCount, answeredQuestions]);
 
   // Persist on state changes
   useEffect(() => {
@@ -171,7 +197,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   }, [isAnswered, selectedAnswer, typedAnswer, currentQuestion]);
 
   const handleStartFresh = () => {
-    clearQuizState(topic.id);
+    clearQuizState(topic.id, ownerId);
     attemptIdRef.current = createClientAttemptId();
     startedAtRef.current = Date.now();
     completionStartedRef.current = false;
@@ -285,7 +311,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
       completionStartedRef.current = true;
 
       // Clear saved state on completion
-      clearQuizState(topic.id);
+      clearQuizState(topic.id, ownerId);
       
       // Calculate final score
       const score = Math.round((correctCount / allQuestions.length) * 100);

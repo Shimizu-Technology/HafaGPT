@@ -8,10 +8,11 @@ import { LessonQuiz } from './LessonQuiz';
 
 const mocks = vi.hoisted(() => ({
   saveQuizResult: vi.fn(),
+  userId: 'user_123',
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useUser: () => ({ isSignedIn: true }),
+  useUser: () => ({ isSignedIn: true, user: { id: mocks.userId } }),
 }));
 
 vi.mock('../hooks/useQuizQuery', () => ({
@@ -37,7 +38,7 @@ function answerLessonQuestion(answer: string, typed = false) {
 }
 
 function saveResumableGreetingQuiz(attemptId: string, startedAt: number) {
-  window.localStorage.setItem('hafagpt_quiz_greetings', JSON.stringify({
+  window.localStorage.setItem(`hafagpt_quiz_${mocks.userId}_greetings`, JSON.stringify({
     topicId: 'greetings',
     attemptId,
     startedAt,
@@ -54,6 +55,7 @@ function saveResumableGreetingQuiz(attemptId: string, startedAt: number) {
 describe('lesson concept evidence', () => {
   beforeEach(() => {
     mocks.saveQuizResult.mockReset();
+    mocks.userId = 'user_123';
     window.localStorage.clear();
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
   });
@@ -146,7 +148,7 @@ describe('lesson concept evidence', () => {
     expect(saved.client_attempt_id).toBe(attemptId);
     expect(saved.time_spent_seconds).toBe(60);
     expect(saved.answers).toHaveLength(5);
-    expect(window.localStorage.getItem('hafagpt_quiz_greetings')).toBeNull();
+    expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).toBeNull();
   });
 
   it('abandons saved progress with a new retry identity when starting fresh', async () => {
@@ -159,12 +161,31 @@ describe('lesson concept evidence', () => {
     expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
     await waitFor(() => {
       const fresh = JSON.parse(
-        window.localStorage.getItem('hafagpt_quiz_greetings') ?? '{}',
+        window.localStorage.getItem('hafagpt_quiz_user_123_greetings') ?? '{}',
       );
       expect(fresh.currentIndex).toBe(0);
       expect(fresh.attemptId).toMatch(/^[0-9a-f-]{36}$/i);
       expect(fresh.attemptId).not.toBe(priorAttemptId);
       expect(fresh.answeredQuestions).toEqual({});
     });
+  });
+
+  it('never restores another authenticated account saved lesson quiz', () => {
+    saveResumableGreetingQuiz(
+      '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678',
+      Date.now() - 60_000,
+    );
+    const { rerender } = render(
+      <LessonQuiz topic={greetings} onComplete={vi.fn()} />,
+    );
+    expect(screen.getByText('Continue Quiz?')).toBeInTheDocument();
+
+    mocks.userId = 'user_456';
+    rerender(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+
+    expect(screen.queryByText('Continue Quiz?')).not.toBeInTheDocument();
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings'))
+      .not.toBeNull();
   });
 });

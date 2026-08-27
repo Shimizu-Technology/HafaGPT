@@ -66,22 +66,18 @@ def record_lesson_exposures_sync(
     try:
         with connection:
             with connection.cursor() as cursor:
-                values = ", ".join(["(%s, %s, %s, %s)"] * len(concept_ids))
-                params = tuple(
-                    value
-                    for concept_id in concept_ids
-                    for value in (user_id, topic_id, lesson_id, concept_id)
-                )
                 cursor.execute(
-                    f"""
+                    """
                     INSERT INTO lesson_concept_exposures (
-                        user_id, topic_id, lesson_id, concept_id
+                        user_id, topic_id, lesson_id, concept_id,
+                        last_exposed_at
                     )
-                    VALUES {values}
+                    SELECT %s, %s, %s, concept_id, now()
+                    FROM unnest(%s::text[]) AS concepts(concept_id)
                     ON CONFLICT (user_id, lesson_id, concept_id)
                     DO UPDATE SET last_exposed_at = EXCLUDED.last_exposed_at
                     """,
-                    params,
+                    (user_id, topic_id, lesson_id, list(concept_ids)),
                 )
     finally:
         connection.close()

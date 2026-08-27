@@ -394,6 +394,9 @@ class QuizResultDetailResponse(BaseModel):
     percentage: float = Field(..., description="Score percentage")
     time_spent_seconds: Optional[int] = Field(None, description="Time spent on quiz")
     created_at: datetime = Field(..., description="When the quiz was taken")
+    learning_topic_id: Optional[str] = Field(None, description="Connected learning topic")
+    learning_source: Optional[str] = Field(None, description="Lesson, Today, or topic launch source")
+    assessment_id: Optional[str] = Field(None, description="Stable assessment identity")
     answers: list[QuizAnswerResponse] = Field(default=[], description="Individual question answers")
 
 

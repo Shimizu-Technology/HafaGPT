@@ -41,11 +41,6 @@ def upgrade() -> None:
         "quiz_results",
         ["user_id", "client_attempt_id"],
     )
-    op.create_index(
-        "idx_quiz_results_user_learning_topic_created",
-        "quiz_results",
-        ["user_id", "learning_topic_id", "created_at"],
-    )
     op.create_check_constraint(
         "ck_quiz_results_learning_source",
         "quiz_results",
@@ -70,11 +65,6 @@ def upgrade() -> None:
     op.add_column(
         "quiz_answers",
         sa.Column("concept_id", sa.String(255), nullable=True),
-    )
-    op.create_index(
-        "idx_quiz_answers_concept_id",
-        "quiz_answers",
-        ["concept_id"],
     )
 
     op.drop_constraint(
@@ -211,7 +201,6 @@ def downgrade() -> None:
         ["game_result_id"],
     )
 
-    op.drop_index("idx_quiz_answers_concept_id", table_name="quiz_answers")
     op.drop_column("quiz_answers", "concept_id")
 
     op.drop_constraint(
@@ -223,10 +212,6 @@ def downgrade() -> None:
         "ck_quiz_results_learning_source",
         "quiz_results",
         type_="check",
-    )
-    op.drop_index(
-        "idx_quiz_results_user_learning_topic_created",
-        table_name="quiz_results",
     )
     op.drop_constraint(
         "uq_quiz_results_user_client_attempt",
