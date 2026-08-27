@@ -4,6 +4,7 @@ import {
   CUSTOM_FLASHCARD_CONTENT_TRUST,
   DICTIONARY_CONTENT_TRUST,
   getFlashcardTrust,
+  getFlashcardTrustForCard,
   getLessonTrust,
   TRUST_LABELS,
 } from './contentTrust';
@@ -30,5 +31,15 @@ describe('lesson content trust', () => {
     expect(getFlashcardTrust('dictionary', 'days')).toBe(DICTIONARY_CONTENT_TRUST);
     expect(getFlashcardTrust('custom', 'days')).toBe(CUSTOM_FLASHCARD_CONTENT_TRUST);
     expect(getFlashcardTrust('curated', 'days').level).toBe('current_source');
+  });
+
+  it('preserves per-card provenance as a legacy custom deck becomes mixed', () => {
+    const legacyCustomDeck = [{ contentSource: 'dictionary' as const }];
+
+    expect(getFlashcardTrustForCard(legacyCustomDeck[0], 'days')).toBe(DICTIONARY_CONTENT_TRUST);
+
+    const mixedDeck = [...legacyCustomDeck, { contentSource: 'custom' as const }];
+    expect(getFlashcardTrustForCard(mixedDeck[0], 'days')).toBe(DICTIONARY_CONTENT_TRUST);
+    expect(getFlashcardTrustForCard(mixedDeck[1], 'days')).toBe(CUSTOM_FLASHCARD_CONTENT_TRUST);
   });
 });

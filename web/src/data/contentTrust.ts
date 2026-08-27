@@ -149,6 +149,15 @@ export function getFlashcardTrust(
   return getLessonTrust(category);
 }
 
+/** Resolve trust for one card so mixed decks retain per-card provenance. */
+export function getFlashcardTrustForCard(
+  card: { contentSource: FlashcardContentSource },
+  category: string,
+  dictionaryTrust?: ContentTrust,
+): ContentTrust {
+  return getFlashcardTrust(card.contentSource, category, dictionaryTrust);
+}
+
 export const STORY_CONTENT_TRUST: ContentTrust = {
   level: 'developing',
   label: TRUST_LABELS.developing.label,
