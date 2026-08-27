@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_APP_URL_LENGTH } from './routes';
 import { readTopicReturn, withTopicReturn } from './topicReturn';
 
 describe('topic return context', () => {
@@ -45,5 +46,13 @@ describe('topic return context', () => {
     expect(parsed.hash).toBe('#quiz');
     expect(parsed.searchParams.getAll('topic')).toEqual(['greetings']);
     expect(parsed.searchParams.getAll('return_to')).toEqual(['/learning/greetings']);
+  });
+
+  it('does not restore stale topic context when replacement exceeds the URL limit', () => {
+    const prefix = '/stories/hafa-adai-maria?topic=family&return_to=%2Flearning%2Ffamily#';
+    const boundaryPath = `${prefix}${'x'.repeat(MAX_APP_URL_LENGTH - prefix.length)}`;
+
+    expect(boundaryPath).toHaveLength(MAX_APP_URL_LENGTH);
+    expect(withTopicReturn(boundaryPath, 'daily-life')).toBe('/learning/daily-life');
   });
 });

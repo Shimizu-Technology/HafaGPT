@@ -25,7 +25,7 @@ export function withTopicReturn(path: string, topicId: string): string {
     return_to: returnTo,
   });
   if (!contextualPath) return returnTo;
-  return contextualPath.length <= MAX_APP_URL_LENGTH ? contextualPath : safePath;
+  return contextualPath.length <= MAX_APP_URL_LENGTH ? contextualPath : returnTo;
 }
 
 /** Read only a known topic and its exact canonical workspace destination. */
