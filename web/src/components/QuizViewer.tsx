@@ -302,10 +302,10 @@ export function QuizViewer() {
           </p>
           <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
           <Link
-            to="/quiz"
+            to={quizReturnTo}
             className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
           >
-            Back to Quiz List
+            {quizReturnLabel}
           </Link>
         </div>
       </div>

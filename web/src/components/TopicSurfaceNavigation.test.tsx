@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationPractice } from './ConversationPractice';
 import { FlashcardViewer } from './FlashcardViewer';
 import { LessonPage } from './LessonPage';
@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
       explanation: 'Test explanation',
     }],
   },
+  tryUse: vi.fn(async () => true),
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
@@ -81,7 +82,7 @@ vi.mock('../hooks/useVocabularyQuery', () => ({
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
-    tryUse: async () => true,
+    tryUse: mocks.tryUse,
     getCount: () => 0,
     getLimit: () => 10,
     isLoading: false,
@@ -127,6 +128,15 @@ const topicQuery = 'topic=greetings&return_to=%2Flearning%2Fgreetings';
 const learningQuery = `topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings`;
 
 describe('topic surface navigation', () => {
+  beforeEach(() => {
+    mocks.tryUse.mockReset();
+    mocks.tryUse.mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('returns a topic-launched lesson to its workspace', () => {
     renderSurface(<LessonPage />, '/learn/:topicId', `/learn/greetings?${learningQuery}`, true);
 
@@ -228,5 +238,19 @@ describe('topic surface navigation', () => {
       .not.toBeInTheDocument();
     fireEvent.click(quizBack);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/quiz');
+  });
+
+  it('keeps a validated topic return when quiz startup fails', async () => {
+    mocks.tryUse.mockRejectedValueOnce(new Error('subscription unavailable'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    renderSurface(<QuizViewer />, '/quiz/:categoryId', `/quiz/greetings?${topicQuery}`);
+
+    expect(await screen.findByText('Quiz temporarily unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Greetings & Basics' })).toHaveAttribute(
+      'href',
+      '/learning/greetings',
+    );
+    consoleError.mockRestore();
   });
 });
