@@ -225,8 +225,8 @@ def test_downgrade_removes_constraints_before_concurrent_indexes():
         ("autocommit_enter",),
     ]
     drops = [event for event in operations.events if event[0] == "drop_index"]
-    assert [event[1] for event in drops] == [
-        index[0] for index in reversed(migration.EVIDENCE_INDEXES)
+    assert [(event[1], event[2]["table_name"]) for event in drops] == [
+        (index[0], index[1]) for index in reversed(migration.EVIDENCE_INDEXES)
     ]
     assert all(event[2]["if_exists"] for event in drops)
     assert all(event[2]["postgresql_concurrently"] for event in drops)
