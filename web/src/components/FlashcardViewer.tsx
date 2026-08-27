@@ -203,7 +203,7 @@ export function FlashcardViewer() {
       // Map dictionary cards to FlashcardData format
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
         contentSource: 'dictionary',
-        sourceId: card.word_id ?? card.source_id,
+        sourceId: card.source_id,
         wordId: card.word_id,
         front: card.front,
         back: card.back,

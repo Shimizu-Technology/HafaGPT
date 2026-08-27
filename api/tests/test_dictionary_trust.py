@@ -1,3 +1,7 @@
+import io
+import json
+from pathlib import Path
+
 from api.dictionary_service import (
     DictionaryService,
     _canonical_trust,
@@ -28,6 +32,35 @@ def test_dictionary_records_have_unique_stable_ids_and_exact_lookup():
     assert service.get_word(entry["chamorro"])["word_id"] == entry["word_id"]
     assert service.get_word(entry["chamorro"])["source_id"] == entry["source_id"]
     assert service.get_word_by_id("revised-word-v1-missing") is None
+
+
+def test_dictionary_load_does_not_publish_partial_indexes(monkeypatch):
+    """A failed identity validation must leave no partially searchable records."""
+
+    duplicate_identity_source = json.dumps({
+        "hånum": {"Definition": "water"},
+        "ha\u030anum": {"Definition": "same NFC headword"},
+    })
+    service = object.__new__(DictionaryService)
+    service._dictionary = {"old": {}}
+    service._word_list = [{"chamorro": "old"}]
+    service._words_by_id = {"old": {"chamorro": "old"}}
+    service._words_by_headword = {"old": {"chamorro": "old"}}
+    service._categories_cache = {"old": []}
+
+    monkeypatch.setattr(Path, "exists", lambda _path: True)
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda *_args, **_kwargs: io.StringIO(duplicate_identity_source),
+    )
+
+    service._load_dictionary()
+
+    assert service._dictionary == {}
+    assert service._word_list == []
+    assert service._words_by_id == {}
+    assert service._words_by_headword == {}
+    assert service._categories_cache == {}
 
 
 def test_category_matching_rejects_known_false_positives():

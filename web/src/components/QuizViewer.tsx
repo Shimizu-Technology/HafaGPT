@@ -493,19 +493,19 @@ export function QuizViewer() {
     }
   };
 
-  // Handle back navigation with confirmation if quiz is in progress
-  const handleBack = () => {
-    if (isResultNavigationBlocked) return;
+  const confirmQuizExit = (): boolean => {
+    if (isResultNavigationBlocked) return false;
     if (results.length > 0) {
-      const confirmed = window.confirm(
+      return window.confirm(
         'Are you sure you want to leave? Your quiz progress will be lost.'
       );
-      if (confirmed) {
-        navigate(quizReturnTo);
-      }
-    } else {
-      navigate(quizReturnTo);
     }
+    return true;
+  };
+
+  // Handle back navigation with confirmation if quiz is in progress
+  const handleBack = () => {
+    if (confirmQuizExit()) navigate(quizReturnTo);
   };
 
   const handleResultsBack = () => {
@@ -909,6 +909,9 @@ export function QuizViewer() {
                 )}
                 {currentQuestion.wordId && (
                   <Link
+                    onClick={(event) => {
+                      if (!confirmQuizExit()) event.preventDefault();
+                    }}
                     to={appRoutes.word(currentQuestion.wordId, {
                       returnTo: currentAppPath(
                         location.pathname,

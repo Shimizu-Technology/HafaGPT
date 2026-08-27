@@ -310,13 +310,13 @@ class DictionaryService:
         
         try:
             with open(dict_path, 'r', encoding='utf-8') as f:
-                self._dictionary = json.load(f)
+                dictionary = json.load(f)
             
-            # Build word list for faster iteration
-            self._word_list = []
-            self._words_by_id = {}
-            self._words_by_headword = {}
-            for source_index, (word, data) in enumerate(self._dictionary.items()):
+            # Validate and build the searchable state before exposing any of it.
+            word_list = []
+            words_by_id = {}
+            words_by_headword = {}
+            for source_index, (word, data) in enumerate(dictionary.items()):
                 word_id = dictionary_word_id(word)
                 if isinstance(data, dict):
                     entry = {
@@ -339,17 +339,23 @@ class DictionaryService:
                         "examples": [],
                         "trust": DICTIONARY_TRUST,
                     }
-                existing_entry = self._words_by_id.get(word_id)
+                existing_entry = words_by_id.get(word_id)
                 if existing_entry is not None:
                     raise ValueError(
                         "Dictionary word identity collision between "
                         f"'{existing_entry['chamorro']}' and '{word}'"
                     )
-                self._word_list.append(entry)
-                self._words_by_id[word_id] = entry
-                self._words_by_headword[
+                word_list.append(entry)
+                words_by_id[word_id] = entry
+                words_by_headword[
                     unicodedata.normalize("NFC", word).strip()
                 ] = entry
+
+            self._dictionary = dictionary
+            self._word_list = word_list
+            self._words_by_id = words_by_id
+            self._words_by_headword = words_by_headword
+            self._categories_cache = {}
             
             # Pre-categorize words
             self._build_category_cache()
@@ -357,6 +363,11 @@ class DictionaryService:
             logger.info(f"✅ Dictionary loaded: {len(self._word_list)} words")
             
         except Exception as e:
+            self._dictionary = {}
+            self._word_list = []
+            self._words_by_id = {}
+            self._words_by_headword = {}
+            self._categories_cache = {}
             logger.error(f"Failed to load dictionary: {e}")
     
     def _extract_examples(self, other_data: list) -> list:
