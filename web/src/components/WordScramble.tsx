@@ -12,6 +12,7 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 import { createClientAttemptId } from '../lib/clientAttemptId';
+import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 interface GameSettings {
   category: string;
@@ -363,6 +364,7 @@ export function WordScramble() {
 
   const isGameInProgress = gameState === 'playing';
   const isResultNavigationBlocked = pendingGameResult !== null;
+  usePendingNavigationBlocker(isResultNavigationBlocked);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {

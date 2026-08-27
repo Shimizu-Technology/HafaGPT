@@ -17,6 +17,7 @@ import { ALL_TOPICS } from '../data/learningPath';
 import { getQuestionConceptId } from '../data/conceptEvidence';
 import { readTopicReturn } from '../lib/topicReturn';
 import { createClientAttemptId } from '../lib/clientAttemptId';
+import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -144,6 +145,7 @@ export function QuizViewer() {
   // Browser warning when leaving mid-quiz
   const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
   const isResultNavigationBlocked = pendingQuizResult !== null;
+  usePendingNavigationBlocker(isResultNavigationBlocked);
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

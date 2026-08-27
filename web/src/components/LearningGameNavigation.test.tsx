@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryMatch } from './MemoryMatch';
 import { WordScramble } from './WordScramble';
@@ -128,12 +128,20 @@ function LocationProbe() {
 
 function renderGame(testCase: LaunchCase) {
   const Component = testCase.component;
-  render(
-    <MemoryRouter initialEntries={[testCase.path]}>
+  const router = createMemoryRouter([{
+    path: '*',
+    element: (
+      <>
       <Component />
       <LocationProbe />
-    </MemoryRouter>,
-  );
+      </>
+    ),
+  }], {
+    initialEntries: ['/prior', testCase.path],
+    initialIndex: 1,
+  });
+  render(<RouterProvider router={router} />);
+  return router;
 }
 
 async function startGame() {
@@ -262,7 +270,7 @@ describe('contextual learning game navigation', () => {
     mocks.saveGameResult
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({});
-    renderGame(testCase);
+    const router = renderGame(testCase);
 
     await completeGame(testCase.game);
     await act(async () => {
@@ -286,6 +294,13 @@ describe('contextual learning game navigation', () => {
     const beforeUnload = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(beforeUnload);
     expect(beforeUnload.defaultPrevented).toBe(true);
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
+    expect(screen.getByRole('button', { name: 'Retry saving game result' }))
+      .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving game result' }));
     await act(async () => {

@@ -1,6 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import {
+  createMemoryRouter,
+  Outlet,
+  RouterProvider,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationPractice } from './ConversationPractice';
 import { FlashcardViewer } from './FlashcardViewer';
@@ -140,19 +146,20 @@ function renderSurface(
   path: string,
   withPriorHistory = false,
 ) {
-  return render(
-    <MemoryRouter
-      initialEntries={withPriorHistory ? ['/unrelated', path] : [path]}
-      initialIndex={withPriorHistory ? 1 : 0}
-    >
-      <Routes>
-        <Route path={routePath} element={component} />
-        <Route path="/learning/:topicId" element={null} />
-        <Route path="*" element={null} />
-      </Routes>
-      <LocationProbe />
-    </MemoryRouter>,
-  );
+  const router = createMemoryRouter([
+    {
+      element: <><Outlet /><LocationProbe /></>,
+      children: [
+        { path: routePath, element: component },
+        { path: '/learning/:topicId', element: null },
+        { path: '*', element: null },
+      ],
+    },
+  ], {
+    initialEntries: withPriorHistory ? ['/unrelated', path] : [path],
+    initialIndex: withPriorHistory ? 1 : 0,
+  });
+  return { ...render(<RouterProvider router={router} />), router };
 }
 
 const topicQuery = 'topic=greetings&return_to=%2Flearning%2Fgreetings';
@@ -195,6 +202,7 @@ describe('topic surface navigation', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('returns a topic-launched lesson to its workspace', () => {
@@ -315,6 +323,45 @@ describe('topic surface navigation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving card activity' }));
     expect(mocks.recordLessonExposure).toHaveBeenCalledTimes(2);
     expect(mocks.recordLessonExposure.mock.calls[1][0]).toEqual(familyPayload);
+  });
+
+  it('ignores a delayed exposure save after navigating to another lesson', () => {
+    vi.useFakeTimers();
+    const familyPayload = {
+      topicId: 'family',
+      conceptIds: getCuratedDeckConceptIds('family'),
+    };
+    window.localStorage.setItem(
+      'hafagpt_lesson_exposure_v1_user_123_family',
+      JSON.stringify(familyPayload),
+    );
+    renderSurface(
+      <>
+        <LessonPage />
+        <SameRouteNavigator to="/learn/family" label="Open family lesson" />
+      </>,
+      '/learn/:topicId',
+      '/learn/greetings',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start Flashcards' }));
+    for (let cardNumber = 2; cardNumber <= 14; cardNumber += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `View card ${cardNumber}` }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Continue to Quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open family lesson' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
+    expect(screen.getByRole('button', { name: 'Start Flashcards' })).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(mocks.recordLessonExposure).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
+    expect(JSON.parse(window.localStorage.getItem(
+      'hafagpt_lesson_exposure_v1_user_123_family',
+    ) ?? '{}')).toEqual(familyPayload);
   });
 
   it('skips authenticated lesson exposure persistence for a signed-out session', async () => {
@@ -447,10 +494,11 @@ describe('topic surface navigation', () => {
       .mockRejectedValueOnce(new Error('offline'))
       .mockResolvedValueOnce({});
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    renderSurface(
+    const { router } = renderSurface(
       <QuizViewer />,
       '/quiz/:categoryId',
       `/quiz/greetings?${topicQuery}`,
+      true,
     );
     await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
 
@@ -472,6 +520,15 @@ describe('topic surface navigation', () => {
     const beforeUnload = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(beforeUnload);
     expect(beforeUnload.defaultPrevented).toBe(true);
+
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      `/quiz/greetings?${topicQuery}`,
+    );
+    expect(screen.getByRole('button', { name: 'Retry saving quiz result' }))
+      .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving quiz result' }));
 

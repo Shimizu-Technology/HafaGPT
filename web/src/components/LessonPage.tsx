@@ -199,8 +199,15 @@ export function LessonPage() {
     
     // Track flashcard completion with actual card count (non-blocking)
     if (topicId) {
+      const scheduledExposureScope = ownerId ? `${ownerId}:${topicId}` : null;
+      const scheduledExposureRequestId = lessonExposureRequestRef.current;
       setTimeout(() => {
-        saveLessonExposure({ topicId, conceptIds: [...conceptIds] });
+        if (
+          lessonExposureScopeRef.current === scheduledExposureScope
+          && lessonExposureRequestRef.current === scheduledExposureRequestId
+        ) {
+          saveLessonExposure({ topicId, conceptIds: [...conceptIds] });
+        }
 
         updateProgress.mutate(
           { topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount },

@@ -13,6 +13,7 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 import { createClientAttemptId } from '../lib/clientAttemptId';
+import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 interface Card {
   id: number;
@@ -219,6 +220,7 @@ export function MemoryMatch() {
   // Browser warning when leaving mid-game (like quizzes)
   const isGameInProgress = gameState === 'playing' && moves > 0;
   const isResultNavigationBlocked = pendingGameResult !== null;
+  usePendingNavigationBlocker(isResultNavigationBlocked);
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
