@@ -1,5 +1,10 @@
 import { getTopic } from '../data/learningPath';
-import { appRoutes, MAX_APP_URL_LENGTH, safeInternalReturnPath } from './routes';
+import {
+  appRoutes,
+  MAX_APP_URL_LENGTH,
+  safeInternalReturnPath,
+  setAppQueryParams,
+} from './routes';
 
 export interface TopicReturnContext {
   topicId: string;
@@ -15,9 +20,11 @@ export function withTopicReturn(path: string, topicId: string): string {
   const returnTo = appRoutes.topic(topic.id);
   const safePath = safeInternalReturnPath(path, '');
   if (!safePath) return returnTo;
-  const separator = safePath.includes('?') ? '&' : '?';
-  const context = new URLSearchParams({ topic: topic.id, return_to: returnTo });
-  const contextualPath = `${safePath}${separator}${context.toString()}`;
+  const contextualPath = setAppQueryParams(safePath, {
+    topic: topic.id,
+    return_to: returnTo,
+  });
+  if (!contextualPath) return returnTo;
   return contextualPath.length <= MAX_APP_URL_LENGTH ? contextualPath : safePath;
 }
 

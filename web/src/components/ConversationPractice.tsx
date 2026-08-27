@@ -8,6 +8,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
+import { getScenarioTopicId } from '../data/topicRelationships';
 import { hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
 import { readTopicReturn } from '../lib/topicReturn';
 
@@ -50,7 +51,10 @@ export function ConversationPractice() {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTranslations, setShowTranslations] = useState(true);
-  const topicReturn = readTopicReturn(searchParams.toString());
+  const scenarioTopicId = getScenarioTopicId(scenarioId || '');
+  const topicReturn = scenarioTopicId
+    ? readTopicReturn(searchParams.toString(), scenarioTopicId)
+    : null;
   const conversationReturnTo = topicReturn?.to ?? '/practice';
   const conversationReturnLabel = topicReturn?.label ?? 'Back to conversation scenarios';
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -244,7 +248,7 @@ export function ConversationPractice() {
   if (showIntro) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
 
         {/* Content */}
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
@@ -315,7 +319,7 @@ export function ConversationPractice() {
   if (conversation.isComplete) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
             <PartyPopper className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />

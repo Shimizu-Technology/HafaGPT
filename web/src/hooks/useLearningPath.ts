@@ -63,12 +63,13 @@ export interface TopicWorkspaceResponse {
 
 // Get one stable topic workspace and its explicit relationships.
 export function useTopicWorkspace(topicId?: string) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useAuth();
 
   return useQuery({
-    queryKey: ['learning', 'workspace', topicId],
+    queryKey: ['learning', 'workspace', userId, topicId],
     queryFn: async (): Promise<TopicWorkspaceResponse> => {
       const token = await getToken();
+      if (!token) throw new Error('Authentication required');
       const response = await fetch(
         `${API_URL}/api/learning/workspaces/${encodeURIComponent(topicId || '')}`,
         { headers: { Authorization: `Bearer ${token}` } },
@@ -80,7 +81,7 @@ export function useTopicWorkspace(topicId?: string) {
 
       return response.json();
     },
-    enabled: isSignedIn && !!topicId,
+    enabled: isSignedIn && !!userId && !!topicId,
     staleTime: 1000 * 60 * 2,
   });
 }

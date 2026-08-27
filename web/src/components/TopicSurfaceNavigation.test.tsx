@@ -78,12 +78,21 @@ function LocationProbe() {
   return <output data-testid="current-location">{`${location.pathname}${location.search}`}</output>;
 }
 
-function renderSurface(component: ReactNode, routePath: string, path: string) {
-  render(
-    <MemoryRouter initialEntries={[path]}>
+function renderSurface(
+  component: ReactNode,
+  routePath: string,
+  path: string,
+  withPriorHistory = false,
+) {
+  return render(
+    <MemoryRouter
+      initialEntries={withPriorHistory ? ['/unrelated', path] : [path]}
+      initialIndex={withPriorHistory ? 1 : 0}
+    >
       <Routes>
         <Route path={routePath} element={component} />
         <Route path="/learning/:topicId" element={null} />
+        <Route path="*" element={null} />
       </Routes>
       <LocationProbe />
     </MemoryRouter>,
@@ -95,7 +104,7 @@ const learningQuery = `topic=greetings&category=greetings&source=topic&return_to
 
 describe('topic surface navigation', () => {
   it('returns a topic-launched lesson to its workspace', () => {
-    renderSurface(<LessonPage />, '/learn/:topicId', `/learn/greetings?${learningQuery}`);
+    renderSurface(<LessonPage />, '/learn/:topicId', `/learn/greetings?${learningQuery}`, true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to topic' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
@@ -109,7 +118,7 @@ describe('topic surface navigation', () => {
   });
 
   it('returns a topic quiz to its workspace', async () => {
-    renderSurface(<QuizViewer />, '/quiz/:categoryId', `/quiz/greetings?${topicQuery}`);
+    renderSurface(<QuizViewer />, '/quiz/:categoryId', `/quiz/greetings?${topicQuery}`, true);
 
     const back = await screen.findByRole('button', {
       name: 'Leave quiz and return to Greetings & Basics',
@@ -119,7 +128,7 @@ describe('topic surface navigation', () => {
   });
 
   it('returns a related story to its workspace', () => {
-    renderSurface(<StoryViewer />, '/stories/:storyId', `/stories/hafa-adai-maria?${topicQuery}`);
+    renderSurface(<StoryViewer />, '/stories/:storyId', `/stories/hafa-adai-maria?${topicQuery}`, true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to Greetings & Basics' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
@@ -130,6 +139,7 @@ describe('topic surface navigation', () => {
       <ConversationPractice />,
       '/practice/:scenarioId',
       `/practice/meeting-someone?${topicQuery}`,
+      true,
     );
 
     const back = await screen.findByRole('button', { name: 'Back to Greetings & Basics' });
@@ -137,5 +147,36 @@ describe('topic surface navigation', () => {
     await waitFor(() => {
       expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
     });
+  });
+
+  it('rejects a valid topic context that does not match the lesson route', () => {
+    renderSurface(
+      <LessonPage />,
+      '/learn/:topicId',
+      `/learn/family?${learningQuery}`,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to learning path' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/learning');
+  });
+
+  it('rejects unrelated valid topic context for stories and scenarios', async () => {
+    const { unmount } = renderSurface(
+      <StoryViewer />,
+      '/stories/:storyId',
+      `/stories/i-familia-hu?${topicQuery}`,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to stories' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/stories');
+    unmount();
+
+    renderSurface(
+      <ConversationPractice />,
+      '/practice/:scenarioId',
+      `/practice/ordering-food?${topicQuery}`,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to conversation scenarios' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/practice');
   });
 });

@@ -1,5 +1,10 @@
 import { getTopic, LearningTopic } from '../data/learningPath';
-import { appRoutes, MAX_APP_URL_LENGTH, safeInternalReturnPath } from './routes';
+import {
+  appRoutes,
+  MAX_APP_URL_LENGTH,
+  safeInternalReturnPath,
+  setAppQueryParams,
+} from './routes';
 
 export type LearningSource = 'lesson' | 'today' | 'topic';
 
@@ -71,20 +76,23 @@ export function withLearningContext(
   const safePath = safeInternalReturnPath(path, '');
   if (!safePath) return fallbackReturn;
   const returnTo = safeLearningReturnPath(context.returnTo ?? fallbackReturn, source, topic.id);
-  const params = new URLSearchParams({
+  const contextParams = {
     topic: topic.id,
     category: topic.flashcardCategory,
     source,
     return_to: returnTo,
+  };
+  const contextualHref = setAppQueryParams(safePath, contextParams);
+
+  if (contextualHref && contextualHref.length <= MAX_APP_URL_LENGTH) return contextualHref;
+
+  const fallbackHref = setAppQueryParams(safePath, {
+    ...contextParams,
+    return_to: fallbackReturn,
   });
-  const separator = safePath.includes('?') ? '&' : '?';
-  const contextualHref = `${safePath}${separator}${params}`;
-
-  if (contextualHref.length <= MAX_APP_URL_LENGTH) return contextualHref;
-
-  params.set('return_to', fallbackReturn);
-  const fallbackHref = `${safePath}${separator}${params}`;
-  return fallbackHref.length <= MAX_APP_URL_LENGTH ? fallbackHref : fallbackReturn;
+  return fallbackHref && fallbackHref.length <= MAX_APP_URL_LENGTH
+    ? fallbackHref
+    : fallbackReturn;
 }
 
 export function getLessonPractice(

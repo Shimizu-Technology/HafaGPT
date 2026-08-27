@@ -34,4 +34,16 @@ describe('topic return context', () => {
     expect(withTopicReturn('//evil.example', 'greetings')).toBe('/learning/greetings');
     expect(withTopicReturn(`/${'a'.repeat(2048)}`, 'greetings')).toBe('/learning/greetings');
   });
+
+  it('replaces stale context keys before a destination hash', () => {
+    const href = withTopicReturn(
+      '/stories/hafa-adai-maria?topic=family&return_to=%2Flearning%2Ffamily#quiz',
+      'greetings',
+    );
+    const parsed = new URL(href, 'https://hafagpt.local');
+
+    expect(parsed.hash).toBe('#quiz');
+    expect(parsed.searchParams.getAll('topic')).toEqual(['greetings']);
+    expect(parsed.searchParams.getAll('return_to')).toEqual(['/learning/greetings']);
+  });
 });

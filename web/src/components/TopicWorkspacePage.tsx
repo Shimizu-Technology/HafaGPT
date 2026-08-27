@@ -14,6 +14,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getScenarioById } from '../data/conversationScenarios';
 import { getTopic } from '../data/learningPath';
 import { getStoryById } from '../data/storyData';
+import { TOPIC_SCENARIO_IDS, TOPIC_STORY_IDS } from '../data/topicRelationships';
 import { useTopicWorkspace } from '../hooks/useLearningPath';
 import { withLearningContext } from '../lib/lessonPractice';
 import { appRoutes } from '../lib/routes';
@@ -91,7 +92,10 @@ export function TopicWorkspacePage() {
     && data.topic.id === localTopic.id
     && data.lesson_id === localTopic.id
     && data.flashcard_category === localTopic.flashcardCategory
-    && data.quiz_category === localTopic.quizCategory;
+    && data.quiz_category === localTopic.quizCategory
+    && JSON.stringify(data.suggested_game_ids) === JSON.stringify(localTopic.suggestedGames ?? [])
+    && JSON.stringify(data.scenario_ids) === JSON.stringify(TOPIC_SCENARIO_IDS[localTopic.id] ?? [])
+    && JSON.stringify(data.story_ids) === JSON.stringify(TOPIC_STORY_IDS[localTopic.id] ?? []);
 
   if (isError || !data || !workspaceMatchesTopic) {
     return (

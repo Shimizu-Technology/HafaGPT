@@ -18,6 +18,9 @@ Progress = dict[str, Any]
 VerifyUser = Callable[[str | None], Awaitable[str]]
 LoadProgress = Callable[[str, str], Awaitable[Progress]]
 
+DATABASE_CONNECT_TIMEOUT_SECONDS = 5
+DATABASE_STATEMENT_TIMEOUT_MS = 5_000
+
 
 class TopicRecord(BaseModel):
     """Stable public metadata for one learning-path topic."""
@@ -117,18 +120,24 @@ def _load_topic_progress_sync(user_id: str, topic_id: str) -> Progress:
 
     import psycopg2
 
-    with psycopg2.connect(db_url) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT topic_id, started_at, completed_at, best_quiz_score,
-                       flashcards_viewed, last_activity_at
-                FROM user_topic_progress
-                WHERE user_id = %s AND topic_id = %s
-                """,
-                (user_id, topic_id),
-            )
-            row = cursor.fetchone()
+    with (
+        psycopg2.connect(
+            db_url,
+            connect_timeout=DATABASE_CONNECT_TIMEOUT_SECONDS,
+            options=f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}",
+        ) as connection,
+        connection.cursor() as cursor,
+    ):
+        cursor.execute(
+            """
+            SELECT topic_id, started_at, completed_at, best_quiz_score,
+                   flashcards_viewed, last_activity_at
+            FROM user_topic_progress
+            WHERE user_id = %s AND topic_id = %s
+            """,
+            (user_id, topic_id),
+        )
+        row = cursor.fetchone()
 
     if not row:
         return empty_topic_progress(topic_id)

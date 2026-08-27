@@ -139,4 +139,23 @@ describe('lesson practice handoff', () => {
     expect(parsed?.returnTo).toBe('/learning');
     expect(mismatchedTopic?.returnTo).toBe('/learning/greetings');
   });
+
+  it('replaces stale context keys and preserves hash ordering', () => {
+    const topic = getTopic('greetings');
+    expect(topic).toBeDefined();
+
+    const href = withLearningContext(
+      '/games/memory?topic=family&category=family&source=lesson&return_to=%2Flearning#score',
+      topic!,
+      { source: 'topic', returnTo: '/learning/greetings' },
+    );
+    const parsed = new URL(href, 'https://hafagpt.local');
+
+    expect(parsed.pathname).toBe('/games/memory');
+    expect(parsed.hash).toBe('#score');
+    expect(parsed.searchParams.getAll('topic')).toEqual(['greetings']);
+    expect(parsed.searchParams.getAll('category')).toEqual(['greetings']);
+    expect(parsed.searchParams.getAll('source')).toEqual(['topic']);
+    expect(parsed.searchParams.getAll('return_to')).toEqual(['/learning/greetings']);
+  });
 });

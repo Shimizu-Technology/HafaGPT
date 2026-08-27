@@ -7,6 +7,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { STORY_CONTENT_TRUST } from '../data/contentTrust';
+import { getStoryTopicId } from '../data/topicRelationships';
 import { readTopicReturn } from '../lib/topicReturn';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
@@ -17,7 +18,10 @@ export function StoryViewer() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const story = getStoryById(storyId || '');
-  const topicReturn = readTopicReturn(searchParams.toString());
+  const storyTopicId = getStoryTopicId(storyId || '');
+  const topicReturn = storyTopicId
+    ? readTopicReturn(searchParams.toString(), storyTopicId)
+    : null;
 
   // Reading state
   const [currentParagraph, setCurrentParagraph] = useState(0);

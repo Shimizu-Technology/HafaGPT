@@ -468,7 +468,7 @@ export function QuizViewer() {
   if (showResults) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={topicReturn ? () => navigate(quizReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
 
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}

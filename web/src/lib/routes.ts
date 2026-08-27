@@ -56,6 +56,21 @@ export function safeInternalReturnPath(value: string | null, fallback: string): 
   }
 }
 
+/** Replace app-owned query keys while preserving other query state and hashes. */
+export function setAppQueryParams(
+  path: string,
+  values: Record<string, string>,
+): string | null {
+  const safePath = safeInternalReturnPath(path, '');
+  if (!safePath) return null;
+
+  const parsed = new URL(safePath, INTERNAL_ORIGIN);
+  for (const [key, value] of Object.entries(values)) {
+    parsed.searchParams.set(key, value);
+  }
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+}
+
 export function currentAppPath(pathname: string, search = '', hash = ''): string {
   return `${pathname}${search}${hash}`;
 }

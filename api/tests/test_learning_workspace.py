@@ -1,3 +1,7 @@
+import sys
+from types import SimpleNamespace
+
+import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
@@ -5,6 +9,9 @@ from api.learning_workspace import (
     TOPIC_SCENARIO_IDS,
     TOPIC_SUGGESTED_GAME_IDS,
     TOPIC_STORY_IDS,
+    DATABASE_CONNECT_TIMEOUT_SECONDS,
+    DATABASE_STATEMENT_TIMEOUT_MS,
+    _load_topic_progress_sync,
     build_topic_workspace,
     create_learning_workspace_router,
     empty_topic_progress,
@@ -97,6 +104,54 @@ def test_workspace_hides_storage_failures():
 
     assert response.status_code == 503
     assert response.json() == {"detail": "Learning workspace is temporarily unavailable"}
+
+
+def test_progress_loader_bounds_connection_wait_and_propagates_timeout(monkeypatch):
+    def connect(_db_url: str, **kwargs):
+        assert kwargs == {
+            "connect_timeout": DATABASE_CONNECT_TIMEOUT_SECONDS,
+            "options": f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}",
+        }
+        raise TimeoutError("connection timed out")
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/hafagpt")
+    monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace(connect=connect))
+
+    with pytest.raises(TimeoutError, match="connection timed out"):
+        _load_topic_progress_sync("user_123", "greetings")
+
+
+def test_progress_loader_bounds_query_wait_and_propagates_timeout(monkeypatch):
+    class TimeoutCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def execute(self, _query: str, _params: tuple[str, str]):
+            raise TimeoutError("statement timed out")
+
+    class Connection:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def cursor(self):
+            return TimeoutCursor()
+
+    def connect(_db_url: str, **kwargs):
+        assert kwargs["connect_timeout"] == DATABASE_CONNECT_TIMEOUT_SECONDS
+        assert kwargs["options"] == f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}"
+        return Connection()
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://example.invalid/hafagpt")
+    monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace(connect=connect))
+
+    with pytest.raises(TimeoutError, match="statement timed out"):
+        _load_topic_progress_sync("user_123", "greetings")
 
 
 def test_alignment_catalog_contains_only_explicit_first_party_ids():

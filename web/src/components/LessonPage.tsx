@@ -40,7 +40,8 @@ export function LessonPage() {
 
   const topic = topicId ? getTopic(topicId) : undefined;
   const topicIndex = topicId ? getTopicIndex(topicId) : 0;
-  const launchContext = readLearningGameContext(location.search);
+  const parsedLaunchContext = readLearningGameContext(location.search);
+  const launchContext = parsedLaunchContext?.topicId === topicId ? parsedLaunchContext : null;
   const lessonReturn = getLearningGameReturn(launchContext);
 
   // Mark topic as started when entering
