@@ -1,7 +1,7 @@
 # Connected Learning Program
 
 - **Status:** complete — final cross-surface audit passed
-- **Last reviewed:** August 28, 2026
+- **Last reviewed:** August 28, 2026 (Pacific/Guam)
 - **Delivered through:** Release 5d and final audit
 
 ## Decision
@@ -192,7 +192,7 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 - Preserved unrelated query parameters and hashes when a view changes.
 - Normalized invalid and empty values to the documented default without leaving misleading URL state behind.
 
-## Final cross-surface audit — August 28, 2026
+## Final cross-surface audit — August 28, 2026 (Pacific/Guam)
 
 | Surface | Verified continuity | Result |
 | --- | --- | --- |
@@ -207,7 +207,7 @@ All writes must be idempotent or protected from duplicate retries. A completion 
 | Progress and saved decks | Progress links reach exact saved quiz/game results. Decks preserve owner scope, stored topic labels, contained cards, and review state without inferred concepts. | Pass |
 | Administrative diagnostics | User search, pagination, details, and returns restore correctly. Audio review is documented as an operational boundary. | Pass with boundary |
 
-No high-value disconnected journey remains inside the approved program scope as of August 28, 2026. New list/detail workflows and new cross-surface launches should meet the same stable-identity, write-time-relationship, bounded-return, and restorable-view requirements.
+No high-value disconnected journey remains inside the approved program scope as of August 28, 2026 (Pacific/Guam). New list/detail workflows and new cross-surface launches should meet the same stable-identity, write-time-relationship, bounded-return, and restorable-view requirements.
 
 Passing this audit validates the product architecture and tested continuity. It does not independently validate Chamorro wording; the language-resource and accuracy programs remain authoritative for content.
 
@@ -237,6 +237,6 @@ Passing this audit validates the product architecture and tested continuity. It 
 
 ## Program completion gate
 
-The program met its completion gate on August 28, 2026. Supported journeys are coherent in both directions, persisted relationships survive reloads, legacy records render honestly, unsafe return paths are rejected, URL-backed views restore correctly, and the final audit found no high-value disconnected journey inside the approved scope.
+The program met its completion gate on August 28, 2026 (Pacific/Guam). Supported journeys are coherent in both directions, persisted relationships survive reloads, legacy records render honestly, unsafe return paths are rejected, URL-backed views restore correctly, and the final audit found no high-value disconnected journey inside the approved scope.
 
 A future regression or a newly introduced workflow can reopen this work. Completion does not create a human-review requirement, certify Chamorro language content, or turn broad activity evidence into mastery.
