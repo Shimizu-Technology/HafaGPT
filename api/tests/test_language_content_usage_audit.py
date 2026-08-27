@@ -4,6 +4,8 @@ from scripts.check_language_content_against_canonical import load_rules, scan_co
 
 
 def test_entry_level_needs_review_terms_are_reported_when_taught(tmp_path):
+    """Report a developing canonical phrase when learner content teaches it."""
+
     vocabulary_path = tmp_path / "canonical.json"
     vocabulary_path.write_text(
         json.dumps(
@@ -37,6 +39,8 @@ def test_entry_level_needs_review_terms_are_reported_when_taught(tmp_path):
 
 
 def test_exact_audit_matches_escaped_glottal_stop_in_typescript(tmp_path):
+    """Audit the rendered glottal stop in an escaped TypeScript string."""
+
     vocabulary_path = tmp_path / "canonical.json"
     vocabulary_path.write_text(
         json.dumps(
@@ -67,6 +71,8 @@ def test_exact_audit_matches_escaped_glottal_stop_in_typescript(tmp_path):
 
 
 def test_exact_audit_excludes_hyphen_prefixed_compound(tmp_path):
+    """Do not treat a term inside a hyphenated compound as a standalone match."""
+
     vocabulary_path = tmp_path / "canonical.json"
     vocabulary_path.write_text(
         json.dumps(

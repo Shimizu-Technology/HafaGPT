@@ -8,14 +8,14 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
-import { serializeConversationHistory } from '../lib/conversationPractice';
+import { hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
 
 interface Message {
   id: string;
   role: 'character' | 'user' | 'system';
   chamorro: string;
   english?: string;
-  groundingStatus?: 'canonical_support' | 'ai_only';
+  groundingStatus?: 'canonical_support' | 'source_support' | 'ai_only';
   feedback?: {
     corrections?: string[];
     suggestions?: string[];
@@ -143,7 +143,11 @@ export function ConversationPractice() {
         chamorro: data.chamorro_response,
         english: data.english_translation,
         feedback: data.feedback,
-        groundingStatus: data.grounding_status === 'canonical_support' ? 'canonical_support' : 'ai_only',
+        groundingStatus: data.grounding_status === 'canonical_support'
+          ? 'canonical_support'
+          : data.grounding_status === 'source_support'
+            ? 'source_support'
+            : 'ai_only',
       };
 
       setConversation(prev => ({
@@ -569,6 +573,8 @@ function MessageBubble({
           <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
             {message.groundingStatus === 'canonical_support' ? (
               <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Canonical term matches included</>
+            ) : message.groundingStatus === 'source_support' ? (
+              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Dictionary source matches included</>
             ) : (
               <><Sparkles className="h-3 w-3" aria-hidden="true" />AI-generated practice response</>
             )}
@@ -576,7 +582,7 @@ function MessageBubble({
         )}
 
         {/* Feedback (for character messages after user input) */}
-        {message.feedback && (
+        {message.feedback && hasVisiblePracticeFeedback(feedbackSuggestions, message.feedback.encouragement) && (
           <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             {feedbackSuggestions.length > 0 && (
               <div className="mb-2">

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ALL_TOPICS } from './learningPath';
-import { getLessonTrust, TRUST_LABELS } from './contentTrust';
+import {
+  CUSTOM_FLASHCARD_CONTENT_TRUST,
+  DICTIONARY_CONTENT_TRUST,
+  getFlashcardTrust,
+  getLessonTrust,
+  TRUST_LABELS,
+} from './contentTrust';
 
 describe('lesson content trust', () => {
   it('labels every learning-path topic without claiming independent review', () => {
@@ -18,5 +24,11 @@ describe('lesson content trust', () => {
     expect(getLessonTrust('months').level).toBe('current_source');
     expect(getLessonTrust('verbs').level).toBe('developing');
     expect(getLessonTrust('sentences').level).toBe('developing');
+  });
+
+  it('labels flashcards from the source that actually supplied the deck', () => {
+    expect(getFlashcardTrust('dictionary', 'days')).toBe(DICTIONARY_CONTENT_TRUST);
+    expect(getFlashcardTrust('custom', 'days')).toBe(CUSTOM_FLASHCARD_CONTENT_TRUST);
+    expect(getFlashcardTrust('curated', 'days').level).toBe('current_source');
   });
 });

@@ -20,6 +20,13 @@ export interface ContentTrust {
   notes?: string[];
 }
 
+export const TRUST_LEVEL_SURFACE_CLASSES: Record<ContentTrustLevel, string> = {
+  current_source: 'border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30',
+  source_backed: 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30',
+  developing: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30',
+  ai_practice: 'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-950/30',
+};
+
 const KUMISION_WORD_LISTS: ContentTrustSource = {
   name: "Kumisión i Fino' CHamoru specialized lists",
   url: 'https://kumisionchamoru.guam.gov/listan-palabra-word-lists/listan-espesi%C7%BBt-specialized-lists/',
@@ -94,6 +101,13 @@ const DEVELOPING_LESSON: ContentTrust = {
   independentlyReviewed: false,
 };
 
+export const CUSTOM_FLASHCARD_CONTENT_TRUST: ContentTrust = {
+  ...DEVELOPING_LESSON,
+  summary: 'This custom deck can combine generated practice cards with other learning material, so each phrase should be treated as developing content.',
+  sources: [HAFAGPT_CANONICAL, LOCAL_DICTIONARIES],
+  notes: ['Generated cards are practice material and have not received independent language review.'],
+};
+
 const GRAMMAR_LESSON: ContentTrust = {
   ...DEVELOPING_LESSON,
   summary: 'Vocabulary roots are source-backed, but some sentence frames are grammar-sensitive and still being reconciled.',
@@ -120,6 +134,19 @@ const LESSON_TRUST_BY_CATEGORY: Record<string, ContentTrust> = {
 /** Resolve the shared trust profile used by a lesson and its linked activities. */
 export function getLessonTrust(category: string): ContentTrust {
   return LESSON_TRUST_BY_CATEGORY[category] ?? DEVELOPING_LESSON;
+}
+
+export type FlashcardContentSource = 'curated' | 'dictionary' | 'custom';
+
+/** Resolve flashcard trust from the cards actually loaded rather than the URL mode. */
+export function getFlashcardTrust(
+  source: FlashcardContentSource,
+  category: string,
+  dictionaryTrust?: ContentTrust,
+): ContentTrust {
+  if (source === 'dictionary') return dictionaryTrust ?? DICTIONARY_CONTENT_TRUST;
+  if (source === 'custom') return CUSTOM_FLASHCARD_CONTENT_TRUST;
+  return getLessonTrust(category);
 }
 
 export const STORY_CONTENT_TRUST: ContentTrust = {

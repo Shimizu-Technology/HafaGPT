@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { BookOpenCheck, ChevronDown, ExternalLink, FlaskConical, Sparkles } from 'lucide-react';
-import type { ContentTrust } from '../data/contentTrust';
+import { TRUST_LEVEL_SURFACE_CLASSES, type ContentTrust } from '../data/contentTrust';
 
 interface ContentTrustNoteProps {
   trust: ContentTrust;
@@ -9,10 +9,10 @@ interface ContentTrustNoteProps {
 }
 
 const levelStyles: Record<ContentTrust['level'], string> = {
-  current_source: 'border-teal-200 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-950/30 dark:text-teal-100',
-  source_backed: 'border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-100',
-  developing: 'border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100',
-  ai_practice: 'border-violet-200 bg-violet-50 text-violet-950 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100',
+  current_source: 'text-teal-900 dark:text-teal-100',
+  source_backed: 'text-sky-900 dark:text-sky-100',
+  developing: 'text-amber-950 dark:text-amber-100',
+  ai_practice: 'text-violet-950 dark:text-violet-100',
 };
 
 /** Select the visual marker associated with a content-trust level. */
@@ -28,7 +28,7 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
   const detailId = useId();
 
   return (
-    <aside className={`overflow-hidden rounded-2xl border ${levelStyles[trust.level]} ${className}`} aria-label="Content source status">
+    <aside className={`overflow-hidden rounded-2xl border ${TRUST_LEVEL_SURFACE_CLASSES[trust.level]} ${levelStyles[trust.level]} ${className}`} aria-label="Content source status">
       <button
         type="button"
         className={`flex min-h-11 w-full items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-inset ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}

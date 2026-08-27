@@ -12,7 +12,10 @@ import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { browserStorage } from '../lib/browserStorage';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
-import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
+import {
+  getFlashcardTrust,
+  type FlashcardContentSource,
+} from '../data/contentTrust';
 
 interface FlashcardData {
   sourceId?: string;
@@ -68,6 +71,9 @@ export function FlashcardViewer() {
   const [cardsStudied, setCardsStudied] = useState(0); // Track total cards studied this session
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSaved, setReviewSaved] = useState(false);
+  const [resolvedDeckSource, setResolvedDeckSource] = useState<FlashcardContentSource>(
+    cardTypeParam === 'custom' ? 'custom' : cardType,
+  );
 
   // Use React Query mutation for saving decks
   const saveDeckMutation = useSaveDeck();
@@ -138,6 +144,7 @@ export function FlashcardViewer() {
         category: deck.displayName
       }));
       setFlashcards(formattedCards);
+      setResolvedDeckSource('curated');
       setCurrentIndex(0);
       setError(null);
     } else {
@@ -185,6 +192,7 @@ export function FlashcardViewer() {
       }));
 
       setFlashcards(mappedCards);
+      setResolvedDeckSource(cardTypeParam === 'custom' ? 'custom' : 'dictionary');
       setCurrentIndex(0);
       setError(null);
       // Reset custom card state
@@ -192,7 +200,7 @@ export function FlashcardViewer() {
       hasGeneratedMoreRef.current = false;
       batchCountRef.current = 0;
     }
-  }, [dictionaryData, cardType, topic]);
+  }, [dictionaryData, cardType, cardTypeParam, topic]);
 
   // Load more dictionary cards (for "Load More" button)
   const loadMoreDictionaryCards = () => {
@@ -256,6 +264,7 @@ export function FlashcardViewer() {
       }
       
       setNewCards(uniqueNewCards);
+      if (uniqueNewCards.length > 0) setResolvedDeckSource('custom');
       setIsGeneratingMore(false);
       
       // Auto-add new cards to deck after 1 second
@@ -472,15 +481,22 @@ export function FlashcardViewer() {
   const currentCard = flashcards[currentIndex];
   const deckTitle = topicTitles[topic || ''] || dictionaryData?.category?.title || topic || 'Flashcards';
   const progress = ((currentIndex + 1) / flashcards.length) * 100;
-  const contentTrust = cardType === 'dictionary'
-    ? dictionaryData?.trust ?? DICTIONARY_CONTENT_TRUST
-    : getLessonTrust(topic || '');
+  const contentTrust = getFlashcardTrust(
+    resolvedDeckSource,
+    topic || '',
+    dictionaryData?.trust,
+  );
+  const deckSourceLabel = resolvedDeckSource === 'curated'
+    ? 'Guided deck'
+    : resolvedDeckSource === 'custom'
+      ? 'Custom practice deck'
+      : 'Dictionary deck';
 
   return (
     <LearnerPageShell className="flex flex-col">
       <LearnerPageHeader
         title={deckTitle}
-        subtitle={`${cardType === 'curated' ? 'Guided deck' : 'Dictionary deck'} · Card ${currentIndex + 1} of ${flashcards.length}`}
+        subtitle={`${deckSourceLabel} · Card ${currentIndex + 1} of ${flashcards.length}`}
         icon={Layers3}
         backTo="/flashcards"
         backLabel="Back to flashcard decks"

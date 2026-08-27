@@ -54,6 +54,21 @@ DEVELOPING_CORPUS_TRUST = {
 }
 
 
+def _word_of_day_pools(words: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Partition daily words without dropping developing canonical entries."""
+
+    preferred = [
+        word
+        for word in words
+        if word["canonical_entry"]
+        and word["canonical_entry"].get("review_status")
+        in {"verified", "source_backed", "variant"}
+        and word["canonical_entry"].get("confidence") in {"high", "medium"}
+    ]
+    broader = [word for word in words if word not in preferred]
+    return preferred, broader
+
+
 @lru_cache(maxsize=1)
 def _canonical_trust_index() -> dict[str, dict]:
     """Index canonical terms and safe recorded variants for learner-facing trust metadata."""
@@ -1011,14 +1026,7 @@ class DictionaryService:
         # Prefer canonical source-backed terms on most days without removing the
         # broader learning corpus from the rotation. Every fifth Guam calendar day
         # intentionally draws from the broader pool when one is available.
-        preferred_words = [
-            word
-            for word in good_words
-            if word["canonical_entry"]
-            and word["canonical_entry"].get("review_status") in {"verified", "source_backed", "variant"}
-            and word["canonical_entry"].get("confidence") in {"high", "medium"}
-        ]
-        broader_words = [word for word in good_words if not word["canonical_entry"]]
+        preferred_words, broader_words = _word_of_day_pools(good_words)
         use_broader_pool = day_of_year % 5 == 0 and bool(broader_words)
         selection_pool = broader_words if use_broader_pool else (preferred_words or good_words)
 

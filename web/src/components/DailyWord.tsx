@@ -11,6 +11,16 @@ interface DailyWordProps {
   compactOnMobile?: boolean;
 }
 
+/** Keep daily-word provenance and synthesized-audio notices together. */
+function WordTrustFooter({ word, className }: { word: WordOfTheDay; className: string }) {
+  return (
+    <>
+      <ContentTrustNote trust={word.trust ?? DICTIONARY_CONTENT_TRUST} className={className} compact />
+      <TTSDisclaimer variant="inline" className={className} />
+    </>
+  );
+}
+
 /** Display the daily dictionary entry with its source status and learning actions. */
 export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyWordProps) {
   const { data: word, isLoading, error } = useWordOfTheDay();
@@ -158,8 +168,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                   <p className="text-brown-600 dark:text-gray-300 italic">"{word.example.english}"</p>
                 </div>
               )}
-              <ContentTrustNote trust={word.trust ?? DICTIONARY_CONTENT_TRUST} className="mt-3" compact />
-              <TTSDisclaimer variant="inline" className="mt-3" />
+              <WordTrustFooter word={word} className="mt-3" />
             </div>
           )}
         </div>
@@ -223,8 +232,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 )}
               </div>
             )}
-            <ContentTrustNote trust={word.trust ?? DICTIONARY_CONTENT_TRUST} className="mb-3" compact />
-            <TTSDisclaimer variant="inline" className="mb-3" />
+            <WordTrustFooter word={word} className="mb-3" />
             {onAddToFlashcards && (
               <button
                 onClick={handleAddToFlashcards}
@@ -326,8 +334,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
           </div>
         )}
 
-        <ContentTrustNote trust={word.trust ?? DICTIONARY_CONTENT_TRUST} className="mb-3" compact />
-        <TTSDisclaimer variant="inline" className="mb-3" />
+        <WordTrustFooter word={word} className="mb-3" />
 
         {/* Add to Flashcards Button */}
         {onAddToFlashcards && (

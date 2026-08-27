@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PublicPage } from './PublicPage';
-import { TRUST_LABELS, type ContentTrustLevel } from '../data/contentTrust';
+import { TRUST_LABELS, TRUST_LEVEL_SURFACE_CLASSES, type ContentTrustLevel } from '../data/contentTrust';
 
 const capabilities: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'AI chat', icon: MessageCircle },
@@ -28,13 +28,6 @@ const capabilities: Array<{ label: string; icon: LucideIcon }> = [
   { label: 'Dictionary', icon: Languages },
   { label: 'Progress', icon: BarChart3 },
 ];
-
-const trustLevelClasses: Record<ContentTrustLevel, string> = {
-  current_source: 'border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30',
-  source_backed: 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30',
-  developing: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30',
-  ai_practice: 'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-950/30',
-};
 
 /** Render one consistently styled section of the public product story. */
 function StorySection({
@@ -121,7 +114,7 @@ export function AboutPage() {
           <p>HåfaGPT keeps useful material available while showing how strongly each learning surface is supported. A source-backed label does not mean a person has independently approved every example.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {(Object.entries(TRUST_LABELS) as Array<[ContentTrustLevel, (typeof TRUST_LABELS)[ContentTrustLevel]]>).map(([level, details]) => (
-              <div key={level} className={`rounded-2xl border p-4 ${trustLevelClasses[level]}`}>
+              <div key={level} className={`rounded-2xl border p-4 ${TRUST_LEVEL_SURFACE_CLASSES[level]}`}>
                 <h3 className="font-bold text-brown-950 dark:text-white">{details.label}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-brown-700 dark:text-gray-300">{details.description}</p>
               </div>

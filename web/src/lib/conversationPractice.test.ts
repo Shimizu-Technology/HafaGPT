@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { serializeConversationHistory } from './conversationPractice';
+import { hasVisiblePracticeFeedback, serializeConversationHistory } from './conversationPractice';
 
 describe('conversation practice request history', () => {
   it('keeps a local failure message out of the next retry payload', () => {
@@ -13,5 +13,11 @@ describe('conversation practice request history', () => {
       { role: 'character', content: 'Håfa Adai!' },
       { role: 'user', content: 'Håfa Adai.' },
     ]);
+  });
+
+  it('does not render an empty feedback card', () => {
+    expect(hasVisiblePracticeFeedback([])).toBe(false);
+    expect(hasVisiblePracticeFeedback(['Try a different spelling'])).toBe(true);
+    expect(hasVisiblePracticeFeedback([], 'Keep going')).toBe(true);
   });
 });
