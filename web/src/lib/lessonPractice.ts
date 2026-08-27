@@ -131,6 +131,9 @@ export function readLearningGameContext(search: string): LearningGameContext | n
   };
 }
 
+/** Read the same allowlisted learning context on lessons, cards, quizzes, or games. */
+export const readLearningContext = readLearningGameContext;
+
 export function getLearningGameReturn(context: LearningGameContext | null): LearningGameReturn {
   if (context?.source === 'today') {
     return { to: context.returnTo, label: 'Back to Today' };
@@ -143,3 +146,6 @@ export function getLearningGameReturn(context: LearningGameContext | null): Lear
   }
   return { to: appRoutes.games, label: 'Back to games' };
 }
+
+/** Resolve the canonical return action for any contextual learning surface. */
+export const getLearningReturn = getLearningGameReturn;

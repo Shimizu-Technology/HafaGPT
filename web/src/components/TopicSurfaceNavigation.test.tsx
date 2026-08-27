@@ -168,6 +168,7 @@ function renderSurface(
 
 const topicQuery = 'topic=greetings&return_to=%2Flearning%2Fgreetings';
 const learningQuery = `topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings`;
+const todayQuery = 'topic=greetings&category=greetings&source=today&return_to=%2F';
 
 function completeCuratedGreetingQuiz() {
   const quiz = getQuizCategory('greetings')!;
@@ -399,6 +400,13 @@ describe('topic surface navigation', () => {
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
   });
 
+  it('returns Today listening flashcards to Today', async () => {
+    renderSurface(<FlashcardViewer />, '/flashcards/:topic', `/flashcards/greetings?${todayQuery}`);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to Today' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/');
+  });
+
   it('opens an exact missed concept and returns to its quiz review', async () => {
     const resultId = '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678';
     const path = withConceptReview(
@@ -478,6 +486,24 @@ describe('topic surface navigation', () => {
     });
     fireEvent.click(back);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
+  });
+
+  it('returns a Today quiz to Today and saves its launch relationship', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    renderSurface(<QuizViewer />, '/quiz/:categoryId', `/quiz/greetings?${todayQuery}`);
+    await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
+
+    completeCuratedGreetingQuiz();
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledOnce());
+    expect(mocks.saveQuizResult.mock.calls[0][0].learning_context).toEqual({
+      topic_id: 'greetings',
+      source: 'today',
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Back to Today' })).toBeEnabled();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Today' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/');
   });
 
   it('saves exact contextual quiz evidence and uses a fresh identity on retry', async () => {

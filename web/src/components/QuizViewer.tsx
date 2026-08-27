@@ -17,6 +17,7 @@ import { ALL_TOPICS } from '../data/learningPath';
 import { getQuestionConceptId } from '../data/conceptEvidence';
 import { readTopicReturn } from '../lib/topicReturn';
 import { createClientAttemptId } from '../lib/clientAttemptId';
+import { getLearningReturn, readLearningContext } from '../lib/lessonPractice';
 import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 import { appRoutes, currentAppPath } from '../lib/routes';
 
@@ -112,8 +113,17 @@ export function QuizViewer() {
   const topicReturn = curatedTopic
     ? readTopicReturn(searchParams.toString(), curatedTopic.id)
     : null;
-  const quizReturnTo = topicReturn?.to ?? '/quiz';
-  const quizReturnLabel = topicReturn?.label ?? 'Back to quizzes';
+  const learningContext = curatedTopic
+    ? readLearningContext(searchParams.toString())
+    : null;
+  const validatedLearningContext = learningContext?.topicId === curatedTopic?.id
+    ? learningContext
+    : null;
+  const learningReturn = validatedLearningContext
+    ? getLearningReturn(validatedLearningContext)
+    : null;
+  const quizReturnTo = learningReturn?.to ?? topicReturn?.to ?? '/quiz';
+  const quizReturnLabel = learningReturn?.label ?? topicReturn?.label ?? 'Back to quizzes';
   const contentTrust = isDictionaryQuiz
     ? dictQuizData?.trust ?? DICTIONARY_CONTENT_TRUST
     : getLessonTrust(curatedTrustCategory);
@@ -421,10 +431,10 @@ export function QuizViewer() {
             time_spent_seconds: timeSpent,
             answers,
             client_attempt_id: clientAttemptIdRef.current,
-            ...(topicReturn && curatedTopic ? {
+            ...((validatedLearningContext || topicReturn) && curatedTopic ? {
               learning_context: {
                 topic_id: curatedTopic.id,
-                source: 'topic' as const,
+                source: validatedLearningContext?.source ?? 'topic' as const,
               },
             } : {}),
           };
@@ -520,7 +530,7 @@ export function QuizViewer() {
   if (showResults) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={isResultNavigationBlocked || topicReturn ? handleResultsBack : undefined} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={isResultNavigationBlocked || learningReturn || topicReturn ? handleResultsBack : undefined} maxWidthClassName="max-w-2xl" />
 
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}
@@ -693,7 +703,7 @@ export function QuizViewer() {
         subtitle={`${isDictionaryQuiz ? 'Dictionary quiz' : 'Guided quiz'} · Question ${currentIndex + 1} of ${questions.length}`}
         icon={Brain}
         backTo={quizReturnTo}
-        backLabel={topicReturn ? `Leave quiz and return to ${curatedTopic?.title}` : 'Leave quiz'}
+        backLabel={learningReturn?.label ?? (topicReturn ? `Leave quiz and return to ${curatedTopic?.title}` : 'Leave quiz')}
         onBack={handleBack}
         maxWidthClassName="max-w-2xl"
         below={(

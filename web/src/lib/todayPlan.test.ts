@@ -62,6 +62,9 @@ describe('deterministic Today planner', () => {
     }));
 
     expect(audioFirst.activities[0].kind).toBe('listen');
+    expect(audioFirst.activities[0].to).toBe(
+      '/flashcards/greetings?topic=greetings&category=greetings&source=today&return_to=%2F',
+    );
     expect(independent.activities[0].kind).toBe('lesson');
     expect(independent.activities[0].to).toBe(
       '/learn/greetings?topic=greetings&category=greetings&source=today&return_to=%2F',
@@ -85,6 +88,27 @@ describe('deterministic Today planner', () => {
 
     expect(playActivity?.to).toBe(
       '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F',
+    );
+  });
+
+  it('keeps Today context on a supported weak-area quiz', () => {
+    const plan = buildTodayPlan(input({
+      weakAreas: {
+        has_weak_areas: true,
+        recommendation: {
+          category_id: 'family',
+          category_title: 'Family',
+          avg_score: 45,
+          attempt_count: 2,
+          priority: 'high',
+        },
+        weak_areas: [],
+      },
+    }));
+    const weakArea = plan.activities.find((activity) => activity.id === 'weak-family');
+
+    expect(weakArea?.to).toBe(
+      '/quiz/family?topic=family&category=family&source=today&return_to=%2F',
     );
   });
 

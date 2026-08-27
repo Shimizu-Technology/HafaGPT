@@ -19,6 +19,7 @@ import {
 import { ALL_TOPICS } from '../data/learningPath';
 import { readTopicReturn } from '../lib/topicReturn';
 import { readConceptReview } from '../lib/conceptReview';
+import { getLearningReturn, readLearningContext } from '../lib/lessonPractice';
 import { appRoutes, currentAppPath } from '../lib/routes';
 
 interface FlashcardData {
@@ -67,11 +68,18 @@ export function FlashcardViewer() {
   const topicReturn = connectedTopic
     ? readTopicReturn(searchParams.toString(), connectedTopic.id)
     : null;
+  const learningContext = connectedTopic
+    ? readLearningContext(searchParams.toString())
+    : null;
+  const learningReturn = learningContext && connectedTopic
+    && learningContext.topicId === connectedTopic.id
+    ? getLearningReturn(learningContext)
+    : null;
   const conceptReview = cardType === 'curated' && topic
     ? readConceptReview(searchParams.toString(), topic)
     : null;
   const conceptReviewCardIndex = conceptReview?.cardIndex;
-  const returnContext = conceptReview ?? topicReturn;
+  const returnContext = conceptReview ?? learningReturn ?? topicReturn;
   
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);
