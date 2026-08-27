@@ -1,9 +1,15 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 const distDirectory = path.resolve('dist');
 const assetsDirectory = path.join(distDirectory, 'assets');
-const maxInitialBytes = 400 * 1024;
+// The authenticated production build includes Clerk plus React Router's data
+// APIs. Keep a narrow raw-size allowance above that verified baseline, and pair
+// it with a transfer-size ceiling so a split or minifier change cannot disguise
+// meaningful startup growth.
+const maxInitialBytes = 425 * 1024;
+const maxInitialGzipBytes = 140 * 1024;
 const maxChunkBytes = 450 * 1024;
 
 const indexHtml = await readFile(path.join(distDirectory, 'index.html'), 'utf8');
@@ -40,17 +46,36 @@ const initialChunks = initialFiles.map((file) => {
   return chunk;
 });
 const initialBytes = initialChunks.reduce((total, chunk) => total + chunk.bytes, 0);
+const initialGzipBytes = (
+  await Promise.all(
+    initialFiles.map(async (file) => {
+      const contents = await readFile(path.join(assetsDirectory, file));
+      return gzipSync(contents).byteLength;
+    }),
+  )
+).reduce((total, bytes) => total + bytes, 0);
 
 const oversizedChunks = sizes.filter(({ bytes }) => bytes > maxChunkBytes);
 const formatKilobytes = (bytes) => `${(bytes / 1024).toFixed(1)} KiB`;
 
-if (initialBytes > maxInitialBytes || oversizedChunks.length > 0) {
+if (
+  initialBytes > maxInitialBytes ||
+  initialGzipBytes > maxInitialGzipBytes ||
+  oversizedChunks.length > 0
+) {
   const failures = [];
 
   if (initialBytes > maxInitialBytes) {
     failures.push(
       `initial JavaScript is ${formatKilobytes(initialBytes)} across ` +
         `${initialChunks.length} chunks (limit ${formatKilobytes(maxInitialBytes)})`,
+    );
+  }
+
+  if (initialGzipBytes > maxInitialGzipBytes) {
+    failures.push(
+      `compressed initial JavaScript is ${formatKilobytes(initialGzipBytes)} ` +
+        `(limit ${formatKilobytes(maxInitialGzipBytes)})`,
     );
   }
 
@@ -69,6 +94,7 @@ const largestChunk = sizes.reduce((largest, chunk) =>
 
 console.log(
   `Bundle budget passed: initial JavaScript ${formatKilobytes(initialBytes)} ` +
-    `across ${initialChunks.length} chunks, ` +
+    `raw / ${formatKilobytes(initialGzipBytes)} compressed across ` +
+    `${initialChunks.length} chunks, ` +
     `largest chunk ${formatKilobytes(largestChunk.bytes)}, ${sizes.length} JavaScript chunks.`,
 );
