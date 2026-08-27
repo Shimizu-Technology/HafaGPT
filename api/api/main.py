@@ -98,6 +98,7 @@ from .learning_attempts import (
     persist_game_result,
 )
 from .learning_workspace import create_learning_workspace_router
+from .conversation_records import create_conversation_records_router
 from .concept_evidence import create_concept_evidence_router
 from .vocabulary_records import create_vocabulary_records_router
 from .quiz_evidence import persist_quiz_result, validate_quiz_result_request
@@ -1614,6 +1615,14 @@ async def eval_create_conversation(
 
 # --- Conversation Management Endpoints ---
 
+def validate_conversation_topic_id(topic_id: Optional[str]) -> Optional[str]:
+    """Accept only stable learning topic IDs from the canonical catalog."""
+    if topic_id is None:
+        return None
+    if topic_id not in {str(topic["id"]) for topic in ALL_TOPICS}:
+        raise HTTPException(status_code=422, detail="Unknown learning topic")
+    return topic_id
+
 @app.post("/api/conversations", response_model=ConversationResponse, tags=["Conversations"])
 async def create_conversation_endpoint(
     request: ConversationCreate,
@@ -1627,7 +1636,8 @@ async def create_conversation_endpoint(
         # Create conversation
         conversation = conversations.create_conversation(
             user_id=user_id,
-            title=request.title or "New Chat"
+            title=request.title or "New Chat",
+            learning_topic_id=validate_conversation_topic_id(request.learning_topic_id),
         )
         
         logger.info(f"Created conversation: {conversation.id} for user: {user_id or 'anonymous'}")
@@ -7818,6 +7828,9 @@ ALL_TOPICS = BEGINNER_PATH + INTERMEDIATE_PATH + ADVANCED_PATH
 
 app.include_router(
     create_learning_workspace_router(topics=ALL_TOPICS, verify_user=verify_user)
+)
+app.include_router(
+    create_conversation_records_router(topics=ALL_TOPICS, verify_user=verify_user)
 )
 app.include_router(create_concept_evidence_router(verify_user=verify_user))
 app.include_router(create_vocabulary_records_router())

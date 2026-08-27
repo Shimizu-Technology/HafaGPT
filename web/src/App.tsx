@@ -159,6 +159,7 @@ function AppRoutes() {
         
         {/* Chat route - AI tutor */}
         <Route path="/chat" element={<Chat />} />
+        <Route path="/chat/:conversationId" element={<Chat />} />
         
         {/* Learning Path - Full map view */}
         <Route path="/learning" element={<ProtectedRoute><LearningPathPage /></ProtectedRoute>} />

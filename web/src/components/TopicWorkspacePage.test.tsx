@@ -5,10 +5,15 @@ import { TopicWorkspacePage } from './TopicWorkspacePage';
 
 const mocks = vi.hoisted(() => ({
   useTopicWorkspace: vi.fn(),
+  useTopicConversations: vi.fn(),
 }));
 
 vi.mock('../hooks/useLearningPath', () => ({
   useTopicWorkspace: mocks.useTopicWorkspace,
+}));
+
+vi.mock('../hooks/useConversationsQuery', () => ({
+  useTopicConversations: mocks.useTopicConversations,
 }));
 
 vi.mock('../hooks/useTheme', () => ({
@@ -54,6 +59,7 @@ function renderWorkspace(path = '/learning/greetings') {
 
 describe('TopicWorkspacePage', () => {
   beforeEach(() => {
+    mocks.useTopicConversations.mockReturnValue({ data: [] });
     mocks.useTopicWorkspace.mockReturnValue({
       data: workspace,
       isLoading: false,
@@ -77,6 +83,10 @@ describe('TopicWorkspacePage', () => {
       'href',
       '/quiz/greetings?topic=greetings&return_to=%2Flearning%2Fgreetings',
     );
+    expect(screen.getByRole('link', { name: /Ask the tutor/ })).toHaveAttribute(
+      'href',
+      '/chat?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
     expect(screen.getByRole('link', { name: /Memory Match/ })).toHaveAttribute(
       'href',
       '/games/memory?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
@@ -89,6 +99,29 @@ describe('TopicWorkspacePage', () => {
       'href',
       '/stories/hafa-adai-maria?topic=greetings&return_to=%2Flearning%2Fgreetings',
     );
+  });
+
+  it('shows bounded metadata links for recent chats without rendering messages', () => {
+    mocks.useTopicConversations.mockReturnValue({
+      data: [{
+        id: 'conv-1',
+        user_id: 'user-1',
+        title: 'Practice greetings',
+        created_at: '2026-08-27T00:00:00Z',
+        updated_at: '2026-08-28T00:00:00Z',
+        message_count: 2,
+        learning_topic_id: 'greetings',
+      }],
+    });
+
+    renderWorkspace();
+
+    expect(screen.getByRole('heading', { name: 'Recent topic chats' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Practice greetings/ })).toHaveAttribute(
+      'href',
+      '/chat/conv-1?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.queryByText('private learner message')).not.toBeInTheDocument();
   });
 
   it('renders an honest empty progress state without implying mastery', () => {

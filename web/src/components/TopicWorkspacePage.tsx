@@ -16,6 +16,7 @@ import { getTopic } from '../data/learningPath';
 import { getStoryById } from '../data/storyData';
 import { TOPIC_SCENARIO_IDS, TOPIC_STORY_IDS } from '../data/topicRelationships';
 import { useTopicWorkspace } from '../hooks/useLearningPath';
+import { useTopicConversations } from '../hooks/useConversationsQuery';
 import { withLearningContext } from '../lib/lessonPractice';
 import { appRoutes } from '../lib/routes';
 import { withTopicReturn } from '../lib/topicReturn';
@@ -65,6 +66,7 @@ export function TopicWorkspacePage() {
   const { topicId } = useParams<{ topicId: string }>();
   const localTopic = getTopic(topicId || '');
   const { data, isLoading, isError, refetch } = useTopicWorkspace(localTopic?.id);
+  const { data: recentConversations = [] } = useTopicConversations(localTopic?.id, 3);
 
   if (!localTopic) {
     return (
@@ -176,11 +178,33 @@ export function TopicWorkspacePage() {
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <WorkspaceLink icon={Layers3} title="Flashcards" description="Study the guided topic deck." to={withTopicReturn(appRoutes.flashcards(data.flashcard_category), localTopic.id)} />
             <WorkspaceLink icon={Brain} title="Topic quiz" description="Check recall with the matching quiz." to={withTopicReturn(appRoutes.quiz(data.quiz_category), localTopic.id)} />
+            <WorkspaceLink icon={MessageCircle} title="Ask the tutor" description="Start a saved chat connected to this topic." to={appRoutes.chat({ topicId: localTopic.id, returnTo: topicHome })} />
             {games.map((game) => (
               <WorkspaceLink key={game.id} icon={Gamepad2} title={game.title} description={game.description} to={withLearningContext(game.path, localTopic, { source: 'topic', returnTo: topicHome })} />
             ))}
           </div>
         </section>
+
+        {recentConversations.length > 0 && (
+          <section aria-labelledby="topic-conversations-heading">
+            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Continue where you left off</p>
+            <h2 id="topic-conversations-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic chats</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {recentConversations.map((conversation) => (
+                <WorkspaceLink
+                  key={conversation.id}
+                  icon={MessageCircle}
+                  title={conversation.title}
+                  description={`Updated ${formatDate(conversation.updated_at) || 'recently'}`}
+                  to={appRoutes.conversation(conversation.id, {
+                    topicId: localTopic.id,
+                    returnTo: topicHome,
+                  })}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {(scenarios.length > 0 || stories.length > 0) && (
           <section aria-labelledby="related-heading">

@@ -16,6 +16,7 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   message_count: number;
+  learning_topic_id?: string | null;
 }
 
 export interface FileInfo {
@@ -88,7 +89,7 @@ export function useInitUserData(activeConversationId: string | null, enabled: bo
  * - staleTime: 10 seconds - shorter cache to ensure fresh data when switching conversations
  */
 export function useConversationMessages(conversationId: string | null) {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
 
   return useQuery({
     queryKey: ['messages', conversationId],
@@ -109,9 +110,56 @@ export function useConversationMessages(conversationId: string | null) {
       const data = await response.json();
       return data.messages || [];
     },
-    enabled: !!conversationId,
+    enabled: !!conversationId && isSignedIn === true,
     staleTime: 10 * 1000, // 10 seconds - short cache for fresh data
     refetchOnWindowFocus: true, // Refetch when user returns to tab (catches background completions)
+  });
+}
+
+/** Fetch stable metadata for one owned conversation record. */
+export function useConversation(conversationId: string | null) {
+  const { getToken, isSignedIn } = useAuth();
+
+  return useQuery({
+    queryKey: ['conversation', conversationId],
+    queryFn: async (): Promise<Conversation> => {
+      const token = await getToken();
+      const response = await fetch(`${API_URL}/api/conversation-records/${conversationId}`, {
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+      });
+      if (!response.ok) throw new Error('Conversation not found');
+      return response.json();
+    },
+    enabled: !!conversationId && isSignedIn === true,
+    staleTime: 30 * 1000,
+  });
+}
+
+/** Fetch a bounded, metadata-only preview of conversations linked to one topic. */
+export function useTopicConversations(topicId?: string, limit = 3) {
+  const { getToken, isSignedIn, userId } = useAuth();
+
+  return useQuery({
+    queryKey: ['conversations', 'topic', userId, topicId, limit],
+    queryFn: async (): Promise<Conversation[]> => {
+      const token = await getToken();
+      const params = new URLSearchParams({ limit: String(limit) });
+      const response = await fetch(
+        `${API_URL}/api/conversation-records/topics/${encodeURIComponent(topicId || '')}?${params}`,
+        {
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        },
+      );
+      if (!response.ok) throw new Error('Failed to fetch topic conversations');
+      const data = await response.json();
+      // Enforce the relationship again at the UI boundary before rendering a
+      // private record in a topic workspace.
+      return (data.conversations || []).filter(
+        (conversation: Conversation) => conversation.learning_topic_id === topicId,
+      );
+    },
+    enabled: isSignedIn === true && !!userId && !!topicId,
+    staleTime: 30 * 1000,
   });
 }
 
@@ -125,7 +173,13 @@ export function useCreateConversation() {
   const { getToken } = useAuth();
 
   return useMutation({
-    mutationFn: async (title: string): Promise<Conversation> => {
+    mutationFn: async ({
+      title,
+      learningTopicId,
+    }: {
+      title: string;
+      learningTopicId?: string;
+    }): Promise<Conversation> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/conversations`, {
         method: 'POST',
@@ -133,7 +187,10 @@ export function useCreateConversation() {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
-        body: JSON.stringify({ title })
+        body: JSON.stringify({
+          title,
+          ...(learningTopicId && { learning_topic_id: learningTopicId }),
+        })
       });
 
       if (!response.ok) throw new Error('Failed to create conversation');
@@ -148,6 +205,11 @@ export function useCreateConversation() {
           conversations: [newConversation, ...old.conversations],
         };
       });
+      if (newConversation.learning_topic_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['conversations', 'topic'],
+        });
+      }
     },
   });
 }
@@ -182,6 +244,8 @@ export function useDeleteConversation() {
       });
       // Invalidate messages for this conversation
       queryClient.removeQueries({ queryKey: ['messages', conversationId] });
+      queryClient.removeQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'topic'] });
     },
   });
 }
@@ -218,6 +282,8 @@ export function useUpdateConversationTitle() {
           ),
         };
       });
+      queryClient.invalidateQueries({ queryKey: ['conversation', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', 'topic'] });
     },
   });
 }

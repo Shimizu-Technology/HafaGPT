@@ -10,6 +10,7 @@ import os
 import json
 import sys
 import threading
+from contextlib import closing
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -979,34 +980,41 @@ def log_conversation(
     """
     try:
         # Use retry wrapper for serverless database connections
-        conn = _get_db_connection_with_retry()
-        cursor = conn.cursor()
-        
-        # Insert conversation log (with user_id, conversation_id, file metadata, and pending_id)
-        cursor.execute("""
-            INSERT INTO conversation_logs (
-                session_id, user_id, conversation_id, mode, user_message, bot_response,
-                sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            session_id,
-            user_id,  # Add user_id
-            conversation_id,  # Add conversation_id
-            mode,
-            user_message,
-            bot_response,
-            json.dumps(sources),  # JSONB field
-            used_rag,
-            used_web_search,
-            response_time,
-            image_url,  # NEW: Add S3 image URL
-            json.dumps(file_urls) if file_urls else None,
-            pending_id,
-        ))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
+        with closing(_get_db_connection_with_retry()) as conn:
+            with closing(conn.cursor()) as cursor:
+                cursor.execute("""
+                    INSERT INTO conversation_logs (
+                        session_id, user_id, conversation_id, mode, user_message, bot_response,
+                        sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    session_id,
+                    user_id,
+                    conversation_id,
+                    mode,
+                    user_message,
+                    bot_response,
+                    json.dumps(sources),
+                    used_rag,
+                    used_web_search,
+                    response_time,
+                    image_url,
+                    json.dumps(file_urls) if file_urls else None,
+                    pending_id,
+                ))
+
+                if conversation_id and user_id:
+                    cursor.execute(
+                        """
+                        UPDATE conversations
+                        SET updated_at = NOW()
+                        WHERE id = %s
+                          AND user_id = %s
+                          AND deleted_at IS NULL
+                        """,
+                        (conversation_id, user_id),
+                    )
+                conn.commit()
         
     except Exception as e:
         # Don't break the app if logging fails
