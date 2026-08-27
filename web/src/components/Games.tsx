@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { GameCard } from './games/GameCard';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { GAME_CONTENT_TRUST } from '../data/contentTrust';
 
 type GameGroup = 'listen' | 'words' | 'quick' | 'challenge';
 
@@ -72,6 +74,7 @@ export function Games() {
       />
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
+        <ContentTrustNote trust={GAME_CONTENT_TRUST} className="mb-6" />
         <section className="mb-8 overflow-hidden rounded-3xl border border-coral-200 bg-coral-50 p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">

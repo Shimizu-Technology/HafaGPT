@@ -11,6 +11,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
+import type { ContentTrust } from '../data/contentTrust';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -24,6 +25,7 @@ export interface DictionaryFlashcard {
   back: string;
   part_of_speech: string;
   example: string | null;
+  trust?: ContentTrust;
 }
 
 interface DictionaryFlashcardsResponse {
@@ -35,6 +37,7 @@ interface DictionaryFlashcardsResponse {
     icon: string;
     description: string;
   } | null;
+  trust?: ContentTrust;
 }
 
 // ===========================

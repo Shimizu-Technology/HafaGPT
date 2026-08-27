@@ -2,6 +2,8 @@ import { ArrowRight, Check, Clock3, MessageCircle, Sparkles } from 'lucide-react
 import { Link } from 'react-router-dom';
 import { conversationScenarios, type ConversationScenario } from '../data/conversationScenarios';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
 
 const difficultyStyles = {
   beginner: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
@@ -86,11 +88,13 @@ export function ConversationList() {
               <div className="mt-3 grid gap-2 text-sm text-brown-700 dark:text-gray-300 sm:grid-cols-3">
                 <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Follow one clear goal.</p>
                 <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Open hints when needed.</p>
-                <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Get gentle language feedback.</p>
+                <p className="flex items-start gap-2"><Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />Get gentle AI suggestions.</p>
               </div>
             </div>
           </div>
         </section>
+
+        <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} />
 
         <ScenarioSection title="Beginner" description="Start with greetings, introductions, and familiar exchanges." scenarios={beginnerScenarios} />
         <ScenarioSection title="Intermediate" description="Handle longer exchanges with less guidance." scenarios={intermediateScenarios} />

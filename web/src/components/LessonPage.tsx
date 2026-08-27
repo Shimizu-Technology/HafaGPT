@@ -10,6 +10,8 @@ import { LessonQuiz } from './LessonQuiz';
 import { LessonComplete } from './LessonComplete';
 import { XPToast } from './XPDisplay';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { getLessonTrust } from '../data/contentTrust';
 
 type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
 
@@ -63,6 +65,7 @@ export function LessonPage() {
 
   const currentStepIndex = STEPS.indexOf(currentStep);
   const progress = ((currentStepIndex + 1) / STEPS.length) * 100;
+  const contentTrust = getLessonTrust(topic.flashcardCategory);
 
   const goToStep = (step: LessonStep) => {
     setCurrentStep(step);
@@ -259,6 +262,7 @@ export function LessonPage() {
 
       {/* Content */}
       <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
+        <ContentTrustNote trust={contentTrust} className="mb-6" />
         {currentStep === 'intro' && (
           <LessonIntro topic={topic} onComplete={handleIntroComplete} />
         )}

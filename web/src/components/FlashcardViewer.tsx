@@ -11,6 +11,8 @@ import { createCardIdentity, type CardSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { browserStorage } from '../lib/browserStorage';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
 
 interface FlashcardData {
   sourceId?: string;
@@ -469,6 +471,9 @@ export function FlashcardViewer() {
   const currentCard = flashcards[currentIndex];
   const deckTitle = topicTitles[topic || ''] || dictionaryData?.category?.title || topic || 'Flashcards';
   const progress = ((currentIndex + 1) / flashcards.length) * 100;
+  const contentTrust = cardType === 'dictionary'
+    ? dictionaryData?.trust ?? DICTIONARY_CONTENT_TRUST
+    : getLessonTrust(topic || '');
 
   return (
     <LearnerPageShell className="flex flex-col">
@@ -511,6 +516,7 @@ export function FlashcardViewer() {
         onTouchEnd={onTouchEnd}
       >
         <div className="w-full max-w-md">
+          <ContentTrustNote trust={contentTrust} className="mb-4" compact />
           <Flashcard
             front={currentCard.front}
             back={currentCard.back}

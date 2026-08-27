@@ -4,6 +4,9 @@ import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, 
 import { getStoryById, StoryWord } from '../data/storyData';
 import { PronunciationButton } from './PronunciationButton';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { ContentTrustNote } from './ContentTrustNote';
+import { TTSDisclaimer } from './TTSDisclaimer';
+import { STORY_CONTENT_TRUST } from '../data/contentTrust';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 
@@ -131,6 +134,9 @@ export function StoryViewer() {
           </div>
         </div>
       </div>
+
+      <ContentTrustNote trust={STORY_CONTENT_TRUST} className="mb-4" />
+      <TTSDisclaimer variant="inline" className="mb-4" />
 
       {/* Cultural Note Toggle */}
       {story.culturalNote && (

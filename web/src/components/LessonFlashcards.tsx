@@ -3,6 +3,7 @@ import { ArrowRight, SkipForward, Volume2, RotateCcw, ChevronLeft, ChevronRight 
 import { LearningTopic } from '../data/learningPath';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useSpeech } from '../hooks/useSpeech';
+import { TTSDisclaimer } from './TTSDisclaimer';
 
 interface LessonFlashcardsProps {
   topic: LearningTopic;
@@ -67,6 +68,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip }: LessonFlashcards
 
   return (
     <div className="animate-fade-in space-y-6">
+      <TTSDisclaimer variant="inline" />
       {/* Progress indicator */}
       <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-400">
         <span>{viewedCards.size} of {cards.length} cards viewed</span>
@@ -248,4 +250,3 @@ export function LessonFlashcards({ topic, onComplete, onSkip }: LessonFlashcards
     </div>
   );
 }
-
