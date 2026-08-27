@@ -171,3 +171,64 @@ def test_upgrade_builds_unique_indexes_in_autocommit_before_attachment():
         '"uq_game_results_user_client_attempt" UNIQUE USING INDEX '
         '"uq_game_results_user_client_attempt"',
     ]
+
+
+def test_downgrade_removes_constraints_before_concurrent_indexes():
+    class AutocommitBlock:
+        def __init__(self, operations):
+            self.operations = operations
+
+        def __enter__(self):
+            self.operations.events.append(("autocommit_enter",))
+            self.operations.in_autocommit = True
+
+        def __exit__(self, *_args):
+            self.operations.in_autocommit = False
+            self.operations.events.append(("autocommit_exit",))
+
+    class Operations:
+        def __init__(self):
+            self.events = []
+            self.in_autocommit = False
+
+        def get_context(self):
+            return self
+
+        def autocommit_block(self):
+            return AutocommitBlock(self)
+
+        def execute(self, statement):
+            self.events.append(("execute", str(statement), self.in_autocommit))
+
+        def drop_index(self, name, **kwargs):
+            self.events.append(("drop_index", name, kwargs, self.in_autocommit))
+
+    migration = load_migration_module()
+    operations = Operations()
+    migration.op = operations
+
+    migration.downgrade()
+
+    assert operations.events[:3] == [
+        (
+            "execute",
+            "ALTER TABLE game_results DROP CONSTRAINT IF EXISTS "
+            "uq_game_results_user_client_attempt",
+            False,
+        ),
+        (
+            "execute",
+            "ALTER TABLE quiz_results DROP CONSTRAINT IF EXISTS "
+            "uq_quiz_results_user_client_attempt",
+            False,
+        ),
+        ("autocommit_enter",),
+    ]
+    drops = [event for event in operations.events if event[0] == "drop_index"]
+    assert [event[1] for event in drops] == [
+        index[0] for index in reversed(migration.EVIDENCE_INDEXES)
+    ]
+    assert all(event[2]["if_exists"] for event in drops)
+    assert all(event[2]["postgresql_concurrently"] for event in drops)
+    assert all(event[3] for event in drops)
+    assert operations.events[-1] == ("autocommit_exit",)
