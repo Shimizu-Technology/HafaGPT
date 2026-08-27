@@ -10,6 +10,7 @@ import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
 
 const PAGE_SIZE = 50;
 
+/** Show a dictionary category and the trust metadata returned for its entries. */
 export function VocabularyCategory() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();

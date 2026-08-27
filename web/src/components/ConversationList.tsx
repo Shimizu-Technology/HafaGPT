@@ -17,6 +17,7 @@ const difficultyLabels = {
   advanced: 'Advanced',
 };
 
+/** Present a single conversation scenario as an accessible practice link. */
 function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
   return (
     <Link
@@ -47,6 +48,7 @@ function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
   );
 }
 
+/** Group available scenarios by difficulty and omit empty groups. */
 function ScenarioSection({ title, description, scenarios }: { title: string; description: string; scenarios: ConversationScenario[] }) {
   if (!scenarios.length) return null;
   const headingId = `scenario-${title.toLowerCase()}`;
@@ -64,6 +66,7 @@ function ScenarioSection({ title, description, scenarios }: { title: string; des
   );
 }
 
+/** List guided conversation scenarios alongside their AI-practice trust notice. */
 export function ConversationList() {
   const beginnerScenarios = conversationScenarios.filter((scenario) => scenario.difficulty === 'beginner');
   const intermediateScenarios = conversationScenarios.filter((scenario) => scenario.difficulty === 'intermediate');

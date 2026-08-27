@@ -11,6 +11,7 @@ interface LessonFlashcardsProps {
   onSkip: () => void;
 }
 
+/** Run the flashcard step of a lesson using the topic's aligned deck and trust. */
 export function LessonFlashcards({ topic, onComplete, onSkip }: LessonFlashcardsProps) {
   const deck = DEFAULT_FLASHCARD_DECKS[topic.flashcardCategory];
   const cards = deck?.cards || [];

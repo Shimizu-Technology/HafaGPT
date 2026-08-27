@@ -23,7 +23,7 @@ interface QuestionResult {
   isCorrect: boolean;
 }
 
-// Convert dictionary quiz question to standard format
+/** Adapt an API-generated dictionary question to the shared quiz model. */
 function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   if (dq.type === 'multiple_choice') {
     return {
@@ -47,6 +47,7 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   }
 }
 
+/** Run curated or dictionary quizzes with matching source-trust context. */
 export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [searchParams] = useSearchParams();

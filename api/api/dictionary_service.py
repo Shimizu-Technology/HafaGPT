@@ -76,6 +76,8 @@ def _canonical_trust_index() -> dict[str, dict]:
 
 
 def _canonical_trust(entry: dict) -> dict:
+    """Convert a canonical vocabulary entry into learner-facing trust metadata."""
+
     review_status = entry.get("review_status", "needs_review")
     source_names = []
     for citation in entry.get("source_citations", []):

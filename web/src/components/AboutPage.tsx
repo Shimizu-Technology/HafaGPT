@@ -36,6 +36,7 @@ const trustLevelClasses: Record<ContentTrustLevel, string> = {
   ai_practice: 'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-950/30',
 };
 
+/** Render one consistently styled section of the public product story. */
 function StorySection({
   title,
   icon: Icon,
@@ -60,6 +61,7 @@ function StorySection({
   );
 }
 
+/** Explain why HåfaGPT exists, how it works, and how content trust is labeled. */
 export function AboutPage() {
   return (
     <PublicPage title="Our story" subtitle="Why HåfaGPT exists and who it is for" icon={Heart} maxWidthClassName="max-w-4xl">

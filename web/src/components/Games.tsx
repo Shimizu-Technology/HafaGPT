@@ -57,6 +57,7 @@ const games: GameDefinition[] = [
   { to: '/games/trivia', title: 'Cultural Trivia', description: 'Explore Guam history, traditions, language, and culture.', difficulty: 'All levels', group: 'challenge', icon: Landmark },
 ];
 
+/** Present vocabulary games with the trust level inherited from their content. */
 export function Games() {
   const [selectedGroup, setSelectedGroup] = useState<'all' | GameGroup>('all');
   const visibleGames = selectedGroup === 'all' ? games : games.filter((game) => game.group === selectedGroup);

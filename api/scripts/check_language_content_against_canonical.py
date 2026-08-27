@@ -50,6 +50,8 @@ def normalized_contains(haystack: str, needle: str) -> bool:
 
 
 def exact_contains(haystack: str, needle: str) -> bool:
+    """Match a standalone source form while excluding compounds and possessives."""
+
     needle = needle.strip()
     if not needle:
         return False
@@ -97,6 +99,8 @@ def iter_scan_files(root: Path):
 
 
 def load_rules(vocabulary_path: Path) -> list[TermRule]:
+    """Build audit rules from canonical entries, variants, and review status."""
+
     data = json.loads(vocabulary_path.read_text(encoding="utf-8"))
     rules: list[TermRule] = []
     for entry in data.get("entries", []):

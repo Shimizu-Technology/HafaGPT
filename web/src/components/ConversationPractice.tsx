@@ -31,6 +31,7 @@ interface ConversationState {
   finalScore?: number;
 }
 
+/** Run a guided scenario while distinguishing authored content from AI feedback. */
 export function ConversationPractice() {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const navigate = useNavigate();
@@ -485,7 +486,7 @@ export function ConversationPractice() {
   );
 }
 
-// Phrase Card Component
+/** Display an authored useful phrase with translation and pronunciation support. */
 function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   return (
     <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
@@ -507,7 +508,7 @@ function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   );
 }
 
-// Message Bubble Component
+/** Render one practice message and any non-authoritative AI feedback. */
 function MessageBubble({
   message, 
   characterName,

@@ -70,7 +70,7 @@ function cleanMarkdownContent(content: string): string {
   return cleanedLines.join('\n');
 }
 
-// Helper to determine file type from URL
+/** Infer the supported attachment type from a URL without fetching it. */
 function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'unknown' {
   const lowerUrl = url.toLowerCase();
   if (lowerUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/)) return 'image';
@@ -80,7 +80,7 @@ function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'un
   return 'unknown';
 }
 
-// Helper to get filename from URL
+/** Derive a readable attachment name from its encoded URL path. */
 function getFilenameFromUrl(url: string): string {
   const parts = url.split('/');
   const filename = parts[parts.length - 1].split('?')[0];

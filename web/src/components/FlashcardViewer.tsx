@@ -41,6 +41,7 @@ const topicTitles: Record<string, string> = {
   'common-phrases': 'Everyday Phrases'
 };
 
+/** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
   const { topic } = useParams<{ topic: string }>();
   const navigate = useNavigate();

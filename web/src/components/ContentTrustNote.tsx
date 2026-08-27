@@ -15,12 +15,14 @@ const levelStyles: Record<ContentTrust['level'], string> = {
   ai_practice: 'border-violet-200 bg-violet-50 text-violet-950 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-100',
 };
 
+/** Select the visual marker associated with a content-trust level. */
 function TrustIcon({ level }: { level: ContentTrust['level'] }) {
   if (level === 'ai_practice') return <Sparkles className="h-4 w-4" aria-hidden="true" />;
   if (level === 'developing') return <FlaskConical className="h-4 w-4" aria-hidden="true" />;
   return <BookOpenCheck className="h-4 w-4" aria-hidden="true" />;
 }
 
+/** Show a compact trust label with optional source, region, and review details. */
 export function ContentTrustNote({ trust, className = '', compact = false }: ContentTrustNoteProps) {
   const [expanded, setExpanded] = useState(false);
   const detailId = useId();

@@ -10,6 +10,7 @@ import { STORY_CONTENT_TRUST } from '../data/contentTrust';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 
+/** Display a bilingual story with provenance and speech-synthesis notices. */
 export function StoryViewer() {
   const { storyId } = useParams<{ storyId: string }>();
   const navigate = useNavigate();

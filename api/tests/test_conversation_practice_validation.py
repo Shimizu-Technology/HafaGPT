@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field, StringConstraints, ValidationError
 
 
 def load_conversation_practice_request_model():
+    """Load only the request models so validation tests avoid API startup side effects."""
+
     source_path = Path(__file__).resolve().parents[1] / "api" / "main.py"
     module = ast.parse(source_path.read_text(encoding="utf-8"))
     selected_names = {
@@ -42,6 +44,8 @@ def load_conversation_practice_request_model():
 
 
 def valid_payload() -> dict:
+    """Return the smallest representative valid conversation-practice request."""
+
     return {
         "scenario_id": "meeting-someone",
         "scenario_context": {

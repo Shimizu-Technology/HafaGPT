@@ -24,6 +24,7 @@ const STEP_INFO = {
   complete: { icon: CheckCircle, label: 'Done' },
 };
 
+/** Orchestrate lesson instruction, practice, quiz, and completion stages. */
 export function LessonPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();

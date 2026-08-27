@@ -11,6 +11,7 @@ interface DailyWordProps {
   compactOnMobile?: boolean;
 }
 
+/** Display the daily dictionary entry with its source status and learning actions. */
 export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyWordProps) {
   const { data: word, isLoading, error } = useWordOfTheDay();
   const { speak, isSpeaking, isSupported } = useSpeech();

@@ -117,6 +117,7 @@ const LESSON_TRUST_BY_CATEGORY: Record<string, ContentTrust> = {
   sentences: GRAMMAR_LESSON,
 };
 
+/** Resolve the shared trust profile used by a lesson and its linked activities. */
 export function getLessonTrust(category: string): ContentTrust {
   return LESSON_TRUST_BY_CATEGORY[category] ?? DEVELOPING_LESSON;
 }
