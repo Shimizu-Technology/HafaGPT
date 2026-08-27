@@ -20,6 +20,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // ===========================
 
 export interface DictionaryFlashcard {
+  word_id?: string;
   source_id: string;
   front: string;
   back: string;

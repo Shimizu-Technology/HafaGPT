@@ -99,6 +99,7 @@ from .learning_attempts import (
 )
 from .learning_workspace import create_learning_workspace_router
 from .concept_evidence import create_concept_evidence_router
+from .vocabulary_records import create_vocabulary_records_router
 from .quiz_evidence import persist_quiz_result, validate_quiz_result_request
 from .conversation_practice_models import (
     ConversationPracticeRequest,
@@ -7819,6 +7820,7 @@ app.include_router(
     create_learning_workspace_router(topics=ALL_TOPICS, verify_user=verify_user)
 )
 app.include_router(create_concept_evidence_router(verify_user=verify_user))
+app.include_router(create_vocabulary_records_router())
 
 
 @app.get("/api/learning/recommended", tags=["Learning Path"])

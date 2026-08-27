@@ -1,11 +1,14 @@
 import { useId, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { ArrowRight, ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
 import { useVocabularyCategories, useVocabularySearch, VocabularyWord } from '../hooks/useVocabularyQuery';
+import { appRoutes, currentAppPath } from '../lib/routes';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 export function VocabularyList() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') ?? '';
   
   // Fetch categories from API
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
@@ -16,9 +19,14 @@ export function VocabularyList() {
   const isSearching = searchQuery.length >= 2;
   const searchResults = searchData?.results || [];
 
-  const clearSearch = () => {
-    setSearchQuery('');
+  const setSearchQuery = (query: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (query) nextParams.set('q', query);
+    else nextParams.delete('q');
+    setSearchParams(nextParams, { replace: true });
   };
+
+  const returnTo = currentAppPath(location.pathname, location.search, location.hash);
 
   // Color mapping for category cards
   const colorClasses: Record<string, { bg: string; text: string; border: string; hover: string }> = {
@@ -129,7 +137,7 @@ export function VocabularyList() {
             {searchQuery && (
               <button
                 type="button"
-                onClick={clearSearch}
+                onClick={() => setSearchQuery('')}
                 aria-label="Clear dictionary search"
                 className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 dark:text-gray-400 dark:hover:bg-slate-700"
               >
@@ -155,7 +163,11 @@ export function VocabularyList() {
                 {searchResults.length > 0 ? (
                   <div className="space-y-2">
                     {searchResults.map((word, index) => (
-                      <SearchResultCard key={`${word.chamorro}-${index}`} word={word} />
+                      <SearchResultCard
+                        key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
+                        word={word}
+                        returnTo={returnTo}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -193,7 +205,7 @@ export function VocabularyList() {
                     return (
                       <Link
                         key={category.id}
-                        to={`/vocabulary/${category.id}`}
+                        to={appRoutes.vocabularyCategory(category.id)}
                         className={`${colors.bg} ${colors.border} ${colors.hover} group min-h-32 rounded-2xl border p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500`}
                       >
                         <div className="text-center">
@@ -238,7 +250,7 @@ export function VocabularyList() {
 }
 
 // Search Result Card Component
-function SearchResultCard({ word }: { word: VocabularyWord }) {
+function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: string }) {
   const [expanded, setExpanded] = useState(false);
   const examplesId = useId();
   
@@ -247,9 +259,18 @@ function SearchResultCard({ word }: { word: VocabularyWord }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
-            <h3 className="font-bold text-brown-800 dark:text-white text-lg">
-              {word.chamorro}
-            </h3>
+            {word.word_id ? (
+              <Link
+                to={appRoutes.word(word.word_id, { returnTo })}
+                className="rounded font-bold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
+              >
+                {word.chamorro}
+              </Link>
+            ) : (
+              <h3 className="font-bold text-brown-800 dark:text-white text-lg">
+                {word.chamorro}
+              </h3>
+            )}
             {word.part_of_speech && (
               <span className="text-xs text-brown-400 dark:text-gray-500 italic">
                 {word.part_of_speech}
@@ -259,6 +280,15 @@ function SearchResultCard({ word }: { word: VocabularyWord }) {
           <p className="text-brown-600 dark:text-gray-300 mt-1">
             {word.definition}
           </p>
+          {word.word_id && (
+            <Link
+              to={appRoutes.word(word.word_id, { returnTo })}
+              className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300"
+            >
+              Open dictionary entry
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          )}
           
         </div>
         

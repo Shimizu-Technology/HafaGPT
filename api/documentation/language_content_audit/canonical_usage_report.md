@@ -33,8 +33,8 @@ Recommended teaching term: **Hu kånno'**
 Reason: Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly.
 
 - `web/src/data/defaultFlashcards.ts:634` — `front: 'Hu kånno\'',`
-- `web/src/data/quizData.ts:838` — `question: 'What does "Hu kånno\'" mean?',`
-- `web/src/data/quizData.ts:841` — `explanation: '"Hu kånno\'" means "I eat" — "Hu" is the pronoun and "kånno\'" is the verb.'`
+- `web/src/data/quizData.ts:839` — `question: 'What does "Hu kånno\'" mean?',`
+- `web/src/data/quizData.ts:842` — `explanation: '"Hu kånno\'" means "I eat" — "Hu" is the pronoun and "kånno\'" is the verb.'`
 
 ### `verbs.go_i_current` — I go / I went
 
@@ -49,12 +49,12 @@ Reason: Root is source-backed, but the app's standalone 'Hu hånao' first-person
 - `web/src/data/defaultFlashcards.ts:624` — `front: 'Hu hånao',`
 - `web/src/data/defaultFlashcards.ts:1027` — `example: 'Bai hu hånao agupa\'. — I will go tomorrow.'`
 - `web/src/data/defaultFlashcards.ts:1049` — `example: 'Hu hånao para i eskuela. — I go to school.'`
-- `web/src/data/quizData.ts:847` — `options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],`
-- `web/src/data/quizData.ts:848` — `correctAnswer: 'Hu hånao',`
-- `web/src/data/quizData.ts:849` — `explanation: '"Hu hånao" means "I go" — "hånao" is the verb for going.'`
-- `web/src/data/quizData.ts:1023` — `options: ['Hu hånao agupa\'', 'Bai hu hånao agupa\'', 'Malago\' yu\' hånao', 'Siña yu\' hånao'],`
-- `web/src/data/quizData.ts:1024` — `correctAnswer: 'Bai hu hånao agupa\'',`
-- `web/src/data/quizData.ts:1025` — `explanation: '"Bai hu" is the future marker — "Bai hu hånao agupa\'" means "I will go tomorrow".'`
+- `web/src/data/quizData.ts:848` — `options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],`
+- `web/src/data/quizData.ts:849` — `correctAnswer: 'Hu hånao',`
+- `web/src/data/quizData.ts:850` — `explanation: '"Hu hånao" means "I go" — "hånao" is the verb for going.'`
+- `web/src/data/quizData.ts:1024` — `options: ['Hu hånao agupa\'', 'Bai hu hånao agupa\'', 'Malago\' yu\' hånao', 'Siña yu\' hånao'],`
+- `web/src/data/quizData.ts:1025` — `correctAnswer: 'Bai hu hånao agupa\'',`
+- `web/src/data/quizData.ts:1026` — `explanation: '"Bai hu" is the future marker — "Bai hu hånao agupa\'" means "I will go tomorrow".'`
 
 ### `verbs.sleep_i_current` — I sleep
 
@@ -65,6 +65,6 @@ Recommended teaching term: **Hu maigo'**
 Reason: Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.
 
 - `web/src/data/defaultFlashcards.ts:644` — `front: 'Hu maigo\'',`
-- `web/src/data/quizData.ts:847` — `options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],`
-- `web/src/data/quizData.ts:854` — `question: 'What does "Hu maigo\'" mean?',`
-- `web/src/data/quizData.ts:858` — `explanation: '"Hu maigo\'" means "I sleep".'`
+- `web/src/data/quizData.ts:848` — `options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],`
+- `web/src/data/quizData.ts:855` — `question: 'What does "Hu maigo\'" mean?',`
+- `web/src/data/quizData.ts:859` — `explanation: '"Hu maigo\'" means "I sleep".'`

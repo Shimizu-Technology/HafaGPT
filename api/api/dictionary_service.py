@@ -5,11 +5,11 @@ Uses the revised_and_updated_chamorro_dictionary.json as the primary source
 (146K lines, most complete with part of speech and examples).
 """
 
+import hashlib
 import json
-import os
 import logging
-import unicodedata
 import re
+import unicodedata
 from functools import lru_cache
 from typing import Optional
 from pathlib import Path
@@ -52,6 +52,14 @@ DEVELOPING_CORPUS_TRUST = {
     "orthography": "Source-specific",
     "independentlyReviewed": False,
 }
+
+
+def dictionary_word_id(headword: str) -> str:
+    """Create a versioned identity that is independent of source order and meaning."""
+
+    identity_headword = unicodedata.normalize("NFC", headword).strip()
+    digest = hashlib.sha256(identity_headword.encode("utf-8")).hexdigest()
+    return f"revised-word-v1-{digest}"
 
 
 def _word_of_day_pools(words: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -280,6 +288,8 @@ class DictionaryService:
     _instance = None
     _dictionary: dict = {}
     _word_list: list = []
+    _words_by_id: dict = {}
+    _words_by_headword: dict = {}
     _categories_cache: dict = {}
     
     def __new__(cls):
@@ -300,13 +310,17 @@ class DictionaryService:
         
         try:
             with open(dict_path, 'r', encoding='utf-8') as f:
-                self._dictionary = json.load(f)
+                dictionary = json.load(f)
             
-            # Build word list for faster iteration
-            self._word_list = []
-            for source_index, (word, data) in enumerate(self._dictionary.items()):
+            # Validate and build the searchable state before exposing any of it.
+            word_list = []
+            words_by_id = {}
+            words_by_headword = {}
+            for source_index, (word, data) in enumerate(dictionary.items()):
+                word_id = dictionary_word_id(word)
                 if isinstance(data, dict):
                     entry = {
+                        "word_id": word_id,
                         "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": data.get("PartOfSpeech", ""),
@@ -317,6 +331,7 @@ class DictionaryService:
                 else:
                     # Simple string definition
                     entry = {
+                        "word_id": word_id,
                         "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": "",
@@ -324,7 +339,23 @@ class DictionaryService:
                         "examples": [],
                         "trust": DICTIONARY_TRUST,
                     }
-                self._word_list.append(entry)
+                existing_entry = words_by_id.get(word_id)
+                if existing_entry is not None:
+                    raise ValueError(
+                        "Dictionary word identity collision between "
+                        f"'{existing_entry['chamorro']}' and '{word}'"
+                    )
+                word_list.append(entry)
+                words_by_id[word_id] = entry
+                words_by_headword[
+                    unicodedata.normalize("NFC", word).strip()
+                ] = entry
+
+            self._dictionary = dictionary
+            self._word_list = word_list
+            self._words_by_id = words_by_id
+            self._words_by_headword = words_by_headword
+            self._categories_cache = {}
             
             # Pre-categorize words
             self._build_category_cache()
@@ -332,6 +363,11 @@ class DictionaryService:
             logger.info(f"✅ Dictionary loaded: {len(self._word_list)} words")
             
         except Exception as e:
+            self._dictionary = {}
+            self._word_list = []
+            self._words_by_id = {}
+            self._words_by_headword = {}
+            self._categories_cache = {}
             logger.error(f"Failed to load dictionary: {e}")
     
     def _extract_examples(self, other_data: list) -> list:
@@ -741,45 +777,40 @@ class DictionaryService:
         Supports diacritic-insensitive lookup:
         - "hanom" will find "hånum"
         """
-        # Try exact match first
-        if word in self._dictionary:
-            data = self._dictionary[word]
-            if isinstance(data, dict):
-                return {
-                    "chamorro": word,
-                    "part_of_speech": data.get("PartOfSpeech", ""),
-                    "definition": data.get("Definition", ""),
-                    "examples": self._extract_examples(data.get("Other", [])),
-                    "trust": DICTIONARY_TRUST,
-                }
-            else:
-                return {
-                    "chamorro": word,
-                    "part_of_speech": "",
-                    "definition": str(data),
-                    "examples": [],
-                    "trust": DICTIONARY_TRUST,
-                }
+        # Try exact match first while preserving the record's stable identity
+        # and legacy source provenance.
+        exact_word = unicodedata.normalize("NFC", word).strip()
+        exact_entry = self._words_by_headword.get(exact_word)
+        if exact_entry:
+            return dict(exact_entry)
         
         # Try case-insensitive match
         word_lower = word.lower()
-        for key in self._dictionary.keys():
-            if key.lower() == word_lower:
-                return self.get_word(key)
+        for entry in self._word_list:
+            if entry["chamorro"].lower() == word_lower:
+                return dict(entry)
         
         # Try normalized match (diacritic-insensitive)
         word_normalized = normalize_chamorro(word)
-        for key in self._dictionary.keys():
-            if normalize_chamorro(key) == word_normalized:
-                return self.get_word(key)
+        for entry in self._word_list:
+            if normalize_chamorro(entry["chamorro"]) == word_normalized:
+                return dict(entry)
         
         # Try spelling variants (o/u swaps, etc.)
         for variant in get_spelling_variants(word):
-            for key in self._dictionary.keys():
-                if normalize_chamorro(key) == variant:
-                    return self.get_word(key)
+            for entry in self._word_list:
+                if normalize_chamorro(entry["chamorro"]) == variant:
+                    return dict(entry)
         
         return None
+
+    def get_word_by_id(self, word_id: str) -> Optional[dict]:
+        """Return the one exact dictionary record addressed by a stable word ID."""
+
+        if len(word_id) > 100:
+            return None
+        entry = self._words_by_id.get(word_id)
+        return dict(entry) if entry else None
     
     def get_word_with_morphology(self, word: str) -> dict:
         """
@@ -901,6 +932,7 @@ class DictionaryService:
                 example = f"{ex.get('chamorro', '')} - {ex.get('english', '')}"
             
             flashcards.append({
+                "word_id": word["word_id"],
                 "source_id": word["source_id"],
                 "front": word["chamorro"],
                 "back": word["definition"],
@@ -1009,7 +1041,7 @@ class DictionaryService:
         # Safety check - if no manifest words available, return a default
         if not good_words:
             logger.warning("⚠️ [WOTD] No pre-generated words available - returning default")
-            return {
+            fallback = {
                 "chamorro": "Håfa Adai",
                 "english": "Hello; a common Chamorro greeting",
                 "part_of_speech": "interjection",
@@ -1022,6 +1054,10 @@ class DictionaryService:
                 "trust": DEVELOPING_CORPUS_TRUST,
                 "audio_review_status": "unknown",
             }
+            dictionary_entry = self._words_by_headword.get("Håfa Adai")
+            if dictionary_entry:
+                fallback["word_id"] = dictionary_entry["word_id"]
+            return fallback
         
         # Prefer canonical source-backed terms on most days without removing the
         # broader learning corpus from the rotation. Every fifth Guam calendar day
@@ -1039,7 +1075,7 @@ class DictionaryService:
         
         logger.info(f"📢 [WOTD] Selected: {word['chamorro']} = {word['definition']}")
         
-        return {
+        response = {
             "chamorro": word["chamorro"],
             "english": word["definition"],
             "part_of_speech": word.get("part_of_speech", ""),
@@ -1049,6 +1085,12 @@ class DictionaryService:
             "trust": word["trust"],
             "audio_review_status": word["audio_review_status"],
         }
+        dictionary_entry = self._words_by_headword.get(
+            unicodedata.normalize("NFC", word["chamorro"]).strip()
+        )
+        if dictionary_entry:
+            response["word_id"] = dictionary_entry["word_id"]
+        return response
     
     def generate_quiz_questions(self, category_id: str, count: int = 10, question_types: list = None) -> dict:
         """
@@ -1127,6 +1169,7 @@ class DictionaryService:
                 
                 questions.append({
                     "id": f"q{i+1}",
+                    "word_id": word["word_id"],
                     "type": "multiple_choice",
                     "question": f"What does '{word['chamorro']}' mean?",
                     "options": options,
@@ -1143,6 +1186,7 @@ class DictionaryService:
                 
                 questions.append({
                     "id": f"q{i+1}",
+                    "word_id": word["word_id"],
                     "type": "type_answer",
                     "question": f"How do you say '{simple_def}' in Chamorro?",
                     "correct_answer": word["chamorro"].lower(),

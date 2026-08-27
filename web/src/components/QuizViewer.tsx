@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from '../lib/quizLocalStats';
@@ -18,6 +18,7 @@ import { getQuestionConceptId } from '../data/conceptEvidence';
 import { readTopicReturn } from '../lib/topicReturn';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
+import { appRoutes, currentAppPath } from '../lib/routes';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -32,6 +33,7 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   if (dq.type === 'multiple_choice') {
     return {
       id: dq.id,
+      wordId: dq.word_id,
       type: 'multiple_choice',
       question: dq.question,
       options: dq.options || [],
@@ -41,6 +43,7 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
   } else {
     return {
       id: dq.id,
+      wordId: dq.word_id,
       type: 'type_answer',
       question: dq.question,
       correctAnswer: dq.correct_answer as string,
@@ -54,6 +57,7 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
 /** Run curated or dictionary quizzes with matching source-trust context. */
 export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -489,19 +493,19 @@ export function QuizViewer() {
     }
   };
 
-  // Handle back navigation with confirmation if quiz is in progress
-  const handleBack = () => {
-    if (isResultNavigationBlocked) return;
+  const confirmQuizExit = (): boolean => {
+    if (isResultNavigationBlocked) return false;
     if (results.length > 0) {
-      const confirmed = window.confirm(
+      return window.confirm(
         'Are you sure you want to leave? Your quiz progress will be lost.'
       );
-      if (confirmed) {
-        navigate(quizReturnTo);
-      }
-    } else {
-      navigate(quizReturnTo);
     }
+    return true;
+  };
+
+  // Handle back navigation with confirmation if quiz is in progress
+  const handleBack = () => {
+    if (confirmQuizExit()) navigate(quizReturnTo);
   };
 
   const handleResultsBack = () => {
@@ -902,6 +906,24 @@ export function QuizViewer() {
                       {currentQuestion.explanation}
                     </p>
                   </div>
+                )}
+                {currentQuestion.wordId && (
+                  <Link
+                    onClick={(event) => {
+                      if (!confirmQuizExit()) event.preventDefault();
+                    }}
+                    to={appRoutes.word(currentQuestion.wordId, {
+                      returnTo: currentAppPath(
+                        location.pathname,
+                        location.search,
+                        location.hash,
+                      ),
+                    })}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+                  >
+                    <BookOpen className="h-4 w-4" aria-hidden="true" />
+                    Open dictionary entry
+                  </Link>
                 )}
                 
                 <button

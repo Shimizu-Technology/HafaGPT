@@ -1,4 +1,66 @@
-from api.dictionary_service import DictionaryService, _canonical_trust, _word_of_day_pools
+import io
+import json
+from pathlib import Path
+
+from api.dictionary_service import (
+    DictionaryService,
+    _canonical_trust,
+    _word_of_day_pools,
+    dictionary_word_id,
+)
+
+
+def test_dictionary_word_identity_is_stable_and_preserves_diacritics():
+    """Keep record identity independent of source order and mutable definitions."""
+
+    headword = "  hånum  "
+    assert dictionary_word_id(headword) == dictionary_word_id("hånum")
+    assert dictionary_word_id("hånum") == dictionary_word_id("ha\u030anum")
+    assert dictionary_word_id("hånum") != dictionary_word_id("hanum")
+    assert dictionary_word_id("hånum").startswith("revised-word-v1-")
+
+
+def test_dictionary_records_have_unique_stable_ids_and_exact_lookup():
+    """Address each loaded record without relying on mutable spelling search."""
+
+    service = DictionaryService()
+    word_ids = [entry["word_id"] for entry in service._word_list]
+    entry = service._word_list[0]
+
+    assert len(word_ids) == len(set(word_ids))
+    assert service.get_word_by_id(entry["word_id"]) == entry
+    assert service.get_word(entry["chamorro"])["word_id"] == entry["word_id"]
+    assert service.get_word(entry["chamorro"])["source_id"] == entry["source_id"]
+    assert service.get_word_by_id("revised-word-v1-missing") is None
+
+
+def test_dictionary_load_does_not_publish_partial_indexes(monkeypatch):
+    """A failed identity validation must leave no partially searchable records."""
+
+    duplicate_identity_source = json.dumps({
+        "hånum": {"Definition": "water"},
+        "ha\u030anum": {"Definition": "same NFC headword"},
+    })
+    service = object.__new__(DictionaryService)
+    service._dictionary = {"old": {}}
+    service._word_list = [{"chamorro": "old"}]
+    service._words_by_id = {"old": {"chamorro": "old"}}
+    service._words_by_headword = {"old": {"chamorro": "old"}}
+    service._categories_cache = {"old": []}
+
+    monkeypatch.setattr(Path, "exists", lambda _path: True)
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda *_args, **_kwargs: io.StringIO(duplicate_identity_source),
+    )
+
+    service._load_dictionary()
+
+    assert service._dictionary == {}
+    assert service._word_list == []
+    assert service._words_by_id == {}
+    assert service._words_by_headword == {}
+    assert service._categories_cache == {}
 
 
 def test_category_matching_rejects_known_false_positives():
@@ -43,13 +105,20 @@ def test_dictionary_learning_surfaces_include_honest_trust_metadata():
     word_of_the_day = service.get_word_of_the_day()
 
     assert category["words"]
+    assert all(service.get_word_by_id(word["word_id"]) for word in category["words"])
     assert all(word["trust"]["independentlyReviewed"] is False for word in category["words"])
     assert flashcards["trust"]["level"] == "source_backed"
     assert all(card["trust"] for card in flashcards["cards"])
+    assert all(service.get_word_by_id(card["word_id"]) for card in flashcards["cards"])
     assert quiz["trust"]["level"] == "source_backed"
     assert all(question["trust"] for question in quiz["questions"])
+    assert all(service.get_word_by_id(question["word_id"]) for question in quiz["questions"])
     assert word_of_the_day["trust"]["level"] in {"source_backed", "developing"}
     assert "audio_review_status" in word_of_the_day
+    if word_of_the_day.get("word_id"):
+        assert service.get_word_by_id(word_of_the_day["word_id"])["chamorro"] == (
+            word_of_the_day["chamorro"]
+        )
 
 
 def test_dynamic_quiz_choices_are_concise_and_unique():

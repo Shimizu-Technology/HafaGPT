@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2, Layers3 } from 'lucide-react';
+import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { BookOpen, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2, Layers3 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -19,10 +19,12 @@ import {
 import { ALL_TOPICS } from '../data/learningPath';
 import { readTopicReturn } from '../lib/topicReturn';
 import { readConceptReview } from '../lib/conceptReview';
+import { appRoutes, currentAppPath } from '../lib/routes';
 
 interface FlashcardData {
   contentSource: FlashcardContentSource;
   sourceId?: string;
+  wordId?: string;
   front: string;
   back: string;
   pronunciation?: string;
@@ -51,6 +53,7 @@ const topicTitles: Record<string, string> = {
 /** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
   const { topic } = useParams<{ topic: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -201,6 +204,7 @@ export function FlashcardViewer() {
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
         contentSource: 'dictionary',
         sourceId: card.source_id,
+        wordId: card.word_id,
         front: card.front,
         back: card.back,
         pronunciation: undefined, // Dictionary doesn't have pronunciation
@@ -561,6 +565,21 @@ export function FlashcardViewer() {
             example={currentCard.example}
             onFlip={handleCardFlip}
           />
+          {currentCard.wordId && (
+            <Link
+              to={appRoutes.word(currentCard.wordId, {
+                returnTo: currentAppPath(
+                  location.pathname,
+                  location.search,
+                  location.hash,
+                ),
+              })}
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+            >
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+              Open this dictionary entry
+            </Link>
+          )}
         </div>
 
         {/* Rating Buttons (show after flip) */}

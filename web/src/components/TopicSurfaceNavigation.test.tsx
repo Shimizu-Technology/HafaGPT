@@ -20,10 +20,12 @@ import {
 } from '../data/conceptEvidence';
 import { getQuizCategory } from '../data/quizData';
 import { withConceptReview } from '../lib/conceptReview';
+import { createCardIdentity } from '../lib/cardIdentity';
 
 const mocks = vi.hoisted(() => ({
   dictionaryFlashcards: {
     cards: [{
+      word_id: 'revised-word-v1-flashcard',
       source_id: 'dictionary:test',
       front: 'Test front',
       back: 'Test back',
@@ -36,6 +38,7 @@ const mocks = vi.hoisted(() => ({
   dictionaryQuiz: {
     questions: [{
       id: 'dictionary-question',
+      word_id: 'revised-word-v1-quiz',
       type: 'multiple_choice',
       question: 'Test question',
       options: ['One', 'Two'],
@@ -45,6 +48,7 @@ const mocks = vi.hoisted(() => ({
   },
   tryUse: vi.fn(async () => true),
   recordLessonExposure: vi.fn(),
+  recordReview: vi.fn(),
   saveQuizResult: vi.fn(),
   userId: 'user_123' as string | null,
 }));
@@ -87,7 +91,7 @@ vi.mock('../hooks/useFlashcardsQuery', () => ({
 }));
 
 vi.mock('../hooks/useSpacedRepetition', () => ({
-  useRecordReview: () => ({ mutate: vi.fn(), isPending: false }),
+  useRecordReview: () => ({ mutateAsync: mocks.recordReview, isPending: false }),
 }));
 
 vi.mock('../hooks/useQuizQuery', () => ({
@@ -194,6 +198,8 @@ describe('topic surface navigation', () => {
     mocks.tryUse.mockReset();
     mocks.tryUse.mockResolvedValue(true);
     mocks.recordLessonExposure.mockReset();
+    mocks.recordReview.mockReset();
+    mocks.recordReview.mockResolvedValue({});
     mocks.saveQuizResult.mockReset();
     mocks.saveQuizResult.mockResolvedValue({});
     mocks.userId = 'user_123';
@@ -647,6 +653,78 @@ describe('topic surface navigation', () => {
       .not.toBeInTheDocument();
     fireEvent.click(quizBack);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/quiz');
+  });
+
+  it('links dictionary flashcards and answered quiz questions to exact word records', async () => {
+    const { unmount } = renderSurface(
+      <FlashcardViewer />,
+      '/flashcards/:topic',
+      '/flashcards/unmapped?type=dictionary',
+    );
+
+    expect(await screen.findByRole('link', { name: 'Open this dictionary entry' }))
+      .toHaveAttribute(
+        'href',
+        '/words/revised-word-v1-flashcard?return_to=%2Fflashcards%2Funmapped%3Ftype%3Ddictionary',
+      );
+    unmount();
+
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      '/quiz/dict-greetings',
+    );
+    fireEvent.click((await screen.findByText('One')).closest('button')!);
+
+    expect(screen.getByRole('link', { name: 'Open dictionary entry' }))
+      .toHaveAttribute(
+        'href',
+        '/words/revised-word-v1-quiz?return_to=%2Fquiz%2Fdict-greetings',
+      );
+  });
+
+  it('keeps the legacy dictionary review identity when a stable word ID is present', async () => {
+    renderSurface(
+      <FlashcardViewer />,
+      '/flashcards/:topic',
+      '/flashcards/unmapped?type=dictionary',
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show the meaning of Test front' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Good/ }));
+
+    await waitFor(() => {
+      expect(mocks.recordReview).toHaveBeenCalledWith(expect.objectContaining({
+        cardId: createCardIdentity({
+          sourceKind: 'dictionary',
+          sourceId: 'dictionary:test',
+        }),
+        deckId: 'dictionary:unmapped',
+        quality: 4,
+      }));
+    });
+  });
+
+  it('guards exact dictionary navigation while a quiz is in progress', async () => {
+    renderSurface(
+      <QuizViewer />,
+      '/quiz/:categoryId',
+      '/quiz/dict-greetings',
+    );
+    fireEvent.click((await screen.findByText('One')).closest('button')!);
+
+    const confirm = vi.spyOn(window, 'confirm');
+    confirm.mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const dictionaryLink = screen.getByRole('link', { name: 'Open dictionary entry' });
+
+    fireEvent.click(dictionaryLink);
+    expect(screen.getByTestId('current-location')).toHaveTextContent('/quiz/dict-greetings');
+
+    fireEvent.click(dictionaryLink);
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      '/words/revised-word-v1-quiz?return_to=%2Fquiz%2Fdict-greetings',
+    );
+    expect(confirm).toHaveBeenCalledTimes(2);
   });
 
   it('keeps a validated topic return when quiz startup fails', async () => {
