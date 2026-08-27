@@ -50,6 +50,9 @@ export function QuizReview() {
     searchParams.get('return_to'),
     '/dashboard/quiz-history',
   );
+  const returnsToTopic = backTo.startsWith(appRoutes.topic(''));
+  const backLabel = returnsToTopic ? 'Back to topic' : 'Back to quiz history';
+  const unavailableReturnLabel = returnsToTopic ? 'Return to topic' : 'Quiz history';
   const isDictionaryQuiz = result?.category_id?.startsWith('dict-');
   const resultTopic = result
     ? ALL_TOPICS.find((topic) => topic.id === result.learning_topic_id)
@@ -64,7 +67,7 @@ export function QuizReview() {
         subtitle="See what you knew and what to practice next."
         icon={ClipboardCheck}
         backTo={backTo}
-        backLabel={backTo.startsWith(appRoutes.topic('')) ? 'Back to topic' : 'Back to quiz history'}
+        backLabel={backLabel}
         maxWidthClassName="max-w-2xl"
         trailing={
           isDictionaryQuiz ? (
@@ -106,10 +109,10 @@ export function QuizReview() {
                 </button>
               )}
               <Link
-                to="/dashboard/quiz-history"
+                to={backTo}
                 className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
               >
-                Quiz history
+                {unavailableReturnLabel}
               </Link>
             </div>
           </section>

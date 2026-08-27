@@ -199,6 +199,26 @@ describe('progress pages', () => {
     expect(mocks.refetchHistory).toHaveBeenCalledOnce();
   });
 
+  it('preserves a validated topic return when a quiz review is unavailable', () => {
+    mocks.quizReview.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      error: new Error('offline'),
+      refetch: mocks.refetchReview,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/quiz/review/quiz-1?return_to=%2Flearning%2Fgreetings']}>
+        <QuizReview />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('link', { name: 'Return to topic' })).toHaveAttribute(
+      'href',
+      '/learning/greetings',
+    );
+  });
+
   it('labels quiz answers and preserves retry choices in the detailed review', () => {
     render(
       <MemoryRouter initialEntries={['/quiz/review/quiz-1']}>

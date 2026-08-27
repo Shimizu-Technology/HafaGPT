@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TopicWorkspacePage } from './TopicWorkspacePage';
@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   useTopicWorkspace: vi.fn(),
   useTopicConversations: vi.fn(),
   useTopicActivityResults: vi.fn(),
+  refetchTopicResults: vi.fn(),
 }));
 
 vi.mock('../hooks/useLearningPath', () => ({
@@ -64,8 +65,13 @@ function renderWorkspace(path = '/learning/greetings') {
 
 describe('TopicWorkspacePage', () => {
   beforeEach(() => {
+    mocks.refetchTopicResults.mockReset();
     mocks.useTopicConversations.mockReturnValue({ data: [] });
-    mocks.useTopicActivityResults.mockReturnValue({ data: [] });
+    mocks.useTopicActivityResults.mockReturnValue({
+      data: [],
+      isError: false,
+      refetch: mocks.refetchTopicResults,
+    });
     mocks.useTopicWorkspace.mockReturnValue({
       data: workspace,
       isLoading: false,
@@ -98,6 +104,8 @@ describe('TopicWorkspacePage', () => {
           stars: null,
         },
       ],
+      isError: false,
+      refetch: mocks.refetchTopicResults,
     });
 
     renderWorkspace();
@@ -111,6 +119,20 @@ describe('TopicWorkspacePage', () => {
       'href',
       '/quiz/review/018f6a6e-9c3d-7b2a-a1c4-8e9f12345679?return_to=%2Flearning%2Fgreetings',
     );
+  });
+
+  it('distinguishes an unavailable recent-results preview and retries it', () => {
+    mocks.useTopicActivityResults.mockReturnValue({
+      data: undefined,
+      isError: true,
+      refetch: mocks.refetchTopicResults,
+    });
+
+    renderWorkspace();
+
+    expect(screen.getByRole('heading', { name: 'Recent topic results are unavailable' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry recent results' }));
+    expect(mocks.refetchTopicResults).toHaveBeenCalledOnce();
   });
 
   it('joins the lesson, cards, quiz, games, scenario, and story with topic return context', () => {
