@@ -11,6 +11,7 @@ export interface LearningTopic {
   estimated_minutes: number;
   flashcard_category: string;
   quiz_category: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface TopicProgress {
@@ -47,6 +48,42 @@ export interface UpdateProgressResponse {
   progress: TopicProgress;
   is_completed: boolean;
   next_topic: LearningTopic | null;
+}
+
+export interface TopicWorkspaceResponse {
+  topic: LearningTopic;
+  progress: TopicProgress;
+  lesson_id: string;
+  flashcard_category: string;
+  quiz_category: string;
+  suggested_game_ids: string[];
+  scenario_ids: string[];
+  story_ids: string[];
+}
+
+// Get one stable topic workspace and its explicit relationships.
+export function useTopicWorkspace(topicId?: string) {
+  const { getToken, isSignedIn, userId } = useAuth();
+
+  return useQuery({
+    queryKey: ['learning', 'workspace', userId, topicId],
+    queryFn: async (): Promise<TopicWorkspaceResponse> => {
+      const token = await getToken();
+      if (!token) throw new Error('Authentication required');
+      const response = await fetch(
+        `${API_URL}/api/learning/workspaces/${encodeURIComponent(topicId || '')}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch topic workspace');
+      }
+
+      return response.json();
+    },
+    enabled: isSignedIn && !!userId && !!topicId,
+    staleTime: 1000 * 60 * 2,
+  });
 }
 
 // Get recommended next topic
@@ -162,4 +199,3 @@ export function useUpdateProgress() {
     },
   });
 }
-

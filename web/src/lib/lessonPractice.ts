@@ -1,7 +1,12 @@
 import { getTopic, LearningTopic } from '../data/learningPath';
-import { appRoutes, MAX_APP_URL_LENGTH, safeInternalReturnPath } from './routes';
+import {
+  appRoutes,
+  MAX_APP_URL_LENGTH,
+  safeInternalReturnPath,
+  setAppQueryParams,
+} from './routes';
 
-export type LearningSource = 'lesson' | 'today';
+export type LearningSource = 'lesson' | 'today' | 'topic';
 
 export interface LearningGameContext {
   topicId: string;
@@ -38,14 +43,56 @@ const PRACTICE_GAMES: Record<string, PracticeGame> = {
   },
 };
 
-function safeLearningReturnPath(value: string | null, source: LearningSource): string {
-  const canonicalDestination = source === 'today' ? appRoutes.home : appRoutes.learning;
+function safeLearningReturnPath(
+  value: string | null,
+  source: LearningSource,
+  topicId: string,
+): string {
+  const canonicalDestination = source === 'today'
+    ? appRoutes.home
+    : source === 'topic'
+      ? appRoutes.topic(topicId)
+      : appRoutes.learning;
   const normalizedPath = safeInternalReturnPath(value, canonicalDestination);
 
   // Learning handoffs intentionally carry no arbitrary path or query state.
   // This prevents personal or unrelated URL context from being copied into
   // the game URL and browser history.
   return normalizedPath === canonicalDestination ? normalizedPath : canonicalDestination;
+}
+
+/** Carry a known topic and bounded source context into a learning workflow. */
+export function withLearningContext(
+  path: string,
+  topic: LearningTopic,
+  context: { source?: LearningSource; returnTo?: string } = {},
+): string {
+  const source = context.source ?? 'lesson';
+  const fallbackReturn = source === 'today'
+    ? appRoutes.home
+    : source === 'topic'
+      ? appRoutes.topic(topic.id)
+      : appRoutes.learning;
+  const safePath = safeInternalReturnPath(path, '');
+  if (!safePath) return fallbackReturn;
+  const returnTo = safeLearningReturnPath(context.returnTo ?? fallbackReturn, source, topic.id);
+  const contextParams = {
+    topic: topic.id,
+    category: topic.flashcardCategory,
+    source,
+    return_to: returnTo,
+  };
+  const contextualHref = setAppQueryParams(safePath, contextParams);
+
+  if (contextualHref && contextualHref.length <= MAX_APP_URL_LENGTH) return contextualHref;
+
+  const fallbackHref = setAppQueryParams(safePath, {
+    ...contextParams,
+    return_to: fallbackReturn,
+  });
+  return fallbackHref && fallbackHref.length <= MAX_APP_URL_LENGTH
+    ? fallbackHref
+    : fallbackReturn;
 }
 
 export function getLessonPractice(
@@ -55,26 +102,9 @@ export function getLessonPractice(
   const game = topic.suggestedGames?.map((id) => PRACTICE_GAMES[id]).find(Boolean);
   if (!game) return null;
 
-  const source = context.source ?? 'lesson';
-  const fallbackReturn = source === 'today' ? appRoutes.home : appRoutes.learning;
-  const returnTo = safeLearningReturnPath(context.returnTo ?? fallbackReturn, source);
-
-  const buildHref = (returnPath: string) => {
-    const params = new URLSearchParams({
-      topic: topic.id,
-      category: topic.flashcardCategory,
-      source,
-      return_to: returnPath,
-    });
-    return `${game.path}?${params}`;
-  };
-  const contextualHref = buildHref(returnTo);
-
   return {
     ...game,
-    href: contextualHref.length <= MAX_APP_URL_LENGTH
-      ? contextualHref
-      : buildHref(fallbackReturn),
+    href: withLearningContext(game.path, topic, context),
   };
 }
 
@@ -84,7 +114,11 @@ export function readLearningGameContext(search: string): LearningGameContext | n
   const categoryId = params.get('category');
   const source = params.get('source');
 
-  if (!topic || categoryId !== topic.flashcardCategory || (source !== 'lesson' && source !== 'today')) {
+  if (
+    !topic
+    || categoryId !== topic.flashcardCategory
+    || (source !== 'lesson' && source !== 'today' && source !== 'topic')
+  ) {
     return null;
   }
 
@@ -93,7 +127,7 @@ export function readLearningGameContext(search: string): LearningGameContext | n
     categoryId,
     topicTitle: topic.title,
     source,
-    returnTo: safeLearningReturnPath(params.get('return_to'), source),
+    returnTo: safeLearningReturnPath(params.get('return_to'), source, topic.id),
   };
 }
 
@@ -103,6 +137,9 @@ export function getLearningGameReturn(context: LearningGameContext | null): Lear
   }
   if (context?.source === 'lesson') {
     return { to: context.returnTo, label: 'Back to learning' };
+  }
+  if (context?.source === 'topic') {
+    return { to: context.returnTo, label: 'Back to topic' };
   }
   return { to: appRoutes.games, label: 'Back to games' };
 }

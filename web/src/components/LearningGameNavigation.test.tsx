@@ -42,7 +42,7 @@ type GameComponent = typeof MemoryMatch;
 interface LaunchCase {
   component: GameComponent;
   game: 'memory' | 'scramble';
-  source: 'today' | 'lesson' | 'games';
+  source: 'today' | 'lesson' | 'topic' | 'games';
   path: string;
   destination: string;
   label: string;
@@ -68,6 +68,14 @@ const launchCases: LaunchCase[] = [
   {
     component: MemoryMatch,
     game: 'memory',
+    source: 'topic',
+    path: '/games/memory?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
+    destination: '/learning/greetings',
+    label: 'Back to topic',
+  },
+  {
+    component: MemoryMatch,
+    game: 'memory',
     source: 'games',
     path: '/games/memory',
     destination: '/games',
@@ -88,6 +96,14 @@ const launchCases: LaunchCase[] = [
     path: '/games/scramble?topic=greetings&category=greetings&source=lesson&return_to=%2Flearning',
     destination: '/learning',
     label: 'Back to learning',
+  },
+  {
+    component: WordScramble,
+    game: 'scramble',
+    source: 'topic',
+    path: '/games/scramble?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
+    destination: '/learning/greetings',
+    label: 'Back to topic',
   },
   {
     component: WordScramble,

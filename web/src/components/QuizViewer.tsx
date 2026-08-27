@@ -14,6 +14,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
 import { ALL_TOPICS } from '../data/learningPath';
+import { readTopicReturn } from '../lib/topicReturn';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -97,6 +98,11 @@ export function QuizViewer() {
     ? ALL_TOPICS.find((topic) => topic.quizCategory === categoryId)
     : undefined;
   const curatedTrustCategory = curatedTopic?.flashcardCategory ?? categoryId ?? '';
+  const topicReturn = curatedTopic
+    ? readTopicReturn(searchParams.toString(), curatedTopic.id)
+    : null;
+  const quizReturnTo = topicReturn?.to ?? '/quiz';
+  const quizReturnLabel = topicReturn?.label ?? 'Back to quizzes';
   const contentTrust = isDictionaryQuiz
     ? dictQuizData?.trust ?? DICTIONARY_CONTENT_TRUST
     : getLessonTrust(curatedTrustCategory);
@@ -210,7 +216,7 @@ export function QuizViewer() {
           feature="quiz"
           onClose={() => {
             setShowUpgradePrompt(false);
-            navigate('/quiz');
+            navigate(quizReturnTo);
           }}
           usageCount={getCount('quiz')}
           usageLimit={getLimit('quiz')}
@@ -296,10 +302,10 @@ export function QuizViewer() {
           </p>
           <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
           <Link
-            to="/quiz"
+            to={quizReturnTo}
             className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
           >
-            Back to Quiz List
+            {quizReturnLabel}
           </Link>
         </div>
       </div>
@@ -450,10 +456,10 @@ export function QuizViewer() {
         'Are you sure you want to leave? Your quiz progress will be lost.'
       );
       if (confirmed) {
-        navigate('/quiz');
+        navigate(quizReturnTo);
       }
     } else {
-      navigate('/quiz');
+      navigate(quizReturnTo);
     }
   };
 
@@ -464,7 +470,7 @@ export function QuizViewer() {
   if (showResults) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo="/quiz" backLabel="Back to quizzes" maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={topicReturn ? () => navigate(quizReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
 
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}
@@ -592,8 +598,8 @@ export function QuizViewer() {
         title={categoryTitle || 'Quiz'}
         subtitle={`${isDictionaryQuiz ? 'Dictionary quiz' : 'Guided quiz'} · Question ${currentIndex + 1} of ${questions.length}`}
         icon={Brain}
-        backTo="/quiz"
-        backLabel="Leave quiz"
+        backTo={quizReturnTo}
+        backLabel={topicReturn ? `Leave quiz and return to ${curatedTopic?.title}` : 'Leave quiz'}
         onBack={handleBack}
         maxWidthClassName="max-w-2xl"
         below={(

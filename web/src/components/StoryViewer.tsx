@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info, X } from 'lucide-react';
 import { getStoryById, StoryWord } from '../data/storyData';
 import { PronunciationButton } from './PronunciationButton';
@@ -7,6 +7,8 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { STORY_CONTENT_TRUST } from '../data/contentTrust';
+import { getStoryTopicId } from '../data/topicRelationships';
+import { readTopicReturn } from '../lib/topicReturn';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
 
@@ -14,7 +16,12 @@ type ViewMode = 'reading' | 'quiz' | 'results';
 export function StoryViewer() {
   const { storyId } = useParams<{ storyId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const story = getStoryById(storyId || '');
+  const storyTopicId = getStoryTopicId(storyId || '');
+  const topicReturn = storyTopicId
+    ? readTopicReturn(searchParams.toString(), storyTopicId)
+    : null;
 
   // Reading state
   const [currentParagraph, setCurrentParagraph] = useState(0);
@@ -485,8 +492,9 @@ export function StoryViewer() {
         title={viewMode === 'reading' ? 'Read story' : viewMode === 'quiz' ? 'Story quiz' : 'Your results'}
         subtitle={story.title}
         icon={BookOpen}
-        backTo="/stories"
-        backLabel="Back to stories"
+        backTo={topicReturn?.to ?? '/stories'}
+        backLabel={topicReturn?.label ?? 'Back to stories'}
+        onBack={topicReturn ? () => navigate(topicReturn.to) : undefined}
         maxWidthClassName="max-w-2xl"
         iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
         trailing={viewMode === 'reading' ? (

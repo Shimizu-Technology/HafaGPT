@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
 import { PronunciationButton } from './PronunciationButton';
@@ -8,7 +8,9 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
+import { getScenarioTopicId } from '../data/topicRelationships';
 import { hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
+import { readTopicReturn } from '../lib/topicReturn';
 
 interface Message {
   id: string;
@@ -35,6 +37,7 @@ interface ConversationState {
 export function ConversationPractice() {
   const { scenarioId } = useParams<{ scenarioId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isSignedIn, user } = useUser();
   const [scenario, setScenario] = useState<ConversationScenario | null>(null);
   const [showIntro, setShowIntro] = useState(true);
@@ -48,6 +51,12 @@ export function ConversationPractice() {
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTranslations, setShowTranslations] = useState(true);
+  const scenarioTopicId = getScenarioTopicId(scenarioId || '');
+  const topicReturn = scenarioTopicId
+    ? readTopicReturn(searchParams.toString(), scenarioTopicId)
+    : null;
+  const conversationReturnTo = topicReturn?.to ?? '/practice';
+  const conversationReturnLabel = topicReturn?.label ?? 'Back to conversation scenarios';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -239,7 +248,7 @@ export function ConversationPractice() {
   if (showIntro) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo="/practice" backLabel="Back to conversation scenarios" maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
 
         {/* Content */}
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
@@ -310,7 +319,7 @@ export function ConversationPractice() {
   if (conversation.isComplete) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo="/practice" backLabel="Back to conversation scenarios" maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
             <PartyPopper className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />
@@ -380,11 +389,11 @@ export function ConversationPractice() {
         title={scenario.characterName}
         subtitle={`${scenario.title} · Turn ${conversation.turnCount} of about ${scenario.estimatedTurns * 2}`}
         icon={MessageCircle}
-        backTo="/practice"
-        backLabel="Leave conversation"
+        backTo={conversationReturnTo}
+        backLabel={topicReturn ? `Leave conversation and ${conversationReturnLabel.toLowerCase()}` : 'Leave conversation'}
         onBack={() => {
           if (conversation.messages.length > 1 && !window.confirm('Leave this conversation? Your progress will be lost.')) return;
-          navigate('/practice');
+          navigate(conversationReturnTo);
         }}
         maxWidthClassName="max-w-2xl"
         trailing={(

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Star, Lock, CheckCircle, Play, RotateCcw, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
 import { useAllProgress } from '../hooks/useLearningPath';
 import { BEGINNER_PATH, INTERMEDIATE_PATH, ADVANCED_PATH, LearningTopic, LearningLevel, isLevelComplete } from '../data/learningPath';
+import { appRoutes } from '../lib/routes';
 
 interface TopicProgress {
   topic_id: string;
@@ -172,7 +173,7 @@ function TopicNode({
   }
 
   return (
-    <Link to={`/learn/${topic.id}`}>
+    <Link to={appRoutes.topic(topic.id)}>
       {content}
     </Link>
   );
@@ -464,4 +465,3 @@ export function LearningPathMap() {
     </div>
   );
 }
-

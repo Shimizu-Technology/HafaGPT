@@ -1,0 +1,122 @@
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TopicWorkspacePage } from './TopicWorkspacePage';
+
+const mocks = vi.hoisted(() => ({
+  useTopicWorkspace: vi.fn(),
+}));
+
+vi.mock('../hooks/useLearningPath', () => ({
+  useTopicWorkspace: mocks.useTopicWorkspace,
+}));
+
+vi.mock('../hooks/useTheme', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}));
+
+const workspace = {
+  topic: {
+    id: 'greetings',
+    title: 'Greetings & Basics',
+    description: 'Learn greetings and introductions.',
+    icon: '👋',
+    estimated_minutes: 5,
+    flashcard_category: 'greetings',
+    quiz_category: 'greetings',
+    level: 'beginner' as const,
+  },
+  progress: {
+    topic_id: 'greetings',
+    started_at: null,
+    completed_at: null,
+    best_quiz_score: null,
+    flashcards_viewed: 0,
+    last_activity_at: null,
+  },
+  lesson_id: 'greetings',
+  flashcard_category: 'greetings',
+  quiz_category: 'greetings',
+  suggested_game_ids: ['memory', 'scramble'],
+  scenario_ids: ['meeting-someone'],
+  story_ids: ['hafa-adai-maria'],
+};
+
+function renderWorkspace(path = '/learning/greetings') {
+  render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/learning/:topicId" element={<TopicWorkspacePage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+describe('TopicWorkspacePage', () => {
+  beforeEach(() => {
+    mocks.useTopicWorkspace.mockReturnValue({
+      data: workspace,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  it('joins the lesson, cards, quiz, games, scenario, and story with topic return context', () => {
+    renderWorkspace();
+
+    expect(screen.getByRole('link', { name: /Start lesson/ })).toHaveAttribute(
+      'href',
+      '/learn/greetings?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Flashcards/ })).toHaveAttribute(
+      'href',
+      '/flashcards/greetings?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Topic quiz/ })).toHaveAttribute(
+      'href',
+      '/quiz/greetings?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Memory Match/ })).toHaveAttribute(
+      'href',
+      '/games/memory?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Meeting Someone New/ })).toHaveAttribute(
+      'href',
+      '/practice/meeting-someone?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
+    expect(screen.getByRole('link', { name: /Hello, Maria!/ })).toHaveAttribute(
+      'href',
+      '/stories/hafa-adai-maria?topic=greetings&return_to=%2Flearning%2Fgreetings',
+    );
+  });
+
+  it('renders an honest empty progress state without implying mastery', () => {
+    renderWorkspace();
+
+    expect(screen.getByText('Not started')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByText(/master/i)).not.toBeInTheDocument();
+  });
+
+  it('rejects an unknown topic before requesting a workspace', () => {
+    renderWorkspace('/learning/not-a-topic');
+
+    expect(screen.getByRole('heading', { name: 'Topic not found' })).toBeInTheDocument();
+    expect(mocks.useTopicWorkspace).toHaveBeenCalledWith(undefined);
+  });
+
+  it('fails closed when API relationships do not match the local topic catalog', () => {
+    mocks.useTopicWorkspace.mockReturnValue({
+      data: { ...workspace, flashcard_category: 'family' },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    renderWorkspace();
+
+    expect(screen.getByRole('heading', { name: 'Topic workspace unavailable' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Flashcards/ })).not.toBeInTheDocument();
+  });
+});

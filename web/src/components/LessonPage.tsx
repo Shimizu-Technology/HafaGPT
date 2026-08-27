@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { BookOpen, Layers, Brain, CheckCircle } from 'lucide-react';
 import { useUpdateProgress } from '../hooks/useLearningPath';
 import { useAwardXP } from '../hooks/useXP';
@@ -12,6 +12,7 @@ import { XPToast } from './XPDisplay';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { getLessonTrust } from '../data/contentTrust';
+import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 
 type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
 
@@ -28,6 +29,7 @@ const STEP_INFO = {
 export function LessonPage() {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const updateProgress = useUpdateProgress();
   const awardXP = useAwardXP();
 
@@ -38,6 +40,9 @@ export function LessonPage() {
 
   const topic = topicId ? getTopic(topicId) : undefined;
   const topicIndex = topicId ? getTopicIndex(topicId) : 0;
+  const parsedLaunchContext = readLearningGameContext(location.search);
+  const launchContext = parsedLaunchContext?.topicId === topicId ? parsedLaunchContext : null;
+  const lessonReturn = getLearningGameReturn(launchContext);
 
   // Mark topic as started when entering
   useEffect(() => {
@@ -211,8 +216,9 @@ export function LessonPage() {
         title={topic.title}
         subtitle={`Step ${currentStepIndex + 1} of ${STEPS.length} · ${STEP_INFO[currentStep].label}`}
         icon={BookOpen}
-        backTo="/learning"
-        backLabel="Back to learning path"
+        backTo={launchContext ? lessonReturn.to : '/learning'}
+        backLabel={launchContext ? lessonReturn.label : 'Back to learning path'}
+        onBack={launchContext ? () => navigate(lessonReturn.to) : undefined}
         maxWidthClassName="max-w-3xl"
         below={(
           <div>

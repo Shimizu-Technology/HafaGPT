@@ -27,6 +27,7 @@ function lazyNamed<TModule>(
 const HomePage = lazyNamed(() => import('./components/HomePage'), 'HomePage');
 const Chat = lazyNamed(() => import('./components/Chat'), 'Chat');
 const LearningPathPage = lazyNamed(() => import('./components/LearningPathPage'), 'LearningPathPage');
+const TopicWorkspacePage = lazyNamed(() => import('./components/TopicWorkspacePage'), 'TopicWorkspacePage');
 const LessonPage = lazyNamed(() => import('./components/LessonPage'), 'LessonPage');
 const FlashcardDeckList = lazyNamed(() => import('./components/FlashcardDeckList'), 'FlashcardDeckList');
 const FlashcardViewer = lazyNamed(() => import('./components/FlashcardViewer'), 'FlashcardViewer');
@@ -154,6 +155,9 @@ function App() {
         
         {/* Learning Path - Full map view */}
         <Route path="/learning" element={<ProtectedRoute><LearningPathPage /></ProtectedRoute>} />
+
+        {/* Stable topic workspace */}
+        <Route path="/learning/:topicId" element={<ProtectedRoute><TopicWorkspacePage /></ProtectedRoute>} />
         
         {/* Learning Path - Mini-Lessons */}
         <Route path="/learn/:topicId" element={<ProtectedRoute><LessonPage /></ProtectedRoute>} />

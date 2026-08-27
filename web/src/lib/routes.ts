@@ -21,7 +21,12 @@ export const appRoutes = {
   home: '/' as const,
   games: '/games' as const,
   learning: '/learning' as const,
+  topic: (topicId: string): string => `/learning/${encodeURIComponent(topicId)}`,
   lesson: (topicId: string): string => `/learn/${encodeURIComponent(topicId)}`,
+  flashcards: (categoryId: string): string => `/flashcards/${encodeURIComponent(categoryId)}`,
+  quiz: (categoryId: string): string => `/quiz/${encodeURIComponent(categoryId)}`,
+  scenario: (scenarioId: string): string => `/practice/${encodeURIComponent(scenarioId)}`,
+  story: (storyId: string): string => `/stories/${encodeURIComponent(storyId)}`,
   memoryGame: (context: ReturnContext = {}): string => withReturnContext('/games/memory', context),
   scrambleGame: (context: ReturnContext = {}): string => withReturnContext('/games/scramble', context),
 };
@@ -49,6 +54,21 @@ export function safeInternalReturnPath(value: string | null, fallback: string): 
   } catch {
     return fallback;
   }
+}
+
+/** Replace app-owned query keys while preserving other query state and hashes. */
+export function setAppQueryParams(
+  path: string,
+  values: Record<string, string>,
+): string | null {
+  const safePath = safeInternalReturnPath(path, '');
+  if (!safePath) return null;
+
+  const parsed = new URL(safePath, INTERNAL_ORIGIN);
+  for (const [key, value] of Object.entries(values)) {
+    parsed.searchParams.set(key, value);
+  }
+  return `${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
 export function currentAppPath(pathname: string, search = '', hash = ''): string {

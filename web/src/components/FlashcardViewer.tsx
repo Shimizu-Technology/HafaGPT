@@ -16,6 +16,8 @@ import {
   getFlashcardTrustForCard,
   type FlashcardContentSource,
 } from '../data/contentTrust';
+import { ALL_TOPICS } from '../data/learningPath';
+import { readTopicReturn } from '../lib/topicReturn';
 
 interface FlashcardData {
   contentSource: FlashcardContentSource;
@@ -57,6 +59,10 @@ export function FlashcardViewer() {
   const cardType = cardTypeParam === 'default' || cardTypeParam === 'curated' ? 'curated' 
                  : cardTypeParam === 'custom' || cardTypeParam === 'dictionary' ? 'dictionary' 
                  : 'curated';
+  const connectedTopic = ALL_TOPICS.find((candidate) => candidate.flashcardCategory === topic);
+  const topicReturn = connectedTopic
+    ? readTopicReturn(searchParams.toString(), connectedTopic.id)
+    : null;
   
   const [flashcards, setFlashcards] = useState<FlashcardData[]>([]);
   const [newCards, setNewCards] = useState<FlashcardData[]>([]);
@@ -499,8 +505,9 @@ export function FlashcardViewer() {
         title={deckTitle}
         subtitle={`${deckSourceLabel} · Card ${currentIndex + 1} of ${flashcards.length}`}
         icon={Layers3}
-        backTo="/flashcards"
-        backLabel="Back to flashcard decks"
+        backTo={topicReturn?.to ?? '/flashcards'}
+        backLabel={topicReturn?.label ?? 'Back to flashcard decks'}
+        onBack={topicReturn ? () => navigate(topicReturn.to) : undefined}
         trailing={(
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />
