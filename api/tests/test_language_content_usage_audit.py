@@ -64,3 +64,33 @@ def test_exact_audit_matches_escaped_glottal_stop_in_typescript(tmp_path):
     findings = scan_content_roots([content_root], load_rules(vocabulary_path))
 
     assert [finding["entry_id"] for finding in findings] == ["verbs.eat"]
+
+
+def test_exact_audit_excludes_hyphen_prefixed_compound(tmp_path):
+    vocabulary_path = tmp_path / "canonical.json"
+    vocabulary_path.write_text(
+        json.dumps(
+            {
+                "entries": [
+                    {
+                        "id": "family.father",
+                        "category": "family",
+                        "english": "father",
+                        "recommended_teaching_term": "tåta",
+                        "review_status": "needs_review",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    content_root = tmp_path / "content"
+    content_root.mkdir()
+    (content_root / "lesson.ts").write_text(
+        "export const compound = 'para-tåta';\n",
+        encoding="utf-8",
+    )
+
+    findings = scan_content_roots([content_root], load_rules(vocabulary_path))
+
+    assert findings == []

@@ -55,5 +55,6 @@ def test_dynamic_quiz_choices_are_concise_and_unique():
 
     assert quiz["questions"]
     for question in quiz["questions"]:
-        assert len(question["options"]) == len(set(question["options"])) == 4
+        normalized_options = {option.casefold() for option in question["options"]}
+        assert len(question["options"]) == len(normalized_options) == 4
         assert all("," not in option and ";" not in option for option in question["options"])

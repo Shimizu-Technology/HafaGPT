@@ -8,6 +8,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
+import { serializeConversationHistory } from '../lib/conversationPractice';
 
 interface Message {
   id: string;
@@ -122,10 +123,7 @@ export function ConversationPractice() {
             objectives: scenario.objectives,
             useful_phrases: scenario.usefulPhrases.map(p => p.chamorro)
           },
-          conversation_history: conversation.messages.map(m => ({
-            role: m.role,
-            content: m.chamorro
-          })),
+          conversation_history: serializeConversationHistory(conversation.messages),
           user_message: userInput.trim(),
           turn_count: conversation.turnCount,
           user_id: user?.id
@@ -510,7 +508,7 @@ function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
 }
 
 // Message Bubble Component
-function MessageBubble({ 
+function MessageBubble({
   message, 
   characterName,
   showTranslation 
@@ -531,6 +529,11 @@ function MessageBubble({
       </div>
     );
   }
+
+  const feedbackSuggestions = [
+    ...(message.feedback?.suggestions ?? []),
+    ...(message.feedback?.corrections ?? []),
+  ];
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -561,7 +564,7 @@ function MessageBubble({
           )}
         </div>
 
-        {!isUser && (
+        {!isUser && message.groundingStatus && (
           <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
             {message.groundingStatus === 'canonical_support' ? (
               <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Canonical term matches included</>
@@ -574,11 +577,11 @@ function MessageBubble({
         {/* Feedback (for character messages after user input) */}
         {message.feedback && (
           <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            {(message.feedback.suggestions || message.feedback.corrections) && (message.feedback.suggestions || message.feedback.corrections)!.length > 0 && (
+            {feedbackSuggestions.length > 0 && (
               <div className="mb-2">
                 <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />AI suggestions</p>
                 <ul className="list-disc space-y-1 pl-4 text-sm text-blue-700 dark:text-blue-300">
-                  {(message.feedback.suggestions || message.feedback.corrections)!.map((suggestion, index) => (
+                  {feedbackSuggestions.map((suggestion, index) => (
                     <li key={index}>{suggestion}</li>
                   ))}
                 </ul>

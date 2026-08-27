@@ -6102,16 +6102,19 @@ async def get_story_endpoint(story_id: str):
 # CONVERSATION PRACTICE ENDPOINTS
 # =====================================================
 
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Literal
+from pydantic import BaseModel, Field, StringConstraints
+from typing import Annotated, List, Dict, Any, Literal
+
+
+ConversationContextItem = Annotated[str, StringConstraints(max_length=300)]
 
 
 class ConversationScenarioContext(BaseModel):
     setting: str = Field(max_length=500)
     character_name: str = Field(max_length=80)
     character_role: str = Field(max_length=160)
-    objectives: List[str] = Field(default_factory=list, max_length=12)
-    useful_phrases: List[str] = Field(default_factory=list, max_length=20)
+    objectives: List[ConversationContextItem] = Field(default_factory=list, max_length=12)
+    useful_phrases: List[ConversationContextItem] = Field(default_factory=list, max_length=20)
 
 
 class ConversationHistoryMessage(BaseModel):

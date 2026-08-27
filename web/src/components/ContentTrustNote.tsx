@@ -31,7 +31,7 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
         type="button"
         className={`flex min-h-11 w-full items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-inset ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
         aria-expanded={expanded}
-        aria-controls={detailId}
+        aria-controls={expanded ? detailId : undefined}
         onClick={() => setExpanded((value) => !value)}
       >
         <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-white/70 dark:bg-slate-900/50">

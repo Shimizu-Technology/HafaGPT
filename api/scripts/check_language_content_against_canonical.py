@@ -63,7 +63,7 @@ def exact_contains(haystack: str, needle: str) -> bool:
     # A leading apostrophe is commonly just the quote around a string literal,
     # so only a word character blocks the start. At the end, apostrophes and
     # hyphens still block a match to avoid flagging longer or possessed forms.
-    pattern = rf"(?<!\w){re.escape(needle)}(?!\w|['’\-]\w)"
+    pattern = rf"(?<!\w)(?<!-){re.escape(needle)}(?!\w|['’\-]\w)"
     return re.search(pattern, haystack, flags=re.IGNORECASE) is not None
 
 

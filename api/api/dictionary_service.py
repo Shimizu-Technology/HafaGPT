@@ -1098,11 +1098,15 @@ class DictionaryService:
             
             if q_type == "multiple_choice":
                 # Generate unique, concise distractors from other entries.
-                other_glosses = list({
-                    primary_definition(other)
-                    for other in good_words
-                    if other != word and primary_definition(other).casefold() != correct_gloss.casefold()
-                })
+                other_glosses_by_key: dict[str, str] = {}
+                for other in good_words:
+                    if other == word:
+                        continue
+                    other_gloss = primary_definition(other)
+                    other_key = other_gloss.casefold()
+                    if other_key != correct_gloss.casefold():
+                        other_glosses_by_key.setdefault(other_key, other_gloss)
+                other_glosses = list(other_glosses_by_key.values())
                 random.shuffle(other_glosses)
                 if len(other_glosses) < 3:
                     continue

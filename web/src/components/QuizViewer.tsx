@@ -13,6 +13,7 @@ import { TTSDisclaimer } from './TTSDisclaimer';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { DICTIONARY_CONTENT_TRUST, getLessonTrust } from '../data/contentTrust';
+import { ALL_TOPICS } from '../data/learningPath';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
 
@@ -91,11 +92,10 @@ export function QuizViewer() {
   const [isRestarting, setIsRestarting] = useState(false);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
-  const curatedTrustCategory = categoryId === 'common-phrases'
-    ? 'phrases'
-    : categoryId === 'body-parts'
-      ? 'body'
-      : categoryId ?? '';
+  const curatedTopic = !isDictionaryQuiz
+    ? ALL_TOPICS.find((topic) => topic.quizCategory === categoryId)
+    : undefined;
+  const curatedTrustCategory = curatedTopic?.flashcardCategory ?? categoryId ?? '';
   const contentTrust = isDictionaryQuiz
     ? dictQuizData?.trust ?? DICTIONARY_CONTENT_TRUST
     : getLessonTrust(curatedTrustCategory);
