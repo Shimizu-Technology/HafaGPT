@@ -27,7 +27,9 @@ export function useRestorableViewParam<T extends string>(
   }, [defaultValue, key, location.hash, location.pathname, navigate, searchParams]);
 
   useEffect(() => {
-    if (rawValue && !allowedValues.includes(rawValue as T)) setValue(defaultValue);
+    if (rawValue !== null && !allowedValues.includes(rawValue as T)) {
+      setValue(defaultValue);
+    }
   }, [allowedValues, defaultValue, rawValue, setValue]);
 
   return [value, setValue] as const;

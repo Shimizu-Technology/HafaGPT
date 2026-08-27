@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { ConversationList } from './ConversationList';
@@ -96,6 +96,18 @@ describe('practice entry pages', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/quiz?level=Advanced#quizzes');
   });
 
+  it('removes empty quiz values while preserving unrelated URL state', async () => {
+    renderPage(<QuizList />, '/quiz?source=&level=&keep=yes#quizzes');
+
+    expect(screen.getByRole('button', { name: 'Guided quizzes' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/quiz?keep=yes#quizzes');
+    });
+  });
+
   it('restores the selected story source from the URL', () => {
     renderPage(<StoryList />, '/stories?source=lengguahita#sources');
 
@@ -106,6 +118,18 @@ describe('practice entry pages', () => {
     expect(screen.getByTestId('location')).toHaveTextContent(
       '/stories?source=lengguahita#sources',
     );
+  });
+
+  it('removes an empty story source while preserving unrelated URL state', async () => {
+    renderPage(<StoryList />, '/stories?source=&keep=yes#sources');
+
+    expect(screen.getByRole('button', { name: /Curated/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/stories?keep=yes#sources');
+    });
   });
 
   it('organizes conversation scenarios by learner readiness', () => {
