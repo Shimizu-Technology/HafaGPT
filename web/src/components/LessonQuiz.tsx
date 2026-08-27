@@ -54,7 +54,9 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
       || !('questionIds' in state)
       || !Array.isArray(state.questionIds)
       || state.questionIds.length === 0
+      || state.questionIds.length > QUESTIONS_PER_QUIZ
       || !state.questionIds.every((questionId) => typeof questionId === 'string')
+      || new Set(state.questionIds).size !== state.questionIds.length
       || !('currentIndex' in state)
       || typeof state.currentIndex !== 'number'
       || !Number.isInteger(state.currentIndex)
@@ -77,6 +79,18 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
         && 'isCorrect' in answer
         && typeof answer.isCorrect === 'boolean'
       ))
+      || !Object.keys(state.answeredQuestions).every((questionId) =>
+        (state.questionIds as string[]).includes(questionId),
+      )
+      || Object.keys(state.answeredQuestions).length < state.currentIndex
+      || Object.keys(state.answeredQuestions).length > state.currentIndex + 1
+      || state.correctCount !== Object.values(state.answeredQuestions)
+        .filter((answer) => (
+          typeof answer === 'object'
+          && answer !== null
+          && 'isCorrect' in answer
+          && answer.isCorrect === true
+        )).length
       || !('timestamp' in state)
       || typeof state.timestamp !== 'number'
       || !Number.isFinite(state.timestamp)
@@ -139,10 +153,23 @@ function LessonQuizSession({
 }: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
   // Try to restore saved state first
-  const savedState = useMemo(
-    () => loadQuizState(topic.id, ownerId),
-    [topic.id, ownerId],
-  );
+  const savedState = useMemo(() => {
+    const state = loadQuizState(topic.id, ownerId);
+    if (!state) return null;
+
+    const category = QUIZ_CATEGORIES.find((candidate) => candidate.id === topic.quizCategory);
+    const validQuestionIds = new Set(category?.questions.map((question) => question.id) ?? []);
+    const expectedQuestionCount = Math.min(QUESTIONS_PER_QUIZ, validQuestionIds.size);
+    if (
+      state.questionIds.length !== expectedQuestionCount
+      || !state.questionIds.every((questionId) => validQuestionIds.has(questionId))
+    ) {
+      clearQuizState(topic.id, ownerId);
+      return null;
+    }
+
+    return state;
+  }, [topic.id, topic.quizCategory, ownerId]);
   const attemptIdRef = useRef(savedState?.attemptId ?? createClientAttemptId());
   const startedAtRef = useRef(savedState?.startedAt ?? Date.now());
   const completionStartedRef = useRef(false);

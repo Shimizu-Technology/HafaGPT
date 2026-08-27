@@ -143,10 +143,11 @@ export function QuizViewer() {
 
   // Browser warning when leaving mid-quiz
   const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
+  const isResultNavigationBlocked = pendingQuizResult !== null;
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isQuizInProgress) {
+      if (isQuizInProgress || isResultNavigationBlocked) {
         e.preventDefault();
         e.returnValue = ''; // Required for Chrome
         return '';
@@ -155,7 +156,7 @@ export function QuizViewer() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isQuizInProgress]);
+  }, [isQuizInProgress, isResultNavigationBlocked]);
   const categoryTitle = isDictionaryQuiz ? dictQuizData?.category : category?.title;
 
   // Check usage limits on mount (wait for data to load first)
@@ -488,6 +489,7 @@ export function QuizViewer() {
 
   // Handle back navigation with confirmation if quiz is in progress
   const handleBack = () => {
+    if (isResultNavigationBlocked) return;
     if (results.length > 0) {
       const confirmed = window.confirm(
         'Are you sure you want to leave? Your quiz progress will be lost.'
@@ -500,6 +502,11 @@ export function QuizViewer() {
     }
   };
 
+  const handleResultsBack = () => {
+    if (isResultNavigationBlocked) return;
+    navigate(quizReturnTo);
+  };
+
   const correctCount = results.filter(r => r.isCorrect).length;
   const scorePercent = Math.round((correctCount / questions.length) * 100);
 
@@ -507,7 +514,7 @@ export function QuizViewer() {
   if (showResults) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={topicReturn ? () => navigate(quizReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={isResultNavigationBlocked || topicReturn ? handleResultsBack : undefined} maxWidthClassName="max-w-2xl" />
 
         <div className="max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}
@@ -612,12 +619,22 @@ export function QuizViewer() {
               <RotateCcw className="w-5 h-5" />
               {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
             </button>
-            <Link
-              to="/quiz"
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-all"
-            >
-              Other Quizzes
-            </Link>
+            {isResultNavigationBlocked ? (
+              <button
+                type="button"
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 transition-all cursor-not-allowed opacity-60"
+              >
+                Other Quizzes
+              </button>
+            ) : (
+              <Link
+                to="/quiz"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-all"
+              >
+                Other Quizzes
+              </Link>
+            )}
           </div>
           
           {/* Dictionary mode hint OR Try Dictionary Mode button */}
@@ -632,13 +649,24 @@ export function QuizViewer() {
                   <BookOpen className="w-5 h-5" />
                   <span className="text-sm font-medium">Want more practice?</span>
                 </div>
-                <Link
-                  to={`/quiz/dict-${actualCategoryId}`}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors"
-                >
-                  Try Dictionary Mode
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
+                {isResultNavigationBlocked ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold transition-colors cursor-not-allowed opacity-60"
+                  >
+                    Try Dictionary Mode
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <Link
+                    to={`/quiz/dict-${actualCategoryId}`}
+                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    Try Dictionary Mode
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
               </div>
               <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 text-center sm:text-left">
                 10,350+ words • Unlimited new questions • More variety

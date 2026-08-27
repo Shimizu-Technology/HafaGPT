@@ -361,8 +361,25 @@ export function WordScramble() {
     setElapsedTime(0);
   };
 
+  const isGameInProgress = gameState === 'playing';
+  const isResultNavigationBlocked = pendingGameResult !== null;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isGameInProgress || isResultNavigationBlocked) {
+        event.preventDefault();
+        event.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isGameInProgress, isResultNavigationBlocked]);
+
   const handleBack = () => {
-    if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
+    if (isResultNavigationBlocked) return;
+    if (isGameInProgress && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
       return;
     }
     navigate(gameReturn.to);
@@ -866,12 +883,22 @@ export function WordScramble() {
             </div>
 
             {/* Back to Games */}
-            <Link
-              to={gameReturn.to}
-              className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
-            >
-              {gameReturn.label}
-            </Link>
+            {isResultNavigationBlocked ? (
+              <button
+                type="button"
+                disabled
+                className="inline-block cursor-not-allowed text-xs font-medium text-purple-500 opacity-60 dark:text-purple-400 sm:text-sm"
+              >
+                {gameReturn.label}
+              </button>
+            ) : (
+              <Link
+                to={gameReturn.to}
+                className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
+              >
+                {gameReturn.label}
+              </Link>
+            )}
           </div>
         )}
       </main>

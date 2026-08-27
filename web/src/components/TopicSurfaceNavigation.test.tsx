@@ -410,6 +410,18 @@ describe('topic surface navigation', () => {
     );
     const firstPayload = mocks.saveQuizResult.mock.calls[0][0];
     expect(screen.getByRole('button', { name: 'Try Again' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Other Quizzes' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Try Dictionary Mode' })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Greetings & Basics' }));
+    expect(screen.getByTestId('current-location')).toHaveTextContent(
+      `/quiz/greetings?${topicQuery}`,
+    );
+
+    const beforeUnload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving quiz result' }));
 
     await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2));

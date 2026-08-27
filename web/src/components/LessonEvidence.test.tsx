@@ -243,6 +243,63 @@ describe('lesson concept evidence', () => {
     });
   });
 
+  it('discards saved scores that conflict with their answer evidence', async () => {
+    window.localStorage.setItem(`hafagpt_quiz_${mocks.userId}_greetings`, JSON.stringify({
+      topicId: 'greetings',
+      attemptId: '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678',
+      startedAt: Date.now() - 60_000,
+      questionIds: ['greet-1', 'greet-2', 'greet-3', 'greet-4', 'greet-5'],
+      currentIndex: 4,
+      correctCount: 5,
+      answeredQuestions: {
+        'greet-1': { userAnswer: 'wrong', isCorrect: false },
+        'greet-2': { userAnswer: 'wrong', isCorrect: false },
+        'greet-3': { userAnswer: 'wrong', isCorrect: false },
+        'greet-4': { userAnswer: 'wrong', isCorrect: false },
+        'greet-5': { userAnswer: 'wrong', isCorrect: false },
+      },
+      timestamp: Date.now(),
+    }));
+
+    render(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+
+    expect(screen.queryByText('Continue Quiz?')).not.toBeInTheDocument();
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    expect(mocks.saveQuizResult).not.toHaveBeenCalled();
+    await waitFor(() => {
+      const replacement = JSON.parse(
+        window.localStorage.getItem(`hafagpt_quiz_${mocks.userId}_greetings`) ?? '{}',
+      );
+      expect(replacement.correctCount).toBe(0);
+      expect(replacement.answeredQuestions).toEqual({});
+    });
+  });
+
+  it('discards saved answers that do not belong to the saved quiz', async () => {
+    window.localStorage.setItem(`hafagpt_quiz_${mocks.userId}_greetings`, JSON.stringify({
+      topicId: 'greetings',
+      questionIds: ['greet-1', 'greet-2', 'greet-3', 'greet-4', 'greet-5'],
+      currentIndex: 1,
+      correctCount: 1,
+      answeredQuestions: {
+        'unrelated-question': { userAnswer: 'Hello / Hi', isCorrect: true },
+      },
+      timestamp: Date.now(),
+    }));
+
+    render(<LessonQuiz topic={greetings} onComplete={vi.fn()} />);
+
+    expect(screen.queryByText('Continue Quiz?')).not.toBeInTheDocument();
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    await waitFor(() => {
+      const replacement = JSON.parse(
+        window.localStorage.getItem(`hafagpt_quiz_${mocks.userId}_greetings`) ?? '{}',
+      );
+      expect(replacement.currentIndex).toBe(0);
+      expect(replacement.answeredQuestions).toEqual({});
+    });
+  });
+
   it('never restores another authenticated account saved lesson quiz', () => {
     saveResumableGreetingQuiz(
       '018f6a6e-9c3d-7b2a-a1c4-8e9f12345678',

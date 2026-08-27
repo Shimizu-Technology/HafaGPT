@@ -218,10 +218,11 @@ export function MemoryMatch() {
 
   // Browser warning when leaving mid-game (like quizzes)
   const isGameInProgress = gameState === 'playing' && moves > 0;
+  const isResultNavigationBlocked = pendingGameResult !== null;
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isGameInProgress) {
+      if (isGameInProgress || isResultNavigationBlocked) {
         e.preventDefault();
         e.returnValue = '';
         return '';
@@ -230,10 +231,11 @@ export function MemoryMatch() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isGameInProgress]);
+  }, [isGameInProgress, isResultNavigationBlocked]);
 
   // Handle back navigation with confirmation
   const handleBackClick = () => {
+    if (isResultNavigationBlocked) return;
     if (isGameInProgress) {
       const confirmed = window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.');
       if (confirmed) {
@@ -766,12 +768,22 @@ export function MemoryMatch() {
             </div>
 
             {/* Back to Games */}
-            <Link
-              to={gameReturn.to}
-              className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
-            >
-              {gameReturn.label}
-            </Link>
+            {isResultNavigationBlocked ? (
+              <button
+                type="button"
+                disabled
+                className="inline-block cursor-not-allowed text-xs font-medium text-coral-500 opacity-60 dark:text-teal-400 sm:text-sm"
+              >
+                {gameReturn.label}
+              </button>
+            ) : (
+              <Link
+                to={gameReturn.to}
+                className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
+              >
+                {gameReturn.label}
+              </Link>
+            )}
           </div>
         )}
       </main>

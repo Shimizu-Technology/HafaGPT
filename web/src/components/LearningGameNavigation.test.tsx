@@ -274,6 +274,19 @@ describe('contextual learning game navigation', () => {
     );
     const firstPayload = mocks.saveGameResult.mock.calls[0][0];
     expect(screen.getByRole('button', { name: 'Play Again' })).toBeDisabled();
+    const returnButtons = screen.getAllByRole('button', { name: testCase.label });
+    const headerBack = returnButtons.find((button) => !button.hasAttribute('disabled'));
+    const disabledCompletionBack = returnButtons.find((button) => button.hasAttribute('disabled'));
+    expect(headerBack).toBeDefined();
+    expect(disabledCompletionBack).toBeDisabled();
+
+    fireEvent.click(headerBack!);
+    expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
+
+    const beforeUnload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(true);
+
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving game result' }));
     await act(async () => {
       await Promise.resolve();
