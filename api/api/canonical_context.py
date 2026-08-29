@@ -12,6 +12,7 @@ from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.translation_policy import (
+    extract_translation_payload,
     extract_translation_retrieval_payload,
     is_passage_translation,
 )
@@ -73,6 +74,13 @@ def _exact_dictionary_data() -> tuple[tuple[str, dict], ...]:
 
 
 def _extract_requested_headword(user_input: str) -> str:
+    candidate_match = re.search(
+        r'candidate spelling to verify:\s*["“]([^"”]+)["”]',
+        user_input,
+        re.I,
+    )
+    if candidate_match:
+        return candidate_match.group(1).strip()
     if not re.search(r"\b(what does|what is|define|meaning|in english)\b", user_input, re.I):
         return ""
     for pattern in (
@@ -98,6 +106,127 @@ def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, obje
             if _normalize_exact_headword(entry_headword) == normalized_headword:
                 matches.append((display_name, entry_headword, definition))
                 break
+    return matches
+
+
+def _extract_requested_english_gloss(user_input: str) -> str:
+    """Return a short English target from an English-to-Chamorro lookup."""
+
+    if not re.search(
+        r"(?i)\b(?:how (?:do|would) (?:you|i) say|"
+        r"what is .+ in chamor(?:ro|u)|chamor(?:ro|u) word for|"
+        r"translate .+ to chamor(?:ro|u))\b",
+        user_input,
+    ):
+        return ""
+    target = extract_translation_payload(user_input).strip(" \t\r\n.,!?;:")
+    words = _PASSAGE_WORD_PATTERN.findall(target)
+    if not words or len(words) > 4 or len(target) > 80:
+        return ""
+    return target
+
+
+def _definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]:
+    """Return direct gloss keys without indexing examples or incidental prose."""
+
+    definition_text = _format_dictionary_definition(definition)
+    segments: list[tuple[str, int]] = []
+    qualifier_starts = (
+        "also ",
+        "but ",
+        "especially ",
+        "from ",
+        "longer ",
+        "shorter ",
+        "similar ",
+        "that ",
+        "usually ",
+        "used ",
+        "when ",
+        "which ",
+        "with ",
+    )
+
+    def add_segment(raw_segment: str, rank: int) -> None:
+        segment = re.sub(
+            r"(?i)^\s*(?:noun|verb|adjective|adverb|n|v|adj|adv)\.\s*",
+            "",
+            raw_segment,
+        ).strip(" \t\r\n.:–—-")
+        normalized = _normalize_for_match(segment)
+        if normalized:
+            segments.append((normalized, rank))
+        without_parenthetical = re.sub(r"\([^)]*\)", " ", segment)
+        normalized_without_parenthetical = _normalize_for_match(without_parenthetical)
+        if (
+            normalized_without_parenthetical
+            and normalized_without_parenthetical != normalized
+        ):
+            segments.append((normalized_without_parenthetical, max(rank, 2)))
+
+    for clause in re.split(r"[;\n]", definition_text):
+        add_segment(clause, 1)
+
+        dash_parts = re.split(r"--|\s[-–—]\s", clause, maxsplit=1)
+        if len(dash_parts) == 2:
+            add_segment(dash_parts[0], 3)
+
+        comma_parts = [part.strip() for part in clause.split(",")]
+        if len(comma_parts) <= 1 or len(_PASSAGE_WORD_PATTERN.findall(clause)) > 8:
+            continue
+        normalized_tail = _normalize_for_match(comma_parts[1])
+        first_rank = (
+            3
+            if any(normalized_tail.startswith(prefix) for prefix in qualifier_starts)
+            else 1
+        )
+        add_segment(comma_parts[0], first_rank)
+        if first_rank == 1:
+            for comma_part in comma_parts[1:]:
+                add_segment(comma_part, 1)
+    return tuple(segments)
+
+
+@lru_cache(maxsize=1)
+def _exact_english_gloss_index(
+) -> dict[str, tuple[tuple[int, str, str, object], ...]]:
+    """Index direct dictionary glosses for deterministic reverse lookup."""
+
+    index: dict[str, list[tuple[int, str, str, object]]] = {}
+    for display_name, dictionary in _exact_dictionary_data():
+        for entry_headword, definition in dictionary.items():
+            for gloss, rank in _definition_gloss_segments(definition):
+                index.setdefault(gloss, []).append(
+                    (rank, display_name, entry_headword, definition)
+                )
+    return {
+        gloss: tuple(sorted(matches, key=lambda match: (match[0], len(match[2]), match[2])))
+        for gloss, matches in index.items()
+    }
+
+
+def _lookup_exact_english_glosses(
+    english_gloss: str,
+) -> list[tuple[str, str, object]]:
+    """Return only the best-ranked headwords for an exact English gloss."""
+
+    normalized_gloss = _normalize_for_match(english_gloss)
+    ranked_matches = _exact_english_gloss_index().get(normalized_gloss, ())
+    if not ranked_matches:
+        return []
+    best_rank = ranked_matches[0][0]
+    matches: list[tuple[str, str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    for rank, display_name, entry_headword, definition in ranked_matches:
+        if rank != best_rank:
+            break
+        key = (display_name, _normalize_exact_headword(entry_headword))
+        if key in seen:
+            continue
+        seen.add(key)
+        matches.append((display_name, entry_headword, definition))
+        if len(matches) >= MAX_CANONICAL_MATCHES:
+            break
     return matches
 
 
@@ -284,9 +413,16 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
 
     requested_headword = _extract_requested_headword(user_input)
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
+    requested_english_gloss = _extract_requested_english_gloss(user_input)
+    english_gloss_matches = _lookup_exact_english_glosses(requested_english_gloss)
     passage_dictionary_matches = _passage_dictionary_matches(user_input)
 
-    if not matches and not dictionary_matches and not passage_dictionary_matches:
+    if (
+        not matches
+        and not dictionary_matches
+        and not english_gloss_matches
+        and not passage_dictionary_matches
+    ):
         return "", []
 
     lines = [
@@ -335,6 +471,18 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             ]
         )
 
+    for display_name, entry_headword, definition in english_gloss_matches:
+        lines.extend(
+            [
+                f"[Exact English dictionary gloss: {requested_english_gloss}]",
+                f"Chamorro headword: {entry_headword}",
+                f"Source: {display_name}",
+                f"Definition: {_format_dictionary_definition(definition)}",
+                "This is direct dictionary evidence for the requested English gloss.",
+                "",
+            ]
+        )
+
     for (
         observed,
         display_name,
@@ -367,7 +515,7 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             "Cite canonical entries as the HåfaGPT canonical vocabulary ledger. "
             "Do not claim native review unless the review status says so."
         )
-    if dictionary_matches or passage_dictionary_matches:
+    if dictionary_matches or english_gloss_matches or passage_dictionary_matches:
         lines.append(
             "Cite exact headword definitions by the dictionary source name shown above."
         )
@@ -403,6 +551,10 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     sources.extend(
         (display_name, None)
         for display_name, _headword, _definition in dictionary_matches
+    )
+    sources.extend(
+        (display_name, None)
+        for display_name, _headword, _definition in english_gloss_matches
     )
     sources.extend(
         (display_name, None)

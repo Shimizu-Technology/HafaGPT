@@ -5,19 +5,25 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from src.rag.translation_policy import extract_translation_payload
+
 
 _AMBIGUOUS_FOLLOW_UPS = (
     re.compile(r"\b(?:the|that|this) language\b", re.IGNORECASE),
     re.compile(r"^\s*(?:tell me more|what about that|can you explain more)\b", re.IGNORECASE),
 )
 _TRANSLATION_TARGET_PATTERNS = (
-    (re.compile(r"\bhow do (?:you|i) say\s+(.+?)(?:\s+in\s+chamorr[ou])?[?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\b(?:the\s+)?chamorr[ou] word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\b(?:the\s+)?chamor(?:ro|u) word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\bwhat does\s+(.+?)\s+mean(?:\s+in\s+english)?[?.!]*$", re.IGNORECASE), "to_english"),
     (re.compile(r"\bwhat is\s+(.+?)\s+in\s+english[?.!]*$", re.IGNORECASE), "to_english"),
     (re.compile(r"\btranslate\s+(.+?)\s+to\s+english[?.!]*$", re.IGNORECASE), "to_english"),
+)
+_CANDIDATE_CORRECTION_PATTERN = re.compile(
+    r"^\s*(?:i\s+thought\s+(?:it\s+)?was|"
+    r"isn['’]t(?:\s+it)?|is(?:\s+it)?\s+not)\s+(.+?)[?.!]*\s*$",
+    re.IGNORECASE,
 )
 _REPLACEMENT_TARGET_PATTERN = re.compile(
     r"^\s*(?:(?:what|how)\s+about|and)\s+(.+?)[?.!]*\s*$",
@@ -36,7 +42,7 @@ _TOPIC_MARKERS = (
     (re.compile(r"\b(?:guam|guåhan|guahan)\b", re.IGNORECASE), "Guam"),
     (re.compile(r"\b(?:cnmi|northern mariana islands)\b", re.IGNORECASE), "CNMI"),
     (re.compile(r"\bsaipan\b", re.IGNORECASE), "Saipan"),
-    (re.compile(r"\bchamorr[ou]\b", re.IGNORECASE), "CHamoru"),
+    (re.compile(r"\bchamor(?:ro|u)\b", re.IGNORECASE), "CHamoru"),
 )
 
 
@@ -74,6 +80,11 @@ def _clean_target(value: str) -> str:
 def _explicit_translation_request(value: str) -> tuple[str, str] | None:
     """Return an explicit target and direction from a user-authored request."""
 
+    if re.search(r"\bhow (?:do|would) (?:you|i) say\b", value, re.IGNORECASE):
+        target = _clean_target(extract_translation_payload(value))
+        if target and target.casefold() not in {"this", "that", "it"}:
+            return target, "to_chamorro"
+
     for pattern, direction in _TRANSLATION_TARGET_PATTERNS:
         match = pattern.search(value)
         if not match:
@@ -92,6 +103,13 @@ def _replacement_target(value: str) -> str:
     if target.casefold() in {"this", "that", "it", "the language", "that language"}:
         return ""
     return target
+
+
+def _candidate_correction(value: str) -> str:
+    """Return a learner-supplied spelling without treating it as a new target."""
+
+    match = _CANDIDATE_CORRECTION_PATTERN.match(value)
+    return _clean_target(match.group(1)) if match else ""
 
 
 def _translation_thread_state(
@@ -119,6 +137,9 @@ def _translation_thread_state(
         replacement = _replacement_target(previous)
         if replacement:
             target = target or replacement
+            continue
+
+        if _candidate_correction(previous):
             continue
 
         if _SAME_TARGET_FOLLOW_UP_PATTERN.search(previous):
@@ -158,13 +179,20 @@ def build_contextual_retrieval_query(
 
     replacement_target = _replacement_target(current)
     same_target_follow_up = bool(_SAME_TARGET_FOLLOW_UP_PATTERN.search(current))
-    if replacement_target or same_target_follow_up:
+    candidate_correction = _candidate_correction(current)
+    if replacement_target or same_target_follow_up or candidate_correction:
         thread_state = _translation_thread_state(past_messages)
         if thread_state:
             previous_target, direction = thread_state
             target = replacement_target or previous_target
             if target:
-                return _canonical_translation_query(target, direction)
+                canonical_query = _canonical_translation_query(target, direction)
+                if candidate_correction:
+                    return (
+                        f'{canonical_query} Candidate spelling to verify: '
+                        f'"{candidate_correction}".'
+                    )
+                return canonical_query
 
     if not any(pattern.search(current) for pattern in _AMBIGUOUS_FOLLOW_UPS):
         return current_message

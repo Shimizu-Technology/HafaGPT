@@ -11,6 +11,13 @@ def detect_query_type(query: str) -> str:
     """Return lookup, educational, usage, cultural, or historical."""
 
     query_lower = query.lower()
+    translation_intent = classify_translation_request(query)
+    if translation_intent.startswith("passage_"):
+        # Sentence and passage translation needs grammar plus lexical evidence,
+        # rather than the single dictionary-headword lookup lane.
+        return "educational"
+    if translation_intent == "single_word_lookup":
+        return "lookup"
 
     historical_keywords = [
         "historical",
@@ -49,14 +56,6 @@ def detect_query_type(query: str) -> str:
     ]
     if any(re.search(pattern, query_lower) for pattern in language_identity_patterns):
         return "cultural"
-
-    translation_intent = classify_translation_request(query)
-    if translation_intent.startswith("passage_"):
-        # Sentence and passage translation needs grammar plus lexical evidence,
-        # rather than the single dictionary-headword lookup lane.
-        return "educational"
-    if translation_intent == "single_word_lookup":
-        return "lookup"
 
     if "chamorro word for" in query_lower:
         return "lookup"

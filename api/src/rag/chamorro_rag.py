@@ -105,7 +105,10 @@ def extract_target_word(query: str) -> str:
         The extracted word, or empty string if not found
     """
     import re
-    from src.rag.translation_policy import is_passage_translation
+    from src.rag.translation_policy import (
+        extract_translation_payload,
+        is_passage_translation,
+    )
 
     if is_passage_translation(query):
         return ""
@@ -144,15 +147,20 @@ def extract_target_word(query: str) -> str:
         return match.group(1).strip().lower()
     
     # Pattern 5: "what is X in Chamorro" (English→Chamorro, NO quotes)
-    match = re.search(r"what is ([^\s?,]+) in chamorro", query, re.IGNORECASE)
+    match = re.search(
+        r"what is\s+([^\s?,]+)\s+in\s+chamor(?:ro|u)",
+        query,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 6: "how do you say X in Chamorro" (English→Chamorro, NO quotes)
+    # Pattern 6: "how do/would you say X in Chamorro" (English→Chamorro, NO quotes)
     # Handle multi-word phrases like "thank you", "good morning"
-    match = re.search(r"how do (?:you|i) say ([^?]+?)(?:\s+in\s+chamorro|\?|$)", query, re.IGNORECASE)
-    if match:
-        return match.group(1).strip().lower()
+    if re.search(r"\bhow (?:do|would) (?:you|i) say\b", query, re.IGNORECASE):
+        target = extract_translation_payload(query)
+        if target:
+            return target.lower()
     
     # Pattern 7: "word for X" (English→Chamorro), including short phrases
     match = re.search(r"word for (.+?)[?.!]*$", query, re.IGNORECASE)
