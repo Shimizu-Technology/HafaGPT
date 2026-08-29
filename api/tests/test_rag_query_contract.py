@@ -249,6 +249,13 @@ def test_short_chamorro_phrase_gets_exact_english_lookup_lane() -> None:
     assert extract_short_lexical_target(query) == "håfa adai"
 
 
+def test_short_english_lookup_strips_period_and_direction() -> None:
+    query = "Translate håfa adai to English."
+
+    assert classify_translation_request(query) == "passage_to_english"
+    assert extract_short_lexical_target(query) == "håfa adai"
+
+
 def test_word_for_parser_keeps_multiword_target() -> None:
     assert extract_target_word("What is the Chamorro word for banana tree?") == "banana tree"
 

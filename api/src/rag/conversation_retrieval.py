@@ -25,7 +25,7 @@ _REPLACEMENT_TARGET_PATTERN = re.compile(
 )
 _SAME_TARGET_FOLLOW_UP_PATTERN = re.compile(
     r"^\s*(?:"
-    r"(?:what|how)\s+about\s+(?:that|it)[?.!]*\s*$|"
+    r"(?:what|how)\s+about\s+(?:that|it)(?=\s*[?.!]*\s*$)|"
     r"(?:give|show|list|offer)\s+me\s+(?:some\s+)?(?:possible\s+)?(?:answers|options|alternatives|translations)|"
     r"what\s+(?:else|could\s+it\s+be)|"
     r"(?:any|some)\s+(?:other\s+)?(?:answers|options|alternatives|translations)"
@@ -67,7 +67,7 @@ def _clean_target(value: str) -> str:
     )
     for opening, closing in quote_pairs:
         if len(cleaned) > 1 and cleaned.startswith(opening) and cleaned.endswith(closing):
-            return cleaned[1:-1].strip()
+            return cleaned[1:-1].strip().strip(" \t\r\n.,!?;:")
     return cleaned
 
 

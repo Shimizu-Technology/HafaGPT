@@ -282,12 +282,14 @@ def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
     if not payload or "\n" in payload or len(payload) > 80:
         return ""
     payload = payload.strip(" \t.,!?;:")
-    if translation_intent == "passage_to_chamorro":
-        payload = re.sub(
-            r"(?i)[\s,;:\-–—]*\b(?:in|to)\s+chamorr[ou]\b\s*$",
-            "",
-            payload,
-        ).strip(" \t.,!?;:")
+    direction_language = (
+        r"chamorr[ou]" if translation_intent == "passage_to_chamorro" else "english"
+    )
+    payload = re.sub(
+        rf"(?i)[\s,;:\-–—]*\b(?:in|to)\s+{direction_language}\b\s*$",
+        "",
+        payload,
+    ).strip(" \t.,!?;:")
     if not payload:
         return ""
     words = _words(payload)

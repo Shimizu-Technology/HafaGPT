@@ -51,6 +51,17 @@ def test_target_cleaning_preserves_terminal_glottal_stops() -> None:
     assert _clean_target("gofli’e’?") == "gofli’e’"
     assert _clean_target("aga'?") == "aga'"
     assert _clean_target("‘ga’lågu’?") == "ga’lågu"
+    assert _clean_target('"flower?"') == "flower"
+    assert _clean_target("“tree!”") == "tree"
+
+
+def test_punctuated_same_target_follow_up_keeps_translation_thread() -> None:
+    query = build_contextual_retrieval_query(
+        "What about that?",
+        [{"role": "user", "content": "How do you say flower in Chamorro?"}],
+    )
+
+    assert query == 'How do you say "flower" in Chamorro?'
 
 
 def test_translation_follow_up_replaces_target_and_keeps_direction() -> None:
