@@ -52,6 +52,8 @@ def test_rebuild_cli_source_default_and_environment_override(
     configured_source: str | None,
     expected_source: str,
 ) -> None:
+    """Keep legacy fallback and environment override behavior explicit."""
+
     if configured_source is None:
         monkeypatch.delenv("RAG_COLLECTION_NAME", raising=False)
     else:
@@ -65,6 +67,8 @@ def test_rebuild_cli_source_default_and_environment_override(
         _target: str,
         _batch_size: int,
     ) -> dict[str, str]:
+        """Capture the parsed source without running an embedding build."""
+
         observed["source"] = source
         return {"status": "ready"}
 

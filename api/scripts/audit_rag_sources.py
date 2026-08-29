@@ -303,6 +303,7 @@ def main() -> int:
     audit = run_audit(args.database_url, args.collection_name)
     print(json.dumps(audit, ensure_ascii=False, indent=2, default=str))
 
+    selected_gates_pass = True
     if args.enforce_clean_corpus_gates:
         summary = audit["summary"]
         clean = (
@@ -313,10 +314,12 @@ def main() -> int:
             and audit["policy"]["blocked_chunks"] == 0
             and audit["policy"]["unregistered_chunks"] == 0
         )
-        return 0 if clean else 1
+        selected_gates_pass = selected_gates_pass and clean
     if args.enforce_operational_cutover_gates:
-        return 0 if audit["operational_cutover"]["ready"] else 1
-    return 0
+        selected_gates_pass = (
+            selected_gates_pass and audit["operational_cutover"]["ready"]
+        )
+    return 0 if selected_gates_pass else 1
 
 
 if __name__ == "__main__":

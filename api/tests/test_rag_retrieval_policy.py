@@ -3,7 +3,14 @@ from __future__ import annotations
 from langchain_core.documents import Document
 
 from src.rag.chamorro_rag import ChamorroRAG, _is_low_quality_semantic_chunk
-from src.rag.source_policy import retrieval_metadata_filter_for_roles
+
+
+REVIEWED_GRAMMAR_FILTER = {
+    "$or": [
+        {"source": {"$ilike": "%chamorro_grammar_dr._sandra_chung%"}},
+        {"source": {"$ilike": "%chamorro grammar%"}},
+    ]
+}
 
 
 class FakeVectorStore:
@@ -176,6 +183,8 @@ def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -
 
 
 def test_explicit_grammar_question_gets_a_dedicated_grammar_candidate_lane() -> None:
+    """Reserve reviewed grammar evidence even after a large dictionary window."""
+
     dictionary_rows = [
         document(
             f"Dictionary index fragment {index}",
@@ -197,18 +206,15 @@ def test_explicit_grammar_question_gets_a_dedicated_grammar_candidate_lane() -> 
         metadata["content_role"] == "reviewed_grammar"
         for _content, metadata in results
     )
-    grammar_filter = retrieval_metadata_filter_for_roles(
-        "educational",
-        {"reviewed_grammar"},
-    )
-    assert sum(call["filter"] == grammar_filter for call in rag.vectorstore.calls) == 1
+    assert sum(
+        call["filter"] == REVIEWED_GRAMMAR_FILTER
+        for call in rag.vectorstore.calls
+    ) == 1
 
 
 def test_plural_grammar_terms_activate_the_reviewed_grammar_lane() -> None:
-    grammar_filter = retrieval_metadata_filter_for_roles(
-        "educational",
-        {"reviewed_grammar"},
-    )
+    """Route plural grammar concepts through the reviewed-grammar lane."""
+
     grammar = document(
         "Verbs and pronouns participate in agreement.",
         "/documents/chamorro_grammar_dr._sandra_chung.pdf",
@@ -221,7 +227,8 @@ def test_plural_grammar_terms_activate_the_reviewed_grammar_lane() -> None:
 
         assert results[0][1]["content_role"] == "reviewed_grammar"
         assert sum(
-            call["filter"] == grammar_filter for call in rag.vectorstore.calls
+            call["filter"] == REVIEWED_GRAMMAR_FILTER
+            for call in rag.vectorstore.calls
         ) == 1
 
 

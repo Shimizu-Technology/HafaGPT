@@ -13,6 +13,7 @@ from src.rag.source_policy import (
     registered_source_ids,
     resolve_source,
     retrieval_metadata_filter,
+    retrieval_metadata_filter_for_roles,
     source_weight,
     sources_explicitly_mentioned,
 )
@@ -150,6 +151,20 @@ def test_vector_filter_includes_only_role_eligible_source_matchers() -> None:
     assert {"source": {"$ilike": "%chamorro_grammar_dr._sandra_chung%"}} in clauses
     assert {"source": {"$ilike": "%natibunmarianas.org%"}} not in clauses
     assert {"source": {"$ilike": "%guampedia.com%"}} not in clauses
+
+
+def test_role_restricted_filter_excludes_non_grammar_sources() -> None:
+    """Keep reviewed-grammar lanes independent from educational dictionaries."""
+
+    grammar_filter = retrieval_metadata_filter_for_roles(
+        "educational",
+        {"reviewed_grammar"},
+    )
+    clauses = grammar_filter["$or"]
+
+    assert {"source": {"$ilike": "%chamorro_grammar_dr._sandra_chung%"}} in clauses
+    assert {"source": {"$ilike": "%chamoru.info/dictionary%"}} not in clauses
+    assert {"source": {"$ilike": "%revised-chamorro-dictionary%"}} not in clauses
 
 
 def test_vector_filter_fails_closed_for_unknown_query_role() -> None:

@@ -30,6 +30,8 @@ def test_source_audit_counts_blocked_and_unregistered_chunks() -> None:
 
 
 def test_operational_cutover_is_independent_from_incomplete_provenance() -> None:
+    """Allow a reversible cutover without claiming source clearance."""
+
     audit = {
         "collection": {
             "name": "hafagpt_governed_openai_v3",
@@ -62,6 +64,8 @@ def test_operational_cutover_cli_maps_readiness_to_exit_status(
     ready: bool,
     expected_status: int,
 ) -> None:
+    """Map operational readiness to the CLI's process status."""
+
     monkeypatch.setattr(
         audit_rag_sources,
         "run_audit",
@@ -81,6 +85,38 @@ def test_operational_cutover_cli_maps_readiness_to_exit_status(
     )
 
     assert audit_rag_sources.main() == expected_status
+
+
+def test_cli_enforces_all_selected_gates(monkeypatch) -> None:
+    """Fail when clean-corpus checks pass but operational readiness does not."""
+
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "run_audit",
+        lambda _database_url, _collection_name: {
+            "summary": {
+                "exact_redundancy_percent": 0,
+                "missing_source": 0,
+                "missing_license": 0,
+                "missing_retrieved_at": 0,
+            },
+            "policy": {"blocked_chunks": 0, "unregistered_chunks": 0},
+            "operational_cutover": {"ready": False},
+        },
+    )
+    monkeypatch.setattr(
+        audit_rag_sources.sys,
+        "argv",
+        [
+            "audit_rag_sources.py",
+            "--database-url",
+            "postgresql://unused",
+            "--enforce-clean-corpus-gates",
+            "--enforce-operational-cutover-gates",
+        ],
+    )
+
+    assert audit_rag_sources.main() == 1
 
 
 class _FakeCursor:
