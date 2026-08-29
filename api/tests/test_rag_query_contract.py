@@ -1,4 +1,5 @@
 import re
+from types import SimpleNamespace
 
 from src.rag.chamorro_rag import (
     ChamorroRAG,
@@ -268,6 +269,41 @@ def test_short_english_lookup_removes_quotes_after_direction() -> None:
 
     assert classify_translation_request(query) == "passage_to_english"
     assert extract_short_lexical_target(query) == "håfa adai"
+
+
+def test_trailing_destination_wins_over_language_words_inside_payload() -> None:
+    query = "Translate “in English” to Chamorro"
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert extract_short_lexical_target(query) == "in english"
+
+
+def test_guillemet_target_reaches_post_suffix_wrapper_cleanup() -> None:
+    query = "Translate «håfa adai» to English."
+
+    assert extract_translation_payload(query) == "«håfa adai» to English."
+    assert extract_short_lexical_target(query) == "håfa adai"
+
+
+def test_normalized_short_target_reaches_exact_dictionary_lookup() -> None:
+    rag = object.__new__(ChamorroRAG)
+    calls: list[tuple[str, int]] = []
+
+    def keyword_search(target: str, k: int):
+        calls.append((target, k))
+        return [
+            SimpleNamespace(
+                page_content="håfa adai: hello",
+                metadata={"source": "Local Revised Chamorro Dictionary snapshot"},
+            )
+        ]
+
+    rag._keyword_search_dictionaries = keyword_search
+
+    result = rag._search_impl("Translate «håfa adai» to English.", k=3)
+
+    assert calls == [("håfa adai", 3)]
+    assert result[0][0] == "håfa adai: hello"
 
 
 def test_word_for_parser_keeps_multiword_target() -> None:

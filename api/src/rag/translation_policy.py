@@ -90,10 +90,37 @@ def _strip_matching_wrapper_quotes(value: str) -> str:
     """Remove only a complete pair of outer quotes from a lexical target."""
 
     cleaned = value.strip()
-    for opening, closing in (("\"", "\""), ("'", "'"), ("“", "”"), ("‘", "’")):
+    quote_pairs = (
+        ("\"", "\""),
+        ("'", "'"),
+        ("\u201c", "\u201d"),
+        ("\u2018", "\u2019"),
+        ("\u00ab", "\u00bb"),
+    )
+    for opening, closing in quote_pairs:
         if len(cleaned) >= 2 and cleaned.startswith(opening) and cleaned.endswith(closing):
             return cleaned[len(opening) : -len(closing)].strip(" \t\r\n.,!?;:")
     return cleaned
+
+
+def _explicit_translation_destination(query: str) -> str:
+    """Return an explicitly requested destination without reading quoted payload text."""
+
+    wrapper_match = re.search(
+        r"(?i)\btranslate\s+this(?:\s+(?:sentence|paragraph|message|phrase))?"
+        r"\s+to\s+(english|chamorr[ou])\b",
+        query,
+    )
+    if wrapper_match:
+        return wrapper_match.group(1).casefold()
+
+    trailing_match = re.search(
+        r"(?i)\b(?:to|in)\s+(english|chamorr[ou])\b[?.!]*\s*$",
+        query,
+    )
+    if trailing_match:
+        return trailing_match.group(1).casefold()
+    return ""
 
 
 def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
@@ -265,8 +292,11 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if len(payload_words) <= 1:
         return "single_word_lookup"
 
-    if re.search(r"\b(?:to|in)\s+english\b", query_lower):
+    explicit_destination = _explicit_translation_destination(query)
+    if explicit_destination == "english":
         return "passage_to_english"
+    if explicit_destination in {"chamorro", "chamoru"}:
+        return "passage_to_chamorro"
     if re.search(r"\b(?:to|in)\s+chamorr[ou]\b", query_lower) or re.search(
         r"\bhow do (?:you|i) say\b", query_lower
     ):
