@@ -86,6 +86,16 @@ def _strip_wrapping_quotes(value: str) -> str:
     return value.strip().strip(" \t\r\n'\"“”‘’")
 
 
+def _strip_matching_wrapper_quotes(value: str) -> str:
+    """Remove only a complete pair of outer quotes from a lexical target."""
+
+    cleaned = value.strip()
+    for opening, closing in (("\"", "\""), ("'", "'"), ("“", "”"), ("‘", "’")):
+        if len(cleaned) >= 2 and cleaned.startswith(opening) and cleaned.endswith(closing):
+            return cleaned[len(opening) : -len(closing)].strip(" \t\r\n.,!?;:")
+    return cleaned
+
+
 def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     """Choose passage text while ignoring before/after explanatory notes."""
 
@@ -255,6 +265,8 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if len(payload_words) <= 1:
         return "single_word_lookup"
 
+    if re.search(r"\b(?:to|in)\s+english\b", query_lower):
+        return "passage_to_english"
     if re.search(r"\b(?:to|in)\s+chamorr[ou]\b", query_lower) or re.search(
         r"\bhow do (?:you|i) say\b", query_lower
     ):
@@ -290,6 +302,7 @@ def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
         "",
         payload,
     ).strip(" \t.,!?;:")
+    payload = _strip_matching_wrapper_quotes(payload)
     if not payload:
         return ""
     words = _words(payload)
