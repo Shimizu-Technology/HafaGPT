@@ -128,6 +128,11 @@ def operational_cutover_readiness(audit: dict[str, Any]) -> dict[str, Any]:
         "embedding_dimensions_match_runtime": (
             collection["embedding_dimensions"] == OPENAI_EMBEDDING_CONTRACT["dimensions"]
         ),
+        "embedding_dimensions_are_uniform": (
+            collection["minimum_embedding_dimensions"]
+            == collection["maximum_embedding_dimensions"]
+        ),
+        "no_null_embeddings": collection["null_embeddings"] == 0,
         "document_count_matches_metadata": (
             metadata.get("document_count") == summary["total_rows"]
         ),
@@ -245,15 +250,24 @@ def run_audit(
 
             cursor.execute(
                 """
-                SELECT vector_dims(embedding)
+                SELECT
+                    COUNT(*) FILTER (WHERE embedding IS NULL) AS null_embeddings,
+                    MIN(vector_dims(embedding)) AS minimum_embedding_dimensions,
+                    MAX(vector_dims(embedding)) AS maximum_embedding_dimensions
                 FROM langchain_pg_embedding
                 WHERE collection_id = %s
-                LIMIT 1
                 """,
                 (collection_id,),
             )
             dimensions_row = cursor.fetchone()
-            embedding_dimensions = dimensions_row[0] if dimensions_row else None
+            null_embeddings, minimum_dimensions, maximum_dimensions = (
+                dimensions_row if dimensions_row else (0, None, None)
+            )
+            embedding_dimensions = (
+                minimum_dimensions
+                if minimum_dimensions == maximum_dimensions
+                else None
+            )
 
     redundant = summary["redundant_exact_rows"]
     total = summary["total_rows"]
@@ -264,6 +278,9 @@ def run_audit(
             "id": str(collection_id),
             "metadata": collection_metadata,
             "embedding_dimensions": embedding_dimensions,
+            "minimum_embedding_dimensions": minimum_dimensions,
+            "maximum_embedding_dimensions": maximum_dimensions,
+            "null_embeddings": null_embeddings,
         },
         "summary": summary,
         "policy": source_audit,

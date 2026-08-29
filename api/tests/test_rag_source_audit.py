@@ -36,6 +36,9 @@ def test_operational_cutover_is_independent_from_incomplete_provenance() -> None
         "collection": {
             "name": "hafagpt_governed_openai_v3",
             "embedding_dimensions": 384,
+            "minimum_embedding_dimensions": 384,
+            "maximum_embedding_dimensions": 384,
+            "null_embeddings": 0,
             "metadata": {
                 CONTRACT_METADATA_KEY: OPENAI_EMBEDDING_CONTRACT,
                 "hafagpt_collection_status": "ready",
@@ -120,10 +123,13 @@ def test_cli_enforces_all_selected_gates(monkeypatch) -> None:
 
 
 class _FakeCursor:
-    def __init__(self) -> None:
+    def __init__(self, *, null_embeddings: int = 0) -> None:
+        """Create a collection cursor with configurable aggregate vector state."""
+
         self.executions: list[tuple[str, tuple]] = []
         self.description = None
         self._result: list[tuple] = []
+        self.null_embeddings = null_embeddings
 
     def __enter__(self):
         return self
@@ -162,8 +168,8 @@ class _FakeCursor:
             ]
         elif "cmetadata->>'source'" in query:
             self._result = [("https://www.guampedia.com/example", "guampedia", 3)]
-        elif "vector_dims(embedding)" in query:
-            self._result = [(384,)]
+        elif "MIN(vector_dims(embedding))" in query:
+            self._result = [(self.null_embeddings, 384, 384)]
         else:
             self._result = [(2, "abc123", 80)]
 
@@ -203,6 +209,9 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
         "id": "collection-uuid",
         "metadata": {},
         "embedding_dimensions": 384,
+        "minimum_embedding_dimensions": 384,
+        "maximum_embedding_dimensions": 384,
+        "null_embeddings": 0,
     }
     assert audit["operational_cutover"]["ready"] is False
     assert audit["largest_exact_duplicate_groups"] == [
@@ -225,3 +234,26 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
     for query, params in cursor.executions[1:]:
         assert "collection_id = %s" in query
         assert params == ("collection-uuid",)
+
+
+def test_run_audit_checks_all_rows_for_null_embeddings(monkeypatch) -> None:
+    """Reject a collection when any later row has a missing vector."""
+
+    cursor = _FakeCursor(null_embeddings=1)
+    monkeypatch.setattr(
+        audit_rag_sources.psycopg,
+        "connect",
+        lambda _database_url: _FakeConnection(cursor),
+    )
+
+    audit = run_audit("postgresql://unused", "hafagpt_governed_openai_v3")
+
+    assert audit["collection"]["null_embeddings"] == 1
+    assert audit["operational_cutover"]["checks"]["no_null_embeddings"] is False
+    assert audit["operational_cutover"]["ready"] is False
+    aggregate_queries = [
+        query for query, _params in cursor.executions
+        if "MIN(vector_dims(embedding))" in query
+    ]
+    assert len(aggregate_queries) == 1
+    assert "COUNT(*) FILTER (WHERE embedding IS NULL)" in aggregate_queries[0]
