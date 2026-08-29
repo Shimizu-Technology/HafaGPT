@@ -176,6 +176,42 @@ def truncate_text(text: str, max_tokens: int, model: str = "gpt-4o") -> str:
         return text[:max_chars] + "\n\n[... content truncated ...]"
 
 
+def truncate_text_preserving_suffix(
+    text: str,
+    suffix: str,
+    max_tokens: int,
+    model: str = "gpt-4o",
+) -> str:
+    """Fit text within a token budget while retaining a priority suffix.
+
+    The suffix receives up to one third of the budget when the combined text is
+    oversized. This is intended for evidence appended after general prompt
+    instructions, where prefix-only truncation would silently remove the
+    evidence while leaving the response metadata unchanged.
+    """
+    combined = text + suffix
+    if count_tokens(combined, model) <= max_tokens:
+        return combined
+    if not suffix:
+        return truncate_text(text, max_tokens, model)
+
+    suffix_budget = min(count_tokens(suffix, model), max(1, max_tokens // 3))
+    fitted_suffix = truncate_text(suffix, suffix_budget, model)
+    prefix_budget = max(1, max_tokens - count_tokens(fitted_suffix, model))
+    fitted_prefix = truncate_text(text, prefix_budget, model)
+    combined = fitted_prefix + fitted_suffix
+
+    # Token boundaries can change when two independently encoded strings are
+    # joined. Tighten only the prefix so the priority evidence remains present.
+    while count_tokens(combined, model) > max_tokens and prefix_budget > 1:
+        overflow = count_tokens(combined, model) - max_tokens
+        prefix_budget = max(1, prefix_budget - overflow)
+        fitted_prefix = truncate_text(text, prefix_budget, model)
+        combined = fitted_prefix + fitted_suffix
+
+    return combined
+
+
 def truncate_conversation_history(
     messages: list,
     max_tokens: int,
@@ -624,4 +660,3 @@ class TokenManager:
             "remaining_for_response": self.tokens_remaining_for_response(),
             "budget_total": self.budget.total
         }
-

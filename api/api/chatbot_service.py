@@ -293,6 +293,7 @@ from src.utils.token_manager import (
     count_tokens,
     count_message_tokens,
     truncate_text,
+    truncate_text_preserving_suffix,
     truncate_conversation_history,
     truncate_document_content,
 )
@@ -1396,18 +1397,21 @@ def get_chatbot_response(
     elif not is_passage_translation(effective_translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
-    # Add web search context if available
-    if web_context:
-        system_prompt += f"\n\n{web_context}"
-    
     # Initialize token manager for this request
     token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
-    
-    # Apply token limit to system prompt
-    system_prompt_tokens = count_tokens(system_prompt)
+
+    # Keep usable web results in the final model prompt even when general
+    # instructions and retrieved context exceed the system-prompt budget.
+    system_prompt_tokens = count_tokens(
+        system_prompt + (f"\n\n{web_context}" if web_context else "")
+    )
     if system_prompt_tokens > token_manager.budget.system_prompt:
         logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget, truncating...")
-        system_prompt = truncate_text(system_prompt, token_manager.budget.system_prompt)
+    system_prompt = truncate_text_preserving_suffix(
+        system_prompt,
+        f"\n\n{web_context}" if web_context else "",
+        token_manager.budget.system_prompt,
+    )
     
     # Build conversation history
     history = [
@@ -1725,15 +1729,17 @@ def get_chatbot_response_stream(
     elif not is_passage_translation(effective_translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
-    # Add web search context if available
-    if web_context:
-        system_prompt += f"\n\n{web_context}"
-    
     # Track token usage and apply limits
-    system_prompt_tokens = count_tokens(system_prompt)
+    system_prompt_tokens = count_tokens(
+        system_prompt + (f"\n\n{web_context}" if web_context else "")
+    )
     if system_prompt_tokens > token_manager.budget.system_prompt:
         logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget ({token_manager.budget.system_prompt}), truncating...")
-        system_prompt = truncate_text(system_prompt, token_manager.budget.system_prompt)
+    system_prompt = truncate_text_preserving_suffix(
+        system_prompt,
+        f"\n\n{web_context}" if web_context else "",
+        token_manager.budget.system_prompt,
+    )
     
     # Build conversation history
     history = [{"role": "system", "content": system_prompt}]
