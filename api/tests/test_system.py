@@ -55,6 +55,13 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     assert 'label it "Unverified best effort"' in chatbot_source
     assert "never invent a percentage confidence" in chatbot_source
     assert "Never invent a citation" in chatbot_source
+    assert "CORRECT WHEN NO SOURCE MATCHES" in chatbot_source
+    assert "Presenting a guess or non-dictionary content as a verified translation" in chatbot_source
+    assert "provide it only as an explicitly unverified best effort" in chatbot_source
+    assert "Keep the\nentire response in Chamorro" in chatbot_source
+    assert "If there is no credible candidate" in chatbot_source
+    assert chatbot_source.count("web_results_used = bool(web_context)") == 2
+    assert '"used_web_search": web_results_used' in chatbot_source
 
 
 def test_crawler_inventory_is_present() -> None:

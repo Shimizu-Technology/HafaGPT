@@ -698,7 +698,8 @@ When translating single words (e.g., "What is 'listen' in Chamorro?", "How do I 
 
 3. **How to answer word translation questions:**
    ✅ CORRECT: "In Chamorro, 'listen' is **ekungok**. [Source: chamorro_english_dictionary_TOD]"
-   ❌ WRONG: Guessing or using non-dictionary content for single-word translations
+   ✅ CORRECT WHEN NO SOURCE MATCHES: "Unverified best effort: a plausible candidate is **...**, but I could not verify it in the available dictionaries."
+   ❌ WRONG: Presenting a guess or non-dictionary content as a verified translation
 
 4. **For contextual/cultural questions** (not single-word translations):
    - You may use all sources (blogs, articles, cultural content)
@@ -721,11 +722,14 @@ IMPORTANTE: MUNGA un usa español o otro lengguahi. Ha' fino' Chamorro!
 
 🔴 Para i tiningo' palåbra (word translations):
 - Usa HA' i diksionarion-måmi (dictionaries): revised_and_updated_chamorro_dictionary, chamoru_info_dictionary, chamorro_english_dictionary_TOD
-- MUNGA un adibina palåbra! (DO NOT guess words!)
+- Never present an unsupported candidate as a verified translation.
+- If no dictionary source matched and a credible candidate would help, you may
+  provide it only as an explicitly unverified best effort, with plain uncertainty.
+- If there is no credible candidate, say so and ask one focused question or
+  suggest a related source-backed lookup.
 
-Use governed Chamorro dictionary/canonical context for language claims. Munga un
-adibina pat un fa'tinas nuebu na tiningo'. Yanggen ti guaha sufisiente na prineba,
-na'fanmanungo' na ti siña un na'siguru.
+Use governed Chamorro dictionary/canonical context for language claims. Keep the
+entire response in Chamorro, including any uncertainty label or clarification.
 
 If you receive web search results, use them but respond in Chamorro only."""
     },
@@ -748,7 +752,9 @@ If you receive web search results for current information, incorporate them into
 
 Never present a guess as a verified Chamorro word. When no dictionary source
 matched, a plausible candidate may be offered only as an explicitly unverified
-best effort with the uncertainty stated plainly.
+best effort with the uncertainty stated plainly. If there is no credible
+candidate, say so and ask one focused question or suggest a related source-backed
+lookup.
 
 For abbreviations, literal translations, phrase variants, pronunciation, and
 usage claims, retrieve a governed source and state uncertainty when the evidence
@@ -1319,6 +1325,7 @@ def get_chatbot_response(
     # Check if we should use web search
     use_web, search_type = should_use_web_search(message)
     web_context = ""
+    web_results_used = False
     
     if use_web:
         # Check for cancellation before web search
@@ -1328,6 +1335,7 @@ def get_chatbot_response(
         search_result = web_search(message, search_type=search_type, max_results=3)
         if search_result["success"] and search_result["results"]:
             web_context = format_search_results(search_result)
+            web_results_used = bool(web_context)
     
     # Check for cancellation before RAG search
     if is_message_cancelled(pending_id):
@@ -1504,7 +1512,7 @@ def get_chatbot_response(
         
         sources = []
         used_rag = False
-        use_web = False
+        web_results_used = False
     
     # Calculate response time
     response_time = time.time() - start_time
@@ -1526,7 +1534,7 @@ def get_chatbot_response(
             mode=mode,
             sources=[],
             used_rag=used_rag,
-            used_web_search=use_web,
+            used_web_search=web_results_used,
             response_time=response_time,
             session_id=session_id,
             user_id=user_id,
@@ -1540,7 +1548,7 @@ def get_chatbot_response(
             "response": "[Message was cancelled by user]",
             "sources": [],
             "used_rag": used_rag,
-            "used_web_search": use_web,
+            "used_web_search": web_results_used,
             "response_time": response_time,
             "cancelled": True
         }
@@ -1552,7 +1560,7 @@ def get_chatbot_response(
         mode=mode,
         sources=formatted_sources,
         used_rag=used_rag,
-        used_web_search=use_web,
+        used_web_search=web_results_used,
         response_time=response_time,
         session_id=session_id,
         user_id=user_id,
@@ -1569,7 +1577,7 @@ def get_chatbot_response(
         "response": response_text,
         "sources": formatted_sources,
         "used_rag": used_rag,
-        "used_web_search": use_web,
+        "used_web_search": web_results_used,
         "response_time": response_time,
         "cancelled": False
     }
@@ -1645,6 +1653,7 @@ def get_chatbot_response_stream(
     # Check if we should use web search
     use_web, search_type = should_use_web_search(message)
     web_context = ""
+    web_results_used = False
     
     if use_web:
         if is_message_cancelled(pending_id):
@@ -1654,6 +1663,7 @@ def get_chatbot_response_stream(
         search_result = web_search(message, search_type=search_type, max_results=3)
         if search_result["success"] and search_result["results"]:
             web_context = format_search_results(search_result)
+            web_results_used = bool(web_context)
     
     # Check for cancellation before RAG
     if is_message_cancelled(pending_id):
@@ -1771,7 +1781,7 @@ def get_chatbot_response_stream(
         "type": "metadata",
         "sources": formatted_sources if should_show_sources else [],
         "used_rag": used_rag,
-        "used_web_search": use_web
+        "used_web_search": web_results_used
     }
     
     # Stream LLM response
@@ -1795,7 +1805,7 @@ def get_chatbot_response_stream(
             mode=mode,
             sources=[],
             used_rag=used_rag,
-            used_web_search=use_web,
+            used_web_search=web_results_used,
             response_time=time.time() - start_time,
             session_id=session_id,
             user_id=user_id,
@@ -1836,7 +1846,7 @@ def get_chatbot_response_stream(
                             mode=mode,
                             sources=formatted_sources,
                             used_rag=used_rag,
-                            used_web_search=use_web,
+                            used_web_search=web_results_used,
                             response_time=time.time() - start_time,
                             session_id=session_id,
                             user_id=user_id,
@@ -1921,7 +1931,7 @@ def get_chatbot_response_stream(
             mode=mode,
             sources=[],
             used_rag=used_rag,
-            used_web_search=use_web,
+            used_web_search=web_results_used,
             response_time=time.time() - start_time,
             session_id=session_id,
             user_id=user_id,
@@ -1945,7 +1955,7 @@ def get_chatbot_response_stream(
         mode=mode,
         sources=formatted_sources,
         used_rag=used_rag,
-        used_web_search=use_web,
+        used_web_search=web_results_used,
         response_time=response_time,
         session_id=session_id,
         user_id=user_id,

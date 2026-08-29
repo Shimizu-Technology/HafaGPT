@@ -6,9 +6,10 @@ export interface ChatEvidenceStatus {
   detail: string;
 }
 
+/** Classify the evidence actually attached to or used by a completed answer. */
 export function getChatEvidenceStatus(
   sourceCount: number,
-  usedWebSearch: boolean,
+  usedWebResults: boolean,
 ): ChatEvidenceStatus {
   if (sourceCount > 0) {
     return {
@@ -17,7 +18,7 @@ export function getChatEvidenceStatus(
       detail: 'Check the citations below.',
     };
   }
-  if (usedWebSearch) {
+  if (usedWebResults) {
     return {
       level: 'web_informed',
       label: 'Web-informed',
