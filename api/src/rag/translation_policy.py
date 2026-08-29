@@ -86,6 +86,48 @@ def _strip_wrapping_quotes(value: str) -> str:
     return value.strip().strip(" \t\r\n'\"“”‘’")
 
 
+def _strip_matching_wrapper_quotes(value: str) -> str:
+    """Remove only a complete pair of outer quotes from a lexical target."""
+
+    cleaned = value.strip()
+    quote_pairs = (
+        ("\"", "\""),
+        ("'", "'"),
+        ("\u201c", "\u201d"),
+        ("\u2018", "\u2019"),
+        ("\u00ab", "\u00bb"),
+    )
+    for opening, closing in quote_pairs:
+        if len(cleaned) >= 2 and cleaned.startswith(opening) and cleaned.endswith(closing):
+            return cleaned[len(opening) : -len(closing)].strip(" \t\r\n.,!?;:")
+    return cleaned
+
+
+def _explicit_translation_destination(query: str) -> str:
+    """Return an explicitly requested destination without reading quoted payload text."""
+
+    instruction_text = re.sub(
+        r'(?s)".*?"|\u201c.*?\u201d|\u2018.*?\u2019|\u00ab.*?\u00bb',
+        " ",
+        query,
+    )
+    wrapper_match = re.search(
+        r"(?i)\btranslate\s+this(?:\s+(?:sentence|paragraph|message|phrase))?"
+        r"\s+to\s+(english|chamorr[ou])\b",
+        instruction_text,
+    )
+    if wrapper_match:
+        return wrapper_match.group(1).casefold()
+
+    trailing_match = re.search(
+        r"(?i)\b(?:to|in)\s+(english|chamorr[ou])\b[?.!]*\s*$",
+        instruction_text,
+    )
+    if trailing_match:
+        return trailing_match.group(1).casefold()
+    return ""
+
+
 def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     """Choose passage text while ignoring before/after explanatory notes."""
 
@@ -255,6 +297,11 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if len(payload_words) <= 1:
         return "single_word_lookup"
 
+    explicit_destination = _explicit_translation_destination(query)
+    if explicit_destination == "english":
+        return "passage_to_english"
+    if explicit_destination in {"chamorro", "chamoru"}:
+        return "passage_to_chamorro"
     if re.search(r"\b(?:to|in)\s+chamorr[ou]\b", query_lower) or re.search(
         r"\bhow do (?:you|i) say\b", query_lower
     ):
@@ -264,6 +311,39 @@ def classify_translation_request(query: str) -> TranslationIntent:
 
 def is_passage_translation(query: str) -> bool:
     return classify_translation_request(query).startswith("passage_")
+
+
+def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
+    """Return a short phrase that is worth an exact dictionary lookup first.
+
+    A phrase such as ``banana tree`` is grammatically multi-word, but treating it
+    only as a passage sends it straight to embeddings and can miss a dictionary
+    definition that contains the exact phrase. Longer or multi-line text remains
+    on the passage-translation path.
+    """
+
+    translation_intent = classify_translation_request(query)
+    if translation_intent not in {"passage_to_chamorro", "passage_to_english"}:
+        return ""
+    payload = extract_translation_payload(query).strip()
+    if not payload or "\n" in payload or len(payload) > 80:
+        return ""
+    payload = payload.strip(" \t.,!?;:")
+    direction_language = (
+        r"chamorr[ou]" if translation_intent == "passage_to_chamorro" else "english"
+    )
+    payload = re.sub(
+        rf"(?i)[\s,;:\-–—]*\b(?:in|to)\s+{direction_language}\b\s*$",
+        "",
+        payload,
+    ).strip(" \t.,!?;:")
+    payload = _strip_matching_wrapper_quotes(payload)
+    if not payload:
+        return ""
+    words = _words(payload)
+    if not 2 <= len(words) <= max_words:
+        return ""
+    return payload.casefold()
 
 
 def translation_prompt_guidance(query: str, *, has_references: bool) -> str:
