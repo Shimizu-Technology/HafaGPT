@@ -109,10 +109,13 @@ def test_common_word_lookup_forms_are_classified_and_extracted() -> None:
     for query, expected_target in (
         ("What is blue in Chamoru?", "blue"),
         ("What is the Chamorro word for banana?", "banana"),
+        ("What is the Chamorro word for culture?", "culture"),
+        ("What is tradition in Chamoru?", "tradition"),
     ):
         assert extract_translation_payload(query) == expected_target
         assert classify_translation_request(query) == "single_word_lookup"
         assert detect_query_type(query) == "lookup"
+        assert extract_target_word(query) == expected_target
 
 
 def test_broad_guam_overview_uses_cultural_evidence_role() -> None:

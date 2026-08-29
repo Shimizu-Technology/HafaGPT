@@ -303,8 +303,16 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if not has_translation_cue:
         return "none"
 
-    if not re.search(
-        r"\b(?:translate|how (?:do|would) (?:you|i) say)\b", query_lower
+    explicit_to_chamorro_lookup = bool(
+        re.search(
+            r"\b(?:what is .+ in chamor(?:ro|u)|"
+            r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
+            query_lower,
+        )
+    )
+    if not explicit_to_chamorro_lookup and not re.search(
+        r"\b(?:translate|how (?:do|would) (?:you|i) say)\b",
+        query_lower,
     ):
         contextual_non_translation = (
             "culture",

@@ -147,7 +147,11 @@ def extract_target_word(query: str) -> str:
         return match.group(1).strip().lower()
     
     # Pattern 5: "what is X in Chamorro" (English→Chamorro, NO quotes)
-    match = re.search(r"what is ([^\s?,]+) in chamorro", query, re.IGNORECASE)
+    match = re.search(
+        r"what is ([^\s?,]+) in chamor(?:ro|u)",
+        query,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1).strip().lower()
     
