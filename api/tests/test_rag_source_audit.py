@@ -123,13 +123,21 @@ def test_cli_enforces_all_selected_gates(monkeypatch) -> None:
 
 
 class _FakeCursor:
-    def __init__(self, *, null_embeddings: int = 0) -> None:
+    def __init__(
+        self,
+        *,
+        null_embeddings: int = 0,
+        minimum_dimensions: int = 384,
+        maximum_dimensions: int = 384,
+    ) -> None:
         """Create a collection cursor with configurable aggregate vector state."""
 
         self.executions: list[tuple[str, tuple]] = []
         self.description = None
         self._result: list[tuple] = []
         self.null_embeddings = null_embeddings
+        self.minimum_dimensions = minimum_dimensions
+        self.maximum_dimensions = maximum_dimensions
 
     def __enter__(self):
         return self
@@ -169,7 +177,11 @@ class _FakeCursor:
         elif "cmetadata->>'source'" in query:
             self._result = [("https://www.guampedia.com/example", "guampedia", 3)]
         elif "MIN(vector_dims(embedding))" in query:
-            self._result = [(self.null_embeddings, 384, 384)]
+            self._result = [(
+                self.null_embeddings,
+                self.minimum_dimensions,
+                self.maximum_dimensions,
+            )]
         else:
             self._result = [(2, "abc123", 80)]
 
@@ -257,3 +269,25 @@ def test_run_audit_checks_all_rows_for_null_embeddings(monkeypatch) -> None:
     ]
     assert len(aggregate_queries) == 1
     assert "COUNT(*) FILTER (WHERE embedding IS NULL)" in aggregate_queries[0]
+
+
+def test_run_audit_rejects_nonuniform_embedding_dimensions(monkeypatch) -> None:
+    """Fail the cutover gate when vectors do not share one dimension."""
+
+    cursor = _FakeCursor(minimum_dimensions=384, maximum_dimensions=768)
+    monkeypatch.setattr(
+        audit_rag_sources.psycopg,
+        "connect",
+        lambda _database_url: _FakeConnection(cursor),
+    )
+
+    audit = run_audit("postgresql://unused", "hafagpt_governed_openai_v3")
+
+    assert audit["collection"]["embedding_dimensions"] is None
+    assert audit["collection"]["minimum_embedding_dimensions"] == 384
+    assert audit["collection"]["maximum_embedding_dimensions"] == 768
+    assert (
+        audit["operational_cutover"]["checks"]["embedding_dimensions_are_uniform"]
+        is False
+    )
+    assert audit["operational_cutover"]["ready"] is False
