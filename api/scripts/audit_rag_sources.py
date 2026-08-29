@@ -20,6 +20,7 @@ if str(API_ROOT) not in sys.path:
 from src.rag.source_policy import annotate_metadata, resolve_source
 from src.rag.collection_names import DEFAULT_PRODUCTION_COLLECTION_NAME
 from src.rag.embedding_contract import CONTRACT_METADATA_KEY, OPENAI_EMBEDDING_CONTRACT
+from src.rag.permission_records import permission_records_by_source
 
 
 DEFAULT_COLLECTION_NAME = DEFAULT_PRODUCTION_COLLECTION_NAME
@@ -145,10 +146,23 @@ def operational_cutover_readiness(audit: dict[str, Any]) -> dict[str, Any]:
     provenance_complete = (
         summary["missing_license"] == 0 and summary["missing_retrieved_at"] == 0
     )
+    permission_records = permission_records_by_source()
+    source_permissions = {
+        source["source_id"]: permission_records.get(source["source_id"], {}).get(
+            "status", "missing"
+        )
+        for source in audit["policy"].get("sources", [])
+    }
+    permissions_complete = bool(source_permissions) and all(
+        status == "granted" for status in source_permissions.values()
+    )
     return {
         "ready": all(checks.values()),
         "checks": checks,
-        "source_permission_and_provenance_complete": provenance_complete,
+        "source_permission_and_provenance_complete": (
+            provenance_complete and permissions_complete
+        ),
+        "source_permission_statuses": source_permissions,
         "note": (
             "Operational cutover readiness does not grant new ingestion rights. "
             "Source permission and artifact provenance remain separate gates."

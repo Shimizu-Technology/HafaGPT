@@ -82,6 +82,12 @@ def detect_query_type(query: str) -> str:
     if any(keyword in query_lower for keyword in usage_keywords):
         return "usage"
 
+    grammar_question_patterns = [
+        r"\bhow (?:does|do)\b.+\bwork(?:s)?\b",
+    ]
+    if any(re.search(pattern, query_lower) for pattern in grammar_question_patterns):
+        return "educational"
+
     # Explicit learning and grammar intent outranks a generic phrase such as
     # "in Chamorro". Otherwise "How does possession work in Chamorro grammar?"
     # is incorrectly routed to dictionary lookup merely because it names the

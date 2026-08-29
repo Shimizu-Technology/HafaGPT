@@ -61,6 +61,55 @@ def test_operational_cutover_is_independent_from_incomplete_provenance() -> None
     assert readiness["source_permission_and_provenance_complete"] is False
 
 
+def test_complete_provenance_does_not_override_required_permission(monkeypatch) -> None:
+    """Keep permission readiness false until the authoritative ledger grants it."""
+
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "permission_records_by_source",
+        lambda: {
+            "chamoru_info_dictionary": {
+                "source_id": "chamoru_info_dictionary",
+                "status": "not_requested",
+            }
+        },
+    )
+    audit = {
+        "collection": {
+            "name": "hafagpt_governed_openai_v3",
+            "embedding_dimensions": 384,
+            "minimum_embedding_dimensions": 384,
+            "maximum_embedding_dimensions": 384,
+            "null_embeddings": 0,
+            "metadata": {
+                CONTRACT_METADATA_KEY: OPENAI_EMBEDDING_CONTRACT,
+                "hafagpt_collection_status": "ready",
+                "document_count": 1,
+            },
+        },
+        "summary": {
+            "total_rows": 1,
+            "redundant_exact_rows": 0,
+            "missing_source": 0,
+            "missing_license": 0,
+            "missing_retrieved_at": 0,
+        },
+        "policy": {
+            "blocked_chunks": 0,
+            "unregistered_chunks": 0,
+            "sources": [{"source_id": "chamoru_info_dictionary"}],
+        },
+    }
+
+    readiness = operational_cutover_readiness(audit)
+
+    assert readiness["ready"] is True
+    assert readiness["source_permission_statuses"] == {
+        "chamoru_info_dictionary": "not_requested"
+    }
+    assert readiness["source_permission_and_provenance_complete"] is False
+
+
 @pytest.mark.parametrize(("ready", "expected_status"), [(False, 1), (True, 0)])
 def test_operational_cutover_cli_maps_readiness_to_exit_status(
     monkeypatch,
