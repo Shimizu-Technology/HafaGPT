@@ -81,7 +81,7 @@ class ChatResponse(BaseModel):
     )
     used_web_search: bool = Field(
         default=False,
-        description="Whether web search was used"
+        description="Whether usable web search results informed the response"
     )
     response_time: Optional[float] = Field(
         None,
