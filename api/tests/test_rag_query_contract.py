@@ -88,6 +88,14 @@ def test_explicit_translation_stays_lookup_when_request_mentions_examples() -> N
     assert detect_query_type(query) == "lookup"
 
 
+def test_how_would_i_say_single_word_is_a_lookup() -> None:
+    query = "How would I say blue?"
+
+    assert classify_translation_request(query) == "single_word_lookup"
+    assert detect_query_type(query) == "lookup"
+    assert extract_target_word(query) == "blue"
+
+
 def test_broad_guam_overview_uses_cultural_evidence_role() -> None:
     assert detect_query_type("Tell me everything about Guam") == "cultural"
 

@@ -1,3 +1,4 @@
+from api.canonical_context import get_canonical_tutor_context
 from src.rag.conversation_retrieval import _clean_target, build_contextual_retrieval_query
 
 
@@ -162,3 +163,54 @@ def test_supplied_mobile_translation_sequence_keeps_each_lookup_target() -> None
     )
     banana_query = build_contextual_retrieval_query("What about banana?", history)
     assert banana_query == 'How do you say "banana" in Chamorro?'
+
+
+def test_mobile_basic_vocabulary_thread_preserves_direction_and_corrections() -> None:
+    history = [
+        {"role": "user", "content": "How would I say hi"},
+        {"role": "assistant", "content": "Håfa adai"},
+    ]
+
+    banana_query = build_contextual_retrieval_query("How about banana", history)
+    assert banana_query == 'How do you say "banana" in Chamorro?'
+
+    history.extend(
+        [
+            {"role": "user", "content": "How about banana"},
+            {"role": "assistant", "content": "chotdan"},
+        ]
+    )
+    correction_query = build_contextual_retrieval_query(
+        "I thought it was aga?",
+        history,
+    )
+    assert correction_query == (
+        'How do you say "banana" in Chamorro? '
+        'Candidate spelling to verify: "aga".'
+    )
+
+    history.extend(
+        [
+            {"role": "user", "content": "I thought it was aga?"},
+            {"role": "assistant", "content": "aga'"},
+        ]
+    )
+    blue_query = build_contextual_retrieval_query("How about blue?", history)
+    assert blue_query == 'How do you say "blue" in Chamorro?'
+
+
+def test_correction_query_keeps_exact_candidate_and_original_gloss_evidence() -> None:
+    history = [
+        {"role": "user", "content": "How would I say hi"},
+        {"role": "assistant", "content": "Håfa adai"},
+        {"role": "user", "content": "How about banana"},
+        {"role": "assistant", "content": "chotdan"},
+    ]
+
+    query = build_contextual_retrieval_query("I thought it was aga?", history)
+    context, _sources = get_canonical_tutor_context(query)
+
+    assert "Exact dictionary headword: aga" in context
+    assert "Marianas crow" in context
+    assert "Exact English dictionary gloss: banana" in context
+    assert "Chamorro headword: aga'" in context

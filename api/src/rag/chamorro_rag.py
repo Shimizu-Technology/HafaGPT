@@ -148,9 +148,13 @@ def extract_target_word(query: str) -> str:
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 6: "how do you say X in Chamorro" (English→Chamorro, NO quotes)
+    # Pattern 6: "how do/would you say X in Chamorro" (English→Chamorro, NO quotes)
     # Handle multi-word phrases like "thank you", "good morning"
-    match = re.search(r"how do (?:you|i) say ([^?]+?)(?:\s+in\s+chamorro|\?|$)", query, re.IGNORECASE)
+    match = re.search(
+        r"how (?:do|would) (?:you|i) say ([^?]+?)(?:\s+in\s+chamorro|\?|$)",
+        query,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1).strip().lower()
     

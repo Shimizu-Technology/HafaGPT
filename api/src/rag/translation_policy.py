@@ -217,7 +217,7 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         return max(quoted_candidates, key=lambda value: len(_words(value)))
 
     say_match = re.search(
-        r"(?is)\bhow do (?:you|i) say\s*[-:–—]?\s*(.+?)(?:\s*[-–—]?\s+in\s+chamorr[ou])?(?:\?|$)",
+        r"(?is)\bhow (?:do|would) (?:you|i) say\s*[-:–—]?\s*(.+?)(?:\s*[-–—]?\s+in\s+chamorr[ou])?(?:\?|$)",
         normalized,
     )
     if say_match:
@@ -272,7 +272,7 @@ def classify_translation_request(query: str) -> TranslationIntent:
     query_lower = query.casefold()
     has_translation_cue = bool(
         re.search(
-            r"\b(?:translate|how do (?:you|i) say|what does .+ mean|what does this say|what is this saying)\b",
+            r"\b(?:translate|how (?:do|would) (?:you|i) say|what does .+ mean|what does this say|what is this saying)\b",
             query_lower,
             re.DOTALL,
         )
@@ -280,7 +280,9 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if not has_translation_cue:
         return "none"
 
-    if not re.search(r"\b(?:translate|how do (?:you|i) say)\b", query_lower):
+    if not re.search(
+        r"\b(?:translate|how (?:do|would) (?:you|i) say)\b", query_lower
+    ):
         contextual_non_translation = (
             "culture",
             "cultural",
@@ -303,7 +305,7 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if explicit_destination in {"chamorro", "chamoru"}:
         return "passage_to_chamorro"
     if re.search(r"\b(?:to|in)\s+chamorr[ou]\b", query_lower) or re.search(
-        r"\bhow do (?:you|i) say\b", query_lower
+        r"\bhow (?:do|would) (?:you|i) say\b", query_lower
     ):
         return "passage_to_chamorro"
     return "passage_to_english"

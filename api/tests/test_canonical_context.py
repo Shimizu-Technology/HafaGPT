@@ -94,6 +94,31 @@ def test_exact_dictionary_lookup_keeps_para_and_para_with_ring_distinct():
     assert "Exact dictionary headword: påra" in para_with_ring_context
 
 
+def test_exact_english_gloss_lookup_prefers_ripe_banana_headword() -> None:
+    context, sources = get_canonical_tutor_context(
+        'How do you say "banana" in Chamorro?'
+    )
+
+    assert "Exact English dictionary gloss: banana" in context
+    assert "Chamorro headword: aga'" in context
+    assert "Definition: Banana (ripe)." in context
+    assert "Chamorro headword: chotdan" not in context
+    assert "Chamorro headword: disdisi" not in context
+    assert ("Chamoru.info dictionary", None) in sources
+    assert ("Topping, Ogo, and Dungca dictionary", None) in sources
+
+
+def test_how_would_lookup_gets_canonical_blue_and_exact_dictionary_evidence() -> None:
+    context, sources = get_canonical_tutor_context("How would I say blue?")
+
+    assert "[Canonical colors.blue]" in context
+    assert "Recommended teaching term: Asut" in context
+    assert "Exact English dictionary gloss: blue" in context
+    assert "Chamorro headword: asút" in context
+    assert "Chamorro headword: asut" in context
+    assert sources[0] == ("HåfaGPT canonical vocabulary", None)
+
+
 def test_passage_gets_exact_dictionary_evidence_for_multiple_words() -> None:
     context, sources = get_canonical_tutor_context(
         "What does this say?\n\n"
