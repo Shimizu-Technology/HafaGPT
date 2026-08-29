@@ -96,6 +96,15 @@ def test_how_would_i_say_single_word_is_a_lookup() -> None:
     assert extract_target_word(query) == "blue"
 
 
+def test_target_extraction_handles_chamoru_suffix_and_colon_separator() -> None:
+    for query in (
+        "How would I say blue in Chamoru?",
+        "How would I say: blue?",
+    ):
+        assert classify_translation_request(query) == "single_word_lookup"
+        assert extract_target_word(query) == "blue"
+
+
 def test_broad_guam_overview_uses_cultural_evidence_role() -> None:
     assert detect_query_type("Tell me everything about Guam") == "cultural"
 

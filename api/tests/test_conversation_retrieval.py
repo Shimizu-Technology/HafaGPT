@@ -214,3 +214,16 @@ def test_correction_query_keeps_exact_candidate_and_original_gloss_evidence() ->
     assert "Marianas crow" in context
     assert "Exact English dictionary gloss: banana" in context
     assert "Chamorro headword: aga'" in context
+
+
+def test_negative_correction_forms_preserve_target_and_candidate() -> None:
+    history = [
+        {"role": "user", "content": "How would I say banana?"},
+        {"role": "assistant", "content": "chotdan"},
+    ]
+
+    for correction in ("Isn't it aga?", "Is it not aga?", "Isn’t it aga?"):
+        assert build_contextual_retrieval_query(correction, history) == (
+            'How do you say "banana" in Chamorro? '
+            'Candidate spelling to verify: "aga".'
+        )

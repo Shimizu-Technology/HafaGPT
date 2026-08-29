@@ -11,16 +11,17 @@ _AMBIGUOUS_FOLLOW_UPS = (
     re.compile(r"^\s*(?:tell me more|what about that|can you explain more)\b", re.IGNORECASE),
 )
 _TRANSLATION_TARGET_PATTERNS = (
-    (re.compile(r"\bhow (?:do|would) (?:you|i) say\s+(.+?)(?:\s+in\s+chamorr[ou])?[?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\b(?:the\s+)?chamorr[ou] word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\bhow (?:do|would) (?:you|i) say\s+(.+?)(?:\s+in\s+chamor(?:ro|u))?[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\b(?:the\s+)?chamor(?:ro|u) word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\bwhat does\s+(.+?)\s+mean(?:\s+in\s+english)?[?.!]*$", re.IGNORECASE), "to_english"),
     (re.compile(r"\bwhat is\s+(.+?)\s+in\s+english[?.!]*$", re.IGNORECASE), "to_english"),
     (re.compile(r"\btranslate\s+(.+?)\s+to\s+english[?.!]*$", re.IGNORECASE), "to_english"),
 )
 _CANDIDATE_CORRECTION_PATTERN = re.compile(
-    r"^\s*(?:i\s+thought\s+(?:it\s+)?was|is(?:n't|\s+not)\s+it)\s+(.+?)[?.!]*\s*$",
+    r"^\s*(?:i\s+thought\s+(?:it\s+)?was|"
+    r"isn['’]t(?:\s+it)?|is(?:\s+it)?\s+not)\s+(.+?)[?.!]*\s*$",
     re.IGNORECASE,
 )
 _REPLACEMENT_TARGET_PATTERN = re.compile(
@@ -40,7 +41,7 @@ _TOPIC_MARKERS = (
     (re.compile(r"\b(?:guam|guåhan|guahan)\b", re.IGNORECASE), "Guam"),
     (re.compile(r"\b(?:cnmi|northern mariana islands)\b", re.IGNORECASE), "CNMI"),
     (re.compile(r"\bsaipan\b", re.IGNORECASE), "Saipan"),
-    (re.compile(r"\bchamorr[ou]\b", re.IGNORECASE), "CHamoru"),
+    (re.compile(r"\bchamor(?:ro|u)\b", re.IGNORECASE), "CHamoru"),
 )
 
 

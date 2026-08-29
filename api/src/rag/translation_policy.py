@@ -113,14 +113,14 @@ def _explicit_translation_destination(query: str) -> str:
     )
     wrapper_match = re.search(
         r"(?i)\btranslate\s+this(?:\s+(?:sentence|paragraph|message|phrase))?"
-        r"\s+to\s+(english|chamorr[ou])\b",
+        r"\s+to\s+(english|chamor(?:ro|u))\b",
         instruction_text,
     )
     if wrapper_match:
         return wrapper_match.group(1).casefold()
 
     trailing_match = re.search(
-        r"(?i)\b(?:to|in)\s+(english|chamorr[ou])\b[?.!]*\s*$",
+        r"(?i)\b(?:to|in)\s+(english|chamor(?:ro|u))\b[?.!]*\s*$",
         instruction_text,
     )
     if trailing_match:
@@ -142,7 +142,7 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
         content_candidates = candidates
 
     translating_to_chamorro = bool(
-        re.search(r"(?i)\b(?:to|in)\s+chamorr[ou]\b", query)
+        re.search(r"(?i)\b(?:to|in)\s+chamor(?:ro|u)\b", query)
     )
     if translating_to_chamorro:
         # This value is used for intent classification, not retrieval. Preserve
@@ -217,14 +217,19 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         return max(quoted_candidates, key=lambda value: len(_words(value)))
 
     say_match = re.search(
-        r"(?is)\bhow (?:do|would) (?:you|i) say\s*[-:–—]?\s*(.+?)(?:\s*[-–—]?\s+in\s+chamorr[ou])?(?:\?|$)",
+        r"(?is)\bhow (?:do|would) (?:you|i) say\s*[-:–—]?\s*(.+?)(?:\?|$)",
         normalized,
     )
     if say_match:
-        return _strip_wrapping_quotes(say_match.group(1))
+        payload = re.sub(
+            r"(?is)\s*[-–—]?\s+in\s+chamor(?:ro|u)\s*$",
+            "",
+            say_match.group(1),
+        )
+        return _strip_wrapping_quotes(payload)
 
     translate_match = re.search(
-        r"(?is)\btranslate(?:\s+this(?:\s+(?:sentence|paragraph|message|phrase))?)?\s*[-:–—]?\s*(.+?)(?:\s+to\s+(?:english|chamorr[ou]))(?:\?|$)",
+        r"(?is)\btranslate(?:\s+this(?:\s+(?:sentence|paragraph|message|phrase))?)?\s*[-:–—]?\s*(.+?)(?:\s+to\s+(?:english|chamor(?:ro|u)))(?:\?|$)",
         normalized,
     )
     if translate_match:
@@ -304,7 +309,7 @@ def classify_translation_request(query: str) -> TranslationIntent:
         return "passage_to_english"
     if explicit_destination in {"chamorro", "chamoru"}:
         return "passage_to_chamorro"
-    if re.search(r"\b(?:to|in)\s+chamorr[ou]\b", query_lower) or re.search(
+    if re.search(r"\b(?:to|in)\s+chamor(?:ro|u)\b", query_lower) or re.search(
         r"\bhow (?:do|would) (?:you|i) say\b", query_lower
     ):
         return "passage_to_chamorro"
@@ -332,7 +337,9 @@ def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
         return ""
     payload = payload.strip(" \t.,!?;:")
     direction_language = (
-        r"chamorr[ou]" if translation_intent == "passage_to_chamorro" else "english"
+        r"chamor(?:ro|u)"
+        if translation_intent == "passage_to_chamorro"
+        else "english"
     )
     payload = re.sub(
         rf"(?i)[\s,;:\-–—]*\b(?:in|to)\s+{direction_language}\b\s*$",

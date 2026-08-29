@@ -114,7 +114,8 @@ def _extract_requested_english_gloss(user_input: str) -> str:
 
     if not re.search(
         r"(?i)\b(?:how (?:do|would) (?:you|i) say|"
-        r"what is .+ in chamorr[ou]|chamorr[ou] word for|translate .+ to chamorr[ou])\b",
+        r"what is .+ in chamor(?:ro|u)|chamor(?:ro|u) word for|"
+        r"translate .+ to chamor(?:ro|u))\b",
         user_input,
     ):
         return ""
