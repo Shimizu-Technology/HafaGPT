@@ -5,13 +5,14 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from src.rag.translation_policy import extract_translation_payload
+
 
 _AMBIGUOUS_FOLLOW_UPS = (
     re.compile(r"\b(?:the|that|this) language\b", re.IGNORECASE),
     re.compile(r"^\s*(?:tell me more|what about that|can you explain more)\b", re.IGNORECASE),
 )
 _TRANSLATION_TARGET_PATTERNS = (
-    (re.compile(r"\bhow (?:do|would) (?:you|i) say\s+(.+?)(?:\s+in\s+chamor(?:ro|u))?[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\b(?:the\s+)?chamor(?:ro|u) word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
@@ -78,6 +79,11 @@ def _clean_target(value: str) -> str:
 
 def _explicit_translation_request(value: str) -> tuple[str, str] | None:
     """Return an explicit target and direction from a user-authored request."""
+
+    if re.search(r"\bhow (?:do|would) (?:you|i) say\b", value, re.IGNORECASE):
+        target = _clean_target(extract_translation_payload(value))
+        if target and target.casefold() not in {"this", "that", "it"}:
+            return target, "to_chamorro"
 
     for pattern, direction in _TRANSLATION_TARGET_PATTERNS:
         match = pattern.search(value)

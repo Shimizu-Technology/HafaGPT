@@ -228,6 +228,21 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         )
         return _strip_wrapping_quotes(payload)
 
+    word_for_match = re.search(
+        r"(?is)\b(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for\s+"
+        r"(.+?)[?.!]*$",
+        normalized,
+    )
+    if word_for_match:
+        return _strip_wrapping_quotes(word_for_match.group(1))
+
+    what_is_match = re.search(
+        r"(?is)\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$",
+        normalized,
+    )
+    if what_is_match:
+        return _strip_wrapping_quotes(what_is_match.group(1))
+
     translate_match = re.search(
         r"(?is)\btranslate(?:\s+this(?:\s+(?:sentence|paragraph|message|phrase))?)?\s*[-:–—]?\s*(.+?)(?:\s+to\s+(?:english|chamor(?:ro|u)))(?:\?|$)",
         normalized,

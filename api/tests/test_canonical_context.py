@@ -119,6 +119,16 @@ def test_how_would_lookup_gets_canonical_blue_and_exact_dictionary_evidence() ->
     assert sources[0] == ("HåfaGPT canonical vocabulary", None)
 
 
+def test_common_english_lookup_forms_reach_exact_dictionary_evidence() -> None:
+    for query, gloss, expected_headword in (
+        ("What is blue in Chamoru?", "blue", "asút"),
+        ("What is the Chamorro word for banana?", "banana", "aga'"),
+    ):
+        context, _sources = get_canonical_tutor_context(query)
+        assert f"Exact English dictionary gloss: {gloss}" in context
+        assert f"Chamorro headword: {expected_headword}" in context
+
+
 def test_passage_gets_exact_dictionary_evidence_for_multiple_words() -> None:
     context, sources = get_canonical_tutor_context(
         "What does this say?\n\n"

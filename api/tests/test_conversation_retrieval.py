@@ -227,3 +227,15 @@ def test_negative_correction_forms_preserve_target_and_candidate() -> None:
             'How do you say "banana" in Chamorro? '
             'Candidate spelling to verify: "aga".'
         )
+
+
+def test_colon_translation_form_preserves_target_for_correction() -> None:
+    history = [
+        {"role": "user", "content": "How would I say: blue?"},
+        {"role": "assistant", "content": "asul"},
+    ]
+
+    assert build_contextual_retrieval_query("Isn't it asut?", history) == (
+        'How do you say "blue" in Chamorro? '
+        'Candidate spelling to verify: "asut".'
+    )
