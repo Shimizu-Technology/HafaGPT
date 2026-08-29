@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
 import type { SourceInfo } from '../types/source';
+import { getChatEvidenceStatus } from '../lib/chatEvidence';
 
 /**
  * Clean markdown content to prevent unwanted code blocks.
@@ -128,6 +129,10 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
+  const evidenceStatus = useMemo(
+    () => getChatEvidenceStatus(sources?.length ?? 0, Boolean(used_web_search)),
+    [sources?.length, used_web_search],
+  );
   
   // Clean content to prevent unwanted code blocks from leading whitespace
   const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
@@ -677,12 +682,28 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
         )}
 
         {!isUser && !isSystem && !isStreaming && (
-          <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-brown-500 dark:text-gray-400" role="note">
-            {sources && sources.length > 0 ? (
-              <><BookOpenCheck className="h-3.5 w-3.5 flex-none" aria-hidden="true" />AI answer with supporting sources listed above</>
+          <p
+            className={`mt-2 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] leading-4 ${
+              evidenceStatus.level === 'source_supported'
+                ? 'border-teal-200 bg-teal-50/70 text-teal-800 dark:border-teal-800/70 dark:bg-teal-950/30 dark:text-teal-200'
+                : evidenceStatus.level === 'web_informed'
+                  ? 'border-purple-200 bg-purple-50/70 text-purple-800 dark:border-purple-800/70 dark:bg-purple-950/30 dark:text-purple-200'
+                  : 'border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-200'
+            }`}
+            role="note"
+            aria-label={`Answer evidence: ${evidenceStatus.label}`}
+          >
+            {evidenceStatus.level === 'source_supported' ? (
+              <BookOpenCheck className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
+            ) : evidenceStatus.level === 'web_informed' ? (
+              <Search className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             ) : (
-              <><Sparkles className="h-3.5 w-3.5 flex-none" aria-hidden="true" />Best-effort AI answer—no supporting source attached</>
+              <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             )}
+            <span>
+              <span className="font-semibold">{evidenceStatus.label}</span>
+              <span className="text-current/80"> · {evidenceStatus.detail}</span>
+            </span>
           </p>
         )}
         

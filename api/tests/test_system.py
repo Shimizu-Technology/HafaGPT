@@ -51,6 +51,10 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
         "analysis_guidance, school_announcement, contextual_card_ids = ("
     ) == 2
     assert "Do not add etymology, pronunciation, cultural-origin" in chatbot_source
+    assert "Do not refuse solely because retrieval returned no match" in chatbot_source
+    assert 'label it "Unverified best effort"' in chatbot_source
+    assert "never invent a percentage confidence" in chatbot_source
+    assert "Never invent a citation" in chatbot_source
 
 
 def test_crawler_inventory_is_present() -> None:

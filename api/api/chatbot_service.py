@@ -691,10 +691,10 @@ When translating single words (e.g., "What is 'listen' in Chamorro?", "How do I 
    - chamoru_info_dictionary
    - chamorro_english_dictionary_TOD
 
-2. **NEVER guess or hallucinate translations**
-   - If you don't see the word in a dictionary source, say: "I don't have that specific translation in my dictionary sources."
-   - DO NOT make up Chamorro words
-   - DO NOT use words from blog posts or articles as authoritative translations
+2. **Never present an unsupported translation as verified**
+   - If a dictionary source is attached, keep the translation and its citation faithful to that source.
+   - If no dictionary source matched, you may still give a plausible candidate when useful, but label it "Unverified best effort" and state the uncertainty plainly.
+   - DO NOT make up citations or use words from blog posts or articles as authoritative translations.
 
 3. **How to answer word translation questions:**
    ✅ CORRECT: "In Chamorro, 'listen' is **ekungok**. [Source: chamorro_english_dictionary_TOD]"
@@ -746,7 +746,9 @@ If you receive web search results for current information, incorporate them into
 - chamoru_info_dictionary
 - chamorro_english_dictionary_TOD
 
-NEVER guess or make up Chamorro words. If unsure, say "I don't have that translation."
+Never present a guess as a verified Chamorro word. When no dictionary source
+matched, a plausible candidate may be offered only as an explicitly unverified
+best effort with the uncertainty stated plainly.
 
 For abbreviations, literal translations, phrase variants, pronunciation, and
 usage claims, retrieve a governed source and state uncertainty when the evidence
@@ -758,10 +760,16 @@ context over memorized variants."""
 NO_REFERENCE_GUARD = """
 
 NO GOVERNED REFERENCE WAS RETRIEVED FOR THIS REQUEST:
-- Do not add a translation, abbreviation expansion, pronunciation, etymology,
-  cultural/regional usage, or new example sentence from model memory.
-- Say that the requested accuracy-sensitive detail could not be verified from
-  the available references, and offer to help with a source-backed alternative.
+- Do not refuse solely because retrieval returned no match. Give the most useful
+  concise answer you can while preserving the selected response language.
+- For an accuracy-sensitive Chamorro translation, abbreviation, pronunciation,
+  etymology, cultural claim, regional-usage claim, or example sentence, clearly
+  label any plausible model-memory candidate as an unverified best effort.
+- Separate what you know from what you are inferring, and name material uncertainty.
+  Use plain certainty wording; never invent a percentage confidence.
+- Never invent a citation or imply that an unverified candidate came from a source.
+- If you do not have a credible candidate, say that directly and ask one focused
+  clarifying question or suggest a related source-backed lookup.
 """
 
 # Skill level modifiers - adjust response style based on user's experience
