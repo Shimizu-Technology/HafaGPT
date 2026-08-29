@@ -489,6 +489,8 @@ class RAGDatabaseManager:
 
 
 def main():
+    """Run the interactive database-management command-line interface."""
+
     import sys
     import glob
     

@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from scripts import audit_rag_sources
 from scripts.audit_rag_sources import (
     classify_source_counts,
@@ -52,6 +54,33 @@ def test_operational_cutover_is_independent_from_incomplete_provenance() -> None
 
     assert readiness["ready"] is True
     assert readiness["source_permission_and_provenance_complete"] is False
+
+
+@pytest.mark.parametrize(("ready", "expected_status"), [(False, 1), (True, 0)])
+def test_operational_cutover_cli_maps_readiness_to_exit_status(
+    monkeypatch,
+    ready: bool,
+    expected_status: int,
+) -> None:
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "run_audit",
+        lambda _database_url, _collection_name: {
+            "operational_cutover": {"ready": ready}
+        },
+    )
+    monkeypatch.setattr(
+        audit_rag_sources.sys,
+        "argv",
+        [
+            "audit_rag_sources.py",
+            "--database-url",
+            "postgresql://unused",
+            "--enforce-operational-cutover-gates",
+        ],
+    )
+
+    assert audit_rag_sources.main() == expected_status
 
 
 class _FakeCursor:

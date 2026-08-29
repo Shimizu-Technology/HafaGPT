@@ -3,6 +3,7 @@ from __future__ import annotations
 from langchain_core.documents import Document
 
 from src.rag.chamorro_rag import ChamorroRAG, _is_low_quality_semantic_chunk
+from src.rag.source_policy import retrieval_metadata_filter_for_roles
 
 
 class FakeVectorStore:
@@ -196,10 +197,32 @@ def test_explicit_grammar_question_gets_a_dedicated_grammar_candidate_lane() -> 
         metadata["content_role"] == "reviewed_grammar"
         for _content, metadata in results
     )
-    assert any(
-        "chamorro_grammar_dr._sandra_chung" in str(call["filter"])
-        for call in rag.vectorstore.calls
+    grammar_filter = retrieval_metadata_filter_for_roles(
+        "educational",
+        {"reviewed_grammar"},
     )
+    assert sum(call["filter"] == grammar_filter for call in rag.vectorstore.calls) == 1
+
+
+def test_plural_grammar_terms_activate_the_reviewed_grammar_lane() -> None:
+    grammar_filter = retrieval_metadata_filter_for_roles(
+        "educational",
+        {"reviewed_grammar"},
+    )
+    grammar = document(
+        "Verbs and pronouns participate in agreement.",
+        "/documents/chamorro_grammar_dr._sandra_chung.pdf",
+        distance=0.3,
+    )
+
+    for query in ("Explain verbs in Chamorro", "Teach me about pronouns"):
+        rag = rag_with_documents([grammar])
+        results = rag.search(query, k=3)
+
+        assert results[0][1]["content_role"] == "reviewed_grammar"
+        assert sum(
+            call["filter"] == grammar_filter for call in rag.vectorstore.calls
+        ) == 1
 
 
 def test_runtime_rejects_semantically_distant_vector_candidates() -> None:

@@ -281,8 +281,8 @@ def _requires_grammar_evidence(query: str, query_type: str) -> bool:
         return False
     grammar_concepts = re.compile(
         r"\b(?:grammar|possess(?:ion|ive|or|ed)?|focus marker|word order|"
-        r"sentence structure|conjugat(?:e|ion)|agreement|pronoun|verb|noun|"
-        r"adjective|tense|aspect|clause|subject|object)\b",
+        r"sentence structures?|conjugat(?:e|ion)|agreements?|pronouns?|verbs?|nouns?|"
+        r"adjectives?|tenses?|aspects?|clauses?|subjects?|objects?)\b",
         re.IGNORECASE,
     )
     return bool(grammar_concepts.search(query))

@@ -26,6 +26,8 @@ DEFAULT_COLLECTION_NAME = DEFAULT_PRODUCTION_COLLECTION_NAME
 
 
 def classify_source_counts(rows: Iterable[tuple[str | None, str | None, int]]) -> dict[str, Any]:
+    """Summarize chunk counts and retrieval-policy status by registered source."""
+
     by_source_id: Counter[str] = Counter()
     blocked_chunks = 0
     unregistered_chunks = 0
@@ -73,6 +75,8 @@ def classify_artifact_counts(
         tuple[str | None, str | None, str | None, str | None, int]
     ],
 ) -> list[dict[str, Any]]:
+    """Summarize version and checksum completeness for each source artifact."""
+
     artifacts: Counter[tuple[str, str, str]] = Counter()
     for source, source_type, version, checksum, chunks in rows:
         annotated = annotate_metadata(
@@ -97,6 +101,8 @@ def classify_artifact_counts(
 
 
 def _collection_record(cursor: Any, collection_name: str) -> tuple[Any, dict[str, Any]]:
+    """Return the identifier and metadata for an existing named collection."""
+
     cursor.execute(
         "SELECT uuid, cmetadata FROM langchain_pg_collection WHERE name = %s",
         (collection_name,),
@@ -149,6 +155,8 @@ def run_audit(
     database_url: str,
     collection_name: str = DEFAULT_COLLECTION_NAME,
 ) -> dict[str, Any]:
+    """Run a read-only, collection-scoped corpus and policy audit."""
+
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
             collection_id, collection_metadata = _collection_record(cursor, collection_name)
@@ -266,6 +274,8 @@ def run_audit(
 
 
 def main() -> int:
+    """Print the requested audit and enforce any selected readiness gate."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
     parser.add_argument(

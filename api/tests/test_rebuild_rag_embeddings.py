@@ -1,11 +1,13 @@
 import pytest
 
+from scripts import rebuild_rag_embeddings
 from scripts.rebuild_rag_embeddings import (
     _stable_id,
     source_snapshot_sha256,
     validate_names,
     validate_resume_snapshot,
 )
+from src.rag.collection_names import LEGACY_COLLECTION_NAME
 
 
 def test_rebuild_requires_new_versioned_target() -> None:
@@ -39,3 +41,45 @@ def test_resume_rejects_rows_without_matching_source_snapshot() -> None:
 
     with pytest.raises(RuntimeError, match="different eligible source snapshot"):
         validate_resume_snapshot(None, {"legacy-row"}, "new")
+
+
+@pytest.mark.parametrize(
+    ("configured_source", "expected_source"),
+    [(None, LEGACY_COLLECTION_NAME), ("explicit_source", "explicit_source")],
+)
+def test_rebuild_cli_source_default_and_environment_override(
+    monkeypatch,
+    configured_source: str | None,
+    expected_source: str,
+) -> None:
+    if configured_source is None:
+        monkeypatch.delenv("RAG_COLLECTION_NAME", raising=False)
+    else:
+        monkeypatch.setenv("RAG_COLLECTION_NAME", configured_source)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    observed: dict[str, str] = {}
+
+    def fake_rebuild(
+        _database_url: str,
+        source: str,
+        _target: str,
+        _batch_size: int,
+    ) -> dict[str, str]:
+        observed["source"] = source
+        return {"status": "ready"}
+
+    monkeypatch.setattr(rebuild_rag_embeddings, "rebuild", fake_rebuild)
+    monkeypatch.setattr(
+        rebuild_rag_embeddings.sys,
+        "argv",
+        [
+            "rebuild_rag_embeddings.py",
+            "--database-url",
+            "postgresql://unused",
+            "--target",
+            "hafagpt_governed_openai_test",
+        ],
+    )
+
+    assert rebuild_rag_embeddings.main() == 0
+    assert observed["source"] == expected_source
