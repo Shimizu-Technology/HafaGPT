@@ -138,6 +138,18 @@ def test_explicit_lookup_wins_over_broad_guam_phrase_in_mixed_prompt() -> None:
 
 def test_historical_meaning_question_stays_historical() -> None:
     assert detect_query_type("What did this word mean in 1865?") == "historical"
+    query = "What does this word mean in 1865?"
+    assert classify_translation_request(query) == "none"
+    assert detect_query_type(query) == "historical"
+
+
+def test_multiline_explicit_lookup_stays_in_dictionary_lane() -> None:
+    query = "What is\nculture in Chamoru?"
+
+    assert extract_translation_payload(query) == "culture"
+    assert classify_translation_request(query) == "single_word_lookup"
+    assert detect_query_type(query) == "lookup"
+    assert extract_target_word(query) == "culture"
 
 
 def test_cultural_meaning_question_stays_cultural() -> None:

@@ -48,6 +48,11 @@ at the specific word or clause where it occurs.
 """
 
 _WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
+_EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN = re.compile(
+    r"\b(?:what is\s+.+?\s+in\s+chamor(?:ro|u)|"
+    r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
+    re.IGNORECASE | re.DOTALL,
+)
 _CONTEXT_PARAGRAPH_PATTERN = re.compile(
     r"(?ix)"
     r"(?:\b(?:this|it|that)\s+(?:is|was|came)\s+from\b|"
@@ -290,12 +295,13 @@ def classify_translation_request(query: str) -> TranslationIntent:
     """Distinguish word lookup from multi-word translation in either direction."""
 
     query_lower = query.casefold()
-    has_translation_cue = bool(
+    explicit_to_chamorro_lookup = bool(
+        _EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN.search(query)
+    )
+    has_translation_cue = explicit_to_chamorro_lookup or bool(
         re.search(
             r"\b(?:translate|how (?:do|would) (?:you|i) say|"
-            r"what does .+ mean|what does this say|what is this saying|"
-            r"what is .+ in chamor(?:ro|u)|"
-            r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
+            r"what does .+ mean|what does this say|what is this saying)\b",
             query_lower,
             re.DOTALL,
         )
@@ -303,13 +309,6 @@ def classify_translation_request(query: str) -> TranslationIntent:
     if not has_translation_cue:
         return "none"
 
-    explicit_to_chamorro_lookup = bool(
-        re.search(
-            r"\b(?:what is .+ in chamor(?:ro|u)|"
-            r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
-            query_lower,
-        )
-    )
     if not explicit_to_chamorro_lookup and not re.search(
         r"\b(?:translate|how (?:do|would) (?:you|i) say)\b",
         query_lower,
@@ -327,6 +326,8 @@ def classify_translation_request(query: str) -> TranslationIntent:
 
     payload = extract_translation_payload(query)
     payload_words = _words(payload)
+    if not payload_words:
+        return "none"
     if re.search(
         r"\b(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for\b",
         query_lower,
