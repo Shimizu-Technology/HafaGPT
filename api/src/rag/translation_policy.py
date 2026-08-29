@@ -106,17 +106,22 @@ def _strip_matching_wrapper_quotes(value: str) -> str:
 def _explicit_translation_destination(query: str) -> str:
     """Return an explicitly requested destination without reading quoted payload text."""
 
+    instruction_text = re.sub(
+        r'(?s)".*?"|\u201c.*?\u201d|\u2018.*?\u2019|\u00ab.*?\u00bb',
+        " ",
+        query,
+    )
     wrapper_match = re.search(
         r"(?i)\btranslate\s+this(?:\s+(?:sentence|paragraph|message|phrase))?"
         r"\s+to\s+(english|chamorr[ou])\b",
-        query,
+        instruction_text,
     )
     if wrapper_match:
         return wrapper_match.group(1).casefold()
 
     trailing_match = re.search(
         r"(?i)\b(?:to|in)\s+(english|chamorr[ou])\b[?.!]*\s*$",
-        query,
+        instruction_text,
     )
     if trailing_match:
         return trailing_match.group(1).casefold()

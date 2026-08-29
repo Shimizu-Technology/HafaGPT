@@ -278,6 +278,12 @@ def test_trailing_destination_wins_over_language_words_inside_payload() -> None:
     assert extract_short_lexical_target(query) == "in english"
 
 
+def test_quoted_translation_instruction_does_not_override_outer_request() -> None:
+    query = "How do you say “Translate this sentence to English”?"
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+
+
 def test_guillemet_target_reaches_post_suffix_wrapper_cleanup() -> None:
     query = "Translate «håfa adai» to English."
 
