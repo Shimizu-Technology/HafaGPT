@@ -1,4 +1,4 @@
-from src.rag.conversation_retrieval import build_contextual_retrieval_query
+from src.rag.conversation_retrieval import _clean_target, build_contextual_retrieval_query
 
 
 def test_ambiguous_language_follow_up_uses_latest_user_context_only() -> None:
@@ -36,6 +36,21 @@ def test_multimodal_user_text_can_supply_context() -> None:
         ],
     )
     assert query == "What about the language in Guam?"
+
+
+def test_language_follow_up_does_not_repeat_prior_translation_target() -> None:
+    query = build_contextual_retrieval_query(
+        "What about that language?",
+        [{"role": "user", "content": "How do you say flower in Chamorro?"}],
+    )
+
+    assert query == "What about the language in CHamoru?"
+
+
+def test_target_cleaning_preserves_terminal_glottal_stops() -> None:
+    assert _clean_target("gofli’e’?") == "gofli’e’"
+    assert _clean_target("aga'?") == "aga'"
+    assert _clean_target("‘ga’lågu’?") == "ga’lågu"
 
 
 def test_translation_follow_up_replaces_target_and_keeps_direction() -> None:

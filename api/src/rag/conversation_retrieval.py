@@ -25,7 +25,7 @@ _REPLACEMENT_TARGET_PATTERN = re.compile(
 )
 _SAME_TARGET_FOLLOW_UP_PATTERN = re.compile(
     r"^\s*(?:"
-    r"(?:what|how)\s+about\s+(?:that|it)|"
+    r"(?:what|how)\s+about\s+(?:that|it)[?.!]*\s*$|"
     r"(?:give|show|list|offer)\s+me\s+(?:some\s+)?(?:possible\s+)?(?:answers|options|alternatives|translations)|"
     r"what\s+(?:else|could\s+it\s+be)|"
     r"(?:any|some)\s+(?:other\s+)?(?:answers|options|alternatives|translations)"
@@ -58,7 +58,17 @@ def _plain_user_text(message: dict[str, Any]) -> str:
 def _clean_target(value: str) -> str:
     """Remove wrapper punctuation without damaging Chamorro apostrophes."""
 
-    return value.strip().strip(" \t\r\n\"“”‘’.,!?;:")
+    cleaned = value.strip().strip(" \t\r\n.,!?;:")
+    quote_pairs = (
+        ("\"", "\""),
+        ("\N{LEFT DOUBLE QUOTATION MARK}", "\N{RIGHT DOUBLE QUOTATION MARK}"),
+        ("\N{LEFT SINGLE QUOTATION MARK}", "\N{RIGHT SINGLE QUOTATION MARK}"),
+        ("'", "'"),
+    )
+    for opening, closing in quote_pairs:
+        if len(cleaned) > 1 and cleaned.startswith(opening) and cleaned.endswith(closing):
+            return cleaned[1:-1].strip()
+    return cleaned
 
 
 def _explicit_translation_request(value: str) -> tuple[str, str] | None:

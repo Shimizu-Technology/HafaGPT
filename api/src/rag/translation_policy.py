@@ -275,10 +275,20 @@ def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
     on the passage-translation path.
     """
 
-    if classify_translation_request(query) != "passage_to_chamorro":
+    translation_intent = classify_translation_request(query)
+    if translation_intent not in {"passage_to_chamorro", "passage_to_english"}:
         return ""
     payload = extract_translation_payload(query).strip()
     if not payload or "\n" in payload or len(payload) > 80:
+        return ""
+    payload = payload.strip(" \t.,!?;:")
+    if translation_intent == "passage_to_chamorro":
+        payload = re.sub(
+            r"(?i)[\s,;:\-–—]*\b(?:in|to)\s+chamorr[ou]\b\s*$",
+            "",
+            payload,
+        ).strip(" \t.,!?;:")
+    if not payload:
         return ""
     words = _words(payload)
     if not 2 <= len(words) <= max_words:

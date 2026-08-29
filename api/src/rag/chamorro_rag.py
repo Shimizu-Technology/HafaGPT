@@ -152,8 +152,8 @@ def extract_target_word(query: str) -> str:
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 7: "word for X" (English→Chamorro)
-    match = re.search(r"word for ([^\s?,]+)", query, re.IGNORECASE)
+    # Pattern 7: "word for X" (English→Chamorro), including short phrases
+    match = re.search(r"word for (.+?)[?.!]*$", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
@@ -163,7 +163,7 @@ def extract_target_word(query: str) -> str:
         return match.group(1).strip().lower()
     
     # Pattern 9: "the chamorro word for X" (English→Chamorro)
-    match = re.search(r"chamorro word for ([^\s?,]+)", query, re.IGNORECASE)
+    match = re.search(r"chamorro word for (.+?)[?.!]*$", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
     
@@ -188,7 +188,7 @@ def _english_keyword_query_params(target_lower: str, collection_name: str, k: in
     """Keep ranking expressions, collection scope, and search filter in order."""
     escaped_target = re.escape(target_lower)
     return (
-        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*[.;]?\s*(\n|$)',
+        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*(?:[,;.]|\n|$)',
         rf'(^|[|\n])\s*{escaped_target}\s*\|',
         rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*\(',
         rf'[,;]\s*{escaped_target}\s*[,;.]',
@@ -736,7 +736,7 @@ class ChamorroRAG:
         short_lexical_target = extract_short_lexical_target(query)
         if query_type == 'lookup' or short_lexical_target:
             # Try to extract the target word
-            target_word = extract_target_word(query) or short_lexical_target
+            target_word = short_lexical_target or extract_target_word(query)
             
             if target_word:
                 # IMPORTANT: Only use SQL keyword search for CHAMORRO→ENGLISH lookups

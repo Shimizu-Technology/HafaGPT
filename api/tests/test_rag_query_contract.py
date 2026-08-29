@@ -41,6 +41,13 @@ def test_english_lookup_ranks_exact_meaning_before_qualified_sense() -> None:
     assert re.search(params[5], "meaning | verb. tree--bent", re.IGNORECASE)
 
 
+def test_english_lookup_ranks_multi_sense_headword_before_compound() -> None:
+    params = _english_keyword_query_params("water", "collection-v1", 3)
+
+    assert re.search(params[0], "meaning | noun. water; liquid.", re.IGNORECASE)
+    assert not re.search(params[0], "meaning | noun. water buffalo.", re.IGNORECASE)
+
+
 def test_english_lookup_does_not_treat_compound_as_exact_alternative() -> None:
     params = _english_keyword_query_params("banana", "collection-v1", 3)
 
@@ -227,6 +234,23 @@ def test_short_phrase_gets_an_exact_dictionary_lookup_lane() -> None:
 
     assert classify_translation_request(query) == "passage_to_chamorro"
     assert extract_short_lexical_target(query) == "banana tree"
+
+
+def test_short_phrase_lookup_strips_period_and_direction() -> None:
+    query = "How do you say good morning in Chamorro."
+
+    assert extract_short_lexical_target(query) == "good morning"
+
+
+def test_short_chamorro_phrase_gets_exact_english_lookup_lane() -> None:
+    query = "What does håfa adai mean?"
+
+    assert classify_translation_request(query) == "passage_to_english"
+    assert extract_short_lexical_target(query) == "håfa adai"
+
+
+def test_word_for_parser_keeps_multiword_target() -> None:
+    assert extract_target_word("What is the Chamorro word for banana tree?") == "banana tree"
 
 
 def test_sentence_does_not_enter_short_dictionary_lookup_lane() -> None:
