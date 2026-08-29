@@ -105,6 +105,16 @@ def test_target_extraction_handles_chamoru_suffix_and_colon_separator() -> None:
         assert extract_target_word(query) == "blue"
 
 
+def test_common_word_lookup_forms_are_classified_and_extracted() -> None:
+    for query, expected_target in (
+        ("What is blue in Chamoru?", "blue"),
+        ("What is the Chamorro word for banana?", "banana"),
+    ):
+        assert extract_translation_payload(query) == expected_target
+        assert classify_translation_request(query) == "single_word_lookup"
+        assert detect_query_type(query) == "lookup"
+
+
 def test_broad_guam_overview_uses_cultural_evidence_role() -> None:
     assert detect_query_type("Tell me everything about Guam") == "cultural"
 
@@ -334,7 +344,10 @@ def test_normalized_short_target_reaches_exact_dictionary_lookup() -> None:
 
 
 def test_word_for_parser_keeps_multiword_target() -> None:
-    assert extract_target_word("What is the Chamorro word for banana tree?") == "banana tree"
+    query = "What is the Chamorro word for banana tree?"
+
+    assert classify_translation_request(query) == "single_word_lookup"
+    assert extract_target_word(query) == "banana tree"
 
 
 def test_sentence_does_not_enter_short_dictionary_lookup_lane() -> None:

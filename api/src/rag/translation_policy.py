@@ -292,7 +292,10 @@ def classify_translation_request(query: str) -> TranslationIntent:
     query_lower = query.casefold()
     has_translation_cue = bool(
         re.search(
-            r"\b(?:translate|how (?:do|would) (?:you|i) say|what does .+ mean|what does this say|what is this saying)\b",
+            r"\b(?:translate|how (?:do|would) (?:you|i) say|"
+            r"what does .+ mean|what does this say|what is this saying|"
+            r"what is .+ in chamor(?:ro|u)|"
+            r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
             query_lower,
             re.DOTALL,
         )
@@ -316,6 +319,11 @@ def classify_translation_request(query: str) -> TranslationIntent:
 
     payload = extract_translation_payload(query)
     payload_words = _words(payload)
+    if re.search(
+        r"\b(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for\b",
+        query_lower,
+    ) and len(payload_words) <= 4:
+        return "single_word_lookup"
     if len(payload_words) <= 1:
         return "single_word_lookup"
 
