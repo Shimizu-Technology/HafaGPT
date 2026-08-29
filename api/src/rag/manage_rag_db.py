@@ -11,6 +11,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_core.documents import Document
 from src.utils.improved_chunker import create_improved_chunker, create_docling_processor
 from src.rag.connection_safety import metadata_file_for_collection, redact_database_url
+from src.rag.collection_names import LEGACY_COLLECTION_NAME
 from src.rag.source_policy import assert_ingestion_allowed
 import os
 import json
@@ -37,7 +38,7 @@ class RAGDatabaseManager:
         self.connection = os.getenv("DATABASE_URL", connection)
         self.collection_name = collection_name or os.getenv(
             "RAG_COLLECTION_NAME",
-            "chamorro_grammar",
+            LEGACY_COLLECTION_NAME,
         )
         self.metadata_file = metadata_file_for_collection(
             self.collection_name,
@@ -488,6 +489,8 @@ class RAGDatabaseManager:
 
 
 def main():
+    """Run the interactive database-management command-line interface."""
+
     import sys
     import glob
     

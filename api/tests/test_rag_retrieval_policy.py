@@ -5,6 +5,14 @@ from langchain_core.documents import Document
 from src.rag.chamorro_rag import ChamorroRAG, _is_low_quality_semantic_chunk
 
 
+REVIEWED_GRAMMAR_FILTER = {
+    "$or": [
+        {"source": {"$ilike": "%chamorro_grammar_dr._sandra_chung%"}},
+        {"source": {"$ilike": "%chamorro grammar%"}},
+    ]
+}
+
+
 class FakeVectorStore:
     def __init__(self, documents: list[Document]) -> None:
         self.documents = documents
@@ -172,6 +180,56 @@ def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -
         "More relevant lesson",
         "Less relevant lesson",
     ]
+
+
+def test_explicit_grammar_question_gets_a_dedicated_grammar_candidate_lane() -> None:
+    """Reserve reviewed grammar evidence even after a large dictionary window."""
+
+    dictionary_rows = [
+        document(
+            f"Dictionary index fragment {index}",
+            f"/documents/Revised-Chamorro-Dictionary.pdf?row={index}",
+            distance=0.2,
+        )
+        for index in range(25)
+    ]
+    grammar = document(
+        "Possessors follow the possessed noun in this construction.",
+        "/documents/chamorro_grammar_dr._sandra_chung.pdf",
+        distance=0.3,
+    )
+    rag = rag_with_documents(dictionary_rows + [grammar])
+
+    results = rag.search("How does possession work in Chamorro grammar?", k=3)
+
+    assert any(
+        metadata["content_role"] == "reviewed_grammar"
+        for _content, metadata in results
+    )
+    assert sum(
+        call["filter"] == REVIEWED_GRAMMAR_FILTER
+        for call in rag.vectorstore.calls
+    ) == 1
+
+
+def test_plural_grammar_terms_activate_the_reviewed_grammar_lane() -> None:
+    """Route plural grammar concepts through the reviewed-grammar lane."""
+
+    grammar = document(
+        "Verbs and pronouns participate in agreement.",
+        "/documents/chamorro_grammar_dr._sandra_chung.pdf",
+        distance=0.3,
+    )
+
+    for query in ("Explain verbs in Chamorro", "Teach me about pronouns"):
+        rag = rag_with_documents([grammar])
+        results = rag.search(query, k=3)
+
+        assert results[0][1]["content_role"] == "reviewed_grammar"
+        assert sum(
+            call["filter"] == REVIEWED_GRAMMAR_FILTER
+            for call in rag.vectorstore.calls
+        ) == 1
 
 
 def test_runtime_rejects_semantically_distant_vector_candidates() -> None:

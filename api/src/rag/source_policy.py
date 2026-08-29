@@ -32,6 +32,8 @@ REQUIRED_SOURCE_FIELDS = {
 
 @lru_cache(maxsize=1)
 def load_source_registry() -> dict[str, Any]:
+    """Load and validate the cached language-source policy registry."""
+
     with REGISTRY_PATH.open("r", encoding="utf-8") as handle:
         registry = json.load(handle)
     validate_source_registry(registry)
@@ -39,6 +41,8 @@ def load_source_registry() -> dict[str, Any]:
 
 
 def validate_source_registry(registry: dict[str, Any]) -> None:
+    """Reject malformed registries and unsafe retrieval or ingestion grants."""
+
     if registry.get("schema_version") != 1:
         raise ValueError("language source registry schema_version must be 1")
     if not registry.get("policy_version"):
@@ -133,6 +137,8 @@ def validate_source_registry(registry: dict[str, Any]) -> None:
 
 
 def _normalized_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
+    """Normalize source location and type fields for policy matching."""
+
     metadata = metadata or {}
     source = str(metadata.get("source") or metadata.get("url") or "").casefold()
     source_type = str(metadata.get("source_type") or "").casefold()
@@ -140,6 +146,8 @@ def _normalized_metadata(metadata: dict[str, Any] | None) -> tuple[str, str]:
 
 
 def resolve_source(metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Resolve chunk metadata to the first matching registered source policy."""
+
     source, source_type = _normalized_metadata(metadata)
     for entry in load_source_registry()["sources"]:
         match = entry["match"]
@@ -153,6 +161,8 @@ def resolve_source(metadata: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def is_retrieval_allowed(metadata: dict[str, Any] | None, query_type: str) -> bool:
+    """Return whether a source may answer the requested evidence role."""
+
     if query_type not in SUPPORTED_QUERY_TYPES:
         return False
     entry = resolve_source(metadata)
@@ -163,10 +173,59 @@ def is_retrieval_allowed(metadata: dict[str, Any] | None, query_type: str) -> bo
 
 
 def source_weight(metadata: dict[str, Any] | None, query_type: str) -> float:
+    """Return the registered authority weight for an eligible source and role."""
+
     if not is_retrieval_allowed(metadata, query_type):
         return 0.0
     entry = resolve_source(metadata)
     return float(entry["retrieval"].get("weight", 1.0))
+
+
+def _retrieval_match_clauses(
+    query_type: str,
+    content_roles: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Build deduplicated PGVector clauses for eligible sources and roles."""
+
+    clauses: list[dict[str, Any]] = []
+    seen_clauses: set[tuple[str, str, str]] = set()
+    if query_type not in SUPPORTED_QUERY_TYPES:
+        return clauses
+
+    for entry in load_source_registry()["sources"]:
+        retrieval = entry["retrieval"]
+        if not retrieval["allowed"] or query_type not in retrieval["allowed_query_types"]:
+            continue
+        if content_roles is not None and entry["content_role"] not in content_roles:
+            continue
+
+        match = entry["match"]
+        for pattern in match.get("source_contains", []):
+            clause_key = ("source", "$ilike", str(pattern).casefold())
+            if clause_key in seen_clauses:
+                continue
+            seen_clauses.add(clause_key)
+            clauses.append({"source": {"$ilike": f"%{pattern}%"}})
+
+        for source_type in match.get("source_types", []):
+            clause_key = ("source_type", "$ilike", str(source_type).casefold())
+            if clause_key in seen_clauses:
+                continue
+            seen_clauses.add(clause_key)
+            clauses.append({"source_type": {"$ilike": source_type}})
+    return clauses
+
+
+def _combine_retrieval_clauses(clauses: list[dict[str, Any]]) -> dict[str, Any]:
+    """Combine clauses while retaining a fail-closed empty-policy sentinel."""
+
+    if not clauses:
+        # Never fall back to an unfiltered search for an unsupported or empty
+        # policy role. This sentinel cannot match a governed source path.
+        return {"source": {"$eq": "internal://hafagpt/no-eligible-source"}}
+    if len(clauses) == 1:
+        return clauses[0]
+    return {"$or": clauses}
 
 
 def retrieval_metadata_filter(query_type: str) -> dict[str, Any]:
@@ -179,39 +238,23 @@ def retrieval_metadata_filter(query_type: str) -> dict[str, Any]:
     :func:`is_retrieval_allowed` so this database filter is never the sole gate.
     """
 
-    clauses: list[dict[str, Any]] = []
-    seen_clauses: set[tuple[str, str, str]] = set()
-    if query_type in SUPPORTED_QUERY_TYPES:
-        for entry in load_source_registry()["sources"]:
-            retrieval = entry["retrieval"]
-            if not retrieval["allowed"] or query_type not in retrieval["allowed_query_types"]:
-                continue
+    return _combine_retrieval_clauses(_retrieval_match_clauses(query_type))
 
-            match = entry["match"]
-            for pattern in match.get("source_contains", []):
-                clause_key = ("source", "$ilike", str(pattern).casefold())
-                if clause_key in seen_clauses:
-                    continue
-                seen_clauses.add(clause_key)
-                clauses.append({"source": {"$ilike": f"%{pattern}%"}})
 
-            for source_type in match.get("source_types", []):
-                clause_key = ("source_type", "$ilike", str(source_type).casefold())
-                if clause_key in seen_clauses:
-                    continue
-                seen_clauses.add(clause_key)
-                clauses.append({"source_type": {"$ilike": source_type}})
+def retrieval_metadata_filter_for_roles(
+    query_type: str,
+    content_roles: set[str],
+) -> dict[str, Any]:
+    """Restrict an eligible candidate lane to particular evidence roles."""
 
-    if not clauses:
-        # Never fall back to an unfiltered search for an unsupported or empty
-        # policy role. This sentinel cannot match a governed source path.
-        return {"source": {"$eq": "internal://hafagpt/no-eligible-source"}}
-    if len(clauses) == 1:
-        return clauses[0]
-    return {"$or": clauses}
+    return _combine_retrieval_clauses(
+        _retrieval_match_clauses(query_type, content_roles)
+    )
 
 
 def annotate_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
+    """Attach normalized governance fields to chunk metadata."""
+
     annotated = dict(metadata or {})
     entry = resolve_source(annotated)
     if not entry:
@@ -239,10 +282,14 @@ def annotate_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def registered_source_ids() -> set[str]:
+    """Return every stable identifier in the source registry."""
+
     return {entry["id"] for entry in load_source_registry()["sources"]}
 
 
 def get_registered_source(source_id: str) -> dict[str, Any] | None:
+    """Return a registered source policy by stable identifier."""
+
     return next(
         (entry for entry in load_source_registry()["sources"] if entry["id"] == source_id),
         None,

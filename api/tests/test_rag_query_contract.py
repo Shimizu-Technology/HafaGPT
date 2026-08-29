@@ -96,6 +96,10 @@ def test_language_overview_remains_educational() -> None:
     assert detect_query_type("Tell me about the Chamorro language") == "educational"
 
 
+def test_how_does_grammar_work_question_is_educational() -> None:
+    assert detect_query_type("How does possession work in Chamorro?") == "educational"
+
+
 def test_explicit_lookup_wins_over_broad_guam_phrase_in_mixed_prompt() -> None:
     query = "Tell me everything about Guam and how do you say water in Chamorro?"
 

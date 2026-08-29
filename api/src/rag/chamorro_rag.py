@@ -16,6 +16,7 @@ from src.rag.source_policy import (
     get_registered_source,
     is_retrieval_allowed,
     retrieval_metadata_filter,
+    retrieval_metadata_filter_for_roles,
     sources_explicitly_mentioned,
     source_weight,
 )
@@ -30,6 +31,7 @@ from src.rag.embedding_contract import (
     runtime_embedding_contract,
     validate_collection_contract,
 )
+from src.rag.collection_names import configured_collection_name
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -272,6 +274,20 @@ def _is_low_quality_semantic_chunk(content: str, metadata: dict) -> bool:
     return len(page_number_tokens) >= 12 and content.count(",") >= 8
 
 
+def _requires_grammar_evidence(query: str, query_type: str) -> bool:
+    """Identify questions where a dictionary-only result set is structurally weak."""
+
+    if query_type != "educational":
+        return False
+    grammar_concepts = re.compile(
+        r"\b(?:grammar|possess(?:ion|ive|or|ed)?|focus marker|word order|"
+        r"sentence structures?|conjugat(?:e|ion)|agreements?|pronouns?|verbs?|nouns?|"
+        r"adjectives?|tenses?|aspects?|clauses?|subjects?|objects?)\b",
+        re.IGNORECASE,
+    )
+    return bool(grammar_concepts.search(query))
+
+
 class ChamorroRAG:
     def __init__(
         self,
@@ -285,7 +301,7 @@ class ChamorroRAG:
         # Get database URL from environment
         import os
         connection = os.getenv("DATABASE_URL", connection)
-        self.collection_name = collection_name or os.getenv("RAG_COLLECTION_NAME", "chamorro_grammar")
+        self.collection_name = collection_name or configured_collection_name()
         self.intended_use = intended_use
         assert_collection_use_allowed(self.collection_name, intended_use)
         
@@ -784,6 +800,17 @@ class ChamorroRAG:
                     )
                 )
 
+        grammar_results = []
+        if _requires_grammar_evidence(query, query_type):
+            grammar_results = self.vectorstore.similarity_search_with_score(
+                search_query,
+                k=max(k * 2, 10),
+                filter=retrieval_metadata_filter_for_roles(
+                    query_type,
+                    {"reviewed_grammar"},
+                ),
+            )
+
         # Enforce source eligibility in PostgreSQL before nearest-neighbor ranking.
         # The previous search-all-then-filter flow allowed blocked collections to
         # consume the complete candidate window, producing an empty governed
@@ -793,7 +820,7 @@ class ChamorroRAG:
             k=max(k * 8, 20),
             filter=retrieval_metadata_filter(query_type),
         )
-        results = targeted_results + eligible_results
+        results = targeted_results + grammar_results + eligible_results
         
         # The source registry replaces the old global era-priority boosts. A
         # newspaper, tourism page, or cultural source can no longer outrank a
@@ -827,6 +854,24 @@ class ChamorroRAG:
         # Sort by score and take top k
         scored_results.sort(key=lambda x: x[1], reverse=True)
         top_results = scored_results[:k]
+        if (
+            top_results
+            and _requires_grammar_evidence(query, query_type)
+            and not any(
+                doc.metadata.get("content_role") == "reviewed_grammar"
+                for doc, _score in top_results
+            )
+        ):
+            grammar_result = next(
+                (
+                    result
+                    for result in scored_results
+                    if result[0].metadata.get("content_role") == "reviewed_grammar"
+                ),
+                None,
+            )
+            if grammar_result:
+                top_results[-1] = grammar_result
         
         return [(doc.page_content, doc.metadata) for doc, score in top_results]
     

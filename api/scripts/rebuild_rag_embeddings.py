@@ -31,6 +31,7 @@ from src.rag.embedding_contract import (  # noqa: E402
     OPENAI_EMBEDDING_CONTRACT,
     collection_metadata,
 )
+from src.rag.collection_names import LEGACY_COLLECTION_NAME  # noqa: E402
 from src.rag.source_policy import (  # noqa: E402
     SUPPORTED_QUERY_TYPES,
     annotate_metadata,
@@ -42,6 +43,8 @@ TARGET_PREFIX = "hafagpt_governed_"
 
 
 def validate_names(source: str, target: str) -> None:
+    """Require a new, versioned governed target that differs from its source."""
+
     if source == target:
         raise ValueError("target collection must differ from source collection")
     if not target.startswith(TARGET_PREFIX):
@@ -49,10 +52,14 @@ def validate_names(source: str, target: str) -> None:
 
 
 def _eligible(metadata: dict[str, Any]) -> bool:
+    """Return whether the source is eligible for at least one retrieval role."""
+
     return any(is_retrieval_allowed(metadata, role) for role in SUPPORTED_QUERY_TYPES)
 
 
 def _stable_id(source_collection: str, content: str, metadata: dict[str, Any]) -> str:
+    """Build a deterministic identifier from source lineage and chunk content."""
+
     identity = json.dumps(
         [source_collection, content, metadata.get("source_id")],
         ensure_ascii=False,
@@ -84,6 +91,8 @@ def validate_resume_snapshot(
 
 
 def load_documents(database_url: str, source_collection: str) -> tuple[list[Document], list[str]]:
+    """Load, govern, annotate, and exact-deduplicate source collection chunks."""
+
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -120,6 +129,8 @@ def load_documents(database_url: str, source_collection: str) -> tuple[list[Docu
 
 
 def existing_ids(database_url: str, target_collection: str) -> set[str]:
+    """Return identifiers already stored in a target collection."""
+
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -136,6 +147,8 @@ def existing_ids(database_url: str, target_collection: str) -> set[str]:
 
 
 def target_metadata(database_url: str, target_collection: str) -> dict[str, Any] | None:
+    """Read target collection metadata when the target already exists."""
+
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -153,6 +166,8 @@ def update_status(
     count: int,
     source_snapshot: str,
 ) -> None:
+    """Persist build status and the verified document snapshot on the target."""
+
     metadata = collection_metadata(OPENAI_EMBEDDING_CONTRACT, status=status)
     metadata["document_count"] = count
     metadata["source_snapshot_sha256"] = source_snapshot
@@ -165,6 +180,8 @@ def update_status(
 
 
 def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dict[str, int | str]:
+    """Build or resume a governed OpenAI collection without mutating its source."""
+
     validate_names(source, target)
     documents, ids = load_documents(database_url, source)
     expected_ids = set(ids)
@@ -227,9 +244,14 @@ def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dic
 
 
 def main() -> int:
+    """Parse arguments and execute the resumable governed collection build."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
-    parser.add_argument("--source", default=os.environ.get("RAG_COLLECTION_NAME", "chamorro_grammar"))
+    parser.add_argument(
+        "--source",
+        default=os.environ.get("RAG_COLLECTION_NAME", LEGACY_COLLECTION_NAME),
+    )
     parser.add_argument("--target", required=True)
     parser.add_argument("--batch-size", type=int, default=100)
     args = parser.parse_args()

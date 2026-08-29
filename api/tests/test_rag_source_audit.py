@@ -1,7 +1,17 @@
 from types import SimpleNamespace
 
+import pytest
+
 from scripts import audit_rag_sources
-from scripts.audit_rag_sources import classify_source_counts, run_audit
+from scripts.audit_rag_sources import (
+    classify_source_counts,
+    operational_cutover_readiness,
+    run_audit,
+)
+from src.rag.embedding_contract import (
+    CONTRACT_METADATA_KEY,
+    OPENAI_EMBEDDING_CONTRACT,
+)
 
 
 def test_source_audit_counts_blocked_and_unregistered_chunks() -> None:
@@ -19,11 +29,164 @@ def test_source_audit_counts_blocked_and_unregistered_chunks() -> None:
     assert audit["unregistered_chunks"] == 3
 
 
+def test_operational_cutover_is_independent_from_incomplete_provenance() -> None:
+    """Allow a reversible cutover without claiming source clearance."""
+
+    audit = {
+        "collection": {
+            "name": "hafagpt_governed_openai_v3",
+            "embedding_dimensions": 384,
+            "minimum_embedding_dimensions": 384,
+            "maximum_embedding_dimensions": 384,
+            "null_embeddings": 0,
+            "metadata": {
+                CONTRACT_METADATA_KEY: OPENAI_EMBEDDING_CONTRACT,
+                "hafagpt_collection_status": "ready",
+                "document_count": 100,
+            },
+        },
+        "summary": {
+            "total_rows": 100,
+            "redundant_exact_rows": 0,
+            "missing_source": 0,
+            "missing_license": 100,
+            "missing_retrieved_at": 100,
+        },
+        "policy": {"blocked_chunks": 0, "unregistered_chunks": 0},
+    }
+
+    readiness = operational_cutover_readiness(audit)
+
+    assert readiness["ready"] is True
+    assert readiness["source_permission_and_provenance_complete"] is False
+
+
+def test_complete_provenance_does_not_override_required_permission(monkeypatch) -> None:
+    """Keep permission readiness false until the authoritative ledger grants it."""
+
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "permission_records_by_source",
+        lambda: {
+            "chamoru_info_dictionary": {
+                "source_id": "chamoru_info_dictionary",
+                "status": "not_requested",
+            }
+        },
+    )
+    audit = {
+        "collection": {
+            "name": "hafagpt_governed_openai_v3",
+            "embedding_dimensions": 384,
+            "minimum_embedding_dimensions": 384,
+            "maximum_embedding_dimensions": 384,
+            "null_embeddings": 0,
+            "metadata": {
+                CONTRACT_METADATA_KEY: OPENAI_EMBEDDING_CONTRACT,
+                "hafagpt_collection_status": "ready",
+                "document_count": 1,
+            },
+        },
+        "summary": {
+            "total_rows": 1,
+            "redundant_exact_rows": 0,
+            "missing_source": 0,
+            "missing_license": 0,
+            "missing_retrieved_at": 0,
+        },
+        "policy": {
+            "blocked_chunks": 0,
+            "unregistered_chunks": 0,
+            "sources": [{"source_id": "chamoru_info_dictionary"}],
+        },
+    }
+
+    readiness = operational_cutover_readiness(audit)
+
+    assert readiness["ready"] is True
+    assert readiness["source_permission_statuses"] == {
+        "chamoru_info_dictionary": "not_requested"
+    }
+    assert readiness["source_permission_and_provenance_complete"] is False
+
+
+@pytest.mark.parametrize(("ready", "expected_status"), [(False, 1), (True, 0)])
+def test_operational_cutover_cli_maps_readiness_to_exit_status(
+    monkeypatch,
+    ready: bool,
+    expected_status: int,
+) -> None:
+    """Map operational readiness to the CLI's process status."""
+
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "run_audit",
+        lambda _database_url, _collection_name: {
+            "operational_cutover": {"ready": ready}
+        },
+    )
+    monkeypatch.setattr(
+        audit_rag_sources.sys,
+        "argv",
+        [
+            "audit_rag_sources.py",
+            "--database-url",
+            "postgresql://unused",
+            "--enforce-operational-cutover-gates",
+        ],
+    )
+
+    assert audit_rag_sources.main() == expected_status
+
+
+def test_cli_enforces_all_selected_gates(monkeypatch) -> None:
+    """Fail when clean-corpus checks pass but operational readiness does not."""
+
+    monkeypatch.setattr(
+        audit_rag_sources,
+        "run_audit",
+        lambda _database_url, _collection_name: {
+            "summary": {
+                "exact_redundancy_percent": 0,
+                "missing_source": 0,
+                "missing_license": 0,
+                "missing_retrieved_at": 0,
+            },
+            "policy": {"blocked_chunks": 0, "unregistered_chunks": 0},
+            "operational_cutover": {"ready": False},
+        },
+    )
+    monkeypatch.setattr(
+        audit_rag_sources.sys,
+        "argv",
+        [
+            "audit_rag_sources.py",
+            "--database-url",
+            "postgresql://unused",
+            "--enforce-clean-corpus-gates",
+            "--enforce-operational-cutover-gates",
+        ],
+    )
+
+    assert audit_rag_sources.main() == 1
+
+
 class _FakeCursor:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        null_embeddings: int = 0,
+        minimum_dimensions: int = 384,
+        maximum_dimensions: int = 384,
+    ) -> None:
+        """Create a collection cursor with configurable aggregate vector state."""
+
         self.executions: list[tuple[str, tuple]] = []
         self.description = None
         self._result: list[tuple] = []
+        self.null_embeddings = null_embeddings
+        self.minimum_dimensions = minimum_dimensions
+        self.maximum_dimensions = maximum_dimensions
 
     def __enter__(self):
         return self
@@ -33,8 +196,8 @@ class _FakeCursor:
 
     def execute(self, query: str, params: tuple) -> None:
         self.executions.append((query, params))
-        if "SELECT uuid FROM langchain_pg_collection" in query:
-            self._result = [("collection-uuid",)]
+        if "SELECT uuid, cmetadata FROM langchain_pg_collection" in query:
+            self._result = [("collection-uuid", {})]
         elif "COUNT(DISTINCT document)" in query:
             names = [
                 "total_rows",
@@ -62,6 +225,12 @@ class _FakeCursor:
             ]
         elif "cmetadata->>'source'" in query:
             self._result = [("https://www.guampedia.com/example", "guampedia", 3)]
+        elif "MIN(vector_dims(embedding))" in query:
+            self._result = [(
+                self.null_embeddings,
+                self.minimum_dimensions,
+                self.maximum_dimensions,
+            )]
         else:
             self._result = [(2, "abc123", 80)]
 
@@ -96,7 +265,16 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
 
     audit = run_audit("postgresql://unused", "collection-v2")
 
-    assert audit["collection"] == {"name": "collection-v2", "id": "collection-uuid"}
+    assert audit["collection"] == {
+        "name": "collection-v2",
+        "id": "collection-uuid",
+        "metadata": {},
+        "embedding_dimensions": 384,
+        "minimum_embedding_dimensions": 384,
+        "maximum_embedding_dimensions": 384,
+        "null_embeddings": 0,
+    }
+    assert audit["operational_cutover"]["ready"] is False
     assert audit["largest_exact_duplicate_groups"] == [
         {
             "copies": 2,
@@ -117,3 +295,48 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
     for query, params in cursor.executions[1:]:
         assert "collection_id = %s" in query
         assert params == ("collection-uuid",)
+
+
+def test_run_audit_checks_all_rows_for_null_embeddings(monkeypatch) -> None:
+    """Reject a collection when any later row has a missing vector."""
+
+    cursor = _FakeCursor(null_embeddings=1)
+    monkeypatch.setattr(
+        audit_rag_sources.psycopg,
+        "connect",
+        lambda _database_url: _FakeConnection(cursor),
+    )
+
+    audit = run_audit("postgresql://unused", "hafagpt_governed_openai_v3")
+
+    assert audit["collection"]["null_embeddings"] == 1
+    assert audit["operational_cutover"]["checks"]["no_null_embeddings"] is False
+    assert audit["operational_cutover"]["ready"] is False
+    aggregate_queries = [
+        query for query, _params in cursor.executions
+        if "MIN(vector_dims(embedding))" in query
+    ]
+    assert len(aggregate_queries) == 1
+    assert "COUNT(*) FILTER (WHERE embedding IS NULL)" in aggregate_queries[0]
+
+
+def test_run_audit_rejects_nonuniform_embedding_dimensions(monkeypatch) -> None:
+    """Fail the cutover gate when vectors do not share one dimension."""
+
+    cursor = _FakeCursor(minimum_dimensions=384, maximum_dimensions=768)
+    monkeypatch.setattr(
+        audit_rag_sources.psycopg,
+        "connect",
+        lambda _database_url: _FakeConnection(cursor),
+    )
+
+    audit = run_audit("postgresql://unused", "hafagpt_governed_openai_v3")
+
+    assert audit["collection"]["embedding_dimensions"] is None
+    assert audit["collection"]["minimum_embedding_dimensions"] == 384
+    assert audit["collection"]["maximum_embedding_dimensions"] == 768
+    assert (
+        audit["operational_cutover"]["checks"]["embedding_dimensions_are_uniform"]
+        is False
+    )
+    assert audit["operational_cutover"]["ready"] is False

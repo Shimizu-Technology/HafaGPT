@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-08-phase-0-expanded",
+  "policy_version": "2026-08-29-governed-cutover",
   "default_policy": {
     "retrieval_allowed": false,
     "reason": "Unknown sources fail closed until provenance, rights, role, and review status are registered."
@@ -374,6 +374,28 @@
         "weight": 0.0
       },
       "decision": "Highest-priority Guam orthography candidate after permission, versioning, and page-level ingestion."
+    },
+    {
+      "id": "kumision_specialized_lists_2025",
+      "name": "Kumisión i Fino' CHamoru specialized word lists (2025)",
+      "canonical_url": "https://kumisionchamoru.guam.gov/listan-palabra-word-lists/listan-espesi%C7%BBt-specialized-lists/",
+      "match": {
+        "source_contains": [
+          "kumisionchamoru.guam.gov/listan-palabra-word-lists/listan-espesi",
+          "kumision_specialized_lists_2025"
+        ]
+      },
+      "content_role": "normative_specialized_lexicon",
+      "region": "Guam",
+      "orthography": "Guam_2024",
+      "rights_status": "permission_required",
+      "review_status": "planned_partnership",
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Current official Guam vocabulary candidate covering focused semantic domains; retain checksums for outreach, but do not ingest the downloaded PDFs without written terms and artifact-level approval."
     },
     {
       "id": "natibu_marianas_living_dictionary",
