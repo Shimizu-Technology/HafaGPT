@@ -69,17 +69,6 @@ def detect_query_type(query: str) -> str:
     if any(re.search(pattern, query_lower) for pattern in broad_guam_patterns):
         return "cultural"
 
-    generic_lookup_patterns = [
-        r"\bin chamorro\b",
-        r"\bto chamorro\b",
-        r"\bin english\b",
-        r"\bto english\b",
-        r"\bwhat (?:does|do|did)\b.+\bmean\b",
-        r"\bmeaning of\b",
-    ]
-    if any(re.search(pattern, query_lower) for pattern in generic_lookup_patterns):
-        return "lookup"
-
     usage_keywords = [
         "use in a sentence",
         "used in a sentence",
@@ -93,6 +82,10 @@ def detect_query_type(query: str) -> str:
     if any(keyword in query_lower for keyword in usage_keywords):
         return "usage"
 
+    # Explicit learning and grammar intent outranks a generic phrase such as
+    # "in Chamorro". Otherwise "How does possession work in Chamorro grammar?"
+    # is incorrectly routed to dictionary lookup merely because it names the
+    # language.
     educational_keywords = [
         "how do i",
         "how to",
@@ -123,5 +116,16 @@ def detect_query_type(query: str) -> str:
     ]
     if any(keyword in query_lower for keyword in educational_keywords):
         return "educational"
+
+    generic_lookup_patterns = [
+        r"\bin chamorro\b",
+        r"\bto chamorro\b",
+        r"\bin english\b",
+        r"\bto english\b",
+        r"\bwhat (?:does|do|did)\b.+\bmean\b",
+        r"\bmeaning of\b",
+    ]
+    if any(re.search(pattern, query_lower) for pattern in generic_lookup_patterns):
+        return "lookup"
 
     return "lookup"

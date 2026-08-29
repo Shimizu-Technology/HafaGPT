@@ -180,6 +180,15 @@
       "rationale": "Primary modern authority for Guam spelling; do not generalize its rules to CNMI without labeling."
     },
     {
+      "source_id": "kumision_specialized_lists_2025",
+      "reviewed_at": "2026-08-29",
+      "review_status": "complete",
+      "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
+      "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
+      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/listan-palabra-word-lists/listan-espesi%C7%BBt-specialized-lists/", "accessed_at": "2026-08-29", "supports": "The official Guam language commission publishes downloadable 2025 specialized lists aligned with its 2024 orthography, including days, months, genealogy and kinship, and weather and climate."}],
+      "rationale": "High-priority official Guam terminology; use links and original cards until written terms authorize storage, embedding, excerpts, and derivative exercises."
+    },
+    {
       "source_id": "natibu_marianas_living_dictionary",
       "reviewed_at": "2026-08-18",
       "review_status": "complete",

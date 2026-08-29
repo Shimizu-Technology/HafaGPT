@@ -5,8 +5,7 @@ from __future__ import annotations
 import re
 from urllib.parse import urlsplit
 
-
-DEFAULT_COLLECTION_NAME = "chamorro_grammar"
+from src.rag.collection_names import LEGACY_COLLECTION_NAME
 
 
 def redact_database_url(connection: str) -> str:
@@ -43,7 +42,7 @@ def metadata_file_for_collection(
         return explicit_path
     if configured_path:
         return configured_path
-    if collection_name == DEFAULT_COLLECTION_NAME:
+    if collection_name == LEGACY_COLLECTION_NAME:
         return "./rag_metadata.json"
     safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", collection_name).strip("._")
     if not safe_name:

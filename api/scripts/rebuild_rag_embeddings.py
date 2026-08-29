@@ -31,6 +31,7 @@ from src.rag.embedding_contract import (  # noqa: E402
     OPENAI_EMBEDDING_CONTRACT,
     collection_metadata,
 )
+from src.rag.collection_names import LEGACY_COLLECTION_NAME  # noqa: E402
 from src.rag.source_policy import (  # noqa: E402
     SUPPORTED_QUERY_TYPES,
     annotate_metadata,
@@ -229,7 +230,10 @@ def rebuild(database_url: str, source: str, target: str, batch_size: int) -> dic
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
-    parser.add_argument("--source", default=os.environ.get("RAG_COLLECTION_NAME", "chamorro_grammar"))
+    parser.add_argument(
+        "--source",
+        default=os.environ.get("RAG_COLLECTION_NAME", LEGACY_COLLECTION_NAME),
+    )
     parser.add_argument("--target", required=True)
     parser.add_argument("--batch-size", type=int, default=100)
     args = parser.parse_args()

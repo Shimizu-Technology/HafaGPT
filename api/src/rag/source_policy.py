@@ -169,6 +169,49 @@ def source_weight(metadata: dict[str, Any] | None, query_type: str) -> float:
     return float(entry["retrieval"].get("weight", 1.0))
 
 
+def _retrieval_match_clauses(
+    query_type: str,
+    content_roles: set[str] | None = None,
+) -> list[dict[str, Any]]:
+    clauses: list[dict[str, Any]] = []
+    seen_clauses: set[tuple[str, str, str]] = set()
+    if query_type not in SUPPORTED_QUERY_TYPES:
+        return clauses
+
+    for entry in load_source_registry()["sources"]:
+        retrieval = entry["retrieval"]
+        if not retrieval["allowed"] or query_type not in retrieval["allowed_query_types"]:
+            continue
+        if content_roles is not None and entry["content_role"] not in content_roles:
+            continue
+
+        match = entry["match"]
+        for pattern in match.get("source_contains", []):
+            clause_key = ("source", "$ilike", str(pattern).casefold())
+            if clause_key in seen_clauses:
+                continue
+            seen_clauses.add(clause_key)
+            clauses.append({"source": {"$ilike": f"%{pattern}%"}})
+
+        for source_type in match.get("source_types", []):
+            clause_key = ("source_type", "$ilike", str(source_type).casefold())
+            if clause_key in seen_clauses:
+                continue
+            seen_clauses.add(clause_key)
+            clauses.append({"source_type": {"$ilike": source_type}})
+    return clauses
+
+
+def _combine_retrieval_clauses(clauses: list[dict[str, Any]]) -> dict[str, Any]:
+    if not clauses:
+        # Never fall back to an unfiltered search for an unsupported or empty
+        # policy role. This sentinel cannot match a governed source path.
+        return {"source": {"$eq": "internal://hafagpt/no-eligible-source"}}
+    if len(clauses) == 1:
+        return clauses[0]
+    return {"$or": clauses}
+
+
 def retrieval_metadata_filter(query_type: str) -> dict[str, Any]:
     """Build the PGVector metadata filter for sources eligible for a query role.
 
@@ -179,36 +222,18 @@ def retrieval_metadata_filter(query_type: str) -> dict[str, Any]:
     :func:`is_retrieval_allowed` so this database filter is never the sole gate.
     """
 
-    clauses: list[dict[str, Any]] = []
-    seen_clauses: set[tuple[str, str, str]] = set()
-    if query_type in SUPPORTED_QUERY_TYPES:
-        for entry in load_source_registry()["sources"]:
-            retrieval = entry["retrieval"]
-            if not retrieval["allowed"] or query_type not in retrieval["allowed_query_types"]:
-                continue
+    return _combine_retrieval_clauses(_retrieval_match_clauses(query_type))
 
-            match = entry["match"]
-            for pattern in match.get("source_contains", []):
-                clause_key = ("source", "$ilike", str(pattern).casefold())
-                if clause_key in seen_clauses:
-                    continue
-                seen_clauses.add(clause_key)
-                clauses.append({"source": {"$ilike": f"%{pattern}%"}})
 
-            for source_type in match.get("source_types", []):
-                clause_key = ("source_type", "$ilike", str(source_type).casefold())
-                if clause_key in seen_clauses:
-                    continue
-                seen_clauses.add(clause_key)
-                clauses.append({"source_type": {"$ilike": source_type}})
+def retrieval_metadata_filter_for_roles(
+    query_type: str,
+    content_roles: set[str],
+) -> dict[str, Any]:
+    """Restrict an eligible candidate lane to particular evidence roles."""
 
-    if not clauses:
-        # Never fall back to an unfiltered search for an unsupported or empty
-        # policy role. This sentinel cannot match a governed source path.
-        return {"source": {"$eq": "internal://hafagpt/no-eligible-source"}}
-    if len(clauses) == 1:
-        return clauses[0]
-    return {"$or": clauses}
+    return _combine_retrieval_clauses(
+        _retrieval_match_clauses(query_type, content_roles)
+    )
 
 
 def annotate_metadata(metadata: dict[str, Any] | None) -> dict[str, Any]:

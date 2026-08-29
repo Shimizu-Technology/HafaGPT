@@ -174,6 +174,34 @@ def test_semantic_ranking_uses_vector_distance_instead_of_candidate_position() -
     ]
 
 
+def test_explicit_grammar_question_gets_a_dedicated_grammar_candidate_lane() -> None:
+    dictionary_rows = [
+        document(
+            f"Dictionary index fragment {index}",
+            f"/documents/Revised-Chamorro-Dictionary.pdf?row={index}",
+            distance=0.2,
+        )
+        for index in range(25)
+    ]
+    grammar = document(
+        "Possessors follow the possessed noun in this construction.",
+        "/documents/chamorro_grammar_dr._sandra_chung.pdf",
+        distance=0.3,
+    )
+    rag = rag_with_documents(dictionary_rows + [grammar])
+
+    results = rag.search("How does possession work in Chamorro grammar?", k=3)
+
+    assert any(
+        metadata["content_role"] == "reviewed_grammar"
+        for _content, metadata in results
+    )
+    assert any(
+        "chamorro_grammar_dr._sandra_chung" in str(call["filter"])
+        for call in rag.vectorstore.calls
+    )
+
+
 def test_runtime_rejects_semantically_distant_vector_candidates() -> None:
     rag = rag_with_documents(
         [

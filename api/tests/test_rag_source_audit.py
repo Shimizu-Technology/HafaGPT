@@ -1,7 +1,15 @@
 from types import SimpleNamespace
 
 from scripts import audit_rag_sources
-from scripts.audit_rag_sources import classify_source_counts, run_audit
+from scripts.audit_rag_sources import (
+    classify_source_counts,
+    operational_cutover_readiness,
+    run_audit,
+)
+from src.rag.embedding_contract import (
+    CONTRACT_METADATA_KEY,
+    OPENAI_EMBEDDING_CONTRACT,
+)
 
 
 def test_source_audit_counts_blocked_and_unregistered_chunks() -> None:
@@ -19,6 +27,33 @@ def test_source_audit_counts_blocked_and_unregistered_chunks() -> None:
     assert audit["unregistered_chunks"] == 3
 
 
+def test_operational_cutover_is_independent_from_incomplete_provenance() -> None:
+    audit = {
+        "collection": {
+            "name": "hafagpt_governed_openai_v3",
+            "embedding_dimensions": 384,
+            "metadata": {
+                CONTRACT_METADATA_KEY: OPENAI_EMBEDDING_CONTRACT,
+                "hafagpt_collection_status": "ready",
+                "document_count": 100,
+            },
+        },
+        "summary": {
+            "total_rows": 100,
+            "redundant_exact_rows": 0,
+            "missing_source": 0,
+            "missing_license": 100,
+            "missing_retrieved_at": 100,
+        },
+        "policy": {"blocked_chunks": 0, "unregistered_chunks": 0},
+    }
+
+    readiness = operational_cutover_readiness(audit)
+
+    assert readiness["ready"] is True
+    assert readiness["source_permission_and_provenance_complete"] is False
+
+
 class _FakeCursor:
     def __init__(self) -> None:
         self.executions: list[tuple[str, tuple]] = []
@@ -33,8 +68,8 @@ class _FakeCursor:
 
     def execute(self, query: str, params: tuple) -> None:
         self.executions.append((query, params))
-        if "SELECT uuid FROM langchain_pg_collection" in query:
-            self._result = [("collection-uuid",)]
+        if "SELECT uuid, cmetadata FROM langchain_pg_collection" in query:
+            self._result = [("collection-uuid", {})]
         elif "COUNT(DISTINCT document)" in query:
             names = [
                 "total_rows",
@@ -62,6 +97,8 @@ class _FakeCursor:
             ]
         elif "cmetadata->>'source'" in query:
             self._result = [("https://www.guampedia.com/example", "guampedia", 3)]
+        elif "vector_dims(embedding)" in query:
+            self._result = [(384,)]
         else:
             self._result = [(2, "abc123", 80)]
 
@@ -96,7 +133,13 @@ def test_run_audit_scopes_every_embedding_query_to_named_collection(monkeypatch)
 
     audit = run_audit("postgresql://unused", "collection-v2")
 
-    assert audit["collection"] == {"name": "collection-v2", "id": "collection-uuid"}
+    assert audit["collection"] == {
+        "name": "collection-v2",
+        "id": "collection-uuid",
+        "metadata": {},
+        "embedding_dimensions": 384,
+    }
+    assert audit["operational_cutover"]["ready"] is False
     assert audit["largest_exact_duplicate_groups"] == [
         {
             "copies": 2,

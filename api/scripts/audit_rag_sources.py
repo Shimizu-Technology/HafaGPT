@@ -18,9 +18,11 @@ if str(API_ROOT) not in sys.path:
     sys.path.insert(0, str(API_ROOT))
 
 from src.rag.source_policy import annotate_metadata, resolve_source
+from src.rag.collection_names import DEFAULT_PRODUCTION_COLLECTION_NAME
+from src.rag.embedding_contract import CONTRACT_METADATA_KEY, OPENAI_EMBEDDING_CONTRACT
 
 
-DEFAULT_COLLECTION_NAME = "chamorro_grammar"
+DEFAULT_COLLECTION_NAME = DEFAULT_PRODUCTION_COLLECTION_NAME
 
 
 def classify_source_counts(rows: Iterable[tuple[str | None, str | None, int]]) -> dict[str, Any]:
@@ -94,15 +96,53 @@ def classify_artifact_counts(
     ]
 
 
-def _collection_id(cursor: Any, collection_name: str) -> Any:
+def _collection_record(cursor: Any, collection_name: str) -> tuple[Any, dict[str, Any]]:
     cursor.execute(
-        "SELECT uuid FROM langchain_pg_collection WHERE name = %s",
+        "SELECT uuid, cmetadata FROM langchain_pg_collection WHERE name = %s",
         (collection_name,),
     )
     row = cursor.fetchone()
     if not row:
         raise ValueError(f"RAG collection does not exist: {collection_name}")
-    return row[0]
+    return row[0], row[1] or {}
+
+
+def operational_cutover_readiness(audit: dict[str, Any]) -> dict[str, Any]:
+    """Evaluate runtime safety separately from still-incomplete source permissions."""
+
+    collection = audit["collection"]
+    summary = audit["summary"]
+    metadata = collection["metadata"]
+    checks = {
+        "governed_versioned_name": collection["name"].startswith("hafagpt_governed_"),
+        "collection_marked_ready": metadata.get("hafagpt_collection_status") == "ready",
+        "embedding_contract_matches_runtime": (
+            metadata.get(CONTRACT_METADATA_KEY) == OPENAI_EMBEDDING_CONTRACT
+        ),
+        "embedding_dimensions_match_runtime": (
+            collection["embedding_dimensions"] == OPENAI_EMBEDDING_CONTRACT["dimensions"]
+        ),
+        "document_count_matches_metadata": (
+            metadata.get("document_count") == summary["total_rows"]
+        ),
+        "collection_is_nonempty": summary["total_rows"] > 0,
+        "no_exact_duplicate_rows": summary["redundant_exact_rows"] == 0,
+        "no_missing_source_labels": summary["missing_source"] == 0,
+        "no_blocked_chunks": audit["policy"]["blocked_chunks"] == 0,
+        "no_unregistered_chunks": audit["policy"]["unregistered_chunks"] == 0,
+    }
+    provenance_complete = (
+        summary["missing_license"] == 0 and summary["missing_retrieved_at"] == 0
+    )
+    return {
+        "ready": all(checks.values()),
+        "checks": checks,
+        "source_permission_and_provenance_complete": provenance_complete,
+        "note": (
+            "Operational cutover readiness does not grant new ingestion rights. "
+            "Source permission and artifact provenance remain separate gates."
+        ),
+    }
 
 
 def run_audit(
@@ -111,7 +151,7 @@ def run_audit(
 ) -> dict[str, Any]:
     with psycopg.connect(database_url) as connection:
         with connection.cursor() as cursor:
-            collection_id = _collection_id(cursor, collection_name)
+            collection_id, collection_metadata = _collection_record(cursor, collection_name)
             cursor.execute(
                 """
                 SELECT
@@ -195,18 +235,34 @@ def run_audit(
                 for copies, fingerprint, characters in cursor.fetchall()
             ]
 
+            cursor.execute(
+                """
+                SELECT vector_dims(embedding)
+                FROM langchain_pg_embedding
+                WHERE collection_id = %s
+                LIMIT 1
+                """,
+                (collection_id,),
+            )
+            dimensions_row = cursor.fetchone()
+            embedding_dimensions = dimensions_row[0] if dimensions_row else None
+
     redundant = summary["redundant_exact_rows"]
     total = summary["total_rows"]
     summary["exact_redundancy_percent"] = round((redundant / total * 100) if total else 0, 2)
-    return {
+    audit = {
         "collection": {
             "name": collection_name,
             "id": str(collection_id),
+            "metadata": collection_metadata,
+            "embedding_dimensions": embedding_dimensions,
         },
         "summary": summary,
         "policy": source_audit,
         "largest_exact_duplicate_groups": duplicate_samples,
     }
+    audit["operational_cutover"] = operational_cutover_readiness(audit)
+    return audit
 
 
 def main() -> int:
@@ -221,6 +277,14 @@ def main() -> int:
         "--enforce-clean-corpus-gates",
         action="store_true",
         help="Exit nonzero until the clean-corpus acceptance gates are met.",
+    )
+    parser.add_argument(
+        "--enforce-operational-cutover-gates",
+        action="store_true",
+        help=(
+            "Exit nonzero unless the governed runtime collection is ready, compatible, "
+            "deduplicated, and free of blocked or unregistered chunks."
+        ),
     )
     args = parser.parse_args()
     if not args.database_url:
@@ -240,6 +304,8 @@ def main() -> int:
             and audit["policy"]["unregistered_chunks"] == 0
         )
         return 0 if clean else 1
+    if args.enforce_operational_cutover_gates:
+        return 0 if audit["operational_cutover"]["ready"] else 1
     return 0
 
 
