@@ -266,6 +266,26 @@ def is_passage_translation(query: str) -> bool:
     return classify_translation_request(query).startswith("passage_")
 
 
+def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
+    """Return a short phrase that is worth an exact dictionary lookup first.
+
+    A phrase such as ``banana tree`` is grammatically multi-word, but treating it
+    only as a passage sends it straight to embeddings and can miss a dictionary
+    definition that contains the exact phrase. Longer or multi-line text remains
+    on the passage-translation path.
+    """
+
+    if classify_translation_request(query) != "passage_to_chamorro":
+        return ""
+    payload = extract_translation_payload(query).strip()
+    if not payload or "\n" in payload or len(payload) > 80:
+        return ""
+    words = _words(payload)
+    if not 2 <= len(words) <= max_words:
+        return ""
+    return payload.casefold()
+
+
 def translation_prompt_guidance(query: str, *, has_references: bool) -> str:
     """Return the passage-specific instruction block, if the request needs one."""
 

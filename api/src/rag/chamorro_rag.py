@@ -22,6 +22,7 @@ from src.rag.source_policy import (
 from src.rag.source_reviews import build_citation_contract
 from src.rag.query_classification import detect_query_type
 from src.rag.translation_policy import (
+    extract_short_lexical_target,
     extract_translation_retrieval_payload,
     is_passage_translation,
 )
@@ -187,10 +188,12 @@ def _english_keyword_query_params(target_lower: str, collection_name: str, k: in
     """Keep ranking expressions, collection scope, and search filter in order."""
     escaped_target = re.escape(target_lower)
     return (
-        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}([,;.\-(]|$)',
+        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*[.;]?\s*(\n|$)',
         rf'(^|[|\n])\s*{escaped_target}\s*\|',
-        rf'[,;]\s*{escaped_target}[,;.\s]',
+        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*\(',
+        rf'[,;]\s*{escaped_target}\s*[,;.]',
         rf'\({escaped_target}\)',
+        rf'meaning\s*\|\s*([a-z]+\.\s*)?{escaped_target}\s*-',
         rf'\n{escaped_target}\s+[a-z]',
         collection_name,
         rf'(^|[^a-z]){escaped_target}([^a-z]|$)',
@@ -594,22 +597,27 @@ class ChamorroRAG:
                         embedding.document,
                         embedding.cmetadata,
                         CASE
-                            -- Priority 1: DIRECT TRANSLATION - word followed by comma, semicolon, dash, or period
-                            -- e.g., "hand, arm" or "fish--generic" or "angry."
+                            -- Priority 1: exact primary meaning on its own line.
+                            -- This keeps "tree." ahead of qualified senses such
+                            -- as "tree--bent" for a generic tree lookup.
                             WHEN embedding.document ~* %s THEN 1
                             -- Current revised-dictionary tables use | English | Chamorro | rows.
                             WHEN embedding.cmetadata->>'source' ILIKE '%%Revised-Chamorro-Dictionary%%'
                                  AND embedding.document ~* %s THEN 1
-                            -- Priority 2: Word as alternative meaning (after comma/semicolon)
-                            -- e.g., ", angry" or "; mad"
+                            -- Priority 2: a qualified primary noun, e.g. "banana (ripe)".
                             WHEN embedding.document ~* %s THEN 2
-                            -- Priority 3: Word in parenthetical - e.g., "(hand)" or "(fish)"
+                            -- Priority 3: Word as a complete alternative meaning (after comma/semicolon)
+                            -- e.g., ", angry" or "; mad"
                             WHEN embedding.document ~* %s THEN 3
-                            -- Priority 4 (LOWER): COMPOUND PHRASE - word followed by space + another word
-                            -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
+                            -- Priority 4: Word in parenthetical - e.g., "(hand)" or "(fish)"
+                            WHEN embedding.document ~* %s THEN 4
+                            -- Priority 5: qualified primary meaning, e.g. "tree--bent".
                             WHEN embedding.document ~* %s THEN 5
-                            -- Priority 5: Word appears anywhere else
-                            ELSE 4
+                            -- Priority 6 (LOWER): COMPOUND PHRASE - word followed by space + another word
+                            -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
+                            WHEN embedding.document ~* %s THEN 6
+                            -- Priority 7: Word appears anywhere else
+                            ELSE 7
                         END as priority
                     FROM langchain_pg_embedding AS embedding
                     JOIN langchain_pg_collection AS collection
@@ -725,9 +733,10 @@ class ChamorroRAG:
         if passage_translation and not translation_payload:
             return []
         
-        if query_type == 'lookup':
+        short_lexical_target = extract_short_lexical_target(query)
+        if query_type == 'lookup' or short_lexical_target:
             # Try to extract the target word
-            target_word = extract_target_word(query)
+            target_word = extract_target_word(query) or short_lexical_target
             
             if target_word:
                 # IMPORTANT: Only use SQL keyword search for CHAMORRO→ENGLISH lookups

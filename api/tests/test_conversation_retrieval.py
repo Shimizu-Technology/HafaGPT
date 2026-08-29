@@ -36,3 +36,103 @@ def test_multimodal_user_text_can_supply_context() -> None:
         ],
     )
     assert query == "What about the language in Guam?"
+
+
+def test_translation_follow_up_replaces_target_and_keeps_direction() -> None:
+    query = build_contextual_retrieval_query(
+        "What about tree?",
+        [
+            {"role": "user", "content": "How do you say flower?"},
+            {"role": "assistant", "content": "An earlier answer must not drive retrieval."},
+        ],
+    )
+
+    assert query == 'How do you say "tree" in Chamorro?'
+
+
+def test_multiword_translation_follow_up_uses_exact_phrase() -> None:
+    query = build_contextual_retrieval_query(
+        "How about banana tree?",
+        [{"role": "user", "content": "How do you say flower in Chamorro?"}],
+    )
+
+    assert query == 'How do you say "banana tree" in Chamorro?'
+
+
+def test_possible_answers_follow_up_keeps_latest_user_target() -> None:
+    query = build_contextual_retrieval_query(
+        "Give me some possible answers of what it could be",
+        [
+            {"role": "user", "content": "How do you say flower?"},
+            {"role": "assistant", "content": "floris"},
+            {"role": "user", "content": "What about tree?"},
+            {"role": "assistant", "content": "I do not know."},
+        ],
+    )
+
+    assert query == 'How do you say "tree" in Chamorro?'
+
+
+def test_unrelated_topic_breaks_stale_translation_thread() -> None:
+    message = "What about tree?"
+    query = build_contextual_retrieval_query(
+        message,
+        [
+            {"role": "user", "content": "How do you say flower?"},
+            {"role": "user", "content": "Tell me about Guam history."},
+        ],
+    )
+
+    assert query == message
+
+
+def test_chamorro_to_english_follow_up_keeps_direction() -> None:
+    query = build_contextual_retrieval_query(
+        "And hånom?",
+        [{"role": "user", "content": "What does ga'lågu mean?"}],
+    )
+
+    assert query == 'What does "hånom" mean in English?'
+
+
+def test_supplied_mobile_translation_sequence_keeps_each_lookup_target() -> None:
+    history = [
+        {"role": "user", "content": "How do you say flower"},
+        {"role": "assistant", "content": "floris"},
+    ]
+
+    tree_query = build_contextual_retrieval_query("What about tree", history)
+    assert tree_query == 'How do you say "tree" in Chamorro?'
+
+    history.extend(
+        [
+            {"role": "user", "content": "What about tree"},
+            {"role": "assistant", "content": "I do not have a verified translation."},
+        ]
+    )
+    alternatives_query = build_contextual_retrieval_query(
+        "Give me some possible answers of what it could be",
+        history,
+    )
+    assert alternatives_query == tree_query
+
+    history.extend(
+        [
+            {"role": "user", "content": "Give me some possible answers of what it could be"},
+            {"role": "assistant", "content": "I do not want to guess."},
+        ]
+    )
+    banana_tree_query = build_contextual_retrieval_query(
+        "How about banana tree",
+        history,
+    )
+    assert banana_tree_query == 'How do you say "banana tree" in Chamorro?'
+
+    history.extend(
+        [
+            {"role": "user", "content": "How about banana tree"},
+            {"role": "assistant", "content": "chotda"},
+        ]
+    )
+    banana_query = build_contextual_retrieval_query("What about banana?", history)
+    assert banana_query == 'How do you say "banana" in Chamorro?'

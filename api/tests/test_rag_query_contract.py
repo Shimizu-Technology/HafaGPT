@@ -1,3 +1,5 @@
+import re
+
 from src.rag.chamorro_rag import (
     ChamorroRAG,
     _chamorro_keyword_query_params,
@@ -12,6 +14,7 @@ from src.rag.translation_policy import (
     classify_translation_request,
     extract_translation_payload,
     extract_translation_retrieval_payload,
+    extract_short_lexical_target,
     translation_prompt_guidance,
 )
 
@@ -23,11 +26,26 @@ def test_chamorro_keyword_collection_parameter_follows_ranking_patterns() -> Non
     assert params[-1] == 6
 
 
-def test_english_keyword_collection_parameter_follows_five_ranking_patterns() -> None:
+def test_english_keyword_collection_parameter_follows_seven_ranking_patterns() -> None:
     params = _english_keyword_query_params("water", "collection-v1", 3)
 
-    assert params[5] == "collection-v1"
+    assert params[7] == "collection-v1"
     assert params[-1] == 9
+
+
+def test_english_lookup_ranks_exact_meaning_before_qualified_sense() -> None:
+    params = _english_keyword_query_params("tree", "collection-v1", 3)
+
+    assert re.search(params[0], "meaning | noun. tree.\netymology | unknown", re.IGNORECASE)
+    assert not re.search(params[0], "meaning | verb. tree--bent", re.IGNORECASE)
+    assert re.search(params[5], "meaning | verb. tree--bent", re.IGNORECASE)
+
+
+def test_english_lookup_does_not_treat_compound_as_exact_alternative() -> None:
+    params = _english_keyword_query_params("banana", "collection-v1", 3)
+
+    assert re.search(params[2], "meaning | Banana (ripe).", re.IGNORECASE)
+    assert not re.search(params[3], "meaning | fruit; banana bunch.", re.IGNORECASE)
 
 
 def test_english_lookup_extracts_chamoru_info_table_entry() -> None:
@@ -202,6 +220,19 @@ def test_multiword_english_request_uses_passage_translation_policy() -> None:
     assert "complete translation" in guidance
     assert "need to contain every" in guidance
     assert "No governed reference was retrieved" in guidance
+
+
+def test_short_phrase_gets_an_exact_dictionary_lookup_lane() -> None:
+    query = 'How do you say "banana tree" in Chamorro?'
+
+    assert classify_translation_request(query) == "passage_to_chamorro"
+    assert extract_short_lexical_target(query) == "banana tree"
+
+
+def test_sentence_does_not_enter_short_dictionary_lookup_lane() -> None:
+    query = "How do you say I am going to the store in Chamorro?"
+
+    assert extract_short_lexical_target(query) == ""
 
 
 def test_quoted_multiword_phrase_excludes_the_requested_language() -> None:

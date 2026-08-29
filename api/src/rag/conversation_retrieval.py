@@ -10,6 +10,28 @@ _AMBIGUOUS_FOLLOW_UPS = (
     re.compile(r"\b(?:the|that|this) language\b", re.IGNORECASE),
     re.compile(r"^\s*(?:tell me more|what about that|can you explain more)\b", re.IGNORECASE),
 )
+_TRANSLATION_TARGET_PATTERNS = (
+    (re.compile(r"\bhow do (?:you|i) say\s+(.+?)(?:\s+in\s+chamorr[ou])?[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\b(?:the\s+)?chamorr[ou] word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamorr[ou][?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(r"\bwhat does\s+(.+?)\s+mean(?:\s+in\s+english)?[?.!]*$", re.IGNORECASE), "to_english"),
+    (re.compile(r"\bwhat is\s+(.+?)\s+in\s+english[?.!]*$", re.IGNORECASE), "to_english"),
+    (re.compile(r"\btranslate\s+(.+?)\s+to\s+english[?.!]*$", re.IGNORECASE), "to_english"),
+)
+_REPLACEMENT_TARGET_PATTERN = re.compile(
+    r"^\s*(?:(?:what|how)\s+about|and)\s+(.+?)[?.!]*\s*$",
+    re.IGNORECASE,
+)
+_SAME_TARGET_FOLLOW_UP_PATTERN = re.compile(
+    r"^\s*(?:"
+    r"(?:what|how)\s+about\s+(?:that|it)|"
+    r"(?:give|show|list|offer)\s+me\s+(?:some\s+)?(?:possible\s+)?(?:answers|options|alternatives|translations)|"
+    r"what\s+(?:else|could\s+it\s+be)|"
+    r"(?:any|some)\s+(?:other\s+)?(?:answers|options|alternatives|translations)"
+    r")\b",
+    re.IGNORECASE,
+)
 _TOPIC_MARKERS = (
     (re.compile(r"\b(?:guam|guåhan|guahan)\b", re.IGNORECASE), "Guam"),
     (re.compile(r"\b(?:cnmi|northern mariana islands)\b", re.IGNORECASE), "CNMI"),
@@ -33,6 +55,75 @@ def _plain_user_text(message: dict[str, Any]) -> str:
     return ""
 
 
+def _clean_target(value: str) -> str:
+    """Remove wrapper punctuation without damaging Chamorro apostrophes."""
+
+    return value.strip().strip(" \t\r\n\"“”‘’.,!?;:")
+
+
+def _explicit_translation_request(value: str) -> tuple[str, str] | None:
+    """Return an explicit target and direction from a user-authored request."""
+
+    for pattern, direction in _TRANSLATION_TARGET_PATTERNS:
+        match = pattern.search(value)
+        if not match:
+            continue
+        target = _clean_target(match.group(1))
+        if target and target.casefold() not in {"this", "that", "it"}:
+            return target, direction
+    return None
+
+
+def _replacement_target(value: str) -> str:
+    match = _REPLACEMENT_TARGET_PATTERN.match(value)
+    if not match:
+        return ""
+    target = _clean_target(match.group(1))
+    if target.casefold() in {"this", "that", "it", "the language", "that language"}:
+        return ""
+    return target
+
+
+def _translation_thread_state(
+    past_messages: list[dict[str, Any]],
+) -> tuple[str, str] | None:
+    """Resolve the latest contiguous user translation thread.
+
+    Work backwards so a replacement such as ``What about tree?`` supplies the
+    newest target while an older explicit request supplies the direction. Stop
+    at unrelated user text to avoid carrying stale translation intent into a
+    different topic.
+    """
+
+    target = ""
+    for message in reversed(past_messages):
+        previous = _plain_user_text(message)
+        if not previous:
+            continue
+
+        explicit = _explicit_translation_request(previous)
+        if explicit:
+            explicit_target, direction = explicit
+            return target or explicit_target, direction
+
+        replacement = _replacement_target(previous)
+        if replacement:
+            target = target or replacement
+            continue
+
+        if _SAME_TARGET_FOLLOW_UP_PATTERN.search(previous):
+            continue
+
+        break
+    return None
+
+
+def _canonical_translation_query(target: str, direction: str) -> str:
+    if direction == "to_english":
+        return f'What does "{target}" mean in English?'
+    return f'How do you say "{target}" in Chamorro?'
+
+
 def build_contextual_retrieval_query(
     current_message: str,
     past_messages: list[dict[str, Any]],
@@ -47,7 +138,25 @@ def build_contextual_retrieval_query(
     """
 
     current = current_message.strip()
-    if not current or not any(pattern.search(current) for pattern in _AMBIGUOUS_FOLLOW_UPS):
+    if not current:
+        return current_message
+
+    # Explicit requests already carry their own direction and target. Keeping
+    # them byte-for-byte stable avoids changing passage-translation behavior.
+    if _explicit_translation_request(current):
+        return current_message
+
+    replacement_target = _replacement_target(current)
+    same_target_follow_up = bool(_SAME_TARGET_FOLLOW_UP_PATTERN.search(current))
+    if replacement_target or same_target_follow_up:
+        thread_state = _translation_thread_state(past_messages)
+        if thread_state:
+            previous_target, direction = thread_state
+            target = replacement_target or previous_target
+            if target:
+                return _canonical_translation_query(target, direction)
+
+    if not any(pattern.search(current) for pattern in _AMBIGUOUS_FOLLOW_UPS):
         return current_message
 
     for message in reversed(past_messages):
