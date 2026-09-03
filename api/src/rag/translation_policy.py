@@ -226,10 +226,10 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
     wrapper_match = (
         re.match(
             r"(?is)^\s*(?:"
-            r"to\s+(?:english|chamor(?:ro|u))"
+            r"(?:to|in)\s+(?:english|chamor(?:ro|u))"
             r"(?:\s*,?\s*(?:please|pls))?|"
             r",?\s*(?:please|pls)"
-            r"(?:\s+to\s+(?:english|chamor(?:ro|u)))?"
+            r"(?:\s+(?:to|in)\s+(?:english|chamor(?:ro|u)))?"
             r")?\s*\?\s*(.*)$",
             normalized[cue_match.end():],
         )

@@ -182,6 +182,8 @@ def test_one_line_translate_all_of_this_uses_the_following_passage() -> None:
         "Can you translate all of this to Chamorro? Buenas. Kao maolek hao?",
         "Can you translate all of this, please? Buenas. Kao maolek hao?",
         "Can you translate all of this to Chamorro, please? Buenas. Kao maolek hao?",
+        "What does this mean in English? Buenas. Kao maolek hao?",
+        "What does this mean in English, please? Buenas. Kao maolek hao?",
     ):
         assert extract_translation_payload(query) == "Buenas. Kao maolek hao?"
 
