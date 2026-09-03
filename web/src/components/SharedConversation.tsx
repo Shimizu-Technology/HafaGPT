@@ -4,6 +4,7 @@ import { BookOpen, Calendar, ExternalLink, Eye, FileText, File, Loader2, Message
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { SourceInfo } from '../types/source';
+import { getChatEvidenceStatus } from '../lib/chatEvidence';
 import { PublicPage } from './PublicPage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -191,7 +192,8 @@ export function SharedConversation() {
                     </span>
                     {message.used_rag && (
                       <span className="flex items-center gap-1 rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
-                        <BookOpen className="h-3 w-3" aria-hidden="true" /> Knowledge base
+                        <BookOpen className="h-3 w-3" aria-hidden="true" />
+                        {getChatEvidenceStatus(message.sources ?? [], message.used_web_search).badgeLabel}
                       </span>
                     )}
                     {message.used_web_search && (
@@ -390,7 +392,7 @@ export function SharedConversation() {
                     <div className="flex flex-wrap gap-1">
                       {message.sources.map((source, i) => {
                         const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-gray-700 dark:text-gray-300";
-                        const label = `${source.name}${typeof source.page === 'number' ? ` (p.${source.page})` : ''}`;
+                        const label = `${source.name}${typeof source.page === 'number' && source.page > 0 ? ` (p.${source.page})` : ''}`;
                         return source.url ? (
                           <a
                             key={`${source.source_id || source.name}-${i}`}

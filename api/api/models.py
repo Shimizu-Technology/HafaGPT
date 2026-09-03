@@ -63,6 +63,10 @@ class SourceInfo(BaseModel):
     citation_required: Optional[bool] = Field(None, description="Whether claims require citation")
     accessed_at: Optional[str] = Field(None, description="Date the cited public source was accessed")
     support: Optional[str] = Field(None, description="How the citation supports the knowledge card")
+    support_scope: Optional[Literal["answer", "partial", "candidate"]] = Field(
+        None,
+        description="Whether the citation supports the answer, a component, or a spelling candidate",
+    )
     knowledge_card_id: Optional[str] = Field(None, description="Knowledge card identifier when applicable")
     evidence_kind: Optional[str] = Field(None, description="Runtime evidence path")
 

@@ -68,6 +68,7 @@ def test_source_info_preserves_governed_citation_metadata() -> None:
                 "content_role": "lexical_reference",
                 "region": "Guam",
                 "evidence_kind": "legacy_retrieval",
+                "support_scope": "partial",
             }
         ]
     )[0]
@@ -79,3 +80,4 @@ def test_source_info_preserves_governed_citation_metadata() -> None:
     assert serialized["locator"] == "Dictionary entry hånom"
     assert serialized["content_role"] == "lexical_reference"
     assert serialized["evidence_kind"] == "legacy_retrieval"
+    assert serialized["support_scope"] == "partial"

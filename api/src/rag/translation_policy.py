@@ -39,6 +39,23 @@ MULTI-WORD TRANSLATION REQUEST:
 - Do not add unrelated etymology, cultural claims, or invented example sentences.
 """
 
+TO_CHAMORRO_PASSAGE_GUIDANCE = """
+
+ENGLISH-TO-CHAMORRO EVIDENCE RULES:
+- Treat every supplied exact English concept match as the preferred lexical anchor
+  for that concept. Use the recorded Chamorro headword or a grammatically required
+  form of that headword; do not substitute a different content word from memory.
+- A citation for one or more component words is partial evidence for the sentence,
+  not proof that a source contains or verifies the complete translation.
+- Never use a Chamorro dictionary headword for an English meaning contradicted by
+  its supplied definition. If the natural grammar is uncertain, give the most
+  useful likely sentence first, label that sentence-level uncertainty plainly,
+  and then identify the exact supported word choices.
+- If this is a request to correct an earlier sentence, provide the corrected
+  sentence first. Do not repeat a known incorrect word and do not refuse merely
+  because the sources verify lexical components rather than the whole sentence.
+"""
+
 PASSAGE_WITHOUT_REFERENCE_GUIDANCE = """
 
 No governed reference was retrieved for this multi-word translation. Still provide
@@ -67,6 +84,13 @@ _TRANSLATION_INSTRUCTION_PATTERN = re.compile(
     r".*\b(?:translation|translated|result|response|output|wording|tone|phrasing)\b|"
     r"\b(?:make|keep)\s+(?:it|the\s+(?:wording|translation|result))\b|"
     r"\b(?:sound|feel|read)\s+(?:more\s+)?(?:warm|gentle|natural|formal|casual|polite)\b)"
+)
+_DEICTIC_TRANSLATION_CUE_PATTERN = re.compile(
+    r"(?ix)\b(?:"
+    r"what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:mean|say)|"
+    r"what\s+does\s+everything(?:\s+here|\s+in\s+this)?\s+(?:mean|say)|"
+    r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying"
+    r")\b"
 )
 _CHAMORRO_PASSAGE_MARKERS = {
     "dispensa",
@@ -180,9 +204,9 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         for part in re.split(r"(?:\r?\n)[ \t]*(?:\r?\n)+", normalized)
         if part.strip()
     ]
-    if len(paragraphs) > 1 and re.search(
-        r"(?i)\b(?:what does this mean|what does this say|translate this|what is this saying)\b",
-        paragraphs[0],
+    if len(paragraphs) > 1 and (
+        _DEICTIC_TRANSLATION_CUE_PATTERN.search(paragraphs[0])
+        or re.search(r"(?i)\btranslate\s+(?:all\s+of\s+)?this\b", paragraphs[0])
     ):
         selected = _select_wrapper_payload(paragraphs, normalized)
         if require_unambiguous:
@@ -197,9 +221,11 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
             selected = candidates[0]
         return _strip_wrapping_quotes(selected)
 
-    wrapper_match = re.search(
-        r"(?is)\b(?:what does this mean|what does this say|what is this saying)\s*\?\s*(.+)$",
-        normalized,
+    cue_match = _DEICTIC_TRANSLATION_CUE_PATTERN.search(normalized)
+    wrapper_match = (
+        re.match(r"(?is)^\s*\?\s*(.+)$", normalized[cue_match.end():])
+        if cue_match
+        else None
     )
     if wrapper_match:
         return _strip_wrapping_quotes(wrapper_match.group(1))
@@ -299,6 +325,8 @@ def classify_translation_request(query: str) -> TranslationIntent:
         _EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN.search(query)
     )
     has_translation_cue = explicit_to_chamorro_lookup or bool(
+        _DEICTIC_TRANSLATION_CUE_PATTERN.search(query)
+    ) or bool(
         re.search(
             r"\b(?:translate|how (?:do|would) (?:you|i) say|"
             r"what does .+ mean|what does this say|what is this saying)\b",
@@ -393,6 +421,8 @@ def translation_prompt_guidance(query: str, *, has_references: bool) -> str:
     if not is_passage_translation(query):
         return ""
     guidance = PASSAGE_TRANSLATION_GUIDANCE
+    if classify_translation_request(query) == "passage_to_chamorro":
+        guidance += TO_CHAMORRO_PASSAGE_GUIDANCE
     if not has_references:
         guidance += PASSAGE_WITHOUT_REFERENCE_GUIDANCE
     return guidance

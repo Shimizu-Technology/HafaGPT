@@ -1170,7 +1170,7 @@ def get_rag_context(
         if include_vector and rag is not None and (
             not card_context
             or contextual_card_ids
-            or is_passage_translation(user_input)
+            or is_passage_translation(retrieval_query)
         ):
             # Passage translations commonly need several independent lexical and
             # grammar clues. A wider governed window prevents one broad semantic
@@ -1393,14 +1393,14 @@ def get_chatbot_response(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        retrieval_message,
         has_references=bool(rag_context),
     )
 
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
-    elif not is_passage_translation(effective_translation_message) and not school_announcement:
+    elif not is_passage_translation(retrieval_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     # Initialize token manager for this request
@@ -1408,15 +1408,22 @@ def get_chatbot_response(
 
     # Keep usable web results in the final model prompt even when general
     # instructions and retrieved context exceed the system-prompt budget.
+    # RAG has its own reserved allocation in TokenBudget. The model receives it
+    # inside the system message, so limiting the combined message to only the
+    # base system-prompt allocation silently discarded retrieved evidence.
+    system_context_budget = (
+        token_manager.budget.system_prompt
+        + (token_manager.budget.rag_context if rag_context else 0)
+    )
     system_prompt_tokens = count_tokens(
         system_prompt + (f"\n\n{web_context}" if web_context else "")
     )
-    if system_prompt_tokens > token_manager.budget.system_prompt:
+    if system_prompt_tokens > system_context_budget:
         logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget, truncating...")
     system_prompt = truncate_text_preserving_suffix(
         system_prompt,
         f"\n\n{web_context}" if web_context else "",
-        token_manager.budget.system_prompt,
+        system_context_budget,
     )
     
     # Build conversation history
@@ -1725,26 +1732,33 @@ def get_chatbot_response_stream(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        retrieval_message,
         has_references=bool(rag_context),
     )
 
     # Add RAG context if available
     if rag_context:
         system_prompt += f"\n\n{rag_context}"
-    elif not is_passage_translation(effective_translation_message) and not school_announcement:
+    elif not is_passage_translation(retrieval_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     # Track token usage and apply limits
+    # RAG has its own reserved allocation in TokenBudget. The model receives it
+    # inside the system message, so limiting the combined message to only the
+    # base system-prompt allocation silently discarded retrieved evidence.
+    system_context_budget = (
+        token_manager.budget.system_prompt
+        + (token_manager.budget.rag_context if rag_context else 0)
+    )
     system_prompt_tokens = count_tokens(
         system_prompt + (f"\n\n{web_context}" if web_context else "")
     )
-    if system_prompt_tokens > token_manager.budget.system_prompt:
-        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget ({token_manager.budget.system_prompt}), truncating...")
+    if system_prompt_tokens > system_context_budget:
+        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget ({system_context_budget}), truncating...")
     system_prompt = truncate_text_preserving_suffix(
         system_prompt,
         f"\n\n{web_context}" if web_context else "",
-        token_manager.budget.system_prompt,
+        system_context_budget,
     )
     
     # Build conversation history

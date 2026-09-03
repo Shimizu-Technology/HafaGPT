@@ -9,9 +9,11 @@ import re
 
 _ALLOWED_SIGNALS = ("SYM", "MSY", "SCHOOL")
 _TRANSLATION_IMAGE_REQUEST = re.compile(
-    r"(?is)\b(?:what\s+(?:does|is)\s+this\s+(?:say|mean|saying)|"
+    r"(?is)\b(?:what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:say|mean)|"
+    r"what\s+does\s+everything(?:\s+here|\s+in\s+this)?\s+(?:say|mean)|"
+    r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying|"
     r"what\s+does\s+(?:the|this)\s+(?:image|photo|screenshot|message)\s+(?:say|mean)|"
-    r"translate|translation|read\s+this|help\s+me\s+understand)\b"
+    r"translate|translation|read\s+(?:all\s+of\s+)?this|help\s+me\s+understand)\b"
 )
 _CONTACT_METADATA = re.compile(
     r"(?ix)(?:"

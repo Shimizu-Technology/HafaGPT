@@ -12,6 +12,7 @@ from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.translation_policy import (
+    classify_translation_request,
     extract_translation_payload,
     extract_translation_retrieval_payload,
     is_passage_translation,
@@ -34,7 +35,40 @@ EXACT_DICTIONARY_FILES = (
 )
 MAX_CANONICAL_MATCHES = 8
 MAX_PASSAGE_DICTIONARY_MATCHES = 8
+MAX_ENGLISH_CONCEPT_MATCHES = 8
 _PASSAGE_WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
+_ENGLISH_CONCEPT_STOP_WORDS = {
+    "a",
+    "about",
+    "an",
+    "and",
+    "for",
+    "i",
+    "in",
+    "is",
+    "it",
+    "like",
+    "of",
+    "something",
+    "the",
+    "to",
+    "we",
+    "you",
+}
+_IRREGULAR_ENGLISH_FORMS = {
+    "forgot": "forget",
+    "forgotten": "forget",
+    "thought": "think",
+    "taught": "teach",
+    "went": "go",
+    "gone": "go",
+    "said": "say",
+}
+_DICTIONARY_SOURCE_IDS = {
+    "Chamoru.info dictionary": "chamoru_info_dictionary",
+    "Topping, Ogo, and Dungca dictionary": "topping_ogo_dungca_1975",
+    "Revised and updated Chamorro dictionary": "local_revised_dictionary_snapshot",
+}
 
 
 def _normalize_for_match(value: str) -> str:
@@ -53,6 +87,12 @@ def _normalize_exact_headword(value: str) -> str:
     )
     composed = unicodedata.normalize("NFC", apostrophe_normalized)
     return " ".join(re.sub(r"[^\w'-]+", " ", composed).split())
+
+
+def _normalize_learner_headword(value: str) -> str:
+    """Collapse phone/OCR spacing only for candidate retrieval."""
+
+    return re.sub(r"[^a-z0-9]", "", _normalize_for_match(value))
 
 
 @lru_cache(maxsize=1)
@@ -92,8 +132,19 @@ def _extract_requested_headword(user_input: str) -> str:
         match = re.search(pattern, user_input)
         if match:
             return match.group(1).strip()
-    match = re.search(r"what does\s+([^\s?,]+)\s+mean", user_input, re.I)
-    return match.group(1).strip() if match else ""
+    match = re.search(
+        r"what does\s+(.+?)\s+mean(?:\s+in\s+english)?[?.!]*\s*$",
+        user_input,
+        re.I | re.S,
+    )
+    if not match:
+        return ""
+    target = match.group(1).strip()
+    if target.casefold() in {"this", "that", "it", "all of this", "everything"}:
+        return ""
+    if len(target) > 80 or len(_PASSAGE_WORD_PATTERN.findall(target)) > 6:
+        return ""
+    return target
 
 
 def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, object]]:
@@ -107,6 +158,50 @@ def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, obje
                 matches.append((display_name, entry_headword, definition))
                 break
     return matches
+
+
+@lru_cache(maxsize=1)
+def _learner_headword_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
+    """Index governed headwords by a display-independent phone/OCR key."""
+
+    index: dict[str, list[tuple[str, str, object]]] = {}
+    for display_name, dictionary in _exact_dictionary_data():
+        for entry_headword, definition in dictionary.items():
+            normalized = _normalize_learner_headword(entry_headword)
+            if len(normalized) >= 4:
+                index.setdefault(normalized, []).append(
+                    (display_name, entry_headword, definition)
+                )
+    return {key: tuple(values) for key, values in index.items()}
+
+
+def _lookup_learner_headword_candidates(
+    headword: str,
+) -> list[tuple[str, str, object]]:
+    """Return spacing/diacritic-tolerant candidates only after exact lookup fails."""
+
+    if not headword or _lookup_exact_dictionary_entries(headword):
+        return []
+    normalized = _normalize_learner_headword(headword)
+    if len(normalized) < 4:
+        return []
+    matches = _learner_headword_index().get(normalized, ())
+    lexical_matches = tuple(
+        match for match in matches if not _is_proper_name_definition(match[2])
+    )
+    if lexical_matches:
+        matches = lexical_matches
+    result: list[tuple[str, str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    for display_name, entry_headword, definition in matches:
+        key = (display_name, _normalize_exact_headword(entry_headword))
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append((display_name, entry_headword, definition))
+        if len(result) >= MAX_CANONICAL_MATCHES:
+            break
+    return result
 
 
 def _extract_requested_english_gloss(user_input: str) -> str:
@@ -230,6 +325,101 @@ def _lookup_exact_english_glosses(
     return matches
 
 
+def _english_lookup_forms(word: str) -> tuple[str, ...]:
+    """Return conservative dictionary forms for an English surface word."""
+
+    normalized = _normalize_for_match(word)
+    if not normalized or " " in normalized:
+        return ()
+    forms = [normalized]
+    irregular = _IRREGULAR_ENGLISH_FORMS.get(normalized)
+    if irregular:
+        forms.append(irregular)
+    if len(normalized) >= 5 and normalized.endswith("ies"):
+        forms.append(f"{normalized[:-3]}y")
+    if len(normalized) >= 5 and normalized.endswith("ed"):
+        forms.extend((normalized[:-2], f"{normalized[:-1]}"))
+    if len(normalized) >= 6 and normalized.endswith("ing"):
+        forms.extend((normalized[:-3], f"{normalized[:-3]}e"))
+    if len(normalized) >= 6 and normalized.endswith("er"):
+        forms.extend((normalized[:-2], f"{normalized[:-1]}"))
+    if len(normalized) >= 5 and normalized.endswith("s"):
+        forms.append(normalized[:-1])
+    return tuple(dict.fromkeys(form for form in forms if len(form) >= 3))
+
+
+def _english_passage_concept_matches(
+    user_input: str,
+) -> list[tuple[str, str, str, str, object]]:
+    """Retrieve direct dictionary anchors for an English-to-Chamorro passage.
+
+    Results contain the observed text, matched dictionary gloss, source name,
+    Chamorro headword, and definition. Inflection handling changes only English
+    retrieval keys; it never rewrites or manufactures Chamorro content.
+    """
+
+    if classify_translation_request(user_input) != "passage_to_chamorro":
+        return []
+    payload = extract_translation_retrieval_payload(user_input)
+    if not payload:
+        return []
+    words = [
+        word.casefold()
+        for word in _PASSAGE_WORD_PATTERN.findall(payload)
+        if re.search(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ]", word)
+    ]
+    if not words:
+        return []
+
+    index = _exact_english_gloss_index()
+    candidates: list[tuple[int, int, str, str]] = []
+    covered_positions: set[int] = set()
+
+    for width in range(min(4, len(words)), 1, -1):
+        for position in range(len(words) - width + 1):
+            if any(
+                offset in covered_positions
+                for offset in range(position, position + width)
+            ):
+                continue
+            observed = " ".join(words[position:position + width])
+            gloss = _normalize_for_match(observed)
+            if gloss not in index:
+                continue
+            candidates.append((width, position, observed, gloss))
+            covered_positions.update(range(position, position + width))
+
+    for position, observed in enumerate(words):
+        if position in covered_positions or observed in _ENGLISH_CONCEPT_STOP_WORDS:
+            continue
+        gloss = next(
+            (form for form in _english_lookup_forms(observed) if form in index),
+            "",
+        )
+        if gloss:
+            candidates.append((1, position, observed, gloss))
+
+    candidates.sort(key=lambda item: (-item[0], item[1], item[3]))
+    matches: list[tuple[str, str, str, str, object]] = []
+    seen_concepts: set[str] = set()
+    for _width, _position, observed, gloss in candidates:
+        if gloss in seen_concepts:
+            continue
+        seen_concepts.add(gloss)
+        ranked_matches = index[gloss]
+        best_rank = ranked_matches[0][0]
+        for rank, display_name, entry_headword, definition in ranked_matches:
+            if rank != best_rank:
+                break
+            matches.append(
+                (observed, gloss, display_name, entry_headword, definition)
+            )
+            break
+        if len(matches) >= MAX_ENGLISH_CONCEPT_MATCHES:
+            break
+    return matches
+
+
 @lru_cache(maxsize=1)
 def _exact_dictionary_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
     """Index governed local dictionaries once for deterministic passage evidence."""
@@ -281,6 +471,29 @@ def _edit_distance_at_most_one(left: str, right: str) -> bool:
     return True
 
 
+def _is_proper_name_definition(definition: object) -> bool:
+    """Keep dictionary name records from outranking ordinary passage words."""
+
+    if isinstance(definition, dict):
+        part_of_speech = str(
+            definition.get("PartOfSpeech") or definition.get("wc") or ""
+        ).casefold()
+        definition_text = str(
+            definition.get("Definition")
+            or definition.get("definition")
+            or definition.get("df")
+            or ""
+        ).casefold()
+    else:
+        part_of_speech = ""
+        definition_text = str(definition).casefold()
+    return (
+        part_of_speech.startswith("name")
+        or definition_text.startswith("nickname for ")
+        or definition_text in {"surname", "first name", "family name"}
+    )
+
+
 def _passage_dictionary_matches(
     user_input: str,
 ) -> list[tuple[str, str, str, object, bool]]:
@@ -305,7 +518,10 @@ def _passage_dictionary_matches(
             normalized_phrase = " ".join(normalized_words[position:position + width])
             if len(normalized_phrase.replace(" ", "")) < 4:
                 continue
-            if normalized_phrase in index:
+            if normalized_phrase in index and any(
+                not _is_proper_name_definition(definition)
+                for _display_name, _entry_headword, definition in index[normalized_phrase]
+            ):
                 candidates.append(
                     (
                         width,
@@ -320,6 +536,23 @@ def _passage_dictionary_matches(
     exact_single_words = {
         candidate[3] for candidate in candidates if candidate[0] == 1
     }
+    learner_index = _learner_headword_index()
+    for position, observed in enumerate(normalized_words):
+        compact = _normalize_learner_headword(observed)
+        if len(compact) < 4:
+            continue
+        for _display_name, entry_headword, definition in learner_index.get(
+            compact, ()
+        ):
+            headword = _normalize_exact_headword(entry_headword)
+            if (
+                headword == observed
+                or " " in headword
+                or _is_proper_name_definition(definition)
+            ):
+                continue
+            candidates.append((1, len(headword), position, observed, headword, True))
+
     near_index = _near_dictionary_headword_index()
     for position, observed in enumerate(normalized_words):
         if len(observed) < 5 or observed in exact_single_words:
@@ -349,7 +582,12 @@ def _passage_dictionary_matches(
         seen_headwords.add(headword)
         # One governed definition per passage headword keeps the prompt compact;
         # exact single-word lookups still return all eligible dictionary sources.
-        for display_name, entry_headword, definition in index[headword][:1]:
+        lexical_entries = [
+            entry
+            for entry in index[headword]
+            if not _is_proper_name_definition(entry[2])
+        ]
+        for display_name, entry_headword, definition in lexical_entries[:1]:
             matches.append(
                 (observed, display_name, entry_headword, definition, near_match)
             )
@@ -377,6 +615,28 @@ def _phrase_matches(normalized_input: str, phrase: str | None) -> bool:
     return f" {normalized_phrase} " in f" {normalized_input} "
 
 
+def _dictionary_source(
+    display_name: str,
+    *,
+    support: str,
+    support_scope: str,
+) -> dict:
+    source_id = _DICTIONARY_SOURCE_IDS.get(display_name)
+    citation = (
+        build_registered_source_citation(source_id)
+        if source_id
+        else {"source_id": None, "name": display_name, "url": None, "page": None}
+    )
+    citation.update(
+        {
+            "support": support,
+            "support_scope": support_scope,
+            "evidence_kind": "deterministic_dictionary_match",
+        }
+    )
+    return citation
+
+
 def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     """Return exact curriculum matches before semantic RAG material.
 
@@ -388,6 +648,7 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     normalized_input = _normalize_for_match(user_input)
     if not normalized_input:
         return "", []
+    passage_request = is_passage_translation(user_input)
 
     matches = []
     for entry in _canonical_entries():
@@ -413,15 +674,21 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
 
     requested_headword = _extract_requested_headword(user_input)
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
+    learner_headword_candidates = _lookup_learner_headword_candidates(
+        requested_headword
+    )
     requested_english_gloss = _extract_requested_english_gloss(user_input)
     english_gloss_matches = _lookup_exact_english_glosses(requested_english_gloss)
     passage_dictionary_matches = _passage_dictionary_matches(user_input)
+    english_passage_concept_matches = _english_passage_concept_matches(user_input)
 
     if (
         not matches
         and not dictionary_matches
+        and not learner_headword_candidates
         and not english_gloss_matches
         and not passage_dictionary_matches
+        and not english_passage_concept_matches
     ):
         return "", []
 
@@ -471,6 +738,18 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             ]
         )
 
+    for display_name, entry_headword, definition in learner_headword_candidates:
+        lines.extend(
+            [
+                f"[Phone/OCR-normalized headword candidate for {requested_headword}: {entry_headword}]",
+                f"Source: {display_name}",
+                f"Definition: {_format_dictionary_definition(definition)}",
+                "The compact spelling matches after removing spaces, apostrophes, and diacritics. "
+                "Present the dictionary spelling as a likely interpretation, not as an exact transcription.",
+                "",
+            ]
+        )
+
     for display_name, entry_headword, definition in english_gloss_matches:
         lines.extend(
             [
@@ -510,19 +789,58 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             ]
         )
 
+    for (
+        observed,
+        gloss,
+        display_name,
+        entry_headword,
+        definition,
+    ) in english_passage_concept_matches:
+        lines.extend(
+            [
+                f"[English passage concept: {observed} -> {gloss}]",
+                f"Chamorro headword: {entry_headword}",
+                f"Source: {display_name}",
+                f"Definition: {_format_dictionary_definition(definition)}",
+                "This directly supports this lexical concept only; it does not verify the complete sentence.",
+                "",
+            ]
+        )
+
     if matches:
         lines.append(
             "Cite canonical entries as the HåfaGPT canonical vocabulary ledger. "
             "Do not claim native review unless the review status says so."
         )
-    if dictionary_matches or english_gloss_matches or passage_dictionary_matches:
+    if (
+        dictionary_matches
+        or learner_headword_candidates
+        or english_gloss_matches
+        or passage_dictionary_matches
+        or english_passage_concept_matches
+    ):
         lines.append(
             "Cite exact headword definitions by the dictionary source name shown above."
         )
     lines.append("=" * 60)
     sources: list[object] = []
     if matches:
-        sources.append(("HåfaGPT canonical vocabulary", None))
+        canonical_source = build_registered_source_citation(
+            "hafagpt_canonical_evaluation"
+        )
+        canonical_source.update(
+            {
+                "name": "HåfaGPT canonical vocabulary",
+                "support": (
+                    "Supports one or more canonical vocabulary components."
+                    if passage_request
+                    else "Supports the requested canonical vocabulary."
+                ),
+                "support_scope": "partial" if passage_request else "answer",
+                "evidence_kind": "canonical_vocabulary_match",
+            }
+        )
+        sources.append(canonical_source)
         for entry in matches:
             for citation in entry.get("source_citations") or []:
                 if not isinstance(citation, dict) or not citation.get("url"):
@@ -545,30 +863,74 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
                             f"as {citation.get('definition', 'public usage')}."
                         ),
                         "evidence_kind": "canonical_underlying_source",
+                        "support_scope": "partial" if passage_request else "answer",
                     }
                 )
                 sources.append(source_contract)
     sources.extend(
-        (display_name, None)
-        for display_name, _headword, _definition in dictionary_matches
+        _dictionary_source(
+            display_name,
+            support=f"Defines the requested headword {entry_headword}.",
+            support_scope="answer",
+        )
+        for display_name, entry_headword, _definition in dictionary_matches
     )
     sources.extend(
-        (display_name, None)
-        for display_name, _headword, _definition in english_gloss_matches
+        _dictionary_source(
+            display_name,
+            support=f"Provides a normalized spelling candidate, {entry_headword}.",
+            support_scope="candidate",
+        )
+        for display_name, entry_headword, _definition in learner_headword_candidates
     )
     sources.extend(
-        (display_name, None)
-        for _observed, display_name, _headword, _definition, _near_match
+        _dictionary_source(
+            display_name,
+            support=f"Defines {entry_headword} for the requested English gloss.",
+            support_scope="answer",
+        )
+        for display_name, entry_headword, _definition in english_gloss_matches
+    )
+    sources.extend(
+        _dictionary_source(
+            display_name,
+            support=f"Defines the passage component {entry_headword}.",
+            support_scope="partial",
+        )
+        for _observed, display_name, entry_headword, _definition, _near_match
         in passage_dictionary_matches
     )
+    sources.extend(
+        _dictionary_source(
+            display_name,
+            support=f"Supports {observed!r} via the dictionary gloss {gloss!r} ({entry_headword}).",
+            support_scope="partial",
+        )
+        for observed, gloss, display_name, entry_headword, _definition
+        in english_passage_concept_matches
+    )
     deduplicated_sources: list[object] = []
-    seen_source_keys: set[tuple[object, object]] = set()
+    seen_source_keys: dict[tuple[object, object], int] = {}
     for source in sources:
         if isinstance(source, dict):
             key = (source.get("source_id") or source.get("name"), source.get("url"))
         else:
             key = (source[0], source[1])
-        if key not in seen_source_keys:
-            seen_source_keys.add(key)
-            deduplicated_sources.append(source)
+        if key in seen_source_keys:
+            existing = deduplicated_sources[seen_source_keys[key]]
+            if isinstance(existing, dict) and isinstance(source, dict):
+                support = str(source.get("support") or "").strip()
+                existing_support = str(existing.get("support") or "").strip()
+                if support and support not in existing_support:
+                    existing["support"] = " ".join(
+                        value for value in (existing_support, support) if value
+                    )
+                scope_rank = {"candidate": 1, "partial": 2, "answer": 3}
+                if scope_rank.get(str(source.get("support_scope")), 0) > scope_rank.get(
+                    str(existing.get("support_scope")), 0
+                ):
+                    existing["support_scope"] = source.get("support_scope")
+            continue
+        seen_source_keys[key] = len(deduplicated_sources)
+        deduplicated_sources.append(source)
     return "\n".join(lines), deduplicated_sources

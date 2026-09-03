@@ -274,6 +274,8 @@ def test_multiword_english_request_uses_passage_translation_policy() -> None:
     assert "complete translation" in guidance
     assert "need to contain every" in guidance
     assert "No governed reference was retrieved" in guidance
+    assert "preferred lexical anchor" in guidance
+    assert "request to correct an earlier sentence" in guidance
 
 
 def test_short_phrase_gets_an_exact_dictionary_lookup_lane() -> None:
