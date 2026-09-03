@@ -153,18 +153,22 @@ def test_passage_gets_exact_dictionary_evidence_for_multiple_words() -> None:
     assert "Exact passage dictionary evidence: uttimo" in context
     assert "Chamoru.info dictionary" in _source_names(sources)
     assert "Chamorro-English Dictionary by Topping, Ogo, and Dungca" in _source_names(sources)
-    assert all(source.get("support_scope") == "partial" for source in sources)
+    scopes = {source.get("support_scope") for source in sources}
+    assert scopes <= {"partial", "candidate"}
+    assert "partial" in scopes
 
 
 def test_passage_uses_one_edit_dictionary_clues_without_rewriting_ocr() -> None:
-    context, _sources = get_canonical_tutor_context(
-        "What does this say?\n\nTrabina. Kada uttemo na Betnes. Modan isla."
+    context, sources = get_canonical_tutor_context(
+        "What does this say?\n\nTrabina. Uttemo. Modan."
     )
 
     assert "Possible OCR/spelling-near dictionary evidence for trabina: trabiha" in context
     assert "Possible OCR/spelling-near dictionary evidence for uttemo: uttimo" in context
     assert "Possible OCR/spelling-near dictionary evidence for modan: moda" in context
     assert "do not silently replace the supplied spelling" in context
+    assert sources
+    assert all(source.get("support_scope") == "candidate" for source in sources)
 
 
 def test_non_translation_prose_does_not_trigger_passage_dictionary_scan() -> None:
@@ -198,6 +202,17 @@ def test_english_sentence_retrieves_inflected_component_glosses() -> None:
     assert "Chamorro headword: klas" in context
     assert "ma'å'ñao" not in context
     assert all(source.get("support_scope") == "partial" for source in sources)
+
+
+def test_english_sentence_does_not_use_a_name_record_as_a_lexical_anchor() -> None:
+    context, _sources = get_canonical_tutor_context(
+        "How would I say I forgot your surname yesterday?"
+    )
+
+    assert "English passage concept: forgot -> forget" in context
+    assert "English passage concept: surname -> surname" in context
+    assert "Chamorro headword: apiyidu" in context
+    assert "Chamorro headword: Masga" not in context
 
 
 def test_unmarked_sina_in_passage_does_not_resolve_to_a_person_name() -> None:

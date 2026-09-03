@@ -89,7 +89,8 @@ _DEICTIC_TRANSLATION_CUE_PATTERN = re.compile(
     r"(?ix)\b(?:"
     r"what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:mean|say)|"
     r"what\s+does\s+everything(?:\s+here|\s+in\s+this)?\s+(?:mean|say)|"
-    r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying"
+    r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying|"
+    r"translate\s+(?:all\s+of\s+)?this"
     r")\b"
 )
 _CHAMORRO_PASSAGE_MARKERS = {

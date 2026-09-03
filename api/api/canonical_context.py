@@ -406,7 +406,13 @@ def _english_passage_concept_matches(
         if gloss in seen_concepts:
             continue
         seen_concepts.add(gloss)
-        ranked_matches = index[gloss]
+        ranked_matches = tuple(
+            match
+            for match in index[gloss]
+            if not _is_proper_name_definition(match[3])
+        )
+        if not ranked_matches:
+            continue
         best_rank = ranked_matches[0][0]
         for rank, display_name, entry_headword, definition in ranked_matches:
             if rank != best_rank:
@@ -895,9 +901,9 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
         _dictionary_source(
             display_name,
             support=f"Defines the passage component {entry_headword}.",
-            support_scope="partial",
+            support_scope="candidate" if near_match else "partial",
         )
-        for _observed, display_name, entry_headword, _definition, _near_match
+        for _observed, display_name, entry_headword, _definition, near_match
         in passage_dictionary_matches
     )
     sources.extend(

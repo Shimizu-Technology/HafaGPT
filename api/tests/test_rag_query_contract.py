@@ -176,6 +176,13 @@ def test_school_chat_wrapper_is_a_passage_not_the_word_this() -> None:
     assert extract_translation_payload(query).startswith("Manana si Yu’os!")
 
 
+def test_one_line_translate_all_of_this_uses_the_following_passage() -> None:
+    query = "Can you translate all of this? Buenas. Kao maolek hao?"
+
+    assert classify_translation_request(query) == "passage_to_english"
+    assert extract_translation_payload(query) == "Buenas. Kao maolek hao?"
+
+
 def test_trailing_context_does_not_replace_middle_chamorro_passage() -> None:
     query = (
         "What does this mean?\n\n"
