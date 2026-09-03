@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from src.rag.image_translation_context import (
     ImageTranslationContext,
     build_image_translation_query,
@@ -153,6 +155,26 @@ def test_image_translation_query_becomes_a_passage_for_governed_retrieval() -> N
     assert classify_translation_request(query) == "passage_to_english"
     assert extract_translation_retrieval_payload(query).startswith("MSY! Kao modan")
     assert "Trabiha" in extract_translation_retrieval_payload(query)
+
+
+@pytest.mark.parametrize(
+    "user_message",
+    (
+        "What does all of this say?",
+        "What does everything here mean?",
+        "Can you translate all of this?",
+    ),
+)
+def test_natural_whole_image_requests_use_translation_contract(user_message: str) -> None:
+    context = ImageTranslationContext(
+        visible_language_text="Buenas\nKao siña hu faisen kuestion?"
+    )
+
+    query, is_translation = build_image_translation_query(user_message, context)
+
+    assert is_translation is True
+    assert classify_translation_request(query) == "passage_to_english"
+    assert extract_translation_retrieval_payload(query) == context.visible_language_text
 
 
 def test_non_translation_image_request_does_not_inject_extracted_text() -> None:

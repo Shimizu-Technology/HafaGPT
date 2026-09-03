@@ -229,6 +229,38 @@ def test_negative_correction_forms_preserve_target_and_candidate() -> None:
         )
 
 
+def test_corrected_sentence_follow_up_recovers_original_user_request() -> None:
+    history = [
+        {
+            "role": "user",
+            "content": (
+                "How would I say something like - thank you for the reminder, "
+                "I forgot about class"
+            ),
+        },
+        {"role": "assistant", "content": "Earlier unsupported translation."},
+        {"role": "user", "content": "What does ma a nao mean?"},
+        {"role": "assistant", "content": "It means afraid."},
+        {"role": "user", "content": "What does maleffa mean?"},
+        {"role": "assistant", "content": "It means forget."},
+    ]
+
+    query = build_contextual_retrieval_query(
+        "Can you give me the corrected sentence?",
+        history,
+    )
+
+    assert query.startswith(
+        'How do you say "something like - thank you for the reminder, '
+        'I forgot about class" in Chamorro?'
+    )
+    assert 'Candidate words discussed: "ma a nao", "maleffa".' in query
+
+    context, _sources = get_canonical_tutor_context(query)
+    assert "Chamorro headword: maleffa" in context
+    assert "Chamorro headword: na'hasso" in context
+
+
 def test_colon_translation_form_preserves_target_for_correction() -> None:
     history = [
         {"role": "user", "content": "How would I say: blue?"},

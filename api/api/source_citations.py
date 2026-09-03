@@ -29,6 +29,7 @@ PUBLIC_CITATION_FIELDS = {
     "citation_required",
     "accessed_at",
     "support",
+    "support_scope",
     "knowledge_card_id",
     "evidence_kind",
 }

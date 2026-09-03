@@ -26,7 +26,7 @@ export function SourceCitation({ sources }: SourceCitationProps) {
                     .join(' • ')}
                   className="inline-flex items-center gap-1 text-teal-700 dark:text-ocean-300 font-medium underline decoration-teal-300/70 underline-offset-2 hover:text-teal-900 dark:hover:text-ocean-100"
                 >
-                  {source.name}{typeof source.page === 'number' && ` (p. ${source.page})`}
+                  {source.name}{typeof source.page === 'number' && source.page > 0 && ` (p. ${source.page})`}
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </a>
               ) : (
@@ -36,7 +36,7 @@ export function SourceCitation({ sources }: SourceCitationProps) {
                     .join(' • ')}
                   className="text-teal-700 dark:text-ocean-300 font-medium"
                 >
-                  {source.name}{typeof source.page === 'number' && ` (p. ${source.page})`}
+                  {source.name}{typeof source.page === 'number' && source.page > 0 && ` (p. ${source.page})`}
                 </span>
               )}
               {index < sources.length - 1 && <span className="mx-1.5 text-brown-500 dark:text-gray-400">•</span>}

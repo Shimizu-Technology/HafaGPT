@@ -130,8 +130,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const [editContent, setEditContent] = useState(content);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
   const evidenceStatus = useMemo(
-    () => getChatEvidenceStatus(sources?.length ?? 0, Boolean(used_web_search)),
-    [sources?.length, used_web_search],
+    () => getChatEvidenceStatus(sources ?? [], Boolean(used_web_search)),
+    [sources, used_web_search],
   );
   
   // Clean content to prevent unwanted code blocks from leading whitespace
@@ -341,8 +341,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {used_rag && !isStreaming && (
               <span className="text-[10px] sm:text-xs font-medium bg-teal-500 dark:bg-ocean-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
                 <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                <span className="hidden sm:inline">Knowledge Base</span>
-                <span className="sm:hidden">KB</span>
+                <span className="hidden sm:inline">{evidenceStatus.badgeLabel}</span>
+                <span className="sm:hidden">{evidenceStatus.level === 'partial_support' ? 'Partial' : evidenceStatus.badgeLabel}</span>
               </span>
             )}
             {used_web_search && !isStreaming && (
@@ -686,6 +686,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             className={`mt-2 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] leading-4 ${
               evidenceStatus.level === 'source_supported'
                 ? 'border-teal-200 bg-teal-50/70 text-teal-800 dark:border-teal-800/70 dark:bg-teal-950/30 dark:text-teal-200'
+                : evidenceStatus.level === 'partial_support' || evidenceStatus.level === 'candidate_support'
+                  ? 'border-sky-200 bg-sky-50/70 text-sky-900 dark:border-sky-800/70 dark:bg-sky-950/30 dark:text-sky-200'
                 : evidenceStatus.level === 'web_informed'
                   ? 'border-purple-200 bg-purple-50/70 text-purple-800 dark:border-purple-800/70 dark:bg-purple-950/30 dark:text-purple-200'
                   : 'border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-200'
@@ -693,7 +695,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             role="note"
             aria-label={`Answer evidence: ${evidenceStatus.label}`}
           >
-            {evidenceStatus.level === 'source_supported' ? (
+            {evidenceStatus.level === 'source_supported' || evidenceStatus.level === 'partial_support' || evidenceStatus.level === 'candidate_support' ? (
               <BookOpenCheck className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
             ) : evidenceStatus.level === 'web_informed' ? (
               <Search className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />

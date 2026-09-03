@@ -13,6 +13,7 @@ export interface SourceInfo {
   citation_required?: boolean | null;
   accessed_at?: string | null;
   support?: string | null;
+  support_scope?: 'answer' | 'partial' | 'candidate' | null;
   knowledge_card_id?: string | null;
   evidence_kind?: string | null;
 }

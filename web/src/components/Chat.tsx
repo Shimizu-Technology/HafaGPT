@@ -953,7 +953,7 @@ ${messages.map((msg) => {
   let content = `[${time}] ${role}:\n${msg.content}\n`;
   
   if (msg.sources && msg.sources.length > 0) {
-    content += `\nSources: ${msg.sources.map(s => `${s.name}${typeof s.page === 'number' ? ` (p. ${s.page})` : ''}${s.url ? ` — ${s.url}` : ''}`).join(', ')}\n`;
+    content += `\nSources: ${msg.sources.map(s => `${s.name}${typeof s.page === 'number' && s.page > 0 ? ` (p. ${s.page})` : ''}${s.url ? ` — ${s.url}` : ''}`).join(', ')}\n`;
   }
   
   if (msg.response_time) {

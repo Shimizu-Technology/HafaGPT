@@ -38,6 +38,12 @@ _SAME_TARGET_FOLLOW_UP_PATTERN = re.compile(
     r")\b",
     re.IGNORECASE,
 )
+_CORRECTED_SENTENCE_FOLLOW_UP_PATTERN = re.compile(
+    r"^\s*(?:can|could|would)\s+you\s+(?:please\s+)?(?:give|show|write|provide)\s+"
+    r"(?:me\s+)?(?:the\s+|a\s+)?(?:corrected|fixed|right)\s+"
+    r"(?:sentence|translation|version)\b",
+    re.IGNORECASE,
+)
 _TOPIC_MARKERS = (
     (re.compile(r"\b(?:guam|guåhan|guahan)\b", re.IGNORECASE), "Guam"),
     (re.compile(r"\b(?:cnmi|northern mariana islands)\b", re.IGNORECASE), "CNMI"),
@@ -155,6 +161,36 @@ def _canonical_translation_query(target: str, direction: str) -> str:
     return f'How do you say "{target}" in Chamorro?'
 
 
+def _corrected_sentence_retrieval_query(
+    past_messages: list[dict[str, Any]],
+) -> str:
+    """Recover the sentence being corrected without trusting assistant prose."""
+
+    discussed_words: list[str] = []
+    for message in reversed(past_messages):
+        previous = _plain_user_text(message)
+        if not previous:
+            continue
+        explicit = _explicit_translation_request(previous)
+        if explicit:
+            target, direction = explicit
+            if direction == "to_chamorro":
+                query = _canonical_translation_query(target, direction)
+                if discussed_words:
+                    quoted = ", ".join(
+                        f'"{word}"' for word in reversed(discussed_words[:4])
+                    )
+                    query += f" Candidate words discussed: {quoted}."
+                return query
+            if len(target.split()) <= 4 and target not in discussed_words:
+                discussed_words.append(target)
+            continue
+        if _candidate_correction(previous) or _SAME_TARGET_FOLLOW_UP_PATTERN.search(previous):
+            continue
+        break
+    return ""
+
+
 def build_contextual_retrieval_query(
     current_message: str,
     past_messages: list[dict[str, Any]],
@@ -171,6 +207,11 @@ def build_contextual_retrieval_query(
     current = current_message.strip()
     if not current:
         return current_message
+
+    if _CORRECTED_SENTENCE_FOLLOW_UP_PATTERN.search(current):
+        correction_query = _corrected_sentence_retrieval_query(past_messages)
+        if correction_query:
+            return correction_query
 
     # Explicit requests already carry their own direction and target. Keeping
     # them byte-for-byte stable avoids changing passage-translation behavior.

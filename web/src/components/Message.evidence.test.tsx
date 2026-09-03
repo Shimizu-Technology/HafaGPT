@@ -50,4 +50,37 @@ describe('Message evidence disclosure', () => {
       screen.getByRole('note', { name: 'Answer evidence: Unverified best effort' }),
     ).toHaveTextContent('No supporting source matched.');
   });
+
+  it('shows partial support for sentence-level answers with component evidence', () => {
+    render(
+      <Message
+        role="assistant"
+        content="A likely full sentence."
+        used_rag
+        sources={[{
+          name: 'Chamoru.info dictionary',
+          page: null,
+          support_scope: 'partial',
+        }]}
+      />,
+    );
+
+    expect(screen.getByText('Partial evidence')).toBeInTheDocument();
+    expect(
+      screen.getByRole('note', { name: 'Answer evidence: Partially supported' }),
+    ).toHaveTextContent('Sources verify parts of this answer, not the full wording.');
+  });
+
+  it('does not display a meaningless page zero locator', () => {
+    render(
+      <Message
+        role="assistant"
+        content="Dictionary answer"
+        sources={[{ name: 'Dictionary snapshot', page: 0 }]}
+      />,
+    );
+
+    expect(screen.getByText('Dictionary snapshot')).toBeInTheDocument();
+    expect(screen.queryByText(/p\.\s*0/i)).not.toBeInTheDocument();
+  });
 });
