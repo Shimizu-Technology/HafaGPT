@@ -224,7 +224,15 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
 
     cue_match = _DEICTIC_TRANSLATION_CUE_PATTERN.search(normalized)
     wrapper_match = (
-        re.match(r"(?is)^\s*\?\s*(.+)$", normalized[cue_match.end():])
+        re.match(
+            r"(?is)^\s*(?:"
+            r"to\s+(?:english|chamor(?:ro|u))"
+            r"(?:\s*,?\s*(?:please|pls))?|"
+            r",?\s*(?:please|pls)"
+            r"(?:\s+to\s+(?:english|chamor(?:ro|u)))?"
+            r")?\s*\?\s*(.*)$",
+            normalized[cue_match.end():],
+        )
         if cue_match
         else None
     )
