@@ -14,8 +14,8 @@ export function getChatEvidenceStatus(
   if (sourceCount > 0) {
     return {
       level: 'source_supported',
-      label: 'Source-supported',
-      detail: 'Check the citations below.',
+      label: 'References attached',
+      detail: 'They may support only parts of this answer.',
     };
   }
   if (usedWebResults) {
@@ -27,7 +27,7 @@ export function getChatEvidenceStatus(
   }
   return {
     level: 'best_effort',
-    label: 'Unverified best effort',
-    detail: 'No supporting source matched.',
+    label: 'No references attached',
+    detail: 'Check important claims against the original material.',
   };
 }

@@ -5,8 +5,8 @@ describe('chat evidence status', () => {
   it('prioritizes attached citations over retrieval flags', () => {
     expect(getChatEvidenceStatus(2, true)).toEqual({
       level: 'source_supported',
-      label: 'Source-supported',
-      detail: 'Check the citations below.',
+      label: 'References attached',
+      detail: 'They may support only parts of this answer.',
     });
   });
 
@@ -14,8 +14,8 @@ describe('chat evidence status', () => {
     expect(getChatEvidenceStatus(0, true).level).toBe('web_informed');
     expect(getChatEvidenceStatus(0, false)).toEqual({
       level: 'best_effort',
-      label: 'Unverified best effort',
-      detail: 'No supporting source matched.',
+      label: 'No references attached',
+      detail: 'Check important claims against the original material.',
     });
   });
 });

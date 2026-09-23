@@ -43,6 +43,12 @@ _cancelled_messages: set[str] = set()
 
 # Valid image extensions for conversation history (prevents sending PDFs as images)
 VALID_IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.gif', '.webp')
+IMAGE_FOLLOWUP_GUIDANCE = """
+When a question refers to uploaded pages or photos, inspect the available images
+before stating what they say or what the user should do. Treat earlier assistant
+descriptions as unverified. Keep directions for each page distinct, and say when
+an image or a line of text is unavailable or unclear rather than filling it in.
+"""
 
 
 def cancel_pending_message(pending_id: str) -> bool:
@@ -149,6 +155,14 @@ def _build_current_user_message(
         })
 
     return {"role": "user", "content": content}
+
+
+def _history_has_images(messages: list[dict]) -> bool:
+    return any(
+        isinstance(message.get("content"), list)
+        and any(part.get("type") == "image_url" for part in message["content"])
+        for message in messages
+    )
 
 
 def detect_image_context(
@@ -294,7 +308,7 @@ from src.utils.token_manager import (
     count_message_tokens,
     truncate_text,
     truncate_text_preserving_suffix,
-    truncate_conversation_history,
+    compact_conversation_history,
     truncate_document_content,
 )
 
@@ -872,13 +886,14 @@ The user wants comprehensive learning, so:
 }
 
 
-def get_conversation_history(conversation_id: str, max_messages: int = 10) -> list:
+def get_conversation_history(conversation_id: str, max_messages: int | None = None) -> list:
     """
     Retrieve conversation history from database for a given conversation.
     
     Args:
         conversation_id: Conversation ID to retrieve history for (NOT session_id!)
-        max_messages: Maximum number of message pairs to retrieve (default: 10)
+        max_messages: Optional row limit for callers that need one. Chat uses
+            the full persisted conversation and compacts it to the token budget.
     
     Returns:
         list: List of dicts with 'user' and 'assistant' messages in chronological order
@@ -899,61 +914,94 @@ def get_conversation_history(conversation_id: str, max_messages: int = 10) -> li
         conn = _get_db_connection_with_retry()
         cursor = conn.cursor()
         
-        # Get last N messages for this CONVERSATION (not session!)
-        # Use subquery to get last N messages DESC, then order them ASC (chronological)
-        cursor.execute("""
-            SELECT user_message, bot_response, image_url, timestamp
-            FROM (
-                SELECT user_message, bot_response, image_url, timestamp
+        if max_messages is None:
+            cursor.execute("""
+                SELECT user_message, bot_response, image_url, file_urls, timestamp
                 FROM conversation_logs
                 WHERE conversation_id = %s
                   AND COALESCE(role, 'user') != 'system'
-                ORDER BY timestamp DESC
-                LIMIT %s
-            ) AS recent_messages
-            ORDER BY timestamp ASC
-        """, (conversation_id, max_messages))
+                ORDER BY timestamp ASC, id ASC
+            """, (conversation_id,))
+        else:
+            # Limit from the end, then restore chronological order.
+            cursor.execute("""
+                SELECT user_message, bot_response, image_url, file_urls, timestamp
+                FROM (
+                    SELECT id, user_message, bot_response, image_url, file_urls, timestamp
+                    FROM conversation_logs
+                    WHERE conversation_id = %s
+                      AND COALESCE(role, 'user') != 'system'
+                    ORDER BY timestamp DESC, id DESC
+                    LIMIT %s
+                ) AS recent_messages
+                ORDER BY timestamp ASC, id ASC
+            """, (conversation_id, max_messages))
         
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
         
-        # Check if current model supports vision
-        # If not, we'll strip image content from history (can't process past images anyway)
-        supports_vision = model_supports_vision()
-        
         # Build conversation history (already in chronological order)
-        # Include images if they exist AND are valid image formats AND model supports vision
+        # Preserve every uploaded image. Request routing below chooses a vision
+        # model even when only a historical message contains images.
         history = []
-        for user_msg, bot_msg, img_url, timestamp in rows:
-            img_url = resolve_private_upload_reference(img_url)
-            # Build user message (with image if available AND is a valid image format)
-            # PDFs, Word docs, etc. should NOT be sent as images - they cause 400 errors
-            # Signed private URLs include query parameters, so inspect only the
-            # URL path when deciding whether a historical upload is an image.
-            is_valid_image = bool(
-                img_url and urlsplit(img_url).path.lower().endswith(VALID_IMAGE_EXTENSIONS)
-            )
+        for user_msg, bot_msg, img_url, file_urls, timestamp in rows:
+            if isinstance(file_urls, str):
+                try:
+                    file_urls = json.loads(file_urls)
+                except ValueError:
+                    file_urls = []
+            attachments = file_urls if isinstance(file_urls, list) else []
+            image_references = []
+            for attachment in attachments:
+                if not isinstance(attachment, dict):
+                    continue
+                reference = attachment.get("url")
+                if reference and (
+                    attachment.get("type") == "image"
+                    or str(attachment.get("content_type") or "").startswith("image/")
+                    or urlsplit(reference).path.lower().endswith(VALID_IMAGE_EXTENSIONS)
+                ):
+                    image_references.append(reference)
+            if img_url and urlsplit(img_url).path.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                image_references.append(img_url)
+
+            image_parts = []
+            unavailable_images = 0
+            for reference in dict.fromkeys(image_references):
+                try:
+                    resolved = resolve_private_upload_reference(reference)
+                except Exception:
+                    resolved = None
+                # Stored attachment metadata already identifies an image. The
+                # legacy image_url field was checked by suffix above.
+                if resolved:
+                    image_parts.append({
+                        "type": "image_url",
+                        "image_url": {"url": resolved, "detail": "low"},
+                    })
+                else:
+                    unavailable_images += 1
             has_user_text = bool(user_msg and user_msg.strip())
 
             # Defensive guard for malformed historical rows. If we have neither
             # user text nor a valid image, don't fabricate a placeholder user turn.
-            if not has_user_text and not is_valid_image:
+            if not has_user_text and not image_references:
                 continue
-            
-            if is_valid_image and supports_vision:
-                # Reconstruct vision message with image URL (only for actual images and vision models)
+
+            text_content = user_msg or "What does this say?"
+            if unavailable_images:
+                text_content += (
+                    f"\n[{unavailable_images} earlier image(s) are unavailable; "
+                    "ask the user to re-upload them before relying on their contents.]"
+                )
+            if image_parts:
                 history.append({
                     "role": "user",
-                    "content": [
-                        {"type": "text", "text": user_msg or "What does this say?"},
-                        {"type": "image_url", "image_url": {"url": img_url, "detail": "low"}}
-                    ]
+                    "content": [{"type": "text", "text": text_content}, *image_parts],
                 })
             else:
-                # Regular text-only message (includes PDFs, Word docs, non-vision models, etc.)
-                # For non-vision models with past images, just use the text portion
-                history.append({"role": "user", "content": user_msg or "What does this say?"})
+                history.append({"role": "user", "content": text_content})
             
             # Skip blank assistant messages. Some historical rows can contain
             # NULL/empty bot responses, which OpenAI-compatible APIs reject.
@@ -1311,7 +1359,7 @@ def get_chatbot_response(
     # RAG ran first, so a follow-up such as "tell me about the language" lost the
     # preceding Guam topic and selected unrelated chunks.
     past_messages = (
-        get_conversation_history(conversation_id, max_messages=10)
+        get_conversation_history(conversation_id)
         if conversation_id
         else []
     )
@@ -1390,6 +1438,8 @@ def get_chatbot_response(
     # the user actually asks.
     
     system_prompt += analysis_guidance
+    if normalized_image_inputs or _history_has_images(past_messages):
+        system_prompt += IMAGE_FOLLOWUP_GUIDANCE
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
@@ -1424,17 +1474,18 @@ def get_chatbot_response(
         {"role": "system", "content": system_prompt}
     ]
     
-    # Retrieve and add past conversation history (last 10 message pairs)
+    # Retrieve and add persisted conversation history within the token budget.
     # IMPORTANT: Use conversation_id (not session_id!) to keep each conversation isolated
     if conversation_id:
         # Apply token limit to conversation history
         history_tokens = count_message_tokens(past_messages)
         if history_tokens > token_manager.budget.conversation_history:
-            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget, truncating...")
-            past_messages = truncate_conversation_history(
+            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget, compacting...")
+            past_messages = compact_conversation_history(
                 past_messages, 
                 token_manager.budget.conversation_history,
-                model=LLM_MODEL_ID
+                model=LLM_MODEL_ID,
+                current_message=message_for_logging,
             )
         
         history.extend(past_messages)
@@ -1478,7 +1529,9 @@ def get_chatbot_response(
     
     # Get LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
-    request_client, request_model = get_client_for_request(has_image=bool(normalized_image_inputs))
+    request_client, request_model = get_client_for_request(
+        has_image=bool(normalized_image_inputs) or _history_has_images(past_messages)
+    )
     
     try:
         response_text = None
@@ -1642,7 +1695,7 @@ def get_chatbot_response_stream(
     # Fetch history before retrieval so ambiguous follow-ups keep the user's
     # explicit prior topic. The same list is reused below for the model prompt.
     past_messages = (
-        get_conversation_history(conversation_id, max_messages=10)
+        get_conversation_history(conversation_id)
         if conversation_id
         else []
     )
@@ -1722,6 +1775,8 @@ def get_chatbot_response_stream(
     # the user actually asks.
     
     system_prompt += analysis_guidance
+    if normalized_image_inputs or _history_has_images(past_messages):
+        system_prompt += IMAGE_FOLLOWUP_GUIDANCE
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
@@ -1756,11 +1811,12 @@ def get_chatbot_response_stream(
         # Apply token limit to conversation history
         history_tokens = count_message_tokens(past_messages)
         if history_tokens > token_manager.budget.conversation_history:
-            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget ({token_manager.budget.conversation_history}), truncating...")
-            past_messages = truncate_conversation_history(
+            logger.info(f"Conversation history ({history_tokens} tokens) exceeds budget ({token_manager.budget.conversation_history}), compacting...")
+            past_messages = compact_conversation_history(
                 past_messages, 
                 token_manager.budget.conversation_history,
-                model=LLM_MODEL_ID
+                model=LLM_MODEL_ID,
+                current_message=message_for_logging,
             )
         
         history.extend(past_messages)
@@ -1798,7 +1854,9 @@ def get_chatbot_response_stream(
     
     # Stream LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
-    request_client, request_model = get_client_for_request(has_image=bool(normalized_image_inputs))
+    request_client, request_model = get_client_for_request(
+        has_image=bool(normalized_image_inputs) or _history_has_images(past_messages)
+    )
     
     # Log token usage before LLM call
     total_input_tokens = count_message_tokens(history)

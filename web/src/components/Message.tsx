@@ -85,8 +85,8 @@ function getFileTypeFromUrl(url: string): 'image' | 'pdf' | 'docx' | 'txt' | 'un
 function getFilenameFromUrl(url: string): string {
   const parts = url.split('/');
   const filename = parts[parts.length - 1].split('?')[0];
-  // Remove timestamp prefix if present (format: YYYYMMDD_HHMMSS_)
-  const cleanName = filename.replace(/^\d{8}_\d{6}_/, '');
+  // Remove the stored timestamp and optional collision-proof ID.
+  const cleanName = filename.replace(/^\d{8}_\d{6}_(?:[a-f0-9]{32}_)?/, '');
   return cleanName || 'document';
 }
 

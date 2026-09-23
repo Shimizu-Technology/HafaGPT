@@ -169,7 +169,7 @@ httpcore==1.0.9
     #   -c requirements.txt
     #   clerk-backend-api
     #   httpx
-httpcore2==2.10.0 ; sys_platform != 'emscripten'
+httpcore2==2.13.1 ; sys_platform != 'emscripten'
     # via
     #   -c requirements.txt
     #   httpx2
@@ -186,7 +186,7 @@ httpx==0.28.1
     #   unclecode-litellm
 httpx-sse==0.4.3
     # via langchain-community
-httpx2==2.10.0
+httpx2==2.13.1
     # via
     #   -c requirements.txt
     #   openai
@@ -550,28 +550,20 @@ truststore==0.10.4 ; sys_platform != 'emscripten'
 typing-extensions==4.16.0
     # via
     #   -c requirements.txt
-    #   aiohttp
-    #   aiosignal
     #   alembic
-    #   anyio
     #   beautifulsoup4
     #   fastapi
-    #   httpx2
     #   huggingface-hub
     #   langchain-core
     #   langchain-protocol
     #   langsmith
     #   openai
-    #   psycopg
     #   psycopg-pool
     #   pydantic
     #   pydantic-core
     #   pyee
-    #   pyopenssl
     #   python-docx
-    #   referencing
     #   sqlalchemy
-    #   starlette
     #   typing-inspection
 typing-inspection==0.4.4
     # via

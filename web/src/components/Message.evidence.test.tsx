@@ -21,7 +21,7 @@ describe('Message evidence disclosure', () => {
     vi.clearAllMocks();
   });
 
-  it('shows source-supported when citations are attached', () => {
+  it('states that references are attached without validating every claim', () => {
     render(
       <Message
         role="assistant"
@@ -31,8 +31,8 @@ describe('Message evidence disclosure', () => {
     );
 
     expect(
-      screen.getByRole('note', { name: 'Answer evidence: Source-supported' }),
-    ).toHaveTextContent('Check the citations below.');
+      screen.getByRole('note', { name: 'Answer evidence: References attached' }),
+    ).toHaveTextContent('They may support only parts of this answer.');
   });
 
   it('shows web-informed when current web context was used without RAG citations', () => {
@@ -43,11 +43,11 @@ describe('Message evidence disclosure', () => {
     ).toHaveTextContent('Current web results were used.');
   });
 
-  it('clearly marks an answer with no matched evidence as unverified', () => {
+  it('clearly marks an answer with no attached references', () => {
     render(<Message role="assistant" content="Possible answer" />);
 
     expect(
-      screen.getByRole('note', { name: 'Answer evidence: Unverified best effort' }),
-    ).toHaveTextContent('No supporting source matched.');
+      screen.getByRole('note', { name: 'Answer evidence: No references attached' }),
+    ).toHaveTextContent('Check important claims against the original material.');
   });
 });
