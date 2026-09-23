@@ -261,7 +261,7 @@ export function useChatbot() {
   /**
    * Send a message with streaming response.
    * The response is delivered via callbacks as it's generated.
-   * Supports multiple file uploads (up to 5 files).
+   * Supports multiple file uploads (up to 10 files).
    * 
    * @param skillLevel - User's skill level for personalized responses (beginner/intermediate/advanced)
    */

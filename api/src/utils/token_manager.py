@@ -8,13 +8,14 @@ truncating and summarizing content.
 Token Budget Allocation (24,000 tokens total for safety):
 - System Prompt:     3,000 tokens max
 - RAG Context:       4,000 tokens max  
-- Conversation:      8,000 tokens max (hybrid: recent exact + old summarized)
+- Conversation:      8,000 tokens max (recent exact + older verbatim excerpts)
 - Current Message:   6,000 tokens max (includes document content)
 - Response Buffer:   3,000 tokens reserved for generation
 """
 
 import os
 import logging
+import re
 from typing import Optional
 from dataclasses import dataclass
 from openai import OpenAI
@@ -300,6 +301,134 @@ def truncate_conversation_history(
     logger.info(f"Truncated to {len(result)} messages ({count_message_tokens(result, model)} tokens)")
     
     return result
+
+
+def compact_conversation_history(
+    messages: list,
+    max_tokens: int,
+    model: str = "gpt-4o",
+    current_message: str = "",
+) -> list:
+    """Keep the conversation's opening context and recent turns within budget.
+
+    Older turns come from persisted conversation rows. Their text is shortened
+    verbatim; we do not ask a model to invent a summary of unseen attachments.
+    Images remain attached to their original user turn when that turn fits.
+    """
+    if count_message_tokens(messages, model) <= max_tokens:
+        return messages
+
+    turns: list[list[dict]] = []
+    for message in messages:
+        if message.get("role") == "user" or not turns:
+            turns.append([message])
+        else:
+            turns[-1].append(message)
+
+    if not turns:
+        return []
+
+    def compact_turn(
+        turn: list[dict], user_limit: int = 350, assistant_limit: int = 180
+    ) -> list[dict]:
+        result = []
+        for message in turn:
+            content = message.get("content", "")
+            text_limit = user_limit if message.get("role") == "user" else assistant_limit
+            if isinstance(content, str):
+                compacted = truncate_text(content, text_limit, model)
+            elif isinstance(content, list):
+                compacted = [
+                    {**item, "text": truncate_text(item.get("text", ""), text_limit, model)}
+                    if item.get("type") == "text" else item
+                    for item in content
+                ]
+            else:
+                continue
+            result.append({"role": message["role"], "content": compacted})
+        return result
+
+    recent_turns = turns[-2:]
+    recent = [message for turn in recent_turns for message in turn]
+    recent_budget = max(1, int(max_tokens * 0.65))
+    if count_message_tokens(recent, model) > recent_budget:
+        # Shorten text within each recent message while keeping its user turn
+        # and images. Dropping the user turn can make a reply meaningless.
+        text_limit = max(32, recent_budget // max(1, len(recent)) - 20)
+        while True:
+            recent = [
+                message for turn in recent_turns
+                for message in compact_turn(turn, text_limit, text_limit)
+            ]
+            if count_message_tokens(recent, model) <= recent_budget:
+                break
+            if text_limit > 32:
+                text_limit = max(32, text_limit // 2)
+            elif len(recent_turns) > 1:
+                recent_turns = recent_turns[-1:]
+            else:
+                break
+
+    older = turns[:-2]
+    omission_note = {
+        "role": "system",
+        "content": (
+            "Some earlier conversation turns were omitted to fit the context window. "
+            "Do not assume the included history is complete; ask when missing details matter."
+        ),
+    }
+    remaining = max_tokens - count_message_tokens(recent, model)
+    if older:
+        remaining -= count_message_tokens([omission_note], model)
+    selected: list[tuple[int, list[dict]]] = []
+
+    # The opening user turn often defines the topic and carries the original
+    # uploads. Reserve space for it before packing the other older turns.
+    if older:
+        opening = compact_turn(older[0])
+        opening_tokens = count_message_tokens(opening, model)
+        if opening_tokens <= remaining:
+            selected.append((0, opening))
+            remaining -= opening_tokens
+
+    # If a long thread cannot fit, keep a relevant named page or topic before
+    # merely recent unrelated turns. Exact persisted text is still preserved.
+    stopwords = {
+        "about", "again", "does", "from", "have", "here", "how", "that",
+        "them", "there", "these", "this", "those", "what", "when", "where",
+        "which", "with", "would", "your",
+    }
+    query_terms = {
+        term for term in re.findall(r"\w+", current_message.casefold())
+        if (len(term) >= 3 or term.isdigit()) and term not in stopwords
+    }
+
+    def relevance(index: int) -> tuple[int, int]:
+        texts = []
+        for message in older[index]:
+            content = message.get("content")
+            if isinstance(content, str):
+                texts.append(content)
+            elif isinstance(content, list):
+                texts.extend(
+                    part.get("text", "") for part in content
+                    if part.get("type") == "text"
+                )
+        turn_text = " ".join(texts).casefold()
+        return len(query_terms.intersection(re.findall(r"\w+", turn_text))), index
+
+    for index in sorted(range(1, len(older)), key=relevance, reverse=True):
+        turn = compact_turn(older[index])
+        turn_tokens = count_message_tokens(turn, model)
+        if turn_tokens <= remaining:
+            selected.append((index, turn))
+            remaining -= turn_tokens
+
+    selected.sort(key=lambda item: item[0])
+    result = [message for _, turn in selected for message in turn]
+    if len(selected) < len(older):
+        result.append(omission_note)
+    return result + recent
 
 
 async def summarize_text(

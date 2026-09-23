@@ -3,6 +3,10 @@ import io
 import re
 import zipfile
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Optional
+from datetime import datetime
+from uuid import uuid4
 
 import pytest
 
@@ -93,3 +97,31 @@ def test_rejects_docx_with_excessive_uncompressed_size():
 def test_sanitizes_upload_filename():
     sanitize = _load_helpers()["safe_upload_filename"]
     assert sanitize("../../family notes <final>.pdf") == "family_notes_final_.pdf"
+
+
+def test_same_named_photos_upload_to_distinct_keys():
+    source_path = Path(__file__).resolve().parents[1] / "api" / "main.py"
+    module = ast.parse(source_path.read_text())
+    upload_node = next(
+        node for node in module.body
+        if isinstance(node, ast.FunctionDef) and node.name == "upload_file_to_s3"
+    )
+    keys = []
+    namespace = {
+        "Optional": Optional,
+        "PRIVATE_UPLOADS_BUCKET": "private-test-bucket",
+        "datetime": datetime,
+        "uuid4": uuid4,
+        "safe_upload_filename": _load_helpers()["safe_upload_filename"],
+        "s3_client": SimpleNamespace(put_object=lambda **kwargs: keys.append(kwargs["Key"])),
+        "make_private_upload_reference": lambda bucket, key: f"s3://{bucket}/{key}",
+        "logger": SimpleNamespace(info=lambda *_args: None, warning=lambda *_args: None, error=lambda *_args: None),
+        "ClientError": Exception,
+    }
+    exec(compile(ast.Module(body=[upload_node], type_ignores=[]), str(source_path), "exec"), namespace)
+
+    first = namespace["upload_file_to_s3"](b"first", "image.jpg", "image/jpeg")
+    second = namespace["upload_file_to_s3"](b"second", "image.jpg", "image/jpeg")
+
+    assert first != second
+    assert len(set(keys)) == 2

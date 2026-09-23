@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional
 import json
 import re
 import zipfile
+from uuid import uuid4
 
 from .time_utils import get_guam_date
 from .auth_policy import (
@@ -387,7 +388,9 @@ def upload_image_to_s3(image_data: bytes, filename: str, content_type: str) -> O
         # Generate unique filename with timestamp
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         safe_filename = safe_upload_filename(filename)
-        s3_key = f"chamorro_uploads/{timestamp}_{safe_filename}"
+        # Camera apps often give several photos the same filename. A timestamp
+        # alone can collide when a multi-image message uploads in one second.
+        s3_key = f"chamorro_uploads/{timestamp}_{uuid4().hex}_{safe_filename}"
         
         # Upload to S3 (without ACL - bucket policy handles public access)
         s3_client.put_object(
@@ -429,9 +432,11 @@ SUPPORTED_FILE_TYPES = {
     'image/webp': 'image',
     'image/gif': 'image',
 }
-MAX_UPLOAD_FILES = 5
+MAX_UPLOAD_FILES = 10
 MAX_UPLOAD_FILE_SIZE_MB = 20
 MAX_UPLOAD_FILE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024
+MAX_UPLOAD_TOTAL_SIZE_MB = 50
+MAX_UPLOAD_TOTAL_BYTES = MAX_UPLOAD_TOTAL_SIZE_MB * 1024 * 1024
 UPLOAD_READ_CHUNK_BYTES = 1024 * 1024
 MAX_DOCX_UNCOMPRESSED_BYTES = 80 * 1024 * 1024
 MAX_DOCX_ARCHIVE_ENTRIES = 2000
@@ -594,7 +599,7 @@ def upload_file_to_s3(file_data: bytes, filename: str, content_type: str) -> Opt
     try:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         safe_filename = safe_upload_filename(filename)
-        s3_key = f"chamorro_uploads/{timestamp}_{safe_filename}"
+        s3_key = f"chamorro_uploads/{timestamp}_{uuid4().hex}_{safe_filename}"
         
         s3_client.put_object(
             Bucket=PRIVATE_UPLOADS_BUCKET,
@@ -766,7 +771,7 @@ def upload_file_to_s3_background(
             filename = safe_upload_filename(file_info["filename"])
             content_type = file_info["content_type"] or "application/octet-stream"
             file_index = file_info["index"]
-            s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{file_index}_{filename}"
+            s3_key = f"uploads/{user_id or 'anonymous'}/{timestamp}_{uuid4().hex}_{file_index}_{filename}"
 
             logger.info(f"📤 Background: Uploading {filename} to S3...")
             s3_client.put_object(
@@ -1238,7 +1243,8 @@ async def chat_stream(
     """
     Streaming chat endpoint - returns Server-Sent Events (SSE) for real-time response.
     
-    **Supports up to 5 files** (images, PDFs, Word docs, text files).
+    **Supports up to 10 files** (images, PDFs, Word docs, text files),
+    with a 50 MB combined upload limit.
     
     **Event Types:**
     - `metadata`: Sources, RAG status (sent first)
@@ -1323,6 +1329,7 @@ async def chat_stream(
         document_texts = []  # Text content from documents
         final_message = message
         files_to_upload = []  # Store file data for background upload
+        total_upload_bytes = 0
         
         for idx, uploaded_file in enumerate(files):
             if not uploaded_file.filename:
@@ -1333,6 +1340,11 @@ async def chat_stream(
                 # Read file data once (we'll need it for both processing and S3 upload)
                 file_data = await read_upload_with_limit(uploaded_file)
                 validate_uploaded_file_size(file_data, uploaded_file.filename)
+                total_upload_bytes += len(file_data)
+                if total_upload_bytes > MAX_UPLOAD_TOTAL_BYTES:
+                    raise ValueError(
+                        f"Files exceed the {MAX_UPLOAD_TOTAL_SIZE_MB}MB combined upload limit"
+                    )
                 
                 # Store for background S3 upload
                 files_to_upload.append({

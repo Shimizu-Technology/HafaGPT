@@ -19,9 +19,11 @@ const SUPPORTED_FILE_TYPES = [
 const FILE_ACCEPT = 'image/*,.pdf,.docx,.txt';
 
 // Maximum number of files allowed
-const MAX_FILES = 5;
+const MAX_FILES = 10;
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const MAX_TOTAL_FILE_SIZE_MB = 50;
+const MAX_TOTAL_FILE_SIZE_BYTES = MAX_TOTAL_FILE_SIZE_MB * 1024 * 1024;
 
 interface MessageInputProps {
   onSend: (message: string, files?: File[]) => void;
@@ -160,6 +162,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     const newFiles: FileWithPreview[] = [];
     const rejectedMessages: string[] = [];
     const currentCount = selectedFiles.length;
+    let totalBytes = selectedFiles.reduce((total, selected) => total + selected.file.size, 0);
     let capRejectedCount = 0;
 
     for (let i = 0; i < incomingFiles.length; i++) {
@@ -180,6 +183,11 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
         continue;
       }
 
+      if (totalBytes + file.size > MAX_TOTAL_FILE_SIZE_BYTES) {
+        rejectedMessages.push(`${file.name || 'File'} exceeds the ${MAX_TOTAL_FILE_SIZE_MB}MB combined upload limit.`);
+        continue;
+      }
+
       const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
 
       newFiles.push({
@@ -187,6 +195,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
         preview,
         id: `${Date.now()}-${i}-${file.name}`,
       });
+      totalBytes += file.size;
     }
 
     if (capRejectedCount > 0) {

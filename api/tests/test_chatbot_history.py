@@ -1,4 +1,5 @@
 import ast
+import json
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -16,6 +17,7 @@ def _load_get_conversation_history():
         "VALID_IMAGE_EXTENSIONS": (".jpg", ".jpeg", ".png", ".gif", ".webp"),
         "resolve_private_upload_reference": lambda value: value,
         "urlsplit": urlsplit,
+        "json": json,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_history"]
@@ -52,15 +54,13 @@ class FakeConnection:
 def test_get_conversation_history_skips_blank_assistant_messages():
     get_conversation_history = _load_get_conversation_history()
     rows = [
-        ("First question", "", None, None),
-        ("Second question", "   ", None, None),
-        ("Third question", "Valid answer", None, None),
+        ("First question", "", None, None, None),
+        ("Second question", "   ", None, None, None),
+        ("Third question", "Valid answer", None, None, None),
     ]
     fake_connection = FakeConnection(rows)
 
     get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
-    get_conversation_history.__globals__["model_supports_vision"] = lambda: False
-
     history = get_conversation_history("conv-123", max_messages=10)
 
     assert history == [
@@ -77,19 +77,20 @@ def test_get_conversation_history_skips_blank_assistant_messages():
 def test_get_conversation_history_skips_rows_without_user_text_or_image():
     get_conversation_history = _load_get_conversation_history()
     rows = [
-        (None, "Assistant-only row", None, None),
-        (None, "Image-only answer", "https://example.com/photo.png", None),
-        ("Real question", "Real answer", None, None),
+        (None, "Assistant-only row", None, None, None),
+        (None, "Image-only answer", "https://example.com/photo.png", None, None),
+        ("Real question", "Real answer", None, None, None),
     ]
     fake_connection = FakeConnection(rows)
 
     get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
-    get_conversation_history.__globals__["model_supports_vision"] = lambda: False
-
     history = get_conversation_history("conv-123", max_messages=10)
 
     assert history == [
-        {"role": "user", "content": "What does this say?"},
+        {"role": "user", "content": [
+            {"type": "text", "text": "What does this say?"},
+            {"type": "image_url", "image_url": {"url": "https://example.com/photo.png", "detail": "low"}},
+        ]},
         {"role": "assistant", "content": "Image-only answer"},
         {"role": "user", "content": "Real question"},
         {"role": "assistant", "content": "Real answer"},
@@ -99,11 +100,10 @@ def test_get_conversation_history_skips_rows_without_user_text_or_image():
 def test_get_conversation_history_accepts_signed_private_image_url():
     get_conversation_history = _load_get_conversation_history()
     signed_url = "https://signed.example/photo.png?X-Amz-Signature=secret"
-    rows = [(None, "Image answer", "s3://private-bucket/photo.png", None)]
+    rows = [(None, "Image answer", "s3://private-bucket/photo.png", None, None)]
     fake_connection = FakeConnection(rows)
 
     get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
-    get_conversation_history.__globals__["model_supports_vision"] = lambda: True
     get_conversation_history.__globals__["resolve_private_upload_reference"] = lambda value: signed_url
 
     history = get_conversation_history("conv-private-image", max_messages=10)
@@ -118,3 +118,38 @@ def test_get_conversation_history_accepts_signed_private_image_url():
         },
         {"role": "assistant", "content": "Image answer"},
     ]
+
+
+def test_history_replays_every_image_from_a_five_photo_homework_turn():
+    get_conversation_history = _load_get_conversation_history()
+    photos = [f"https://example.com/worksheet-{index}.jpg" for index in range(5)]
+    attachments = [{"url": url, "type": "image"} for url in photos]
+    rows = [
+        ("What does my daughter's homework say?", "Earlier interpretation", photos[0], attachments, None),
+        *[(f"Follow-up {index}", f"Reply {index}", None, None, None) for index in range(10)],
+    ]
+    fake_connection = FakeConnection(rows)
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+
+    history = get_conversation_history("homework-thread")
+
+    first_user = history[0]
+    assert [part["image_url"]["url"] for part in first_user["content"][1:]] == photos
+    assert history[-2]["content"] == "Follow-up 9"
+    assert fake_connection.cursor_instance.executions[0][1] == ("homework-thread",)
+    assert "LIMIT" not in fake_connection.cursor_instance.executions[0][0]
+
+
+def test_history_marks_unavailable_earlier_photo_without_reusing_its_description():
+    get_conversation_history = _load_get_conversation_history()
+    fake_connection = FakeConnection([(
+        "What does this page say?", "It says X", None,
+        [{"url": "s3://private-bucket/missing.jpg", "type": "image"}], None,
+    )])
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+    get_conversation_history.__globals__["resolve_private_upload_reference"] = lambda _value: None
+
+    history = get_conversation_history("missing-photo")
+
+    assert "1 earlier image(s) are unavailable" in history[0]["content"]
+    assert "re-upload" in history[0]["content"]

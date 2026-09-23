@@ -15,6 +15,12 @@ def _load_chat_stream():
         if isinstance(node, ast.AsyncFunctionDef) and node.name == "chat_stream"
     )
     isolated_module = ast.Module(body=[function_node], type_ignores=[])
+    max_upload_files = next(
+        ast.literal_eval(node.value)
+        for node in module.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "MAX_UPLOAD_FILES" for target in node.targets)
+    )
 
     class DummyApp:
         @staticmethod
@@ -35,7 +41,7 @@ def _load_chat_stream():
         "File": lambda default=None: default,
         "UploadFile": object,
         "HTTPException": HTTPException,
-        "MAX_UPLOAD_FILES": 5,
+        "MAX_UPLOAD_FILES": max_upload_files,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["chat_stream"]
@@ -106,3 +112,54 @@ def test_stream_upload_requires_pending_id():
         assert exc.detail == "pending_id is required when uploading files to the streaming endpoint"
     else:
         raise AssertionError("Expected chat_stream to reject file uploads without pending_id")
+
+
+def test_stream_upload_accepts_six_files_past_legacy_cap():
+    chat_stream = _load_chat_stream()
+
+    try:
+        asyncio.run(
+            chat_stream(
+                request=FakeRequest(),
+                background_tasks=FakeBackgroundTasks(),
+                authorization="Bearer token",
+                message="Please help with these photos",
+                mode="english",
+                session_id=None,
+                conversation_id=None,
+                pending_id="pending-123",
+                skill_level=None,
+                file=None,
+                files=[FakeUploadFile(f"photo-{index}.png") for index in range(6)],
+            )
+        )
+    except HTTPException as exc:
+        assert exc.detail == "conversation_id is required when uploading files to the streaming endpoint"
+    else:
+        raise AssertionError("Expected six files to pass the count check")
+
+
+def test_stream_upload_rejects_eleven_files():
+    chat_stream = _load_chat_stream()
+
+    try:
+        asyncio.run(
+            chat_stream(
+                request=FakeRequest(),
+                background_tasks=FakeBackgroundTasks(),
+                authorization="Bearer token",
+                message="Please help with these photos",
+                mode="english",
+                session_id=None,
+                conversation_id="conv-123",
+                pending_id="pending-123",
+                skill_level=None,
+                file=None,
+                files=[FakeUploadFile(f"photo-{index}.png") for index in range(11)],
+            )
+        )
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert exc.detail == "Maximum 10 files allowed"
+    else:
+        raise AssertionError("Expected eleven files to exceed the count limit")
