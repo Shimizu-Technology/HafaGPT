@@ -369,7 +369,7 @@ def compact_conversation_history(
             else:
                 break
 
-    older = turns[:-2]
+    older = turns[: len(turns) - len(recent_turns)]
     omission_note = {
         "role": "system",
         "content": (

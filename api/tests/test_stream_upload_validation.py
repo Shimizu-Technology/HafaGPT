@@ -1,9 +1,13 @@
 import ast
 import asyncio
+import logging
+import os
 from pathlib import Path
+from types import SimpleNamespace
 from typing import List, Optional
 
 from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 
 
 def _load_chat_stream():
@@ -20,6 +24,12 @@ def _load_chat_stream():
         for node in module.body
         if isinstance(node, ast.Assign)
         and any(isinstance(target, ast.Name) and target.id == "MAX_UPLOAD_FILES" for target in node.targets)
+    )
+    max_upload_total_size_mb = next(
+        ast.literal_eval(node.value)
+        for node in module.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "MAX_UPLOAD_TOTAL_SIZE_MB" for target in node.targets)
     )
 
     class DummyApp:
@@ -42,6 +52,8 @@ def _load_chat_stream():
         "UploadFile": object,
         "HTTPException": HTTPException,
         "MAX_UPLOAD_FILES": max_upload_files,
+        "MAX_UPLOAD_TOTAL_SIZE_MB": max_upload_total_size_mb,
+        "MAX_UPLOAD_TOTAL_BYTES": max_upload_total_size_mb * 1024 * 1024,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["chat_stream"]
@@ -58,8 +70,10 @@ class FakeBackgroundTasks:
 
 
 class FakeUploadFile:
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, data: bytes = b""):
         self.filename = filename
+        self.data = data
+        self.content_type = "image/png"
 
 
 def test_stream_upload_requires_conversation_id():
@@ -163,3 +177,75 @@ def test_stream_upload_rejects_eleven_files():
         assert exc.detail == "Maximum 10 files allowed"
     else:
         raise AssertionError("Expected eleven files to exceed the count limit")
+
+
+def _configure_valid_stream_upload(chat_stream):
+    async def verify_user(_authorization):
+        return "user-123"
+
+    async def read_upload_with_limit(uploaded_file):
+        return uploaded_file.data
+
+    chat_stream.__globals__.update({
+        "verify_user": verify_user,
+        "conversations": SimpleNamespace(conversation_belongs_to_user=lambda *_: True),
+        "set_user_context": lambda **_: None,
+        "set_request_context": lambda **_: None,
+        "os": os,
+        "logger": logging.getLogger(__name__),
+        "read_upload_with_limit": read_upload_with_limit,
+        "validate_uploaded_file_size": lambda *_: None,
+        "process_uploaded_file": lambda **_: {},
+        "StreamingResponse": StreamingResponse,
+    })
+
+
+class AcceptingBackgroundTasks:
+    def __init__(self):
+        self.tasks = []
+
+    def add_task(self, *args, **kwargs):
+        self.tasks.append((args, kwargs))
+
+
+def test_stream_accepts_exactly_50_mb_combined_upload():
+    chat_stream = _load_chat_stream()
+    _configure_valid_stream_upload(chat_stream)
+    chat_stream.__globals__["upload_file_to_s3_background"] = lambda **_: None
+    background_tasks = AcceptingBackgroundTasks()
+    files = [
+        FakeUploadFile("first.png", b"a" * (20 * 1024 * 1024)),
+        FakeUploadFile("second.png", b"b" * (20 * 1024 * 1024)),
+        FakeUploadFile("third.png", b"c" * (10 * 1024 * 1024)),
+    ]
+
+    response = asyncio.run(chat_stream(
+        request=FakeRequest(), background_tasks=background_tasks,
+        authorization="Bearer token", message="Read these photos", mode="english",
+        conversation_id="conv-123", pending_id="pending-123", file=None, files=files,
+    ))
+
+    assert isinstance(response, StreamingResponse)
+    assert len(background_tasks.tasks) == 1
+
+
+def test_stream_rejects_one_byte_above_50_mb_combined_upload():
+    chat_stream = _load_chat_stream()
+    _configure_valid_stream_upload(chat_stream)
+    files = [
+        FakeUploadFile("first.png", b"a" * (20 * 1024 * 1024)),
+        FakeUploadFile("second.png", b"b" * (20 * 1024 * 1024)),
+        FakeUploadFile("third.png", b"c" * (10 * 1024 * 1024 + 1)),
+    ]
+
+    try:
+        asyncio.run(chat_stream(
+            request=FakeRequest(), background_tasks=FakeBackgroundTasks(),
+            authorization="Bearer token", message="Read these photos", mode="english",
+            conversation_id="conv-123", pending_id="pending-123", file=None, files=files,
+        ))
+    except HTTPException as exc:
+        assert exc.status_code == 400
+        assert exc.detail == "Files exceed the 50MB combined upload limit"
+    else:
+        raise AssertionError("Expected combined upload limit rejection")

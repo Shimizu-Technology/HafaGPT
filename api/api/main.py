@@ -1050,6 +1050,8 @@ async def chat(
         
         # Verify user authentication (REQUIRED)
         user_id = await verify_user(authorization)
+        if conversation_id and not conversations.conversation_belongs_to_user(conversation_id, user_id):
+            raise HTTPException(status_code=404, detail="Conversation not found")
         
         # Process file if present (images, PDFs, Word docs, text files)
         image_base64 = None
@@ -1314,6 +1316,8 @@ async def chat_stream(
         
         # Verify user authentication
         user_id = await verify_user(authorization)
+        if conversation_id and not conversations.conversation_belongs_to_user(conversation_id, user_id):
+            raise HTTPException(status_code=404, detail="Conversation not found")
         
         # Set Sentry context for this request
         set_user_context(user_id=user_id)

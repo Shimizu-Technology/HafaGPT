@@ -973,7 +973,9 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
                     resolved = resolve_private_upload_reference(reference)
                 except Exception:
                     resolved = None
-                if resolved and urlsplit(resolved).path.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                # Stored attachment metadata already identifies an image. The
+                # legacy image_url field was checked by suffix above.
+                if resolved:
                     image_parts.append({
                         "type": "image_url",
                         "image_url": {"url": resolved, "detail": "low"},

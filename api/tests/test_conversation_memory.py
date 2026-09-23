@@ -73,3 +73,25 @@ def test_long_recent_answer_does_not_displace_its_user_question():
         message["role"] == "user" and message["content"] == "What does page 54 say?"
         for message in compacted
     )
+
+
+def test_dropped_recent_turn_is_reported_as_omitted():
+    def photo_turn(label):
+        return {"role": "user", "content": [
+            {"type": "text", "text": label},
+            *[
+                {"type": "image_url", "image_url": {"url": f"https://example.com/{label}-{index}.png", "detail": "low"}}
+                for index in range(5)
+            ],
+        ]}
+
+    compacted = compact_conversation_history(
+        [photo_turn("first"), photo_turn("second")], max_tokens=700
+    )
+
+    assert count_message_tokens(compacted) <= 700
+    assert any(
+        message["role"] == "system" and "earlier conversation turns were omitted" in message["content"]
+        for message in compacted
+    )
+    assert compacted[-1]["content"][0]["text"] == "second"

@@ -153,3 +153,17 @@ def test_history_marks_unavailable_earlier_photo_without_reusing_its_description
 
     assert "1 earlier image(s) are unavailable" in history[0]["content"]
     assert "re-upload" in history[0]["content"]
+
+
+def test_history_replays_image_classified_by_metadata_without_filename_extension():
+    get_conversation_history = _load_get_conversation_history()
+    image_url = "https://example.com/upload-without-extension"
+    fake_connection = FakeConnection([(
+        "Please read this photo", "Earlier answer", None,
+        [{"url": image_url, "type": "image", "content_type": "image/png"}], None,
+    )])
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+
+    history = get_conversation_history("extensionless-photo")
+
+    assert history[0]["content"][1]["image_url"]["url"] == image_url
