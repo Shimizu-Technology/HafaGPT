@@ -162,9 +162,9 @@ pydantic==2.13.4
     #   svix
 pydantic-core==2.46.4
     # via pydantic
-pyjwt==2.13.0
+pyjwt==2.15.0
     # via clerk-backend-api
-pypdf==6.16.1
+pypdf==6.19.0
     # via hafagpt-api (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
@@ -246,7 +246,7 @@ typing-inspection==0.4.4
     #   pydantic
 tzdata==2026.3 ; sys_platform == 'win32'
     # via psycopg
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   botocore
     #   requests

@@ -348,6 +348,59 @@ test('persistent initial route failure stops after one recovery attempt', async 
   await expect(page).toHaveURL(/__hafagpt_recovery=/);
 });
 
+for (const blockedStorage of [false, true]) {
+  test(`persistent post-boot asset failure stops after one recovery (storage blocked: ${blockedStorage})`, async ({ page }) => {
+    let documentLoads = 0;
+    page.on('request', (request) => {
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentLoads += 1;
+    });
+    await page.route('**/assets/retired-after-boot.js', async (route) => {
+      await route.fulfill({ contentType: 'application/javascript', body: await legacyRecoveryModule });
+    });
+    await page.addInitScript(({ blockedStorage }) => {
+      if (blockedStorage) {
+        Object.defineProperty(window, 'sessionStorage', {
+          get() { throw new DOMException('Storage unavailable', 'SecurityError'); },
+        });
+      }
+      const observer = new MutationObserver(() => {
+        if (document.documentElement.dataset.hafagptBooted !== 'true') return;
+        observer.disconnect();
+        // Simulate an asset that fails on every visit, after React has rendered.
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = '/assets/retired-after-boot.js';
+        document.body.append(script);
+      });
+      observer.observe(document, { subtree: true, attributes: true });
+    }, { blockedStorage });
+
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    // A late success callback must not hide the recovery error either.
+    await page.evaluate(() => window.__hafagptMarkBootSuccessful?.());
+    await expect(page.getByRole('heading', { name: 'HåfaGPT could not start' })).toBeVisible();
+    expect(documentLoads).toBe(2);
+  });
+}
+
+test('an optional preload failure does not reload a working page', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
+  const result = await page.evaluate(() => {
+    const event = new Event('vite:preloadError', { cancelable: true });
+    window.dispatchEvent(event);
+    return {
+      defaultPrevented: event.defaultPrevented,
+      recoveryVisible: Boolean(document.querySelector('[data-hafagpt-startup-status]')),
+    };
+  });
+  // Let the optional import reject into its own catch instead of global recovery.
+  expect(result).toEqual({ defaultPrevented: false, recoveryVisible: false });
+  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible();
+});
+
 test('returning profile still starts when persistent browser storage is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, 'localStorage', {
