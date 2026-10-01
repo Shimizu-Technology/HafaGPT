@@ -1438,7 +1438,10 @@ def get_chatbot_response(
         else []
     )
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
-    if normalized_image_inputs and is_image_translation_request(message_for_logging):
+    # Mixed document/image requests need the general document-analysis path;
+    # page item translation alone cannot cover a separate extracted document.
+    if (normalized_image_inputs and is_image_translation_request(message_for_logging)
+            and "--- Document Content" not in message):
         image_events = _image_translation_events(
             image_context=image_context, images=normalized_image_inputs,
             message=message, message_for_logging=message_for_logging,
@@ -1630,7 +1633,7 @@ def get_chatbot_response(
                 logger.info("CHAT_COMPLETION model=%s finish=%s", request_model, finish_reason)
                 if finish_reason == "length":
                     response_text += "\n\n**This reply reached its length limit and is incomplete. Ask me to continue from the last item.**"
-                elif finish_reason not in (None, "stop"):
+                elif finish_reason != "stop":
                     response_text += "\n\n**This reply could not be completed. Please try again.**"
                 break
             except Exception as retry_error:
@@ -1785,7 +1788,10 @@ def get_chatbot_response_stream(
         else []
     )
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
-    if normalized_image_inputs and is_image_translation_request(message_for_logging):
+    # Mixed document/image requests need the general document-analysis path;
+    # page item translation alone cannot cover a separate extracted document.
+    if (normalized_image_inputs and is_image_translation_request(message_for_logging)
+            and "--- Document Content" not in message):
         image_events = _image_translation_events(
             image_context=image_context, images=normalized_image_inputs,
             message=message, message_for_logging=message_for_logging,

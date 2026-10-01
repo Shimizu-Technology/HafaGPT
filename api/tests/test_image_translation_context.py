@@ -242,7 +242,8 @@ def test_structured_privacy_uses_roles_not_capitalization() -> None:
     assert [item.text for item in context.pages[0].items] == ["Kåmpu", "Motmot Guma’ Yan Bisnes"]
     assert "Example Student" not in repr(context)
     assert "parent@example.com" not in repr(context)
-    assert context.pages[0].complete
+    assert not context.pages[0].complete
+    assert "filtered_contact" in context.pages[0].issues
 
 
 def test_unclear_text_is_retained_as_partial_but_not_used_for_retrieval() -> None:
@@ -392,3 +393,23 @@ def test_page_character_limit_counts_separators_and_keeps_partial_status() -> No
     assert len(page.visible_language_text) <= MAX_IMAGE_PAGE_CHARS
     assert "page_limit" in page.issues
     assert page.status == "partial"
+
+
+def test_filtered_contact_inside_body_cannot_claim_complete():
+    from src.rag.image_translation_context import try_parse_image_context_response
+    context = try_parse_image_context_response(json.dumps({
+        'signals': [], 'text_confidence': 'high', 'complete': True,
+        'lines': [{'kind': 'body', 'text': 'Please email parent@example.com about this exercise.'},
+                  {'kind': 'body', 'text': 'A. Worksheet option'}],
+    }), card_ids_by_signal={})
+    assert context is not None
+    assert context.pages[0].complete is False
+    assert 'filtered_contact' in context.pages[0].issues
+    assert 'example.com' not in context.visible_language_text
+
+
+def test_explicit_request_not_to_translate_does_not_select_translation_pipeline():
+    from src.rag.image_translation_context import is_image_translation_request
+    assert not is_image_translation_request('Do not translate this; help me answer question 2.')
+    assert not is_image_translation_request("Don't translate the pages. Describe the layout.")
+    assert is_image_translation_request('Translate this and help me understand question 2.')

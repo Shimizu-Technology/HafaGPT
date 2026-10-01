@@ -139,7 +139,10 @@ class ImageTranslationContext:
 def is_image_translation_request(message: str) -> bool:
     """An image without accompanying text uses the app's translation default."""
 
-    return not (message or "").strip() or bool(_TRANSLATION_IMAGE_REQUEST.search(message))
+    text = (message or "").strip()
+    if re.search(r"(?i)\b(?:do\s+not|don['’]t|without|stop)\s+translat(?:e|ing|ion)\b", text):
+        return False
+    return not text or bool(_TRANSLATION_IMAGE_REQUEST.search(text))
 
 
 def _is_contact_or_ui_metadata(line: str) -> bool:
@@ -228,7 +231,12 @@ def try_parse_image_context_response(
     for ordinal, raw_line in enumerate(raw_lines):
         kind = raw_line["kind"]
         line = " ".join(raw_line["text"].split()).strip()
-        if kind == "private_metadata" or _CONTACT_METADATA.search(line):
+        if kind == "private_metadata":
+            continue
+        if _CONTACT_METADATA.search(line):
+            if kind == "body":
+                complete = False
+                issues.append("filtered_contact")
             continue
         if legacy and (
             _is_contact_or_ui_metadata(line)

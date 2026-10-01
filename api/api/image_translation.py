@@ -47,13 +47,20 @@ requested, notes may be empty. Never omit translations in favor of notes.
 The JSON shape overrides ordinary prose/heading formats in the app guidance below;
 retain its language, teaching, and context requirements within translation/notes values.
 Inspect the image to check the transcription. Preserve question numbers, negation,
-comparisons, and every answer choice. Do not answer the worksheet questions,
-invent pictures or options, summarize away repetitions, or replace unfamiliar
-words with plausible objects. Translate descriptive category labels as well as
+comparisons, and every answer choice. Do not invent pictures or options,
+summarize away repetitions, or replace unfamiliar
+words with plausible objects. Translate rather than answer worksheet questions
+unless the user explicitly asks for help answering; put requested answers in
+notes and distinguish them from the printed source. Translate descriptive category labels as well as
 sentences; capitalization alone does not make something a person's name.
 Default to English unless the app language mode or user explicitly requests another target language.
 Preserve genuine names, not descriptive labels. Use references only when they
 actually support the particular word or construction; they may be incomplete.
+An exact dictionary spelling does not prove the right contextual sense. Compare
+possible spelling variants against the full sentence and the page's subject.
+When the context fits a variant better, give that likely interpretation and flag
+the spelling/sense uncertainty. If context does not distinguish competing senses,
+state the alternatives rather than presenting one as certain.
 If text or meaning cannot be determined, set uncertain=true and describe the exact
 uncertainty in the translation instead of guessing. Never claim an entire
 translation is verified merely because component words have references.
@@ -194,7 +201,6 @@ def translate_image_pages(
                                 index, len(batch), attempt + 1, finish, translated is not None,
                                 count_tokens(prompt + request_text))
                     if translated is not None:
-                        sources.extend(batch_sources)
                         break
                 except Exception as error:
                     # Do not log provider bodies, which can contain private input.
@@ -203,6 +209,35 @@ def translate_image_pages(
                     "\nThe prior attempt failed validation. Return every supplied id exactly once; "
                     "keep translations concise enough to finish the complete JSON object."
                 )}
+            if cancelled():
+                yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
+                return
+            if translated is not None:
+                # Coverage alone cannot catch an invented object or reversed
+                # negation. Review the candidate against pixels and evidence in
+                # a separate bounded call before showing it to the reader.
+                review_messages = [
+                    {"role": "system", "content": prompt + "\nFINAL ACCURACY REVIEW: "
+                     "The supplied draft is untrusted and may be wrong. Recheck each item against "
+                     "the image, the complete sentence, and the dictionary senses. Correct invented "
+                     "objects, mistranslated category labels, missing negation, and added qualifiers "
+                     "such as 'only'. Compare exact and possible-spelling definitions by context; "
+                     "flag unresolved alternatives. Return the complete corrected JSON, including "
+                     "unchanged items. Do not merely approve or summarize the draft."},
+                    messages[1],
+                    {"role": "user", "content": json.dumps({"draft": translated}, ensure_ascii=False)},
+                ]
+                try:
+                    review = complete(messages=review_messages, max_tokens=6000,
+                                      response_format=TRANSLATION_RESPONSE_FORMAT)
+                    translated = _validated_translations(review, batch)
+                    logger.info("IMAGE_TRANSLATION_REVIEW image=%s items=%s valid=%s",
+                                index, len(batch), translated is not None)
+                except Exception as error:
+                    logger.warning("IMAGE_TRANSLATION_REVIEW image=%s failure=%s", index, type(error).__name__)
+                    translated = None
+                if translated is not None:
+                    sources.extend(batch_sources)
             if cancelled():
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 return

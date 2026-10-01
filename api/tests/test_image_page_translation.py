@@ -32,14 +32,14 @@ def test_all_pages_and_repeated_choices_are_rendered_once_in_order():
     calls=[]
     def complete(**kwargs):
         calls.append(kwargs)
-        return response(pages[len(calls)-1].items)
+        return response(pages[(len(calls)-1)//2].items)
     events=run(pages, complete)
     text=''.join(e['content'] for e in events if e['type']=='chunk')
     for p in pages:
         assert f'## Image {p.image_index+1}' in text
         for item in p.items:
             assert text.count('Translated '+item.id.replace('-', r'\-')) == 1
-    assert len(calls) == 3
+    assert len(calls) == 6
     assert all('RETAIN THIS EVIDENCE' in c['messages'][0]['content'] for c in calls)
     assert events[-1]['translation_incomplete'] is False
 
@@ -91,7 +91,7 @@ def test_provider_error_does_not_prevent_later_pages():
             raise RuntimeError('unavailable')
         return response(pages[1].items)
     events=run(pages, complete)
-    assert count==3
+    assert count==4
     assert r'Translated p2\-i4' in ''.join(e.get('content','') for e in events)
 
 
@@ -108,7 +108,7 @@ def test_large_page_is_split_and_final_choices_preserved():
         ids={x['id'] for x in json.loads(kwargs['messages'][1]['content'][0]['text'])['items']}
         return response([item for item in p.items if item.id in ids])
     events=run([p],complete)
-    assert len(calls)==3
+    assert len(calls)==6
     assert r'Translated p1\-i45' in ''.join(e.get('content','') for e in events)
 
 
