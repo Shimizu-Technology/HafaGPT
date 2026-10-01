@@ -10,13 +10,8 @@ import { browserStorage } from './lib/browserStorage';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// A route chunk from an older open tab can disappear after a new atomic
-// deploy. Vite reports that case before React can handle it, so use the same
-// bounded startup recovery as an entry-module failure.
-window.addEventListener('vite:preloadError', (event) => {
-  event.preventDefault();
-  void window.__hafagptRecoverStaleBuild?.();
-});
+// Route imports own stale-build recovery in App. Optional analytics and PWA
+// imports must reject into their own handlers without refreshing a working app.
 
 // Register service worker for PWA
 registerSW({

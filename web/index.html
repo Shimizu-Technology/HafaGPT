@@ -72,6 +72,15 @@
         const recoveryKey = 'hafagpt:stale-build-recovery';
         const recoveryParam = '__hafagpt_recovery';
         let recoveryStarted = false;
+        // Remember how this document was reached before a successful render
+        // removes the URL/storage markers. A later asset failure must not
+        // reopen the automatic retry budget on every load.
+        let alreadyAttempted = new URL(window.location.href).searchParams.has(recoveryParam);
+        try {
+          alreadyAttempted = alreadyAttempted || sessionStorage.getItem(recoveryKey) === '1';
+        } catch (_) {
+          // The URL marker also works when browser storage is unavailable.
+        }
 
         function renderStartupStatus(title, detail, allowRetry) {
           const shell = document.createElement('main');
@@ -130,14 +139,6 @@
           if (recoveryStarted) return;
           recoveryStarted = true;
 
-          let alreadyAttempted = false;
-          try {
-            alreadyAttempted = sessionStorage.getItem(recoveryKey) === '1';
-          } catch (_) {
-            // Recovery still works when private browsing blocks storage.
-          }
-          alreadyAttempted = alreadyAttempted || new URL(window.location.href).searchParams.has(recoveryParam);
-
           if (alreadyAttempted) {
             renderStartupStatus(
               'HåfaGPT could not start',
@@ -183,6 +184,8 @@
         window.__hafagptRecoverStaleBuild = recoverFromStaleBuild;
 
         window.__hafagptMarkBootSuccessful = function () {
+          // A delayed React commit must not dismiss an active recovery/error.
+          if (recoveryStarted) return;
           try { sessionStorage.removeItem(recoveryKey); } catch (_) { /* Storage may be unavailable. */ }
           document.querySelector('[data-hafagpt-startup-status]')?.remove();
           const currentUrl = new URL(window.location.href);

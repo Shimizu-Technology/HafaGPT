@@ -19,12 +19,23 @@ import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
 import { ScrollToTop } from './components/ScrollToTop';
 
+async function loadRoute<TModule>(loader: () => Promise<TModule>): Promise<TModule> {
+  try {
+    return await loader();
+  } catch (error) {
+    // Only a required route import warrants recovery. A global preload-error
+    // listener also catches optional analytics/PWA failures on mobile networks.
+    void window.__hafagptRecoverStaleBuild?.();
+    throw error;
+  }
+}
+
 function lazyNamed<TModule>(
   loader: () => Promise<TModule>,
   exportName: keyof TModule,
 ) {
   return lazy(async () => ({
-    default: (await loader())[exportName] as ComponentType,
+    default: (await loadRoute(loader))[exportName] as ComponentType,
   }));
 }
 
@@ -78,8 +89,8 @@ const AdminUserDetail = lazyNamed(() => import('./components/admin/AdminUserDeta
 const AdminAnalytics = lazyNamed(() => import('./components/admin/AdminAnalytics'), 'AdminAnalytics');
 const AdminAudioReview = lazyNamed(() => import('./components/admin/AdminAudioReview'), 'AdminAudioReview');
 const AdminSettings = lazyNamed(() => import('./components/admin/AdminSettings'), 'AdminSettings');
-const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
-const SupportPage = lazy(() => import('./components/SupportPage'));
+const PrivacyPolicy = lazy(() => loadRoute(() => import('./components/PrivacyPolicy')));
+const SupportPage = lazy(() => loadRoute(() => import('./components/SupportPage')));
 
 function RouteLoadingFallback() {
   return (
