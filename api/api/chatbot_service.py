@@ -20,12 +20,18 @@ from openai import OpenAI
 # Add parent directory to path for root-level imports.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from .prompt_budget import assemble_system_prompt
+from .image_translation import translate_image_pages
 from .canonical_context import get_canonical_tutor_context
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
 from src.rag.conversation_retrieval import build_contextual_retrieval_query
 from src.rag.image_translation_context import (
     ImageTranslationContext,
+    ImagePageContext,
+    IMAGE_CONTEXT_RESPONSE_FORMAT,
+    IMAGE_TRANSCRIPTION_INSTRUCTIONS,
+    is_image_translation_request,
     build_image_translation_query,
     build_translation_structure_hints,
     merge_image_translation_contexts,
@@ -167,6 +173,7 @@ def _history_has_images(messages: list[dict]) -> bool:
 
 def detect_image_context(
     normalized_image_inputs: list[dict] | None,
+    cancelled=None,
 ) -> ImageTranslationContext:
     """Extract privacy-safe language text and trusted image routing signals.
 
@@ -183,36 +190,33 @@ def detect_image_context(
     try:
         detector_client, detector_model = get_client_for_request(has_image=True)
     except Exception as error:
-        logger.warning("Image context detector unavailable; failing closed: %s", error)
-        return ImageTranslationContext()
+        logger.warning("Image context detector unavailable; failing closed: %s", type(error).__name__)
+        return ImageTranslationContext(pages=tuple(
+            ImagePageContext(image_index=i, items=(), text_confidence="low", complete=False, issues=("extraction_failed",))
+            for i in range(len(images))
+        ))
 
     image_contexts: list[ImageTranslationContext] = []
     for image_index, image in enumerate(images):
+        if cancelled and cancelled():
+            break
         detector_message = _build_current_user_message(
             (
-                "Inspect this single uploaded image. Return strict JSON with exactly "
-                "these keys: "
-                '{"signals":[],"visible_language_text":[],"text_confidence":"high"}. '
-                "signals is a subset of SYM, MSY, SCHOOL. Detect these independently: "
-                "(1) standalone SYM or MSY tokens (case-insensitive, punctuation allowed) "
-                "and (2) SCHOOL when the image is visibly an operational school "
-                "announcement, parent/student handbook page, schedule, closure/change "
-                "notice, event reminder, or other message telling a school family what "
-                "happened or what to do. SYM/MSY qualify only when Guam/Chamorro/Hurao "
+                IMAGE_TRANSCRIPTION_INSTRUCTIONS + "\n"
+                "Inspect this single uploaded image. Detect signals independently: "
+                "standalone SYM or MSY tokens qualify only when Guam/Chamorro/Hurao "
                 "or Guam-local institutional context is established in the same image. "
-                "A generic worksheet, school-themed photo, isolated token, or ordinary "
-                "language-learning content is not SCHOOL. visible_language_text must list "
-                "only the message-body text that may need language translation, in reading "
-                "order. Exclude sender names, usernames, phone numbers, email addresses, "
-                "timestamps, reactions, status-bar text, buttons, and other app chrome. "
-                "Preserve the writer's spelling and punctuation; use [unclear] instead of "
-                "guessing. Set text_confidence to high, medium, or low."
+                "A generic worksheet, isolated token, or language-learning content is not SCHOOL. "
+                "SCHOOL means an operational school announcement, parent/student handbook, "
+                "schedule, closure/change notice, or message telling a family what to do."
             ),
             [image],
         )
         try:
             image_context = None
             for detector_attempt in range(2):
+                if cancelled and cancelled():
+                    break
                 response = detector_client.chat.completions.create(
                     model=detector_model,
                     messages=[
@@ -231,21 +235,32 @@ def detect_image_context(
                         },
                         detector_message,
                     ],
-                    temperature=0,
-                    max_tokens=1000,
+                    **({"temperature": 0} if model_supports_temperature(detector_model) else {}),
+                    max_tokens=6000,
+                    response_format=IMAGE_CONTEXT_RESPONSE_FORMAT,
                 )
                 image_context = try_parse_image_context_response(
                     str(response.choices[0].message.content or ""),
                     card_ids_by_signal=IMAGE_CONTEXT_CARD_IDS,
+                    image_index=image_index,
                 )
+                finish_reason = getattr(response.choices[0], "finish_reason", None)
+                if finish_reason != "stop":
+                    image_context = None
                 if image_context is not None:
                     break
                 logger.warning(
                     "Image context detector returned malformed output for image_index=%s "
-                    "attempt=%s",
+                    "attempt=%s finish=%s",
                     image_index,
                     detector_attempt + 1,
+                    finish_reason,
                 )
+            if image_context is None:
+                image_context = ImageTranslationContext(pages=(ImagePageContext(
+                    image_index=image_index, items=(), text_confidence="low", complete=False,
+                    issues=("extraction_failed",),
+                ),))
             if image_context is not None:
                 image_contexts.append(image_context)
                 logger.info(
@@ -259,8 +274,12 @@ def detect_image_context(
             logger.warning(
                 "Image context detection failed closed for image_index=%s: %s",
                 image_index,
-                error,
+                type(error).__name__,
             )
+            image_contexts.append(ImageTranslationContext(pages=(ImagePageContext(
+                image_index=image_index, items=(), text_confidence="low", complete=False,
+                issues=("extraction_failed",),
+            ),)))
     merged_context = merge_image_translation_contexts(image_contexts)
     merged_context = ImageTranslationContext(
         card_ids=tuple(
@@ -270,6 +289,7 @@ def detect_image_context(
         ),
         school_announcement=merged_context.school_announcement,
         visible_language_text=merged_context.visible_language_text,
+        pages=merged_context.pages,
     )
     if merged_context == ImageTranslationContext():
         logger.info("IMAGE_CONTEXT_DETECTION matched=none")
@@ -1267,6 +1287,60 @@ def get_rag_context(
     return context, sources
 
 
+def _image_translation_events(*, image_context, images, message, message_for_logging,
+                              mode, session_id, user_id, conversation_id, image_url,
+                              file_urls, pending_id, start_time, past_messages, skill_level):
+    """Persist the same validated page response for streaming and ordinary requests."""
+    client, model = get_client_for_request(has_image=True)
+    effective_message, image_translation = build_image_translation_query(message, image_context)
+    guidance, _, _ = resolve_school_message_context(
+        message, has_images=True, image_school_signal=image_context.school_announcement,
+        image_card_ids=image_context.card_ids, image_translation=image_translation,
+    )
+    guidance = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])["prompt"] + guidance
+    if mode != "chamorro" and skill_level in SKILL_LEVEL_MODIFIERS:
+        guidance += SKILL_LEVEL_MODIFIERS[skill_level]
+    guidance += build_translation_structure_hints(effective_message)
+    if mode == "chamorro":
+        guidance += "\nWrite every translation and notes value in Chamorro only."
+    text_parts = []
+    sources = []
+    incomplete = False
+    was_cancelled = False
+
+    def complete(**kwargs):
+        return client.chat.completions.create(
+            model=model, **kwargs, **optional_chat_completion_kwargs(model),
+        )
+
+    for event in translate_image_pages(
+        context=image_context, images=images, message=message,
+        complete=complete, retrieve=get_rag_context, guidance=guidance, history=past_messages,
+        cancelled=lambda: is_message_cancelled(pending_id),
+    ):
+        if event["type"] == "chunk":
+            text_parts.append(event["content"])
+        elif event["type"] == "metadata":
+            sources = format_source_citations(event["sources"])
+            event = {**event, "sources": sources, "used_rag": bool(sources)}
+            incomplete = event["translation_incomplete"]
+        elif event["type"] == "cancelled":
+            was_cancelled = True
+        yield event
+    response_time = time.time() - start_time
+    log_conversation(
+        user_message=message_for_logging,
+        bot_response="[Message was cancelled by user]" if was_cancelled else "".join(text_parts),
+        mode=mode, sources=sources, used_rag=bool(sources), used_web_search=False,
+        response_time=response_time, session_id=session_id, user_id=user_id,
+        conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
+        pending_id=pending_id,
+    )
+    cleanup_cancelled_message(pending_id)
+    if not was_cancelled:
+        yield {"type": "done", "response_time": response_time, "translation_incomplete": incomplete}
+
+
 def get_chatbot_response(
     message: str,
     mode: str = "english",
@@ -1363,7 +1437,24 @@ def get_chatbot_response(
         if conversation_id
         else []
     )
-    image_context = detect_image_context(normalized_image_inputs)
+    image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    if normalized_image_inputs and is_image_translation_request(message_for_logging):
+        image_events = _image_translation_events(
+            image_context=image_context, images=normalized_image_inputs,
+            message=message, message_for_logging=message_for_logging,
+            mode=mode, session_id=session_id, user_id=user_id,
+            conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
+            pending_id=pending_id, start_time=start_time,
+            past_messages=past_messages, skill_level=skill_level,
+        )
+        events = list(image_events)
+        metadata = next((event for event in reversed(events) if event["type"] == "metadata"), {})
+        return {
+            "response": "".join(event["content"] for event in events if event["type"] in {"chunk", "cancelled"}),
+            "sources": metadata.get("sources", []), "used_rag": metadata.get("used_rag", False),
+            "used_web_search": False, "response_time": time.time() - start_time,
+            "cancelled": any(event["type"] == "cancelled" for event in events),
+        }
     effective_translation_message, image_translation = build_image_translation_query(
         message,
         image_context,
@@ -1447,28 +1538,16 @@ def get_chatbot_response(
         has_references=bool(rag_context),
     )
 
-    # Add RAG context if available
-    if rag_context:
-        system_prompt += f"\n\n{rag_context}"
-    elif not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     # Initialize token manager for this request
     token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
 
-    # Keep usable web results in the final model prompt even when general
-    # instructions and retrieved context exceed the system-prompt budget.
-    system_prompt_tokens = count_tokens(
-        system_prompt + (f"\n\n{web_context}" if web_context else "")
+    system_prompt, web_results_used = assemble_system_prompt(
+        system_prompt, rag_context, web_context, token_manager.budget,
     )
-    if system_prompt_tokens > token_manager.budget.system_prompt:
-        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget, truncating...")
-    system_prompt = truncate_text_preserving_suffix(
-        system_prompt,
-        f"\n\n{web_context}" if web_context else "",
-        token_manager.budget.system_prompt,
-    )
-    
+
     # Build conversation history
     history = [
         {"role": "system", "content": system_prompt}
@@ -1547,6 +1626,12 @@ def get_chatbot_response(
                 response_text = _extract_non_stream_response_text(response)
                 if not response_text:
                     raise RuntimeError("LLM response had no text content")
+                finish_reason = getattr(response.choices[0], "finish_reason", None)
+                logger.info("CHAT_COMPLETION model=%s finish=%s", request_model, finish_reason)
+                if finish_reason == "length":
+                    response_text += "\n\n**This reply reached its length limit and is incomplete. Ask me to continue from the last item.**"
+                elif finish_reason not in (None, "stop"):
+                    response_text += "\n\n**This reply could not be completed. Please try again.**"
                 break
             except Exception as retry_error:
                 if _is_retryable_llm_error(retry_error) and attempt < max_attempts - 1:
@@ -1699,7 +1784,18 @@ def get_chatbot_response_stream(
         if conversation_id
         else []
     )
-    image_context = detect_image_context(normalized_image_inputs)
+    image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    if normalized_image_inputs and is_image_translation_request(message_for_logging):
+        image_events = _image_translation_events(
+            image_context=image_context, images=normalized_image_inputs,
+            message=message, message_for_logging=message_for_logging,
+            mode=mode, session_id=session_id, user_id=user_id,
+            conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
+            pending_id=pending_id, start_time=start_time,
+            past_messages=past_messages, skill_level=skill_level,
+        )
+        yield from image_events
+        return
     effective_translation_message, image_translation = build_image_translation_query(
         message,
         image_context,
@@ -1784,24 +1880,13 @@ def get_chatbot_response_stream(
         has_references=bool(rag_context),
     )
 
-    # Add RAG context if available
-    if rag_context:
-        system_prompt += f"\n\n{rag_context}"
-    elif not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
-    # Track token usage and apply limits
-    system_prompt_tokens = count_tokens(
-        system_prompt + (f"\n\n{web_context}" if web_context else "")
+    system_prompt, web_results_used = assemble_system_prompt(
+        system_prompt, rag_context, web_context, token_manager.budget,
     )
-    if system_prompt_tokens > token_manager.budget.system_prompt:
-        logger.warning(f"System prompt ({system_prompt_tokens} tokens) exceeds budget ({token_manager.budget.system_prompt}), truncating...")
-    system_prompt = truncate_text_preserving_suffix(
-        system_prompt,
-        f"\n\n{web_context}" if web_context else "",
-        token_manager.budget.system_prompt,
-    )
-    
+
     # Build conversation history
     history = [{"role": "system", "content": system_prompt}]
     
@@ -1889,6 +1974,7 @@ def get_chatbot_response_stream(
         return
     
     full_response = ""
+    finish_reason = None
     streamed_any_content = False
     try:
         max_attempts = _get_max_llm_retries()
@@ -1928,6 +2014,9 @@ def get_chatbot_response_stream(
                         cleanup_cancelled_message(pending_id)
                         return
 
+                    choices = getattr(chunk, "choices", None) or []
+                    if choices and getattr(choices[0], "finish_reason", None):
+                        finish_reason = choices[0].finish_reason
                     content, is_empty_choice_chunk = _extract_stream_chunk_content_and_empty_choice(chunk)
                     if is_empty_choice_chunk:
                         empty_choice_chunk_count += 1
@@ -2015,9 +2104,19 @@ def get_chatbot_response_stream(
         cleanup_cancelled_message(pending_id)
         return
     
+    logger.info("CHAT_COMPLETION model=%s finish=%s", request_model, finish_reason)
+    if finish_reason != "stop":
+        notice = (
+            "\n\n**This reply reached its length limit and is incomplete. Ask me to continue from the last item.**"
+            if finish_reason == "length" else
+            "\n\n**This reply ended before completion could be confirmed. Please try again if anything is missing.**"
+        )
+        full_response += notice
+        yield {"type": "chunk", "content": notice}
+
     # Calculate response time
     response_time = time.time() - start_time
-    
+
     # Log the complete conversation (use original message for display, not doc-augmented)
     log_conversation(
         user_message=message_for_logging,  # Use original message for logging
