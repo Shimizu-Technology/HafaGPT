@@ -33,7 +33,8 @@ EXACT_DICTIONARY_FILES = (
     ),
 )
 MAX_CANONICAL_MATCHES = 8
-MAX_PASSAGE_DICTIONARY_MATCHES = 8
+MAX_PASSAGE_DICTIONARY_MATCHES = 24
+MAX_PASSAGE_SPELLING_CANDIDATES = 2
 _PASSAGE_WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
 
 
@@ -281,13 +282,34 @@ def _edit_distance_at_most_one(left: str, right: str) -> bool:
     return True
 
 
+def _spelling_candidate_key(headword: str) -> str:
+    """Group a narrow set of orthographic possibilities, not equivalent meanings.
+
+    These operations are only a retrieval aid for passage interpretation. Exact
+    headword lookup retains its stricter normalization and distinction of senses.
+    """
+
+    decomposed = unicodedata.normalize("NFD", headword)
+    return "".join(char for char in decomposed if not unicodedata.combining(char)).replace("'", "").replace("o", "u")
+
+
+@lru_cache(maxsize=1)
+def _spelling_candidate_index() -> dict[str, tuple[str, ...]]:
+    buckets: dict[str, list[str]] = {}
+    for headword in _exact_dictionary_index():
+        if " " not in headword and len(headword) >= 3:
+            buckets.setdefault(_spelling_candidate_key(headword), []).append(headword)
+    return {key: tuple(sorted(values)) for key, values in buckets.items()}
+
+
 def _passage_dictionary_matches(
     user_input: str,
 ) -> list[tuple[str, str, str, object, bool]]:
-    """Find exact and conservative near matches for a translation passage.
+    """Find bounded evidence fairly across passage lines and answer choices.
 
-    The boolean marks a one-edit OCR/spelling candidate. These matches are prompt
-    evidence only and never rewrite the user's or image's supplied text.
+    Preserve distinct governed definitions and narrowly related spellings even
+    when an exact match exists: an exact spelling is not proof of the right sense.
+    The boolean marks an interpretation candidate, never an input correction.
     """
 
     if not is_passage_translation(user_input):
@@ -296,65 +318,81 @@ def _passage_dictionary_matches(
     if not payload:
         return []
 
-    raw_words = _PASSAGE_WORD_PATTERN.findall(payload)
-    normalized_words = [_normalize_exact_headword(word) for word in raw_words]
     index = _exact_dictionary_index()
-    candidates: list[tuple[int, int, int, str, str, bool]] = []
-    for width in range(min(4, len(normalized_words)), 0, -1):
-        for position in range(len(normalized_words) - width + 1):
-            normalized_phrase = " ".join(normalized_words[position:position + width])
-            if len(normalized_phrase.replace(" ", "")) < 4:
-                continue
-            if normalized_phrase in index:
-                candidates.append(
-                    (
-                        width,
-                        len(normalized_phrase),
-                        position,
-                        normalized_phrase,
-                        normalized_phrase,
-                        False,
-                    )
-                )
-
-    exact_single_words = {
-        candidate[3] for candidate in candidates if candidate[0] == 1
-    }
+    spelling_index = _spelling_candidate_index()
     near_index = _near_dictionary_headword_index()
-    for position, observed in enumerate(normalized_words):
-        if len(observed) < 5 or observed in exact_single_words:
-            continue
-        bucket_candidates = (
-            headword
-            for candidate_length in range(
-                max(4, len(observed) - 1),
-                len(observed) + 2,
-            )
-            for headword in near_index.get((observed[:2], candidate_length), ())
-        )
-        near_headwords = [
-            headword
-            for headword in bucket_candidates
-            if _edit_distance_at_most_one(observed, headword)
-        ]
-        for headword in near_headwords[:3]:
-            candidates.append((1, len(headword), position, observed, headword, True))
+    # A line keeps its own priority queue, so a long first question cannot consume
+    # the entire allowance before short choices or later questions are considered.
+    line_candidates: list[list[tuple[str, tuple[str, ...]]]] = []
+    for line in payload.splitlines():
+        words = [_normalize_exact_headword(word) for word in _PASSAGE_WORD_PATTERN.findall(line)]
+        candidates: dict[str, tuple[int, int, tuple[str, ...]]] = {}
+        for width in range(min(4, len(words)), 0, -1):
+            for position in range(len(words) - width + 1):
+                observed = " ".join(words[position:position + width])
+                if len(observed.replace(" ", "")) >= 3 and observed in index:
+                    candidates.setdefault(observed, (width, position, (observed,)))
+        for position, observed in enumerate(words):
+            if len(observed) < 3:
+                continue
+            spelling_candidates = [
+                headword for headword in spelling_index.get(_spelling_candidate_key(observed), ())
+                if headword != observed and _edit_distance_at_most_one(observed, headword)
+            ]
+            # Prefer fewer character changes; tie-breaking is deterministic and
+            # does not rank one dictionary meaning as the correct translation.
+            spelling_candidates.sort(key=lambda headword: (
+                not _edit_distance_at_most_one(observed, headword),
+                abs(len(observed) - len(headword)), headword,
+            ))
+            related = spelling_candidates[:MAX_PASSAGE_SPELLING_CANDIDATES]
+            if not related and observed not in index and len(observed) >= 5:
+                related = sorted({
+                    headword
+                    for length in range(max(4, len(observed) - 1), len(observed) + 2)
+                    for headword in near_index.get((observed[:2], length), ())
+                    if _edit_distance_at_most_one(observed, headword)
+                })[:MAX_PASSAGE_SPELLING_CANDIDATES]
+            headwords = ((observed,) if observed in index else ()) + tuple(related)
+            if headwords:
+                candidates[observed] = (1, position, headwords)
+        ordered = sorted(candidates.items(), key=lambda item: (
+            -item[1][0], -len(item[0]), item[1][1], item[0],
+        ))
+        if ordered:
+            line_candidates.append([(observed, values[2]) for observed, values in ordered])
 
-    candidates.sort(key=lambda item: (-item[0], -item[1], item[2], item[4]))
-    matches: list[tuple[str, str, str, object, bool]] = []
-    seen_headwords: set[str] = set()
-    for _width, _length, _position, observed, headword, near_match in candidates:
-        if headword in seen_headwords:
-            continue
-        seen_headwords.add(headword)
-        # One governed definition per passage headword keeps the prompt compact;
-        # exact single-word lookups still return all eligible dictionary sources.
-        for display_name, entry_headword, definition in index[headword][:1]:
-            matches.append(
-                (observed, display_name, entry_headword, definition, near_match)
-            )
-        if len(seen_headwords) >= MAX_PASSAGE_DICTIONARY_MATCHES:
+    selected: list[tuple[str, tuple[str, ...]]] = []
+    seen_observed: set[str] = set()
+    # Round-robin, skipping duplicates without spending a line's turn on them.
+    offsets = [0] * len(line_candidates)
+    while len(selected) < MAX_PASSAGE_DICTIONARY_MATCHES:
+        progressed = False
+        for line_index, candidates in enumerate(line_candidates):
+            while offsets[line_index] < len(candidates):
+                observed, headwords = candidates[offsets[line_index]]
+                offsets[line_index] += 1
+                if observed in seen_observed:
+                    continue
+                selected.append((observed, headwords))
+                seen_observed.add(observed)
+                progressed = True
+                break
+            if len(selected) >= MAX_PASSAGE_DICTIONARY_MATCHES:
+                break
+        if not progressed:
             break
+
+    matches: list[tuple[str, str, str, object, bool]] = []
+    seen_evidence: set[tuple[str, str, str, str]] = set()
+    for observed, headwords in selected:
+        for headword in headwords:
+            for display_name, entry_headword, definition in index[headword]:
+                key = (observed, display_name, entry_headword, _format_dictionary_definition(definition))
+                if key in seen_evidence:
+                    continue
+                seen_evidence.add(key)
+                matches.append((observed, display_name, entry_headword, definition, headword != observed))
     return matches
 
 
@@ -483,32 +521,29 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
             ]
         )
 
-    for (
-        observed,
-        display_name,
-        entry_headword,
-        definition,
-        near_match,
-    ) in passage_dictionary_matches:
+    if passage_dictionary_matches:
+        lines.append(
+            "Passage definitions may describe different senses. Choose only the reading supported "
+            "by the full sentence/image; flag unresolved conflicts. Possible spelling matches "
+            "are interpretation clues, not synonyms: recheck the image and do not silently "
+            "replace the supplied spelling."
+        )
+    prior_passage_label = None
+    for observed, display_name, entry_headword, definition, near_match in passage_dictionary_matches:
         label = (
             f"Possible OCR/spelling-near dictionary evidence for {observed}: {entry_headword}"
             if near_match
             else f"Exact passage dictionary evidence: {entry_headword}"
         )
-        lines.extend(
-            [
-                f"[{label}]",
-                f"Source: {display_name}",
-                f"Definition: {_format_dictionary_definition(definition)}",
-                (
-                    "Use this near match only as an interpretation clue. Recheck the image "
-                    "and do not silently replace the supplied spelling."
-                    if near_match
-                    else "This headword occurs exactly in the supplied passage text."
-                ),
-                "",
-            ]
-        )
+        if label != prior_passage_label:
+            lines.append(f"[{label}]")
+            prior_passage_label = label
+        lines.extend([
+            f"Source: {display_name}",
+            f"Definition: {_format_dictionary_definition(definition)}",
+        ])
+    if passage_dictionary_matches:
+        lines.append("")
 
     if matches:
         lines.append(
