@@ -8,14 +8,23 @@ test('streaming preserves reading position and Markdown nodes, then resumes foll
   await expect.poll(() => scroller.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(500);
   const firstTable = await page.getByRole('table').first().elementHandle();
   const firstParagraph = await page.getByText('Read this page while the remaining answer arrives.').first().elementHandle();
-  await scroller.dispatchEvent('touchstart', { touches: [{ clientY: 300 }] });
+  // Browser input creates a real touch target/identifier and exercises passive
+  // listeners in desktop Chromium as well as the emulated phone viewport.
+  const touchSession = await page.context().newCDPSession(page);
+  const bounds = await scroller.boundingBox();
+  if (!bounds) throw new Error('Missing scroll viewport');
+  await touchSession.send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: bounds.x + bounds.width / 2, y: bounds.y + 100, id: 1 }],
+  });
   await scroller.evaluate(element => { element.scrollTop = 100; });
   await expect.poll(() => scroller.evaluate(element => element.scrollTop)).toBe(100);
   // Wait for content to grow while the finger is down, then while reading history.
   const originalHeight = await scroller.evaluate(element => element.scrollHeight);
   await expect.poll(() => scroller.evaluate(element => element.scrollHeight)).toBeGreaterThan(originalHeight + 100);
   expect(await scroller.evaluate(element => element.scrollTop)).toBe(100);
-  await scroller.dispatchEvent('touchend');
+  await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await touchSession.detach();
   await expect(page.getByRole('status')).toHaveText(/Ready/);
   expect(await scroller.evaluate(element => element.scrollTop)).toBe(100);
   expect(await firstTable!.evaluate(element => element.isConnected)).toBe(true);

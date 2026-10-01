@@ -92,6 +92,9 @@ jobs:
       - name: Run critical browser flows
         run: npm run test:e2e
 
+      - name: Run streaming gesture and rendering regressions
+        run: npm run test:e2e:streaming
+
   content-sync:
     name: Cross-app content sync
     runs-on: ubuntu-latest

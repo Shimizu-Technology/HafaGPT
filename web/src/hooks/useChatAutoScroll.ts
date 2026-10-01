@@ -10,13 +10,14 @@ export function useChatAutoScroll(
 ) {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const following = useRef(true);
+  const preserveInitialPosition = useRef(true);
   const touching = useRef(false);
   const frame = useRef<number>();
   const pinInitialExchange = shouldPinInitialExchangeToTop(messages);
   const pinInitialExchangeRef = useRef(pinInitialExchange);
   pinInitialExchangeRef.current = pinInitialExchange;
 
-  const targetTop = useCallback((preserveInitialExchange = true) => {
+  const targetTop = useCallback((preserveInitialExchange = preserveInitialPosition.current) => {
     const container = containerRef.current;
     if (!container) return 0;
     return getChatScrollTop({
@@ -30,7 +31,7 @@ export function useChatAutoScroll(
 
   const updateButton = useCallback(() => {
     const container = containerRef.current;
-    if (container) setShowScrollButton(targetTop() - container.scrollTop > BOTTOM_THRESHOLD);
+    if (container) setShowScrollButton(targetTop(false) - container.scrollTop > BOTTOM_THRESHOLD);
   }, [containerRef, targetTop]);
 
   const cancelFrame = useCallback(() => {
@@ -54,11 +55,13 @@ export function useChatAutoScroll(
 
   const resetScrollTracking = useCallback(() => {
     following.current = true;
+    preserveInitialPosition.current = true;
     scheduleFollow();
   }, [scheduleFollow]);
 
   const resumeFollowing = useCallback(() => {
     following.current = true;
+    preserveInitialPosition.current = false;
     const container = containerRef.current;
     if (container && !touching.current) container.scrollTo({ top: targetTop(false), behavior: 'instant' });
     updateButton();
@@ -80,8 +83,9 @@ export function useChatAutoScroll(
     };
     const onTouchEnd = () => {
       touching.current = false;
-      if (touchedTowardBottom && targetTop() - container.scrollTop <= BOTTOM_THRESHOLD) {
+      if (touchedTowardBottom && targetTop(false) - container.scrollTop <= BOTTOM_THRESHOLD) {
         following.current = true;
+        preserveInitialPosition.current = false;
         scheduleFollow();
       }
       updateButton();
@@ -92,8 +96,9 @@ export function useChatAutoScroll(
       lastTop = container.scrollTop;
       if (touching.current) {
         touchedTowardBottom = movedDown;
-      } else if (!following.current && movedDown && targetTop() - container.scrollTop <= BOTTOM_THRESHOLD) {
+      } else if (!following.current && movedDown && targetTop(false) - container.scrollTop <= BOTTOM_THRESHOLD) {
         following.current = true;
+        preserveInitialPosition.current = false;
       } else if (movedUp) {
         // Includes keyboard and scrollbar movement, not just wheel/touch events.
         following.current = false;

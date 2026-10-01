@@ -55,6 +55,18 @@ describe('chat follow and reading modes', () => {
     expect(screen.queryByRole('button', { name: 'Latest' })).not.toBeInTheDocument();
   });
 
+  it('offers and preserves explicit resume when composer padding overflows the first exchange', () => {
+    const { container, grow } = setup(true);
+    grow(650, 'Content extends behind the fixed composer');
+    act(() => vi.advanceTimersByTime(20));
+    expect(container.scrollTop).toBe(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Latest' }));
+    expect(container.scrollTop).toBe(150);
+    grow(680, 'Another first-exchange chunk');
+    act(() => vi.advanceTimersByTime(20));
+    expect(container.scrollTop).toBe(180);
+  });
+
   it('cancels pending follow immediately on touch and preserves reading position through streaming and completion', () => {
     const { container, grow, scrollTo } = setup();
     grow(1800, 'More streamed text');
