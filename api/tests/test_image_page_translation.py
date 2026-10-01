@@ -151,3 +151,34 @@ def test_retrieval_outage_preserves_item_coverage_without_false_citations():
     assert events[-1]['sources'] == []
     assert events[-1]['used_rag'] is False
     assert ''.join(event.get('content','') for event in events).count('**Translation:**') == 4
+
+
+def test_accuracy_review_replaces_a_valid_but_incorrect_draft():
+    p = page(0, 1)
+    calls = []
+    def complete(**kwargs):
+        calls.append(kwargs)
+        result = response(p.items)
+        payload = json.loads(result.choices[0].message.content)
+        payload['translations'][0]['translation'] = 'Wrong draft' if len(calls) == 1 else 'Corrected meaning'
+        result.choices[0].message.content = json.dumps(payload)
+        return result
+    text = ''.join(event.get('content','') for event in run([p], complete))
+    assert 'Corrected meaning' in text
+    assert 'Wrong draft' not in text
+    assert 'FINAL ACCURACY REVIEW' in calls[1]['messages'][0]['content']
+
+
+def test_incomplete_accuracy_review_never_exposes_unreviewed_draft():
+    p = page(0, 1)
+    calls = 0
+    def complete(**kwargs):
+        nonlocal calls
+        calls += 1
+        return response(p.items, finish='stop' if calls == 1 else 'length')
+    events = run([p], complete)
+    text = ''.join(event.get('content','') for event in events)
+    assert 'Translated ' not in text
+    assert 'Translation unavailable' in text
+    assert events[-1]['translation_incomplete'] is True
+    assert events[-1]['sources'] == []

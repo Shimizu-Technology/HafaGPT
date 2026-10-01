@@ -413,3 +413,11 @@ def test_explicit_request_not_to_translate_does_not_select_translation_pipeline(
     assert not is_image_translation_request('Do not translate this; help me answer question 2.')
     assert not is_image_translation_request("Don't translate the pages. Describe the layout.")
     assert is_image_translation_request('Translate this and help me understand question 2.')
+
+
+def test_scoped_or_review_requests_keep_the_general_image_path():
+    from src.rag.image_translation_context import is_image_translation_request
+    for request in ['Translate only question 3.', 'Translate page 2.',
+                    'Can you check whether this translation is accurate?',
+                    'What does this say? Only the final paragraph please.']:
+        assert not is_image_translation_request(request)

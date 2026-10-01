@@ -142,6 +142,13 @@ def is_image_translation_request(message: str) -> bool:
     text = (message or "").strip()
     if re.search(r"(?i)\b(?:do\s+not|don['’]t|without|stop)\s+translat(?:e|ing|ion)\b", text):
         return False
+    if re.search(r"(?i)\b(?:translate|read)\s+(?:(?:only|just)\s+)?(?:question|item|page|image|line|paragraph|section)\s+\d+", text):
+        return False
+    if re.search(r"(?i)\b(?:only|just)\s+(?:question|item|page|image|line|paragraph|section)\b", text):
+        return False
+    if (re.search(r"(?i)\b(?:check|review|verify)\b.*\btranslation\b", text)
+            and not re.search(r"(?i)\btranslate\b", text)):
+        return False
     return not text or bool(_TRANSLATION_IMAGE_REQUEST.search(text))
 
 
