@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:e2e:streaming": "playwright test --config playwright.streaming.config.ts",
     "test:e2e:headed": "playwright test --headed",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json"

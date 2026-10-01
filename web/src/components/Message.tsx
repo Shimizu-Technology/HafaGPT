@@ -1,7 +1,7 @@
 import { BookOpen, BookOpenCheck, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles } from 'lucide-react';
 import { useState, memo, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
@@ -116,10 +116,129 @@ interface MessageProps {
   isStreaming?: boolean; // Whether this message is currently streaming
   // Edit & Regenerate props
   canEdit?: boolean; // Whether this message can be edited
-  onEdit?: (newContent: string) => void; // Callback when user saves edited message
+  onEdit?: (newContent: string, messageIndex?: number) => void;
+  messageIndex?: number; // Callback when user saves edited message
 }
 
-export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit }: MessageProps) {
+// Keep element types stable while content grows so touch targets and history DOM survive.
+const markdownComponents: Components = {
+  // Paragraphs
+  p: ({ children }) => (
+    <p className="text-sm sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
+      {children}
+    </p>
+  ),
+  // Headers - styled prominently
+  h1: ({ children }) => (
+    <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-gray-600">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-sm sm:text-base font-semibold text-brown-800 dark:text-white mt-3 mb-1.5 first:mt-0">
+      {children}
+    </h3>
+  ),
+  // Text formatting
+  strong: ({ children }) => (
+    <strong className="font-bold text-brown-900 dark:text-white">
+      {children}
+    </strong>
+  ),
+  em: ({ children }) => <em className="italic">{children}</em>,
+  // Lists
+  ul: ({ children }) => (
+    <ul className="list-disc ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="leading-relaxed">{children}</li>
+  ),
+  // Code blocks (multi-line)
+  pre: ({ children }) => (
+    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
+      {children}
+    </pre>
+  ),
+  // Inline code and code within pre
+  code: ({ className, children }) => {
+    // Check if it's inside a pre block (multi-line code)
+    const isInline = !className;
+
+    if (isInline) {
+      // Inline code (single backticks)
+      return (
+        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
+          {children}
+        </code>
+      );
+    }
+
+    // Code block content (triple backticks) - use pre-wrap to wrap long lines
+    return (
+      <code className="text-xs sm:text-sm font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-gray-100">
+        {children}
+      </code>
+    );
+  },
+  // Blockquotes
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-gray-300">
+      {children}
+    </blockquote>
+  ),
+  // Horizontal rule
+  hr: () => (
+    <hr className="my-4 border-cream-300 dark:border-gray-600" />
+  ),
+  // Tables - responsive and styled
+  table: ({ children }) => (
+    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
+      <table className="min-w-full text-sm">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-cream-100 dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700">
+      {children}
+    </thead>
+  ),
+  tbody: ({ children }) => (
+    <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
+      {children}
+    </tbody>
+  ),
+  tr: ({ children }) => (
+    <tr className="hover:bg-cream-50 dark:hover:bg-gray-800/50 transition-colors">
+      {children}
+    </tr>
+  ),
+  th: ({ children }) => (
+    <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-white text-xs sm:text-sm">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="px-3 py-2 text-brown-700 dark:text-gray-300 text-xs sm:text-sm">
+      {children}
+    </td>
+  ),
+};
+const markdownPlugins = [remarkGfm];
+
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit, messageIndex }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const { getToken } = useAuth();
@@ -140,7 +259,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   // Handle edit submission
   const handleEditSubmit = () => {
     if (editContent.trim() && editContent !== content && onEdit) {
-      onEdit(editContent.trim());
+      onEdit(editContent.trim(), messageIndex);
       setIsEditing(false);
     }
   };
@@ -517,122 +636,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               isStreaming && content && content.length > 0 ? 'animate-fade-in-fast' : ''
             }`}>
               <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  // Paragraphs
-                  p: ({ children }) => (
-                    <p className="text-sm sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
-                      {children}
-                    </p>
-                  ),
-                  // Headers - styled prominently
-                  h1: ({ children }) => (
-                    <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-gray-600">
-                      {children}
-                    </h1>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0">
-                      {children}
-                    </h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-sm sm:text-base font-semibold text-brown-800 dark:text-white mt-3 mb-1.5 first:mt-0">
-                      {children}
-                    </h3>
-                  ),
-                  // Text formatting
-                  strong: ({ children }) => (
-                    <strong className="font-bold text-brown-900 dark:text-white">
-                      {children}
-                    </strong>
-                  ),
-                  em: ({ children }) => <em className="italic">{children}</em>,
-                  // Lists
-                  ul: ({ children }) => (
-                    <ul className="list-disc ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
-                      {children}
-                    </ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="list-decimal ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
-                      {children}
-                    </ol>
-                  ),
-                  li: ({ children }) => (
-                    <li className="leading-relaxed">{children}</li>
-                  ),
-                  // Code blocks (multi-line)
-                  pre: ({ children }) => (
-                    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
-                      {children}
-                    </pre>
-                  ),
-                  // Inline code and code within pre
-                  code: ({ className, children }) => {
-                    // Check if it's inside a pre block (multi-line code)
-                    const isInline = !className;
-                    
-                    if (isInline) {
-                      // Inline code (single backticks)
-                      return (
-                        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
-                          {children}
-                        </code>
-                      );
-                    }
-                    
-                    // Code block content (triple backticks) - use pre-wrap to wrap long lines
-                    return (
-                      <code className="text-xs sm:text-sm font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-gray-100">
-                        {children}
-                      </code>
-                    );
-                  },
-                  // Blockquotes
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-gray-300">
-                      {children}
-                    </blockquote>
-                  ),
-                  // Horizontal rule
-                  hr: () => (
-                    <hr className="my-4 border-cream-300 dark:border-gray-600" />
-                  ),
-                  // Tables - responsive and styled
-                  table: ({ children }) => (
-                    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
-                      <table className="min-w-full text-sm">
-                        {children}
-                      </table>
-                    </div>
-                  ),
-                  thead: ({ children }) => (
-                    <thead className="bg-cream-100 dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700">
-                      {children}
-                    </thead>
-                  ),
-                  tbody: ({ children }) => (
-                    <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
-                      {children}
-                    </tbody>
-                  ),
-                  tr: ({ children }) => (
-                    <tr className="hover:bg-cream-50 dark:hover:bg-gray-800/50 transition-colors">
-                      {children}
-                    </tr>
-                  ),
-                  th: ({ children }) => (
-                    <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-white text-xs sm:text-sm">
-                      {children}
-                    </th>
-                  ),
-                  td: ({ children }) => (
-                    <td className="px-3 py-2 text-brown-700 dark:text-gray-300 text-xs sm:text-sm">
-                      {children}
-                    </td>
-                  ),
-                }}
+                remarkPlugins={markdownPlugins}
+                components={markdownComponents}
               >
                 {/* Only render content if it's not the thinking placeholder */}
                 {content !== '...' ? cleanedContent : ''}
