@@ -303,7 +303,7 @@ def _spelling_candidate_index() -> dict[str, tuple[str, ...]]:
 
 
 def _passage_dictionary_matches(
-    user_input: str,
+    user_input: str, *, match_limit: int = MAX_PASSAGE_DICTIONARY_MATCHES,
 ) -> list[tuple[str, str, str, object, bool]]:
     """Find bounded evidence fairly across passage lines and answer choices.
 
@@ -339,10 +339,9 @@ def _passage_dictionary_matches(
                 headword for headword in spelling_index.get(_spelling_candidate_key(observed), ())
                 if headword != observed and _edit_distance_at_most_one(observed, headword)
             ]
-            # Prefer fewer character changes; tie-breaking is deterministic and
+            # Prefer the same length; tie-breaking is deterministic and
             # does not rank one dictionary meaning as the correct translation.
             spelling_candidates.sort(key=lambda headword: (
-                not _edit_distance_at_most_one(observed, headword),
                 abs(len(observed) - len(headword)), headword,
             ))
             related = spelling_candidates[:MAX_PASSAGE_SPELLING_CANDIDATES]
@@ -366,7 +365,7 @@ def _passage_dictionary_matches(
     seen_observed: set[str] = set()
     # Round-robin, skipping duplicates without spending a line's turn on them.
     offsets = [0] * len(line_candidates)
-    while len(selected) < MAX_PASSAGE_DICTIONARY_MATCHES:
+    while len(selected) < match_limit:
         progressed = False
         for line_index, candidates in enumerate(line_candidates):
             while offsets[line_index] < len(candidates):
@@ -378,7 +377,7 @@ def _passage_dictionary_matches(
                 seen_observed.add(observed)
                 progressed = True
                 break
-            if len(selected) >= MAX_PASSAGE_DICTIONARY_MATCHES:
+            if len(selected) >= match_limit:
                 break
         if not progressed:
             break
@@ -415,7 +414,7 @@ def _phrase_matches(normalized_input: str, phrase: str | None) -> bool:
     return f" {normalized_phrase} " in f" {normalized_input} "
 
 
-def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
+def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = MAX_PASSAGE_DICTIONARY_MATCHES) -> tuple[str, list[object]]:
     """Return exact curriculum matches before semantic RAG material.
 
     This is intentionally a lexical bridge, not a replacement for retrieval. It
@@ -453,7 +452,7 @@ def get_canonical_tutor_context(user_input: str) -> tuple[str, list[object]]:
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
     requested_english_gloss = _extract_requested_english_gloss(user_input)
     english_gloss_matches = _lookup_exact_english_glosses(requested_english_gloss)
-    passage_dictionary_matches = _passage_dictionary_matches(user_input)
+    passage_dictionary_matches = _passage_dictionary_matches(user_input, match_limit=passage_match_limit)
 
     if (
         not matches

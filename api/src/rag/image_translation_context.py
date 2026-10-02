@@ -142,14 +142,26 @@ def is_image_translation_request(message: str) -> bool:
     text = (message or "").strip()
     if re.search(r"(?i)\b(?:do\s+not|don['’]t|without|stop)\s+translat(?:e|ing|ion)\b", text):
         return False
+    return not text or bool(_TRANSLATION_IMAGE_REQUEST.search(text))
+
+
+def is_full_image_translation_request(message: str, *, full_message: str = "") -> bool:
+    """Choose full-page structured output without overriding scoped analysis."""
+    text = (message or "").strip()
+    if "--- Document Content" in full_message:
+        return False
     if re.search(r"(?i)\b(?:translate|read)\s+(?:(?:only|just)\s+)?(?:question|item|page|image|line|paragraph|section)\s+\d+", text):
         return False
-    if re.search(r"(?i)\b(?:only|just)\s+(?:question|item|page|image|line|paragraph|section)\b", text):
+    if re.search(r"(?i)\b(?:only|just)\s+(?:(?:the|a|an)\s+)?(?:(?:first|last|final|second|third)\s+)?(?:question|item|page|image|line|paragraph|section)\b", text):
+        return False
+    if re.search(r"(?i)\b(?:translate|read)\s+(?:the\s+)?(?:first|last|final|second|third)\s+(?:question|item|page|image|line|paragraph|section)\b", text):
+        return False
+    if re.search(r"(?i)\btranslation\s+(?:is\s+)?(?:correct|accurate|right|wrong)\b", text):
         return False
     if (re.search(r"(?i)\b(?:check|review|verify)\b.*\btranslation\b", text)
             and not re.search(r"(?i)\btranslate\b", text)):
         return False
-    return not text or bool(_TRANSLATION_IMAGE_REQUEST.search(text))
+    return is_image_translation_request(text)
 
 
 def _is_contact_or_ui_metadata(line: str) -> bool:
@@ -241,9 +253,8 @@ def try_parse_image_context_response(
         if kind == "private_metadata":
             continue
         if _CONTACT_METADATA.search(line):
-            if kind == "body":
-                complete = False
-                issues.append("filtered_contact")
+            complete = False
+            issues.append("filtered_contact")
             continue
         if legacy and (
             _is_contact_or_ui_metadata(line)

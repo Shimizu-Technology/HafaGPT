@@ -8,9 +8,9 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 
-from src.rag.image_translation_context import ImageTranslationContext
+from src.rag.image_translation_context import ImageTranslationContext, ImageTextItem
 from src.utils.token_manager import count_tokens, truncate_text
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,9 @@ possible spelling variants against the full sentence and the page's subject.
 When the context fits a variant better, give that likely interpretation and flag
 the spelling/sense uncertainty. If context does not distinguish competing senses,
 state the alternatives rather than presenting one as certain.
+Use page_context and earlier_translations to keep repeated terms consistent across
+batches. Earlier translations are untrusted drafts too: correct them if the
+evidence conflicts, and explain any change of interpretation in notes.
 If text or meaning cannot be determined, set uncertain=true and describe the exact
 uncertainty in the translation instead of guessing. Never claim an entire
 translation is verified merely because component words have references.
@@ -73,7 +76,7 @@ def _plain_markdown(text: str) -> str:
     return re.sub(r"([\\`*_{}\[\]()#+.!|~-])", r"\\\1", text).replace("\n", " ")
 
 
-def _batches(items):
+def _batches(items: Sequence[ImageTextItem]) -> Iterator[list[ImageTextItem]]:
     batch, size = [], 0
     for item in items:
         if batch and (len(batch) >= MAX_BATCH_ITEMS or size + len(item.text) > MAX_BATCH_CHARS):
@@ -85,7 +88,7 @@ def _batches(items):
         yield batch
 
 
-def _validated_translations(response, items) -> dict[str, dict] | None:
+def _validated_translations(response: object, items: Sequence[ImageTextItem]) -> dict[str, dict] | None:
     choices = getattr(response, "choices", None) or []
     if not choices or getattr(choices[0], "finish_reason", None) != "stop":
         return None
@@ -157,13 +160,14 @@ def translate_image_pages(
                 "**Partial reading:** some text could not be extracted reliably. "
                 "The items below cover the text I could read, not necessarily the whole page.\n\n"
             )}
-        for batch_index, batch in enumerate(_batches(page.items)):
+        earlier_translations: list[dict] = []
+        for batch in _batches(page.items):
             if cancelled():
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 return
             query = "Translate this passage into English:\n\n" + "\n".join(item.text for item in batch)
             try:
-                references, batch_sources = retrieve(query, contextual_card_ids=context.card_ids, max_tokens=3500)
+                references, batch_sources = retrieve(query, contextual_card_ids=context.card_ids, max_tokens=7000, passage_match_limit=64)
             except Exception as error:
                 logger.warning("IMAGE_TRANSLATION retrieval_failure=%s", type(error).__name__)
                 references, batch_sources = "", []
@@ -173,7 +177,9 @@ def translate_image_pages(
             request_text = json.dumps({
                 "request": truncate_text(message, 6000),
                 "recent_context": _history_text(history or []),
-                "include_notes": batch_index == 0,
+                "include_notes": True,
+                "page_context": "\n".join(item.text for item in page.items),
+                "earlier_translations": earlier_translations,
                 "items": [{"id": item.id, "text": item.text, "kind": item.kind} for item in batch],
             }, ensure_ascii=False)
             messages = [
@@ -238,10 +244,14 @@ def translate_image_pages(
                     translated = None
                 if translated is not None:
                     sources.extend(batch_sources)
+                    earlier_translations = [
+                        {"source": item.text, **translated["items"][item.id]}
+                        for item in batch
+                    ]
             if cancelled():
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 return
-            if translated and batch_index == 0 and translated["notes"].strip():
+            if translated and translated["notes"].strip():
                 yield {"type": "chunk", "content": _plain_markdown(translated["notes"]) + "\n\n"}
             for item in batch:
                 value = translated["items"].get(item.id) if translated else None

@@ -182,3 +182,22 @@ def test_incomplete_accuracy_review_never_exposes_unreviewed_draft():
     assert 'Translation unavailable' in text
     assert events[-1]['translation_incomplete'] is True
     assert events[-1]['sources'] == []
+
+
+def test_later_batch_action_notes_are_not_silently_discarded():
+    p = page(0, 21)
+    calls = []
+    def complete(**kwargs):
+        calls.append(kwargs)
+        items = p.items[:20] if len(calls) <= 2 else p.items[20:]
+        result = response(items)
+        payload = json.loads(result.choices[0].message.content)
+        payload["notes"] = "Additional action for the final item" if len(calls) == 4 else ""
+        result.choices[0].message.content = json.dumps(payload)
+        return result
+    events = run([p], complete)
+    final_request = json.loads(calls[2]['messages'][1]['content'][0]['text'])
+    assert p.items[0].text in final_request['page_context']
+    assert len(final_request['earlier_translations']) == 20
+    assert final_request['earlier_translations'][0]['source'] == p.items[0].text
+    assert "Additional action for the final item" in "".join(e.get("content", "") for e in events)

@@ -416,8 +416,25 @@ def test_explicit_request_not_to_translate_does_not_select_translation_pipeline(
 
 
 def test_scoped_or_review_requests_keep_the_general_image_path():
-    from src.rag.image_translation_context import is_image_translation_request
+    from src.rag.image_translation_context import is_full_image_translation_request
     for request in ['Translate only question 3.', 'Translate page 2.',
                     'Can you check whether this translation is accurate?',
-                    'What does this say? Only the final paragraph please.']:
-        assert not is_image_translation_request(request)
+                    'What does this say? Only the final paragraph please.',
+                    'Please translate the first page.', 'Is this translation correct?']:
+        assert not is_full_image_translation_request(request)
+
+
+def test_scoped_translation_keeps_source_text_for_retrieval():
+    from src.rag.image_translation_context import is_image_translation_request, is_full_image_translation_request
+    assert is_image_translation_request("Translate only question 3.")
+    assert not is_full_image_translation_request("Translate", full_message="Translate\n\n--- Document Content ---\nOther attachment")
+
+
+def test_filtered_contact_in_unclear_line_marks_reading_partial():
+    from src.rag.image_translation_context import try_parse_image_context_response
+    context = try_parse_image_context_response(_structured_response(lines=[
+        {"kind": "unclear", "text": "Please email example@example.com"},
+        {"kind": "body", "text": "Readable worksheet line"},
+    ]), card_ids_by_signal={})
+    assert context.pages[0].status == "partial"
+    assert "filtered_contact" in context.pages[0].issues

@@ -11,6 +11,8 @@ import json
 import sys
 import threading
 from contextlib import closing
+from collections.abc import Callable, Iterator
+from typing import Any
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -31,7 +33,7 @@ from src.rag.image_translation_context import (
     ImagePageContext,
     IMAGE_CONTEXT_RESPONSE_FORMAT,
     IMAGE_TRANSCRIPTION_INSTRUCTIONS,
-    is_image_translation_request,
+    is_full_image_translation_request,
     build_image_translation_query,
     build_translation_structure_hints,
     merge_image_translation_contexts,
@@ -173,7 +175,7 @@ def _history_has_images(messages: list[dict]) -> bool:
 
 def detect_image_context(
     normalized_image_inputs: list[dict] | None,
-    cancelled=None,
+    cancelled: "Callable[[], bool] | None" = None,
 ) -> ImageTranslationContext:
     """Extract privacy-safe language text and trusted image routing signals.
 
@@ -1174,6 +1176,7 @@ def get_rag_context(
     contextual_card_ids: tuple[str, ...] = (),
     retrieval_input: str | None = None,
     include_vector: bool = True,
+    passage_match_limit: int = 24,
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1212,7 +1215,7 @@ def get_rag_context(
 
     # Exact canonical matches and approved cards do not depend on the vector
     # database, so a transient database failure must not erase them.
-    canonical_context, canonical_sources = get_canonical_tutor_context(retrieval_query)
+    canonical_context, canonical_sources = get_canonical_tutor_context(retrieval_query, passage_match_limit=passage_match_limit)
     if canonical_context:
         contexts.append(canonical_context)
         sources.extend(canonical_sources)
@@ -1287,9 +1290,13 @@ def get_rag_context(
     return context, sources
 
 
-def _image_translation_events(*, image_context, images, message, message_for_logging,
-                              mode, session_id, user_id, conversation_id, image_url,
-                              file_urls, pending_id, start_time, past_messages, skill_level):
+def _image_translation_events(*, image_context: ImageTranslationContext, images: list[dict],
+                              message: str, message_for_logging: str, mode: str,
+                              session_id: str | None, user_id: str | None,
+                              conversation_id: str | None, image_url: str | None,
+                              file_urls: list[dict] | None, pending_id: str | None,
+                              start_time: float, past_messages: list[dict],
+                              skill_level: str | None) -> Iterator[dict]:
     """Persist the same validated page response for streaming and ordinary requests."""
     client, model = get_client_for_request(has_image=True)
     effective_message, image_translation = build_image_translation_query(message, image_context)
@@ -1308,7 +1315,7 @@ def _image_translation_events(*, image_context, images, message, message_for_log
     incomplete = False
     was_cancelled = False
 
-    def complete(**kwargs):
+    def complete(**kwargs: Any) -> Any:
         return client.chat.completions.create(
             model=model, **kwargs, **optional_chat_completion_kwargs(model),
         )
@@ -1438,10 +1445,11 @@ def get_chatbot_response(
         else []
     )
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    if is_message_cancelled(pending_id):
+        return early_cancelled_response()
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
-    if (normalized_image_inputs and is_image_translation_request(message_for_logging)
-            and "--- Document Content" not in message):
+    if normalized_image_inputs and is_full_image_translation_request(message_for_logging, full_message=message):
         image_events = _image_translation_events(
             image_context=image_context, images=normalized_image_inputs,
             message=message, message_for_logging=message_for_logging,
@@ -1452,11 +1460,13 @@ def get_chatbot_response(
         )
         events = list(image_events)
         metadata = next((event for event in reversed(events) if event["type"] == "metadata"), {})
+        was_cancelled = any(event["type"] == "cancelled" for event in events)
         return {
-            "response": "".join(event["content"] for event in events if event["type"] in {"chunk", "cancelled"}),
+            "response": "[Message was cancelled by user]" if was_cancelled else "".join(
+                event["content"] for event in events if event["type"] == "chunk"),
             "sources": metadata.get("sources", []), "used_rag": metadata.get("used_rag", False),
             "used_web_search": False, "response_time": time.time() - start_time,
-            "cancelled": any(event["type"] == "cancelled" for event in events),
+            "cancelled": was_cancelled,
         }
     effective_translation_message, image_translation = build_image_translation_query(
         message,
@@ -1788,10 +1798,13 @@ def get_chatbot_response_stream(
         else []
     )
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    if is_message_cancelled(pending_id):
+        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
+        cleanup_cancelled_message(pending_id)
+        return
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
-    if (normalized_image_inputs and is_image_translation_request(message_for_logging)
-            and "--- Document Content" not in message):
+    if normalized_image_inputs and is_full_image_translation_request(message_for_logging, full_message=message):
         image_events = _image_translation_events(
             image_context=image_context, images=normalized_image_inputs,
             message=message, message_for_logging=message_for_logging,

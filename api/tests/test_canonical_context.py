@@ -247,3 +247,19 @@ def test_distinct_definitions_from_same_normalized_headword_are_not_discarded(mo
     monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {})
     matches = module._passage_dictionary_matches("Translate this passage:\n\nExample fixture")
     assert [match[3] for match in matches] == ["first sense", "different sense", "third sense"]
+
+
+def test_image_batch_can_request_evidence_beyond_the_default_short_passage_limit(monkeypatch):
+    import api.canonical_context as module
+
+    terms = ["longword" + chr(ord('a') + i) for i in range(26)]
+    terms += ["short"]
+    index = {word: (("Example dictionary", word, "fixture meaning"),) for word in terms}
+    monkeypatch.setattr(module, "_exact_dictionary_index", lambda: index)
+    monkeypatch.setattr(module, "_spelling_candidate_index", lambda: {})
+    monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {})
+    query = "Translate this passage:\n\n" + " ".join(terms)
+    default, _ = module.get_canonical_tutor_context(query)
+    expanded, _ = module.get_canonical_tutor_context(query, passage_match_limit=64)
+    assert "dictionary evidence: short" not in default
+    assert "dictionary evidence: short" in expanded
