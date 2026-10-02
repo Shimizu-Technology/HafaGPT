@@ -51,3 +51,20 @@ describe('Message evidence disclosure', () => {
     ).toHaveTextContent('Check important claims against the original material.');
   });
 });
+
+describe('streaming Markdown identity', () => {
+  it('preserves existing paragraph and table nodes through chunks and completion', () => {
+    const content = 'Read this paragraph while the answer continues.\n\n| Item | Translation |\n| --- | --- |\n| 1 | First item |\n';
+    const { rerender } = render(<Message role="assistant" content={content} isStreaming />);
+    const paragraph = screen.getByText('Read this paragraph while the answer continues.');
+    const table = screen.getByRole('table');
+    const firstCell = screen.getByRole('cell', { name: 'First item' });
+    rerender(<Message role="assistant" content={`${content}| 2 | Second item |\n\nMore explanation.`} isStreaming />);
+    expect(screen.getByText('Read this paragraph while the answer continues.')).toBe(paragraph);
+    expect(screen.getByRole('table')).toBe(table);
+    expect(screen.getByRole('cell', { name: 'First item' })).toBe(firstCell);
+    rerender(<Message role="assistant" content={`${content}| 2 | Second item |\n\nMore explanation.`} isStreaming={false} response_time={4} />);
+    expect(screen.getByRole('table')).toBe(table);
+    expect(paragraph.isConnected).toBe(true);
+  });
+});

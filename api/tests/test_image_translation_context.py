@@ -202,3 +202,239 @@ def test_unrelated_translation_does_not_get_clothing_hint() -> None:
     assert build_translation_structure_hints(
         "Håfa adai! Håfa tatatmånu hao?"
     ) == ""
+
+
+def _structured_response(**overrides) -> str:
+    payload = {
+        "signals": [],
+        "text_confidence": "high",
+        "complete": True,
+        "lines": [],
+    }
+    payload.update(overrides)
+    return json.dumps(payload)
+
+
+def test_structured_page_preserves_numbering_repeated_choices_and_title_case() -> None:
+    lines = ["11. Question?", "Motmot Guma’", "Ti Motmot Guma’", "12. Question?", "Motmot Guma’"]
+    context = parse_image_context_response(
+        _structured_response(lines=[{"text": line, "kind": "body"} for line in lines]),
+        card_ids_by_signal=CARD_IDS,
+        image_index=2,
+    )
+    page = context.pages[0]
+    assert page.status == "complete"
+    assert [item.text for item in page.items] == lines
+    assert [item.id for item in page.items] == ["p3-i1", "p3-i2", "p3-i3", "p3-i4", "p3-i5"]
+    assert context.visible_language_text.count("Motmot Guma’") == 3
+
+
+def test_structured_privacy_uses_roles_not_capitalization() -> None:
+    context = parse_image_context_response(
+        _structured_response(lines=[
+            {"text": "Example Student", "kind": "private_metadata"},
+            {"text": "Kåmpu", "kind": "body"},
+            {"text": "Motmot Guma’ Yan Bisnes", "kind": "body"},
+            {"text": "parent@example.com", "kind": "body"},
+            {"text": "Delivered", "kind": "private_metadata"},
+        ]), card_ids_by_signal=CARD_IDS,
+    )
+    assert [item.text for item in context.pages[0].items] == ["Kåmpu", "Motmot Guma’ Yan Bisnes"]
+    assert "Example Student" not in repr(context)
+    assert "parent@example.com" not in repr(context)
+    assert not context.pages[0].complete
+    assert "filtered_contact" in context.pages[0].issues
+
+
+def test_unclear_text_is_retained_as_partial_but_not_used_for_retrieval() -> None:
+    context = parse_image_context_response(
+        _structured_response(lines=[
+            {"text": "1. Readable question", "kind": "body"},
+            {"text": "", "kind": "unclear"},
+        ]), card_ids_by_signal=CARD_IDS,
+    )
+    page = context.pages[0]
+    assert page.status == "partial"
+    assert page.items[1].text == "[unclear]"
+    assert page.items[1].kind == "unclear"
+    assert "unclear_text" in page.issues
+    assert "unclear" not in context.visible_language_text
+
+
+def test_low_confidence_never_claims_complete_or_grounds_retrieval() -> None:
+    context = parse_image_context_response(
+        _structured_response(text_confidence="low", lines=[{"text": "Possible text", "kind": "body"}]),
+        card_ids_by_signal=CARD_IDS,
+    )
+    assert context.pages[0].status == "partial"
+    assert context.pages[0].items[0].kind == "unclear"
+    assert context.visible_language_text == ""
+
+
+def test_empty_page_is_explicitly_unavailable() -> None:
+    context = parse_image_context_response(_structured_response(), card_ids_by_signal=CARD_IDS)
+    assert context.pages[0].status == "unavailable"
+    assert not context.pages[0].complete
+    assert "no_readable_text" in context.pages[0].issues
+
+
+def test_legacy_transcript_cannot_claim_verified_completeness() -> None:
+    context = parse_image_context_response(
+        _response(visible_language_text=["Håfa adai"]), card_ids_by_signal=CARD_IDS,
+    )
+    assert context.pages[0].status == "partial"
+    assert context.pages[0].issues == ("legacy_unverified",)
+
+
+def test_structured_parser_rejects_malformed_types_and_unknown_fields() -> None:
+    from src.rag.image_translation_context import try_parse_image_context_response
+
+    invalid = [
+        {"complete": "true"}, {"text_confidence": []}, {"text_confidence": "certain"},
+        {"signals": ["MSY", "MSY"]}, {"lines": "text"},
+        {"lines": [{"text": "text", "kind": "instruction"}]},
+        {"lines": [{"text": "text", "kind": "body", "trusted": True}]},
+        {"lines": [{"text": None, "kind": "body"}]},
+    ]
+    for overrides in invalid:
+        assert try_parse_image_context_response(
+            _structured_response(**overrides), card_ids_by_signal=CARD_IDS,
+        ) is None
+
+
+def test_page_limits_are_visible_and_do_not_crop_later_pages() -> None:
+    from src.rag.image_translation_context import MAX_IMAGE_TEXT_ITEMS
+
+    first = parse_image_context_response(
+        _structured_response(lines=[{"text": f"Item {i}", "kind": "body"} for i in range(140)]),
+        card_ids_by_signal=CARD_IDS,
+    )
+    second = parse_image_context_response(
+        _structured_response(lines=[{"text": "Last page question", "kind": "body"}]),
+        card_ids_by_signal=CARD_IDS, image_index=1,
+    )
+    merged = merge_image_translation_contexts([first, second])
+    assert len(merged.pages) == 2
+    assert len(merged.pages[0].items) == MAX_IMAGE_TEXT_ITEMS
+    assert merged.pages[0].status == "partial"
+    assert "page_limit" in merged.pages[0].issues
+    assert merged.pages[1].status == "complete"
+    assert merged.pages[1].items[0].text == "Last page question"
+
+
+def test_long_line_has_explicit_partial_marker() -> None:
+    context = parse_image_context_response(
+        _structured_response(lines=[{"text": "x" * 2200, "kind": "body"}]),
+        card_ids_by_signal=CARD_IDS,
+    )
+    page = context.pages[0]
+    assert page.status == "partial"
+    assert "line_limit" in page.issues
+    assert "exceeds transcription limit" in page.items[0].text
+    assert page.items[0].kind == "unclear"
+
+
+def test_retrieval_budget_is_fair_while_page_transcripts_remain_complete() -> None:
+    contexts = [
+        parse_image_context_response(
+            _structured_response(lines=[{"text": letter * 1000, "kind": "body"} for _ in range(3)]),
+            card_ids_by_signal=CARD_IDS, image_index=i,
+        ) for i, letter in enumerate("ABC")
+    ]
+    merged = merge_image_translation_contexts(contexts)
+    query, is_translation = build_image_translation_query("What do these say?", merged)
+    excerpt = query.split("\n\n", 1)[1]
+    assert is_translation
+    assert len(excerpt) <= 4000
+    assert all(excerpt.count(letter) >= 1300 for letter in "ABC")
+    assert all(len(page.visible_language_text) == 3002 for page in merged.pages)
+    assert all(page.complete for page in merged.pages)
+
+
+def test_short_pages_donate_unused_retrieval_allowance() -> None:
+    contexts = [
+        parse_image_context_response(
+            _structured_response(lines=[{"text": text, "kind": "body"} for text in lines]),
+            card_ids_by_signal=CARD_IDS, image_index=i,
+        ) for i, lines in enumerate([["Short page"], ["A" * 1500] * 3])
+    ]
+    query, _ = build_image_translation_query("Translate these pages", merge_image_translation_contexts(contexts))
+    assert "Short page" in query
+    assert query.count("A") > 3900
+
+
+def test_plural_requests_and_empty_upload_trigger_translation() -> None:
+    from src.rag.image_translation_context import is_image_translation_request
+
+    for request in ["", "What do these say?", "What do the photos mean?", "Read these pages", "Translate these"]:
+        assert is_image_translation_request(request)
+    assert not is_image_translation_request("Describe the colors")
+
+
+def test_structured_body_role_preserves_words_also_used_by_app_chrome() -> None:
+    context = parse_image_context_response(
+        _structured_response(lines=[
+            {"text": "Read", "kind": "body"},
+            {"text": "Yesterday", "kind": "body"},
+            {"text": "Delivered", "kind": "private_metadata"},
+        ]), card_ids_by_signal=CARD_IDS,
+    )
+    assert [item.text for item in context.pages[0].items] == ["Read", "Yesterday"]
+
+
+def test_page_character_limit_counts_separators_and_keeps_partial_status() -> None:
+    from src.rag.image_translation_context import MAX_IMAGE_PAGE_CHARS
+
+    context = parse_image_context_response(
+        _structured_response(lines=[{"text": "a" * 2000, "kind": "body"}] * 7),
+        card_ids_by_signal=CARD_IDS,
+    )
+    page = context.pages[0]
+    assert len(page.visible_language_text) <= MAX_IMAGE_PAGE_CHARS
+    assert "page_limit" in page.issues
+    assert page.status == "partial"
+
+
+def test_filtered_contact_inside_body_cannot_claim_complete():
+    from src.rag.image_translation_context import try_parse_image_context_response
+    context = try_parse_image_context_response(json.dumps({
+        'signals': [], 'text_confidence': 'high', 'complete': True,
+        'lines': [{'kind': 'body', 'text': 'Please email parent@example.com about this exercise.'},
+                  {'kind': 'body', 'text': 'A. Worksheet option'}],
+    }), card_ids_by_signal={})
+    assert context is not None
+    assert context.pages[0].complete is False
+    assert 'filtered_contact' in context.pages[0].issues
+    assert 'example.com' not in context.visible_language_text
+
+
+def test_explicit_request_not_to_translate_does_not_select_translation_pipeline():
+    from src.rag.image_translation_context import is_image_translation_request
+    assert not is_image_translation_request('Do not translate this; help me answer question 2.')
+    assert not is_image_translation_request("Don't translate the pages. Describe the layout.")
+    assert is_image_translation_request('Translate this and help me understand question 2.')
+
+
+def test_scoped_or_review_requests_keep_the_general_image_path():
+    from src.rag.image_translation_context import is_full_image_translation_request
+    for request in ['Translate only question 3.', 'Translate page 2.',
+                    'Can you check whether this translation is accurate?',
+                    'What does this say? Only the final paragraph please.',
+                    'Please translate the first page.', 'Is this translation correct?']:
+        assert not is_full_image_translation_request(request)
+
+
+def test_scoped_translation_keeps_source_text_for_retrieval():
+    from src.rag.image_translation_context import is_image_translation_request, is_full_image_translation_request
+    assert is_image_translation_request("Translate only question 3.")
+    assert not is_full_image_translation_request("Translate", full_message="Translate\n\n--- Document Content ---\nOther attachment")
+
+
+def test_filtered_contact_in_unclear_line_marks_reading_partial():
+    from src.rag.image_translation_context import try_parse_image_context_response
+    context = try_parse_image_context_response(_structured_response(lines=[
+        {"kind": "unclear", "text": "Please email example@example.com"},
+        {"kind": "body", "text": "Readable worksheet line"},
+    ]), card_ids_by_signal={})
+    assert context.pages[0].status == "partial"
+    assert "filtered_contact" in context.pages[0].issues

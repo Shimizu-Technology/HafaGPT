@@ -10,12 +10,12 @@ const hasAuthenticatedTestConfig = Boolean(
 const projects: Project[] = [
   {
     name: 'desktop-chromium',
-    testIgnore: /authenticated\.spec\.ts/,
+    testIgnore: /(?:authenticated|streaming)\.spec\.ts/,
     use: { ...devices['Desktop Chrome'] },
   },
   {
     name: 'mobile-chromium',
-    testIgnore: /authenticated\.spec\.ts/,
+    testIgnore: /(?:authenticated|streaming)\.spec\.ts/,
     use: { ...devices['Pixel 7'] },
   },
 ];

@@ -5,6 +5,9 @@ from types import SimpleNamespace
 
 from src.rag.image_translation_context import (
     ImageTranslationContext,
+    ImagePageContext,
+    IMAGE_CONTEXT_RESPONSE_FORMAT,
+    IMAGE_TRANSCRIPTION_INSTRUCTIONS,
     merge_image_translation_contexts,
     parse_image_context_response,
     try_parse_image_context_response,
@@ -58,7 +61,7 @@ def _load_image_helpers(
             if isinstance(response_text, Exception):
                 raise response_text
             message = SimpleNamespace(content=response_text)
-            return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+            return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason="stop")])
 
     class FakeLogger:
         def info(self, *_args):
@@ -77,6 +80,10 @@ def _load_image_helpers(
             "MSY": "usage.guam.school.msy_greeting",
         },
         "ImageTranslationContext": ImageTranslationContext,
+        "ImagePageContext": ImagePageContext,
+        "IMAGE_CONTEXT_RESPONSE_FORMAT": IMAGE_CONTEXT_RESPONSE_FORMAT,
+        "IMAGE_TRANSCRIPTION_INSTRUCTIONS": IMAGE_TRANSCRIPTION_INSTRUCTIONS,
+        "model_supports_temperature": lambda model: False,
         "merge_image_translation_contexts": merge_image_translation_contexts,
         "parse_image_context_response": parse_image_context_response,
         "try_parse_image_context_response": try_parse_image_context_response,
@@ -133,7 +140,9 @@ def test_image_detector_includes_sym_card_only_after_scoped_visual_match() -> No
     assert card_ids == ("usage.guam.school.sym_signoff",)
     request = completions.calls[0]
     assert request["model"] == "vision-model"
-    assert request["max_tokens"] == 1000
+    assert request["max_tokens"] == 6000
+    assert request["response_format"] == IMAGE_CONTEXT_RESPONSE_FORMAT
+    assert "temperature" not in request
     detector_prompt = request["messages"][1]["content"][0]["text"]
     assert "same image" in detector_prompt
     assert "Guam/Chamorro/Hurao" in detector_prompt
@@ -282,7 +291,7 @@ def test_image_detector_reports_school_signal_without_governed_cards() -> None:
 
     assert detect_image_context(
         [{"data": "school-announcement", "content_type": "image/png"}]
-    ) == ImageTranslationContext(school_announcement=True)
+    ).school_announcement is True
     detector_prompt = completions.calls[0]["messages"][1]["content"][0]["text"]
     assert "operational school" in detector_prompt
 
@@ -292,12 +301,12 @@ def test_image_detector_can_report_school_and_scoped_acronym_together() -> None:
         detector_text=_detector_json(signals=["SCHOOL", "SYM"])
     )
 
-    assert detect_image_context(
+    context = detect_image_context(
         [{"data": "hurao-school-sym", "content_type": "image/jpeg"}]
-    ) == ImageTranslationContext(
-        card_ids=("usage.guam.school.sym_signoff",),
-        school_announcement=True,
     )
+    assert context.card_ids == ("usage.guam.school.sym_signoff",)
+    assert context.school_announcement is True
+    assert len(context.pages) == 1
 
 
 def test_image_detector_returns_privacy_safe_translation_text() -> None:
@@ -335,3 +344,13 @@ def test_low_confidence_image_text_is_not_used_for_retrieval() -> None:
     assert detect_image_context(
         [{"data": "blurry", "content_type": "image/png"}]
     ).visible_language_text == ""
+
+
+def test_cancellation_between_images_stops_remaining_extraction_calls():
+    _, _, _, detect, completions = _load_image_helpers(detector_text=_detector_json(lines=['Håfa adai!']))
+    context = detect([
+        {'data': 'first', 'content_type': 'image/png'},
+        {'data': 'second', 'content_type': 'image/png'},
+    ], cancelled=lambda: bool(completions.calls))
+    assert len(completions.calls) == 1
+    assert len(context.pages) == 1

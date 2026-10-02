@@ -38,3 +38,28 @@ def test_truncate_text_omits_indicator_when_it_cannot_fit() -> None:
 
     assert count_tokens(fitted) <= 3
     assert "content truncated" not in fitted
+
+
+def test_reference_allocation_is_not_cut_by_instruction_cap() -> None:
+    from api.prompt_budget import assemble_system_prompt
+    from src.utils.token_manager import TokenBudget
+
+    instructions = "Keep every question and answer choice. " * 140
+    references = "Verified dictionary evidence. " * 700 + " FINAL_REFERENCE_SENTINEL"
+    prompt, used_web = assemble_system_prompt(instructions, references, "", TokenBudget())
+    assert count_tokens(prompt) > 3000
+    assert prompt == instructions + "\n\n" + references
+    assert prompt.endswith("FINAL_REFERENCE_SENTINEL")
+    assert not used_web
+
+
+def test_combined_prompt_keeps_instructions_and_references_when_web_is_large() -> None:
+    from api.prompt_budget import assemble_system_prompt
+    from src.utils.token_manager import TokenBudget
+
+    core = "Mandatory instruction. " * 200
+    references = "Source evidence. " * 800
+    prompt, used_web = assemble_system_prompt(core, references, "Web result. " * 4000, TokenBudget())
+    assert prompt.startswith(core + "\n\n" + references)
+    assert count_tokens(prompt) <= 7000
+    assert used_web

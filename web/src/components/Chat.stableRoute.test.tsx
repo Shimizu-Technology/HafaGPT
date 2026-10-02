@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
@@ -25,6 +25,7 @@ const state = vi.hoisted(() => ({
   createConversation: vi.fn(),
   setError: vi.fn(),
   openSignIn: vi.fn(),
+  sendMessageStream: vi.fn(),
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
@@ -40,7 +41,7 @@ vi.mock('@clerk/clerk-react', () => ({
 vi.mock('../hooks/useChatbot', () => ({
   CancelledError: class CancelledError extends Error {},
   useChatbot: () => ({
-    sendMessageStream: vi.fn(),
+    sendMessageStream: state.sendMessageStream,
     cancelMessage: vi.fn(async () => undefined),
     loading: false,
     error: null,
@@ -142,6 +143,7 @@ describe('Chat stable conversation route', () => {
     state.tryUse.mockResolvedValue(true);
     state.createConversation.mockReset();
     state.setError.mockReset();
+    state.sendMessageStream.mockReset();
     window.localStorage.clear();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
@@ -204,6 +206,23 @@ describe('Chat stable conversation route', () => {
     expect(screen.queryByText('Test message')).not.toBeInTheDocument();
     expect(screen.queryByText('Thinking')).not.toBeInTheDocument();
     expect(state.createConversation).not.toHaveBeenCalled();
+  });
+
+
+  it('keeps the optimistic user and assistant DOM mounted when streaming finishes', async () => {
+    state.createConversation.mockResolvedValue({ id: 'conv-created' });
+    renderChat('/chat');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    const callbacks = state.sendMessageStream.mock.calls[0][3];
+    act(() => callbacks.onChunk('First paragraph.', 'First paragraph.'));
+    const userMessage = screen.getByText('Test message');
+    const assistantMessage = screen.getByText('First paragraph.');
+    act(() => callbacks.onChunk(' Final sentence.', 'First paragraph. Final sentence.'));
+    expect(screen.getByText('First paragraph. Final sentence.')).toBe(assistantMessage);
+    act(() => callbacks.onDone(2.5));
+    expect(screen.getByText('First paragraph. Final sentence.')).toBe(assistantMessage);
+    expect(screen.getByText('Test message')).toBe(userMessage);
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import type { SourceInfo } from '../types/source';
 import { browserStorage } from '../lib/browserStorage';
+import { createStreamTextBatcher } from '../lib/streamTextBatcher';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -37,6 +38,8 @@ export interface FileInfo {
 
 export interface ChatMessage {
   id?: string; // Message UUID from database
+  renderKey?: string; // Stable local identity across optimistic completion
+  isStreaming?: boolean;
   role: 'user' | 'assistant' | 'system';
   content: string;
   imageUrl?: string; // Legacy: For displaying uploaded images in chat history
@@ -289,6 +292,8 @@ export function useChatbot() {
     setLoading(true);
     setError(null);
 
+    const textBatcher = createStreamTextBatcher(callbacks.onChunk);
+
     try {
       // Get auth token if user is signed in
       let token = null;
@@ -355,7 +360,6 @@ export function useChatbot() {
       }
 
       const decoder = new TextDecoder();
-      let fullContent = '';
       let buffer = '';
       let receivedTerminalEvent = false;
 
@@ -394,11 +398,11 @@ export function useChatbot() {
                   break;
                   
                 case 'chunk':
-                  fullContent += event.content;
-                  callbacks.onChunk(event.content, fullContent);
+                  textBatcher.append(event.content);
                   break;
                   
                 case 'done':
+                  textBatcher.flush();
                   receivedTerminalEvent = true;
                   callbacks.onDone(event.response_time);
                   break;
@@ -440,6 +444,7 @@ export function useChatbot() {
       callbacks.onError(errorMessage);
       throw err;
     } finally {
+      textBatcher.cancel();
       setLoading(false);
       abortControllerRef.current = null;
       pendingIdRef.current = null;

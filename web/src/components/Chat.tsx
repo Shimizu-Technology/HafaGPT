@@ -29,7 +29,7 @@ import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentLabel, getChatIntentPlaceholder } from '../lib/chatIntent';
-import { getChatScrollTop, shouldPinInitialExchangeToTop } from '../lib/chatScroll';
+import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
 import { browserStorage } from '../lib/browserStorage';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
@@ -40,7 +40,6 @@ export function Chat() {
   const { conversationId: routeConversationId } = useParams<{ conversationId: string }>();
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -398,140 +397,14 @@ export function Chat() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const pinInitialExchangeToTop = shouldPinInitialExchangeToTop(messages);
-
-  const scrollToBottom = useCallback((
-    behavior: ScrollBehavior = 'smooth',
-    preserveInitialExchange = true,
-  ) => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const paddingBottom = Number.parseFloat(getComputedStyle(container).paddingBottom) || 0;
-    const top = getChatScrollTop({
-      scrollHeight: container.scrollHeight,
-      clientHeight: container.clientHeight,
-      paddingBottom,
-      isInitialExchange: pinInitialExchangeToTop,
-      preserveInitialExchange,
-    });
-
-    // Scroll only the messages viewport. Element.scrollIntoView() can also move
-    // outer ancestors in mobile Safari, which consumes the fixed header gutter.
-    container.scrollTo({ top, behavior });
-  }, [pinInitialExchangeToTop]);
-
-  // Track if user has manually scrolled up (to avoid auto-scroll when reading history)
-  const userScrolledUpRef = useRef(false);
-  // Track if we're doing programmatic scroll (to ignore scroll events from auto-scroll)
-  const isProgrammaticScrollRef = useRef(false);
-  
-  // Check if user is near bottom of scroll
-  const isNearBottom = () => {
-    const container = messagesContainerRef.current;
-    if (!container) return true;
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    return scrollHeight - scrollTop - clientHeight < 150;
-  };
-
-  // Track user scroll behavior - only respond to user-initiated scroll
+  const { showScrollButton, resumeFollowing, resetScrollTracking } = useChatAutoScroll(
+    messagesContainerRef, messages,
+  );
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    
-    // Use wheel event to detect user intent to scroll up
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY < 0) {
-        // User scrolling UP - they want to read history
-        userScrolledUpRef.current = true;
-      } else if (e.deltaY > 0 && isNearBottom()) {
-        // User scrolling DOWN and near bottom - resume auto-scroll
-        userScrolledUpRef.current = false;
-      }
-    };
-    
-    // Also handle touch scroll for mobile
-    let touchStartY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
-    };
-    const handleTouchMove = (e: TouchEvent) => {
-      const touchY = e.touches[0].clientY;
-      const deltaY = touchStartY - touchY;
-      
-      if (deltaY < -10) {
-        // User swiping DOWN (scrolling UP) - they want to read history
-        userScrolledUpRef.current = true;
-      } else if (deltaY > 10 && isNearBottom()) {
-        // User swiping UP (scrolling DOWN) and near bottom - resume auto-scroll
-        userScrolledUpRef.current = false;
-      }
-    };
-    
-    container.addEventListener('wheel', handleWheel, { passive: true });
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: true });
-    
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, []);
+    if (!isSendingMessageRef.current) resetScrollTracking();
+  }, [activeConversationId, resetScrollTracking]);
 
-  // Auto-scroll on new messages
-  useEffect(() => {
-    // Small delay to ensure DOM has updated
-    const timer = setTimeout(() => {
-      // Always scroll when new message is added (unless user explicitly scrolled up)
-      if (!userScrolledUpRef.current) {
-        isProgrammaticScrollRef.current = true;
-        scrollToBottom();
-        setTimeout(() => { isProgrammaticScrollRef.current = false; }, 100);
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [messages.length, scrollToBottom]);
-
-  // Auto-scroll during streaming - but respect user's choice to scroll up
-  const isCurrentlyStreaming = messages.some(m => m.id?.startsWith('streaming_'));
-  useEffect(() => {
-    if (isCurrentlyStreaming && !userScrolledUpRef.current) {
-      // Use instant scroll during streaming for smoother experience
-      isProgrammaticScrollRef.current = true;
-      scrollToBottom('instant');
-      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 50);
-    }
-  }, [messages, isCurrentlyStreaming, scrollToBottom]);
-  
-  // Reset scroll tracking when user sends a new message (they want to see the response)
-  const resetScrollTracking = () => {
-    userScrolledUpRef.current = false;
-  }
-
-  // Detect scroll position to show/hide scroll button
-  useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      const isScrollable = scrollHeight > clientHeight;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
-      
-      // Only show button if:
-      // 1. There are messages to show
-      // 2. Container is actually scrollable
-      // 3. User has scrolled up (not near bottom)
-      setShowScrollButton(messages.length > 0 && isScrollable && !isNearBottom);
-    };
-
-    // Check immediately on mount/update
-    handleScroll();
-    
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [messages.length]);
+  const isCurrentlyStreaming = messages.some(message => message.isStreaming);
 
   // Handler to open sign-in modal for unauthenticated users
   const handleSignInClick = () => {
@@ -583,6 +456,7 @@ export function Chat() {
     // INSTANT: Add user message immediately
     const userMessage: ChatMessage = {
       id: userMessageId,
+      renderKey: userMessageId,
       role: 'user',
       content: message,
       file_urls: localFileUrls,
@@ -593,6 +467,8 @@ export function Chat() {
     // INSTANT: Add thinking indicator immediately
     const placeholderMessage: ChatMessage = {
       id: assistantMessageId,
+      renderKey: assistantMessageId,
+      isStreaming: true,
       role: 'assistant',
       content: '',  // Empty - will show thinking animation
       timestamp: Date.now(),
@@ -666,17 +542,12 @@ export function Chat() {
       // STREAMING: Now send the actual message
       // ========================================================================
       
-      let receivedFirstChunk = false;
-
       await sendMessageStream(
         message,
         mode,
         currentConversationId,
         {
           onChunk: (_chunk, fullContent) => {
-            if (!receivedFirstChunk) {
-              receivedFirstChunk = true;
-            }
             setMessages((prev) => 
               prev.map((msg) => 
                 msg.id === assistantMessageId 
@@ -698,7 +569,7 @@ export function Chat() {
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
-                  return { ...msg, response_time, id: undefined };
+                  return { ...msg, response_time, id: undefined, isStreaming: false };
                 }
                 // Also clear the user message ID (it's now persisted)
                 if (msg.id === userMessageId) {
@@ -714,7 +585,7 @@ export function Chat() {
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
-                  return { ...msg, id: undefined, content: `Error: ${errorMsg}` };
+                  return { ...msg, id: undefined, isStreaming: false, content: `Error: ${errorMsg}` };
                 }
                 if (msg.id === userMessageId) {
                   return { ...msg, id: undefined };
@@ -731,6 +602,7 @@ export function Chat() {
                   return {
                     ...msg,
                     id: undefined,
+                    isStreaming: false,
                     content: 'Message cancelled',
                     systemType: 'cancelled',
                     cancelled: true,
@@ -917,6 +789,13 @@ export function Chat() {
     // INSTANT: Send the edited message (this will add user message + thinking indicator immediately)
     handleSend(newContent);
   };
+
+  // Stable prop identity lets memoized history messages skip streaming renders.
+  const editMessageRef = useRef(handleEditMessage);
+  useEffect(() => { editMessageRef.current = handleEditMessage; });
+  const editMessage = useCallback((newContent: string, index?: number) => {
+    if (index !== undefined) void editMessageRef.current(index, newContent);
+  }, []);
 
   const handleExportChat = (format: 'txt' | 'json') => {
     if (messages.length === 0) return;
@@ -1133,6 +1012,8 @@ End of Export
         <div
           ref={messagesContainerRef}
           data-testid="chat-messages"
+          tabIndex={0}
+          aria-label="Conversation messages"
           className="h-full min-h-0 overflow-y-auto overflow-x-hidden px-4 sm:px-4 pb-[200px] sm:pb-[140px] custom-scrollbar"
         >
           <div className="w-full max-w-4xl mx-auto">
@@ -1182,14 +1063,14 @@ End of Export
                 // Determine if this user message can be edited
                 // Can edit if: it's a user message, not currently streaming, and not a cancelled message
                 const isUserMessage = message.role === 'user';
-                const isNotStreaming = !loading && !messages.some(m => m.id?.startsWith('streaming_'));
+                const isNotStreaming = !loading && !isCurrentlyStreaming;
                 const canEditMessage = isUserMessage && isNotStreaming && !message.cancelled;
 
                 return (
                   <Message 
                     // A conversation log row can produce both the user and assistant
                     // message, so its database id is only unique together with role.
-                    key={message.id ? `${message.id}-${message.role}` : index}
+                    key={message.renderKey || (message.id ? `${message.id}-${message.role}` : index)}
                     role={message.role}
                     content={message.content}
                     imageUrl={message.imageUrl}
@@ -1205,14 +1086,15 @@ End of Export
                     messageId={message.id}
                     conversationId={activeConversationId || undefined}
                     cancelled={message.cancelled}
-                    isStreaming={message.id?.startsWith('streaming_')}
+                    isStreaming={message.isStreaming}
                     canEdit={canEditMessage}
-                    onEdit={(newContent) => handleEditMessage(index, newContent)}
+                    onEdit={editMessage}
+                    messageIndex={index}
                   />
                 );
               })}
               {/* Only show loading indicator when not streaming (fallback for non-streaming requests) */}
-              {loading && !messages.some(m => m.id?.startsWith('streaming_')) && <LoadingIndicator />}
+              {loading && !isCurrentlyStreaming && <LoadingIndicator />}
               {error && (
                 <div className="flex justify-center mb-4 animate-fade-in">
                   <div className="bg-hibiscus-50 dark:bg-red-950/30 border border-hibiscus-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
@@ -1248,13 +1130,11 @@ End of Export
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
             <button
               onClick={() => {
-                resetScrollTracking();
-                scrollToBottom('smooth', false);
+                resumeFollowing();
               }}
               onTouchEnd={(e) => {
                 e.preventDefault();
-                resetScrollTracking();
-                scrollToBottom('smooth', false);
+                resumeFollowing();
               }}
               className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
               aria-label="Scroll to bottom"

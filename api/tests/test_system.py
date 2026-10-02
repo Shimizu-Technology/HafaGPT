@@ -39,14 +39,14 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     assert "MODE_PROMPTS =" in chatbot_source
     assert "def get_rag_context(" in chatbot_source
     assert "from src.rag.web_search_tool import web_search" in chatbot_source
-    assert chatbot_source.count('if mode != "chamorro" and skill_level') == 2
+    assert chatbot_source.count('if mode != "chamorro" and skill_level') == 3
     assert chatbot_source.count(
-        "elif not is_passage_translation(effective_translation_message) and not school_announcement:"
+        "if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:"
     ) == 2
-    assert chatbot_source.count("build_image_translation_query(") == 2
-    assert chatbot_source.count("build_translation_structure_hints(") == 2
+    assert chatbot_source.count("build_image_translation_query(") == 3
+    assert chatbot_source.count("build_translation_structure_hints(") == 3
     assert chatbot_source.count("translation_prompt_guidance(") == 2
-    assert chatbot_source.count("resolve_school_message_context(") == 2
+    assert chatbot_source.count("resolve_school_message_context(") == 3
     assert chatbot_source.count(
         "analysis_guidance, school_announcement, contextual_card_ids = ("
     ) == 2

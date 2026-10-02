@@ -44,7 +44,7 @@ def _load_get_rag_context(
         "should_use_rag": lambda _query, _length: (
             (True, "full") if use_rag else (False, None)
         ),
-        "get_canonical_tutor_context": lambda _query: (
+        "get_canonical_tutor_context": lambda _query, **_kwargs: (
             "canonical context",
             [{"name": "Canonical", "page": None}],
         ),

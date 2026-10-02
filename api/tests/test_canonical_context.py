@@ -162,3 +162,104 @@ def test_non_translation_prose_does_not_trigger_passage_dictionary_scan() -> Non
     )
 
     assert "passage dictionary evidence" not in context
+
+
+def test_exact_passage_spelling_does_not_hide_conflicting_governed_senses() -> None:
+    context, sources = get_canonical_tutor_context(
+        "Translate this passage into English:\n\nÅnglo'\nKåmpo"
+    )
+    assert "Exact passage dictionary evidence: ånglo'" in context
+    assert "Sterile; barren" in context
+    assert "Possible OCR/spelling-near dictionary evidence for ånglo': ånglu'" in context
+    assert "dry, dried up" in context
+    assert "Exact passage dictionary evidence: kåmpo" in context
+    assert "Definition: Camp." in context
+    assert "Possible OCR/spelling-near dictionary evidence for kåmpo: kåmpu" in context
+    assert "space, room, area" in context
+    assert "not synonyms" in context
+    assert "flag unresolved conflicts" in context
+    assert ("Revised and updated Chamorro dictionary", None) in sources
+
+
+def test_passage_retains_each_governed_dictionary_definition_for_headword() -> None:
+    from api.canonical_context import _passage_dictionary_matches
+
+    matches = _passage_dictionary_matches("Translate this passage:\n\nGuagua' yan åcho'")
+    basket_matches = [match for match in matches if match[2].casefold() == "guagua'"]
+    assert {match[1] for match in basket_matches} == {
+        "Chamoru.info dictionary", "Topping, Ogo, and Dungca dictionary",
+        "Revised and updated Chamorro dictionary",
+    }
+    assert all(not match[4] for match in basket_matches)
+    assert any(match[2] == "åcho'" for match in matches)
+
+
+def test_apostrophe_candidates_are_narrow_and_do_not_rewrite_source() -> None:
+    context, _ = get_canonical_tutor_context("Translate this passage:\n\nGuagua yan åcho'")
+    assert "Possible OCR/spelling-near dictionary evidence for guagua: guagua'" in context
+    assert "Exact passage dictionary evidence: guagua'" not in context
+    # Two added apostrophes lead to an unrelated entry and exceed the one-edit bound.
+    assert "gua'gua'" not in context
+    assert "regurgitation" not in context
+    assert "do not silently replace the supplied spelling" in context
+
+
+def test_exact_match_does_not_open_arbitrary_one_letter_neighbours(monkeypatch) -> None:
+    import api.canonical_context as module
+
+    fake_index = {
+        "stone": (("Example dictionary", "stone", "fixture definition"),),
+        "stoke": (("Example dictionary", "stoke", "unrelated fixture"),),
+        "stune": (("Example dictionary", "stune", "spelling candidate fixture"),),
+    }
+    monkeypatch.setattr(module, "_exact_dictionary_index", lambda: fake_index)
+    monkeypatch.setattr(module, "_spelling_candidate_index", lambda: {"stune": ("stone", "stune")})
+    monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {("st", 5): tuple(fake_index)})
+    matches = module._passage_dictionary_matches("Translate this passage:\n\nStone fixture")
+    assert {match[2] for match in matches} == {"stone", "stune"}
+
+
+def test_short_later_choices_receive_evidence_before_more_first_line_words(monkeypatch) -> None:
+    import api.canonical_context as module
+
+    long_terms = ["longword" + chr(ord('a') + index) for index in range(26)]
+    fake_index = {word: (("Example dictionary", word, "fixture definition"),) for word in long_terms}
+    fake_index.update({word: (("Example dictionary", word, "short option"),) for word in ["abc", "def", "ghi"]})
+    monkeypatch.setattr(module, "_exact_dictionary_index", lambda: fake_index)
+    monkeypatch.setattr(module, "_spelling_candidate_index", lambda: {})
+    monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {})
+    query = "Translate this passage:\n\n" + " ".join(long_terms) + "\nabc\ndef\nghi"
+    matches = module._passage_dictionary_matches(query)
+    assert [match[2] for match in matches[:4]] == [long_terms[0], "abc", "def", "ghi"]
+    assert len(matches) == module.MAX_PASSAGE_DICTIONARY_MATCHES
+
+
+def test_distinct_definitions_from_same_normalized_headword_are_not_discarded(monkeypatch) -> None:
+    import api.canonical_context as module
+
+    fake_index = {"example": (
+        ("First dictionary", "example", "first sense"),
+        ("Second dictionary", "Example", "different sense"),
+        ("Third dictionary", "example", "third sense"),
+    )}
+    monkeypatch.setattr(module, "_exact_dictionary_index", lambda: fake_index)
+    monkeypatch.setattr(module, "_spelling_candidate_index", lambda: {})
+    monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {})
+    matches = module._passage_dictionary_matches("Translate this passage:\n\nExample fixture")
+    assert [match[3] for match in matches] == ["first sense", "different sense", "third sense"]
+
+
+def test_image_batch_can_request_evidence_beyond_the_default_short_passage_limit(monkeypatch):
+    import api.canonical_context as module
+
+    terms = ["longword" + chr(ord('a') + i) for i in range(26)]
+    terms += ["short"]
+    index = {word: (("Example dictionary", word, "fixture meaning"),) for word in terms}
+    monkeypatch.setattr(module, "_exact_dictionary_index", lambda: index)
+    monkeypatch.setattr(module, "_spelling_candidate_index", lambda: {})
+    monkeypatch.setattr(module, "_near_dictionary_headword_index", lambda: {})
+    query = "Translate this passage:\n\n" + " ".join(terms)
+    default, _ = module.get_canonical_tutor_context(query)
+    expanded, _ = module.get_canonical_tutor_context(query, passage_match_limit=64)
+    assert "dictionary evidence: short" not in default
+    assert "dictionary evidence: short" in expanded
