@@ -34,6 +34,7 @@ from .auth_policy import (
     validate_clerk_session_claims,
 )
 from .upload_storage import make_private_upload_reference
+from .sse import queue_sse_events
 
 from .models import (
     ChatRequest,
@@ -1452,25 +1453,11 @@ async def chat_stream(
             thread = threading.Thread(target=run_sync_generator, daemon=True)
             thread.start()
             
-            # Yield events as they come from the queue
-            while True:
-                # Try to get from queue without blocking
-                try:
-                    event = event_queue.get_nowait()
-                    yield f"data: {json.dumps(event)}\n\n"
-                except queue.Empty:
-                    # No event available
-                    if stream_done.is_set() and event_queue.empty():
-                        # Stream is finished and queue is empty
-                        yield "data: [DONE]\n\n"
-                        break
-                    # Wait a bit before checking again
-                    await asyncio.sleep(0.01)
-                except Exception as e:
-                    logger.error(f"SSE error: {e}")
-                    yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
-                    break
-        
+            # Keep the connection active during transcription and review calls,
+            # while preserving model event order and background persistence.
+            async for frame in queue_sse_events(event_queue, stream_done):
+                yield frame
+
         return StreamingResponse(
             generate_sse(),
             media_type="text/event-stream",
