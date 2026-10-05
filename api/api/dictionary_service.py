@@ -160,7 +160,8 @@ def normalize_chamorro(text: str) -> str:
         'å': 'a',
         'ñ': 'n',
         "'": '',   # Glottal stop (apostrophe)
-        "'": '',   # Curly apostrophe
+        "’": '',   # Right curly apostrophe
+        "‘": '',   # Left curly apostrophe
         "‑": '-',  # Non-breaking hyphen to regular hyphen
     }
     

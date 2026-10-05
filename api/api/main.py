@@ -7256,13 +7256,15 @@ async def get_usage_trends(
         cursor.execute("""
             WITH activity AS (
                 SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
-                       'chat' AS kind FROM conversation_logs WHERE role IN ('user', 'assistant')
+                       'chat' AS kind FROM conversation_logs
+                WHERE role IN ('user', 'assistant')
+                  AND timestamp >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day' * %s
                 UNION ALL
                 SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'games' FROM game_results
+                       'games' FROM game_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
                 UNION ALL
                 SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'quizzes' FROM quiz_results
+                       'quizzes' FROM quiz_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
             )
             SELECT day,
                    COUNT(*) FILTER (WHERE kind = 'chat'),
@@ -7272,7 +7274,7 @@ async def get_usage_trends(
             FROM activity
             WHERE day >= (NOW() AT TIME ZONE 'Pacific/Guam')::date - %s
             GROUP BY day ORDER BY day
-        """, (days,))
+        """, (days + 1, days + 1, days + 1, days))
 
         rows = cursor.fetchall()
         

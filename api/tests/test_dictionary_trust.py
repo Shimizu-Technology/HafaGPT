@@ -180,3 +180,10 @@ def test_category_search_is_diacritic_insensitive_and_handles_empty_query():
     assert service.get_category_words("greetings", query="HANUM")["total"] == 1
     assert service.get_category_words("greetings", query="   ")["total"] == 1
     assert service.get_category_words("greetings", query="missing")["total"] == 0
+
+
+def test_category_search_accepts_phone_keyboard_apostrophes():
+    service = DictionaryService.__new__(DictionaryService)
+    service._categories_cache = {"greetings": [{"chamorro": "Si Yu'os Ma'åse'", "definition": "thank you"}]}
+    assert service.get_category_words("greetings", query="Yu’os Ma’åse’")["total"] == 1
+    assert service.get_category_words("greetings", query="Yu‘os Ma‘åse‘")["total"] == 1
