@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RotateCcw, Play, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame, Target, Drama, ScrollText, Map, Languages, UtensilsCrossed, Flower2, Landmark, Building2, Trophy, Star, Lightbulb, type LucideIcon } from 'lucide-react';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -275,11 +277,16 @@ export function CulturalTrivia() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Settings state
+  const [timedChallenge, setTimedChallenge] = useState(false);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isStarting, setIsStarting] = useState(false);
@@ -328,39 +335,51 @@ export function CulturalTrivia() {
 
   // Start game
   const startGame = useCallback(async () => {
-    if (!canUse('game')) {
-      setShowUpgradePrompt(true);
-      return;
-    }
-    
-    setIsStarting(true);
-    
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
     try {
-      const success = await tryUse('game');
-      if (!success) {
+
+      const newQuestions = pickQuestions();
+      if (newQuestions.length === 0) return;
+      if (!canUse('game')) {
         setShowUpgradePrompt(true);
         return;
       }
       
-      const newQuestions = pickQuestions();
-      setQuestions(newQuestions);
-      setCurrentQuestionIndex(0);
-      setSelectedAnswer(null);
-      setShowResult(false);
-      setScore(0);
-      setStreak(0);
-      setMaxStreak(0);
-      setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
-      setTimerActive(true);
-      hasSavedRef.current = false;
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
+      setIsStarting(true);
+
+      try {
+        const success = await tryUse('game');
+        if (!success) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+
+        saveGameResultMutation.reset();
+        setCorrectAnswers(0);
+        setQuestions(newQuestions);
+        setCurrentQuestionIndex(0);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setScore(0);
+        setStreak(0);
+        setMaxStreak(0);
+        setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
+        setTimerActive(timedChallenge);
+        hasSavedRef.current = false;
+        gameAttemptIdRef.current = createClientAttemptId();
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        setGameState('playing');
+      } finally {
+        setIsStarting(false);
       }
-      setGameState('playing');
+
     } finally {
-      setIsStarting(false);
+      startingRef.current = false;
     }
-  }, [canUse, tryUse, pickQuestions, difficulty]);
+  }, [canUse, tryUse, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
 
   // Handle answer selection
   const handleAnswer = useCallback((answerIndex: number) => {
@@ -375,7 +394,8 @@ export function CulturalTrivia() {
     
     if (isCorrect) {
       // Bonus points for time remaining
-      const timeBonus = Math.floor(timeLeft * 5);
+      setCorrectAnswers(count => count + 1);
+      const timeBonus = timedChallenge ? Math.floor(timeLeft * 5) : 0;
       const streakBonus = streak * 10;
       setScore(prev => prev + 100 + timeBonus + streakBonus);
       setStreak(prev => {
@@ -386,7 +406,7 @@ export function CulturalTrivia() {
     } else {
       setStreak(0);
     }
-  }, [showResult, questions, currentQuestionIndex, timeLeft, streak]);
+  }, [showResult, questions, currentQuestionIndex, timeLeft, streak, timedChallenge]);
 
   useEffect(() => {
     if (!timerActive || timeLeft <= 0) return;
@@ -411,11 +431,11 @@ export function CulturalTrivia() {
       setSelectedAnswer(null);
       setShowResult(false);
       setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
-      setTimerActive(true);
+      setTimerActive(timedChallenge);
     } else {
       setGameState('complete');
     }
-  }, [currentQuestionIndex, questions.length, difficulty]);
+  }, [currentQuestionIndex, questions.length, difficulty, timedChallenge]);
 
   const handleBack = () => {
     if (gameState === 'playing') {
@@ -429,7 +449,7 @@ export function CulturalTrivia() {
   const keepPlaying = () => {
     setShowQuitConfirm(false);
     if (!showResult) {
-      setTimerActive(true);
+      setTimerActive(timedChallenge);
     }
   };
 
@@ -438,14 +458,14 @@ export function CulturalTrivia() {
     if (gameState === 'complete' && !hasSavedRef.current && isSignedIn) {
       hasSavedRef.current = true;
       
-      const correctAnswers = Math.round(score / 100); // Approximate
       let stars = 1;
-      if (correctAnswers >= 8) stars = 3;
-      else if (correctAnswers >= 5) stars = 2;
+      if (correctAnswers / questions.length >= 0.8) stars = 3;
+      else if (correctAnswers / questions.length >= 0.5) stars = 2;
       
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'cultural_trivia',
-        mode: 'challenge',
+        mode: timedChallenge ? 'challenge' : 'practice',
         category_id: selectedCategory,
         category_title: selectedCategory === 'all' ? 'All Categories' : CATEGORY_CONFIG[selectedCategory]?.label || 'Cultural Trivia',
         difficulty: difficulty,
@@ -454,11 +474,11 @@ export function CulturalTrivia() {
         stars,
       });
     }
-  }, [gameState, score, isSignedIn, saveGameResultMutation, difficulty, selectedCategory]);
+  }, [gameState, score, isSignedIn, saveGameResultMutation, difficulty, selectedCategory, correctAnswers, questions.length, timedChallenge]);
 
   // Calculate stars
   const getStars = () => {
-    const percentage = (score / (QUESTIONS_PER_GAME * 100)) * 100;
+    const percentage = questions.length ? (correctAnswers / questions.length) * 100 : 0;
     if (percentage >= 80) return 3;
     if (percentage >= 50) return 2;
     return 1;
@@ -476,6 +496,11 @@ export function CulturalTrivia() {
         />
 
         <main className="mx-auto max-w-2xl space-y-4 px-3 py-4 sm:px-4 sm:py-6">
+          <label className="flex min-h-12 items-center gap-3 rounded-xl border border-cream-300 bg-white p-4 text-brown-800 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200">
+            <input type="checkbox" checked={timedChallenge} onChange={event => setTimedChallenge(event.target.checked)} />
+            Timed challenge (optional). Practice has no time limit.
+          </label>
+          {timedChallenge && (
           <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h2 className="mb-3 flex items-center gap-2 font-semibold text-brown-800 dark:text-white">
               <Zap className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
@@ -488,7 +513,7 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'easy'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
                   difficulty === 'easy'
-                    ? 'bg-emerald-600 text-white shadow-lg'
+                    ? 'bg-emerald-700 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
@@ -502,7 +527,7 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'medium'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
                   difficulty === 'medium'
-                    ? 'bg-amber-600 text-white shadow-lg'
+                    ? 'bg-amber-700 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
@@ -526,6 +551,7 @@ export function CulturalTrivia() {
               </button>
             </div>
           </section>
+          )}
 
           <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <h2 className="mb-3 font-semibold text-brown-800 dark:text-white">Choose a topic</h2>
@@ -548,7 +574,7 @@ export function CulturalTrivia() {
                       isDisabled
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
-                          ? 'bg-coral-600 text-white shadow-lg dark:bg-teal-600'
+                          ? 'bg-coral-700 text-white shadow-lg dark:bg-teal-700'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }`}
                   >
@@ -570,7 +596,7 @@ export function CulturalTrivia() {
             type="button"
             onClick={startGame}
             disabled={availableQuestionCount === 0 || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
           >
             {isStarting ? (
               <>
@@ -638,20 +664,19 @@ export function CulturalTrivia() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => {
-                  hasSavedRef.current = false;
-                  startGame();
-                }}
+                onClick={startGame}
+                disabled={resultUnresolved}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 Play again
               </button>
-              <button type="button" onClick={() => navigate('/games')} className="min-h-12 rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
+              <button type="button" onClick={() => navigate('/games')} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
                 More games
               </button>
             </div>
           </section>
+          <GameSaveStatus mutation={saveGameResultMutation} />
         </main>
       </GamePage>
     );
@@ -685,7 +710,7 @@ export function CulturalTrivia() {
                   setTimerActive(false);
                   navigate('/games');
                 }}
-                className="flex-1 py-2 px-4 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
+                className="flex-1 py-2 px-4 bg-red-700 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
               >
                 Leave game
               </button>
@@ -700,9 +725,9 @@ export function CulturalTrivia() {
         icon={Landmark}
         onBack={handleBack}
         trailing={(
-          <div className={`flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold ${timeLeft <= 5 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200'}`} aria-label={`${timeLeft} seconds remaining`}>
+          <div className={`flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold ${timeLeft <= 5 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200'}`} aria-label={timedChallenge ? `${timeLeft} seconds remaining` : 'No time limit'}>
             <Timer className="h-4 w-4" aria-hidden="true" />
-            {timeLeft}s
+            {timedChallenge ? `${timeLeft}s` : 'No time limit'}
           </div>
         )}
       />
@@ -748,9 +773,9 @@ export function CulturalTrivia() {
                 >
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     showCorrect
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-green-700 text-white'
                       : showWrong
-                      ? 'bg-red-500 text-white'
+                      ? 'bg-red-700 text-white'
                       : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-400'
                   }`}>
                     {showCorrect ? <CheckCircle className="w-5 h-5" /> : showWrong ? <XCircle className="w-5 h-5" /> : String.fromCharCode(65 + index)}
@@ -781,7 +806,7 @@ export function CulturalTrivia() {
           <button
             type="button"
             onClick={nextQuestion}
-            className="min-h-12 w-full rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
           </button>

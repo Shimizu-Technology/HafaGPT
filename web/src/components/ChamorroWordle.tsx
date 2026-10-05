@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, RotateCcw, Calendar, Shuffle, Share2, Sparkles, BookOpen, Grid3X3, Trophy, Star } from 'lucide-react';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -91,9 +93,9 @@ const DIFFICULTY_CONFIG = {
 };
 
 // Get word for a specific date (daily challenge - always 5 letters)
-const getDailyWord = (): WordEntry => {
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 0);
+const getDailyWord = (day?: string): WordEntry => {
+  const today = new Date(`${day || new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Guam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())}T00:00:00Z`);
+  const startOfYear = new Date(Date.UTC(today.getUTCFullYear(), 0, 0));
   const diff = today.getTime() - startOfYear.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
   return DAILY_WORDS[dayOfYear % DAILY_WORDS.length];
@@ -103,9 +105,12 @@ const MAX_ATTEMPTS = 6;
 
 export function ChamorroWordle() {
   const navigate = useNavigate();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -118,6 +123,8 @@ export function ChamorroWordle() {
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'won' | 'lost'>('setup');
   const [gameMode, setGameMode] = useState<GameMode>('practice');
+  const [activeDailyKey, setActiveDailyKey] = useState('');
+  const [resumeStorageAvailable, setResumeStorageAvailable] = useState(true);
   const [targetWord, setTargetWord] = useState<WordEntry | null>(null);
   const [guesses, setGuesses] = useState<GuessResult[][]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -161,7 +168,7 @@ export function ChamorroWordle() {
   const wordLength = targetWord?.word.length || DIFFICULTY_CONFIG[difficulty].length;
 
   // Check if daily challenge was already played today
-  const dailyKey = `wordle-daily-${new Date().toDateString()}`;
+  const dailyKey = `wordle-daily-${new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Guam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())}`;
   const dailyPlayed = typeof window !== 'undefined' && browserStorage.get(dailyKey);
 
   // Get available words based on mode and difficulty
@@ -183,46 +190,59 @@ export function ChamorroWordle() {
 
   // Start game
   const startGame = useCallback(async (selectedGameMode: GameMode) => {
-    // Check usage limits before starting (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('game')) {
-        setShowUpgradePrompt(true);
-        return;
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    try {
+
+      const startDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Guam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      const startedDailyKey = `wordle-daily-${startDay}`;
+      let word: WordEntry;
+      if (selectedGameMode === 'daily') {
+        word = getDailyWord(startDay);
+      } else {
+        const words = getAvailableWords();
+        if (words.length === 0) {
+          setMessage('No words available for this category/difficulty');
+          return;
+        }
+        word = words[Math.floor(Math.random() * words.length)];
       }
-      const allowed = await tryUse('game');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
+
+      // Check usage limits before starting (only for signed-in users)
+      if (isSignedIn) {
+        if (!canUse('game')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+        const allowed = await tryUse('game');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+          return;
+        }
       }
-    }
-    
-    clearTransitionTimers();
-    setGameMode(selectedGameMode);
-    
-    let word: WordEntry;
-    if (selectedGameMode === 'daily') {
-      word = getDailyWord();
-    } else {
-      const words = getAvailableWords();
-      if (words.length === 0) {
-        setMessage('No words available for this category/difficulty');
-        return;
+
+      clearTransitionTimers();
+      setGameMode(selectedGameMode);
+      setActiveDailyKey(selectedGameMode === 'daily' ? startedDailyKey : '');
+
+      setTargetWord(word);
+      setGuesses([]);
+      setCurrentGuess('');
+      setCurrentRow(0);
+      setLetterStates({});
+      setMessage('');
+      saveGameResultMutation.reset();
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
       }
-      word = words[Math.floor(Math.random() * words.length)];
+      setGameState('playing');
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    setTargetWord(word);
-    setGuesses([]);
-    setCurrentGuess('');
-    setCurrentRow(0);
-    setLetterStates({});
-    setMessage('');
-    hasSavedRef.current = false;
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    setGameState('playing');
-  }, [getAvailableWords, isSignedIn, canUse, tryUse, clearTransitionTimers]);
+  }, [getAvailableWords, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
 
   // Handle key press
   const handleKeyPress = useCallback((key: string) => {
@@ -310,25 +330,28 @@ export function ChamorroWordle() {
     if (currentGuess === targetWord.word) {
       setGameState('won');
       if (gameMode === 'daily') {
-        browserStorage.set(dailyKey, 'true');
+        browserStorage.set(activeDailyKey, 'true');
       }
     } else if (newGuesses.length >= MAX_ATTEMPTS) {
       setGameState('lost');
       if (gameMode === 'daily') {
-        browserStorage.set(dailyKey, 'true');
+        browserStorage.set(activeDailyKey, 'true');
       }
     } else {
       setCurrentRow(prev => prev + 1);
     }
 
     setCurrentGuess('');
-  }, [gameState, currentGuess, wordLength, targetWord, guesses, letterStates, checkGuess, gameMode, dailyKey, scheduleTransition]);
+  }, [gameState, currentGuess, wordLength, targetWord, guesses, letterStates, checkGuess, gameMode, activeDailyKey, scheduleTransition]);
 
   // Physical keyboard support
   useEffect(() => {
     if (gameState !== 'playing') return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+      const target = e.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         handleEnter();
@@ -354,6 +377,7 @@ export function ChamorroWordle() {
       const stars = won ? (attempts <= 3 ? 3 : attempts <= 5 ? 2 : 1) : 0;
       
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'chamorro_wordle',
         mode: gameMode === 'daily' ? 'daily' : wordMode,
         category_id: gameMode === 'daily' ? 'daily' : `${difficulty}-${category}`,
@@ -364,7 +388,68 @@ export function ChamorroWordle() {
         stars,
       });
     }
-  }, [gameState, isSignedIn, guesses, gameMode, wordMode, difficulty, category, saveGameResultMutation]);
+  }, [gameState, isSignedIn, guesses, gameMode, wordMode, difficulty, category, saveGameResultMutation, resultUnresolved]);
+
+  const resumeKey = `hafagpt-wordle-resume-v1-${user?.id || 'guest'}`;
+  const restoredKeyRef = useRef('');
+  const skipNextStorageWriteRef = useRef(false);
+  useEffect(() => {
+    if (isLoaded === false || restoredKeyRef.current === resumeKey) return;
+    if (restoredKeyRef.current) {
+      skipNextStorageWriteRef.current = true;
+      clearTransitionTimers();
+      setGameState('setup');
+      setActiveDailyKey('');
+      setTargetWord(null);
+      setGuesses([]);
+      setCurrentGuess('');
+      setCurrentRow(0);
+      setLetterStates({});
+      setMessage('');
+      hasSavedRef.current = false;
+      saveGameResultMutation.reset();
+    }
+    restoredKeyRef.current = resumeKey;
+    const raw = browserStorage.get(resumeKey);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      if (!saved.targetWord || typeof saved.targetWord.word !== 'string' || typeof saved.targetWord.meaning !== 'string'
+        || ![4, 5, 6].includes(saved.targetWord.word.length)
+        || !Array.isArray(saved.guesses) || saved.guesses.length >= MAX_ATTEMPTS
+        || saved.guesses.some((row: GuessResult[]) => !Array.isArray(row) || row.length !== saved.targetWord.word.length
+          || row.some(cell => typeof cell.letter !== 'string' || cell.letter.length !== 1 || !['correct', 'present', 'absent'].includes(cell.state)))
+        || typeof saved.currentGuess !== 'string' || saved.currentGuess.length > saved.targetWord.word.length
+        || !['practice', 'daily'].includes(saved.gameMode)
+        || (saved.gameMode === 'daily' && saved.dailyKey !== dailyKey)) return;
+      const keyboard: Record<string, 'correct' | 'present' | 'absent'> = {};
+      saved.guesses.forEach((row: GuessResult[]) => row.forEach(cell => {
+        if (cell.state === 'correct' || !keyboard[cell.letter] || (cell.state === 'present' && keyboard[cell.letter] === 'absent')) keyboard[cell.letter] = cell.state as 'correct' | 'present' | 'absent';
+      }));
+      setTargetWord(saved.targetWord);
+      setGuesses(saved.guesses);
+      setCurrentRow(saved.guesses.length);
+      setCurrentGuess(saved.currentGuess);
+      setLetterStates(keyboard);
+      setGameMode(saved.gameMode);
+      setActiveDailyKey(saved.gameMode === 'daily' ? saved.dailyKey : '');
+      if (['easy', 'medium', 'hard'].includes(saved.difficulty)) setDifficulty(saved.difficulty);
+      if (['beginner', 'challenge'].includes(saved.wordMode)) setWordMode(saved.wordMode);
+      if (typeof saved.category === 'string' && /^[a-z0-9-]{1,80}$/.test(saved.category)) setCategory(saved.category);
+      setGameState('playing');
+      setMessage('Resumed your unfinished game');
+    } catch { /* Invalid or unavailable storage must not block a new game. */ }
+  }, [resumeKey, dailyKey, isLoaded, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
+
+  useEffect(() => {
+    if (isLoaded === false || restoredKeyRef.current !== resumeKey) return;
+    if (skipNextStorageWriteRef.current) { skipNextStorageWriteRef.current = false; return; }
+    if (gameState === 'playing' && targetWord) {
+      setResumeStorageAvailable(browserStorage.set(resumeKey, JSON.stringify({ targetWord, guesses, currentGuess, gameMode, difficulty, wordMode, category, dailyKey: activeDailyKey })));
+    } else if (gameState === 'won' || gameState === 'lost') {
+      browserStorage.remove(resumeKey);
+    }
+  }, [resumeKey, gameState, targetWord, guesses, currentGuess, gameMode, difficulty, wordMode, category, activeDailyKey, isLoaded]);
 
   // Generate share text
   const generateShareText = () => {
@@ -399,7 +484,7 @@ export function ChamorroWordle() {
   };
 
   const handleBack = () => {
-    if (gameState === 'playing' && !window.confirm('Leave game? Your progress will be lost.')) {
+    if (gameState === 'playing' && !window.confirm(resumeStorageAvailable ? 'Leave this game? Your unfinished game is saved on this device so you can resume it later.' : 'Leave this game? This browser could not save your unfinished game, so progress will be lost.')) {
       return;
     }
     clearTransitionTimers();
@@ -428,9 +513,9 @@ export function ChamorroWordle() {
     }
 
     const stateStyles = {
-      correct: 'bg-green-500 text-white border-green-500',
-      present: 'bg-yellow-500 text-white border-yellow-500',
-      absent: 'bg-gray-400 dark:bg-gray-600 text-white border-gray-400 dark:border-gray-600',
+      correct: 'bg-green-700 text-white border-green-500',
+      present: 'bg-yellow-700 text-white border-yellow-500',
+      absent: 'bg-gray-600 dark:bg-gray-600 text-white border-gray-400 dark:border-gray-600',
       empty: 'bg-white dark:bg-slate-800 border-cream-300 dark:border-slate-600',
     };
 
@@ -516,7 +601,7 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'beginner'}
                     className={`p-3 rounded-xl text-center transition-all ${
                       wordMode === 'beginner'
-                        ? 'bg-amber-500 text-white shadow-lg'
+                        ? 'bg-amber-700 text-white shadow-lg'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }`}
                   >
@@ -530,7 +615,7 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'challenge'}
                     className={`p-3 rounded-xl text-center transition-all ${
                       wordMode === 'challenge'
-                        ? 'bg-amber-500 text-white shadow-lg'
+                        ? 'bg-amber-700 text-white shadow-lg'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }`}
                   >
@@ -553,7 +638,7 @@ export function ChamorroWordle() {
                       aria-pressed={difficulty === d}
                       className={`p-2 rounded-xl text-center transition-all ${
                         difficulty === d
-                          ? 'bg-teal-600 text-white shadow-lg'
+                          ? 'bg-teal-700 text-white shadow-lg'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }`}
                     >
@@ -577,7 +662,7 @@ export function ChamorroWordle() {
                         aria-pressed={category === cat.id}
                         className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-all ${
                           category === cat.id
-                            ? 'bg-coral-600 text-white dark:bg-teal-600'
+                            ? 'bg-coral-700 text-white dark:bg-teal-700'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600'
                         }`}
                       >
@@ -592,7 +677,8 @@ export function ChamorroWordle() {
               <button
                 type="button"
                 onClick={() => startGame('practice')}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              disabled={resultUnresolved}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Play className="w-5 h-5" />
                 Start Practice
@@ -618,8 +704,8 @@ export function ChamorroWordle() {
 
               {/* Color legend */}
               <div className="flex justify-center gap-2 mb-3">
-                <div className="w-10 h-10 bg-green-500 text-white rounded flex items-center justify-center font-bold">H</div>
-                <div className="w-10 h-10 bg-yellow-500 text-white rounded flex items-center justify-center font-bold">Å</div>
+                <div className="w-10 h-10 bg-green-700 text-white rounded flex items-center justify-center font-bold">H</div>
+                <div className="w-10 h-10 bg-yellow-700 text-white rounded flex items-center justify-center font-bold">Å</div>
                 <div className="w-10 h-10 bg-gray-400 text-white rounded flex items-center justify-center font-bold">F</div>
                 <div className="w-10 h-10 bg-gray-400 text-white rounded flex items-center justify-center font-bold">A</div>
               </div>
@@ -731,7 +817,7 @@ export function ChamorroWordle() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Share2 className="w-5 h-5" />
                 Share Result
@@ -740,6 +826,7 @@ export function ChamorroWordle() {
                 <button
                   type="button"
                   onClick={() => startGame('practice')}
+              disabled={resultUnresolved}
                   className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-5 h-5" />
@@ -753,6 +840,7 @@ export function ChamorroWordle() {
             </button>
           </div>
         )}
+        {(gameState === 'won' || gameState === 'lost') && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {/* Add shake animation */}

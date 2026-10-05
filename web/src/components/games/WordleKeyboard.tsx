@@ -35,13 +35,13 @@ export const WordleKeyboard = memo(function WordleKeyboard({
 
     switch (state) {
       case 'correct':
-        return `${baseStyle} flex-1 h-10 sm:h-14 bg-green-500 text-white`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-green-700 text-white`;
       case 'present':
-        return `${baseStyle} flex-1 h-10 sm:h-14 bg-yellow-500 text-white`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-yellow-700 text-white`;
       case 'absent':
-        return `${baseStyle} flex-1 h-10 sm:h-14 bg-gray-400 dark:bg-gray-600 text-white`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-gray-600 text-white`;
       default:
-        return `${baseStyle} flex-1 h-10 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white hover:bg-cream-300 dark:hover:bg-slate-500`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white hover:bg-cream-300 dark:hover:bg-slate-500`;
     }
   };
 
@@ -50,9 +50,9 @@ export const WordleKeyboard = memo(function WordleKeyboard({
       font-bold text-[11px] sm:text-sm rounded
       transition-all duration-150 active:scale-95
       flex items-center justify-center
-      w-10 sm:w-14 h-10 sm:h-14
-      bg-cream-300 dark:bg-slate-500 text-brown-700 dark:text-gray-200 
-      hover:bg-cream-400 dark:hover:bg-slate-400
+      w-10 sm:w-14 h-11 sm:h-14
+      bg-cream-300 dark:bg-slate-700 text-brown-700 dark:text-gray-200
+      hover:bg-cream-400 dark:hover:bg-slate-600
     `;
   };
 
@@ -95,6 +95,7 @@ export const WordleKeyboard = memo(function WordleKeyboard({
       <div className="flex gap-[2px] sm:gap-1.5">
         <button
           onClick={onEnter}
+          aria-label="Submit guess"
           disabled={disabled}
           className={getActionKeyStyle()}
         >
@@ -114,6 +115,7 @@ export const WordleKeyboard = memo(function WordleKeyboard({
         </div>
         <button
           onClick={onBackspace}
+          aria-label="Delete letter"
           disabled={disabled}
           className={getActionKeyStyle()}
         >
