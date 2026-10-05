@@ -68,7 +68,7 @@ export function useTodaySessionProgress(plan?: TodayPlan | null) {
     if (next === current) return;
     setState({ scope, session: next });
     setStorageAvailable(saveTodaySession(userId, next));
-  }, [userId, day, session, scope, location.search, location.pathname]);
+  }, [userId, day, session, scope, location]);
 
   return { session, completeStep, contextualHref: withTodayStep, storageAvailable };
 }
