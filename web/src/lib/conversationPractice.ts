@@ -1,6 +1,7 @@
 export interface ConversationHistorySource {
   role: 'character' | 'user' | 'system';
   chamorro: string;
+  english?: string;
   hintUsed?: boolean;
 }
 
@@ -22,11 +23,22 @@ export function hasVisiblePracticeFeedback(
 export function serializeConversationHistory(
   messages: ConversationHistorySource[],
 ): ConversationHistoryPayload[] {
-  return messages.flatMap((message) => (
-    message.role === 'system'
-      ? []
-      : [{ role: message.role, content: message.chamorro.slice(0, 600), ...(message.hintUsed ? { hint_used: true } : {}) }]
-  ));
+  return messages.flatMap((message) => {
+    if (message.role === 'system') return [];
+    let content = message.chamorro.slice(0, 600);
+    if (message.role === 'character' && message.english?.trim()) {
+      // Preserve the guidance the learner saw, including source-safe English
+      // fallback when the tutor could not supply a supported Chamorro response.
+      const english = message.english.trim();
+      if (!content) content = english.slice(0, 600);
+      else {
+        const guidance = english.slice(0, 300);
+        const separator = '\nEnglish guidance: ';
+        content = `${content.slice(0, 600 - separator.length - guidance.length)}${separator}${guidance}`;
+      }
+    }
+    return [{ role: message.role, content, ...(message.hintUsed ? { hint_used: true } : {}) }];
+  });
 }
 
 export interface PracticeObjectiveEvidence {

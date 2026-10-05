@@ -20,6 +20,18 @@ describe('conversation practice request history', () => {
     expect(hasVisiblePracticeFeedback(['Try a different spelling'])).toBe(true);
     expect(hasVisiblePracticeFeedback([], 'Keep going')).toBe(true);
   });
+
+  it('preserves English fallback and bilingual guidance within the history limit', () => {
+    expect(serializeConversationHistory([
+      { role: 'character', chamorro: '', english: 'Try introducing yourself.' },
+    ])).toEqual([{ role: 'character', content: 'Try introducing yourself.' }]);
+    const [message] = serializeConversationHistory([
+      { role: 'character', chamorro: 'A'.repeat(600), english: 'What is your name?'.repeat(40) },
+    ]);
+    expect(message.content).toContain('English guidance: What is your name?');
+    expect(message.content).toContain('AAA');
+    expect(message.content.length).toBeLessThanOrEqual(600);
+  });
 });
 
 import { emptyPracticeDraft, parsePracticeDraft } from './conversationPractice';

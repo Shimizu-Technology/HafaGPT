@@ -130,8 +130,9 @@ def validated_objective_evidence(response_data: dict, request: ConversationPract
     """
     import re
 
-    learner_turns = [message.content for message in request.conversation_history if message.role == "user"]
-    learner_turns.append(request.user_message)
+    learner_turns = [(message.content, message.hint_used)
+                     for message in request.conversation_history if message.role == "user"]
+    learner_turns.append((request.user_message, request.hint_used))
     evidence = []
     seen = set()
     items = response_data.get("objective_evidence", [])
@@ -146,17 +147,15 @@ def validated_objective_evidence(response_data: dict, request: ConversationPract
                 or item.get("language") != "chamorro"):
             continue
         quote = quote.strip()
-        matching_turn = next((turn for turn in learner_turns if quote in turn), None)
+        # Be conservative about the English assistance patterns reproduced in
+        # the audit, even when the provider mislabels their language. Prefer the
+        # latest eligible response: an earlier help request must not block a
+        # subsequent answer, or lend its hint provenance to that answer.
+        matching_turn = next(((turn, hint_used) for turn, hint_used in reversed(learner_turns)
+                              if quote in turn and not re.search(r"\b(my name is|i am from|i live in|i want|hello|thank you|good morning|goodbye|how (are|do|can)|can you|please (help|translate)|what does|tell me|in chamorro)\b", turn, re.I)), None)
         if matching_turn is None:
             continue
-        # Be conservative about the English assistance patterns reproduced in
-        # the audit, even when the provider mislabels their language.
-        if re.search(r"\b(my name is|i am from|i live in|i want|hello|thank you|good morning|goodbye|how (are|do|can)|can you|please (help|translate)|what does|tell me|in chamorro)\b", matching_turn, re.I):
-            continue
-        assisted = any(message.hint_used and quote in message.content
-                       for message in request.conversation_history if message.role == "user")
-        if quote in request.user_message and request.hint_used:
-            assisted = True
+        _, assisted = matching_turn
         evidence.append({"objective": objective, "quote": quote, "assisted": assisted})
         seen.add(objective)
     return evidence

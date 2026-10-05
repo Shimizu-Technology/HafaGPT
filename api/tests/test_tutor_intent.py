@@ -55,3 +55,15 @@ def test_goal_observations_require_user_quote_and_reject_english_even_if_mislabe
 def test_goal_observations_ignore_bare_model_claim_and_uncertain_language():
     assert validated_objective_evidence({'objectives_completed': ['Greet Maria']}, request()) == []
     assert validated_objective_evidence({'objective_evidence': [dict(objective='Greet Maria', quote='Håfa Adai!', language='uncertain')]}, request()) == []
+
+
+def test_later_answer_is_not_blocked_by_prior_help_or_given_its_hint_provenance():
+    evidence = {'objective_evidence': [dict(objective='Greet Maria', quote='Håfa Adai!', language='chamorro')]}
+    practice_request = request()
+    practice_request.conversation_history[1].content = 'What does Håfa Adai! mean?'
+    practice_request.user_message = 'Håfa Adai!'
+    assert validated_objective_evidence(evidence, practice_request) == [
+        dict(objective='Greet Maria', quote='Håfa Adai!', assisted=False)]
+    practice_request.hint_used = True
+    assert validated_objective_evidence(evidence, practice_request) == [
+        dict(objective='Greet Maria', quote='Håfa Adai!', assisted=True)]
