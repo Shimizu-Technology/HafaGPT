@@ -100,6 +100,17 @@ describe('useSaveGameResult concept context', () => {
     expect(loadTodaySession('user_1')?.completed).toEqual([]);
   });
 
+  it('does not finish the planned topic when settings switch the game category', async () => {
+    startTodayGame();
+    const { result } = renderHook(() => useSaveGameResult(), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ game_type: 'memory_match', category_id: 'numbers', score: 400 });
+    });
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+    const request = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(request.body as string).learning_context).toBeUndefined();
+  });
+
   it('keeps the launch provenance when navigation happens during token retrieval', async () => {
     startTodayGame();
     let releaseToken: ((token: string) => void) | undefined;

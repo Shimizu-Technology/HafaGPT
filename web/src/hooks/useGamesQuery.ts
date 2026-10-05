@@ -69,7 +69,10 @@ export function useSaveGameResult() {
   currentOwner.current = userId;
 
   return useMutation({
-    onMutate: () => ({ owner: userId, route: window.location.pathname + window.location.search }),
+    onMutate: () => ({
+      owner: userId, route: window.location.pathname + window.location.search,
+      category: readLearningGameContext(window.location.search)?.categoryId,
+    }),
     mutationFn: async (params: GameResultCreate) => {
       const owner = userId;
       const learningContext = readLearningGameContext(window.location.search);
@@ -106,8 +109,9 @@ export function useSaveGameResult() {
       }
       return result;
     },
-    onSuccess: (_result, _params, launch) => {
-      if (launch?.owner === userId && launch.route === window.location.pathname + window.location.search) {
+    onSuccess: (_result, params, launch) => {
+      if (launch?.owner === userId && launch.route === window.location.pathname + window.location.search
+        && launch.category === params.category_id) {
         completeStep('use');
       }
       // Invalidate game stats to refetch
