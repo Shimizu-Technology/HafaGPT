@@ -24,15 +24,11 @@ function getStars(score: number | null): number {
 
 // Get status of a topic
 function getTopicStatus(
-  _topic: LearningTopic,
-  progress: TopicProgress | undefined,
-  prevCompleted: boolean,
-  isFirst: boolean
+  progress: TopicProgress | undefined
 ): 'locked' | 'available' | 'in_progress' | 'completed' {
   if (progress?.completed_at) return 'completed';
   if (progress?.started_at) return 'in_progress';
-  if (isFirst || prevCompleted) return 'available';
-  return 'locked';
+  return 'available';
 }
 
 function StarDisplay({ count, size = 'sm' }: { count: number; size?: 'sm' | 'md' }) {
@@ -202,7 +198,6 @@ function LevelSection({
   isExpanded,
   onToggle,
 }: LevelSectionProps) {
-  let prevCompleted = false;
 
   const levelColors: Record<LearningLevel, { bg: string; border: string; text: string; progress: string }> = {
     beginner: {
@@ -283,14 +278,8 @@ function LevelSection({
         <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:bg-gray-800">
           {topics.map((topic, index) => {
             const progress = progressMap.get(topic.id);
-            const status = getTopicStatus(topic, progress, prevCompleted, index === 0);
+            const status = getTopicStatus(progress);
             
-            if (progress?.completed_at) {
-              prevCompleted = true;
-            } else {
-              prevCompleted = false;
-            }
-
             return (
               <TopicNode
                 key={topic.id}
@@ -369,13 +358,6 @@ export function LearningPathMap() {
     topic => progressMap.get(topic.id)?.completed_at
   ).length;
 
-  // Check if levels are complete to unlock next
-  const completedTopicIds = Array.from(progressMap.entries())
-    .filter(([, progress]) => progress.completed_at)
-    .map(([id]) => id);
-  const beginnerComplete = isLevelComplete('beginner', completedTopicIds);
-  const intermediateComplete = isLevelComplete('intermediate', completedTopicIds);
-
   // Total progress
   const totalTopics = BEGINNER_PATH.length + INTERMEDIATE_PATH.length + ADVANCED_PATH.length;
   const totalCompleted = beginnerCompleted + intermediateCompleted + advancedCompleted;
@@ -389,7 +371,7 @@ export function LearningPathMap() {
             Your Learning Journey
           </h2>
           <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">
-            {totalCompleted} of {totalTopics} topics mastered
+            {totalCompleted} of {totalTopics} topics completed
           </p>
         </div>
         <div className="text-2xl sm:text-3xl">🗺️</div>
@@ -425,7 +407,7 @@ export function LearningPathMap() {
           icon="🌿"
           topics={INTERMEDIATE_PATH}
           progressMap={progressMap}
-          isLocked={!beginnerComplete}
+          isLocked={false}
           completedCount={intermediateCompleted}
           isExpanded={expandedLevel === 'intermediate'}
           onToggle={() => setExpandedLevel(expandedLevel === 'intermediate' ? null : 'intermediate')}
@@ -437,7 +419,7 @@ export function LearningPathMap() {
           icon="🌳"
           topics={ADVANCED_PATH}
           progressMap={progressMap}
-          isLocked={!intermediateComplete}
+          isLocked={false}
           completedCount={advancedCompleted}
           isExpanded={expandedLevel === 'advanced'}
           onToggle={() => setExpandedLevel(expandedLevel === 'advanced' ? null : 'advanced')}

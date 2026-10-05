@@ -183,3 +183,15 @@ def test_render_capacity_is_intentionally_unchanged():
         "preDeployCommand: alembic upgrade head && alembic current --check-heads"
         in config
     )
+
+
+def test_today_recommends_unfinished_advanced_topics_instead_of_skipping_the_level():
+    recommend, _ = _load_progress_builders()
+    completed = {"completed_at": "2026-10-05T00:00:00", "started_at": "2026-10-04T00:00:00"}
+    progress = {"greetings": completed, "numbers": completed, "verbs": completed}
+    result = recommend(progress)
+    assert result["topic"]["id"] == "stories"
+    assert result["recommendation_type"] == "next"
+    assert result["completed_topics"] == 3
+    progress["stories"] = {"started_at": "2026-10-05T00:00:00", "completed_at": None}
+    assert recommend(progress)["recommendation_type"] == "continue"

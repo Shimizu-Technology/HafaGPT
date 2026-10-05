@@ -5,6 +5,12 @@ import { ADVANCED_PATH, BEGINNER_PATH } from '../data/learningPath';
 import { LessonComplete } from './LessonComplete';
 
 describe('LessonComplete level copy', () => {
+  it('does not infer all topics complete from the last topic ordinal', () => {
+    const topic = ADVANCED_PATH[ADVANCED_PATH.length - 1];
+    render(<MemoryRouter><LessonComplete topic={topic} topicIndex={7} totalTopics={7} completedTopics={1} quizScore={80} completionSaved onNextTopic={vi.fn()} /></MemoryRouter>);
+    expect(screen.queryByText("You've completed all advanced topics!")).not.toBeInTheDocument();
+    expect(screen.getByText('Advanced Path Progress: 1/7 topics completed')).toBeInTheDocument();
+  });
   it('labels advanced progress and completion as advanced', () => {
     const topic = ADVANCED_PATH[ADVANCED_PATH.length - 1];
 
@@ -15,12 +21,14 @@ describe('LessonComplete level copy', () => {
           topicIndex={ADVANCED_PATH.length}
           totalTopics={ADVANCED_PATH.length}
           quizScore={80}
+          completedTopics={ADVANCED_PATH.length}
+          completionSaved
           onNextTopic={vi.fn()}
         />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Advanced Path Progress')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Path Progress:', { exact: false })).toBeInTheDocument();
     expect(screen.getByText("You've completed all advanced topics!")).toBeInTheDocument();
     expect(screen.queryByText(/beginner/i)).not.toBeInTheDocument();
   });
@@ -66,7 +74,7 @@ describe('LessonComplete level copy', () => {
 
     expect(screen.getByRole('link', { name: `Practice ${topic.title}` })).toHaveAttribute(
       'href',
-      '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F',
+      expect.stringContaining('/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F&today_step=use&today_day='),
     );
   });
 });

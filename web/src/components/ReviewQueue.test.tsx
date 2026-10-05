@@ -47,6 +47,8 @@ vi.mock('./ReviewRatingButtons', () => ({
   ),
 }));
 
+vi.mock('../hooks/useTodaySession', () => ({ useTodaySessionProgress: () => ({ completeStep: vi.fn() }) }));
+
 describe('ReviewQueue pagination', () => {
   beforeEach(() => {
     mocks.mutateAsync.mockReset();

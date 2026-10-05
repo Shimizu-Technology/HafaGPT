@@ -59,6 +59,15 @@ describe('useRecordLessonExposure', () => {
     );
   });
 
+  it('sends unchanged introduced cards with the shared curated review identity', async () => {
+    const conceptId = getCuratedConceptId('greetings', 0);
+    const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });
+    await act(async () => { await result.current.mutateAsync({ topicId: 'greetings', conceptIds: [conceptId] }); });
+    const payload = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string);
+    expect(payload.review_cards).toHaveLength(1);
+    expect(payload.review_cards[0]).toMatchObject({ concept_id: conceptId, front: 'Håfa Adai', back: 'Hello / Hi / Greetings' });
+  });
+
   it('rejects when the authenticated session has no token', async () => {
     mocks.getToken.mockResolvedValue(null);
     const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });

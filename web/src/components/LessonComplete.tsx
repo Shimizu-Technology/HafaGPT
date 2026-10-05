@@ -1,263 +1,53 @@
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Trophy, Star, ArrowRight, Home, RotateCcw, Sparkles, Gamepad2 } from 'lucide-react';
+import { ArrowRight, CheckCircle, RotateCcw } from 'lucide-react';
 import { LearningTopic, getNextTopic } from '../data/learningPath';
 import { getLessonPractice, readLearningGameContext } from '../lib/lessonPractice';
+import { withTodayStep } from '../lib/todaySession';
 
 interface LessonCompleteProps {
   topic: LearningTopic;
   topicIndex: number;
   totalTopics: number;
+  completedTopics?: number;
   quizScore: number;
+  completionSaved?: boolean;
+  isSaving?: boolean;
+  onRestart?: () => void;
   onNextTopic: () => void;
 }
 
-export function LessonComplete({ topic, topicIndex, totalTopics, quizScore, onNextTopic }: LessonCompleteProps) {
-  const [showConfetti, setShowConfetti] = useState(false);
+export function LessonComplete({ topic, totalTopics, completedTopics, quizScore, completionSaved = false, isSaving = false, onRestart, onNextTopic }: LessonCompleteProps) {
   const location = useLocation();
-  
-  const nextTopic = getNextTopic(topic.id);
   const isPassing = quizScore >= 70;
-  const isPerfect = quizScore === 100;
-  const isLastTopic = topicIndex === totalTopics;
-  const levelLabel = `${topic.level.charAt(0).toUpperCase()}${topic.level.slice(1)}`;
-  const launchContext = readLearningGameContext(location.search);
-  const practice = getLessonPractice(topic, launchContext
-    ? { source: launchContext.source, returnTo: launchContext.returnTo }
-    : undefined);
-
-  // Calculate stars (1-3 based on score)
-  const stars = quizScore >= 90 ? 3 : quizScore >= 70 ? 2 : 1;
-
-  useEffect(() => {
-    if (isPassing) {
-      setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isPassing]);
-
+  const nextTopic = getNextTopic(topic.id);
+  const context = readLearningGameContext(location.search);
+  const practice = getLessonPractice(topic, context ? { source: context.source, returnTo: context.returnTo } : undefined);
+  const today = context?.source === 'today';
+  const practiceHref = practice ? today ? withTodayStep(practice.href, 'use') : practice.href : '/games';
+  const levelLabel = `${topic.level[0].toUpperCase()}${topic.level.slice(1)}`;
   return (
-    <div className="animate-fade-in space-y-6 text-center">
-      {/* Confetti effect */}
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          {[...Array(50)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-confetti"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: '-20px',
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${2 + Math.random() * 2}s`,
-              }}
-            >
-              {['🎉', '⭐', '🌺', '✨', '🎊'][Math.floor(Math.random() * 5)]}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Trophy/Result card */}
-      <div className={`rounded-3xl p-8 shadow-xl ${
-        isPassing
-          ? 'bg-gradient-to-br from-amber-400 to-orange-500'
-          : 'bg-gradient-to-br from-slate-400 to-slate-500'
-      }`}>
-        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
-          {isPassing ? (
-            <Trophy className="w-10 h-10 text-white" />
-          ) : (
-            <RotateCcw className="w-10 h-10 text-white" />
-          )}
-        </div>
-
-        <h2 className="text-2xl font-bold text-white mb-2">
-          {isPerfect ? 'Perfect Score!' : isPassing ? 'Lesson Complete!' : 'Keep Practicing!'}
-        </h2>
-
-        <p className="text-white/80 mb-4">
-          {isPassing
-            ? `You've completed ${topic.title}`
-            : `You need 70% to pass. Let's try again!`}
-        </p>
-
-        {/* Stars */}
-        <div className="flex justify-center gap-2 mb-4">
-          {[1, 2, 3].map((n) => (
-            <Star
-              key={n}
-              className={`w-10 h-10 transition-all duration-500 ${
-                n <= stars
-                  ? 'text-yellow-300 fill-yellow-300 scale-110'
-                  : 'text-white/30'
-              }`}
-              style={{ animationDelay: `${n * 0.2}s` }}
-            />
-          ))}
-        </div>
-
-        {/* Score */}
-        <div className="text-5xl font-bold text-white mb-2">
-          {quizScore}%
-        </div>
-        <p className="text-white/70 text-sm">Quiz Score</p>
-      </div>
-
-      {/* Progress update */}
-      {isPassing && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-lg border border-cream-200/50 dark:border-slate-700/50">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-brown-600 dark:text-gray-400">{levelLabel} Path Progress</span>
-            <span className="font-semibold text-coral-600 dark:text-ocean-400">
-              {topicIndex}/{totalTopics}
-            </span>
-          </div>
-          
-          <div className="h-3 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full transition-all duration-1000"
-              style={{ width: `${(topicIndex / totalTopics) * 100}%` }}
-            />
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2 justify-center">
-            {Array.from({ length: totalTopics }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
-                  i < topicIndex
-                    ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400'
-                    : i === topicIndex - 1
-                    ? 'bg-coral-100 dark:bg-ocean-900/40 text-coral-600 dark:text-ocean-400 ring-2 ring-coral-500 dark:ring-ocean-400'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-400 dark:text-gray-500'
-                }`}
-              >
-                {i < topicIndex ? '✓' : i + 1}
-              </div>
-            ))}
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex items-start gap-3">
+          {isPassing ? <CheckCircle className="mt-1 h-6 w-6 text-teal-700 dark:text-teal-300" aria-hidden="true" /> : <RotateCcw className="mt-1 h-6 w-6 text-coral-700 dark:text-coral-300" aria-hidden="true" />}
+          <div className="flex-1"><h2 className="text-2xl font-bold text-brown-900 dark:text-white">{isPassing ? completionSaved ? 'Lesson complete' : 'Quiz finished' : 'Keep practicing'}</h2>
+            <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{topic.title} · {quizScore}% quiz score</p>
+            <p className="mt-3 text-sm text-brown-700 dark:text-gray-200" role="status">{isSaving ? 'Saving your lesson…' : completionSaved ? isPassing ? 'Course progress saved. Recall improves with practice over time.' : 'Result saved. Score 70% to complete this topic.' : 'Course progress has not saved yet.'}</p>
           </div>
         </div>
-      )}
-
-      {/* Next topic preview */}
-      {isPassing && nextTopic && !isLastTopic && (
-        <div className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-900/20 dark:to-emerald-900/20 rounded-2xl p-5 border border-teal-200/50 dark:border-teal-700/30">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 shadow flex items-center justify-center text-2xl">
-              {nextTopic.icon}
-            </div>
-            <div className="text-left">
-              <p className="text-sm text-teal-600 dark:text-teal-400 font-medium">Up Next</p>
-              <p className="font-semibold text-teal-900 dark:text-teal-100">{nextTopic.title}</p>
-            </div>
-          </div>
-          <p className="text-sm text-teal-700 dark:text-teal-300 text-left">
-            {nextTopic.description}
-          </p>
-        </div>
-      )}
-
-      {/* All topics complete celebration */}
-      {isPassing && isLastTopic && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-6 border border-purple-200/50 dark:border-purple-700/30">
-          <Sparkles className="w-12 h-12 mx-auto mb-3 text-purple-500" />
-          <h3 className="text-xl font-bold text-purple-900 dark:text-purple-100 mb-2">
-            You've completed all {topic.level} topics!
-          </h3>
-          <p className="text-purple-700 dark:text-purple-300 text-sm">
-            Amazing work! You completed every topic in this level. Keep practicing with games, chat, and quizzes!
-          </p>
-        </div>
-      )}
-
-      {isPassing && practice && (
-        <div className="rounded-2xl border border-coral-200 bg-coral-50 p-5 text-left dark:border-ocean-700/40 dark:bg-ocean-900/20">
-          <div className="mb-3 flex items-start gap-3">
-            <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-white text-coral-600 shadow-sm dark:bg-slate-800 dark:text-ocean-300">
-              <Gamepad2 className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-coral-700 dark:text-ocean-300">Practice what you learned</p>
-              <h3 className="font-semibold text-brown-900 dark:text-white">{practice.label}</h3>
-              <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{practice.description}</p>
-            </div>
-          </div>
-          <Link
-            to={practice.href}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-coral-700 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus:ring-ocean-400 dark:focus:ring-offset-slate-900"
-          >
-            Practice {topic.title}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <div className="flex flex-col gap-3">
-        {isPassing ? (
-          <>
-            {nextTopic && !isLastTopic ? (
-              <button
-                onClick={onNextTopic}
-                className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600
-                         text-white font-semibold rounded-2xl shadow-lg
-                         hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700
-                         transition-all flex items-center justify-center gap-2"
-              >
-                Continue to {nextTopic.title}
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            ) : (
-              <Link
-                to="/games"
-                className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600
-                         text-white font-semibold rounded-2xl shadow-lg
-                         hover:from-purple-600 hover:to-purple-700
-                         transition-all flex items-center justify-center gap-2"
-              >
-                Play Learning Games
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            )}
-            
-            <Link
-              to="/"
-              className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300
-                       font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600
-                       transition-colors flex items-center justify-center gap-2"
-            >
-              <Home className="w-4 h-4" />
-              Back to Home
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link
-              to={`/learn/${topic.id}`}
-              onClick={() => window.location.reload()}
-              className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600
-                       text-white font-semibold rounded-2xl shadow-lg
-                       hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700
-                       transition-all flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-5 h-5" />
-              Try Again
-            </Link>
-            
-            <Link
-              to="/"
-              className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300
-                       font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600
-                       transition-colors flex items-center justify-center gap-2"
-            >
-              <Home className="w-4 h-4" />
-              Back to Home
-            </Link>
-          </>
-        )}
-      </div>
+        {completedTopics !== undefined && <p className="mt-4 text-sm text-brown-600 dark:text-gray-300">{levelLabel} Path Progress: {completedTopics}/{totalTopics} topics completed</p>}
+        {completedTopics === totalTopics && <p className="mt-2 text-sm font-semibold text-teal-700 dark:text-teal-300">You've completed all {topic.level} topics!</p>}
+      </section>
+      {today && <Link to="/" className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 focus-visible:ring-2 focus-visible:ring-coral-500">Continue Today<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
+      {isPassing && practice && <section className="rounded-2xl border border-teal-200 bg-teal-50 p-5 dark:border-teal-800 dark:bg-teal-950/30">
+        <h3 className="font-semibold text-brown-900 dark:text-white">Practice what you learned</h3>
+        <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{practice.description}</p>
+        <Link to={practiceHref} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-700 px-4 font-semibold text-teal-800 dark:border-teal-500 dark:text-teal-200">Practice {topic.title}<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+      </section>}
+      {!isPassing && <button type="button" onClick={onRestart} disabled={isSaving} className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white disabled:opacity-50">Try again</button>}
+      {!today && isPassing && nextTopic && <button type="button" onClick={onNextTopic} disabled={isSaving} className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white disabled:opacity-50">Continue to {nextTopic.title}</button>}
+      {isPassing && onRestart && <button type="button" onClick={onRestart} disabled={isSaving} className="min-h-11 w-full rounded-xl border border-cream-300 font-medium text-brown-800 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200">Review this lesson again</button>}
+      <Link to={context?.returnTo ?? '/learning'} className="flex min-h-11 items-center justify-center rounded-xl border border-cream-300 font-medium text-brown-800 dark:border-slate-600 dark:text-gray-200">{today ? 'Back to Today' : 'Back to learning path'}</Link>
     </div>
   );
 }

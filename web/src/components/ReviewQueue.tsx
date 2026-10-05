@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle2, Loader2, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useTodaySessionProgress } from '../hooks/useTodaySession';
+import { readTodayStep } from '../lib/todaySession';
 import { Flashcard } from './Flashcard';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { useDueCards, useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 
 export function ReviewQueue() {
+  const location = useLocation();
+  const today = readTodayStep(location.search) === 'review';
+  const { completeStep } = useTodaySessionProgress();
   const { data, isLoading, isFetching, isError, refetch } = useDueCards(undefined, 20);
   const reviewMutation = useRecordReview();
   const [reviewedCardIds, setReviewedCardIds] = useState<Set<string>>(() => new Set());
@@ -16,6 +21,10 @@ export function ReviewQueue() {
   const allCards = data?.due_cards ?? [];
   const cards = allCards.filter((card) => !reviewedCardIds.has(card.card_id));
   const currentCard = cards[0];
+
+  useEffect(() => {
+    if (data && !currentCard && !isLoading && !isFetching && !isError && !error && !isLoadingNextPage) completeStep('review');
+  }, [data, currentCard, isLoading, isFetching, isError, error, isLoadingNextPage, completeStep]);
 
   const handleRate = async (quality: QualityRating) => {
     if (!currentCard) return;
@@ -100,6 +109,7 @@ export function ReviewQueue() {
           <p className="mt-2 text-brown-600 dark:text-gray-300">
             Nice work. New reviews will appear here when they are due.
           </p>
+          <Link to="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
           <Link
             to="/flashcards"
             className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-600 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"

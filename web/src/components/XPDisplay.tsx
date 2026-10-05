@@ -1,5 +1,5 @@
 import { useXP, getLevelInfo } from '../hooks/useXP';
-import { Zap, Target, ChevronRight } from 'lucide-react';
+import { Zap, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { XPData } from '../hooks/useHomepageData';
 
@@ -101,48 +101,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </div>
       </div>
 
-      {/* Daily Goal */}
-      {xpData.daily_goal_minutes > 0 && (
-        <div className="flex items-center gap-3 p-2.5 bg-white/60 dark:bg-gray-800/40 rounded-lg">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-            xpData.daily_goal_complete 
-              ? 'bg-green-100 dark:bg-green-900/40' 
-              : 'bg-amber-100 dark:bg-amber-800/40'
-          }`}>
-            <Target className={`w-4 h-4 ${
-              xpData.daily_goal_complete 
-                ? 'text-green-600 dark:text-green-400' 
-                : 'text-amber-600 dark:text-amber-400'
-            }`} />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-brown-700 dark:text-gray-300">
-                Daily Goal
-              </span>
-              {xpData.daily_goal_complete ? (
-                <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                  ✓ Complete!
-                </span>
-              ) : (
-                <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                  {xpData.today_minutes} / {xpData.daily_goal_minutes} min
-                </span>
-              )}
-            </div>
-            <div className="mt-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  xpData.daily_goal_complete 
-                    ? 'bg-green-500' 
-                    : 'bg-gradient-to-r from-amber-400 to-yellow-500'
-                }`}
-                style={{ width: `${Math.min(100, (xpData.today_minutes / xpData.daily_goal_minutes) * 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <Link to="/" className="inline-flex min-h-11 items-center text-sm font-semibold text-amber-800 underline-offset-4 hover:underline dark:text-amber-200">Continue your Today session</Link>
     </div>
   );
 }
@@ -187,7 +146,7 @@ export function XPToast({ xpEarned, levelUp, newLevel, onClose }: XPToastProps) 
       className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in"
       onClick={onClose}
     >
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform">
         <Zap className="w-5 h-5 animate-pulse" />
         <span className="font-bold">+{xpEarned} XP</span>
         {levelUp && newLevel && (

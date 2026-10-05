@@ -48,6 +48,7 @@ interface AwardXPResponse {
 interface AwardXPRequest {
   activity_type: ActivityType;
   activity_id?: string;
+  deduplicate?: boolean;
   quiz_score?: number;
   minutes_spent?: number;
 }
@@ -108,6 +109,7 @@ export function useAwardXP() {
     onSuccess: () => {
       // Invalidate XP data to refresh
       queryClient.invalidateQueries({ queryKey: ['xp'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
     },
   });
 }

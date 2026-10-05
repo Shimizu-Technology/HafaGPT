@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { AlertCircle, BookOpen, Layers, Brain, CheckCircle, RefreshCw } from 'lucide-react';
-import { useUpdateProgress } from '../hooks/useLearningPath';
+import { useUpdateProgress, useAllProgress } from '../hooks/useLearningPath';
 import { useAwardXP } from '../hooks/useXP';
-import { getTopic, getTopicIndex, getNextTopic, getPath } from '../data/learningPath';
+import { getTopic, getNextTopic, getPath } from '../data/learningPath';
 import { LessonIntro } from './LessonIntro';
 import { LessonFlashcards } from './LessonFlashcards';
 import { LessonQuiz } from './LessonQuiz';
@@ -17,7 +17,9 @@ import { getLessonTrust } from '../data/contentTrust';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { browserStorage } from '../lib/browserStorage';
 
-type LessonStep = 'intro' | 'flashcards' | 'quiz' | 'complete';
+import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { loadLessonResume, saveLessonResume, emptyLessonResume, type LessonStep } from '../lib/lessonResume';
+import { useTodaySessionProgress } from '../hooks/useTodaySession';
 
 const STEPS: LessonStep[] = ['intro', 'flashcards', 'quiz', 'complete'];
 
@@ -68,16 +70,29 @@ function loadQueuedLessonExposure(
 /** Orchestrate lesson instruction, practice, quiz, and completion stages. */
 export function LessonPage() {
   const { topicId } = useParams<{ topicId: string }>();
+  const { user } = useUser();
+  return <LessonPageSession key={`${user?.id ?? 'guest'}:${topicId}`} />;
+}
+
+function LessonPageSession() {
+  const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useUser();
   const updateProgress = useUpdateProgress();
+  const startProgress = updateProgress.mutate;
   const recordLessonExposure = useRecordLessonExposure();
   const awardXP = useAwardXP();
 
-  const [currentStep, setCurrentStep] = useState<LessonStep>('intro');
-  const [, setFlashcardsCompleted] = useState(false);
-  const [quizScore, setQuizScore] = useState<number | null>(null);
+  const cardCount = DEFAULT_FLASHCARD_DECKS[getTopic(topicId ?? '')?.flashcardCategory ?? '']?.cards.length ?? 0;
+  const [resume, setResume] = useState(() => loadLessonResume(user?.id ?? 'guest', topicId ?? '', cardCount));
+  const [currentStep, setCurrentStep] = useState<LessonStep>(resume.step);
+  const [quizScore, setQuizScore] = useState<number | null>(resume.score);
+  const [completionSaved, setCompletionSaved] = useState(resume.saved);
+  const [isSavingCompletion, setIsSavingCompletion] = useState(false);
+  const [progressError, setProgressError] = useState<string | null>(resume.step === 'complete' && !resume.saved ? 'Your lesson result has not synced yet. Retry saving to update course progress.' : null);
+  const { completeStep } = useTodaySessionProgress();
+  const { data: allProgress } = useAllProgress();
   const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
   const [pendingLessonExposure, setPendingLessonExposure] = useState<PendingLessonExposure | null>(null);
   const [lessonExposureSaveFailed, setLessonExposureSaveFailed] = useState(false);
@@ -85,7 +100,7 @@ export function LessonPage() {
   const lessonExposureScopeRef = useRef<string | null>(null);
 
   const topic = topicId ? getTopic(topicId) : undefined;
-  const topicIndex = topicId ? getTopicIndex(topicId) : 0;
+
   const parsedLaunchContext = readLearningGameContext(location.search);
   const launchContext = parsedLaunchContext?.topicId === topicId ? parsedLaunchContext : null;
   const lessonReturn = getLearningGameReturn(launchContext);
@@ -114,18 +129,20 @@ export function LessonPage() {
   }, [ownerId, topicId]);
 
   useEffect(() => {
-    setCurrentStep('intro');
-    setFlashcardsCompleted(false);
-    setQuizScore(null);
-    setXpToast(null);
-  }, [topicId]);
+    if (topicId && ownerId) saveLessonResume(ownerId, topicId, {
+      ...resume, step: currentStep, score: quizScore, saved: completionSaved,
+    });
+  }, [topicId, ownerId, resume, currentStep, quizScore, completionSaved]);
 
-  // Mark topic as started when entering
+  const handleCardProgress = useCallback((index: number, viewed: number[]) => {
+    setResume(previous => previous.cardIndex === index && JSON.stringify(previous.viewed) === JSON.stringify(viewed)
+      ? previous : { ...previous, cardIndex: index, viewed });
+  }, []);
+
+  // Start is a recoverable orientation event, not lesson completion.
   useEffect(() => {
-    if (topicId) {
-      updateProgress.mutate({ topicId, action: 'start' });
-    }
-  }, [topicId]);
+    if (topicId && ownerId) startProgress({ topicId, action: 'start' });
+  }, [topicId, ownerId, startProgress]);
 
   if (!topic) {
     return (
@@ -136,7 +153,7 @@ export function LessonPage() {
           </h1>
           <Link
             to="/"
-            className="inline-flex min-h-11 items-center rounded-xl bg-coral-500 px-5 py-2.5 font-semibold text-white hover:bg-coral-600"
+            className="inline-flex min-h-11 items-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
           >
             Return to home
           </Link>
@@ -153,167 +170,58 @@ export function LessonPage() {
     setCurrentStep(step);
   };
 
-  const saveLessonExposure = (payload: PendingLessonExposure) => {
+  const saveLessonExposure = async (payload: PendingLessonExposure) => {
     if (!ownerId) return;
     const requestScope = `${ownerId}:${payload.topicId}`;
-    const requestId = lessonExposureRequestRef.current + 1;
-    lessonExposureRequestRef.current = requestId;
+    const requestId = ++lessonExposureRequestRef.current;
     lessonExposureScopeRef.current = requestScope;
     setPendingLessonExposure(payload);
     setLessonExposureSaveFailed(false);
-    browserStorage.set(
-      getLessonExposureQueueKey(ownerId, payload.topicId),
-      JSON.stringify(payload),
-    );
-    recordLessonExposure.mutate(payload, {
-      onSuccess: () => {
-        if (
-          lessonExposureScopeRef.current !== requestScope
-          || lessonExposureRequestRef.current !== requestId
-        ) return;
-        browserStorage.remove(
-          getLessonExposureQueueKey(ownerId, payload.topicId),
-        );
-        setPendingLessonExposure(null);
-        setLessonExposureSaveFailed(false);
-      },
-      onError: (error) => {
-        console.warn('Failed to record lesson concept exposure:', error);
-        if (
-          lessonExposureScopeRef.current !== requestScope
-          || lessonExposureRequestRef.current !== requestId
-        ) return;
-        setLessonExposureSaveFailed(true);
-      },
-    });
-  };
-
-  const handleIntroComplete = () => {
-    goToStep('flashcards');
-  };
-
-  const handleFlashcardsComplete = (cardsCount: number, conceptIds: string[]) => {
-    setFlashcardsCompleted(true);
-    // Always proceed to quiz, even if API calls fail
-    goToStep('quiz');
-    
-    // Track flashcard completion with actual card count (non-blocking)
-    if (topicId) {
-      const scheduledExposureScope = ownerId ? `${ownerId}:${topicId}` : null;
-      const scheduledExposureRequestId = lessonExposureRequestRef.current;
-      setTimeout(() => {
-        if (
-          lessonExposureScopeRef.current === scheduledExposureScope
-          && lessonExposureRequestRef.current === scheduledExposureRequestId
-        ) {
-          saveLessonExposure({ topicId, conceptIds: [...conceptIds] });
-        }
-
-        updateProgress.mutate(
-          { topicId, action: 'flashcard_viewed', flashcardsCount: cardsCount },
-          {
-            onError: (error) => {
-              console.warn('Failed to update flashcard progress:', error);
-            }
-          }
-        );
-        
-        // Award XP for flashcard completion
-        awardXP.mutate(
-          { 
-            activity_type: 'flashcard_complete', 
-            activity_id: topicId,
-            minutes_spent: 2 // Estimate 2 min for flashcards
-          },
-          {
-            onSuccess: (data) => {
-              setXpToast({ 
-                xp: data.xp_earned, 
-                levelUp: data.level_up, 
-                newLevel: data.new_level || undefined 
-              });
-              setTimeout(() => setXpToast(null), 3000);
-            },
-            onError: (error) => {
-              console.warn('Failed to award flashcard XP:', error);
-            }
-          }
-        );
-      }, 100);
+    browserStorage.set(getLessonExposureQueueKey(ownerId, payload.topicId), JSON.stringify(payload));
+    try {
+      await recordLessonExposure.mutateAsync(payload);
+      await updateProgress.mutateAsync({ topicId: payload.topicId, action: 'flashcard_viewed', flashcardsCount: payload.conceptIds.length });
+      if (lessonExposureScopeRef.current !== requestScope || lessonExposureRequestRef.current !== requestId) return;
+      browserStorage.remove(getLessonExposureQueueKey(ownerId, payload.topicId));
+      setPendingLessonExposure(null);
+      void awardXP.mutateAsync({ activity_type: 'flashcard_complete', activity_id: payload.topicId, minutes_spent: 0, deduplicate: true }).catch(() => {});
+    } catch {
+      if (lessonExposureScopeRef.current === requestScope && lessonExposureRequestRef.current === requestId) setLessonExposureSaveFailed(true);
     }
   };
 
+  const handleIntroComplete = () => goToStep('flashcards');
+  const handleFlashcardsComplete = (_cardsCount: number, conceptIds: string[]) => {
+    goToStep('quiz');
+    if (topicId) void saveLessonExposure({ topicId, conceptIds: [...conceptIds] });
+  };
+
+  const saveCompletion = async (score: number) => {
+    if (!topicId || isSavingCompletion) return;
+    setIsSavingCompletion(true);
+    setProgressError(null);
+    try {
+      const requestScope = ownerId ? `${ownerId}:${topicId}` : null;
+      await updateProgress.mutateAsync({ topicId, action: 'quiz_completed', quizScore: score });
+      if (!requestScope || lessonExposureScopeRef.current !== requestScope) return;
+      setCompletionSaved(true);
+      if (score >= 70) completeStep('learn');
+      const data = await awardXP.mutateAsync({ activity_type: 'quiz_complete', activity_id: topicId, quiz_score: score, minutes_spent: 0, deduplicate: true });
+      if (data.xp_earned > 0) setXpToast({ xp: data.xp_earned, levelUp: data.level_up, newLevel: data.new_level || undefined });
+      if (score >= 70 && lessonExposureScopeRef.current === requestScope) await awardXP.mutateAsync({ activity_type: 'topic_complete', activity_id: topicId, minutes_spent: 0, deduplicate: true });
+    } catch {
+      setProgressError('Some activity has not saved. Retry to sync your lesson progress and XP. Your result stays on this browser.');
+    } finally { setIsSavingCompletion(false); }
+  };
   const handleQuizComplete = (score: number) => {
     setQuizScore(score);
-    
-    // Always proceed to complete step, even if API calls fail
-    // This ensures the UI doesn't get stuck on loading
+    setCompletionSaved(false);
     goToStep('complete');
-    
-    // Track quiz completion (non-blocking)
-    if (topicId) {
-      // Use setTimeout to ensure UI updates first
-      setTimeout(() => {
-        updateProgress.mutate(
-          { topicId, action: 'quiz_completed', quizScore: score },
-          {
-            onError: (error) => {
-              console.warn('Failed to update progress:', error);
-              // Don't block UI - user can still see results
-            }
-          }
-        );
-        
-        // Award XP for quiz completion (with bonus for 90%+)
-        awardXP.mutate(
-          { 
-            activity_type: 'quiz_complete', 
-            activity_id: topicId,
-            quiz_score: score,
-            minutes_spent: 3 // Estimate 3 min for quiz
-          },
-          {
-            onSuccess: (data) => {
-              // Also award topic completion XP since quiz is the final step
-              awardXP.mutate(
-                { 
-                  activity_type: 'topic_complete', 
-                  activity_id: topicId,
-                  minutes_spent: 0 // Already counted
-                },
-                {
-                  onSuccess: (topicData) => {
-                    // Show combined XP
-                    setXpToast({ 
-                      xp: data.xp_earned + topicData.xp_earned, 
-                      levelUp: data.level_up || topicData.level_up, 
-                      newLevel: topicData.new_level || data.new_level || undefined 
-                    });
-                    setTimeout(() => setXpToast(null), 4000);
-                  },
-                  onError: (error) => {
-                    console.warn('Failed to award topic completion XP:', error);
-                    // Still show quiz XP if available
-                    if (data) {
-                      setXpToast({ 
-                        xp: data.xp_earned, 
-                        levelUp: data.level_up, 
-                        newLevel: data.new_level || undefined 
-                      });
-                      setTimeout(() => setXpToast(null), 4000);
-                    }
-                  }
-                }
-              );
-            },
-            onError: (error) => {
-              console.warn('Failed to award quiz XP:', error);
-              // UI already progressed, user can see results
-            }
-          }
-        );
-      }, 100);
-    }
+    void saveCompletion(score);
+  };
+  const restartLesson = () => {
+    setResume(emptyLessonResume()); setCurrentStep('intro'); setQuizScore(null);
+    setCompletionSaved(false); setProgressError(null);
   };
 
   const handleNextTopic = () => {
@@ -322,7 +230,7 @@ export function LessonPage() {
       navigate(`/learn/${nextTopic.id}`);
       // Reset state for new topic
       setCurrentStep('intro');
-      setFlashcardsCompleted(false);
+
       setQuizScore(null);
     } else {
       // All topics complete
@@ -422,6 +330,9 @@ export function LessonPage() {
         {currentStep === 'flashcards' && (
           <LessonFlashcards
             topic={topic}
+            initialIndex={resume.cardIndex}
+            initialViewed={resume.viewed}
+            onProgress={handleCardProgress}
             onComplete={handleFlashcardsComplete}
             onSkip={() => goToStep('quiz')}
           />
@@ -431,10 +342,17 @@ export function LessonPage() {
           <LessonQuiz topic={topic} onComplete={handleQuizComplete} />
         )}
         
+        {progressError && <div role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <p>{progressError}</p><button type="button" disabled={isSavingCompletion} onClick={() => quizScore !== null && void saveCompletion(quizScore)} className="mt-2 min-h-11 rounded-lg bg-amber-800 px-4 font-semibold text-white disabled:opacity-50">Retry saving lesson</button>
+        </div>}
         {currentStep === 'complete' && (
           <LessonComplete
             topic={topic}
-            topicIndex={topicIndex}
+            topicIndex={0}
+            completedTopics={allProgress ? getPath(topic.level).filter(candidate => allProgress.topics.some(item => item.topic.id === candidate.id && item.progress.completed_at) || (candidate.id === topic.id && completionSaved && (quizScore ?? 0) >= 70)).length : undefined}
+            completionSaved={completionSaved}
+            isSaving={isSavingCompletion}
+            onRestart={restartLesson}
             totalTopics={getPath(topic.level).length}
             quizScore={quizScore || 0}
             onNextTopic={handleNextTopic}

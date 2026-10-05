@@ -33,7 +33,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
             </p>
           </div>
         </div>
-        
+
         <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
           {topic.description}
         </p>
@@ -62,7 +62,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
           <span className="text-lg">📚</span>
           Key Phrases You'll Learn
         </h3>
-        
+
         <div className="space-y-3">
           {topic.intro.keyPhrases.map((phrase, index) => {
             const [chamorro, english] = phrase.split('—').map(s => s.trim());
@@ -81,8 +81,9 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
                 </div>
                 <button
                   onClick={() => handleSpeak(phrase)}
+                  aria-label={`Play pronunciation for ${chamorro}`}
                   disabled={isSpeaking}
-                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-coral-100 dark:bg-ocean-900/40 text-coral-600 dark:text-ocean-400 
+                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-coral-100 dark:bg-ocean-900/40 text-coral-600 dark:text-ocean-400
                            hover:bg-coral-200 dark:hover:bg-ocean-800/40 transition-colors disabled:opacity-50"
                 >
                   <Volume2 className="w-5 h-5" />
@@ -113,9 +114,9 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
       {/* Continue button */}
       <button
         onClick={onComplete}
-        className="w-full py-4 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 
+        className="w-full py-4 bg-coral-700 dark:bg-teal-700
                    text-white font-semibold rounded-2xl shadow-lg
-                   hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700
+                   hover:bg-coral-800 dark:hover:bg-teal-800
                    transition-all active:scale-[0.98] flex items-center justify-center gap-2"
       >
         Start Flashcards
