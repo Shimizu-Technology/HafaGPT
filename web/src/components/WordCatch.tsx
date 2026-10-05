@@ -306,14 +306,21 @@ export function WordCatch() {
     setFlyingPairs(pairs => pairs.filter(pair => !pair.missed));
   }, [flyingPairs]);
 
+  const spawnPairRef = useRef(spawnPair);
+  const spawnIntervalRef = useRef(spawnInterval);
+  useEffect(() => {
+    spawnPairRef.current = spawnPair;
+    spawnIntervalRef.current = spawnInterval;
+  }, [spawnPair, spawnInterval]);
+
   // Spawn timer
   useEffect(() => {
     if (gameState !== 'playing') return;
 
     const spawn = () => {
-      spawnPair();
+      spawnPairRef.current();
       // Schedule next spawn
-      spawnTimerRef.current = setTimeout(spawn, spawnInterval);
+      spawnTimerRef.current = setTimeout(spawn, spawnIntervalRef.current);
     };
 
     // Initial spawn
@@ -324,7 +331,7 @@ export function WordCatch() {
         clearTimeout(spawnTimerRef.current);
       }
     };
-  }, [gameState, spawnInterval, spawnPair]);
+  }, [gameState]);
 
   // Game timer
   useEffect(() => {

@@ -51,14 +51,23 @@ describe('calm listening games', () => {
     expect(screen.queryByText('200')).not.toBeInTheDocument();
   });
 
+  it('keeps the spawn pace when difficulty changes', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<MemoryRouter><WordCatch /></MemoryRouter>);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
+    for (let tick = 0; tick < 3; tick += 1) act(() => vi.advanceTimersByTime(500));
+    expect(screen.getAllByRole('button', { name: /Håfa Adai.*Hello/ })).toHaveLength(1);
+    for (let tick = 0; tick < 4; tick += 1) act(() => vi.advanceTimersByTime(500));
+    expect(screen.getAllByRole('button', { name: /Håfa Adai.*Hello/ })).toHaveLength(2);
+  });
+
   it('counts two catches before a render with the correct combo bonus', async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     render(<StrictMode><MemoryRouter><WordCatch /></MemoryRouter></StrictMode>);
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
-    act(() => vi.advanceTimersByTime(500));
-    act(() => vi.advanceTimersByTime(500));
-    act(() => vi.advanceTimersByTime(500));
+    for (let tick = 0; tick < 7; tick += 1) act(() => vi.advanceTimersByTime(500));
     const pairs = screen.getAllByRole('button', { name: /Håfa Adai.*Hello/ });
     expect(pairs.length).toBeGreaterThanOrEqual(2);
     act(() => { fireEvent.click(pairs[0]); fireEvent.click(pairs[1]); });
@@ -73,7 +82,7 @@ describe('calm listening games', () => {
     act(() => vi.advanceTimersByTime(500));
     fireEvent.click(screen.getByRole('button', { name: /Håfa Adai.*Hello/ }));
     random.mockReturnValue(0.999);
-    for (let tick = 0; tick < 4; tick += 1) act(() => vi.advanceTimersByTime(500));
+    for (let tick = 0; tick < 13; tick += 1) act(() => vi.advanceTimersByTime(500));
     const wrongPairs = screen.getAllByRole('button', { name: /=/ });
     expect(wrongPairs.length).toBeGreaterThanOrEqual(2);
     act(() => { fireEvent.click(wrongPairs[0]); fireEvent.click(wrongPairs[1]); });
