@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
 import { captureLearningActivity, buildLearningActivityProperties } from '../lib/learningAnalytics';
 import { readLearningGameContext } from '../lib/lessonPractice';
+import { useTodaySessionProgress } from './useTodaySession';
+import { useRef } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -60,13 +62,19 @@ export interface GameHistoryResponse {
 
 // Hook to save game result
 export function useSaveGameResult() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const queryClient = useQueryClient();
+  const { completeStep } = useTodaySessionProgress();
+  const currentOwner = useRef(userId);
+  currentOwner.current = userId;
 
   return useMutation({
+    onMutate: () => ({ owner: userId, route: window.location.pathname + window.location.search }),
     mutationFn: async (params: GameResultCreate) => {
-      const token = await getToken();
+      const owner = userId;
       const learningContext = readLearningGameContext(window.location.search);
+      const token = await getToken();
+      if (!token || currentOwner.current !== owner) throw new Error('Learner changed before the result could save');
       const shouldRecordLearning = learningContext?.categoryId === params.category_id;
       const { concept_ids: conceptIds = [], ...resultParams } = params;
       
@@ -98,7 +106,10 @@ export function useSaveGameResult() {
       }
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_result, _params, launch) => {
+      if (launch?.owner === userId && launch.route === window.location.pathname + window.location.search) {
+        completeStep('use');
+      }
       // Invalidate game stats to refetch
       queryClient.invalidateQueries({ queryKey: ['game-stats'] });
       queryClient.invalidateQueries({ queryKey: ['game-history'] });

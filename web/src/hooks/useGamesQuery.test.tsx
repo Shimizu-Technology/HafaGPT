@@ -1,19 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useGameHistory, useGameStats, useSaveGameResult } from './useGamesQuery';
+import { guamDay, loadTodaySession, saveTodaySession, withTodayStep } from '../lib/todaySession';
+import type { TodayPlan } from '../lib/todayPlan';
 
 
 const mocks = vi.hoisted(() => ({
   capture: vi.fn(),
   userId: 'user_1',
+  token: vi.fn(async () => 'test-token'),
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({
-    getToken: async () => 'test-token',
+    getToken: mocks.token,
     isSignedIn: true,
     userId: mocks.userId,
   }),
@@ -29,7 +33,7 @@ let queryClient: QueryClient;
 function wrapper({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <BrowserRouter>{children}</BrowserRouter>
     </QueryClientProvider>
   );
 }
@@ -51,10 +55,79 @@ describe('useSaveGameResult concept context', () => {
     });
     mocks.capture.mockReset();
     mocks.userId = 'user_1';
+    mocks.token.mockReset().mockResolvedValue('test-token');
+    window.localStorage.clear();
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
       json: async () => gameResult(),
     })));
+  });
+
+  function startTodayGame() {
+    const to = '/games/memory?topic=greetings&category=greetings&source=today&return_to=%2F';
+    const plan = { activities: [{ id: 'use-greetings', kind: 'play', title: 'Use Greetings', description: 'Practice', minutes: 3, to }] } as TodayPlan;
+    saveTodaySession('user_1', { version: 1, day: guamDay(), plan, completed: [] });
+    window.history.pushState({}, '', withTodayStep(to, 'use'));
+  }
+
+  it('finishes the planned Today game only after its result saves', async () => {
+    startTodayGame();
+    const { result } = renderHook(() => useSaveGameResult(), { wrapper });
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false } as Response);
+    await act(async () => {
+      await expect(result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 })).rejects.toThrow();
+    });
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+    await act(async () => {
+      await result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 });
+    });
+    expect(loadTodaySession('user_1')?.completed).toEqual(['use-greetings']);
+  });
+
+  it('does not finish Today after the learner navigates away while saving', async () => {
+    startTodayGame();
+    let finish: ((response: Response) => void) | undefined;
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    const { result } = renderHook(() => useSaveGameResult(), { wrapper });
+    let saving: Promise<unknown>;
+    act(() => { saving = result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 }); });
+    await waitFor(() => expect(finish).toBeDefined());
+    window.history.pushState({}, '', '/games/memory');
+    await act(async () => {
+      finish?.({ ok: true, json: async () => gameResult() } as Response);
+      await saving;
+    });
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+  });
+
+  it('keeps the launch provenance when navigation happens during token retrieval', async () => {
+    startTodayGame();
+    let releaseToken: ((token: string) => void) | undefined;
+    mocks.token.mockImplementationOnce(() => new Promise(resolve => { releaseToken = resolve; }));
+    const { result } = renderHook(() => useSaveGameResult(), { wrapper });
+    let saving: Promise<unknown>;
+    act(() => { saving = result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 }); });
+    await waitFor(() => expect(releaseToken).toBeDefined());
+    window.history.pushState({}, '', '/games/memory?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings');
+    await act(async () => { releaseToken?.('test-token'); await saving; });
+    const request = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(request.body as string).learning_context.source).toBe('today');
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+  });
+
+  it('does not save the previous learner round if accounts change while obtaining a token', async () => {
+    startTodayGame();
+    let releaseToken: ((token: string) => void) | undefined;
+    mocks.token.mockImplementationOnce(() => new Promise(resolve => { releaseToken = resolve; }));
+    const { result, rerender } = renderHook(() => useSaveGameResult(), { wrapper });
+    let saving: Promise<unknown>;
+    act(() => { saving = result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 }).catch(error => error); });
+    await waitFor(() => expect(releaseToken).toBeDefined());
+    mocks.userId = 'user_2';
+    rerender();
+    await act(async () => { releaseToken?.('other-token'); await saving; });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
   });
 
   it('nests exact concepts only inside a validated learning launch', async () => {
