@@ -701,7 +701,7 @@ export function WordCatch() {
                 {timeLeft === 0 ? "Time's Up!" : 'Game Over!'}
               </h2>
               <p className="text-brown-600 dark:text-gray-400">
-                You caught {caught} correct pairs!
+                You caught {caught} correct {caught === 1 ? 'pair' : 'pairs'}!
               </p>
             </div>
 
