@@ -72,6 +72,7 @@ export function FallingWords() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -238,18 +239,15 @@ export function FallingWords() {
       setStreak(prev => prev + 1);
       const newCount = wordsCompleted + 1;
       setWordsCompleted(newCount);
-      if (newCount >= WIN_WORDS) {
-        scheduleTransition(() => setGameState('complete'), 300);
-      } else if (newCount % WORDS_PER_LEVEL === 0) {
+      if (newCount < WIN_WORDS && newCount % WORDS_PER_LEVEL === 0) {
         setLevel(level => level + 1);
         setCurrentSpeed(speed => speed + SPEED_INCREMENT);
       }
 
       // Quick transition to next word (only if not won)
       scheduleTransition(() => {
-        if (wordsCompleted + 1 < WIN_WORDS) {
-          generateNewWord();
-        }
+        if (newCount >= WIN_WORDS) setGameState('complete');
+        else generateNewWord();
       }, 300);
     } else {
       setFeedback('wrong');
@@ -341,11 +339,11 @@ export function FallingWords() {
         stars,
       });
     }
-  }, [gameState, isSignedIn, wordsCompleted, score, level, elapsedTime, settings, saveGameResultMutation]);
+  }, [gameState, isSignedIn, wordsCompleted, score, level, elapsedTime, settings, saveGameResultMutation, resultUnresolved]);
 
   // Start game
   const startGame = useCallback(async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -386,7 +384,7 @@ export function FallingWords() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
@@ -394,6 +392,7 @@ export function FallingWords() {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
+    if (resultUnresolved) return;
     setGameState('setup');
     setCurrentWord(null);
     setAnswerOptions([]);
@@ -757,6 +756,7 @@ export function FallingWords() {
               </button>
               <button
                 onClick={resetGame}
+                disabled={resultUnresolved}
                 className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />

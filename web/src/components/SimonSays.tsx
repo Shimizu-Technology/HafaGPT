@@ -38,6 +38,7 @@ type GameState = 'setup' | 'playing' | 'listening' | 'feedback' | 'complete';
 export function SimonSays() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -96,7 +97,7 @@ export function SimonSays() {
 
   // Start the game
   const startGame = async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -345,6 +346,7 @@ export function SimonSays() {
         {/* Complete Screen */}
         {gameState === 'complete' && (
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"

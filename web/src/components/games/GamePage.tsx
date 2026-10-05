@@ -84,9 +84,10 @@ interface GameResultProps {
   stars: number;
   onReplay: () => void;
   heading?: string;
+  replayDisabled?: boolean;
 }
 
-export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: GameResultProps) {
+export function GameResult({ score, stars, onReplay, heading = 'Great work!', replayDisabled = false }: GameResultProps) {
   const location = useLocation();
   const learningContext = readLearningGameContext(location.search);
   const gameReturn = getLearningGameReturn(learningContext);
@@ -118,6 +119,7 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: 
         <button
           type="button"
           onClick={onReplay}
+          disabled={replayDisabled}
           className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again

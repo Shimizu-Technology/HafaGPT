@@ -81,6 +81,7 @@ export function Hangman() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -217,7 +218,7 @@ export function Hangman() {
 
   // Start game
   const startGame = useCallback(async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -268,7 +269,7 @@ export function Hangman() {
     } finally {
       startingRef.current = false;
     }
-  }, [availableWords, canUse, tryUse, saveGameResultMutation]);
+  }, [availableWords, canUse, tryUse, saveGameResultMutation, resultUnresolved]);
 
   // Save game result
   useEffect(() => {
@@ -292,7 +293,7 @@ export function Hangman() {
         stars,
       });
     }
-  }, [gameState, wordsCompleted, totalScore, settings, isSignedIn, saveGameResultMutation]);
+  }, [gameState, wordsCompleted, totalScore, settings, isSignedIn, saveGameResultMutation, resultUnresolved]);
 
   // Get display word (with blanks for unguessed letters)
   const displayWord = useMemo(() => {
@@ -529,12 +530,14 @@ export function Hangman() {
             <div className="space-y-3">
               <button
                 onClick={startGame}
+                disabled={resultUnresolved}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
               </button>
               <button
+                disabled={resultUnresolved}
                 onClick={() => setGameState('setup')}
                 className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >

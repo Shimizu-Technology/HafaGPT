@@ -1,13 +1,17 @@
+import { StrictMode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumberTap } from './NumberTap';
 import { SimonSays } from './SimonSays';
+import { WordCatch } from './WordCatch';
 import { GameSaveStatus } from './games/GameSaveStatus';
 const mocks = vi.hoisted(() => ({ speak: vi.fn(), mutate: vi.fn(), reset: vi.fn() }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: false }) }));
 vi.mock('../hooks/useGamesQuery', () => ({ useSaveGameResult: () => ({ mutate: mocks.mutate, reset: mocks.reset }) }));
 vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: async () => true, getCount: () => 0, getLimit: () => 10 }) }));
+vi.mock('../hooks/useVocabularyQuery', () => ({ useVocabularyCategories: () => ({ data: { categories: [] }, isLoading: false }) }));
+vi.mock('../hooks/useFlashcardsQuery', () => ({ useDictionaryFlashcards: () => ({ data: null, isLoading: false }) }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: mocks.speak, preload: vi.fn(), isSpeaking: false }) }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
 vi.mock('./UpgradePrompt', () => ({ UpgradePrompt: () => null }));
@@ -30,6 +34,37 @@ describe('calm listening games', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next round' }));
     expect(screen.getByText('Round 2 of 10')).toBeInTheDocument();
   });
+  it('hides answer colors and scores one catch once in Strict Mode', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<StrictMode><MemoryRouter><WordCatch /></MemoryRouter></StrictMode>);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+      await Promise.resolve();
+    });
+    act(() => vi.advanceTimersByTime(500));
+    const pair = screen.getByRole('button', { name: /Håfa Adai.*Hello/ });
+    expect(pair.className).toContain('bg-white');
+    expect(pair.className).not.toContain('bg-green-100');
+    fireEvent.click(pair);
+    expect(screen.getByText('100')).toBeInTheDocument();
+    expect(screen.queryByText('200')).not.toBeInTheDocument();
+  });
+
+  it('counts two catches before a render with the correct combo bonus', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<StrictMode><MemoryRouter><WordCatch /></MemoryRouter></StrictMode>);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
+    act(() => vi.advanceTimersByTime(500));
+    act(() => vi.advanceTimersByTime(500));
+    act(() => vi.advanceTimersByTime(500));
+    const pairs = screen.getAllByRole('button', { name: /Håfa Adai.*Hello/ });
+    expect(pairs.length).toBeGreaterThanOrEqual(2);
+    act(() => { fireEvent.click(pairs[0]); fireEvent.click(pairs[1]); });
+    expect(screen.getByText('210')).toBeInTheDocument();
+  });
+
   it('an early Simon answer cancels the pending instruction and preserves feedback', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     vi.useFakeTimers();

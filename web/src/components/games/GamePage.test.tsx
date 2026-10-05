@@ -42,6 +42,15 @@ describe('shared game page UI', () => {
     expect(screen.getByRole('link', { name: 'More games' })).toHaveAttribute('href', '/games');
   });
 
+  it('keeps replay disabled while an attempt has not saved', () => {
+    const replay = vi.fn();
+    render(<MemoryRouter><GameResult score={400} stars={2} onReplay={replay} replayDisabled /></MemoryRouter>);
+    const button = screen.getByRole('button', { name: 'Play again' });
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
+    expect(replay).not.toHaveBeenCalled();
+  });
+
   it('always returns to the game library instead of an unrelated history entry', () => {
     function CurrentPath() {
       return <output>{useLocation().pathname}</output>;

@@ -40,6 +40,7 @@ type GameState = 'setup' | 'playing' | 'feedback' | 'complete';
 export function ColorTouch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -93,7 +94,7 @@ export function ColorTouch() {
 
   // Start the game
   const startGame = async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -355,6 +356,7 @@ export function ColorTouch() {
         {/* Complete Screen */}
         {gameState === 'complete' && (
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"

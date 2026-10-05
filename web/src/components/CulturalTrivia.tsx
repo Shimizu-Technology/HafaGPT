@@ -277,6 +277,7 @@ export function CulturalTrivia() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -334,7 +335,7 @@ export function CulturalTrivia() {
 
   // Start game
   const startGame = useCallback(async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -378,7 +379,7 @@ export function CulturalTrivia() {
     } finally {
       startingRef.current = false;
     }
-  }, [canUse, tryUse, pickQuestions, difficulty, timedChallenge, saveGameResultMutation]);
+  }, [canUse, tryUse, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
 
   // Handle answer selection
   const handleAnswer = useCallback((answerIndex: number) => {
@@ -664,6 +665,7 @@ export function CulturalTrivia() {
               <button
                 type="button"
                 onClick={startGame}
+                disabled={resultUnresolved}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />

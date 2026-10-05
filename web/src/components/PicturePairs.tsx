@@ -111,6 +111,7 @@ const DIFFICULTY_CONFIG = {
 export function PicturePairs() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -206,7 +207,7 @@ export function PicturePairs() {
 
   // Start game
   const startGame = async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -443,6 +444,7 @@ export function PicturePairs() {
             {/* Restart Button */}
             <div className="flex justify-center mt-4">
               <button
+                disabled={resultUnresolved}
                 onClick={() => setGameState('setup')}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
@@ -500,12 +502,14 @@ export function PicturePairs() {
             <div className="flex gap-3">
               <button
                 onClick={startGame}
+                disabled={resultUnresolved}
                 className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
               </button>
               <button
+                disabled={resultUnresolved}
                 onClick={() => setGameState('setup')}
                 className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >

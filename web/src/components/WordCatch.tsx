@@ -81,6 +81,7 @@ export function WordCatch() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -110,6 +111,8 @@ export function WordCatch() {
   // Refs
   const animationRef = useRef<number | null>(null);
   const caughtIdsRef = useRef(new Set<number>());
+  const comboRef = useRef(0);
+  const livesRef = useRef(MAX_LIVES);
   const missedIdsRef = useRef(new Set<number>());
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pairIdRef = useRef(0);
@@ -168,12 +171,10 @@ export function WordCatch() {
 
     let english = word.english;
     if (!isCorrect) {
-      // Pick a different word's English for wrong pair
-      let wrongIndex = wordIndex;
-      while (wrongIndex === wordIndex) {
-        wrongIndex = Math.floor(Math.random() * wordPool.length);
-      }
-      english = wordPool[wrongIndex].english;
+      // Choose a finite pool with a different meaning, including duplicate definitions.
+      const otherMeanings = wordPool.filter(entry => entry.english !== word.english);
+      if (!otherMeanings.length) return;
+      english = otherMeanings[Math.floor(Math.random() * otherMeanings.length)].english;
     }
 
     // Random start position (from edges)
@@ -230,22 +231,27 @@ export function WordCatch() {
 
   // Handle tapping a pair
   const handleCatch = useCallback((pairId: number) => {
-    if (gameState !== 'playing' || caughtIdsRef.current.has(pairId)) return;
+    if (gameState !== 'playing' || livesRef.current <= 0 || caughtIdsRef.current.has(pairId)) return;
     const pair = flyingPairs.find(item => item.id === pairId);
     if (!pair || pair.caught || pair.missed) return;
     caughtIdsRef.current.add(pairId);
     setFlyingPairs(prev => prev.map(item => item.id === pairId ? { ...item, caught: true } : item));
     if (pair.isCorrect) {
-      setScore(score => score + 100 + combo * 10);
-      setCombo(combo + 1);
-      setMaxCombo(current => Math.max(current, combo + 1));
+      const nextCombo = comboRef.current + 1;
+      const comboBonus = comboRef.current * 10;
+      setScore(score => score + 100 + comboBonus);
+      comboRef.current = nextCombo;
+      setCombo(nextCombo);
+      setMaxCombo(current => Math.max(current, nextCombo));
       setCaught(count => count + 1);
     } else {
+      comboRef.current = 0;
       setCombo(0);
-      setLives(lives - 1);
-      if (lives <= 1) setGameState('complete');
+      livesRef.current -= 1;
+      setLives(livesRef.current);
+      if (livesRef.current <= 0) setGameState('complete');
     }
-  }, [combo, flyingPairs, gameState, lives]);
+  }, [flyingPairs, gameState]);
 
   // Animation loop
   useEffect(() => {
@@ -293,6 +299,7 @@ export function WordCatch() {
     expired.forEach(pair => missedIdsRef.current.add(pair.id));
     const missedMatches = expired.filter(pair => pair.isCorrect).length;
     if (missedMatches) {
+      comboRef.current = 0;
       setCombo(0);
       setMissed(count => count + missedMatches);
     }
@@ -357,11 +364,11 @@ export function WordCatch() {
         stars,
       });
     }
-  }, [gameState, isSignedIn, caught, score, maxCombo, timeLeft, settings, saveGameResultMutation]);
+  }, [gameState, isSignedIn, caught, score, maxCombo, timeLeft, settings, saveGameResultMutation, resultUnresolved]);
 
   // Start game
   const startGame = useCallback(async () => {
-    if (startingRef.current) return;
+    if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
     try {
 
@@ -389,6 +396,8 @@ export function WordCatch() {
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
       gameAttemptIdRef.current = createClientAttemptId();
+      livesRef.current = MAX_LIVES;
+      comboRef.current = 0;
       setLives(MAX_LIVES);
       setScore(0);
       setCombo(0);
@@ -406,7 +415,7 @@ export function WordCatch() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, isSignedIn, canUse, tryUse, saveGameResultMutation]);
+  }, [wordPool, isSignedIn, canUse, tryUse, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
@@ -416,6 +425,7 @@ export function WordCatch() {
     if (spawnTimerRef.current) {
       clearTimeout(spawnTimerRef.current);
     }
+    if (resultUnresolved) return;
     setGameState('setup');
     setFlyingPairs([]);
   };
@@ -764,6 +774,7 @@ export function WordCatch() {
               </button>
               <button
                 onClick={resetGame}
+                disabled={resultUnresolved}
                 className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
