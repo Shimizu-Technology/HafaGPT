@@ -985,6 +985,8 @@ async def chat(
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
     pending_id: Optional[str] = Form(None),  # Unique ID for cancel tracking
+    intent: Optional[str] = Form(None),
+    learning_topic_id: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None)  # Renamed from 'image' to support all file types
 ):
     """
@@ -1028,6 +1030,8 @@ async def chat(
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
             pending_id = body.get('pending_id')  # Parse pending_id from JSON
+            intent = body.get('intent')
+            learning_topic_id = body.get('learning_topic_id')
             file = None
         else:
             # FormData is already parsed by Form() parameters above
@@ -1040,6 +1044,14 @@ async def chat(
                 detail="Message is required"
             )
         
+        from api.tutor_intent import normalize_tutor_intent
+        try:
+            intent = normalize_tutor_intent(intent)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+        if learning_topic_id is not None and (not isinstance(learning_topic_id, str) or len(learning_topic_id) > 160):
+            raise HTTPException(status_code=400, detail="Invalid learning topic")
+
         # Validate mode
         valid_modes = ["english", "chamorro", "learn"]
         if mode not in valid_modes:
@@ -1148,7 +1160,9 @@ async def chat(
             image_url=file_url,  # Pass S3 URL for logging (works for all file types)
             file_urls=uploaded_file_infos,
             pending_id=pending_id,  # Pass pending_id for cancel tracking
-            original_message=message  # Original user message for logging/display
+            original_message=message,  # Original user message for logging/display
+            intent=intent,
+            learning_topic_id=learning_topic_id
         )
         
         # Check if the request was cancelled - if so, return a cancelled response
@@ -1240,6 +1254,8 @@ async def chat_stream(
     conversation_id: Optional[str] = Form(None),
     pending_id: Optional[str] = Form(None),
     skill_level: Optional[str] = Form(None),  # User's skill level for personalized responses
+    intent: Optional[str] = Form(None),
+    learning_topic_id: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),  # Legacy single file support
     files: List[UploadFile] = File(default=[])  # New: multiple files support
 ):
@@ -1281,6 +1297,8 @@ async def chat_stream(
             conversation_id = body.get('conversation_id')
             pending_id = body.get('pending_id')
             skill_level = body.get('skill_level')  # User's skill level
+            intent = body.get('intent')
+            learning_topic_id = body.get('learning_topic_id')
             files = []
             file = None
         else:
@@ -1293,6 +1311,14 @@ async def chat_stream(
         if not message:
             raise HTTPException(status_code=400, detail="Message is required")
         
+        from api.tutor_intent import normalize_tutor_intent
+        try:
+            intent = normalize_tutor_intent(intent)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+        if learning_topic_id is not None and (not isinstance(learning_topic_id, str) or len(learning_topic_id) > 160):
+            raise HTTPException(status_code=400, detail="Invalid learning topic")
+
         # Validate mode
         valid_modes = ["english", "chamorro", "learn"]
         if mode not in valid_modes:
@@ -1441,7 +1467,9 @@ async def chat_stream(
                         image_url=file_url,
                         pending_id=pending_id,
                         original_message=message,  # Original user message for logging/display
-                        skill_level=skill_level  # User's skill level for personalization
+                        skill_level=skill_level,  # User's skill level for personalization
+                        intent=intent,
+                        learning_topic_id=learning_topic_id
                     ):
                         event_queue.put(event)
                 except Exception as e:
@@ -6103,6 +6131,7 @@ class ConversationPracticeResponse(BaseModel):
     english_translation: str
     feedback: Optional[Dict[str, Any]] = None
     objectives_completed: List[str] = Field(default_factory=list)
+    objective_evidence: List[Dict[str, Any]] = Field(default_factory=list)
     is_complete: bool = False
     final_score: Optional[int] = Field(default=None, ge=1, le=5)
     grounding_status: GroundingStatus = "ai_only"
@@ -6119,6 +6148,8 @@ async def conversation_practice(request: ConversationPracticeRequest):
     try:
         import openai
         from api.canonical_context import get_canonical_tutor_context
+        from api.conversation_practice_models import validated_objective_evidence
+        from api.tutor_intent import curriculum_tutor_context
         
         client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
@@ -6129,6 +6160,12 @@ async def conversation_practice(request: ConversationPracticeRequest):
             + context.useful_phrases[:10]
         )
         canonical_context, canonical_sources = get_canonical_tutor_context(grounding_input)
+        lesson_context, lesson_sources = curriculum_tutor_context(
+            request.user_message, "practice",
+            "greetings" if request.scenario_id == "meeting-someone" else None,
+        )
+        canonical_context = "\n\n".join(part for part in (canonical_context, lesson_context) if part)
+        canonical_sources.extend(lesson_sources)
         grounding_status = grounding_status_from_sources(canonical_sources)
         system_prompt = build_conversation_system_prompt(
             context,
@@ -6147,7 +6184,8 @@ async def conversation_practice(request: ConversationPracticeRequest):
         messages.append({"role": "user", "content": request.user_message})
         
         # Call OpenAI
-        response = client.chat.completions.create(
+        response = await asyncio.to_thread(
+            client.chat.completions.create,
             model="gpt-4o-mini",
             messages=messages,
             temperature=0.3,
@@ -6159,13 +6197,15 @@ async def conversation_practice(request: ConversationPracticeRequest):
         response_text = response.choices[0].message.content
         response_data = json.loads(response_text)
         
+        evidence = validated_objective_evidence(response_data, request)
         return ConversationPracticeResponse(
             chamorro_response=response_data.get("chamorro_response", ""),
             english_translation=response_data.get("english_translation", ""),
             feedback=response_data.get("feedback"),
-            objectives_completed=response_data.get("objectives_completed", []),
+            objectives_completed=[item["objective"] for item in evidence],
+            objective_evidence=evidence,
             is_complete=response_data.get("is_complete", False),
-            final_score=response_data.get("final_score"),
+            final_score=None,
             grounding_status=grounding_status,
         )
         

@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from .prompt_budget import assemble_system_prompt
 from .image_translation import translate_image_pages
 from .canonical_context import get_canonical_tutor_context
+from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
 from src.rag.conversation_retrieval import build_contextual_retrieval_query
@@ -828,10 +829,11 @@ SKILL_LEVEL_MODIFIERS = {
 Adjust your responses for a new learner:
 - Use simple, clear explanations
 - Always provide English translations alongside Chamorro
-- Break down words into syllables when helpful (e.g., "Må-nu-la" = Tuesday)
-- Use lots of encouragement ("Great question!", "You're doing well!")
+- Keep the first answer concise: one useful answer or source-backed example
+- Give specific feedback about the learner's response; avoid repeated generic praise
+- Do not invent syllable breaks or pronunciation guides
 - Focus on common, everyday vocabulary
-- Explain cultural context in simple terms
+- Explain cultural context only when directly supported by the supplied sources
 - Avoid overwhelming with too many examples at once
 - Repeat key phrases for reinforcement
 """,
@@ -851,7 +853,7 @@ Adjust your responses for a learner with basic knowledge:
 Adjust your responses for an experienced learner:
 - Use more Chamorro in your responses
 - Provide nuanced explanations (register, formality, regional variations)
-- Include etymology and historical context
+- Include etymology and historical context only when directly supported by supplied sources
 - Reference cultural practices and traditions in depth
 - Discuss subtle grammar distinctions
 - Less hand-holding, more conversation-style responses
@@ -1177,6 +1179,8 @@ def get_rag_context(
     retrieval_input: str | None = None,
     include_vector: bool = True,
     passage_match_limit: int = 24,
+    intent: str | None = None,
+    learning_topic_id: str | None = None,
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1191,6 +1195,7 @@ def get_rag_context(
         tuple: (context_string, sources_list)
     """
     from src.rag.translation_policy import is_passage_translation
+    from api.tutor_intent import curriculum_tutor_context
 
     retrieval_query = retrieval_input or user_input
     use_rag, rag_mode = should_use_rag(retrieval_query, conversation_length)
@@ -1200,6 +1205,12 @@ def get_rag_context(
         # path, and full mode preserves any relevant corpus support.
         use_rag, rag_mode = True, "full"
     
+    curriculum_context, curriculum_sources = curriculum_tutor_context(
+        user_input, intent, learning_topic_id,
+    )
+    if curriculum_context:
+        use_rag, rag_mode = True, rag_mode or "light"
+
     if not use_rag:
         retrieval_event = build_retrieval_event(
             query_type=detect_query_type(retrieval_query),
@@ -1210,8 +1221,8 @@ def get_rag_context(
         logger.info("RAG_SELECTION %s", json.dumps(retrieval_event, sort_keys=True))
         return "", []
     
-    contexts: list[str] = []
-    sources: list[object] = []
+    contexts: list[str] = [curriculum_context] if curriculum_context else []
+    sources: list[object] = list(curriculum_sources)
 
     # Exact canonical matches and approved cards do not depend on the vector
     # database, so a transient database failure must not erase them.
@@ -1296,7 +1307,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
                               conversation_id: str | None, image_url: str | None,
                               file_urls: list[dict] | None, pending_id: str | None,
                               start_time: float, past_messages: list[dict],
-                              skill_level: str | None) -> Iterator[dict]:
+                              skill_level: str | None, intent: str | None = None) -> Iterator[dict]:
     """Persist the same validated page response for streaming and ordinary requests."""
     client, model = get_client_for_request(has_image=True)
     effective_message, image_translation = build_image_translation_query(message, image_context)
@@ -1307,6 +1318,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     guidance = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])["prompt"] + guidance
     if mode != "chamorro" and skill_level in SKILL_LEVEL_MODIFIERS:
         guidance += SKILL_LEVEL_MODIFIERS[skill_level]
+    guidance += tutor_task_guidance(intent)
     guidance += build_translation_structure_hints(effective_message)
     if mode == "chamorro":
         guidance += "\nWrite every translation and notes value in Chamorro only."
@@ -1361,7 +1373,9 @@ def get_chatbot_response(
     file_urls: list[dict] | None = None,
     pending_id: str = None,  # Unique ID for cancel tracking
     original_message: str = None,  # Original user message (without appended doc text)
-    skill_level: str = None  # User's skill level for personalized responses
+    skill_level: str = None,  # User's skill level for personalized responses
+    intent: str | None = None,
+    learning_topic_id: str | None = None,
 ) -> dict:
     """
     Get chatbot response (core logic for both CLI and API).
@@ -1456,7 +1470,7 @@ def get_chatbot_response(
             mode=mode, session_id=session_id, user_id=user_id,
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id, start_time=start_time,
-            past_messages=past_messages, skill_level=skill_level,
+            past_messages=past_messages, skill_level=skill_level, intent=intent,
         )
         events = list(image_events)
         metadata = next((event for event in reversed(events) if event["type"] == "metadata"), {})
@@ -1523,11 +1537,13 @@ def get_chatbot_response(
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
         include_vector=not use_web,
+        intent=intent,
+        learning_topic_id=learning_topic_id,
     )
     used_rag = bool(rag_context)
     
     # Build system prompt
-    system_prompt = mode_config["prompt"]
+    system_prompt = mode_config["prompt"] + tutor_task_guidance(intent)
     
     # Add skill level modifier if provided (personalization based on user experience)
     # Generic level modifiers require English explanations at some levels, which
@@ -1757,7 +1773,9 @@ def get_chatbot_response_stream(
     file_urls: list[dict] | None = None,
     pending_id: str = None,
     original_message: str = None,  # Original user message (without appended doc text)
-    skill_level: str = None  # User's skill level for personalized responses
+    skill_level: str = None,  # User's skill level for personalized responses
+    intent: str | None = None,
+    learning_topic_id: str | None = None,
 ):
     """
     Streaming version of get_chatbot_response.
@@ -1811,7 +1829,7 @@ def get_chatbot_response_stream(
             mode=mode, session_id=session_id, user_id=user_id,
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id, start_time=start_time,
-            past_messages=past_messages, skill_level=skill_level,
+            past_messages=past_messages, skill_level=skill_level, intent=intent,
         )
         yield from image_events
         return
@@ -1872,11 +1890,13 @@ def get_chatbot_response_stream(
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
         include_vector=not use_web,
+        intent=intent,
+        learning_topic_id=learning_topic_id,
     )
     used_rag = bool(rag_context)
     
     # Build system prompt
-    system_prompt = mode_config["prompt"]
+    system_prompt = mode_config["prompt"] + tutor_task_guidance(intent)
     
     # Add skill level modifier if provided (personalization based on user experience)
     # Keep streaming and non-streaming prompt construction behavior identical.
