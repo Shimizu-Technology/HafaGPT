@@ -89,8 +89,10 @@ function LessonPageSession() {
   const [currentStep, setCurrentStep] = useState<LessonStep>(resume.step);
   const [quizScore, setQuizScore] = useState<number | null>(resume.score);
   const [completionSaved, setCompletionSaved] = useState(resume.saved);
+  const [resumeStorageAvailable, setResumeStorageAvailable] = useState(true);
+  const [xpPending, setXpPending] = useState(resume.xpPending ?? false);
   const [isSavingCompletion, setIsSavingCompletion] = useState(false);
-  const [progressError, setProgressError] = useState<string | null>(resume.step === 'complete' && !resume.saved ? 'Your lesson result has not synced yet. Retry saving to update course progress.' : null);
+  const [progressError, setProgressError] = useState<string | null>(resume.step === 'complete' && (!resume.saved || resume.xpPending) ? resume.saved ? 'Your lesson progress is saved, but XP has not synced yet. Retry saving to finish.' : 'Your lesson result has not synced yet. Retry saving to update course progress.' : null);
   const { completeStep } = useTodaySessionProgress();
   const { data: allProgress } = useAllProgress();
   const [xpToast, setXpToast] = useState<{ xp: number; levelUp?: boolean; newLevel?: number } | null>(null);
@@ -129,10 +131,10 @@ function LessonPageSession() {
   }, [ownerId, topicId]);
 
   useEffect(() => {
-    if (topicId && ownerId) saveLessonResume(ownerId, topicId, {
-      ...resume, step: currentStep, score: quizScore, saved: completionSaved,
-    });
-  }, [topicId, ownerId, resume, currentStep, quizScore, completionSaved]);
+    if (topicId && ownerId) setResumeStorageAvailable(saveLessonResume(ownerId, topicId, {
+      ...resume, step: currentStep, score: quizScore, saved: completionSaved, xpPending,
+    }));
+  }, [topicId, ownerId, resume, currentStep, quizScore, completionSaved, xpPending]);
 
   const handleCardProgress = useCallback((index: number, viewed: number[]) => {
     setResume(previous => previous.cardIndex === index && JSON.stringify(previous.viewed) === JSON.stringify(viewed)
@@ -180,11 +182,13 @@ function LessonPageSession() {
     browserStorage.set(getLessonExposureQueueKey(ownerId, payload.topicId), JSON.stringify(payload));
     try {
       await recordLessonExposure.mutateAsync(payload);
+      if (lessonExposureScopeRef.current !== requestScope || lessonExposureRequestRef.current !== requestId) return;
       await updateProgress.mutateAsync({ topicId: payload.topicId, action: 'flashcard_viewed', flashcardsCount: payload.conceptIds.length });
+      if (lessonExposureScopeRef.current !== requestScope || lessonExposureRequestRef.current !== requestId) return;
+      await awardXP.mutateAsync({ activity_type: 'flashcard_complete', activity_id: payload.topicId, minutes_spent: 0, deduplicate: true });
       if (lessonExposureScopeRef.current !== requestScope || lessonExposureRequestRef.current !== requestId) return;
       browserStorage.remove(getLessonExposureQueueKey(ownerId, payload.topicId));
       setPendingLessonExposure(null);
-      void awardXP.mutateAsync({ activity_type: 'flashcard_complete', activity_id: payload.topicId, minutes_spent: 0, deduplicate: true }).catch(() => {});
     } catch {
       if (lessonExposureScopeRef.current === requestScope && lessonExposureRequestRef.current === requestId) setLessonExposureSaveFailed(true);
     }
@@ -197,8 +201,9 @@ function LessonPageSession() {
   };
 
   const saveCompletion = async (score: number) => {
-    if (!topicId || isSavingCompletion) return;
+    if (!topicId || !ownerId || isSavingCompletion || lessonExposureScopeRef.current !== `${ownerId}:${topicId}`) return;
     setIsSavingCompletion(true);
+    setXpPending(true);
     setProgressError(null);
     try {
       const requestScope = ownerId ? `${ownerId}:${topicId}` : null;
@@ -208,9 +213,11 @@ function LessonPageSession() {
       if (score >= 70) completeStep('learn');
       const data = await awardXP.mutateAsync({ activity_type: 'quiz_complete', activity_id: topicId, quiz_score: score, minutes_spent: 0, deduplicate: true });
       if (data.xp_earned > 0) setXpToast({ xp: data.xp_earned, levelUp: data.level_up, newLevel: data.new_level || undefined });
-      if (score >= 70 && lessonExposureScopeRef.current === requestScope) await awardXP.mutateAsync({ activity_type: 'topic_complete', activity_id: topicId, minutes_spent: 0, deduplicate: true });
+      if (lessonExposureScopeRef.current !== requestScope) return;
+      if (score >= 70) await awardXP.mutateAsync({ activity_type: 'topic_complete', activity_id: topicId, minutes_spent: 0, deduplicate: true });
+      if (lessonExposureScopeRef.current === requestScope) setXpPending(false);
     } catch {
-      setProgressError('Some activity has not saved. Retry to sync your lesson progress and XP. Your result stays on this browser.');
+      setProgressError('Some activity has not saved. Retry to sync your lesson progress and XP. Keep this page open until the save succeeds.');
     } finally { setIsSavingCompletion(false); }
   };
   const handleQuizComplete = (score: number) => {
@@ -221,7 +228,7 @@ function LessonPageSession() {
   };
   const restartLesson = () => {
     setResume(emptyLessonResume()); setCurrentStep('intro'); setQuizScore(null);
-    setCompletionSaved(false); setProgressError(null);
+    setCompletionSaved(false); setXpPending(false); setProgressError(null);
   };
 
   const handleNextTopic = () => {
@@ -240,6 +247,7 @@ function LessonPageSession() {
 
   return (
     <LearnerPageShell>
+      {!resumeStorageAvailable && <p role="status" className="mx-auto max-w-3xl px-4 py-3 text-sm text-amber-900 dark:text-amber-200">Browser storage is unavailable. Keep this page open until your lesson saves; reload cannot restore this attempt.</p>}
       <LearnerPageHeader
         title={topic.title}
         subtitle={`Step ${currentStepIndex + 1} of ${STEPS.length} · ${STEP_INFO[currentStep].label}`}

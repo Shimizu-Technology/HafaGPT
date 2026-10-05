@@ -7,6 +7,7 @@ export interface LessonResume {
   viewed: number[];
   score: number | null;
   saved: boolean;
+  xpPending?: boolean;
   updatedAt: number;
 }
 export const emptyLessonResume = (): LessonResume => ({ step: 'intro', cardIndex: 0, viewed: [0], score: null, saved: false, updatedAt: Date.now() });
@@ -19,10 +20,11 @@ export function loadLessonResume(owner: string, topic: string, cardCount: number
       && Number.isInteger(value.cardIndex) && value.cardIndex >= 0 && value.cardIndex < Math.max(1, cardCount)
       && Array.isArray(value.viewed) && value.viewed.every(index => Number.isInteger(index) && index >= 0 && index < cardCount)
       && (value.score === null || (Number.isInteger(value.score) && value.score >= 0 && value.score <= 100))
+      && (value.xpPending === undefined || typeof value.xpPending === 'boolean')
       && typeof value.saved === 'boolean' && Number.isFinite(value.updatedAt)
       && Date.now() - value.updatedAt < 30 * 24 * 60 * 60 * 1000
       && (value.step !== 'complete' || value.score !== null)) {
-      if (value.step === 'complete' && value.saved && guamDay(new Date(value.updatedAt)) !== guamDay()) return emptyLessonResume();
+      if (value.step === 'complete' && value.saved && !value.xpPending && guamDay(new Date(value.updatedAt)) !== guamDay()) return emptyLessonResume();
       return value;
     }
   } catch { /* Optional browser state may be malformed. */ }

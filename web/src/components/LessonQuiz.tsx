@@ -138,7 +138,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   const ownerId = user?.id ?? 'anonymous';
   return (
     <LessonQuizSession
-      key={ownerId}
+      key={`${ownerId}:${topic.id}`}
       topic={topic}
       onComplete={onComplete}
       isSignedIn={Boolean(isSignedIn)}
@@ -159,6 +159,8 @@ function LessonQuizSession({
   ownerId,
 }: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   // Try to restore saved state first
   const savedState = useMemo(() => {
     const state = loadQuizState(topic.id, ownerId);
@@ -455,13 +457,15 @@ function LessonQuizSession({
               },
             });
           } catch {
+            if (!active.current) return;
             completionStartedRef.current = false;
             setIsSavingResult(false);
-            setSaveError('We could not save your result. Your progress is safe—try again.');
+            setSaveError('We could not save your result. Keep this page open and try again.');
             return;
           }
         }
       }
+      if (!active.current) return;
       clearQuizState(topic.id, ownerId);
       setIsSavingResult(false);
       onComplete(score);

@@ -56,7 +56,7 @@ export function loadTodaySession(owner: string, day = guamDay()): TodaySession |
 
 export function saveTodaySession(owner: string, session: TodaySession): boolean {
   const saved = browserStorage.set(key(owner), JSON.stringify(session));
-  window.dispatchEvent(new Event(TODAY_SESSION_CHANGED));
+  if (saved) window.dispatchEvent(new Event(TODAY_SESSION_CHANGED));
   return saved;
 }
 

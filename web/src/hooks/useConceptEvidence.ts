@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 import { getTopic } from '../data/learningPath';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { getCuratedConceptId } from '../data/conceptEvidence';
@@ -19,7 +19,7 @@ interface LessonExposureResponse {
 }
 
 export function useRecordLessonExposure() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({

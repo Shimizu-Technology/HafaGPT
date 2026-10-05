@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -85,7 +85,7 @@ export interface QuizHistoryResponse {
 
 // Hook to get quiz stats
 export function useQuizStats() {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['quizStats', userId],
@@ -111,7 +111,7 @@ export function useQuizStats() {
 
 // Hook to get quiz result detail with answers
 export function useQuizResultDetail(resultId: string | undefined) {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['quizResult', userId, resultId],
@@ -136,7 +136,7 @@ export function useQuizResultDetail(resultId: string | undefined) {
 
 // Hook to save quiz result
 export function useSaveQuizResult() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -170,7 +170,7 @@ export function useSaveQuizResult() {
 
 // Hook to get paginated quiz history
 export function useQuizHistory(page: number = 1, perPage: number = 20) {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['quizHistory', userId, page, perPage],
@@ -215,7 +215,7 @@ export interface WeakAreasResponse {
 
 // Hook to get weak areas (categories where user struggles)
 export function useWeakAreas() {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['weakAreas', userId],

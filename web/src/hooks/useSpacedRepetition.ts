@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -74,10 +74,10 @@ export type QualityRating = typeof QUALITY_RATINGS[keyof typeof QUALITY_RATINGS]
  * Hook to get flashcards due for review
  */
 export function useDueCards(deckId?: string, limit: number = 20) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
-    queryKey: ['dueCards', deckId, limit],
+    queryKey: ['dueCards', userId, deckId, limit],
     queryFn: async (): Promise<DueCardsResponse> => {
       const token = await getToken();
       const params = new URLSearchParams();
@@ -96,7 +96,7 @@ export function useDueCards(deckId?: string, limit: number = 20) {
 
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60, // 1 minute
   });
 }
@@ -105,7 +105,7 @@ export function useDueCards(deckId?: string, limit: number = 20) {
  * Hook to record a flashcard review
  */
 export function useRecordReview() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -144,10 +144,10 @@ export function useRecordReview() {
  * Hook to get spaced repetition summary stats
  */
 export function useSRSummary() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
-    queryKey: ['srSummary'],
+    queryKey: ['srSummary', userId],
     queryFn: async (): Promise<SRSummary> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/flashcards/stats/summary`, {
@@ -162,7 +162,7 @@ export function useSRSummary() {
 
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }

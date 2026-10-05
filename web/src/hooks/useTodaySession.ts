@@ -28,7 +28,7 @@ export function useTodaySessionProgress(plan?: TodayPlan | null) {
     }
     const existing = loadTodaySession(userId, day);
     const memorySession = currentState.current.scope === scope ? currentState.current.session : null;
-    const next = existing ?? memorySession ?? (plan && plan.activities.length ? {
+    const next = memorySession ?? existing ?? (plan && plan.activities.length ? {
       version: 1 as const, day, plan, completed: [],
     } : null);
     setState({ scope, session: next });
@@ -50,10 +50,18 @@ export function useTodaySessionProgress(plan?: TodayPlan | null) {
   }, [userId, day, scope]);
 
   const completeStep = useCallback((requestedStep?: TodayStep) => {
+    // A pending save can outlive the render's day. Never revive yesterday's
+    // captured session over a newer plan created in another tab.
+    const currentDay = guamDay();
+    if (currentDay !== day) return;
     const step = readTodayStep(location.search);
     if (!userId || !step || (requestedStep && requestedStep !== step)) return;
-    if (new URLSearchParams(location.search).get('today_day') !== day) return;
-    const current = loadTodaySession(userId, day) ?? session;
+    if (new URLSearchParams(location.search).get('today_day') !== currentDay) return;
+    const stored = loadTodaySession(userId, day);
+    const current = stored && session ? {
+      ...stored, completed: [...new Set([...stored.completed, ...session.completed])]
+        .filter(id => stored.plan.activities.some(activity => activity.id === id)),
+    } : stored ?? session;
     if (!current || current.day !== day) return;
     const next = completeTodayStep(current, step, location.pathname);
     if (next === current) return;

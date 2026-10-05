@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, CheckCircle2, Loader2, RotateCcw } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
 import { useTodaySessionProgress } from '../hooks/useTodaySession';
 import { readTodayStep } from '../lib/todaySession';
 import { Flashcard } from './Flashcard';
@@ -8,6 +9,13 @@ import { ReviewRatingButtons } from './ReviewRatingButtons';
 import { useDueCards, useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 
 export function ReviewQueue() {
+  const { userId } = useAuth();
+  return <ReviewQueueSession key={userId ?? 'guest'} />;
+}
+
+function ReviewQueueSession() {
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const location = useLocation();
   const today = readTodayStep(location.search) === 'review';
   const { completeStep } = useTodaySessionProgress();
@@ -43,18 +51,21 @@ export function ReviewQueue() {
           source_kind: currentCard.source_kind,
         },
       });
+      if (!active.current) return;
       setIsFlipped(false);
       setReviewedCardIds((cardIds) => new Set(cardIds).add(currentCard.card_id));
 
       if (cards.length === 1 && (data?.total_due ?? 0) > 1) {
         setIsLoadingNextPage(true);
         const refreshed = await refetch();
+        if (!active.current) return;
         setIsLoadingNextPage(false);
         if (refreshed.isError) {
           setError('More reviews could not load. Please try again.');
         }
       }
     } catch {
+      if (!active.current) return;
       setIsLoadingNextPage(false);
       setError('Your review was not saved. Please try again.');
     }
@@ -80,7 +91,7 @@ export function ReviewQueue() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-5 min-h-11 rounded-xl bg-coral-600 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
+            className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
           >
             Try again
           </button>
@@ -112,7 +123,7 @@ export function ReviewQueue() {
           <Link to="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
           <Link
             to="/flashcards"
-            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-600 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
           >
             Study more cards
           </Link>

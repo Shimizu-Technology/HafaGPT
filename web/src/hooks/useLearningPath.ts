@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -63,7 +63,7 @@ export interface TopicWorkspaceResponse {
 
 // Get one stable topic workspace and its explicit relationships.
 export function useTopicWorkspace(topicId?: string) {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['learning', 'workspace', userId, topicId],
@@ -88,7 +88,7 @@ export function useTopicWorkspace(topicId?: string) {
 
 // Get recommended next topic
 export function useRecommendedTopic() {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['learning', 'recommended', userId],
@@ -114,7 +114,7 @@ export function useRecommendedTopic() {
 
 // Get all progress
 export function useAllProgress() {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['learning', 'progress', userId],
@@ -139,7 +139,7 @@ export function useAllProgress() {
 
 // Update progress
 export function useUpdateProgress() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({

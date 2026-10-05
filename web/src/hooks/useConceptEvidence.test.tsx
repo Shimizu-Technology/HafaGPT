@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useAuth: () => ({ getToken: mocks.getToken }),
+  useAuth: () => ({ getToken: mocks.getToken, userId: 'evidence-learner' }),
 }));
 
 
