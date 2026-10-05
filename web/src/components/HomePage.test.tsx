@@ -97,7 +97,7 @@ describe('home progress summary', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it('shows a disabled daily goal without a false zero-percent meter', () => {
+  it('shows completed topics and due review without estimating learning minutes', () => {
     render(
       <MemoryRouter>
         <ProgressSummary
@@ -112,8 +112,9 @@ describe('home progress summary', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText('Daily time goal is off')).toBeInTheDocument();
+    expect(screen.getByText('2/21')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
     expect(screen.queryByRole('progressbar', { name: /daily learning goal/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /set a goal/i })).toHaveAttribute('href', '/settings');
+    expect(screen.queryByText(/minutes today/i)).not.toBeInTheDocument();
   });
 });

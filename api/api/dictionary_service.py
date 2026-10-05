@@ -160,7 +160,8 @@ def normalize_chamorro(text: str) -> str:
         'å': 'a',
         'ñ': 'n',
         "'": '',   # Glottal stop (apostrophe)
-        "'": '',   # Curly apostrophe
+        "’": '',   # Right curly apostrophe
+        "‘": '',   # Left curly apostrophe
         "‑": '-',  # Non-breaking hyphen to regular hyphen
     }
     
@@ -626,7 +627,7 @@ class DictionaryService:
             })
         return categories
     
-    def get_category_words(self, category_id: str, limit: int = 100, offset: int = 0) -> dict:
+    def get_category_words(self, category_id: str, limit: int = 100, offset: int = 0, query: str = "") -> dict:
         """Get words in a specific category."""
         if category_id not in self._categories_cache:
             return {"words": [], "total": 0, "category": None}
@@ -634,12 +635,17 @@ class DictionaryService:
         cat_info = CATEGORY_DEFINITIONS.get(category_id, {})
         words = self._categories_cache[category_id]
         
-        # Sort alphabetically by Chamorro word
-        sorted_words = sorted(words, key=lambda x: x["chamorro"].lower())
+        # Search the entire category before pagination, including diacritic variants.
+        normalized_query = normalize_chamorro(query.strip())
+        matching_words = [word for word in words if not normalized_query or
+                          normalized_query in normalize_chamorro(word["chamorro"]) or
+                          normalized_query in normalize_chamorro(word["definition"])]
+        sorted_words = sorted(matching_words, key=lambda x: x["chamorro"].lower())
         
         return {
             "words": sorted_words[offset:offset + limit],
             "total": len(sorted_words),
+            "category_total": len(words),
             "category": {
                 "id": category_id,
                 "title": cat_info.get("title", ""),

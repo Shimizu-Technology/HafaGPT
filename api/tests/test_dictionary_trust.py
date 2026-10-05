@@ -156,3 +156,34 @@ def test_word_of_the_day_broader_pool_keeps_developing_canonical_entries():
 
     assert preferred == [preferred_word]
     assert broader == [developing_word, unmatched_word]
+
+
+def test_category_search_filters_before_paging_and_preserves_total():
+    service = DictionaryService.__new__(DictionaryService)
+    service._categories_cache = {
+        "greetings": [
+            {"chamorro": f"word-{index:03}", "definition": "hello"}
+            for index in range(70)
+        ] + [{"chamorro": "z-last", "definition": "thank you"}]
+    }
+    result = service.get_category_words("greetings", limit=50, query="thank you")
+    assert result["words"] == [{"chamorro": "z-last", "definition": "thank you"}]
+    assert result["total"] == 1
+    assert result["category_total"] == 71
+    assert len(service.get_category_words("greetings", limit=50)["words"]) == 50
+    assert service.get_category_words("greetings", limit=50, offset=50)["total"] == 71
+
+
+def test_category_search_is_diacritic_insensitive_and_handles_empty_query():
+    service = DictionaryService.__new__(DictionaryService)
+    service._categories_cache = {"greetings": [{"chamorro": "hånum", "definition": "water"}]}
+    assert service.get_category_words("greetings", query="HANUM")["total"] == 1
+    assert service.get_category_words("greetings", query="   ")["total"] == 1
+    assert service.get_category_words("greetings", query="missing")["total"] == 0
+
+
+def test_category_search_accepts_phone_keyboard_apostrophes():
+    service = DictionaryService.__new__(DictionaryService)
+    service._categories_cache = {"greetings": [{"chamorro": "Si Yu'os Ma'åse'", "definition": "thank you"}]}
+    assert service.get_category_words("greetings", query="Yu’os Ma’åse’")["total"] == 1
+    assert service.get_category_words("greetings", query="Yu‘os Ma‘åse‘")["total"] == 1

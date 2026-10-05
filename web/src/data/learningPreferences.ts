@@ -31,12 +31,12 @@ export const LEARNER_MODE_OPTIONS: LearningPreferenceOption<LearnerMode>[] = [
   {
     id: 'with_child',
     title: 'Learning with a child',
-    description: 'Learn together on a caregiver-managed account.',
+    description: 'Show shared picture and listening activities on your adult account.',
   },
   {
     id: 'helping_family',
     title: 'Helping family',
-    description: 'Get practical support for family learning and school messages.',
+    description: 'Keep translation and dictionary help close at hand.',
   },
 ];
 
@@ -44,12 +44,12 @@ export const READING_SUPPORT_OPTIONS: LearningPreferenceOption<ReadingSupport>[]
   {
     id: 'audio_pictures',
     title: 'Audio and pictures first',
-    description: 'Use listening and visual cues before longer text.',
+    description: 'Recommend picture and listening activities in Today and Library.',
   },
   {
     id: 'short_text_audio',
     title: 'Short text with audio',
-    description: 'Pair brief reading with listening support.',
+    description: 'Recommend short activities with replayable audio.',
   },
   {
     id: 'independent',

@@ -35,7 +35,7 @@ export function AdminAnalytics() {
     { name: 'Chatted', value: advancedData.user_funnel.chatted, fill: FUNNEL_COLORS[1] },
     { name: 'Played Game', value: advancedData.user_funnel.played_game, fill: FUNNEL_COLORS[2] },
     { name: 'Took Quiz', value: advancedData.user_funnel.took_quiz, fill: FUNNEL_COLORS[3] },
-    { name: 'Returned', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
+    { name: '2+ recorded days', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
   ] : [];
   
   // Get heatmap color based on intensity
@@ -125,7 +125,7 @@ export function AdminAnalytics() {
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
                   <GraduationCap className="w-5 h-5 text-indigo-500" />
-                  <span className="text-sm text-brown-500 dark:text-gray-400">Quizzes Taken</span>
+                  <span className="text-sm text-brown-500 dark:text-gray-400">Completed quizzes</span>
                 </div>
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">
                   {usageData?.totals?.quizzes?.toLocaleString() || 0}
@@ -323,7 +323,7 @@ export function AdminAnalytics() {
                   <p className="text-3xl font-bold text-indigo-600">
                     {featureData?.quizzes_total?.toLocaleString() || 0}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Quizzes Taken</p>
+                  <p className="text-sm text-brown-600 dark:text-gray-400">Completed quizzes</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-teal-600">
@@ -476,8 +476,10 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <ArrowRight className="w-5 h-5 text-purple-500" />
-                User Journey Funnel
+                Learning activity reach
               </h2>
+              <p className="mb-4 text-sm text-brown-600 dark:text-gray-300">Independent activity counts in this period. Learners can use tools in any order; these percentages describe reach, not conversion between steps.</p>
+              <p className="mb-4 text-xs text-brown-500 dark:text-gray-400">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
               {funnelData.length > 0 && funnelData[0].value > 0 ? (
                 <div className="flex flex-col lg:flex-row items-center gap-6">
                   {/* Funnel visualization */}
@@ -495,7 +497,7 @@ export function AdminAnalytics() {
                               style={{ 
                                 width: `${Math.max(widthPercent, 20)}%`,
                                 backgroundColor: stage.fill,
-                                marginLeft: `${(100 - Math.max(widthPercent, 20)) / 2}%`
+                                marginLeft: 0
                               }}
                             >
                               <span className="text-sm font-medium text-white truncate">
@@ -523,7 +525,7 @@ export function AdminAnalytics() {
                           ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-500 dark:text-gray-400">Return Rate</p>
+                      <p className="text-xs text-brown-500 dark:text-gray-400">2+ recorded days</p>
                     </div>
                     <div className="text-center lg:text-left">
                       <p className="text-2xl font-bold text-teal-600">
@@ -537,7 +539,7 @@ export function AdminAnalytics() {
                 </div>
               ) : (
                 <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
-                  No user funnel data yet
+                  No learning activity yet
                 </div>
               )}
             </div>
@@ -549,4 +551,3 @@ export function AdminAnalytics() {
 }
 
 export default AdminAnalytics;
-

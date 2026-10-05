@@ -5,14 +5,11 @@ import {
   BarChart3,
   Book,
   BookMarked,
-  Brain,
   Flame,
   Gamepad2,
   GraduationCap,
   Languages,
-  Layers,
   MessageCircle,
-  MessagesSquare,
   Moon,
   Search,
   Settings,
@@ -33,15 +30,6 @@ import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { TodayPlanCard } from './TodayPlanCard';
 
-const EXPLORE_ITEMS = [
-  { to: '/learning', label: 'Lessons', description: 'Follow a guided path', icon: GraduationCap, tone: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50' },
-  { to: '/stories', label: 'Stories', description: 'Read and listen', icon: BookMarked, tone: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/50' },
-  { to: '/flashcards', label: 'Flashcards', description: 'Build vocabulary', icon: Layers, tone: 'text-teal-700 bg-teal-100 dark:text-teal-300 dark:bg-teal-950/50' },
-  { to: '/quiz', label: 'Quizzes', description: 'Check understanding', icon: Brain, tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50' },
-  { to: '/practice', label: 'Speaking', description: 'Practice conversations', icon: MessagesSquare, tone: 'text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-950/50' },
-  { to: '/games', label: 'Games', description: 'Learn through play', icon: Gamepad2, tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50' },
-] as const;
-
 function HomeHeader({ signedIn }: { signedIn: boolean }) {
   const { theme, toggleTheme } = useTheme();
   const { isChristmasTheme, isNewYearTheme } = useSubscription();
@@ -50,7 +38,7 @@ function HomeHeader({ signedIn }: { signedIn: boolean }) {
     <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
       <div className="safe-area-top mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         <Link to="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-600 text-lg text-white shadow-sm dark:bg-ocean-500" aria-hidden="true">
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-700 text-lg text-white shadow-sm dark:bg-ocean-700" aria-hidden="true">
             {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
           </span>
           <span>
@@ -104,11 +92,11 @@ function UtilityLinks() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link to="/chat?intent=translate" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600">
+            <Link to="/chat?intent=translate" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800">
               Translate
             </Link>
             <Link to="/chat?intent=ask" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 bg-white px-3 py-2.5 text-sm font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700">
-              Ask a question
+              Explain a phrase
             </Link>
           </div>
         </div>
@@ -133,27 +121,10 @@ function UtilityLinks() {
 
 function ExploreSection() {
   return (
-    <section aria-labelledby="explore-heading">
-      <div className="mb-3">
-        <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Choose your way</p>
-        <h2 id="explore-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Explore</h2>
-      </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-        {EXPLORE_ITEMS.map(({ to, label, description, icon: Icon, tone }) => (
-          <Link
-            key={to}
-            to={to}
-            className="group min-h-32 rounded-2xl border border-cream-200 bg-white p-3 hover:border-coral-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-700 sm:p-4"
-          >
-            <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone}`}>
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
-            <span className="mt-3 block text-sm font-bold text-brown-900 dark:text-white">{label}</span>
-            <span className="mt-0.5 block text-xs leading-snug text-brown-500 dark:text-gray-400">{description}</span>
-          </Link>
-        ))}
-      </div>
-    </section>
+    <Link to="/library" className="flex min-h-16 items-center justify-between gap-4 rounded-2xl border border-cream-200 bg-white px-5 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
+      <span><span className="block font-bold text-brown-900 dark:text-white">Browse the Library</span><span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">Stories, flashcards, quizzes, games, and saved material.</span></span>
+      <ArrowRight className="h-5 w-5 flex-none text-teal-700 dark:text-ocean-300" aria-hidden="true" />
+    </Link>
   );
 }
 
@@ -169,7 +140,7 @@ interface ProgressSummaryProps {
   streak: number;
 }
 
-export function ProgressSummary({ isLoading, hasError = false, onRetry, todayMinutes, goalMinutes, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
+export function ProgressSummary({ isLoading, hasError = false, onRetry, completedTopics, totalTopics, dueCards, streak }: ProgressSummaryProps) {
   if (isLoading) {
     return (
       <section
@@ -210,7 +181,6 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, todayMin
     );
   }
 
-  const progress = goalMinutes > 0 ? Math.min(100, Math.round((todayMinutes / goalMinutes) * 100)) : 0;
   return (
     <section aria-labelledby="progress-heading" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
       <div className="flex items-start justify-between gap-3">
@@ -222,26 +192,7 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, todayMin
           Details <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-      {goalMinutes === 0 ? (
-        <div className="mt-4 flex min-h-11 items-center justify-between gap-3 rounded-xl bg-cream-50 px-3 py-2 dark:bg-slate-900/50">
-          <p className="text-sm text-brown-600 dark:text-gray-300">Daily time goal is off</p>
-          <Link to="/settings" className="text-sm font-semibold text-coral-700 hover:underline dark:text-ocean-300">Set a goal</Link>
-        </div>
-      ) : (
-        <>
-          <div
-            className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
-            role="progressbar"
-            aria-label="Daily learning goal"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
-            <div className="h-full rounded-full bg-teal-600" style={{ width: `${progress}%` }} />
-          </div>
-          <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">{todayMinutes} of {goalMinutes} minutes today</p>
-        </>
-      )}
+      <p className="mt-3 text-sm text-brown-600 dark:text-gray-300">Completed lessons and scheduled review. Follow your session checklist on Today.</p>
       <dl className="mt-4 grid grid-cols-3 divide-x divide-cream-200 rounded-xl bg-cream-50 py-3 text-center dark:divide-slate-700 dark:bg-slate-900/50">
         <div className="px-2">
           <dt className="text-xs text-brown-500 dark:text-gray-400">Path</dt>
@@ -271,7 +222,7 @@ function TodayDataError({ onRetry }: { onRetry: () => void }) {
       <button
         type="button"
         onClick={onRetry}
-        className="mt-5 min-h-11 rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+        className="mt-5 min-h-11 rounded-xl bg-amber-700 px-4 py-2.5 font-semibold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
       >
         Try loading again
       </button>
@@ -297,7 +248,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
             <button
               type="button"
               onClick={onStart}
-              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 py-3 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600"
+              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 py-3 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800"
             >
               Start learning free <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -454,13 +405,7 @@ export function HomePage() {
         accountKey={user?.id}
       />
 
-      {isLoaded && !isSignedIn && (
-        <div className="fixed above-bottom-nav left-0 right-0 z-30 px-4 pb-2 sm:hidden">
-          <button type="button" onClick={() => clerk.openSignUp()} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 py-3 font-semibold text-white shadow-lg">
-            <Sparkles className="h-4 w-4" aria-hidden="true" /> Start learning free
-          </button>
-        </div>
-      )}
+
     </div>
   );
 }
