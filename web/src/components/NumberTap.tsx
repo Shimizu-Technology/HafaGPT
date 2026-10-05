@@ -303,7 +303,7 @@ export function NumberTap() {
             {/* Counting Grid */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-6 min-h-[120px] flex items-center justify-center shadow-lg border-2 border-cream-200 dark:border-slate-700">
               <div className="text-center">
-                <p className="text-sm text-brown-500 dark:text-gray-400 mb-2">Count the {currentItem.name}s!</p>
+                <p className="text-sm text-brown-500 dark:text-gray-400 mb-2">Count the {currentItem.name === 'fish' ? 'fish' : `${currentItem.name}s`}!</p>
                 {renderCountingGrid()}
               </div>
             </div>
