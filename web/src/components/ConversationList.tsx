@@ -78,7 +78,7 @@ export function ConversationList() {
 
       <main className="mx-auto max-w-5xl space-y-9 px-4 py-6 sm:py-8">
         <div className="max-w-2xl">
-          <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Speak with confidence</p>
+          <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice at your own pace</p>
           <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Practice a real-life moment</h2>
           <p className="mt-2 text-brown-600 dark:text-gray-300">Pick a scene, respond in Chamorro, and use a hint whenever you need one.</p>
         </div>

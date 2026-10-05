@@ -27,6 +27,7 @@ class ConversationHistoryMessage(BaseModel):
 
     role: Literal["character", "user"]
     content: str = Field(max_length=600)
+    hint_used: bool = False
 
 
 class ConversationPracticeRequest(BaseModel):
@@ -40,6 +41,7 @@ class ConversationPracticeRequest(BaseModel):
     )
     user_message: str = Field(min_length=1, max_length=600)
     turn_count: int = Field(ge=0, le=50)
+    hint_used: bool = False
     user_id: str | None = Field(default=None, max_length=160)
 
 
@@ -88,6 +90,11 @@ IMPORTANT INSTRUCTIONS:
 8. Never invent an etymology, cultural fact, or grammar rule.
 9. Prefer the exact governed reference matches below when they apply. A needs-review entry is a caution, not proof.
 10. If you are uncertain, keep the exchange simple and say so in the English feedback rather than guessing.
+11. End each non-final turn with ONE clear question or next action. In English feedback, explain what to try next if the Chamorro question cannot be supported.
+12. Do not praise an English request as successful Chamorro. Help requests and your own example sentences do not complete goals.
+13. Every observed goal MUST cite a verbatim quote from a USER message in objective_evidence. Set language to english for English evidence, or uncertain when uncertain. Never cite your own messages or infer ability from the number of turns.
+14. Prefer exact governed example phrases. Do not compose unsupported Chamorro simply to stay in character; if no supporting phrase is available, leave chamorro_response empty and use English translation/feedback to explain the next step.
+15. Give at most one specific suggestion at a time. Avoid generic praise and do not issue proficiency grades.
 
 GOVERNED REFERENCE MATCHES (may be empty):
 {governed_context or 'No exact governed source match was found for this turn.'}
@@ -106,14 +113,49 @@ RESPONSE FORMAT (JSON):
         "suggestions": ["List of tentative spelling/grammar suggestions for the USER's message, if any"],
         "encouragement": "Brief encouraging comment about their Chamorro"
     }},
-    "objectives_completed": ["List of objectives the user has now completed"],
+    "objective_evidence": [{{"objective": "Exact scenario goal", "quote": "Verbatim learner response", "language": "chamorro or english or uncertain"}}],
     "is_complete": false,
     "final_score": null
 }}
 
-When is_complete is true, set final_score to an informal 1-5 practice estimate based on:
-- 5: Excellent - completed all objectives, good Chamorro usage
-- 4: Good - completed most objectives, minor issues
-- 3: Satisfactory - completed some objectives
-- 2: Needs practice - struggled with objectives
-- 1: Keep trying - minimal completion"""
+Never set a numeric final_score. Keep it null; specific observed responses are more useful than a grade."""
+
+
+def validated_objective_evidence(response_data: dict, request: ConversationPracticeRequest) -> list[dict]:
+    """Require verbatim learner evidence; model goals remain AI observations.
+
+    This prevents the completion UI from accepting an unsupported list of goals,
+    assistant-authored text, and clear English help requests as learner output.
+    It does not pretend to be an authoritative Chamorro language detector.
+    """
+    import re
+
+    learner_turns = [(message.content, message.hint_used)
+                     for message in request.conversation_history if message.role == "user"]
+    learner_turns.append((request.user_message, request.hint_used))
+    evidence = []
+    seen = set()
+    items = response_data.get("objective_evidence", [])
+    if not isinstance(items, list):
+        return []
+    for item in items[:12]:
+        if not isinstance(item, dict):
+            continue
+        objective, quote = item.get("objective"), item.get("quote")
+        if (objective not in request.scenario_context.objectives or objective in seen
+                or not isinstance(quote, str) or not quote.strip()
+                or item.get("language") != "chamorro"):
+            continue
+        quote = quote.strip()
+        # Be conservative about the English assistance patterns reproduced in
+        # the audit, even when the provider mislabels their language. Prefer the
+        # latest eligible response: an earlier help request must not block a
+        # subsequent answer, or lend its hint provenance to that answer.
+        matching_turn = next(((turn, hint_used) for turn, hint_used in reversed(learner_turns)
+                              if quote in turn and not re.search(r"\b(my name is|i am from|i live in|i want|hello|thank you|good morning|goodbye|how (are|do|can)|can you|please (help|translate)|what does|tell me|in chamorro)\b", turn, re.I)), None)
+        if matching_turn is None:
+            continue
+        _, assisted = matching_turn
+        evidence.append({"objective": objective, "quote": quote, "assisted": assisted})
+        seen.add(objective)
+    return evidence

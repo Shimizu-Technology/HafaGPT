@@ -190,3 +190,10 @@ def test_no_rag_decision_emits_privacy_safe_selection_event() -> None:
             ),
         )
     ]
+
+
+def test_guided_topic_has_governed_curriculum_even_when_generic_rag_router_skips():
+    get_rag_context, _ = _load_get_rag_context(fake_rag=FakeRAG(), card_context="", use_rag=False)
+    context, sources = get_rag_context("Try a phrase", intent="practice", learning_topic_id="greetings", include_vector=False)
+    assert "Recommended teaching term:" in context
+    assert sources

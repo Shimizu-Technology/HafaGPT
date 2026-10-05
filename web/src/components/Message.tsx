@@ -393,7 +393,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
     const modes = {
       english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
       chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
-      learn: { icon: '📚', label: 'Learn', description: 'Detailed learning explanations' },
+      learn: { icon: '📚', label: 'Both languages', description: 'Chamorro with English support' },
     };
     return modes[modeName as keyof typeof modes] || modes.english;
   };

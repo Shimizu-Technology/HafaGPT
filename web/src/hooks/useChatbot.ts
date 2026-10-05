@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import type { SourceInfo } from '../types/source';
+import type { ChatIntent } from '../lib/chatIntent';
 import { browserStorage } from '../lib/browserStorage';
 import { createStreamTextBatcher } from '../lib/streamTextBatcher';
 
@@ -163,7 +164,9 @@ export function useChatbot() {
     message: string,
     mode: 'english' | 'chamorro' | 'learn' = 'english',
     conversationId?: string | null,
-    image?: File
+    image?: File,
+    intent?: ChatIntent,
+    learningTopicId?: string,
   ): Promise<ChatResponse> => {
     // Cancel any existing request before starting a new one
     if (abortControllerRef.current) {
@@ -204,6 +207,8 @@ export function useChatbot() {
         const formData = new FormData();
         formData.append('message', message);
         formData.append('mode', mode);
+        if (intent) formData.append('intent', intent);
+        if (learningTopicId) formData.append('learning_topic_id', learningTopicId);
         formData.append('session_id', sessionId || '');
         formData.append('pending_id', pendingId); // Add pending_id for cancel tracking
         if (conversationId) {
@@ -218,6 +223,8 @@ export function useChatbot() {
         body = JSON.stringify({
           message,
           mode,
+          intent,
+          learning_topic_id: learningTopicId,
           session_id: sessionId,
           user_id: user?.id || null,
           conversation_id: conversationId,
@@ -274,7 +281,9 @@ export function useChatbot() {
     conversationId: string | null,
     callbacks: StreamCallbacks,
     files?: File[],
-    skillLevel?: 'beginner' | 'intermediate' | 'advanced'
+    skillLevel?: 'beginner' | 'intermediate' | 'advanced',
+    intent?: ChatIntent,
+    learningTopicId?: string,
   ): Promise<void> => {
     // Cancel any existing request before starting a new one
     if (abortControllerRef.current) {
@@ -315,6 +324,8 @@ export function useChatbot() {
         const formData = new FormData();
         formData.append('message', message);
         formData.append('mode', mode);
+        if (intent) formData.append('intent', intent);
+        if (learningTopicId) formData.append('learning_topic_id', learningTopicId);
         formData.append('session_id', sessionId || '');
         formData.append('pending_id', pendingId);
         if (conversationId) {
@@ -333,6 +344,8 @@ export function useChatbot() {
         body = JSON.stringify({
           message,
           mode,
+          intent,
+          learning_topic_id: learningTopicId,
           session_id: sessionId,
           user_id: user?.id || null,
           conversation_id: conversationId,

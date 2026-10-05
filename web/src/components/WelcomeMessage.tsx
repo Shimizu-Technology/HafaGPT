@@ -1,32 +1,35 @@
+import type { ChatIntent } from '../lib/chatIntent';
 import { GraduationCap, Languages, MessageCircle } from 'lucide-react';
 
 interface WelcomeMessageProps {
-  onSelect: (intent: 'translate' | 'ask' | 'practice') => void;
+  onSelect: (intent: ChatIntent) => void;
   disabled?: boolean;
+  intent?: ChatIntent;
+  onStartPractice?: () => void;
 }
 
 const STARTERS = [
   {
-    label: 'Translate a message',
+    label: 'Translate',
     description: 'Understand a phrase or school notice',
     intent: 'translate' as const,
     icon: Languages,
   },
   {
-    label: 'Ask a question',
+    label: 'Explain',
     description: 'Learn about a word, grammar, or culture',
-    intent: 'ask' as const,
+    intent: 'explain' as const,
     icon: MessageCircle,
   },
   {
-    label: 'Practice together',
+    label: 'Practice',
     description: 'Work through a useful everyday phrase',
     intent: 'practice' as const,
     icon: GraduationCap,
   },
 ] as const;
 
-export function WelcomeMessage({ onSelect, disabled = false }: WelcomeMessageProps) {
+export function WelcomeMessage({ onSelect, disabled = false, intent, onStartPractice }: WelcomeMessageProps) {
   return (
     <div className="flex w-full items-start justify-center px-1 py-2 sm:px-4 sm:py-8">
       <div className="w-full max-w-2xl animate-fade-in">
@@ -60,6 +63,12 @@ export function WelcomeMessage({ onSelect, disabled = false }: WelcomeMessagePro
             </button>
           ))}
         </div>
+        {intent === 'practice' && onStartPractice && (
+          <div className="mt-4 rounded-xl border border-cream-200 bg-cream-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800">
+            <p className="text-sm text-brown-600 dark:text-gray-300">Start with a short exchange. Ask for a hint whenever you need one.</p>
+            <button type="button" disabled={disabled} onClick={onStartPractice} className="mt-3 min-h-11 rounded-lg bg-coral-700 px-4 font-semibold text-white dark:bg-ocean-700">Start guided practice</button>
+          </div>
+        )}
       </div>
     </div>
   );

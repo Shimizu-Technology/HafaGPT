@@ -17,6 +17,8 @@ class ChatRequest(BaseModel):
         default="english",
         description="Chat mode: 'english', 'chamorro', or 'learn'"
     )
+    intent: Optional[Literal["translate", "explain", "practice", "ask"]] = None
+    learning_topic_id: Optional[str] = Field(default=None, max_length=160)
     session_id: Optional[str] = Field(
         default=None,
         description="Optional session ID for conversation continuity"

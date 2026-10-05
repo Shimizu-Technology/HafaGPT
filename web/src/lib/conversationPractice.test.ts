@@ -20,4 +20,35 @@ describe('conversation practice request history', () => {
     expect(hasVisiblePracticeFeedback(['Try a different spelling'])).toBe(true);
     expect(hasVisiblePracticeFeedback([], 'Keep going')).toBe(true);
   });
+
+  it('preserves English fallback and bilingual guidance within the history limit', () => {
+    expect(serializeConversationHistory([
+      { role: 'character', chamorro: '', english: 'Try introducing yourself.' },
+    ])).toEqual([{ role: 'character', content: 'Try introducing yourself.' }]);
+    const [message] = serializeConversationHistory([
+      { role: 'character', chamorro: 'A'.repeat(600), english: 'What is your name?'.repeat(40) },
+    ]);
+    expect(message.content).toContain('English guidance: What is your name?');
+    expect(message.content).toContain('AAA');
+    expect(message.content.length).toBeLessThanOrEqual(600);
+  });
+});
+
+import { emptyPracticeDraft, parsePracticeDraft } from './conversationPractice';
+
+describe('conversation resume', () => {
+  it('restores a recent draft and rejects expired, malformed, or cross-version data', () => {
+    const draft = { ...emptyPracticeDraft(), messages: [{ id: '1', role: 'character', chamorro: 'Håfa Adai!' }], turnCount: 1 };
+    const value = JSON.stringify({ version: 1, savedAt: 1000, draft });
+    expect(parsePracticeDraft(value, 2000)).toEqual(draft);
+    expect(parsePracticeDraft(value, 9 * 86400000)).toBeNull();
+    expect(parsePracticeDraft('{broken')).toBeNull();
+    expect(parsePracticeDraft(JSON.stringify({ version: 2, savedAt: 1000, draft }), 2000)).toBeNull();
+    expect(parsePracticeDraft(JSON.stringify({ version: 1, savedAt: 1000, draft: { ...draft, messages: [{ id: '1', role: 'user', chamorro: 42 }] } }), 2000)).toBeNull();
+  });
+
+  it('carries phrase-hint use into the evidence request', () => {
+    expect(serializeConversationHistory([{ role: 'user', chamorro: 'Håfa Adai!', hintUsed: true }]))
+      .toEqual([{ role: 'user', content: 'Håfa Adai!', hint_used: true }]);
+  });
 });

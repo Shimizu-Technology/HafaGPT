@@ -3,35 +3,15 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
 import { PronunciationButton } from './PronunciationButton';
-import { BookOpenCheck, Check, Circle, Languages, Lightbulb, MessageCircle, PartyPopper, Play, RotateCcw, Send, Sparkles, Target, UserRound } from 'lucide-react';
+import { BookOpenCheck, Check, Circle, Languages, Lightbulb, MessageCircle, Play, RotateCcw, Send, Sparkles, Target, UserRound } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
 import { getScenarioTopicId } from '../data/topicRelationships';
-import { hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
+import { browserStorage } from '../lib/browserStorage';
+import { emptyPracticeDraft, parsePracticeDraft, type PracticeMessage as Message, type PracticeDraft as ConversationState, hasVisiblePracticeFeedback, serializeConversationHistory } from '../lib/conversationPractice';
 import { readTopicReturn } from '../lib/topicReturn';
-
-interface Message {
-  id: string;
-  role: 'character' | 'user' | 'system';
-  chamorro: string;
-  english?: string;
-  groundingStatus?: 'canonical_support' | 'source_support' | 'ai_only';
-  feedback?: {
-    corrections?: string[];
-    suggestions?: string[];
-    encouragement?: string;
-  };
-}
-
-interface ConversationState {
-  messages: Message[];
-  turnCount: number;
-  objectivesCompleted: string[];
-  isComplete: boolean;
-  finalScore?: number;
-}
 
 /** Run a guided scenario while distinguishing authored content from AI feedback. */
 export function ConversationPractice() {
@@ -42,12 +22,14 @@ export function ConversationPractice() {
   const [scenario, setScenario] = useState<ConversationScenario | null>(null);
   const [showIntro, setShowIntro] = useState(true);
   const [showPhrases, setShowPhrases] = useState(false);
-  const [conversation, setConversation] = useState<ConversationState>({
-    messages: [],
-    turnCount: 0,
-    objectivesCompleted: [],
-    isComplete: false
-  });
+  const [conversation, setConversation] = useState<ConversationState>(emptyPracticeDraft);
+  const draftKey = user?.id && scenarioId ? `hafagpt:practice:${user.id}:${scenarioId}` : null;
+  const [readyDraftKey, setReadyDraftKey] = useState<string | null>(null);
+  const [savedDraft, setSavedDraft] = useState<ConversationState | null>(null);
+  const [storageAvailable, setStorageAvailable] = useState(true);
+  const [hintUsed, setHintUsed] = useState(false);
+  const [reviewTranscript, setReviewTranscript] = useState(false);
+  const requestController = useRef<AbortController | null>(null);
   const [userInput, setUserInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTranslations, setShowTranslations] = useState(true);
@@ -59,6 +41,23 @@ export function ConversationPractice() {
   const conversationReturnLabel = topicReturn?.label ?? 'Back to conversation scenarios';
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    requestController.current?.abort();
+    setConversation(emptyPracticeDraft());
+    setShowIntro(true);
+    setReviewTranscript(false);
+    setIsLoading(false);
+    setUserInput('');
+    setSavedDraft(draftKey ? parsePracticeDraft(browserStorage.get(draftKey)) : null);
+    setReadyDraftKey(draftKey);
+    return () => requestController.current?.abort();
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftKey || readyDraftKey !== draftKey || showIntro || !conversation.messages.length || isLoading) return;
+    setStorageAvailable(browserStorage.set(draftKey, JSON.stringify({ version: 1, savedAt: Date.now(), draft: conversation })));
+  }, [conversation, draftKey, readyDraftKey, showIntro, isLoading]);
 
   // Load scenario
   useEffect(() => {
@@ -74,14 +73,16 @@ export function ConversationPractice() {
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }, [conversation.messages]);
 
   // Start conversation
-  const startConversation = useCallback(() => {
+  const startConversation = useCallback((focusObjective?: string) => {
     if (!scenario) return;
     
     setShowIntro(false);
+    setReviewTranscript(false);
+    setHintUsed(false);
     setConversation({
       messages: [{
         id: '1',
@@ -91,11 +92,12 @@ export function ConversationPractice() {
       }],
       turnCount: 1,
       objectivesCompleted: [],
+      objectiveEvidence: [],
+      focusObjective,
       isComplete: false
     });
     
-    // Focus input after starting
-    setTimeout(() => inputRef.current?.focus(), 100);
+
   }, [scenario]);
 
   // Send message to AI
@@ -105,22 +107,27 @@ export function ConversationPractice() {
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      chamorro: userInput.trim()
+      chamorro: userInput.trim(),
+      hintUsed
     };
 
     setConversation(prev => ({
       ...prev,
       messages: [...prev.messages, userMessage],
-      turnCount: prev.turnCount + 1
+      turnCount: prev.turnCount
     }));
     setUserInput('');
     setIsLoading(true);
+    const controller = new AbortController();
+    requestController.current = controller;
+    setHintUsed(false);
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       
       const response = await fetch(`${API_URL}/api/conversation-practice`, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -130,13 +137,14 @@ export function ConversationPractice() {
             setting: scenario.setting,
             character_name: scenario.characterName,
             character_role: scenario.characterRole,
-            objectives: scenario.objectives,
+            objectives: conversation.focusObjective ? [conversation.focusObjective] : scenario.objectives,
             useful_phrases: scenario.usefulPhrases.map(p => p.chamorro)
           },
-          conversation_history: serializeConversationHistory(conversation.messages),
+          conversation_history: serializeConversationHistory(conversation.messages).slice(-30),
           user_message: userInput.trim(),
           turn_count: conversation.turnCount,
-          user_id: user?.id
+          user_id: user?.id,
+          hint_used: hintUsed
         })
       });
 
@@ -145,6 +153,7 @@ export function ConversationPractice() {
       }
 
       const data = await response.json();
+      if (controller.signal.aborted) return;
       
       const characterMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -159,59 +168,64 @@ export function ConversationPractice() {
             : 'ai_only',
       };
 
-      setConversation(prev => ({
-        ...prev,
-        messages: [...prev.messages, characterMessage],
-        turnCount: prev.turnCount + 1,
-        objectivesCompleted: data.objectives_completed || prev.objectivesCompleted,
-        isComplete: data.is_complete || false,
-        finalScore: data.final_score
-      }));
+      setConversation(prev => {
+        const objectiveEvidence = [...prev.objectiveEvidence];
+        for (const evidence of data.objective_evidence || []) {
+          const index = objectiveEvidence.findIndex(item => item.objective === evidence.objective);
+          if (index < 0) objectiveEvidence.push(evidence);
+          else objectiveEvidence[index] = evidence;
+        }
+        return {
+          ...prev,
+          messages: [...prev.messages, characterMessage],
+          turnCount: prev.turnCount + 2,
+          objectivesCompleted: objectiveEvidence.map(item => item.objective),
+          isComplete: data.is_complete || prev.turnCount >= 47,
+          objectiveEvidence,
+        };
+      });
 
     } catch (error) {
+      if (controller.signal.aborted) return;
       console.error('Error sending message:', error);
+      setUserInput(userMessage.chamorro);
+      setHintUsed(Boolean(userMessage.hintUsed));
       // Add error message
       setConversation(prev => ({
         ...prev,
-        messages: [...prev.messages, {
+        messages: [...prev.messages.filter(message => message.id !== userMessage.id), {
           id: (Date.now() + 1).toString(),
           role: 'system',
-          chamorro: 'Sorry, there was an error. Please try again.',
-          english: 'Sorry, there was an error. Please try again.'
+          chamorro: 'Your response was not sent. Try again.',
+          english: 'Your response was not sent. Try again.'
         }]
       }));
     } finally {
-      setIsLoading(false);
-      inputRef.current?.focus();
-    }
-  };
-
-  // Handle key press - device-dependent Enter behavior
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    // Detect if mobile device (small screen or touch device)
-    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
-    
-    if (e.key === 'Enter') {
-      if (isMobile) {
-        // Mobile: Don't send on Enter, use Send button instead
-        // (This is a single-line input, so Enter would just be ignored anyway)
-      } else {
-        // Desktop: Enter = send
-        e.preventDefault();
-        sendMessage();
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+        inputRef.current?.focus();
       }
     }
   };
 
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+      event.preventDefault();
+      void sendMessage();
+    }
+  };
+
+  useEffect(() => {
+    if (!showIntro && !conversation.isComplete && !isLoading) inputRef.current?.focus();
+  }, [showIntro, conversation.isComplete, isLoading]);
+
   // Restart conversation
   const restartConversation = () => {
     setShowIntro(true);
-    setConversation({
-      messages: [],
-      turnCount: 0,
-      objectivesCompleted: [],
-      isComplete: false
-    });
+    setConversation(emptyPracticeDraft());
+    setSavedDraft(null);
+    setReviewTranscript(false);
+    if (draftKey) browserStorage.remove(draftKey);
   };
 
   if (!isSignedIn) {
@@ -227,7 +241,7 @@ export function ConversationPractice() {
           </p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-600 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-800 transition-colors"
           >
             ← Back to Home
           </Link>
@@ -303,10 +317,18 @@ export function ConversationPractice() {
             <TTSDisclaimer variant="inline" className="mt-4" />
           </div>
 
+          {savedDraft && (
+            <div className="rounded-xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-sm text-brown-600 dark:text-gray-300">{savedDraft.isComplete ? 'Your last practice is saved on this device.' : 'Continue your saved conversation on this device.'}</p>
+              <button type="button" onClick={() => { setConversation(savedDraft); setShowIntro(false); }} className="mt-3 min-h-11 rounded-lg bg-coral-700 px-4 font-semibold text-white dark:bg-ocean-700">
+                {savedDraft.isComplete ? 'Review last practice' : 'Resume conversation'}
+              </button>
+            </div>
+          )}
           {/* Start Button */}
           <button
-            onClick={startConversation}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 py-4 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+            onClick={() => startConversation()}
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 py-4 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
           >
             <Play className="h-5 w-5" aria-hidden="true" /> Start conversation
           </button>
@@ -316,51 +338,42 @@ export function ConversationPractice() {
   }
 
   // Conversation Complete Screen
-  if (conversation.isComplete) {
+  if (conversation.isComplete && !reviewTranscript) {
     return (
       <LearnerPageShell>
         <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
-            <PartyPopper className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />
+
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-              Conversation Complete!
+              Practice recap
             </h1>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               {scenario.title}
             </p>
-
-            {/* AI practice estimate */}
-            {conversation.finalScore !== undefined && (
-              <div className="mb-6">
-                <div className="text-4xl font-bold text-coral-500 mb-2">
-                  {conversation.finalScore}/5
-                </div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  AI practice estimate—not a proficiency grade
-                </p>
-              </div>
-            )}
 
             <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} className="mb-6 text-left" compact />
 
             {/* Objectives Completed */}
             <div className="text-left mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
               <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
-                Objectives:
+                What you practiced
               </h3>
               <ul className="space-y-1">
                 {scenario.objectives.map((obj, i) => {
-                  const completed = conversation.objectivesCompleted.includes(obj);
+                  const evidence = conversation.objectiveEvidence.find(item => item.objective === obj);
+                  const completed = Boolean(evidence);
                   return (
-                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}`}>
-                      {completed ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />} {obj}
+                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                      {completed ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />}
+                      <span>{obj}<span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{evidence ? `“${evidence.quote}”${evidence.assisted ? ' · With a phrase hint' : ' · AI-observed response'}` : 'Try this goal next time'}</span>{!evidence && <button type="button" onClick={() => startConversation(obj)} aria-label={`Practice this goal: ${obj}`} className="mt-1 min-h-9 font-semibold text-coral-700 dark:text-ocean-300">Practice this goal<span className="sr-only">: {obj}</span></button>}</span>
                     </li>
                   );
                 })}
               </ul>
             </div>
 
+            <button type="button" onClick={() => setReviewTranscript(true)} className="mb-4 min-h-11 text-sm font-semibold text-coral-700 dark:text-ocean-300">Review conversation and suggestions</button>
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -371,7 +384,7 @@ export function ConversationPractice() {
               </button>
               <Link
                 to="/practice"
-                className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-600 px-4 py-3 text-center font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+                className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-700 px-4 py-3 text-center font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
               >
                 More scenarios
               </Link>
@@ -387,12 +400,11 @@ export function ConversationPractice() {
     <LearnerPageShell className="flex min-h-[100dvh] flex-col !pb-0">
       <LearnerPageHeader
         title={scenario.characterName}
-        subtitle={`${scenario.title} · Turn ${conversation.turnCount} of about ${scenario.estimatedTurns * 2}`}
+        subtitle={`${scenario.title} · ${Math.ceil((conversation.turnCount - 1) / 2)} responses`}
         icon={MessageCircle}
         backTo={conversationReturnTo}
         backLabel={topicReturn ? `Leave conversation and ${conversationReturnLabel.toLowerCase()}` : 'Leave conversation'}
         onBack={() => {
-          if (conversation.messages.length > 1 && !window.confirm('Leave this conversation? Your progress will be lost.')) return;
           navigate(conversationReturnTo);
         }}
         maxWidthClassName="max-w-2xl"
@@ -419,8 +431,10 @@ export function ConversationPractice() {
           </div>
         )}
         below={(
-          <div className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Conversation progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100, (conversation.turnCount / (scenario.estimatedTurns * 2)) * 100)}>
-            <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${Math.min(100, (conversation.turnCount / (scenario.estimatedTurns * 2)) * 100)}%` }} />
+          <div className="mx-auto max-w-2xl px-4 pb-3 text-xs text-brown-600 dark:text-gray-300">
+            <p>{storageAvailable ? 'Saved on this device. You can return later.' : 'Saving is unavailable. Keep this page open to retain your conversation.'}</p>
+            {!conversation.isComplete && <p className="mt-1">Next goal: {conversation.focusObjective || scenario.objectives.find(goal => !conversation.objectivesCompleted.includes(goal)) || 'Finish your exchange'}</p>}
+            {conversation.messages.some(message => message.role === 'user') && <button type="button" disabled={isLoading} onClick={() => { setConversation(prev => ({ ...prev, isComplete: true })); setReviewTranscript(false); }} className="mt-2 min-h-9 font-semibold text-coral-700 dark:text-ocean-300">{conversation.isComplete ? 'Back to recap' : 'Finish and review'}</button>}
           </div>
         )}
       />
@@ -434,7 +448,7 @@ export function ConversationPractice() {
               {scenario.usefulPhrases.slice(0, 5).map((phrase, i) => (
                 <button
                   key={i}
-                  onClick={() => setUserInput(prev => prev + (prev ? ' ' : '') + phrase.chamorro)}
+                  onClick={() => { setUserInput(prev => prev + (prev ? ' ' : '') + phrase.chamorro); setHintUsed(true); }}
                   className="text-xs px-2 py-1 bg-white dark:bg-slate-800 rounded border border-yellow-300 dark:border-yellow-700 text-slate-700 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors"
                 >
                   {phrase.chamorro}
@@ -481,14 +495,15 @@ export function ConversationPractice() {
               aria-label="Conversation response"
               placeholder="Write in Chamorro..."
               className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-slate-700 dark:text-white dark:placeholder-gray-400"
-              disabled={isLoading}
+              disabled={isLoading || conversation.isComplete}
+              maxLength={600}
             />
             <button
               type="button"
               onClick={sendMessage}
-              disabled={!userInput.trim() || isLoading}
+              disabled={!userInput.trim() || isLoading || conversation.isComplete}
               aria-label="Send response"
-              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-600 text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-700 text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800"
             >
               <Send className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -560,14 +575,14 @@ function MessageBubble({
         {/* Bubble */}
         <div className={`rounded-2xl px-4 py-3 ${
           isUser 
-            ? 'bg-coral-500 text-white rounded-br-md' 
+            ? 'bg-coral-700 text-white rounded-br-md'
             : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md shadow-sm border border-slate-200 dark:border-slate-600'
         }`}>
           {/* Chamorro text */}
           <p className="mb-1">{message.chamorro}</p>
           
           {/* English translation */}
-          {showTranslation && message.english && !isUser && (
+          {(showTranslation || !message.chamorro.trim()) && message.english && !isUser && (
             <p className={`text-sm mt-2 pt-2 border-t ${
               isUser 
                 ? 'border-coral-400 text-coral-100' 
@@ -581,9 +596,9 @@ function MessageBubble({
         {!isUser && message.groundingStatus && (
           <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
             {message.groundingStatus === 'canonical_support' ? (
-              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Canonical term matches included</>
+              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Source-backed vocabulary matches included</>
             ) : message.groundingStatus === 'source_support' ? (
-              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Dictionary source matches included</>
+              <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Dictionary matches included</>
             ) : (
               <><Sparkles className="h-3 w-3" aria-hidden="true" />AI-generated practice response</>
             )}

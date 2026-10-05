@@ -111,7 +111,7 @@ function ChatRouteHarness() {
     <>
       <Chat />
       <button type="button" onClick={() => navigate('/chat')}>Leave saved chat</button>
-      <div data-testid="chat-path">{location.pathname}</div>
+      <div data-testid="chat-path">{location.pathname}{location.search}</div>
     </>
   );
 }
@@ -223,6 +223,15 @@ describe('Chat stable conversation route', () => {
     act(() => callbacks.onDone(2.5));
     expect(screen.getByText('First paragraph. Final sentence.')).toBe(assistantMessage);
     expect(screen.getByText('Test message')).toBe(userMessage);
+  });
+
+  it('preserves the selected task when creating a saved conversation', async () => {
+    state.createConversation.mockResolvedValue({ id: 'conv-practice', learning_topic_id: 'greetings' });
+    renderChat('/chat?intent=practice&topic=greetings');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.sendMessageStream.mock.calls[0].slice(5)).toEqual(['beginner', 'practice', 'greetings']);
+    expect(screen.getByTestId('chat-path')).toHaveTextContent('intent=practice');
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {

@@ -12,7 +12,7 @@ describe('WelcomeMessage', () => {
     expect(screen.getByRole('heading', { name: 'How can I help?' })).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(3);
 
-    await user.click(screen.getByRole('button', { name: 'Translate a message' }));
+    await user.click(screen.getByRole('button', { name: 'Translate' }));
     expect(onSelect).toHaveBeenCalledWith('translate');
   });
 });

@@ -28,7 +28,7 @@ import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
-import { getChatIntentLabel, getChatIntentPlaceholder } from '../lib/chatIntent';
+import { getChatIntentLabel, getChatIntentPlaceholder, normalizeChatIntent, type ChatIntent } from '../lib/chatIntent';
 import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
 import { browserStorage } from '../lib/browserStorage';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
@@ -85,7 +85,7 @@ export function Chat() {
     searchParams.get('return_to'),
     requestedTopic ? appRoutes.topic(requestedTopic.id) : '',
   );
-  const chatIntent = searchParams.get('intent');
+  const chatIntent = normalizeChatIntent(searchParams.get('intent'));
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
   const intentLabel = getChatIntentLabel(chatIntent);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
@@ -160,7 +160,7 @@ export function Chat() {
     const modes = {
       english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
       chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
-      learn: { icon: '📚', label: 'Learn', description: 'Detailed learning explanations' },
+      learn: { icon: '📚', label: 'Both languages', description: 'Chamorro with English support' },
     };
     return modes[modeName];
   };
@@ -411,7 +411,7 @@ export function Chat() {
     clerk.openSignIn();
   };
 
-  const handleStarterSelect = (intent: 'translate' | 'ask' | 'practice') => {
+  const handleStarterSelect = (intent: ChatIntent) => {
     if (!isSignedIn) {
       handleSignInClick();
       return;
@@ -423,7 +423,8 @@ export function Chat() {
     requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
-  const handleSend = async (message: string, files?: File[]) => {
+  const handleSend = async (message: string, files?: File[], learningTopicOverride?: string) => {
+    const sendTopic = getTopic(learningTopicOverride || '') || linkedTopic;
     // ========================================================================
     // OPTIMISTIC UI: Show messages IMMEDIATELY before any API calls
     // This makes the UI feel instant even if backend operations take time
@@ -513,15 +514,21 @@ export function Chat() {
         const generatedTitle = message.trim().slice(0, 50);
         conversationPromise = createConversationMutation.mutateAsync({
           title: generatedTitle,
-          learningTopicId: requestedTopic?.id,
+          learningTopicId: sendTopic?.id || requestedTopic?.id,
         })
           .then((newConv) => {
             setActiveConversationId(newConv.id);
             browserStorage.set('active_conversation_id', newConv.id);
-            navigate(appRoutes.conversation(newConv.id, {
-              topicId: newConv.learning_topic_id || requestedTopic?.id,
+            const conversationUrl = new URL(appRoutes.conversation(newConv.id, {
+              topicId: newConv.learning_topic_id || sendTopic?.id || requestedTopic?.id,
               returnTo: requestedReturnPath,
-            }), { replace: true });
+            }), window.location.origin);
+            conversationUrl.searchParams.set('intent', chatIntent);
+            for (const key of ['today_step', 'today_day']) {
+              const value = searchParams.get(key);
+              if (value) conversationUrl.searchParams.set(key, value);
+            }
+            navigate(conversationUrl.pathname + conversationUrl.search, { replace: true });
             return newConv.id;
           });
       }
@@ -619,7 +626,9 @@ export function Chat() {
           },
         },
         files,
-        preferences.skill_level // Pass user's skill level for personalized responses
+        preferences.skill_level,
+        chatIntent,
+        sendTopic?.id
       );
       
     } catch (err) {
@@ -882,7 +891,7 @@ End of Export
   };
 
   return (
-    <main id="main-content" className="flex h-full bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
+    <main id="main-content" className="flex h-full sm:h-[calc(100dvh-3rem)] bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
       {/* Public Banner - Only show if not signed in */}
       {!isSignedIn && (
         <div className="fixed top-0 left-0 right-0 z-50">
@@ -985,7 +994,7 @@ End of Export
             </div>
           </div>
         </div>
-        <ModeSelector mode={mode} onModeChange={setMode} />
+        <ModeSelector mode={mode} onModeChange={setMode} intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading} />
         {linkedTopic && (
           <div className="border-t border-cream-200 px-3 py-2 dark:border-gray-800 sm:px-6">
             <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
@@ -1022,7 +1031,7 @@ End of Export
             <div className="mx-auto max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
               <h2 className="text-lg font-bold text-brown-900 dark:text-white">Sign in to open this saved chat</h2>
               <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">Saved conversations are private to their owner.</p>
-              <button type="button" onClick={handleSignInClick} className="mt-5 min-h-11 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700">Sign in</button>
+              <button type="button" onClick={handleSignInClick} className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800">Sign in</button>
             </div>
           ) : conversationUnavailable ? (
             <div className="mx-auto max-w-md rounded-2xl border border-hibiscus-200 bg-hibiscus-50 p-6 text-center dark:border-red-800 dark:bg-red-950/30">
@@ -1056,7 +1065,7 @@ End of Export
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (
-            <WelcomeMessage onSelect={handleStarterSelect} disabled={loading} />
+            <WelcomeMessage onSelect={handleStarterSelect} disabled={loading} intent={chatIntent} onStartPractice={() => void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings")} />
           ) : (
             <>
               {messages.map((message, index) => {
