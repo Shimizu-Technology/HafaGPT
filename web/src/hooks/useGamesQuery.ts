@@ -3,6 +3,7 @@ import { useAuth } from '@clerk/clerk-react';
 import { captureLearningActivity, buildLearningActivityProperties } from '../lib/learningAnalytics';
 import { readLearningGameContext } from '../lib/lessonPractice';
 import { useTodaySessionProgress } from './useTodaySession';
+import { useLearnerAuth } from './useLearnerAuth';
 import { useRef } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -62,7 +63,7 @@ export interface GameHistoryResponse {
 
 // Hook to save game result
 export function useSaveGameResult() {
-  const { getToken, userId } = useAuth();
+  const { getToken, userId } = useLearnerAuth();
   const queryClient = useQueryClient();
   const { completeStep } = useTodaySessionProgress();
   const currentOwner = useRef(userId);

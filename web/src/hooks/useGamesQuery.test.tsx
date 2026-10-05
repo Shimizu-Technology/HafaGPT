@@ -141,6 +141,21 @@ describe('useSaveGameResult concept context', () => {
     expect(loadTodaySession('user_1')?.completed).toEqual([]);
   });
 
+  it('rejects a pending token after the game unmounts before an account change', async () => {
+    startTodayGame();
+    let releaseToken: ((token: string) => void) | undefined;
+    mocks.token.mockImplementationOnce(() => new Promise(resolve => { releaseToken = resolve; }));
+    const { result, unmount } = renderHook(() => useSaveGameResult(), { wrapper });
+    let saving: Promise<unknown>;
+    act(() => { saving = result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 }).catch(error => error); });
+    await waitFor(() => expect(releaseToken).toBeDefined());
+    unmount();
+    mocks.userId = 'user_2';
+    await act(async () => { releaseToken?.('other-token'); await saving; });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+  });
+
   it('nests exact concepts only inside a validated learning launch', async () => {
     window.history.pushState(
       {},
