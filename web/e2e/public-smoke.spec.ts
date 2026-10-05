@@ -516,7 +516,7 @@ test('dictionary category and story reader keep detail interactions accessible',
   await page.goto('/stories/hafa-adai-maria');
   await expect(page.getByRole('heading', { name: 'Read story' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Håfa Adai, Maria!' })).toBeVisible();
-  await page.getByRole('button', { name: 'Håfa', exact: true }).click();
+  await page.getByRole('button', { name: 'Meaning of Håfa', exact: true }).click();
   await expect(page.getByText('what', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Close word translation' }).click();
 
