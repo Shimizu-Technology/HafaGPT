@@ -7256,7 +7256,7 @@ async def get_usage_trends(
         cursor.execute("""
             WITH activity AS (
                 SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
-                       'chat' AS kind FROM conversation_logs
+                       'chat' AS kind FROM conversation_logs WHERE role IN ('user', 'assistant')
                 UNION ALL
                 SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
                        'games' FROM game_results
@@ -7568,13 +7568,17 @@ async def get_advanced_analytics(
         """)
         users_who_took_quiz = cursor.fetchone()[0] or 0
         
-        # Return across supported learning activities, using the learner's Guam day.
+        # Recorded activity dates, using Guam days. Topic rows retain only start,
+        # completion and latest activity; this is not a complete visit history.
         cursor.execute(f"""
             WITH activity AS (
                 SELECT user_id, timestamp AT TIME ZONE 'UTC' AS occurred_at FROM conversation_logs
+                WHERE role IN ('user', 'assistant')
                 UNION ALL SELECT user_id, created_at FROM game_results
                 UNION ALL SELECT user_id, created_at FROM quiz_results
                 UNION ALL SELECT user_id, last_activity_at FROM user_topic_progress
+                UNION ALL SELECT user_id, started_at FROM user_topic_progress
+                UNION ALL SELECT user_id, completed_at FROM user_topic_progress
             )
             SELECT COUNT(*) FROM (
                 SELECT user_id FROM activity
@@ -7588,13 +7592,13 @@ async def get_advanced_analytics(
         # Get total users from all activity in period
         cursor.execute(f"""
             SELECT COUNT(DISTINCT user_id) FROM (
-                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL AND timestamp >= NOW() - INTERVAL '{interval}'
+                SELECT user_id FROM conversation_logs WHERE user_id IS NOT NULL AND role IN ('user', 'assistant') AND timestamp >= NOW() - INTERVAL '{interval}'
                 UNION
                 SELECT user_id FROM game_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
                 UNION
                 SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
                 UNION
-                SELECT user_id FROM user_topic_progress WHERE user_id IS NOT NULL AND last_activity_at >= NOW() - INTERVAL '{interval}'
+                SELECT user_id FROM user_topic_progress WHERE user_id IS NOT NULL AND GREATEST(last_activity_at, completed_at, started_at) >= NOW() - INTERVAL '{interval}'
             ) all_users
         """)
         total_active_users = cursor.fetchone()[0] or 0

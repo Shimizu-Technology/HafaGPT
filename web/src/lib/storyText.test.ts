@@ -14,4 +14,12 @@ describe('story annotation', () => {
     expect(parts.find(part => part.word)?.text).toBe('yu’');
     expect(parts.map(part => part.text).join('')).toBe("Maolek yu’. Unknown!");
   });
+  it('keeps a multiword lookup together and preserves its original spacing', () => {
+    const phrase = { chamorro: "hineksa' agaga'", english: 'red rice' };
+    const short = { chamorro: "hineksa'", english: 'rice' };
+    const text = "Hineksa’  agaga’, i-fiesta!";
+    const parts = annotateStoryText(text, [short, phrase, { chamorro: 'i', english: 'the' }]);
+    expect(parts.filter(part => part.word)).toEqual([{ text: 'Hineksa’  agaga’', word: phrase }]);
+    expect(parts.map(part => part.text).join('')).toBe(text);
+  });
 });

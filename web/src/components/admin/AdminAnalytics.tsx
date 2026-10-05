@@ -35,7 +35,7 @@ export function AdminAnalytics() {
     { name: 'Chatted', value: advancedData.user_funnel.chatted, fill: FUNNEL_COLORS[1] },
     { name: 'Played Game', value: advancedData.user_funnel.played_game, fill: FUNNEL_COLORS[2] },
     { name: 'Took Quiz', value: advancedData.user_funnel.took_quiz, fill: FUNNEL_COLORS[3] },
-    { name: 'Returned', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
+    { name: '2+ recorded days', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
   ] : [];
   
   // Get heatmap color based on intensity
@@ -479,6 +479,7 @@ export function AdminAnalytics() {
                 Learning activity reach
               </h2>
               <p className="mb-4 text-sm text-brown-600 dark:text-gray-300">Independent activity counts in this period. Learners can use tools in any order; these percentages describe reach, not conversion between steps.</p>
+              <p className="mb-4 text-xs text-brown-500 dark:text-gray-400">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
               {funnelData.length > 0 && funnelData[0].value > 0 ? (
                 <div className="flex flex-col lg:flex-row items-center gap-6">
                   {/* Funnel visualization */}
@@ -524,7 +525,7 @@ export function AdminAnalytics() {
                           ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-500 dark:text-gray-400">Active on 2+ days</p>
+                      <p className="text-xs text-brown-500 dark:text-gray-400">2+ recorded days</p>
                     </div>
                     <div className="text-center lg:text-left">
                       <p className="text-2xl font-bold text-teal-600">
@@ -550,4 +551,3 @@ export function AdminAnalytics() {
 }
 
 export default AdminAnalytics;
-
