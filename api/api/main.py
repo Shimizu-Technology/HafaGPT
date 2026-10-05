@@ -5774,8 +5774,9 @@ async def get_vocabulary_categories():
 @app.get("/api/vocabulary/categories/{category_id}", tags=["Vocabulary"])
 async def get_category_words(
     category_id: str,
-    limit: int = 100,
-    offset: int = 0
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    q: str = Query("", max_length=200),
 ):
     """
     Get all words in a specific category.
@@ -5787,7 +5788,7 @@ async def get_category_words(
     """
     try:
         service = get_dictionary_service()
-        result = service.get_category_words(category_id, limit=limit, offset=offset)
+        result = service.get_category_words(category_id, limit=limit, offset=offset, query=q)
         
         if not result["category"]:
             raise HTTPException(status_code=404, detail=f"Category '{category_id}' not found")
@@ -6377,7 +6378,7 @@ async def get_admin_stats(authorization: Optional[str] = Header(None)):
         avg_quizzes_per_user = round(total_quiz_attempts / users_with_quizzes, 1) if users_with_quizzes > 0 else 0
         
         # Average quiz score
-        cursor.execute("SELECT AVG(score) FROM quiz_results WHERE score IS NOT NULL")
+        cursor.execute("SELECT AVG(percentage) FROM quiz_results WHERE percentage IS NOT NULL")
         avg_score_row = cursor.fetchone()
         avg_quiz_score = round(avg_score_row[0], 1) if avg_score_row[0] is not None else None
         
@@ -7251,20 +7252,28 @@ async def get_usage_trends(
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
-        # Get daily usage from user_daily_usage table
+        # Count completed activities rather than quota reservations / starts.
         cursor.execute("""
-            SELECT 
-                usage_date,
-                SUM(chat_count) as chat_total,
-                SUM(game_count) as game_total,
-                SUM(quiz_count) as quiz_total,
-                COUNT(DISTINCT user_id) as active_users
-            FROM user_daily_usage
-            WHERE usage_date >= CURRENT_DATE - INTERVAL '%s days'
-            GROUP BY usage_date
-            ORDER BY usage_date ASC
+            WITH activity AS (
+                SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
+                       'chat' AS kind FROM conversation_logs
+                UNION ALL
+                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
+                       'games' FROM game_results
+                UNION ALL
+                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
+                       'quizzes' FROM quiz_results
+            )
+            SELECT day,
+                   COUNT(*) FILTER (WHERE kind = 'chat'),
+                   COUNT(*) FILTER (WHERE kind = 'games'),
+                   COUNT(*) FILTER (WHERE kind = 'quizzes'),
+                   COUNT(DISTINCT user_id)
+            FROM activity
+            WHERE day >= (NOW() AT TIME ZONE 'Pacific/Guam')::date - %s
+            GROUP BY day ORDER BY day
         """, (days,))
-        
+
         rows = cursor.fetchall()
         
         data = []
@@ -7491,7 +7500,7 @@ async def get_advanced_analytics(
                 SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END) as completed,
                 ROUND((SUM(CASE WHEN completed_at IS NOT NULL THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1) as completion_rate
             FROM user_topic_progress
-            WHERE started_at >= NOW() - INTERVAL '{interval}'
+            WHERE GREATEST(last_activity_at, completed_at, started_at) >= NOW() - INTERVAL '{interval}'
             GROUP BY topic_id
             ORDER BY total_started DESC
         """)
@@ -7559,16 +7568,19 @@ async def get_advanced_analytics(
         """)
         users_who_took_quiz = cursor.fetchone()[0] or 0
         
-        # Users who returned (active on 2+ different days in period)
+        # Return across supported learning activities, using the learner's Guam day.
         cursor.execute(f"""
-            SELECT COUNT(DISTINCT user_id)
-            FROM (
-                SELECT user_id, COUNT(DISTINCT DATE(timestamp)) as active_days
-                FROM conversation_logs
-                WHERE user_id IS NOT NULL
-                  AND timestamp >= NOW() - INTERVAL '{interval}'
+            WITH activity AS (
+                SELECT user_id, timestamp AT TIME ZONE 'UTC' AS occurred_at FROM conversation_logs
+                UNION ALL SELECT user_id, created_at FROM game_results
+                UNION ALL SELECT user_id, created_at FROM quiz_results
+                UNION ALL SELECT user_id, last_activity_at FROM user_topic_progress
+            )
+            SELECT COUNT(*) FROM (
+                SELECT user_id FROM activity
+                WHERE user_id IS NOT NULL AND occurred_at >= NOW() - INTERVAL '{interval}'
                 GROUP BY user_id
-                HAVING COUNT(DISTINCT DATE(timestamp)) >= 2
+                HAVING COUNT(DISTINCT (occurred_at AT TIME ZONE 'Pacific/Guam')::date) >= 2
             ) returning_users
         """)
         users_who_returned = cursor.fetchone()[0] or 0
@@ -7581,6 +7593,8 @@ async def get_advanced_analytics(
                 SELECT user_id FROM game_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
                 UNION
                 SELECT user_id FROM quiz_results WHERE user_id IS NOT NULL AND created_at >= NOW() - INTERVAL '{interval}'
+                UNION
+                SELECT user_id FROM user_topic_progress WHERE user_id IS NOT NULL AND last_activity_at >= NOW() - INTERVAL '{interval}'
             ) all_users
         """)
         total_active_users = cursor.fetchone()[0] or 0

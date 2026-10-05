@@ -53,29 +53,13 @@ function SidebarHarness() {
 }
 
 describe('shared navigation and modal accessibility', () => {
-  it('identifies the active route and treats More as a keyboard-safe dialog', async () => {
-    render(
-      <MemoryRouter initialEntries={['/vocabulary']}>
-        <BottomNav />
-      </MemoryRouter>,
-    );
-
-    const moreButton = screen.getByRole('button', { name: 'More ways to learn' });
+  it('groups learning tools under Library and keeps four named destinations', () => {
+    render(<MemoryRouter initialEntries={['/vocabulary']}><BottomNav /></MemoryRouter>);
     expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current');
-    expect(moreButton).toHaveAttribute('aria-expanded', 'false');
-
-    moreButton.focus();
-    fireEvent.click(moreButton);
-
-    expect(screen.getByRole('dialog', { name: 'More ways to learn' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Vocabulary' })).toHaveAttribute('aria-current', 'page');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Close more navigation' })).toHaveFocus());
-
-    fireEvent.keyDown(document, { key: 'Escape' });
-
-    expect(screen.queryByRole('dialog', { name: 'More ways to learn' })).not.toBeInTheDocument();
-    expect(moreButton).toHaveFocus();
+    expect(screen.getAllByRole('link')).toHaveLength(4);
+    expect(screen.getByRole('link', { name: 'Today' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Tutor' })).toHaveAttribute('href', '/chat');
   });
 
   it('keeps the upgrade message synchronized with the current plan and restores focus', async () => {

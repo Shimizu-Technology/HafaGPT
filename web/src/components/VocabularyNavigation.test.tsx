@@ -27,7 +27,7 @@ vi.mock('../hooks/useVocabularyQuery', () => ({
     isLoading: false,
   }),
   useVocabularySearch: () => ({ data: mocks.searchResults, isLoading: false }),
-  useCategoryWords: () => ({ data: mocks.categoryWords, isLoading: false, error: null }),
+  useCategoryWordPages: () => ({ data: { pages: [mocks.categoryWords] }, isLoading: false, error: null }),
   useVocabularyWordById: () => mocks.wordById,
 }));
 

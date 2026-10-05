@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
-import { useCategoryWords, VocabularyWord } from '../hooks/useVocabularyQuery';
+import { useCategoryWordPages } from '../hooks/useVocabularyQuery';
 import { PronunciationButton } from './PronunciationButton';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
@@ -20,27 +20,13 @@ export function VocabularyCategory() {
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const searchQuery = searchParams.get('q') ?? '';
   
-  // Pagination state - track additional words loaded beyond initial fetch
-  const [additionalWords, setAdditionalWords] = useState<VocabularyWord[]>([]);
-  const [currentOffset, setCurrentOffset] = useState(PAGE_SIZE); // Start at PAGE_SIZE since initial fetch is 0
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  // Fetch initial category words from API (offset 0)
-  const { data, isLoading, error } = useCategoryWords(categoryId, PAGE_SIZE, 0);
-  
+  const { data: pages, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isPlaceholderData } = useCategoryWordPages(categoryId, searchQuery, PAGE_SIZE);
+  const data = pages?.pages[0];
   const category = data?.category;
-  const totalWords = data?.total || 0;
-  const initialWords = data?.words || [];
-  
-  // Combine initial words with any additional loaded words
-  const words = [...initialWords, ...additionalWords];
-  
-  // Reset additional words when category changes
-  useEffect(() => {
-    setAdditionalWords([]);
-    setCurrentOffset(PAGE_SIZE);
-    setExpandedWord(null);
-  }, [categoryId]);
+  const totalWords = data?.total ?? 0;
+  const words = pages?.pages.flatMap(page => page.words) ?? [];
+
+  useEffect(() => { setExpandedWord(null); }, [categoryId, searchQuery]);
 
   const setSearchQuery = (query: string) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -54,37 +40,8 @@ export function VocabularyCategory() {
     ), { replace: true });
   };
   
-  const hasMore = words.length < totalWords;
-  
-  const loadMore = async () => {
-    if (hasMore && !isLoadingMore && categoryId) {
-      setIsLoadingMore(true);
-      try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-        const response = await fetch(
-          `${API_URL}/api/vocabulary/categories/${categoryId}?limit=${PAGE_SIZE}&offset=${currentOffset}`
-        );
-        if (response.ok) {
-          const result = await response.json();
-          setAdditionalWords(prev => [...prev, ...result.words]);
-          setCurrentOffset(prev => prev + PAGE_SIZE);
-        }
-      } catch (err) {
-        console.error('Failed to load more words:', err);
-      } finally {
-        setIsLoadingMore(false);
-      }
-    }
-  };
-
-  // Filter words based on search
-  const filteredWords = searchQuery.trim()
-    ? words.filter(
-        word =>
-          word.chamorro.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          word.definition.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : words;
+  const hasMore = hasNextPage && !isPlaceholderData;
+  const filteredWords = words;
   const returnTo = currentAppPath(location.pathname, location.search, location.hash);
 
   // Loading state
@@ -100,14 +57,15 @@ export function VocabularyCategory() {
   }
 
   // Error or not found
-  if (error || !category) {
+  if (!category) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <p className="text-brown-600 dark:text-gray-400 mb-4">Category not found</p>
+          <p className="text-brown-600 dark:text-gray-400 mb-4">{error ? "Dictionary words could not load. Please try again." : "Category not found"}</p>
+          {error && <button type="button" onClick={() => void refetch()} className="min-h-11 px-4 text-coral-700 dark:text-ocean-300">Try again</button>}
           <button
             onClick={() => navigate('/vocabulary')}
-            className="min-h-11 rounded-xl bg-coral-500 px-5 py-2.5 font-semibold text-white hover:bg-coral-600"
+            className="min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-700"
           >
             Back to Vocabulary
           </button>
@@ -130,7 +88,7 @@ export function VocabularyCategory() {
         backLabel="Back to dictionary"
         trailing={(
           <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline-flex">
-            {filteredWords.length} word{filteredWords.length !== 1 ? 's' : ''}
+            {totalWords} {searchQuery ? "matches" : "words"}
           </span>
         )}
       />
@@ -146,6 +104,7 @@ export function VocabularyCategory() {
             <input
               aria-label={`Search in ${category.title}`}
               type="text"
+              maxLength={200}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search in ${category.title}...`}
@@ -164,6 +123,8 @@ export function VocabularyCategory() {
           </div>
         </div>
 
+        {isFetching && <p role="status" className="mb-3 text-sm text-brown-600 dark:text-gray-300">Searching…</p>}
+        <p className="mb-3 text-sm text-brown-600 dark:text-gray-300" aria-live="polite">{!isPlaceholderData && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
         {/* Word List */}
         <div className="space-y-3">
           {filteredWords.map((word, index) => {
@@ -264,7 +225,7 @@ export function VocabularyCategory() {
         </div>
 
         {/* No Results */}
-        {filteredWords.length === 0 && searchQuery && (
+        {filteredWords.length === 0 && searchQuery && !isFetching && (
           <div className="text-center py-12 text-brown-500 dark:text-gray-400">
             <p>No words found matching "{searchQuery}"</p>
             <button
@@ -277,14 +238,14 @@ export function VocabularyCategory() {
         )}
 
         {/* Load More Button */}
-        {hasMore && !searchQuery && (
+        {hasMore && (
           <div className="mt-6 text-center">
             <button
-              onClick={loadMore}
-              disabled={isLoadingMore}
-              className="px-6 py-3 bg-coral-500 dark:bg-ocean-600 text-white rounded-xl hover:bg-coral-600 dark:hover:bg-ocean-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              onClick={() => void fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="px-6 py-3 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl hover:bg-coral-700 dark:hover:bg-ocean-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
             >
-              {isLoadingMore ? (
+              {isFetchingNextPage ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Loading...
@@ -298,6 +259,7 @@ export function VocabularyCategory() {
           </div>
         )}
 
+        {error && words.length > 0 && <p role="alert" className="mt-3 text-center text-red-700 dark:text-red-300">More words could not load. Try Load more again.</p>}
         {/* All Loaded Indicator */}
         {!hasMore && words.length > PAGE_SIZE && !searchQuery && (
           <div className="mt-6 text-center text-brown-500 dark:text-gray-400 text-sm">

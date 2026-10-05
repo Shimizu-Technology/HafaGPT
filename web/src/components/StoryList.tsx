@@ -135,7 +135,7 @@ export function StoryList() {
                 ) : (
                   <>
                     <span className="font-semibold text-teal-600 dark:text-teal-400">Lengguahi-ta</span> is an independent Chamorro learning resource.
-                    HåfaGPT links to the original while copied stories are disabled pending written reuse permission and attribution review.
+
                   </>
                 )}
               </p>
@@ -330,7 +330,7 @@ export function StoryList() {
         )}
 
         {/* Info Card */}
-        <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+        {mode === 'curated' && <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center gap-3 mb-2">
             {mode === 'curated' ? (
               <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -350,7 +350,7 @@ export function StoryList() {
               </>
             )}
           </p>
-        </div>
+        </div>}
       </main>
     </LearnerPageShell>
   );

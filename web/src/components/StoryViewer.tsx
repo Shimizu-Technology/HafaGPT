@@ -8,6 +8,7 @@ import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { STORY_CONTENT_TRUST } from '../data/contentTrust';
 import { getStoryTopicId } from '../data/topicRelationships';
+import { annotateStoryText } from '../lib/storyText';
 import { readTopicReturn } from '../lib/topicReturn';
 
 type ViewMode = 'reading' | 'quiz' | 'results';
@@ -27,6 +28,8 @@ export function StoryViewer() {
   const [currentParagraph, setCurrentParagraph] = useState(0);
   const [selectedWord, setSelectedWord] = useState<StoryWord | null>(null);
   const [showCulturalNote, setShowCulturalNote] = useState(false);
+  const [showEnglish, setShowEnglish] = useState(false);
+  const [reviewIds, setReviewIds] = useState<string[] | null>(null);
 
   // Quiz state
   const [viewMode, setViewMode] = useState<ViewMode>('reading');
@@ -50,7 +53,8 @@ export function StoryViewer() {
 
   const paragraph = story.paragraphs[currentParagraph];
   const progress = ((currentParagraph + 1) / story.paragraphs.length) * 100;
-  const question = story.questions[currentQuestion];
+  const questions = reviewIds ? story.questions.filter(question => reviewIds.includes(question.id)) : story.questions;
+  const question = questions[currentQuestion];
 
   // Handle word tap
   const handleWordTap = (word: StoryWord) => {
@@ -62,6 +66,7 @@ export function StoryViewer() {
     if (currentParagraph > 0) {
       setCurrentParagraph(currentParagraph - 1);
       setSelectedWord(null);
+      setShowEnglish(false);
     }
   };
 
@@ -69,6 +74,7 @@ export function StoryViewer() {
     if (currentParagraph < story.paragraphs.length - 1) {
       setCurrentParagraph(currentParagraph + 1);
       setSelectedWord(null);
+      setShowEnglish(false);
     } else {
       // Finished reading, start quiz
       setViewMode('quiz');
@@ -87,7 +93,7 @@ export function StoryViewer() {
 
   // Handle next question
   const handleNextQuestion = () => {
-    if (currentQuestion < story.questions.length - 1) {
+    if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
@@ -106,11 +112,13 @@ export function StoryViewer() {
     setSelectedAnswer(null);
     setShowExplanation(false);
     setAnswers([]);
+    setReviewIds(null);
+    setShowEnglish(false);
   };
 
   // Calculate score
   const correctAnswers = answers.filter(a => a.correct).length;
-  const totalQuestions = story.questions.length;
+  const totalQuestions = questions.length;
   const scorePercentage = Math.round((correctAnswers / totalQuestions) * 100);
 
   // Render reading mode
@@ -150,6 +158,8 @@ export function StoryViewer() {
       {story.culturalNote && (
         <button
           onClick={() => setShowCulturalNote(!showCulturalNote)}
+          aria-expanded={showCulturalNote}
+          aria-controls="story-cultural-note"
           className="w-full mb-4 flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
         >
           <Info className="w-4 h-4" />
@@ -159,7 +169,7 @@ export function StoryViewer() {
       )}
       
       {showCulturalNote && story.culturalNote && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+        <div id="story-cultural-note" className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
           <p className="text-sm text-blue-800 dark:text-blue-200">
             {story.culturalNote}
           </p>
@@ -173,31 +183,16 @@ export function StoryViewer() {
           <p className="text-xs text-brown-500 dark:text-gray-400 uppercase tracking-wide mb-2 font-medium">
             Tap any word to translate
           </p>
-          <div className="flex flex-wrap gap-1.5 text-lg leading-relaxed">
-            {paragraph.words.map((word, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleWordTap(word)}
-                className={`min-h-9 rounded-lg px-2 py-1 transition-colors ${
-                  selectedWord?.chamorro === word.chamorro
-                    ? 'bg-amber-200 dark:bg-amber-700 text-amber-900 dark:text-amber-100 font-semibold'
-                    : 'hover:bg-amber-100 dark:hover:bg-amber-900/30 text-brown-800 dark:text-white'
-                }`}
-              >
-                {word.chamorro}
-              </button>
-            ))}
-          </div>
+          <p className="text-lg leading-loose">
+            {annotateStoryText(paragraph.chamorro, paragraph.words).map((part, idx) => part.word ? (
+              <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`inline rounded px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
+            ) : <span key={idx}>{part.text}</span>)}
+          </p>
         </div>
 
-        {/* English Translation */}
-        <div className="pt-4 border-t border-cream-200 dark:border-slate-700">
-          <p className="text-xs text-brown-500 dark:text-gray-400 uppercase tracking-wide mb-2 font-medium">
-            English Translation
-          </p>
-          <p className="text-brown-700 dark:text-gray-300 italic">
-            {paragraph.english}
-          </p>
+        <div className="border-t border-cream-200 pt-3 dark:border-slate-700">
+          <button type="button" onClick={() => setShowEnglish(!showEnglish)} aria-expanded={showEnglish} aria-controls="story-english" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:text-ocean-300">{showEnglish ? 'Hide English' : 'Reveal English'}</button>
+          {showEnglish && <p id="story-english" className="mt-2 text-brown-700 dark:text-gray-300">{paragraph.english}</p>}
         </div>
       </div>
 
@@ -251,6 +246,7 @@ export function StoryViewer() {
       <div className="flex items-center justify-between gap-4">
         <button
           onClick={goToPrevParagraph}
+          aria-label="Previous paragraph"
           disabled={currentParagraph === 0}
           className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
         >
@@ -260,7 +256,7 @@ export function StoryViewer() {
 
         <button
           onClick={goToNextParagraph}
-          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-700"
+          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-800"
         >
           {currentParagraph < story.paragraphs.length - 1 ? (
             <>
@@ -292,7 +288,7 @@ export function StoryViewer() {
               Comprehension Check
             </h2>
             <p className="text-sm text-brown-600 dark:text-gray-300">
-              Question {currentQuestion + 1} of {story.questions.length}
+              Question {currentQuestion + 1} of {questions.length}
             </p>
           </div>
         </div>
@@ -374,7 +370,7 @@ export function StoryViewer() {
         <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div 
             className="h-full bg-gradient-to-r from-purple-400 to-indigo-500 transition-all duration-300"
-            style={{ width: `${((currentQuestion + 1) / story.questions.length) * 100}%` }}
+            style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
           />
         </div>
       </div>
@@ -385,7 +381,7 @@ export function StoryViewer() {
           onClick={handleNextQuestion}
           className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-purple-700"
         >
-          {currentQuestion < story.questions.length - 1 ? (
+          {currentQuestion < questions.length - 1 ? (
             <>
               <span>Next Question</span>
               <ChevronRight className="w-5 h-5" />
@@ -413,7 +409,7 @@ export function StoryViewer() {
           : 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200/50 dark:border-red-700/30'
       }`}>
         <div className="text-center">
-          <div className="text-6xl mb-4">
+          <div className="text-3xl mb-2">
             {scorePercentage >= 80 ? '🎉' : scorePercentage >= 60 ? '👍' : '📚'}
           </div>
           <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
@@ -427,49 +423,22 @@ export function StoryViewer() {
             You got {correctAnswers} out of {totalQuestions} questions correct
           </p>
           
-          {/* Score Circle */}
-          <div className="relative w-32 h-32 mx-auto mb-4">
-            <svg className="w-full h-full transform -rotate-90">
-              <circle
-                cx="64"
-                cy="64"
-                r="56"
-                stroke="currentColor"
-                strokeWidth="12"
-                fill="none"
-                className="text-cream-200 dark:text-slate-700"
-              />
-              <circle
-                cx="64"
-                cy="64"
-                r="56"
-                stroke="currentColor"
-                strokeWidth="12"
-                fill="none"
-                strokeDasharray={`${scorePercentage * 3.52} 352`}
-                className={`${
-                  scorePercentage >= 80
-                    ? 'text-green-500'
-                    : scorePercentage >= 60
-                    ? 'text-amber-500'
-                    : 'text-red-500'
-                }`}
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-3xl font-bold text-brown-800 dark:text-white">
-                {scorePercentage}%
-              </span>
-            </div>
-          </div>
+          <p className="text-3xl font-bold text-brown-800 dark:text-white">{scorePercentage}%</p>
         </div>
       </div>
 
+      {answers.some(answer => !answer.correct) && (
+        <section aria-labelledby="story-mistakes" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+          <h3 id="story-mistakes" className="font-bold">Review missed questions</h3>
+          {questions.filter(question => answers.some(answer => answer.questionId === question.id && !answer.correct)).map(question => <div key={question.id} className="mt-3 text-sm"><p className="font-semibold">{question.question}</p><p className="mt-1 text-brown-600 dark:text-gray-300">{question.explanation}</p></div>)}
+          <button type="button" onClick={() => { setReviewIds(answers.filter(answer => !answer.correct).map(answer => answer.questionId)); setCurrentQuestion(0); setSelectedAnswer(null); setShowExplanation(false); setAnswers([]); setViewMode('quiz'); }} className="mt-4 min-h-11 rounded-xl bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">Try missed questions again</button>
+        </section>
+      )}
       {/* Action Buttons */}
       <div className="space-y-3">
         <button
           onClick={restartStory}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-700"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-800"
         >
           <RotateCcw className="w-5 h-5" />
           <span>Read Again</span>

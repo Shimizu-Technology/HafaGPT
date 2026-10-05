@@ -622,22 +622,12 @@ test('shared navigation and reduced-motion behavior follow accessibility prefere
   expect(animationDuration).toBe('0.001s');
 
   const primaryNavigation = page.getByRole('navigation', { name: 'Primary' });
-  if ((page.viewportSize()?.width ?? 0) < 640) {
-    await expect(primaryNavigation).toBeVisible();
-    await expect(primaryNavigation.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
-
-    const moreButton = primaryNavigation.getByRole('button', { name: 'More ways to learn' });
-    await moreButton.focus();
-    await moreButton.click();
-    await expect(page.getByRole('dialog', { name: 'More ways to learn' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Close more navigation' })).toBeFocused();
-
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'More ways to learn' })).toBeHidden();
-    await expect(moreButton).toBeFocused();
-  } else {
-    await expect(primaryNavigation).toBeHidden();
-  }
+  await expect(primaryNavigation).toBeVisible();
+  await expect(primaryNavigation.getByRole('link', { name: 'Today' })).toHaveAttribute('aria-current', 'page');
+  await primaryNavigation.getByRole('link', { name: 'Library' }).click();
+  await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible();
+  await expect(primaryNavigation.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('link', { name: /Dictionary Look up/ })).toBeVisible();
 
   expect(errors).toEqual([]);
 });

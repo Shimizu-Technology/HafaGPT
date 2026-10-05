@@ -41,6 +41,7 @@ function lazyNamed<TModule>(
 
 // Each page is loaded only when its route is visited. This keeps games,
 // administration, charts, and the AI chat out of the initial home-page bundle.
+const LibraryPage = lazyNamed(() => import('./components/LibraryPage'), 'LibraryPage');
 const HomePage = lazyNamed(() => import('./components/HomePage'), 'HomePage');
 const Chat = lazyNamed(() => import('./components/Chat'), 'Chat');
 const LearningPathPage = lazyNamed(() => import('./components/LearningPathPage'), 'LearningPathPage');
@@ -164,11 +165,13 @@ function AppRoutes() {
   return (
     <>
       <ScrollToTop />
+      <BottomNav />
       <RouteErrorBoundary>
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
         {/* Homepage - Learning dashboard */}
         <Route path="/" element={<HomePage />} />
+        <Route path="/library" element={<LibraryPage />} />
         
         {/* Chat route - AI tutor */}
         <Route path="/chat" element={<Chat />} />
@@ -262,7 +265,7 @@ function AppRoutes() {
       </RouteErrorBoundary>
       
       {/* Mobile bottom navigation - shows on mobile only */}
-      <BottomNav />
+
     </>
   );
 }

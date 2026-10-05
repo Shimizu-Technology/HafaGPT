@@ -52,12 +52,15 @@ export default {
           600: '#5A4430',
           700: '#453428',  // Dark mode surfaces
           800: '#3A2A1D',  // Main brown - from icon outlines
+          950: '#1C1512',
           900: '#2A1F1A',  // Dark mode background
         },
         // Keep ocean for backward compatibility but add hibiscus
         ocean: {
-          500: '#5DAFB0',  // Map to teal
-          600: '#4A8E8F',
+          50: '#F0F9F9', 100: '#D9F1F1', 200: '#B8E6E6',
+          300: '#88D5D6', 400: '#6BC3C4', 500: '#5DAFB0',
+          600: '#4A8E8F', 700: '#3D7273', 800: '#355D5E',
+          900: '#304E4F', 950: '#173334',
         },
         hibiscus: {
           400: '#F17B6A',

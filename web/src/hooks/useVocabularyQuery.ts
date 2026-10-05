@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import type { ContentTrust } from '../data/contentTrust';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -33,6 +33,7 @@ export interface CategoriesResponse {
 export interface CategoryWordsResponse {
   words: VocabularyWord[];
   total: number;
+  category_total?: number;
   category: {
     id: string;
     title: string;
@@ -92,6 +93,47 @@ export function useCategoryWords(categoryId: string | undefined, limit: number =
     enabled: !!categoryId,
     staleTime: 1000 * 60 * 60, // 1 hour
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
+  });
+}
+
+/** Search first, then paginate; each query owns its pages and cannot mix categories. */
+export function useCategoryWordPages(categoryId: string | undefined, query: string, limit = 50) {
+  return useInfiniteQuery({
+    queryKey: ['vocabulary', 'category-pages', categoryId, query.trim(), limit],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam, signal }): Promise<CategoryWordsResponse> => {
+      const params = new URLSearchParams({ limit: String(limit), offset: String(pageParam), q: query.trim() });
+      const response = await fetch(`${API_URL}/api/vocabulary/categories/${encodeURIComponent(categoryId!)}?${params}`, { signal });
+      if (!response.ok) throw new Error('Could not load dictionary words');
+      let result: CategoryWordsResponse = await response.json();
+      if (!query.trim() || result.category_total !== undefined) return result;
+      // A web deploy may precede the API deploy. Older APIs ignore q, so read
+      // every category page before filtering instead of calling those words matches.
+      if (pageParam > 0) {
+        const first = await fetch(`${API_URL}/api/vocabulary/categories/${encodeURIComponent(categoryId!)}?limit=500&offset=0`, { signal });
+        if (!first.ok) throw new Error('Could not search all dictionary words');
+        result = await first.json();
+      }
+      const allWords = [...result.words];
+      while (allWords.length < result.total) {
+        const next = await fetch(`${API_URL}/api/vocabulary/categories/${encodeURIComponent(categoryId!)}?limit=500&offset=${allWords.length}`, { signal });
+        if (!next.ok) throw new Error('Could not search all dictionary words');
+        const page: CategoryWordsResponse = await next.json();
+        if (!page.words.length) throw new Error('Category search is temporarily unavailable');
+        allWords.push(...page.words);
+      }
+      const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f'’`]/g, '').toLowerCase().trim();
+      const search = normalize(query);
+      const matches = allWords.filter(word => normalize(word.chamorro).includes(search) || normalize(word.definition).includes(search));
+      return { ...result, words: matches.slice(pageParam, pageParam + limit), total: matches.length, category_total: result.total };
+    },
+    getNextPageParam: (lastPage, pages) => {
+      const loaded = pages.reduce((count, page) => count + page.words.length, 0);
+      return loaded < lastPage.total ? loaded : undefined;
+    },
+    placeholderData: (previous, previousQuery) => previousQuery?.queryKey[2] === categoryId ? keepPreviousData(previous) : undefined,
+    enabled: !!categoryId,
+    staleTime: 1000 * 60 * 60,
   });
 }
 
