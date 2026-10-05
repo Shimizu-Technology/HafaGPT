@@ -25,6 +25,13 @@ describe('browser-local Today continuity', () => {
     saveTodaySession('one', { ...session, completed: ['invented'] });
     expect(loadTodaySession('one', session.day)).toBeNull();
   });
+  it('keeps a shared game route tied to the topic and category in the frozen plan', () => {
+    const planned: TodaySession = { ...session, plan: { ...session.plan, activities: [
+      { id: 'use-greetings', kind: 'play', title: 'Use greetings', description: 'Practice', minutes: 3, to: '/games/memory?topic=greetings&category=greetings' },
+    ] } };
+    expect(completeTodayStep(planned, 'use', '/games/memory', '?topic=numbers&category=numbers')).toBe(planned);
+    expect(completeTodayStep(planned, 'use', '/games/memory', '?topic=greetings&category=greetings').completed).toEqual(['use-greetings']);
+  });
   it('carries a bounded stage and day while preserving lesson context', () => {
     expect(withTodayStep('/learn/greetings?source=today', 'learn')).toContain('source=today&today_step=learn&today_day=');
   });

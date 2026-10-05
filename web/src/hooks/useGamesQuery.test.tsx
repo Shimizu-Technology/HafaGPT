@@ -84,7 +84,7 @@ describe('useSaveGameResult concept context', () => {
     expect(loadTodaySession('user_1')?.completed).toEqual(['use-greetings']);
   });
 
-  it('does not finish Today after the learner navigates away while saving', async () => {
+  it('finishes the original Today activity when the learner returns home while saving', async () => {
     startTodayGame();
     let finish: ((response: Response) => void) | undefined;
     vi.mocked(fetch).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
@@ -92,12 +92,12 @@ describe('useSaveGameResult concept context', () => {
     let saving: Promise<unknown>;
     act(() => { saving = result.current.mutateAsync({ game_type: 'memory_match', category_id: 'greetings', score: 400 }); });
     await waitFor(() => expect(finish).toBeDefined());
-    window.history.pushState({}, '', '/games/memory');
+    window.history.pushState({}, '', '/');
     await act(async () => {
       finish?.({ ok: true, json: async () => gameResult() } as Response);
       await saving;
     });
-    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+    expect(loadTodaySession('user_1')?.completed).toEqual(['use-greetings']);
   });
 
   it('does not finish the planned topic when settings switch the game category', async () => {
@@ -123,7 +123,7 @@ describe('useSaveGameResult concept context', () => {
     await act(async () => { releaseToken?.('test-token'); await saving; });
     const request = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
     expect(JSON.parse(request.body as string).learning_context.source).toBe('today');
-    expect(loadTodaySession('user_1')?.completed).toEqual([]);
+    expect(loadTodaySession('user_1')?.completed).toEqual(['use-greetings']);
   });
 
   it('does not save the previous learner round if accounts change while obtaining a token', async () => {

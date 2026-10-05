@@ -61,9 +61,14 @@ export function saveTodaySession(owner: string, session: TodaySession): boolean 
 }
 
 /** Require the planned destination as well as its step, so unrelated activity cannot finish Today. */
-export function completeTodayStep(session: TodaySession, step: TodayStep, pathname: string): TodaySession {
-  const activity = session.plan.activities.find(candidate => activityStep(candidate) === step
-    && new URL(candidate.to, 'https://hafagpt.local').pathname === pathname);
+export function completeTodayStep(session: TodaySession, step: TodayStep, pathname: string, search = ''): TodaySession {
+  const actual = new URLSearchParams(search);
+  const activity = session.plan.activities.find(candidate => {
+    const planned = new URL(candidate.to, 'https://hafagpt.local');
+    return activityStep(candidate) === step && planned.pathname === pathname
+      && ['topic', 'category'].every(key => !planned.searchParams.has(key)
+        || planned.searchParams.get(key) === actual.get(key));
+  });
   if (!activity || session.completed.includes(activity.id)) return session;
   return { ...session, completed: [...session.completed, activity.id] };
 }

@@ -70,7 +70,7 @@ export function useSaveGameResult() {
 
   return useMutation({
     onMutate: () => ({
-      owner: userId, route: window.location.pathname + window.location.search,
+      owner: userId, pathname: window.location.pathname, search: window.location.search,
       category: readLearningGameContext(window.location.search)?.categoryId,
     }),
     mutationFn: async (params: GameResultCreate) => {
@@ -110,9 +110,8 @@ export function useSaveGameResult() {
       return result;
     },
     onSuccess: (_result, params, launch) => {
-      if (launch?.owner === userId && launch.route === window.location.pathname + window.location.search
-        && launch.category === params.category_id) {
-        completeStep('use');
+      if (launch?.owner === userId && launch.category === params.category_id) {
+        completeStep('use', launch);
       }
       // Invalidate game stats to refetch
       queryClient.invalidateQueries({ queryKey: ['game-stats'] });
