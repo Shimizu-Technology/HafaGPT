@@ -1,3 +1,4 @@
+import { scrambleLetters } from '../lib/gameRound';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle } from 'lucide-react';
@@ -69,6 +70,7 @@ export function WordScramble() {
   const { isSignedIn } = useUser();
   const { mutateAsync: saveGameResult } = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
   const submissionStartedRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
@@ -149,19 +151,7 @@ export function WordScramble() {
   }, [gameState, startTime]);
 
   // Scramble a word
-  const scrambleWord = useCallback((word: string): string[] => {
-    const letters = word.toUpperCase().split('');
-    // Fisher-Yates shuffle
-    for (let i = letters.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [letters[i], letters[j]] = [letters[j], letters[i]];
-    }
-    // Make sure it's actually scrambled (not the same as original)
-    if (letters.join('') === word.toUpperCase() && letters.length > 1) {
-      return scrambleWord(word);
-    }
-    return letters;
-  }, []);
+  const scrambleWord = useCallback(scrambleLetters, []);
 
   // Set up current word
   useEffect(() => {
@@ -252,6 +242,7 @@ export function WordScramble() {
     // Filter out very short words (less than 3 chars) for better gameplay
     const filtered = shuffled.filter(card => card.front.length >= 3);
     
+    if (filtered.length < settings.wordsPerRound) return [];
     return filtered.slice(0, settings.wordsPerRound).map(card => ({
       chamorro: card.front,
       english: card.back,
@@ -260,40 +251,54 @@ export function WordScramble() {
   }, [settings.mode, settings.wordsPerRound, curatedFlashcards, flashcardsData]);
 
   const startGame = useCallback(async () => {
-    // Check usage limits before starting (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('game')) {
-        setShowUpgradePrompt(true);
+    if (startingRef.current) return;
+    startingRef.current = true;
+    try {
+
+      const newWords = generateWords();
+      if (newWords.length < settings.wordsPerRound) {
+        alert('Not enough words in this category. Please choose fewer words or another category.');
         return;
       }
-      const allowed = await tryUse('game');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
+      // Check usage limits before starting (only for signed-in users)
+      if (isSignedIn) {
+        if (!canUse('game')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+        const allowed = await tryUse('game');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+          return;
+        }
       }
+
+      hasSavedRef.current = false;
+      submissionStartedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      setPendingGameResult(null);
+      setResultSaveFailed(false);
+      setIsSavingResult(false);
+      setWords(newWords);
+      setCurrentWordIndex(0);
+      setScore(0);
+      setStreak(0);
+      setCorrectAnswers(0);
+      setStartTime(Date.now());
+      setElapsedTime(0);
+      setGameState('playing');
+
+    } finally {
+      startingRef.current = false;
     }
+  }, [generateWords, settings.wordsPerRound, isSignedIn, canUse, tryUse]);
     
-    const newWords = generateWords();
-    if (newWords.length === 0) {
-      alert('Not enough words in this category. Please try another.');
-      return;
-    }
-    
-    hasSavedRef.current = false;
-    submissionStartedRef.current = false;
-    gameAttemptIdRef.current = createClientAttemptId();
-    setPendingGameResult(null);
-    setResultSaveFailed(false);
-    setIsSavingResult(false);
-    setWords(newWords);
-    setCurrentWordIndex(0);
-    setScore(0);
-    setStreak(0);
-    setCorrectAnswers(0);
-    setStartTime(Date.now());
-    setElapsedTime(0);
-    setGameState('playing');
-  }, [generateWords, isSignedIn, canUse, tryUse]);
+  const contextualStartedRef = useRef(false);
+  useEffect(() => {
+    if (!learningContext || contextualStartedRef.current || gameState !== 'setup') return;
+    contextualStartedRef.current = true;
+    void startGame();
+  }, [learningContext, gameState, startGame]);
 
   // Handle letter selection
   const handleLetterClick = (index: number) => {
@@ -315,6 +320,7 @@ export function WordScramble() {
 
   // Check if answer is correct
   const checkAnswer = useCallback(() => {
+    if (feedback) return;
     const currentWord = words[currentWordIndex];
     const isCorrect = currentAnswer.toUpperCase() === currentWord.chamorro.toUpperCase();
     
@@ -328,19 +334,15 @@ export function WordScramble() {
       setStreak(0);
     }
     
-    // Move to next word after delay
-    setTimeout(() => {
-      setCurrentWordIndex(prev => prev + 1);
-    }, 1500);
-  }, [currentAnswer, words, currentWordIndex, streak]);
+
+  }, [currentAnswer, words, currentWordIndex, streak, feedback]);
 
   // Skip current word
   const skipWord = () => {
+    if (feedback) return;
     setStreak(0);
     setFeedback('incorrect');
-    setTimeout(() => {
-      setCurrentWordIndex(prev => prev + 1);
-    }, 1000);
+
   };
 
   // Reshuffle current letters
@@ -463,7 +465,7 @@ export function WordScramble() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -482,7 +484,7 @@ export function WordScramble() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -512,7 +514,7 @@ export function WordScramble() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
-                        ? 'bg-purple-500 dark:bg-purple-600 text-white shadow-lg scale-105'
+                        ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }
                     `}
@@ -549,7 +551,7 @@ export function WordScramble() {
                         ${isDisabled 
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
                           : settings.wordsPerRound === count
-                            ? 'bg-purple-500 dark:bg-purple-600 text-white shadow-lg scale-105'
+                            ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg scale-105'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                         }
                       `}
@@ -672,7 +674,7 @@ export function WordScramble() {
                         relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-xl sm:text-2xl
                         transition-all duration-200 transform
                         ${isSelected
-                          ? 'bg-purple-500 text-white scale-95 shadow-inner'
+                          ? 'bg-purple-700 text-white scale-95 shadow-inner'
                           : 'bg-gradient-to-br from-cream-100 to-cream-200 dark:from-slate-700 dark:to-slate-600 text-brown-800 dark:text-white shadow-md hover:scale-105 active:scale-95'
                         }
                         ${feedback === 'correct' && isSelected ? 'bg-green-500' : ''}
@@ -755,7 +757,7 @@ export function WordScramble() {
               {!feedback && currentAnswer.length === scrambledLetters.length && (
                 <button
                   onClick={checkAnswer}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-all"
                 >
                   <Check className="w-4 h-4" />
                   Check
@@ -870,7 +872,7 @@ export function WordScramble() {
               <button
                 onClick={startGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -903,6 +905,11 @@ export function WordScramble() {
               </Link>
             )}
           </div>
+        )}
+        {gameState === 'playing' && feedback && (
+          <button type="button" onClick={() => { setFeedback(null); setCurrentWordIndex(index => index + 1); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+            {currentWordIndex + 1 >= settings.wordsPerRound ? 'See results' : 'Next word'}
+          </button>
         )}
       </main>
 

@@ -79,51 +79,55 @@ export const MemoryCard = memo(function MemoryCard({
         <div
           className={`
             absolute top-0 left-0 right-0 bottom-0 rounded-lg sm:rounded-xl md:rounded-2xl
-            ${isMatched 
-              ? 'bg-gradient-to-br from-green-400 to-green-500 dark:from-green-600 dark:to-green-700 border-green-300 dark:border-green-500' 
+            ${isMatched
+              ? 'bg-gradient-to-br from-green-400 to-green-500 dark:from-green-600 dark:to-green-700 border-green-300 dark:border-green-500'
               : 'bg-white dark:bg-slate-800 border-cream-300 dark:border-slate-600'
             }
             border-2 flex flex-col items-center justify-center p-1 sm:p-2 md:p-3
             shadow-md md:shadow-lg
           `}
-          style={{ 
+          style={{
             backfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
           }}
         >
-          {/* Language Badge */}
-          <span className={`
-            inline-block px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[9px] md:text-[10px] font-bold rounded-full mb-0.5 sm:mb-1
-            ${type === 'chamorro' 
-              ? 'bg-coral-100 text-coral-700 dark:bg-coral-900/40 dark:text-coral-300' 
-              : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
-            }
-            ${isMatched ? 'bg-white/20 text-white' : ''}
-          `}>
-            {type === 'chamorro' ? 'CH' : 'EN'}
-          </span>
-          
-          {/* Word - Full text with proper wrapping */}
-          <p className={`
-            font-bold text-center leading-tight px-0.5 w-full
-            ${getTextSize()}
-            ${isMatched 
-              ? 'text-white' 
-              : 'text-brown-800 dark:text-white'
-            }
-          `}
-          style={{
-            wordBreak: 'break-word',
-            overflowWrap: 'break-word',
-            hyphens: 'auto',
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-          >
-            {content}
-          </p>
+          {(isFlipped || isMatched) && (
+            <>
+              {/* Language Badge */}
+              <span className={`
+                inline-block px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[9px] md:text-[10px] font-bold rounded-full mb-0.5 sm:mb-1
+                ${type === 'chamorro'
+                  ? 'bg-coral-100 text-coral-700 dark:bg-coral-900/40 dark:text-coral-300'
+                  : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
+                }
+                ${isMatched ? 'bg-white/20 text-white' : ''}
+              `}>
+                {type === 'chamorro' ? 'CH' : 'EN'}
+              </span>
+
+              {/* Word - Full text with proper wrapping */}
+              <p className={`
+                font-bold text-center leading-tight px-0.5 w-full
+                ${getTextSize()}
+                ${isMatched
+                  ? 'text-white'
+                  : 'text-brown-800 dark:text-white'
+                }
+              `}
+              style={{
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                hyphens: 'auto',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+              >
+                {content}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </button>

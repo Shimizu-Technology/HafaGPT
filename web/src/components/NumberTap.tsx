@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ListOrdered, Volume2, Play, Sparkles } from 'lucide-react';
+import { numberOptions } from '../lib/gameRound';
+import { useGameTimers } from '../hooks/useGameTimers';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -48,7 +52,11 @@ type GameState = 'setup' | 'playing' | 'feedback' | 'complete';
 export function NumberTap() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
+  const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const { speak, preload, isSpeaking } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -82,21 +90,7 @@ export function NumberTap() {
     // Pick a random item to count
     const item = COUNTABLE_ITEMS[Math.floor(Math.random() * COUNTABLE_ITEMS.length)];
     
-    // Generate 3 wrong answers that are different from correct
-    const wrongNumbers: number[] = [];
-    while (wrongNumbers.length < 3) {
-      // Keep wrong answers close to correct for a good challenge
-      const offset = Math.floor(Math.random() * 4) - 2; // -2 to +2
-      let wrongValue = correctNumber.value + offset;
-      if (wrongValue < 1) wrongValue = correctNumber.value + Math.abs(offset);
-      if (wrongValue > 10) wrongValue = correctNumber.value - Math.abs(offset);
-      if (wrongValue !== correctNumber.value && !wrongNumbers.includes(wrongValue) && wrongValue >= 1 && wrongValue <= 10) {
-        wrongNumbers.push(wrongValue);
-      }
-    }
-    
-    // Combine and shuffle
-    const allOptions = [correctNumber.value, ...wrongNumbers].sort(() => Math.random() - 0.5);
+    const allOptions = numberOptions(correctNumber.value);
     
     setCurrentNumber(correctNumber);
     setCurrentItem(item);
@@ -112,24 +106,35 @@ export function NumberTap() {
 
   // Start the game
   const startGame = async () => {
-    if (!canUse('game')) {
-      setShowUpgradePrompt(true);
-      return;
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    try {
+
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      const success = await tryUse('game');
+      if (!success) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      clearTimers();
+      saveGameResultMutation.reset();
+      setGameState('playing');
+      setCurrentRound(1);
+      setScore(0);
+      setStreak(0);
+      setUsedNumbers(new Set());
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      generateRound();
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    const success = await tryUse('game');
-    if (!success) {
-      setShowUpgradePrompt(true);
-      return;
-    }
-    
-    setGameState('playing');
-    setCurrentRound(1);
-    setScore(0);
-    setStreak(0);
-    setUsedNumbers(new Set());
-    hasSavedRef.current = false;
-    generateRound();
   };
 
   // Handle answer selection
@@ -148,20 +153,23 @@ export function NumberTap() {
       speak('Bunitu!');
     } else {
       setStreak(0);
-      setTimeout(() => {
+      schedule(() => {
         speak(currentNumber?.chamorro || '');
       }, 500);
     }
     
-    setTimeout(() => {
-      if (currentRound >= ROUNDS_PER_GAME) {
-        setGameState('complete');
-      } else {
-        setCurrentRound(prev => prev + 1);
-        setGameState('playing');
-        generateRound();
-      }
-    }, correct ? 1500 : 2500);
+
+  };
+
+  const continueRound = () => {
+    clearTimers();
+    if (currentRound >= ROUNDS_PER_GAME) {
+      setGameState('complete');
+    } else {
+      setCurrentRound(prev => prev + 1);
+      setGameState('playing');
+      generateRound();
+    }
   };
 
   // Save game result when complete
@@ -170,6 +178,7 @@ export function NumberTap() {
       hasSavedRef.current = true;
       const stars = score >= 800 ? 3 : score >= 600 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'number_tap',
         score,
         stars,
@@ -246,7 +255,7 @@ export function NumberTap() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-bold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <Play className="w-6 h-6" />
               Start Game
@@ -269,7 +278,7 @@ export function NumberTap() {
               disabled={isSpeaking}
               className={`w-full py-4 rounded-2xl mb-4 transition-all flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-teal-500 text-white scale-105'
+                  ? 'bg-teal-700 text-white scale-105'
                   : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 hover:from-teal-200 hover:to-cyan-200 dark:hover:from-teal-900/70 dark:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
@@ -362,15 +371,23 @@ export function NumberTap() {
         {/* Complete Screen */}
         {gameState === 'complete' && (
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"
             onReplay={() => {
               setGameState('setup');
               hasSavedRef.current = false;
+              gameAttemptIdRef.current = createClientAttemptId();
             }}
           />
         )}
+        {gameState === 'feedback' && (
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+            {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
+          </button>
+        )}
+        {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {showUpgradePrompt && (

@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Palette, Volume2, Play, Sparkles } from 'lucide-react';
+import { useGameTimers } from '../hooks/useGameTimers';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -37,7 +40,11 @@ type GameState = 'setup' | 'playing' | 'feedback' | 'complete';
 export function ColorTouch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
+  const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const { speak, preload, isSpeaking } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -87,24 +94,35 @@ export function ColorTouch() {
 
   // Start the game
   const startGame = async () => {
-    if (!canUse('game')) {
-      setShowUpgradePrompt(true);
-      return;
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    try {
+
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      const success = await tryUse('game');
+      if (!success) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      clearTimers();
+      saveGameResultMutation.reset();
+      setGameState('playing');
+      setCurrentRound(1);
+      setScore(0);
+      setStreak(0);
+      setUsedColors(new Set());
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      generateRound();
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    const success = await tryUse('game');
-    if (!success) {
-      setShowUpgradePrompt(true);
-      return;
-    }
-    
-    setGameState('playing');
-    setCurrentRound(1);
-    setScore(0);
-    setStreak(0);
-    setUsedColors(new Set());
-    hasSavedRef.current = false;
-    generateRound();
   };
 
   // Handle answer selection
@@ -123,20 +141,23 @@ export function ColorTouch() {
       speak('Bunitu!');
     } else {
       setStreak(0);
-      setTimeout(() => {
+      schedule(() => {
         speak(currentColor?.chamorro || '');
       }, 500);
     }
     
-    setTimeout(() => {
-      if (currentRound >= ROUNDS_PER_GAME) {
-        setGameState('complete');
-      } else {
-        setCurrentRound(prev => prev + 1);
-        setGameState('playing');
-        generateRound();
-      }
-    }, correct ? 1500 : 2500);
+
+  };
+
+  const continueRound = () => {
+    clearTimers();
+    if (currentRound >= ROUNDS_PER_GAME) {
+      setGameState('complete');
+    } else {
+      setCurrentRound(prev => prev + 1);
+      setGameState('playing');
+      generateRound();
+    }
   };
 
   // Save game result when complete
@@ -145,6 +166,7 @@ export function ColorTouch() {
       hasSavedRef.current = true;
       const stars = score >= 800 ? 3 : score >= 600 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'color_touch',
         score,
         stars,
@@ -200,7 +222,7 @@ export function ColorTouch() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-bold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <Play className="w-6 h-6" />
               Start Game
@@ -223,7 +245,7 @@ export function ColorTouch() {
               disabled={isSpeaking}
               className={`w-full py-5 rounded-2xl mb-6 transition-all flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-pink-500 text-white scale-105'
+                  ? 'bg-pink-700 text-white scale-105'
                   : 'bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 hover:from-pink-200 hover:to-orange-200 dark:hover:from-pink-900/70 dark:hover:to-orange-900/70 border-2 border-pink-300 dark:border-pink-700'
               }`}
             >
@@ -334,15 +356,23 @@ export function ColorTouch() {
         {/* Complete Screen */}
         {gameState === 'complete' && (
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"
             onReplay={() => {
               setGameState('setup');
               hasSavedRef.current = false;
+              gameAttemptIdRef.current = createClientAttemptId();
             }}
           />
         )}
+        {gameState === 'feedback' && (
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+            {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
+          </button>
+        )}
+        {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {showUpgradePrompt && (

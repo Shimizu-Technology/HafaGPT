@@ -4,6 +4,9 @@ import { ArrowDown, Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { frameDistance } from '../lib/gameRound';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -69,7 +72,10 @@ export function FallingWords() {
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -99,6 +105,7 @@ export function FallingWords() {
   const animationRef = useRef<number | null>(null);
   const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const wordIdRef = useRef(0);
+  const resolvedWordRef = useRef<number | null>(null);
 
   const clearTransitionTimers = useCallback(() => {
     transitionTimersRef.current.forEach(timer => clearTimeout(timer));
@@ -176,15 +183,8 @@ export function FallingWords() {
       setUsedWordIndices(new Set([randomIndex]));
       
       // Generate wrong answers
-      const wrongAnswers: string[] = [];
-      const usedForAnswers = new Set([randomIndex]);
-      while (wrongAnswers.length < ANSWER_OPTIONS - 1 && usedForAnswers.size < wordPool.length) {
-        const wrongIndex = Math.floor(Math.random() * wordPool.length);
-        if (!usedForAnswers.has(wrongIndex)) {
-          usedForAnswers.add(wrongIndex);
-          wrongAnswers.push(wordPool[wrongIndex].english);
-        }
-      }
+      const wrongAnswers = wordPool.filter((_, index) => index !== randomIndex)
+        .sort(() => Math.random() - 0.5).slice(0, ANSWER_OPTIONS - 1).map(entry => entry.english);
       
       const options = [word.english, ...wrongAnswers].sort(() => Math.random() - 0.5);
       wordIdRef.current += 1;
@@ -208,17 +208,9 @@ export function FallingWords() {
     setUsedWordIndices(prev => new Set([...prev, randomAvailableIndex]));
 
     // Generate wrong answers (can use any word from pool)
-    const wrongAnswers: string[] = [];
-    const usedForAnswers = new Set([randomAvailableIndex]);
-    while (wrongAnswers.length < ANSWER_OPTIONS - 1 && usedForAnswers.size < wordPool.length) {
-      const wrongIndex = Math.floor(Math.random() * wordPool.length);
-      if (!usedForAnswers.has(wrongIndex)) {
-        usedForAnswers.add(wrongIndex);
-        wrongAnswers.push(wordPool[wrongIndex].english);
-      }
-    }
+    const wrongAnswers = wordPool.filter((_, index) => index !== randomAvailableIndex)
+      .sort(() => Math.random() - 0.5).slice(0, ANSWER_OPTIONS - 1).map(entry => entry.english);
 
-    // Shuffle answer options
     const options = [word.english, ...wrongAnswers].sort(() => Math.random() - 0.5);
 
     wordIdRef.current += 1;
@@ -235,8 +227,9 @@ export function FallingWords() {
 
   // Handle answer selection
   const handleAnswer = useCallback((answer: string) => {
-    if (!currentWord || feedback) return;
+    if (gameState !== 'playing' || !currentWord || feedback || resolvedWordRef.current === currentWord.id) return;
 
+    resolvedWordRef.current = currentWord.id;
     const isCorrect = answer === currentWord.english;
 
     if (isCorrect) {
@@ -244,28 +237,17 @@ export function FallingWords() {
       const streakBonus = streak * 25;
       setScore(prev => prev + 100 + streakBonus);
       setStreak(prev => prev + 1);
-      setWordsCompleted(prev => {
-        const newCount = prev + 1;
-        
-        // WIN CONDITION: Complete 30 words to win!
-        if (newCount >= WIN_WORDS) {
-          scheduleTransition(() => setGameState('complete'), 300);
-          return newCount;
-        }
-        
-        // Level up every WORDS_PER_LEVEL words
-        if (newCount % WORDS_PER_LEVEL === 0) {
-          setLevel(l => l + 1);
-          setCurrentSpeed(s => s + SPEED_INCREMENT);
-        }
-        return newCount;
-      });
+      const newCount = wordsCompleted + 1;
+      setWordsCompleted(newCount);
+      if (newCount < WIN_WORDS && newCount % WORDS_PER_LEVEL === 0) {
+        setLevel(level => level + 1);
+        setCurrentSpeed(speed => speed + SPEED_INCREMENT);
+      }
 
       // Quick transition to next word (only if not won)
       scheduleTransition(() => {
-        if (wordsCompleted + 1 < WIN_WORDS) {
-          generateNewWord();
-        }
+        if (newCount >= WIN_WORDS) setGameState('complete');
+        else generateNewWord();
       }, 300);
     } else {
       setFeedback('wrong');
@@ -285,40 +267,23 @@ export function FallingWords() {
         }
       }, 500);
     }
-  }, [currentWord, feedback, streak, lives, generateNewWord, scheduleTransition]);
+  }, [currentWord, feedback, gameState, streak, lives, wordsCompleted, generateNewWord, scheduleTransition]);
 
   // Animation loop
+  const currentWordId = currentWord?.id;
   useEffect(() => {
-    if (gameState !== 'playing' || !currentWord) return;
+    if (gameState !== 'playing' || !currentWordId || feedback) return;
 
-    const animate = () => {
+    let previousTime: number | null = null;
+    const animate = (timestamp: number) => {
+      const elapsed = previousTime === null ? 0 : timestamp - previousTime;
+      previousTime = timestamp;
       setCurrentWord(prev => {
         if (!prev) return null;
 
-        const newY = prev.y + prev.speed;
+        const newY = prev.y + frameDistance(prev.speed, elapsed);
 
-        // Word hit bottom - lose a life
-        if (newY >= 85) {
-          setFeedback('wrong');
-          setStreak(0);
-          setLives(l => {
-            const newLives = l - 1;
-            if (newLives <= 0) {
-              setGameState('complete');
-            }
-            return newLives;
-          });
-
-          scheduleTransition(() => {
-            if (lives > 1) {
-              generateNewWord();
-            }
-          }, 500);
-
-          return null;
-        }
-
-        return { ...prev, y: newY };
+        return { ...prev, y: Math.min(newY, 85) };
       });
 
       animationRef.current = requestAnimationFrame(animate);
@@ -331,7 +296,20 @@ export function FallingWords() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, currentWord?.id, lives, generateNewWord, scheduleTransition]);
+  }, [gameState, currentWordId, feedback]);
+
+  useEffect(() => {
+    if (gameState !== 'playing' || !currentWord || currentWord.y < 85 || feedback || resolvedWordRef.current === currentWord.id) return;
+    resolvedWordRef.current = currentWord.id;
+    setFeedback('wrong');
+    setStreak(0);
+    setLives(lives - 1);
+    if (lives <= 1) {
+      setGameState('complete');
+    } else {
+      scheduleTransition(generateNewWord, 500);
+    }
+  }, [currentWord, feedback, gameState, lives, generateNewWord, scheduleTransition]);
 
   // Timer
   useEffect(() => {
@@ -350,6 +328,7 @@ export function FallingWords() {
       hasSavedRef.current = true;
       const stars = wordsCompleted >= 10 ? 3 : wordsCompleted >= 5 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'falling_words',
         mode: settings.mode,
         category_id: settings.category,
@@ -360,45 +339,56 @@ export function FallingWords() {
         stars,
       });
     }
-  }, [gameState, isSignedIn, wordsCompleted, score, level, elapsedTime, settings, saveGameResultMutation]);
+  }, [gameState, isSignedIn, wordsCompleted, score, level, elapsedTime, settings, saveGameResultMutation, resultUnresolved]);
 
   // Start game
   const startGame = useCallback(async () => {
-    // Check usage limits before starting (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('game')) {
-        setShowUpgradePrompt(true);
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    try {
+
+      if (wordPool.length < ANSWER_OPTIONS) {
+        alert('Not enough words in this category. Please try another category.');
         return;
       }
-      const allowed = await tryUse('game');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
+      // Check usage limits before starting (only for signed-in users)
+      if (isSignedIn) {
+        if (!canUse('game')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+        const allowed = await tryUse('game');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+          return;
+        }
       }
+
+      clearTransitionTimers();
+      saveGameResultMutation.reset();
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      setLives(MAX_LIVES);
+      setScore(0);
+      setStreak(0);
+      setWordsCompleted(0);
+      setCurrentSpeed(INITIAL_SPEED);
+      setLevel(1);
+      setStartTime(Date.now());
+      setElapsedTime(0);
+      setFeedback(null);
+      setUsedWordIndices(new Set()); // Reset used words for new game
+      setGameState('playing');
+      generateNewWord();
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    if (wordPool.length < ANSWER_OPTIONS) {
-      alert('Not enough words in this category. Please try another category.');
-      return;
-    }
-    clearTransitionTimers();
-    hasSavedRef.current = false;
-    setLives(MAX_LIVES);
-    setScore(0);
-    setStreak(0);
-    setWordsCompleted(0);
-    setCurrentSpeed(INITIAL_SPEED);
-    setLevel(1);
-    setStartTime(Date.now());
-    setElapsedTime(0);
-    setFeedback(null);
-    setUsedWordIndices(new Set()); // Reset used words for new game
-    setGameState('playing');
-    generateNewWord();
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
+    if (resultUnresolved) return;
     clearTransitionTimers();
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
@@ -494,7 +484,7 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -509,7 +499,7 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -533,7 +523,7 @@ export function FallingWords() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }
                     `}
@@ -570,7 +560,7 @@ export function FallingWords() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -645,7 +635,7 @@ export function FallingWords() {
                     absolute left-1/2 -translate-x-1/2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
                     text-lg sm:text-2xl font-bold text-white shadow-xl
                     transition-colors duration-200
-                    ${feedback === 'correct' ? 'bg-green-500' : feedback === 'wrong' ? 'bg-red-500' : 'bg-coral-500 dark:bg-ocean-500'}
+                    ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
                   `}
                   style={{
                     top: `${currentWord.y}%`,
@@ -666,7 +656,7 @@ export function FallingWords() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-500 dark:bg-ocean-500 text-white font-bold hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
                     >
                       Resume
                     </button>
@@ -686,7 +676,7 @@ export function FallingWords() {
                     py-3 sm:py-4 px-3 rounded-xl font-bold text-sm sm:text-base
                     transition-all duration-200 active:scale-95 shadow-md
                     ${feedback && option === currentWord?.english
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-green-700 text-white'
                       : feedback === 'wrong' && option !== currentWord?.english
                         ? 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500'
                         : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-cream-100 dark:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
@@ -759,13 +749,15 @@ export function FallingWords() {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={playAgain}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                disabled={resultUnresolved}
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
               </button>
               <button
                 onClick={resetGame}
+                disabled={resultUnresolved}
                 className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -781,6 +773,7 @@ export function FallingWords() {
             </Link>
           </div>
         )}
+        {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {/* Upgrade Prompt Modal */}

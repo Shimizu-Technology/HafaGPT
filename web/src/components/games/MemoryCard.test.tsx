@@ -19,6 +19,8 @@ describe('MemoryCard accessibility', () => {
       />,
     );
 
+    expect(screen.queryByText('Håfa Adai')).not.toBeInTheDocument();
+    expect(screen.queryByText('CH')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Reveal memory card' }));
     expect(onClick).toHaveBeenCalledWith(4);
 
@@ -34,5 +36,6 @@ describe('MemoryCard accessibility', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Chamorro card: Håfa Adai' })).toBeDisabled();
+    expect(screen.getByText('Håfa Adai')).toBeInTheDocument();
   });
 });

@@ -73,7 +73,7 @@ export function GameProgress({ current, total, score, streak = 0 }: GameProgress
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-coral-600 transition-[width] dark:bg-teal-500" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded-full bg-coral-700 transition-[width] dark:bg-teal-500" style={{ width: `${progress}%` }} />
       </div>
     </section>
   );
@@ -84,9 +84,10 @@ interface GameResultProps {
   stars: number;
   onReplay: () => void;
   heading?: string;
+  replayDisabled?: boolean;
 }
 
-export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: GameResultProps) {
+export function GameResult({ score, stars, onReplay, heading = 'Great work!', replayDisabled = false }: GameResultProps) {
   const location = useLocation();
   const learningContext = readLearningGameContext(location.search);
   const gameReturn = getLearningGameReturn(learningContext);
@@ -118,13 +119,14 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: 
         <button
           type="button"
           onClick={onReplay}
+          disabled={replayDisabled}
           className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again
         </button>
         <Link
           to={gameReturn.to}
-          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>
