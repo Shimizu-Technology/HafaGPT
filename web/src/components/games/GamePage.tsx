@@ -73,7 +73,7 @@ export function GameProgress({ current, total, score, streak = 0 }: GameProgress
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-coral-600 transition-[width] dark:bg-teal-500" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded-full bg-coral-700 transition-[width] dark:bg-teal-500" style={{ width: `${progress}%` }} />
       </div>
     </section>
   );
@@ -124,7 +124,7 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!' }: 
         </button>
         <Link
           to={gameReturn.to}
-          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>

@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Image as ImageIcon, RotateCcw, Trophy, Star, Play, Timer } from 'lucide-react';
+import { useGameTimers } from '../hooks/useGameTimers';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -109,6 +112,9 @@ export function PicturePairs() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
+  const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const { speak, preload } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -147,6 +153,7 @@ export function PicturePairs() {
         hasSavedRef.current = true;
         const stars = getStars(moves, pairsCount);
         saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
           game_type: 'picture_pairs',
           score: calculateScore(moves, elapsedTime, pairsCount),
           stars,
@@ -199,29 +206,41 @@ export function PicturePairs() {
 
   // Start game
   const startGame = async () => {
-    if (!canUse('game')) {
-      setShowUpgradePrompt(true);
-      return;
+    if (startingRef.current) return;
+    startingRef.current = true;
+    try {
+
+      if (!canUse('game')) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      const success = await tryUse('game');
+      if (!success) {
+        setShowUpgradePrompt(true);
+        return;
+      }
+
+      clearTimers();
+      saveGameResultMutation.reset();
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      const newCards = generateCards();
+      setIsChecking(false);
+      setCards(newCards);
+      setFlippedCards([]);
+      setMatchedPairs([]);
+      setMoves(0);
+      setStartTime(Date.now());
+      setElapsedTime(0);
+      setGameState('playing');
+
+      // Preload audio for this category
+      preloadCategoryAudio(selectedCategory);
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    const success = await tryUse('game');
-    if (!success) {
-      setShowUpgradePrompt(true);
-      return;
-    }
-    
-    hasSavedRef.current = false;
-    const newCards = generateCards();
-    setCards(newCards);
-    setFlippedCards([]);
-    setMatchedPairs([]);
-    setMoves(0);
-    setStartTime(Date.now());
-    setElapsedTime(0);
-    setGameState('playing');
-    
-    // Preload audio for this category
-    preloadCategoryAudio(selectedCategory);
   };
 
   // Handle card click
@@ -245,7 +264,7 @@ export function PicturePairs() {
 
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
         // Match found! Speak the word as reinforcement
-        setTimeout(() => {
+        schedule(() => {
           speak(firstCard.word.chamorro); // Say the matched word
           setMatchedPairs(prev => [...prev, firstCard.pairId]);
           setFlippedCards([]);
@@ -253,13 +272,13 @@ export function PicturePairs() {
         }, 600);
       } else {
         // No match - flip back silently
-        setTimeout(() => {
+        schedule(() => {
           setFlippedCards([]);
           setIsChecking(false);
         }, 1000);
       }
     }
-  }, [flippedCards, cards, isChecking, speak]);
+  }, [flippedCards, cards, isChecking, speak, schedule, matchedPairs]);
 
   // Calculate score
   const calculateScore = (moves: number, time: number, pairs: number) => {
@@ -355,7 +374,7 @@ export function PicturePairs() {
             {/* Start Button */}
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-bold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <Play className="w-6 h-6" />
               Start Game
@@ -480,11 +499,8 @@ export function PicturePairs() {
             {/* Action Buttons */}
             <div className="flex gap-3">
               <button
-                onClick={() => {
-                  hasSavedRef.current = false;
-                  startGame();
-                }}
-                className="flex-1 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                onClick={startGame}
+                className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -505,6 +521,7 @@ export function PicturePairs() {
             </Link>
           </div>
         )}
+        {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {/* Upgrade Prompt */}

@@ -4,6 +4,9 @@ import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePoin
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { frameDistance } from '../lib/gameRound';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -79,6 +82,8 @@ export function WordCatch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -104,6 +109,8 @@ export function WordCatch() {
 
   // Refs
   const animationRef = useRef<number | null>(null);
+  const caughtIdsRef = useRef(new Set<number>());
+  const missedIdsRef = useRef(new Set<number>());
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pairIdRef = useRef(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -223,58 +230,41 @@ export function WordCatch() {
 
   // Handle tapping a pair
   const handleCatch = useCallback((pairId: number) => {
-    setFlyingPairs(prev => {
-      const pair = prev.find(p => p.id === pairId);
-      if (!pair || pair.caught || pair.missed) return prev;
-
-      if (pair.isCorrect) {
-        // Caught a correct pair!
-        const comboBonus = combo * 10;
-        setScore(s => s + 100 + comboBonus);
-        setCombo(c => {
-          const newCombo = c + 1;
-          setMaxCombo(m => Math.max(m, newCombo));
-          return newCombo;
-        });
-        setCaught(c => c + 1);
-      } else {
-        // Caught a wrong pair - lose life!
-        setCombo(0);
-        setLives(l => {
-          const newLives = l - 1;
-          if (newLives <= 0) {
-            setGameState('complete');
-          }
-          return newLives;
-        });
-      }
-
-      return prev.map(p => 
-        p.id === pairId ? { ...p, caught: true } : p
-      );
-    });
-  }, [combo]);
+    if (gameState !== 'playing' || caughtIdsRef.current.has(pairId)) return;
+    const pair = flyingPairs.find(item => item.id === pairId);
+    if (!pair || pair.caught || pair.missed) return;
+    caughtIdsRef.current.add(pairId);
+    setFlyingPairs(prev => prev.map(item => item.id === pairId ? { ...item, caught: true } : item));
+    if (pair.isCorrect) {
+      setScore(score => score + 100 + combo * 10);
+      setCombo(combo + 1);
+      setMaxCombo(current => Math.max(current, combo + 1));
+      setCaught(count => count + 1);
+    } else {
+      setCombo(0);
+      setLives(lives - 1);
+      if (lives <= 1) setGameState('complete');
+    }
+  }, [combo, flyingPairs, gameState, lives]);
 
   // Animation loop
   useEffect(() => {
     if (gameState !== 'playing') return;
 
-    const animate = () => {
+    let previousTime: number | null = null;
+    const animate = (timestamp: number) => {
+      const elapsed = previousTime === null ? 0 : timestamp - previousTime;
+      previousTime = timestamp;
       setFlyingPairs(prev => {
         const updated = prev.map(pair => {
           if (pair.caught || pair.missed) return pair;
 
-          const newProgress = pair.progress + pair.speed;
+          const newProgress = pair.progress + frameDistance(pair.speed, elapsed);
           const newX = pair.startX + (pair.endX - pair.startX) * newProgress;
           const newY = pair.startY + (pair.endY - pair.startY) * newProgress;
 
           // Check if went off screen
           if (newProgress >= 1) {
-            if (pair.isCorrect && !pair.caught) {
-              // Missed a correct pair - lose combo (but not life in this version)
-              setCombo(0);
-              setMissed(m => m + 1);
-            }
             return { ...pair, x: newX, y: newY, progress: newProgress, missed: true };
           }
 
@@ -282,7 +272,7 @@ export function WordCatch() {
         });
 
         // Remove pairs that are off screen and processed
-        return updated.filter(p => !p.missed || p.progress < 1.1);
+        return updated.filter(pair => !pair.caught);
       });
 
       animationRef.current = requestAnimationFrame(animate);
@@ -296,6 +286,18 @@ export function WordCatch() {
       }
     };
   }, [gameState]);
+
+  useEffect(() => {
+    const expired = flyingPairs.filter(pair => pair.missed && !missedIdsRef.current.has(pair.id));
+    if (!expired.length) return;
+    expired.forEach(pair => missedIdsRef.current.add(pair.id));
+    const missedMatches = expired.filter(pair => pair.isCorrect).length;
+    if (missedMatches) {
+      setCombo(0);
+      setMissed(count => count + missedMatches);
+    }
+    setFlyingPairs(pairs => pairs.filter(pair => !pair.missed));
+  }, [flyingPairs]);
 
   // Spawn timer
   useEffect(() => {
@@ -344,6 +346,7 @@ export function WordCatch() {
       hasSavedRef.current = true;
       const stars = caught >= 20 ? 3 : caught >= 10 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'word_catch',
         mode: settings.mode,
         category_id: settings.category,
@@ -358,36 +361,52 @@ export function WordCatch() {
 
   // Start game
   const startGame = useCallback(async () => {
-    // Check usage limits before starting (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('game')) {
-        setShowUpgradePrompt(true);
+    if (startingRef.current) return;
+    startingRef.current = true;
+    try {
+
+      if (wordPool.length < 4) {
+        alert('Not enough words in this category. Please try another category.');
         return;
       }
-      const allowed = await tryUse('game');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
+      // Check usage limits before starting (only for signed-in users)
+      if (isSignedIn) {
+        if (!canUse('game')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+        const allowed = await tryUse('game');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+      }
+
+      if (wordPool.length < 4) {
+        alert('Not enough words in this category. Please try another category.');
         return;
       }
+      saveGameResultMutation.reset();
+      hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      setLives(MAX_LIVES);
+      setScore(0);
+      setCombo(0);
+      setMaxCombo(0);
+      setCaught(0);
+      setMissed(0);
+      setTimeLeft(GAME_DURATION);
+      setCurrentSpeed(PAIR_SPEED_START);
+      setSpawnInterval(SPAWN_INTERVAL_START);
+      caughtIdsRef.current.clear();
+      missedIdsRef.current.clear();
+      setFlyingPairs([]);
+      setGameState('playing');
+
+    } finally {
+      startingRef.current = false;
     }
-    
-    if (wordPool.length < 4) {
-      alert('Not enough words in this category. Please try another category.');
-      return;
-    }
-    hasSavedRef.current = false;
-    setLives(MAX_LIVES);
-    setScore(0);
-    setCombo(0);
-    setMaxCombo(0);
-    setCaught(0);
-    setMissed(0);
-    setTimeLeft(GAME_DURATION);
-    setCurrentSpeed(PAIR_SPEED_START);
-    setSpawnInterval(SPAWN_INTERVAL_START);
-    setFlyingPairs([]);
-    setGameState('playing');
-  }, [wordPool, isSignedIn, canUse, tryUse]);
+  }, [wordPool, isSignedIn, canUse, tryUse, saveGameResultMutation]);
 
   // Reset to setup
   const resetGame = () => {
@@ -487,7 +506,7 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -502,7 +521,7 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -526,7 +545,7 @@ export function WordCatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }
                     `}
@@ -545,10 +564,10 @@ export function WordCatch() {
               <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
               <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✅</span> Tap <strong className="text-green-600 dark:text-green-400">GREEN</strong> pairs (matching!)
+                  <span className="text-green-500">✅</span> Tap pairs with matching meanings
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-red-500">❌</span> Avoid <strong className="text-red-600 dark:text-red-400">RED</strong> pairs (wrong match!)
+                  <span className="text-red-500">❌</span> Let pairs with wrong meanings pass by
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-yellow-500">⚡</span> Build combos for bonus points
@@ -563,7 +582,7 @@ export function WordCatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -636,11 +655,9 @@ export function WordCatch() {
                     shadow-lg transition-all duration-150
                     ${pair.caught
                       ? pair.isCorrect
-                        ? 'bg-green-500 text-white scale-125 opacity-0'
-                        : 'bg-red-500 text-white scale-125 opacity-0'
-                      : pair.isCorrect
-                        ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border-2 border-green-400 dark:border-green-600 hover:scale-110 active:scale-95'
-                        : 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border-2 border-red-400 dark:border-red-600 hover:scale-110 active:scale-95'
+                        ? 'bg-green-700 text-white scale-125 opacity-0'
+                        : 'bg-red-700 text-white scale-125 opacity-0'
+                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600 hover:scale-105 active:scale-95'
                     }
                   `}
                   style={{
@@ -663,7 +680,7 @@ export function WordCatch() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-500 dark:bg-ocean-500 text-white font-bold hover:bg-coral-600 dark:hover:bg-ocean-600 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
                     >
                       Resume
                     </button>
@@ -675,8 +692,8 @@ export function WordCatch() {
               {timeLeft >= GAME_DURATION - 3 && gameState === 'playing' && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="bg-black/50 text-white px-6 py-4 rounded-2xl text-center animate-pulse">
-                    <p className="text-lg font-bold">Tap the GREEN pairs! 💚</p>
-                    <p className="text-sm opacity-80">Avoid the RED ones! ❌</p>
+                    <p className="text-lg font-bold">Tap matching word pairs</p>
+                    <p className="text-sm opacity-80">Let incorrect meanings pass by</p>
                   </div>
                 </div>
               )}
@@ -740,7 +757,7 @@ export function WordCatch() {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={playAgain}
-                className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
@@ -762,6 +779,7 @@ export function WordCatch() {
             </Link>
           </div>
         )}
+        {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
       {/* Upgrade Prompt Modal */}

@@ -4,6 +4,8 @@ import { RotateCcw, Trophy, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loa
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
@@ -80,6 +82,8 @@ export function Hangman() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -102,6 +106,7 @@ export function Hangman() {
   const [totalScore, setTotalScore] = useState(0);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [usedWords, setUsedWords] = useState<string[]>([]);
+  const scoredWordRef = useRef('');
   const [wordPool, setWordPool] = useState<Array<{ word: string; hint: string }>>([]);
 
   // Only fetch dictionary flashcards in challenge mode
@@ -186,22 +191,17 @@ export function Hangman() {
 
   // Handle word completion
   useEffect(() => {
-    if (isWordComplete && gameState === 'playing') {
+    if (isWordComplete && gameState === 'playing' && scoredWordRef.current !== currentWord) {
+      scoredWordRef.current = currentWord;
       // Calculate score for this word
       const remainingGuesses = MAX_WRONG_GUESSES - wrongGuesses;
       const wordScore = (remainingGuesses + 1) * 100 - (hintsUsed * 25);
       setTotalScore(prev => prev + Math.max(wordScore, 50));
       setWordsCompleted(prev => prev + 1);
       
-      // Short delay then pick new word
-      setTimeout(() => {
-        if (!pickNewWord()) {
-          // No more words
-          setGameState('won');
-        }
-      }, 1500);
+
     }
-  }, [isWordComplete, gameState, wrongGuesses, hintsUsed, pickNewWord]);
+  }, [isWordComplete, gameState, wrongGuesses, hintsUsed, currentWord]);
 
   // Use hint (reveal a letter)
   const useHint = useCallback(() => {
@@ -217,46 +217,58 @@ export function Hangman() {
 
   // Start game
   const startGame = useCallback(async () => {
-    // Check daily limit
-    if (!canUse('game')) {
-      setShowUpgradePrompt(true);
-      return;
-    }
-    
-    setIsStarting(true);
-    
+    if (startingRef.current) return;
+    startingRef.current = true;
     try {
-      // Use a game slot
-      const success = await tryUse('game');
-      if (!success) {
+
+      if (availableWords.length < MIN_WORDS_TO_PLAY) return;
+      scoredWordRef.current = '';
+      // Check daily limit
+      if (!canUse('game')) {
         setShowUpgradePrompt(true);
-        setIsStarting(false);
         return;
       }
       
-      setWordPool(availableWords);
-      setUsedWords([]);
-      setWordsCompleted(0);
-      setTotalScore(0);
-      setHintsUsed(0);
-      setGuessedLetters([]);
-      setWrongGuesses(0);
+      setIsStarting(true);
+
+      try {
+        // Use a game slot
+        const success = await tryUse('game');
+        if (!success) {
+          setShowUpgradePrompt(true);
+          setIsStarting(false);
+          return;
+        }
+
+        setWordPool(availableWords);
+        setUsedWords([]);
+        setWordsCompleted(0);
+        setTotalScore(0);
+        setHintsUsed(0);
+        setGuessedLetters([]);
+        setWrongGuesses(0);
+        saveGameResultMutation.reset();
       hasSavedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
       
-      // Pick first word
-      const unusedWords = availableWords;
-      if (unusedWords.length === 0) return;
+        // Pick first word
+        const unusedWords = availableWords;
+        if (unusedWords.length === 0) return;
       
-      const randomWord = unusedWords[Math.floor(Math.random() * unusedWords.length)];
-      setCurrentWord(randomWord.word);
-      setCurrentHint(randomWord.hint);
-      setUsedWords([randomWord.word]);
+        const randomWord = unusedWords[Math.floor(Math.random() * unusedWords.length)];
+        setCurrentWord(randomWord.word);
+        setCurrentHint(randomWord.hint);
+        setUsedWords([randomWord.word]);
       
-      setGameState('playing');
+        setGameState('playing');
+      } finally {
+        setIsStarting(false);
+      }
+
     } finally {
-      setIsStarting(false);
+      startingRef.current = false;
     }
-  }, [availableWords, canUse, tryUse]);
+  }, [availableWords, canUse, tryUse, saveGameResultMutation]);
 
   // Save game result
   useEffect(() => {
@@ -269,6 +281,7 @@ export function Hangman() {
       else if (wordsCompleted >= 3) stars = 2;
       
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'hangman',
         mode: settings.mode,
         category_id: settings.category,
@@ -370,7 +383,7 @@ export function Hangman() {
                 aria-pressed={settings.mode === 'beginner'}
                 className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'beginner'
-                    ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
@@ -385,7 +398,7 @@ export function Hangman() {
                 aria-pressed={settings.mode === 'challenge'}
                 className={`p-4 rounded-xl text-center transition-all duration-200 ${
                   settings.mode === 'challenge'
-                    ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                 }`}
               >
@@ -424,7 +437,7 @@ export function Hangman() {
                         isDisabled
                           ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
-                            ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }`}
                     >
@@ -446,7 +459,7 @@ export function Hangman() {
           <button
             onClick={startGame}
             disabled={availableWords.length < MIN_WORDS_TO_PLAY || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
           >
             {isStarting ? (
               <>
@@ -465,7 +478,7 @@ export function Hangman() {
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
-        </main>
+      </main>
         
         {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
@@ -515,11 +528,8 @@ export function Hangman() {
             {/* Actions */}
             <div className="space-y-3">
               <button
-                onClick={() => {
-                  hasSavedRef.current = false;
-                  startGame();
-                }}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+                onClick={startGame}
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -538,7 +548,8 @@ export function Hangman() {
               </Link>
             </div>
           </div>
-        </main>
+            <GameSaveStatus mutation={saveGameResultMutation} />
+      </main>
       </GamePage>
     );
   }
@@ -555,7 +566,7 @@ export function Hangman() {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Change settings? Your current progress will be lost.')) setGameState('setup');
+              if (window.confirm('Change settings? Your current progress will be lost.')) { setGameState('setup'); }
             }}
             className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
             aria-label="Change game settings"
@@ -641,7 +652,7 @@ export function Hangman() {
                   disabled={isGuessed || isWordComplete}
                   className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-bold text-sm sm:text-base transition-all ${
                     isCorrect
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-green-700 text-white'
                       : isWrong
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed
@@ -655,6 +666,7 @@ export function Hangman() {
             })}
           </div>
         </div>
+        {isWordComplete && <button type="button" onClick={() => { pickNewWord(); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Next word</button>}
       </main>
     </GamePage>
   );

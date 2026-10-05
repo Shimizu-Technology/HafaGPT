@@ -146,7 +146,8 @@ function renderGame(testCase: LaunchCase) {
 
 async function startGame() {
   await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+    const start = screen.queryByRole('button', { name: 'Start Game' });
+    if (start) fireEvent.click(start);
     await Promise.resolve();
   });
 }
@@ -176,7 +177,8 @@ async function advanceGameToCompletion(game: LaunchCase['game']) {
   for (let word = 0; word < 5; word += 1) {
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     await act(async () => {
-      vi.advanceTimersByTime(1000);
+      fireEvent.click(screen.getByRole('button', { name: word === 4 ? 'See results' : 'Next word' }));
+      await Promise.resolve();
     });
   }
 }

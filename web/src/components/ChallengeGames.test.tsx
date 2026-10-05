@@ -5,13 +5,14 @@ import { ChamorroWordle } from './ChamorroWordle';
 import { CulturalTrivia } from './CulturalTrivia';
 
 const saveResult = vi.fn();
+const storage = vi.hoisted(() => ({ get: vi.fn<(key: string) => string | null>(() => null), set: vi.fn(), remove: vi.fn() }));
 
 vi.mock('@clerk/clerk-react', () => ({
   useUser: () => ({ isSignedIn: false }),
 }));
 
 vi.mock('../hooks/useGamesQuery', () => ({
-  useSaveGameResult: () => ({ mutate: saveResult }),
+  useSaveGameResult: () => ({ mutate: saveResult, reset: vi.fn() }),
 }));
 
 vi.mock('../hooks/useSubscription', () => ({
@@ -34,7 +35,7 @@ vi.mock('../hooks/useFlashcardsQuery', () => ({
 }));
 
 vi.mock('../lib/browserStorage', () => ({
-  browserStorage: { get: () => null, set: vi.fn() },
+  browserStorage: storage,
 }));
 
 function CurrentPath() {
@@ -46,6 +47,9 @@ describe('challenge game screens', () => {
     vi.restoreAllMocks();
     vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
     saveResult.mockReset();
+    storage.get.mockReset().mockReturnValue(null);
+    storage.set.mockReset();
+    storage.remove.mockReset();
   });
 
   it('gives Wordle a compact, accessible setup and guards an active game exit', async () => {
@@ -70,6 +74,29 @@ describe('challenge game screens', () => {
     expect(screen.getByText('/games/wordle')).toBeInTheDocument();
   });
 
+  it('resumes unfinished Wordle and leaves browser shortcuts alone', async () => {
+    storage.get.mockImplementation(key => key.includes('resume') ? JSON.stringify({
+      targetWord: { word: 'HÅNOM', meaning: 'water' }, guesses: [], currentGuess: 'H',
+      gameMode: 'practice', difficulty: 'medium', wordMode: 'beginner', category: 'greetings',
+    }) : null);
+    render(<MemoryRouter initialEntries={['/games/wordle']}><ChamorroWordle /></MemoryRouter>);
+    expect(await screen.findByText('Resumed your unfinished game')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 's', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 'l', metaKey: true });
+    const latest = JSON.parse(storage.set.mock.calls[storage.set.mock.calls.length - 1][1]);
+    expect(latest.currentGuess).toBe('H');
+    fireEvent.keyDown(window, { key: 'å' });
+    expect(JSON.parse(storage.set.mock.calls[storage.set.mock.calls.length - 1][1]).currentGuess).toBe('HÅ');
+  });
+
+  it('starts trivia without a timer by default', async () => {
+    render(<MemoryRouter><CulturalTrivia /></MemoryRouter>);
+    expect(screen.getByRole('checkbox', { name: /Timed challenge/ })).not.toBeChecked();
+    expect(screen.queryByRole('button', { name: /Medium 20s/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Start Trivia' }));
+    expect(await screen.findByLabelText('No time limit')).toBeInTheDocument();
+  });
+
   it('uses selected-state semantics and an in-app leave guard for Cultural Trivia', async () => {
     render(
       <MemoryRouter initialEntries={['/games/trivia']}>
@@ -79,6 +106,7 @@ describe('challenge game screens', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Cultural Trivia' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: /Timed challenge/ }));
     expect(screen.getByRole('button', { name: /Medium 20s/ })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /All Categories/ })).toHaveAttribute('aria-pressed', 'true');
 

@@ -1,3 +1,4 @@
+import { useGameTimers } from '../hooks/useGameTimers';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { RotateCcw, Trophy, Timer, MousePointer2, Settings2, Play, Sparkles, BookOpen, Puzzle } from 'lucide-react';
@@ -78,6 +79,8 @@ export function MemoryMatch() {
   const { isSignedIn } = useUser();
   const { mutateAsync: saveGameResult } = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const { schedule, clear: clearTimers } = useGameTimers();
   const submissionStartedRef = useRef(false);
   const playedConceptIdsRef = useRef<string[]>([]);
   const gameAttemptIdRef = useRef(createClientAttemptId());
@@ -301,41 +304,58 @@ export function MemoryMatch() {
   };
 
   const startGame = useCallback(async () => {
-    // Check usage limits before starting (only for signed-in users)
-    if (isSignedIn) {
-      if (!canUse('game')) {
-        setShowUpgradePrompt(true);
+    if (startingRef.current) return;
+    startingRef.current = true;
+    try {
+
+      const newCards = generateCards();
+      if (newCards.length === 0) {
+        alert('Not enough words in this category. Please try another category.');
         return;
       }
-      const allowed = await tryUse('game');
-      if (!allowed) {
-        setShowUpgradePrompt(true);
-        return;
+
+      // Check usage limits before starting (only for signed-in users)
+      if (isSignedIn) {
+        if (!canUse('game')) {
+          setShowUpgradePrompt(true);
+          return;
+        }
+        const allowed = await tryUse('game');
+        if (!allowed) {
+          setShowUpgradePrompt(true);
+          return;
+        }
       }
+
+      clearTimers();
+      setIsChecking(false);
+      // Reset save flag for new game
+      hasSavedRef.current = false;
+      submissionStartedRef.current = false;
+      gameAttemptIdRef.current = createClientAttemptId();
+      setPendingGameResult(null);
+      setResultSaveFailed(false);
+      setIsSavingResult(false);
+
+      setCards(newCards);
+      setFlippedCards([]);
+      setMatchedPairs([]);
+      setMoves(0);
+      setStartTime(Date.now());
+      setElapsedTime(0);
+      setGameState('playing');
+
+    } finally {
+      startingRef.current = false;
     }
+  }, [generateCards, isSignedIn, canUse, tryUse, clearTimers]);
     
-    const newCards = generateCards();
-    if (newCards.length === 0) {
-      alert('Not enough words in this category. Please try another category.');
-      return;
-    }
-    
-    // Reset save flag for new game
-    hasSavedRef.current = false;
-    submissionStartedRef.current = false;
-    gameAttemptIdRef.current = createClientAttemptId();
-    setPendingGameResult(null);
-    setResultSaveFailed(false);
-    setIsSavingResult(false);
-    
-    setCards(newCards);
-    setFlippedCards([]);
-    setMatchedPairs([]);
-    setMoves(0);
-    setStartTime(Date.now());
-    setElapsedTime(0);
-    setGameState('playing');
-  }, [generateCards, isSignedIn, canUse, tryUse]);
+  const contextualStartedRef = useRef(false);
+  useEffect(() => {
+    if (!learningContext || contextualStartedRef.current || gameState !== 'setup') return;
+    contextualStartedRef.current = true;
+    void startGame();
+  }, [learningContext, gameState, startGame]);
 
   const handleCardClick = useCallback((cardId: number) => {
     if (isChecking || flippedCards.length >= 2) return;
@@ -354,22 +374,24 @@ export function MemoryMatch() {
 
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
         // Match found
-        setTimeout(() => {
+        schedule(() => {
           setMatchedPairs((prev) => [...prev, firstCard.pairId]);
           setFlippedCards([]);
           setIsChecking(false);
         }, 600);
       } else {
         // No match - flip back
-        setTimeout(() => {
+        schedule(() => {
           setFlippedCards([]);
           setIsChecking(false);
         }, 1000);
       }
     }
-  }, [flippedCards, cards, isChecking]);
+  }, [flippedCards, cards, isChecking, schedule]);
 
   const resetGame = () => {
+    clearTimers();
+    setIsChecking(false);
     setGameState('setup');
     setCards([]);
     setFlippedCards([]);
@@ -475,7 +497,7 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -494,7 +516,7 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-all duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                     }
                   `}
@@ -524,7 +546,7 @@ export function MemoryMatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }
                     `}
@@ -565,7 +587,7 @@ export function MemoryMatch() {
                         ${isDisabled 
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
                           : settings.difficulty === key
-                            ? 'bg-coral-500 dark:bg-ocean-500 text-white shadow-lg scale-105'
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                         }
                       `}
@@ -597,7 +619,7 @@ export function MemoryMatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-bold text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -755,7 +777,7 @@ export function MemoryMatch() {
               <button
                 onClick={playAgain}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
