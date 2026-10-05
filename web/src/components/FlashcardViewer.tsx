@@ -618,6 +618,7 @@ export function FlashcardViewer() {
         <div className="flex items-center justify-center gap-4 mt-8">
           <button
             onClick={handlePrevious}
+            aria-label="Previous flashcard"
             disabled={currentIndex === 0}
             className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
           >
@@ -639,6 +640,7 @@ export function FlashcardViewer() {
 
           <button
             onClick={handleNext}
+            aria-label="Next flashcard"
             disabled={currentIndex === flashcards.length - 1}
             className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
           >

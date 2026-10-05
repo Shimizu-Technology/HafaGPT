@@ -49,25 +49,26 @@ export function useTodaySessionProgress(plan?: TodayPlan | null) {
     };
   }, [userId, day, scope]);
 
-  const completeStep = useCallback((requestedStep?: TodayStep) => {
+  const completeStep = useCallback((requestedStep?: TodayStep, launch?: { pathname: string; search: string }) => {
     // A pending save can outlive the render's day. Never revive yesterday's
     // captured session over a newer plan created in another tab.
     const currentDay = guamDay();
     if (currentDay !== day) return;
-    const step = readTodayStep(location.search);
+    const activityLocation = launch ?? location;
+    const step = readTodayStep(activityLocation.search);
     if (!userId || !step || (requestedStep && requestedStep !== step)) return;
-    if (new URLSearchParams(location.search).get('today_day') !== currentDay) return;
+    if (new URLSearchParams(activityLocation.search).get('today_day') !== currentDay) return;
     const stored = loadTodaySession(userId, day);
     const current = stored && session ? {
       ...stored, completed: [...new Set([...stored.completed, ...session.completed])]
         .filter(id => stored.plan.activities.some(activity => activity.id === id)),
     } : stored ?? session;
     if (!current || current.day !== day) return;
-    const next = completeTodayStep(current, step, location.pathname);
+    const next = completeTodayStep(current, step, activityLocation.pathname, activityLocation.search);
     if (next === current) return;
     setState({ scope, session: next });
     setStorageAvailable(saveTodaySession(userId, next));
-  }, [userId, day, session, scope, location.search, location.pathname]);
+  }, [userId, day, session, scope, location]);
 
   return { session, completeStep, contextualHref: withTodayStep, storageAvailable };
 }

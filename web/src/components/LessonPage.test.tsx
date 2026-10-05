@@ -12,7 +12,7 @@ vi.mock('../hooks/useTodaySession', () => ({ useTodaySessionProgress: () => ({ c
 vi.mock('./LessonIntro', () => ({ LessonIntro: ({ onComplete }: { onComplete: () => void }) => <button onClick={onComplete}>Start cards</button> }));
 vi.mock('./LessonFlashcards', () => ({ LessonFlashcards: ({ onComplete }: { onComplete: (count: number, concepts: string[]) => void }) => <button onClick={() => onComplete(1, ['fixture-concept'])}>Finish cards</button> }));
 vi.mock('./LessonQuiz', () => ({ LessonQuiz: ({ onComplete }: { onComplete: (score: number) => void }) => <button onClick={() => onComplete(80)}>Finish quiz</button> }));
-vi.mock('./XPDisplay', () => ({ XPToast: () => null }));
+vi.mock('./XPDisplay', () => ({ XPToast: () => <p>XP award notification</p> }));
 const tree = () => (<MemoryRouter initialEntries={['/learn/greetings?topic=greetings&category=greetings&source=today&return_to=%2F']}><Routes><Route path="/learn/:topicId" element={<LessonPage />} /></Routes></MemoryRouter>);
 const view = () => render(tree());
 beforeEach(() => {
@@ -20,6 +20,21 @@ beforeEach(() => {
   mocks.update.mockResolvedValue({}); mocks.exposure.mockResolvedValue({}); mocks.xp.mockResolvedValue({ xp_earned: 10 });
 });
 describe('lesson continuity and save recovery', () => {
+  it('does not show a departed learner XP notification or continue their awards', async () => {
+    const user = userEvent.setup();
+    let finishXP!: (value: { xp_earned: number }) => void;
+    mocks.xp.mockImplementation(({ activity_type }: { activity_type: string }) => activity_type === 'quiz_complete'
+      ? new Promise(resolve => { finishXP = resolve; }) : Promise.resolve({ xp_earned: 0 }));
+    const mounted = view();
+    await user.click(screen.getByRole('button', { name: 'Start cards' }));
+    await user.click(screen.getByRole('button', { name: 'Finish cards' }));
+    await user.click(screen.getByRole('button', { name: 'Finish quiz' }));
+    await waitFor(() => expect(finishXP).toBeTypeOf('function'));
+    mocks.owner = 'another-learner'; mounted.rerender(tree());
+    await act(async () => { finishXP({ xp_earned: 10 }); });
+    expect(screen.queryByText('XP award notification')).not.toBeInTheDocument();
+    expect(mocks.xp.mock.calls.filter(([payload]) => payload.activity_type === 'topic_complete')).toHaveLength(0);
+  });
   it('resumes the actual stage instead of repeating the introduction', async () => {
     const user = userEvent.setup();
     const first = view(); await user.click(screen.getByRole('button', { name: 'Start cards' })); first.unmount();

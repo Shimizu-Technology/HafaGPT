@@ -205,20 +205,20 @@ function LessonPageSession() {
     setIsSavingCompletion(true);
     setXpPending(true);
     setProgressError(null);
+    const requestScope = `${ownerId}:${topicId}`;
     try {
-      const requestScope = ownerId ? `${ownerId}:${topicId}` : null;
       await updateProgress.mutateAsync({ topicId, action: 'quiz_completed', quizScore: score });
-      if (!requestScope || lessonExposureScopeRef.current !== requestScope) return;
+      if (lessonExposureScopeRef.current !== requestScope) return;
       setCompletionSaved(true);
       if (score >= 70) completeStep('learn');
       const data = await awardXP.mutateAsync({ activity_type: 'quiz_complete', activity_id: topicId, quiz_score: score, minutes_spent: 0, deduplicate: true });
-      if (data.xp_earned > 0) setXpToast({ xp: data.xp_earned, levelUp: data.level_up, newLevel: data.new_level || undefined });
       if (lessonExposureScopeRef.current !== requestScope) return;
+      if (data.xp_earned > 0) setXpToast({ xp: data.xp_earned, levelUp: data.level_up, newLevel: data.new_level || undefined });
       if (score >= 70) await awardXP.mutateAsync({ activity_type: 'topic_complete', activity_id: topicId, minutes_spent: 0, deduplicate: true });
       if (lessonExposureScopeRef.current === requestScope) setXpPending(false);
     } catch {
-      setProgressError('Some activity has not saved. Retry to sync your lesson progress and XP. Keep this page open until the save succeeds.');
-    } finally { setIsSavingCompletion(false); }
+      if (lessonExposureScopeRef.current === requestScope) setProgressError('Some activity has not saved. Retry to sync your lesson progress and XP. Keep this page open until the save succeeds.');
+    } finally { if (lessonExposureScopeRef.current === requestScope) setIsSavingCompletion(false); }
   };
   const handleQuizComplete = (score: number) => {
     setQuizScore(score);
