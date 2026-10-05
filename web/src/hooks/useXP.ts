@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -48,6 +48,7 @@ interface AwardXPResponse {
 interface AwardXPRequest {
   activity_type: ActivityType;
   activity_id?: string;
+  deduplicate?: boolean;
   quiz_score?: number;
   minutes_spent?: number;
 }
@@ -56,10 +57,10 @@ interface AwardXPRequest {
  * Hook to get user's XP data
  */
 export function useXP() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
   
   return useQuery({
-    queryKey: ['xp'],
+    queryKey: ['xp', userId],
     queryFn: async (): Promise<XPData> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/xp/me`, {
@@ -74,9 +75,8 @@ export function useXP() {
       
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60 * 3, // 3 minutes - XP doesn't change that often
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
@@ -84,7 +84,7 @@ export function useXP() {
  * Hook to award XP for activities
  */
 export function useAwardXP() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -108,6 +108,7 @@ export function useAwardXP() {
     onSuccess: () => {
       // Invalidate XP data to refresh
       queryClient.invalidateQueries({ queryKey: ['xp'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
     },
   });
 }
@@ -116,10 +117,10 @@ export function useAwardXP() {
  * Hook to get XP history
  */
 export function useXPHistory(limit: number = 20) {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
   
   return useQuery({
-    queryKey: ['xp-history', limit],
+    queryKey: ['xp-history', userId, limit],
     queryFn: async (): Promise<{ history: XPHistoryItem[] }> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/xp/history?limit=${limit}`, {
@@ -134,7 +135,7 @@ export function useXPHistory(limit: number = 20) {
       
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60, // 1 minute
   });
 }
@@ -143,7 +144,7 @@ export function useXPHistory(limit: number = 20) {
  * Hook to update daily goal setting
  */
 export function useUpdateDailyGoal() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
   
   return useMutation({

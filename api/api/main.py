@@ -28,6 +28,7 @@ import zipfile
 from uuid import uuid4
 
 from .time_utils import get_guam_date
+from .xp_awards import lock_and_check_xp_award
 from .auth_policy import (
     configured_authorized_parties,
     configured_clerk_issuer,
@@ -4617,7 +4618,7 @@ def _build_learning_recommended(progress_map: dict):
     paths = [
         (BEGINNER_PATH, beginner_complete, "intermediate"),
         (INTERMEDIATE_PATH, intermediate_complete, "advanced"),
-        (ADVANCED_PATH, True, None)
+        (ADVANCED_PATH, advanced_completed == len(ADVANCED_PATH), None)
     ]
     
     for path, path_complete, next_level in paths:
@@ -4943,6 +4944,14 @@ async def award_xp(
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
+        try:
+            already_awarded = lock_and_check_xp_award(
+                cursor, user_id=user_id, activity_type=activity_type,
+                activity_id=activity_id, deduplicate=request.get("deduplicate") is True,
+            )
+        except ValueError as error:
+            conn.rollback(); cursor.close(); conn.close()
+            raise HTTPException(status_code=400, detail=str(error)) from error
         today = get_guam_date()
         
         # Calculate XP to award
@@ -4971,6 +4980,11 @@ async def award_xp(
             old_total_xp, old_level = 0, 1
             daily_goal_minutes, today_minutes = 10, 0
         
+        if already_awarded:
+            conn.commit(); cursor.close(); conn.close()
+            return {"xp_earned": 0, "total_xp": old_total_xp, "level": old_level,
+                    "level_up": False, "new_level": None, "daily_goal_just_completed": False}
+
         new_total_xp = old_total_xp + xp_earned
         new_level = calculate_level(new_total_xp)
         level_up = new_level > old_level
@@ -8080,7 +8094,7 @@ async def get_recommended_topic(
                 recommended_topic = worst_topic
                 message = f"You've completed all topics! Review {worst_topic['title']} to improve your score."
             else:
-                message = "Congratulations! You've mastered all available topics! 🎉"
+                message = "Congratulations! You've completed all available topics! 🎉"
         
         return {
             "recommendation_type": recommendation_type,

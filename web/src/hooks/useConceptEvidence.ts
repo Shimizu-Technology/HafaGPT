@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
+import { getTopic } from '../data/learningPath';
+import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { getCuratedConceptId } from '../data/conceptEvidence';
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -16,7 +19,7 @@ interface LessonExposureResponse {
 }
 
 export function useRecordLessonExposure() {
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -26,6 +29,10 @@ export function useRecordLessonExposure() {
     }: RecordLessonExposureParams): Promise<LessonExposureResponse> => {
       const token = await getToken();
       if (!token) throw new Error('Authentication required');
+      const category = getTopic(topicId)?.flashcardCategory;
+      const reviewCards = category ? (DEFAULT_FLASHCARD_DECKS[category]?.cards ?? [])
+        .map((card, index) => ({ concept_id: getCuratedConceptId(category, index), ...card }))
+        .filter(card => conceptIds.includes(card.concept_id)) : [];
 
       const response = await fetch(
         `${API_URL}/api/learning/lessons/${encodeURIComponent(topicId)}/exposures`,
@@ -35,7 +42,10 @@ export function useRecordLessonExposure() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ concept_ids: conceptIds }),
+          body: JSON.stringify({
+            concept_ids: conceptIds,
+            ...(reviewCards.length ? { review_cards: reviewCards } : {}),
+          }),
         },
       );
 
@@ -44,6 +54,8 @@ export function useRecordLessonExposure() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['topicWorkspace'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
+      queryClient.invalidateQueries({ queryKey: ['srSummary'] });
     },
   });
 }

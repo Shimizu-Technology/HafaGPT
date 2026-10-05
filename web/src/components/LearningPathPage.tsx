@@ -1,4 +1,4 @@
-import { Clock3, Library, Lightbulb, Map as MapIcon, Trophy } from 'lucide-react';
+import { Clock3, Library, Lightbulb, Map as MapIcon, BookOpen } from 'lucide-react';
 import { LearningPathMap } from './LearningPathMap';
 import { LearningProgressStats } from './LearningProgressStats';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
@@ -16,18 +16,18 @@ export function LearningPathPage() {
         <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:mb-7 sm:p-6" aria-labelledby="beginner-path-heading">
           <div className="flex items-start gap-4">
             <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">
-              <Trophy className="h-6 w-6" aria-hidden="true" />
+              <BookOpen className="h-6 w-6" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Beginner</p>
-              <h2 id="beginner-path-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">Build your Chamorro foundation</h2>
-              <p className="mt-1 max-w-2xl text-sm text-brown-600 dark:text-gray-300">Seven focused topics introduce the words and patterns you will use most often.</p>
+              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Choose your starting point</p>
+              <h2 id="beginner-path-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">Learn one useful topic at a time</h2>
+              <p className="mt-1 max-w-2xl text-sm text-brown-600 dark:text-gray-300">Start with Beginner for a guided introduction, or choose any topic if you already know some Chamorro.</p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-brown-600 dark:text-gray-300">
                 <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-cream-100 px-3 dark:bg-slate-700">
-                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> About 35 minutes
+                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> Short lessons
                 </span>
                 <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-cream-100 px-3 dark:bg-slate-700">
-                  <Library className="h-3.5 w-3.5" aria-hidden="true" /> 7 topics
+                  <Library className="h-3.5 w-3.5" aria-hidden="true" /> 21 topics
                 </span>
               </div>
             </div>

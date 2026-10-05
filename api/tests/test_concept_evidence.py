@@ -193,3 +193,38 @@ def test_default_connection_factory_retries_and_bounds_connection_and_query_wait
         "connect_timeout": DATABASE_CONNECT_TIMEOUT_SECONDS,
         "options": f"-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}",
     }
+
+
+def test_lesson_introduction_seeds_review_without_claiming_recall_or_resetting_schedule():
+    connection = Connection()
+    concept_id = curated_concept_id("greetings", 0)
+    response = make_client(connection).post(
+        "/api/learning/lessons/greetings/exposures",
+        headers={"Authorization": "Bearer test-token"},
+        json={"concept_ids": [concept_id], "review_cards": [
+            {"concept_id": concept_id, "front": "fixture front", "back": "fixture meaning"}
+        ]},
+    )
+    assert response.status_code == 200
+    query, params = connection.cursor_instance.executions[1]
+    assert "ON CONFLICT (user_id, card_id) DO NOTHING" in query
+    assert "INTERVAL '1 day'" in query
+    assert "0, 0, 0" in query
+    assert params[:3] == ("user_123", concept_id, "curated:greetings")
+    assert connection.committed
+
+
+def test_lesson_review_snapshots_cannot_introduce_unrelated_or_duplicate_concepts():
+    concept_id = curated_concept_id("greetings", 0)
+    for cards in (
+        [{"concept_id": curated_concept_id("family", 0), "front": "x", "back": "y"}],
+        [{"concept_id": concept_id, "front": "x", "back": "y"}] * 2,
+    ):
+        connection = Connection()
+        response = make_client(connection).post(
+            "/api/learning/lessons/greetings/exposures",
+            headers={"Authorization": "Bearer test-token"},
+            json={"concept_ids": [concept_id], "review_cards": cards},
+        )
+        assert response.status_code == 400
+        assert not connection.cursor_instance.executions

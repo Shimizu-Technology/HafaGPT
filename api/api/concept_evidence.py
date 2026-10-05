@@ -21,10 +21,21 @@ DATABASE_CONNECT_TIMEOUT_SECONDS = 5
 DATABASE_STATEMENT_TIMEOUT_MS = 5000
 
 
+class LessonReviewCard(BaseModel):
+    concept_id: str = Field(max_length=100)
+    front: str = Field(min_length=1, max_length=2000)
+    back: str = Field(min_length=1, max_length=2000)
+    pronunciation: str | None = Field(default=None, max_length=2000)
+    example: str | None = Field(default=None, max_length=4000)
+
+    model_config = {"extra": "forbid"}
+
+
 class LessonExposureCreate(BaseModel):
     """Exact curated concepts viewed before a lesson advances."""
 
     concept_ids: list[str] = Field(min_length=1, max_length=50)
+    review_cards: list[LessonReviewCard] = Field(default_factory=list, max_length=50)
 
     model_config = {"extra": "forbid"}
 
@@ -52,6 +63,7 @@ def record_lesson_exposures_sync(
     user_id: str,
     topic_id: str,
     concept_ids: tuple[str, ...],
+    review_cards: tuple[LessonReviewCard, ...] = (),
 ) -> int:
     """Upsert one row per exact concept; retries cannot duplicate evidence."""
 
@@ -75,6 +87,23 @@ def record_lesson_exposures_sync(
                     """,
                     (user_id, topic_id, lesson_id, list(concept_ids)),
                 )
+                # Introduction is not successful recall. Seed tomorrow's queue
+                # with zero reviews, and never reset an existing schedule.
+                for card in review_cards:
+                    cursor.execute(
+                        """
+                        INSERT INTO spaced_repetition (
+                            user_id, card_id, deck_id, easiness_factor, interval,
+                            repetition, next_review, total_reviews, correct_count,
+                            incorrect_count, front, back, pronunciation, example, source_kind
+                        ) VALUES (%s, %s, %s, 2.5, 1, 0, now() + INTERVAL '1 day',
+                            0, 0, 0, %s, %s, %s, %s, 'curated')
+                        ON CONFLICT (user_id, card_id) DO NOTHING
+                        """,
+                        (user_id, card.concept_id,
+                         f"curated:{LEARNING_TOPIC_CATEGORIES[topic_id]}",
+                         card.front, card.back, card.pronunciation, card.example),
+                    )
     finally:
         connection.close()
     return len(concept_ids)
@@ -108,6 +137,9 @@ def create_concept_evidence_router(
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
+        if (len({card.concept_id for card in request.review_cards}) != len(request.review_cards)
+                or any(card.concept_id not in concept_ids for card in request.review_cards)):
+            raise HTTPException(status_code=400, detail="Review cards must match the introduced concepts")
 
         try:
             recorded = await asyncio.to_thread(
@@ -116,6 +148,7 @@ def create_concept_evidence_router(
                 user_id=user_id,
                 topic_id=topic_id,
                 concept_ids=concept_ids,
+                review_cards=tuple(request.review_cards),
             )
         except Exception:
             logger.exception("Failed to record lesson concept exposure")

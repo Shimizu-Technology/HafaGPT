@@ -69,15 +69,16 @@ vi.mock('../hooks/useTheme', () => ({
 }));
 
 vi.mock('../hooks/useLearningPath', () => ({
-  useUpdateProgress: () => ({ mutate: vi.fn() }),
+  useUpdateProgress: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(async () => ({})) }),
+  useAllProgress: () => ({ data: undefined }),
 }));
 
 vi.mock('../hooks/useConceptEvidence', () => ({
-  useRecordLessonExposure: () => ({ mutate: mocks.recordLessonExposure }),
+  useRecordLessonExposure: () => ({ mutateAsync: (payload: unknown) => new Promise((resolve, reject) => mocks.recordLessonExposure(payload, { onSuccess: resolve, onError: reject })) }),
 }));
 
 vi.mock('../hooks/useXP', () => ({
-  useAwardXP: () => ({ mutate: vi.fn() }),
+  useAwardXP: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(async () => ({ xp_earned: 0 })) }),
 }));
 
 vi.mock('../hooks/useFlashcardsQuery', () => ({
@@ -259,7 +260,7 @@ describe('topic surface navigation', () => {
 
     await waitFor(() => expect(mocks.recordLessonExposure).toHaveBeenCalledOnce());
     const firstPayload = mocks.recordLessonExposure.mock.calls[0][0];
-    act(() => {
+    await act(async () => {
       mocks.recordLessonExposure.mock.calls[0][1].onError(new Error('offline'));
     });
 
@@ -278,8 +279,8 @@ describe('topic surface navigation', () => {
 
     expect(mocks.recordLessonExposure).toHaveBeenCalledTimes(2);
     expect(mocks.recordLessonExposure.mock.calls[1][0]).toEqual(firstPayload);
-    act(() => {
-      mocks.recordLessonExposure.mock.calls[1][1].onSuccess();
+    await act(async () => {
+      mocks.recordLessonExposure.mock.calls[1][1].onSuccess({});
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(window.localStorage.getItem(
@@ -318,8 +319,8 @@ describe('topic surface navigation', () => {
     );
     expect(screen.getByRole('button', { name: 'Start Flashcards' })).toBeInTheDocument();
 
-    act(() => {
-      mocks.recordLessonExposure.mock.calls[0][1].onSuccess();
+    await act(async () => {
+      mocks.recordLessonExposure.mock.calls[0][1].onSuccess({});
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
@@ -332,7 +333,7 @@ describe('topic surface navigation', () => {
     expect(mocks.recordLessonExposure.mock.calls[1][0]).toEqual(familyPayload);
   });
 
-  it('ignores a delayed exposure save after navigating to another lesson', () => {
+  it('preserves a new lesson queue after immediately starting the prior exposure save', () => {
     vi.useFakeTimers();
     const familyPayload = {
       topicId: 'family',
@@ -364,7 +365,7 @@ describe('topic surface navigation', () => {
       vi.advanceTimersByTime(100);
     });
 
-    expect(mocks.recordLessonExposure).not.toHaveBeenCalled();
+    expect(mocks.recordLessonExposure).toHaveBeenCalledOnce();
     expect(screen.getByRole('alert')).toHaveTextContent('Card activity has not saved yet');
     expect(JSON.parse(window.localStorage.getItem(
       'hafagpt_lesson_exposure_v1_user_123_family',
@@ -486,6 +487,41 @@ describe('topic surface navigation', () => {
     });
     fireEvent.click(back);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
+  });
+
+  it('resumes a standalone quiz at the same question without another usage charge', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const questions = getQuizCategory('greetings')!.questions;
+    const first = renderSurface(<QuizViewer />, '/quiz/:categoryId', '/quiz/greetings');
+    await screen.findByText(questions[0].question);
+    fireEvent.click(screen.getByText(questions[0].correctAnswer).closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    const resumedQuestion = questions.find(question => screen.queryByText(question.question))!;
+    expect(resumedQuestion).toBeDefined();
+    first.unmount();
+    vi.mocked(Math.random).mockReturnValue(0.01);
+    renderSurface(<QuizViewer />, '/quiz/:categoryId', '/quiz/greetings');
+    expect(await screen.findByText(resumedQuestion.question)).toBeInTheDocument();
+    expect(screen.getByText('Resumed your quiz on this browser.')).toBeInTheDocument();
+    expect(mocks.tryUse).toHaveBeenCalledOnce();
+  });
+
+  it('retries an interrupted standalone result with its original attempt identity after reload', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    mocks.saveQuizResult.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({});
+    const first = renderSurface(<QuizViewer />, '/quiz/:categoryId', '/quiz/greetings');
+    await screen.findByText(getQuizCategory('greetings')!.questions[0].question);
+    completeCuratedGreetingQuiz();
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledOnce());
+    const attempt = mocks.saveQuizResult.mock.calls[0][0].client_attempt_id;
+    await screen.findByRole('button', { name: 'Retry saving quiz result' });
+    first.unmount();
+    renderSurface(<QuizViewer />, '/quiz/:categoryId', '/quiz/greetings');
+    fireEvent.click(await screen.findByRole('button', { name: 'See Results' }));
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2));
+    expect(mocks.saveQuizResult.mock.calls[1][0].client_attempt_id).toBe(attempt);
+    expect(mocks.tryUse).toHaveBeenCalledOnce();
   });
 
   it('returns a Today quiz to Today and saves its launch relationship', async () => {

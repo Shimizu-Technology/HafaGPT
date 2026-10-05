@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
-  useAuth: () => ({ getToken: mocks.getToken }),
+  useAuth: () => ({ getToken: mocks.getToken, userId: 'evidence-learner' }),
 }));
 
 
@@ -57,6 +57,15 @@ describe('useRecordLessonExposure', () => {
         body: JSON.stringify({ concept_ids: conceptIds }),
       }),
     );
+  });
+
+  it('sends unchanged introduced cards with the shared curated review identity', async () => {
+    const conceptId = getCuratedConceptId('greetings', 0);
+    const { result } = renderHook(() => useRecordLessonExposure(), { wrapper });
+    await act(async () => { await result.current.mutateAsync({ topicId: 'greetings', conceptIds: [conceptId] }); });
+    const payload = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string);
+    expect(payload.review_cards).toHaveLength(1);
+    expect(payload.review_cards[0]).toMatchObject({ concept_id: conceptId, front: 'Håfa Adai', back: 'Hello / Hi / Greetings' });
   });
 
   it('rejects when the authenticated session has no token', async () => {

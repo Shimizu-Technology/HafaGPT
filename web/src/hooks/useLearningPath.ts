@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
+import { useLearnerAuth } from './useLearnerAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -63,7 +63,7 @@ export interface TopicWorkspaceResponse {
 
 // Get one stable topic workspace and its explicit relationships.
 export function useTopicWorkspace(topicId?: string) {
-  const { getToken, isSignedIn, userId } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
     queryKey: ['learning', 'workspace', userId, topicId],
@@ -88,10 +88,10 @@ export function useTopicWorkspace(topicId?: string) {
 
 // Get recommended next topic
 export function useRecommendedTopic() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
-    queryKey: ['learning', 'recommended'],
+    queryKey: ['learning', 'recommended', userId],
     queryFn: async (): Promise<RecommendedTopicResponse> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/learning/recommended`, {
@@ -106,19 +106,18 @@ export function useRecommendedTopic() {
 
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60 * 2, // 2 minutes - recommendations don't change that often
     refetchOnWindowFocus: true,
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
 // Get all progress
 export function useAllProgress() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn, userId } = useLearnerAuth();
 
   return useQuery({
-    queryKey: ['learning', 'progress'],
+    queryKey: ['learning', 'progress', userId],
     queryFn: async (): Promise<AllProgressResponse> => {
       const token = await getToken();
       const response = await fetch(`${API_URL}/api/learning/progress`, {
@@ -133,15 +132,14 @@ export function useAllProgress() {
 
       return response.json();
     },
-    enabled: isSignedIn,
+    enabled: isSignedIn && !!userId,
     staleTime: 1000 * 60 * 2, // 2 minutes - progress doesn't change that often
-    placeholderData: (previousData) => previousData, // Keep previous data while refetching
   });
 }
 
 // Update progress
 export function useUpdateProgress() {
-  const { getToken, isSignedIn } = useAuth();
+  const { getToken, isSignedIn } = useLearnerAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -196,6 +194,8 @@ export function useUpdateProgress() {
       // Invalidate both queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['learning', 'recommended'] });
       queryClient.invalidateQueries({ queryKey: ['learning', 'progress'] });
+      queryClient.invalidateQueries({ queryKey: ['learning', 'workspace'] });
+      queryClient.invalidateQueries({ queryKey: ['homepageData'] });
     },
   });
 }

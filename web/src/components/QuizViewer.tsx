@@ -19,6 +19,8 @@ import { readTopicReturn } from '../lib/topicReturn';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { getLearningReturn, readLearningContext } from '../lib/lessonPractice';
 import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
+import { useTodaySessionProgress } from '../hooks/useTodaySession';
+import { loadStandaloneQuiz, saveStandaloneQuiz, clearStandaloneQuiz } from '../lib/standaloneQuizResume';
 import { appRoutes, currentAppPath } from '../lib/routes';
 
 type AnswerState = 'unanswered' | 'correct' | 'incorrect';
@@ -58,11 +60,19 @@ function convertDictionaryQuestion(dq: DictionaryQuizQuestion): QuizQuestion {
 /** Run curated or dictionary quizzes with matching source-trust context. */
 export function QuizViewer() {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const { user } = useUser();
+  const [searchParams] = useSearchParams();
+  return <QuizViewerSession key={`${user?.id ?? 'guest'}:${categoryId}:${searchParams.get('count') || ''}`} />;
+}
+function QuizViewerSession() {
+  const { categoryId } = useParams<{ categoryId: string }>();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
+  const ownerId = user?.id ?? 'guest';
+  const { completeStep } = useTodaySessionProgress();
   const saveQuizResultMutation = useSaveQuizResult();
   const startTimeRef = useRef<number>(Date.now());
   const clientAttemptIdRef = useRef(createClientAttemptId());
@@ -76,7 +86,11 @@ export function QuizViewer() {
   // Check if this is a dictionary quiz (category starts with "dict-")
   const isDictionaryQuiz = categoryId?.startsWith('dict-');
   const actualCategoryId = isDictionaryQuiz ? categoryId?.replace('dict-', '') : categoryId;
-  const questionCount = parseInt(searchParams.get('count') || '10');
+  const parsedCount = Number(searchParams.get('count') || '10');
+  const questionCount = Number.isInteger(parsedCount) ? Math.max(1, Math.min(50, parsedCount)) : 10;
+  const [savedQuiz] = useState(() => loadStandaloneQuiz(ownerId, categoryId ?? '', questionCount,
+    !isDictionaryQuiz && categoryId ? new Set(getQuizCategory(categoryId)?.questions.map(question => question.id) ?? []) : undefined));
+  const [storageAvailable, setStorageAvailable] = useState(true);
   
   // Fetch dictionary quiz if needed
   const {
@@ -90,20 +104,36 @@ export function QuizViewer() {
     actualCategoryId,
     questionCount,
     'multiple_choice,type_answer',
-    isDictionaryQuiz
+    isDictionaryQuiz && !savedQuiz
   );
   
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [userAnswer, setUserAnswer] = useState('');
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered');
-  const [results, setResults] = useState<QuestionResult[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>(savedQuiz?.questions ?? []);
+  const [currentIndex, setCurrentIndex] = useState(savedQuiz?.currentIndex ?? 0);
+  const [userAnswer, setUserAnswer] = useState(savedQuiz?.userAnswer ?? '');
+  const [answerState, setAnswerState] = useState<AnswerState>(savedQuiz?.answerState ?? 'unanswered');
+  const [results, setResults] = useState<QuestionResult[]>(savedQuiz?.results ?? []);
   const [showResults, setShowResults] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
   const [pendingQuizResult, setPendingQuizResult] = useState<SaveQuizResultParams | null>(null);
   const [isSavingResult, setIsSavingResult] = useState(false);
   const [resultSaveFailed, setResultSaveFailed] = useState(false);
+
+  const initializedAttemptRef = useRef(false);
+  if (!initializedAttemptRef.current) {
+    if (savedQuiz) {
+      startTimeRef.current = savedQuiz.startedAt;
+      clientAttemptIdRef.current = savedQuiz.attemptId;
+    }
+    initializedAttemptRef.current = true;
+  }
+  useEffect(() => {
+    if (!categoryId || !questions.length || showResults && !pendingQuizResult) return;
+    setStorageAvailable(saveStandaloneQuiz(ownerId, categoryId, questionCount, {
+      version: 1, questions, currentIndex, results, userAnswer, answerState,
+      attemptId: clientAttemptIdRef.current, startedAt: startTimeRef.current, updatedAt: Date.now(),
+    }));
+  }, [ownerId, categoryId, questionCount, questions, currentIndex, results, userAnswer, answerState, showResults, pendingQuizResult]);
 
   const category = !isDictionaryQuiz && categoryId ? getQuizCategory(categoryId) : undefined;
   const curatedTopic = !isDictionaryQuiz
@@ -163,7 +193,7 @@ export function QuizViewer() {
   
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isQuizInProgress || isResultNavigationBlocked) {
+      if ((isQuizInProgress && !storageAvailable) || isResultNavigationBlocked) {
         e.preventDefault();
         e.returnValue = ''; // Required for Chrome
         return '';
@@ -172,14 +202,15 @@ export function QuizViewer() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isQuizInProgress, isResultNavigationBlocked]);
-  const categoryTitle = isDictionaryQuiz ? dictQuizData?.category : category?.title;
+  }, [isQuizInProgress, isResultNavigationBlocked, storageAvailable]);
+  const categoryTitle = isDictionaryQuiz ? dictQuizData?.category ?? actualCategoryId : category?.title;
 
   // Check usage limits on mount (wait for data to load first)
   useEffect(() => {
     const checkUsage = async () => {
       // Wait for subscription data to load before checking
       if (subscriptionLoading) return;
+      if (savedQuiz) { usageCheckRef.current = true; setUsageChecked(true); return; }
       if (!isSignedIn || usageCheckRef.current) {
         // Not signed in or already checked - just mark as checked
         if (!isSignedIn) setUsageChecked(true);
@@ -207,22 +238,22 @@ export function QuizViewer() {
     };
     
     checkUsage();
-  }, [isSignedIn, canUse, tryUse, subscriptionLoading]);
+  }, [isSignedIn, canUse, tryUse, subscriptionLoading, savedQuiz]);
 
   // Initialize questions for curated quiz
   useEffect(() => {
-    if (category && !isDictionaryQuiz && usageChecked && !showUpgradePrompt) {
+    if (!savedQuiz && category && !isDictionaryQuiz && usageChecked && !showUpgradePrompt) {
       setQuestions(shuffleQuestions(category.questions));
     }
-  }, [category, isDictionaryQuiz, usageChecked, showUpgradePrompt]);
+  }, [category, isDictionaryQuiz, usageChecked, showUpgradePrompt, savedQuiz]);
 
   // Initialize questions for dictionary quiz
   useEffect(() => {
-    if (isDictionaryQuiz && dictQuizData?.questions && usageChecked && !showUpgradePrompt) {
+    if (!savedQuiz && isDictionaryQuiz && dictQuizData?.questions && usageChecked && !showUpgradePrompt) {
       const converted = dictQuizData.questions.map(convertDictionaryQuestion);
       setQuestions(converted);
     }
-  }, [isDictionaryQuiz, dictQuizData, usageChecked, showUpgradePrompt]);
+  }, [isDictionaryQuiz, dictQuizData, usageChecked, showUpgradePrompt, savedQuiz]);
 
   // Focus input for type_answer questions
   useEffect(() => {
@@ -249,7 +280,7 @@ export function QuizViewer() {
   }
 
   // Loading state for dictionary quiz
-  if (isDictionaryQuiz && isDictLoading) {
+  if (isDictionaryQuiz && isDictLoading && !savedQuiz) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
@@ -260,7 +291,7 @@ export function QuizViewer() {
     );
   }
 
-  if (isDictionaryQuiz && isDictError) {
+  if (isDictionaryQuiz && isDictError && !savedQuiz) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
         <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
@@ -274,7 +305,7 @@ export function QuizViewer() {
             <button
               onClick={() => void refetchDictQuiz()}
               disabled={isDictFetching}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+              className="flex-1 px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
             >
               {isDictFetching ? 'Retrying...' : 'Try Again'}
             </button>
@@ -326,7 +357,7 @@ export function QuizViewer() {
           <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
           <Link
             to={quizReturnTo}
-            className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+            className="inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
           >
             {quizReturnLabel}
           </Link>
@@ -347,7 +378,7 @@ export function QuizViewer() {
           </p>
           <Link
             to="/quiz"
-            className="inline-flex items-center justify-center px-4 py-3 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-xl font-semibold"
+            className="inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
           >
             Back to Quiz List
           </Link>
@@ -384,6 +415,8 @@ export function QuizViewer() {
     try {
       await saveQuizResultMutation.mutateAsync(payload);
       setPendingQuizResult(null);
+      if (categoryId) clearStandaloneQuiz(ownerId, categoryId, questionCount);
+      completeStep();
     } catch (error) {
       console.warn('Failed to save quiz result:', error);
       setResultSaveFailed(true);
@@ -444,6 +477,8 @@ export function QuizViewer() {
         }
       }
       setShowResults(true);
+      if (categoryId) clearStandaloneQuiz(ownerId, categoryId, questionCount);
+      completeStep();
     }
   };
 
@@ -454,6 +489,7 @@ export function QuizViewer() {
     setQuizError(null);
 
     try {
+      if (categoryId) clearStandaloneQuiz(ownerId, categoryId, questionCount);
       // Check usage limits before restarting
       if (isSignedIn) {
         if (!canUse('quiz')) {
@@ -631,7 +667,7 @@ export function QuizViewer() {
             <button
               onClick={handleRestart}
               disabled={isRestarting || isSavingResult || Boolean(pendingQuizResult)}
-              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 py-3 font-semibold text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 py-3 font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <RotateCcw className="w-5 h-5" />
               {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
@@ -719,6 +755,7 @@ export function QuizViewer() {
       {/* Question Content - scrollable area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
+        <p role="status" className="mb-3 text-xs text-brown-600 dark:text-gray-400">{storageAvailable ? savedQuiz ? 'Resumed your quiz on this browser.' : 'Your quiz resumes on this browser if you leave.' : 'Browser storage is unavailable. Keep this quiz open to retain your progress.'}</p>
         <ContentTrustNote trust={contentTrust} className="mb-4" compact />
         {currentQuestion && (
           <>
@@ -743,7 +780,7 @@ export function QuizViewer() {
                     aria-label={isSpeaking ? 'Stop reading question' : 'Read question aloud'}
                     className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
                       isSpeaking 
-                        ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse' 
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white animate-pulse'
                         : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
                     }`}
                   >
@@ -880,7 +917,7 @@ export function QuizViewer() {
                       <button
                         onClick={() => handleAnswer(userAnswer)}
                         disabled={!userAnswer.trim()}
-                        className="min-h-12 flex-1 rounded-xl bg-coral-600 py-3 font-semibold text-white hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+                        className="min-h-12 flex-1 rounded-xl bg-coral-700 py-3 font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
                       >
                         Submit Answer
                       </button>
@@ -938,7 +975,7 @@ export function QuizViewer() {
                 
                 <button
                   onClick={handleNext}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 py-3 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700 sm:py-4"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 py-3 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800 sm:py-4"
                 >
                   {currentIndex < questions.length - 1 ? (
                     <>

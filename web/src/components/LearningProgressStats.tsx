@@ -138,7 +138,7 @@ export function LearningProgressStats() {
       {completedTopics === totalTopics && (
         <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-50 to-emerald-50 dark:from-amber-900/30 dark:to-emerald-900/30 border border-amber-200 dark:border-amber-700">
           <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
-            🎉 All beginner topics mastered!
+            🎉 All beginner topics completed!
           </p>
         </div>
       )}

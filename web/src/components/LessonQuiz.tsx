@@ -110,9 +110,9 @@ function loadQuizState(topicId: string, ownerId: string): SavedQuizState | null 
       return null;
     }
     
-    // Check if state is older than 1 hour (stale)
-    const ONE_HOUR = 60 * 60 * 1000;
-    if (Date.now() - state.timestamp > ONE_HOUR) {
+    // Keep meaningful work available across learning days.
+    const RESUME_WINDOW = 30 * 24 * 60 * 60 * 1000;
+    if (Date.now() - state.timestamp > RESUME_WINDOW) {
       clearQuizState(topicId, ownerId);
       return null;
     }
@@ -138,7 +138,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   const ownerId = user?.id ?? 'anonymous';
   return (
     <LessonQuizSession
-      key={ownerId}
+      key={`${ownerId}:${topic.id}`}
       topic={topic}
       onComplete={onComplete}
       isSignedIn={Boolean(isSignedIn)}
@@ -159,6 +159,8 @@ function LessonQuizSession({
   ownerId,
 }: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   // Try to restore saved state first
   const savedState = useMemo(() => {
     const state = loadQuizState(topic.id, ownerId);
@@ -322,7 +324,7 @@ function LessonQuizSession({
         </p>
         <button
           onClick={() => onComplete(100)}
-          className="mt-4 px-6 py-2 bg-coral-500 text-white rounded-xl"
+          className="mt-4 px-6 py-2 bg-coral-700 text-white rounded-xl"
         >
           Continue anyway
         </button>
@@ -455,13 +457,15 @@ function LessonQuizSession({
               },
             });
           } catch {
+            if (!active.current) return;
             completionStartedRef.current = false;
             setIsSavingResult(false);
-            setSaveError('We could not save your result. Your progress is safe—try again.');
+            setSaveError('We could not save your result. Keep this page open and try again.');
             return;
           }
         }
       }
+      if (!active.current) return;
       clearQuizState(topic.id, ownerId);
       setIsSavingResult(false);
       onComplete(score);
@@ -663,8 +667,8 @@ function LessonQuizSession({
           disabled={isSavingResult}
           className={`w-full py-4 font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 ${
             isCorrect
-              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'
-              : 'bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white hover:from-coral-600 hover:to-coral-700'
+              ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+              : 'bg-coral-700 dark:bg-teal-700 text-white hover:from-coral-600 hover:to-coral-700'
           } disabled:cursor-not-allowed disabled:opacity-60`}
         >
           {isSavingResult

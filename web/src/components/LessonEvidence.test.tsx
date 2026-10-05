@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getTopic } from '../data/learningPath';
 import { getCuratedDeckConceptIds, getQuestionConceptId } from '../data/conceptEvidence';
@@ -216,7 +216,7 @@ describe('lesson concept evidence', () => {
     fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Your progress is safe—try again.',
+      'Keep this page open and try again.',
     );
     expect(onComplete).not.toHaveBeenCalled();
     const firstAttemptId = mocks.saveQuizResult.mock.calls[0][0].client_attempt_id;
@@ -410,4 +410,22 @@ describe('lesson concept evidence', () => {
     expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings'))
       .not.toBeNull();
   });
+  it('does not complete a departed account lesson when its quiz save resolves late', async () => {
+    const onComplete = vi.fn();
+    let finish!: () => void;
+    mocks.saveQuizResult.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+    const mounted = render(<LessonQuiz topic={greetings} onComplete={onComplete} />);
+    answerLessonQuestion('Hello / Hi'); fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion("Si Yu'os Ma'åse'"); fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adios', true); fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('Adai', true); fireEvent.click(screen.getByRole('button', { name: 'Next Question' }));
+    answerLessonQuestion('How are you?'); fireEvent.click(screen.getByRole('button', { name: 'See Results' }));
+    await waitFor(() => expect(finish).toBeDefined());
+    mocks.userId = 'user_456'; mounted.rerender(<LessonQuiz topic={greetings} onComplete={onComplete} />);
+    await act(async () => { finish(); });
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+    expect(window.localStorage.getItem('hafagpt_quiz_user_123_greetings')).not.toBeNull();
+  });
+
 });
