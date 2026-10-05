@@ -388,11 +388,11 @@ export function FallingWords() {
 
   // Reset to setup
   const resetGame = () => {
+    if (resultUnresolved) return;
     clearTransitionTimers();
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
-    if (resultUnresolved) return;
     setGameState('setup');
     setCurrentWord(null);
     setAnswerOptions([]);
@@ -749,6 +749,7 @@ export function FallingWords() {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={playAgain}
+                disabled={resultUnresolved}
                 className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />

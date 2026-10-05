@@ -444,7 +444,6 @@ export function PicturePairs() {
             {/* Restart Button */}
             <div className="flex justify-center mt-4">
               <button
-                disabled={resultUnresolved}
                 onClick={() => setGameState('setup')}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >

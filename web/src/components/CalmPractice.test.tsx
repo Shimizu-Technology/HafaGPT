@@ -65,6 +65,23 @@ describe('calm listening games', () => {
     expect(screen.getByText('210')).toBeInTheDocument();
   });
 
+  it('resets the combo and counts two wrong catches before a render', async () => {
+    vi.useFakeTimers();
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<StrictMode><MemoryRouter><WordCatch /></MemoryRouter></StrictMode>);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
+    act(() => vi.advanceTimersByTime(500));
+    fireEvent.click(screen.getByRole('button', { name: /Håfa Adai.*Hello/ }));
+    random.mockReturnValue(0.999);
+    for (let tick = 0; tick < 4; tick += 1) act(() => vi.advanceTimersByTime(500));
+    const wrongPairs = screen.getAllByRole('button', { name: /=/ });
+    expect(wrongPairs.length).toBeGreaterThanOrEqual(2);
+    act(() => { fireEvent.click(wrongPairs[0]); fireEvent.click(wrongPairs[1]); });
+    expect(screen.getByRole('img', { name: '1 lives remaining' })).toBeInTheDocument();
+    expect(screen.getByText('0🔥')).toBeInTheDocument();
+    expect(screen.getByText('100')).toBeInTheDocument();
+  });
+
   it('an early Simon answer cancels the pending instruction and preserves feedback', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     vi.useFakeTimers();

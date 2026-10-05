@@ -399,6 +399,7 @@ export function ChamorroWordle() {
       skipNextStorageWriteRef.current = true;
       clearTransitionTimers();
       setGameState('setup');
+      setActiveDailyKey('');
       setTargetWord(null);
       setGuesses([]);
       setCurrentGuess('');
