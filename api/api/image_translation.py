@@ -147,6 +147,10 @@ def translate_image_pages(
             yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
             return
         page = next((page for page in context.pages if page.image_index == index), None)
+        # A valid unreadable-page warning is a completed result. A missing page
+        # or failed extraction is an infrastructure/generation failure instead.
+        if page is None or "extraction_failed" in page.issues:
+            generation_complete = False
         yield {"type": "chunk", "content": f"\n\n## Image {index + 1}\n\n"}
         if page is None or not page.items or page.text_confidence == "low":
             incomplete = True

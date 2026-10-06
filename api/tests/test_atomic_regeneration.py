@@ -392,21 +392,23 @@ def test_unconfirmed_or_interrupted_real_text_stream_cannot_replace_original(fai
     if failure == 'missing_finish': assert 'ended before completion could be confirmed' in text
 
 
-def actual_image_edit_generator(case: str) -> tuple[Any, Mock]:
+def actual_image_edit_generator(case: str, context: Any = None, images: Optional[list[dict[str, Any]]] = None) -> tuple[Any, Mock]:
     """Run the real page generator and staged image adapter with a fake provider."""
     import time
     from api.image_translation import translate_image_pages
     from src.rag.image_translation_context import ImagePageContext, ImageTextItem, ImageTranslationContext
     item = ImageTextItem(id='item-1', text='Printed source', kind='unclear' if case == 'unclear' else 'body')
     page = ImagePageContext(image_index=0, items=(item,), text_confidence='low' if case == 'low_confidence' else 'high', complete=case != 'partial_reading')
-    context = ImageTranslationContext(pages=(page,))
+    context = context if context is not None else ImageTranslationContext(pages=(page,))
+    images = images if images is not None else [{"data": "fake-bytes", "content_type": "image/png"}]
     calls = 0
     def complete(**kwargs: Any) -> Any:
         nonlocal calls
         calls += 1
         if case == 'provider_failure': raise RuntimeError('Provider unavailable')
         if case == 'review_failure' and calls == 2: raise RuntimeError('Review unavailable')
-        translations = [] if case == 'invalid_coverage' else [{'id': item.id, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'}]
+        identifiers = [entry['id'] for entry in json.loads(kwargs['messages'][1]['content'][0]['text'])['items']]
+        translations = [] if case == 'invalid_coverage' else [{'id': identifier, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'} for identifier in identifiers]
         finish = 'length' if case == 'truncated' else 'stop'
         return SimpleNamespace(choices=[SimpleNamespace(finish_reason=finish, message=SimpleNamespace(content=json.dumps({'translations': translations, 'notes': ''})))])
     provider = Mock(side_effect=complete)
@@ -425,7 +427,7 @@ def actual_image_edit_generator(case: str) -> tuple[Any, Mock]:
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     def generate() -> Iterator[dict[str, Any]]:
-        return namespace['_image_translation_events'](image_context=context, images=[{'data': 'fake-bytes', 'content_type': 'image/png'}],
+        return namespace['_image_translation_events'](image_context=context, images=images,
             message='Edited request', message_for_logging='Edited request', mode='english', session_id=None,
             user_id='learner-a', conversation_id='conv-a', image_url=None, file_urls=None, pending_id='pending',
             start_time=time.time(), past_messages=[], skill_level=None, persist=False)
@@ -471,3 +473,90 @@ def test_confirmed_stop_remains_complete_after_trailing_usage_only_chunk() -> No
     assert result[-1]['type'] == 'done' and result[-1]['complete'] is True
     replace.assert_called_once()
     assert replace.call_args.args[0] == 'Complete reply'
+
+
+def extracted_image_context(case: str) -> tuple[Any, list[dict[str, Any]]]:
+    """Run the actual OCR detector, envelope validation and context merge."""
+    from src.rag.image_translation_context import (
+        ImageTranslationContext, ImagePageContext, IMAGE_CONTEXT_RESPONSE_FORMAT,
+        IMAGE_TRANSCRIPTION_INSTRUCTIONS, merge_image_translation_contexts,
+        try_parse_image_context_response,
+    )
+    images = [{'data': 'failed-image' if case == 'mixed_failure' else 'image', 'content_type': 'image/png'}]
+    if case in ('mixed_failure', 'missing_page'):
+        images.append({'data': 'valid-image', 'content_type': 'image/png'})
+    calls = 0
+    def complete(**kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        image = kwargs['messages'][1]['content'][1]['image_url']['url']
+        if case == 'provider_failure' or (case == 'mixed_failure' and image.endswith('failed-image')):
+            raise RuntimeError('OCR provider unavailable')
+        if case == 'missing_choices': return SimpleNamespace(choices=[])
+        payload: dict[str, Any] = {'signals': [], 'text_confidence': 'high', 'complete': True,
+            'lines': [{'text': 'Printed source', 'kind': 'body'}]}
+        if case in ('valid_low_confidence', 'valid_unreadable'):
+            payload.update(text_confidence='low', complete=False)
+        if case in ('valid_unreadable', 'valid_empty_reading'): payload['lines'] = []
+        if case == 'valid_partial': payload['complete'] = False
+        if case == 'invalid_signal': payload['signals'] = ['UNKNOWN']
+        if case == 'invalid_confidence': payload['text_confidence'] = 'invalid'
+        if case == 'invalid_lines': payload['lines'] = [{'text': 123, 'kind': 'body'}]
+        if case == 'invalid_complete': payload['complete'] = 'true'
+        if case == 'extra_field': payload['unexpected'] = 'invalid'
+        text = json.dumps(payload)
+        if case == 'malformed' or (case == 'recovered_retry' and calls == 1): text = 'not JSON'
+        if case == 'empty_response': text = ''
+        reason = 'length' if case == 'truncated' else None if case == 'unconfirmed' else 'stop'
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason=reason, message=SimpleNamespace(content=text))])
+    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=complete)))
+    def get_client(**kwargs: Any) -> tuple[Any, str]:
+        if case == 'client_failure': raise RuntimeError('OCR client unavailable')
+        return client, 'fake'
+    namespace = {
+        'ImageTranslationContext': ImageTranslationContext, 'ImagePageContext': ImagePageContext,
+        'IMAGE_CONTEXT_RESPONSE_FORMAT': IMAGE_CONTEXT_RESPONSE_FORMAT, 'IMAGE_TRANSCRIPTION_INSTRUCTIONS': IMAGE_TRANSCRIPTION_INSTRUCTIONS,
+        'IMAGE_CONTEXT_CARD_IDS': {}, 'get_client_for_request': get_client,
+        'model_supports_temperature': lambda model: False, 'merge_image_translation_contexts': merge_image_translation_contexts,
+        'try_parse_image_context_response': try_parse_image_context_response, 'logger': logging.getLogger(__name__),
+    }
+    source = ROOT / 'chatbot_service.py'; module = ast.parse(source.read_text())
+    nodes = [node for node in module.body if isinstance(node, ast.FunctionDef) and node.name in ('_build_current_user_message', 'detect_image_context')]
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), 'exec'), namespace)
+    context = namespace['detect_image_context'](images)
+    if case == 'missing_page':
+        context = ImageTranslationContext(pages=context.pages[:1])
+    return context, images
+
+
+@pytest.mark.parametrize('case', [
+    'client_failure', 'provider_failure', 'malformed', 'empty_response', 'missing_choices',
+    'truncated', 'unconfirmed', 'invalid_signal', 'invalid_confidence', 'invalid_lines',
+    'invalid_complete', 'extra_field', 'mixed_failure', 'missing_page',
+])
+def test_failed_actual_extraction_cannot_swap_atomic_edit(case: str) -> None:
+    context, images = extracted_image_context(case)
+    if case != 'missing_page': assert any('extraction_failed' in page.issues for page in context.pages)
+    generate, log = actual_image_edit_generator('success', context, images)
+    store, replace = Mock(), Mock()
+    result = list(atomic_regeneration_events(generate, store, replace, lambda: False))
+    metadata = next(event for event in result if event['type'] == 'metadata')
+    assert metadata['generation_complete'] is False
+    assert result[-1]['type'] == 'error' and not any(event['type'] == 'done' for event in result)
+    store.assert_not_called(); replace.assert_not_called(); log.assert_not_called()
+    if case in ('mixed_failure', 'missing_page'):
+        assert sum(event.get('content', '').startswith('\n\n## Image') for event in result) == 2
+    if case == 'mixed_failure':
+        assert 'Possible interpretation' in ''.join(event.get('content', '') for event in result)
+
+
+@pytest.mark.parametrize('case', ['valid_low_confidence', 'valid_unreadable', 'valid_empty_reading', 'valid_partial', 'recovered_retry'])
+def test_valid_actual_extraction_warning_or_recovered_retry_remains_atomic_eligible(case: str) -> None:
+    context, images = extracted_image_context(case)
+    assert context.pages and all('extraction_failed' not in page.issues for page in context.pages)
+    generate, log = actual_image_edit_generator('success', context, images)
+    replace = Mock(return_value=99)
+    result = list(atomic_regeneration_events(generate, lambda: [], replace, lambda: False))
+    metadata = next(event for event in result if event['type'] == 'metadata')
+    assert metadata['generation_complete'] is True and result[-1]['type'] == 'done'
+    replace.assert_called_once(); log.assert_not_called()
