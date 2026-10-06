@@ -273,7 +273,6 @@ function ChatSession() {
     if (isLoaded && !isSignedIn) {
       setActiveConversationId(null);
       setMessages([]);
-      if (activeStorageKey) browserStorage.remove(activeStorageKey);
     }
   }, [activeStorageKey, isLoaded, isSignedIn]);
 
@@ -337,7 +336,6 @@ function ChatSession() {
     if (isSignedIn === false) {
         setMessages([]);
       setActiveConversationId(null);
-      if (activeStorageKey) browserStorage.remove(activeStorageKey);
       // Invalidate all queries to clear cache
       queryClient.clear();
       }
@@ -358,7 +356,6 @@ function ChatSession() {
     if (isSignedIn === false) {
       setMessages([]);
       setActiveConversationId(null);
-      if (activeStorageKey) browserStorage.remove(activeStorageKey);
       // Invalidate all queries to clear cache
       queryClient.clear();
     }
@@ -1140,7 +1137,7 @@ End of Export
               <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          {!viewport.keyboardOpen && <ModeSelector mode={mode} onModeChange={setMode} intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
+          {!viewport.keyboardOpen && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}

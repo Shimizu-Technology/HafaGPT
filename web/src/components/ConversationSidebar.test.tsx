@@ -146,4 +146,15 @@ describe('ConversationSidebar', () => {
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
+  it('moves focus to New chat after deleting a row', async () => {
+    viewport(true); const value = props();
+    const view = show(value);
+    fireEvent.click(screen.getByRole('button', { name: `Actions for ${conversation.title}` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await act(async () => fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' })));
+    view.rerender(<MemoryRouter><ConversationSidebar {...value} conversations={[]} /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'New chat' })).toHaveFocus());
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
 });

@@ -2,8 +2,6 @@ import { GraduationCap, Languages, MessageCircle } from 'lucide-react';
 import type { ChatIntent } from '../lib/chatIntent';
 
 interface ModeSelectorProps {
-  mode: 'english' | 'chamorro' | 'learn';
-  onModeChange: (mode: 'english' | 'chamorro' | 'learn') => void;
   intent: ChatIntent;
   onIntentChange: (intent: ChatIntent) => void;
   disabled?: boolean;

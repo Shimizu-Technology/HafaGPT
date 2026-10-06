@@ -38,7 +38,6 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
     const direction = steps[event.key];
     if (direction === undefined && event.key !== 'Home' && event.key !== 'End') return;
     event.preventDefault();
-    event.stopPropagation();
     const maximum = content.scrollHeight - content.clientHeight;
     content.scrollTop = event.key === 'Home' ? 0 : event.key === 'End' ? maximum
       : Math.max(0, Math.min(maximum, content.scrollTop + (direction || 0)));

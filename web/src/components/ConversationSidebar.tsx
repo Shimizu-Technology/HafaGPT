@@ -42,6 +42,8 @@ export function ConversationSidebar({ conversations, activeConversationId, onSel
   const deleteDialogRef = useRef<HTMLDivElement>(null);
   const deleteCancelRef = useRef<HTMLButtonElement>(null);
   const deleteFocusRef = useRef<string | null>(null);
+  const deleteSucceededRef = useRef(false);
+  const newChatRef = useRef<HTMLButtonElement>(null);
   const actionButtonRefs = useRef(new Map<string, HTMLButtonElement>());
   const restoreFocusRef = useRef<string | null>(null);
 
@@ -79,7 +81,9 @@ export function ConversationSidebar({ conversations, activeConversationId, onSel
   useEffect(() => {
     if (deleteConfirmId) deleteFocusRef.current = deleteConfirmId;
     else if (deleteFocusRef.current) {
-      actionButtonRefs.current.get(deleteFocusRef.current)?.focus();
+      const previousRow = actionButtonRefs.current.get(deleteFocusRef.current);
+      (deleteSucceededRef.current ? newChatRef.current : previousRow || newChatRef.current)?.focus();
+      deleteSucceededRef.current = false;
       deleteFocusRef.current = null;
     }
   }, [deleteConfirmId]);
@@ -130,6 +134,7 @@ export function ConversationSidebar({ conversations, activeConversationId, onSel
     deletingRef.current = true; setDeleting(true); setDeleteError(null);
     try {
       await onDeleteConversation(id);
+      deleteSucceededRef.current = true;
       setDeleteConfirmId(current => current === id ? null : current);
     } catch { setDeleteError('Could not delete this conversation. Please try again.'); }
     finally { deletingRef.current = false; setDeleting(false); }
@@ -151,7 +156,7 @@ export function ConversationSidebar({ conversations, activeConversationId, onSel
             <button ref={closeSidebarRef} type="button" onClick={onToggle} aria-label="Close sidebar"
               className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-400 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
           </div>
-          <button type="button" onClick={onNewConversation}
+          <button ref={newChatRef} type="button" onClick={onNewConversation}
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Plus className="h-4 w-4" />New chat</button>
         </div>
         <div className="px-3 pt-3">

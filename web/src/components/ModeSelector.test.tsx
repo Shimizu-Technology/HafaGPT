@@ -5,7 +5,7 @@ import { ModeSelector } from './ModeSelector';
 
 it('shows one task strip and leaves answer language to tutor options', async () => {
   const onIntentChange = vi.fn();
-  render(<ModeSelector mode="learn" onModeChange={vi.fn()} intent="translate" onIntentChange={onIntentChange} />);
+  render(<ModeSelector intent="translate" onIntentChange={onIntentChange} />);
   expect(screen.getAllByRole('button')).toHaveLength(3);
   expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Translate' })).toHaveAttribute('aria-pressed', 'true');
@@ -14,7 +14,7 @@ it('shows one task strip and leaves answer language to tutor options', async () 
 });
 describe('disabled tasks', () => {
   it('prevents task changes during a request', () => {
-    render(<ModeSelector mode="english" onModeChange={vi.fn()} intent="explain" onIntentChange={vi.fn()} disabled />);
+    render(<ModeSelector intent="explain" onIntentChange={vi.fn()} disabled />);
     screen.getAllByRole('button').forEach(button => expect(button).toBeDisabled());
   });
 });

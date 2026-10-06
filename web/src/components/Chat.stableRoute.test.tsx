@@ -643,4 +643,19 @@ describe('Tutor shell and continuity', () => {
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeVisible();
   });
 
+  it('applies the preference after delayed sign-in and preserves a later manual language choice', () => {
+    state.isLoaded = false; state.isSignedIn = false;
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = () => <QueryClientProvider client={client}><MemoryRouter initialEntries={['/chat']}><Chat /></MemoryRouter></QueryClientProvider>;
+    const { rerender } = render(view());
+    state.isLoaded = true; state.isSignedIn = true; state.preferredMode = 'learn';
+    rerender(view());
+    fireEvent.click(screen.getByRole('button', { name: 'Tutor options' }));
+    expect(screen.getByRole('combobox', { name: 'Answer language' })).toHaveValue('learn');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Answer language' }), { target: { value: 'english' } });
+    state.preferredMode = 'chamorro';
+    rerender(view());
+    expect(screen.getByRole('combobox', { name: 'Answer language' })).toHaveValue('english');
+  });
+
 });
