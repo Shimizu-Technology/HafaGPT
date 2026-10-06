@@ -12,7 +12,8 @@ def _load_get_conversation_history():
         for node in module.body
         if isinstance(node, ast.FunctionDef) and node.name == "get_conversation_history"
     )
-    isolated_module = ast.Module(body=[function_node], type_ignores=[])
+    formatter = next(node for node in module.body if isinstance(node, ast.FunctionDef) and node.name == "conversation_rows_to_history")
+    isolated_module = ast.Module(body=[formatter, function_node], type_ignores=[])
     namespace = {
         "VALID_IMAGE_EXTENSIONS": (".jpg", ".jpeg", ".png", ".gif", ".webp"),
         "resolve_private_upload_reference": lambda value: value,

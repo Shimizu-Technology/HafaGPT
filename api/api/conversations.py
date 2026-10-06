@@ -5,9 +5,12 @@ Simple CRUD operations for conversations.
 """
 
 import uuid
+import hashlib
+import json
+from dataclasses import dataclass
 from contextlib import closing
 from datetime import datetime
-from typing import Optional
+from typing import Any, Callable, Optional
 import logging
 
 from .database_connections import get_db_connection, get_db_connection_with_retry
@@ -210,6 +213,134 @@ def get_conversation(conversation_id: str, user_id: str) -> Optional[Conversatio
         raise
 
 
+@dataclass(frozen=True)
+class RegenerationSnapshot:
+    """Owner-scoped revision captured before generating an edited exchange."""
+    conversation_id: str
+    user_id: str
+    message_id: int
+    rows: list[tuple[Any, ...]]
+    revision: str
+
+
+class RegenerationConflict(ValueError):
+    """The conversation changed while its replacement was being generated."""
+
+
+class RegenerationCancelled(ValueError):
+    """Cancellation won before the replacement transaction committed."""
+
+
+def _owned_regeneration_rows(cursor: Any, conversation_id: str, user_id: str, for_update: bool = False) -> list[tuple[Any, ...]]:
+    """Read one active owner's transcript in the same order used by the UI."""
+    query = """
+        SELECT logs.id, logs.role, logs.user_message, logs.bot_response,
+               logs.timestamp, logs.sources_used, logs.used_rag, logs.used_web_search,
+               logs.image_url, logs.mode, logs.response_time_seconds, logs.file_urls, logs.pending_id
+        FROM conversations AS conversation
+        JOIN conversation_logs AS logs ON logs.conversation_id = conversation.id
+        WHERE conversation.id = %s AND conversation.user_id = %s
+          AND conversation.deleted_at IS NULL AND logs.user_id = %s
+        ORDER BY logs.timestamp ASC, logs.id ASC
+        """
+    if for_update:
+        query += " FOR UPDATE OF logs"
+    cursor.execute(query, (conversation_id, user_id, user_id))
+    return cursor.fetchall()
+
+
+def _transcript_revision(rows: list[tuple[Any, ...]]) -> str:
+    """Compare full stored rows, including background attachment updates."""
+    return hashlib.sha256(json.dumps(rows, sort_keys=True, default=str).encode()).hexdigest()
+
+
+def get_regeneration_snapshot(conversation_id: str, message_id: int, user_id: str) -> Optional[RegenerationSnapshot]:
+    """Validate the original user exchange without writing or deleting anything."""
+    with closing(get_db_connection_with_retry()) as conn:
+        with closing(conn.cursor()) as cursor:
+            rows = _owned_regeneration_rows(cursor, conversation_id, user_id)
+    boundary = next((row for row in rows if row[0] == message_id), None)
+    if boundary is None or boundary[1] not in (None, "user"):
+        return None
+    if boundary[2] is None and not boundary[8] and not boundary[11]:
+        return None
+    return RegenerationSnapshot(conversation_id, user_id, message_id, rows, _transcript_revision(rows))
+
+
+def regeneration_prefix_rows(snapshot: RegenerationSnapshot) -> list[tuple[Any, ...]]:
+    """Exclude the original exchange and its entire suffix from model context."""
+    prefix = []
+    for row in snapshot.rows:
+        if row[0] == snapshot.message_id:
+            break
+        if row[1] != "system":
+            prefix.append((row[2], row[3], row[8], row[11], row[4]))
+    return prefix
+
+
+def replace_regenerated_exchange(
+    snapshot: RegenerationSnapshot, message: str, response: str, mode: str,
+    sources: list[dict[str, Any]], used_rag: bool, used_web_search: bool,
+    response_time: float, session_id: Optional[str], pending_id: str,
+    file_urls: list[dict[str, Any]], cancelled: Callable[[], bool],
+) -> int:
+    """Swap the unchanged owned suffix and complete replacement in one short transaction."""
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection_with_retry()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id FROM conversations WHERE id = %s AND user_id = %s AND deleted_at IS NULL FOR UPDATE",
+            (snapshot.conversation_id, snapshot.user_id),
+        )
+        if cursor.fetchone() is None:
+            raise RegenerationConflict("Conversation unavailable")
+        rows = _owned_regeneration_rows(cursor, snapshot.conversation_id, snapshot.user_id, for_update=True)
+        if _transcript_revision(rows) != snapshot.revision:
+            raise RegenerationConflict("Conversation changed")
+        boundary_index = next((index for index, row in enumerate(rows) if row[0] == snapshot.message_id), None)
+        if boundary_index is None:
+            raise RegenerationConflict("Original exchange unavailable")
+        if cancelled():
+            raise RegenerationCancelled()
+        cursor.execute(
+            "DELETE FROM conversation_logs WHERE conversation_id = %s AND user_id = %s AND id = ANY(%s)",
+            (snapshot.conversation_id, snapshot.user_id, [row[0] for row in rows[boundary_index:]]),
+        )
+        image_url = next((file["url"] for file in file_urls if file.get("type") == "image"), None)
+        cursor.execute(
+            """
+            INSERT INTO conversation_logs (
+                session_id, user_id, conversation_id, role, mode, user_message, bot_response,
+                sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
+            ) VALUES (%s, %s, %s, 'user', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (session_id, snapshot.user_id, snapshot.conversation_id, mode, message, response,
+             json.dumps(sources), used_rag, used_web_search, response_time, image_url,
+             json.dumps(file_urls) if file_urls else None, pending_id),
+        )
+        message_id = cursor.fetchone()[0]
+        cursor.execute(
+            "UPDATE conversations SET updated_at = NOW() WHERE id = %s AND user_id = %s AND deleted_at IS NULL",
+            (snapshot.conversation_id, snapshot.user_id),
+        )
+        if cancelled():
+            raise RegenerationCancelled()
+        conn.commit()
+        return message_id
+    except Exception:
+        if conn is not None:
+            conn.rollback()
+        raise
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
+
 def get_conversation_attachment(
     conversation_id: str, message_id: int, file_index: int, user_id: str,
 ) -> Optional[dict]:
@@ -243,7 +374,7 @@ def get_conversation_attachment(
     return None
 
 
-def get_conversation_messages(conversation_id: str) -> MessagesResponse:
+def get_conversation_messages(conversation_id: str, user_id: Optional[str] = None) -> MessagesResponse:
     """
     Get all messages for a conversation.
     
@@ -257,9 +388,16 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
         conn = get_db_connection_with_retry()
         cursor = conn.cursor()
         
+        edit_enabled = False
+        if user_id is not None:
+            cursor.execute(
+                "SELECT id FROM conversations WHERE id = %s AND user_id = %s AND deleted_at IS NULL",
+                (conversation_id, user_id),
+            )
+            edit_enabled = cursor.fetchone() is not None
         # Get messages for conversation (even if conversation is soft-deleted)
         # This allows access to historical data for analytics
-        cursor.execute("""
+        query = """
             SELECT 
                 id,
                 role,
@@ -272,13 +410,20 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 image_url,
                 mode,
                 response_time_seconds,
-                file_urls
+                file_urls,
+                pending_id
             FROM conversation_logs
             WHERE conversation_id = %s
-            ORDER BY timestamp ASC, id ASC
-        """, (conversation_id,))
+        """
+        params = (conversation_id,)
+        if user_id is not None:
+            query += " AND user_id = %s"
+            params += (user_id,)
+        query += " ORDER BY timestamp ASC, id ASC"
+        cursor.execute(query, params)
         
         rows = cursor.fetchall()
+        edit_revision = _transcript_revision(rows) if edit_enabled else None
         messages = []
         
         # Convert to messages based on role
@@ -323,6 +468,8 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 messages.append(MessageResponse(
                     id=row[0],
                     role="user",
+                    edit_protocol="atomic-v1" if edit_revision and role in (None, "user") else None,
+                    edit_revision=edit_revision if role in (None, "user") else None,
                     content=row[2],
                     timestamp=row[4],
                     sources=[],

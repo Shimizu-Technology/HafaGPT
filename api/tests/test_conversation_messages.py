@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+from typing import Optional
 
 
 def _load_get_conversation_messages():
@@ -33,6 +34,7 @@ def _load_get_conversation_messages():
             self.error_messages.append(message)
 
     namespace = {
+        "Optional": Optional,
         "MessagesResponse": FakeMessagesResponse,
         "MessageResponse": FakeMessageResponse,
         "SourceInfo": FakeSourceInfo,

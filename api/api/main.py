@@ -23,6 +23,7 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from collections import defaultdict
+from collections.abc import AsyncIterator, Iterator
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import json
@@ -91,7 +92,11 @@ from .models import (
     SharedConversationResponse,
     ShareInfoResponse
 )
-from .chatbot_service import get_chatbot_response, get_chatbot_response_stream, cancel_pending_message
+from .chatbot_service import (
+    get_chatbot_response, get_chatbot_response_stream, cancel_pending_message,
+    is_message_cancelled, cleanup_cancelled_message, conversation_rows_to_history,
+)
+from .atomic_regeneration import atomic_regeneration_events
 from . import conversations
 from .spaced_repetition import (
     calculate_sm2 as _calculate_sm2,
@@ -1748,7 +1753,7 @@ async def init_user_data(
             
             if conversation_exists:
                 # Get messages for this conversation
-                messages_response = conversations.get_conversation_messages(active_conversation_id)
+                messages_response = conversations.get_conversation_messages(active_conversation_id, user_id=user_id)
                 messages_list = messages_response.messages
                 validated_conversation_id = active_conversation_id
                 logger.info(f"✅ Loaded {len(messages_list)} messages for conversation: {active_conversation_id}")
@@ -1797,7 +1802,7 @@ async def get_conversation_messages_endpoint(
             raise HTTPException(status_code=404, detail="Conversation not found")
 
         # Get messages
-        messages = conversations.get_conversation_messages(conversation_id)
+        messages = conversations.get_conversation_messages(conversation_id, user_id=user_id)
         
         logger.info(f"Retrieved {len(messages.messages)} messages for conversation: {conversation_id}")
         return messages
@@ -1872,6 +1877,154 @@ async def delete_conversation_endpoint(
     except Exception as e:
         logger.error(f"Failed to delete conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/conversations/{conversation_id}/messages/{message_id}/regenerate", tags=["Conversations"])
+async def regenerate_conversation_message(
+    conversation_id: str,
+    message_id: int,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+    message: Optional[str] = Form(None),
+    mode: Optional[str] = Form(None),
+    session_id: Optional[str] = Form(None),
+    body_conversation_id: Optional[str] = Form(None, alias="conversation_id"),
+    pending_id: Optional[str] = Form(None),
+    edit_revision: Optional[str] = Form(None),
+    skill_level: Optional[str] = Form(None),
+    intent: Optional[str] = Form(None),
+    learning_topic_id: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    files: List[UploadFile] = File(default=[]),
+) -> StreamingResponse:
+    """Generate an owned edit and commit its complete replacement atomically."""
+    user_id = await verify_user(authorization)
+    if 'application/json' in request.headers.get('content-type', ''):
+        body = await request.json()
+        message = body.get('message')
+        mode = body.get('mode', 'english')
+        session_id = body.get('session_id')
+        body_conversation_id = body.get('conversation_id')
+        pending_id = body.get('pending_id')
+        edit_revision = body.get('edit_revision')
+        skill_level = body.get('skill_level')
+        intent = body.get('intent')
+        learning_topic_id = body.get('learning_topic_id')
+        files = []
+        file = None
+    elif file and file.filename:
+        files = [file] + list(files)
+    if body_conversation_id is not None and body_conversation_id != conversation_id:
+        raise HTTPException(status_code=400, detail="Conversation ID does not match the edit route")
+    if not isinstance(message, str) or not message.strip():
+        raise HTTPException(status_code=400, detail="Message is required")
+    mode = mode or 'english'
+    if mode not in ('english', 'chamorro', 'learn'):
+        raise HTTPException(status_code=400, detail="Invalid chat mode")
+    if skill_level is not None and skill_level not in ('beginner', 'intermediate', 'advanced'):
+        raise HTTPException(status_code=400, detail="Invalid skill level")
+    from api.tutor_intent import normalize_tutor_intent
+    try:
+        intent = normalize_tutor_intent(intent)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    if learning_topic_id is not None and (not isinstance(learning_topic_id, str) or len(learning_topic_id) > 160):
+        raise HTTPException(status_code=400, detail="Invalid learning topic")
+    if not isinstance(pending_id, str) or not pending_id or len(pending_id) > 200:
+        raise HTTPException(status_code=400, detail="A pending message ID is required")
+    snapshot = await run_in_threadpool(conversations.get_regeneration_snapshot, conversation_id, message_id, user_id)
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="Conversation message not found")
+    if not isinstance(edit_revision, str) or edit_revision != snapshot.revision:
+        raise HTTPException(status_code=409, detail="This conversation changed. Reopen it before editing.")
+    if len(files) > MAX_UPLOAD_FILES:
+        raise HTTPException(status_code=400, detail=f"Maximum {MAX_UPLOAD_FILES} files allowed")
+    prepared_files: list[dict[str, Any]] = []
+    images: list[dict[str, Any]] = []
+    documents: list[str] = []
+    total_bytes = 0
+    for uploaded in files:
+        if not uploaded.filename:
+            continue
+        try:
+            data = await read_upload_with_limit(uploaded)
+            total_bytes += len(data)
+            if total_bytes > MAX_UPLOAD_TOTAL_BYTES:
+                raise ValueError(f"Files exceed the {MAX_UPLOAD_TOTAL_SIZE_MB}MB combined upload limit")
+            processed = await run_in_threadpool(process_uploaded_file, data, uploaded.content_type, uploaded.filename)
+            prepared_files.append({"data": data, "filename": safe_upload_filename(uploaded.filename), "content_type": uploaded.content_type})
+            if processed.get("image_base64"):
+                images.append({"data": processed["image_base64"], "content_type": uploaded.content_type})
+            if processed.get("text_content"):
+                documents.append(f"[{uploaded.filename}]\n{processed['text_content']}")
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+    full_message = message
+    if documents:
+        full_message += "\n\n--- Document Content ---\n" + "\n\n".join(documents)[:50000]
+    history = await run_in_threadpool(conversation_rows_to_history, conversations.regeneration_prefix_rows(snapshot))
+    aborted = threading.Event()
+    committed = threading.Event()
+
+    def cancelled() -> bool:
+        return aborted.is_set() or is_message_cancelled(pending_id)
+
+    def upload_files() -> list[dict[str, Any]]:
+        stored = []
+        for attachment in prepared_files:
+            if cancelled():
+                raise conversations.RegenerationCancelled()
+            reference = upload_file_to_s3(attachment["data"], attachment["filename"], attachment["content_type"])
+            if not reference:
+                raise RuntimeError("Private attachment persistence unavailable")
+            stored.append({"url": reference, "filename": attachment["filename"], "content_type": attachment["content_type"],
+                           "type": "image" if attachment["content_type"].startswith("image/") else "document"})
+        return stored
+
+    def replace(response: str, metadata: dict[str, Any], attachments: list[dict[str, Any]]) -> int:
+        persisted_id = conversations.replace_regenerated_exchange(
+            snapshot, message, response, mode, metadata.get("sources", []), bool(metadata.get("used_rag")),
+            bool(metadata.get("used_web_search")), metadata.get("response_time", 0), session_id, pending_id,
+            attachments, cancelled,
+        )
+        committed.set()
+        return persisted_id
+
+    async def generate_sse() -> AsyncIterator[str]:
+        events: queue.Queue = queue.Queue()
+        finished = threading.Event()
+
+        def produce() -> None:
+            try:
+                def generate() -> Iterator[dict[str, Any]]:
+                    return get_chatbot_response_stream(
+                        message=full_message, original_message=message, mode=mode, session_id=session_id,
+                        user_id=user_id, conversation_id=conversation_id, image_inputs=images,
+                        pending_id=pending_id, skill_level=skill_level, intent=intent,
+                        learning_topic_id=learning_topic_id, history_override=history, persist=False,
+                    )
+                for event in atomic_regeneration_events(generate, upload_files, replace, cancelled):
+                    events.put(event)
+            finally:
+                cleanup_cancelled_message(pending_id)
+                finished.set()
+
+        threading.Thread(target=produce, daemon=True).start()
+        try:
+            async for frame in queue_sse_events(events, finished):
+                if await request.is_disconnected():
+                    aborted.set()
+                    return
+                yield frame
+        finally:
+            if not committed.is_set():
+                aborted.set()
+                if not finished.is_set():
+                    cancel_pending_message(pending_id)
+
+    return StreamingResponse(generate_sse(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+    })
 
 
 @app.get("/api/conversations/{conversation_id}/messages/{message_id}/files/{file_index}", tags=["Conversations"])

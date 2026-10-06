@@ -171,7 +171,7 @@ def test_get_conversation_messages_endpoint_allows_owned_soft_deleted_history():
     endpoint.__globals__["verify_user"] = fake_verify_user
     endpoint.__globals__["conversations"] = SimpleNamespace(
         conversation_belongs_to_user=fake_belongs_to_user,
-        get_conversation_messages=lambda conversation_id: expected_messages,
+        get_conversation_messages=lambda conversation_id, user_id=None: expected_messages,
     )
 
     result = asyncio.run(endpoint("conv-123", "Bearer token"))
