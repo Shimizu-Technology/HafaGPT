@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession, useUser } from '@clerk/clerk-react';
+import { useAccountRequest, useAccountMutation } from './useAccountRequest';
 import { FREE_TIER_LIMITS } from '../lib/planConfig';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -128,63 +129,27 @@ export function useSubscriptionStatus(enabled: boolean = true) {
  * Premium users have limits set to -1 (unlimited).
  */
 export function useUsage(enabled: boolean = true) {
-  const { getToken, isSignedIn } = useAuth();
-
+  const owner = useAccountRequest();
   return useQuery<UsageData>({
-    queryKey: ['usage-today'],
-    queryFn: async () => {
-      const token = await getToken();
-      
-      const response = await fetch(`${API_URL}/api/usage/today`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch usage data');
-      }
-
-      return response.json();
-    },
-    enabled: enabled && isSignedIn,
-    staleTime: 1000 * 30, // 30 seconds - usage can change frequently
+    queryKey: ['usage-today', owner.ownerId],
+    queryFn: ({ signal }) => owner.request(`${API_URL}/api/usage/today`, { signal }),
+    enabled: enabled && !!owner.ownerId,
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 }
 
-/**
- * Hook to increment usage counter.
- * 
- * Call this before allowing a user to use a feature.
- * Returns whether the action was allowed and how many uses remain.
- */
+/** Increment usage only for the account that initiated the action. */
 export function useIncrementUsage() {
-  const { getToken } = useAuth();
   const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (usageType: UsageType): Promise<UsageIncrementResult> => {
-      const token = await getToken();
-      
-      const response = await fetch(`${API_URL}/api/usage/increment/${usageType}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to increment usage');
-      }
-
-      return response.json();
+  return useAccountMutation(
+    (usageType: UsageType, owner): Promise<UsageIncrementResult> => owner.request(
+      `${API_URL}/api/usage/increment/${usageType}`, { method: 'POST' },
+    ),
+    (_, __, owner) => {
+      void queryClient.invalidateQueries({ queryKey: ['usage-today', owner.ownerId] });
     },
-    onSuccess: () => {
-      // Invalidate usage query to refetch updated counts
-      queryClient.invalidateQueries({ queryKey: ['usage-today'] });
-    },
-  });
+  );
 }
 
 /**
@@ -194,6 +159,7 @@ export function useIncrementUsage() {
  */
 export function useSubscription() {
   const { isSignedIn } = useAuth();
+  const owner = useAccountRequest();
   const { data: usage, isLoading: usageLoading } = useUsage(isSignedIn);
   const { data: status, isLoading: statusLoading } = useSubscriptionStatus(isSignedIn);
   const { data: promo } = usePromoStatus();
@@ -264,14 +230,10 @@ export function useSubscription() {
    */
   const tryUse = async (type: UsageType): Promise<boolean> => {
     if (!isSignedIn) return false;
-    if (isPremium) {
-      // Still increment for tracking, but always allow
-      await incrementMutation.mutateAsync(type);
-      return true;
-    }
-    
+    if (!owner.isCurrent()) throw new Error('The signed-in account changed.');
     const result = await incrementMutation.mutateAsync(type);
-    return result.success;
+    if (!owner.isCurrent()) throw new Error('The signed-in account changed.');
+    return isPremium || result.success;
   };
 
   return {

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Message } from './Message';
 
@@ -67,4 +67,61 @@ describe('streaming Markdown identity', () => {
     expect(screen.getByRole('table')).toBe(table);
     expect(paragraph.isConnected).toBe(true);
   });
+});
+
+
+describe('edit acceptance', () => {
+  it('retains the edit on rejection and closes only after an accepted update', async () => {
+    const onEdit = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    render(<Message role="user" content="Original question" canEdit onEdit={onEdit} messageIndex={2} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Keep this edited question' } });
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' })));
+    expect(screen.getByRole('textbox')).toHaveValue('Keep this edited question');
+    expect(screen.getByRole('alert')).toHaveTextContent('Your edit is still here.');
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' })));
+    expect(onEdit.mock.calls).toEqual([['Keep this edited question', 2], ['Keep this edited question', 2]]);
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+  });
+  it('blocks repeated submission while awaiting the mutation and keeps a thrown failure editable', async () => {
+    let reject!: (reason: Error) => void;
+    const onEdit = vi.fn(() => new Promise<boolean>((_resolve, failure) => { reject = failure; }));
+    render(<Message role="user" content="Original question" canEdit onEdit={onEdit} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+    const textbox = screen.getByRole('textbox');
+    fireEvent.change(textbox, { target: { value: 'Edited question' } });
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+    fireEvent.keyDown(textbox, { key: 'Enter' });
+    expect(onEdit).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Updating…' })).toBeDisabled();
+    expect(textbox).toHaveAttribute('readonly');
+    await act(async () => reject(new Error('offline')));
+    expect(textbox).toHaveValue('Edited question');
+    expect(textbox).not.toHaveAttribute('readonly');
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not update this message.');
+  });
+});
+
+
+it('identifies unavailable files and asks before regenerating without them', async () => {
+  const onEdit = vi.fn().mockResolvedValue(true);
+  render(<Message role="user" content="Original" canEdit onEdit={onEdit} messageIndex={1} unavailableAttachments={['old-note.txt']} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Updated' } });
+  expect(screen.getByRole('alert')).toHaveTextContent('old-note.txt');
+  expect(onEdit).not.toHaveBeenCalled();
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Regenerate without these attachments' })));
+  expect(onEdit).toHaveBeenCalledWith('Updated', 1, true);
+});
+
+it('keeps a later edit failure visible alongside an unavailable-file warning', async () => {
+  const onEdit = vi.fn().mockResolvedValue(false);
+  render(<Message role="user" content="Original" canEdit onEdit={onEdit} unavailableAttachments={['old-note.txt']} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Keep my edit' } });
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Regenerate without these attachments' })));
+  expect(screen.getByRole('textbox')).toHaveValue('Keep my edit');
+  const alerts = screen.getAllByRole('alert').map(element => element.textContent);
+  expect(alerts.some(text => text?.includes('Your edit is still here.'))).toBe(true);
+  expect(alerts.some(text => text?.includes('old-note.txt'))).toBe(true);
 });

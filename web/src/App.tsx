@@ -147,7 +147,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
             </p>
             <button
               type="button"
-              className="mt-5 min-h-11 rounded-xl bg-coral-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coral-600 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coral-800 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
               onClick={() => window.location.reload()}
             >
               Refresh page

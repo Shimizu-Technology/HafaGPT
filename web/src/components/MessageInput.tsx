@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
+import { useCallback, useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
 import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus, GraduationCap, Sparkles } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
 
@@ -26,7 +26,8 @@ const MAX_TOTAL_FILE_SIZE_MB = 50;
 const MAX_TOTAL_FILE_SIZE_BYTES = MAX_TOTAL_FILE_SIZE_MB * 1024 * 1024;
 
 interface MessageInputProps {
-  onSend: (message: string, files?: File[]) => void;
+  onSend: (message: string, files?: File[]) => Promise<boolean> | boolean | void;
+  completedSend?: { message: string; files?: File[] };
   disabled?: boolean;
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
@@ -42,10 +43,17 @@ interface FileWithPreview {
   id: string; // Unique ID for React keys
 }
 
-export function MessageInput({ onSend, disabled, inputRef, placeholder, contextLabel, onDisabledClick, loading, onCancel }: MessageInputProps) {
+export function MessageInput({ onSend, completedSend, disabled, inputRef, placeholder, contextLabel, onDisabledClick, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const draftRevision = useRef(0);
+  const pendingPreviews = useRef<FileWithPreview[]>([]);
+  const lastSubmission = useRef<{ input: string; message: string; files?: File[]; revision: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
+  const draftRef = useRef({ input, selectedFiles });
+  draftRef.current = { input, selectedFiles };
   const [fileError, setFileError] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
@@ -85,6 +93,8 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     if (isDesktop && textareaRef.current && !disabled) {
       // Small delay to ensure component is fully rendered
       const timer = setTimeout(() => {
+        const active = document.activeElement;
+        if (active !== textareaRef.current && active instanceof HTMLElement && active.matches('textarea, input, [contenteditable="true"]')) return;
         textareaRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
@@ -98,7 +108,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
         recognitionRef.current.abort();
       }
       // Cleanup all preview URLs
-      selectedFilesRef.current.forEach(f => {
+      [...selectedFilesRef.current, ...pendingPreviews.current].forEach(f => {
         if (f.preview) URL.revokeObjectURL(f.preview);
       });
     };
@@ -208,6 +218,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     );
 
     if (newFiles.length > 0) {
+      draftRevision.current += 1;
       setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
@@ -238,6 +249,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
   };
 
   const removeFile = (id: string) => {
+    draftRevision.current += 1;
     setSelectedFiles(prev => {
       const fileToRemove = prev.find(f => f.id === id);
       if (fileToRemove?.preview) {
@@ -246,17 +258,6 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
       return prev.filter(f => f.id !== id);
     });
     setFileError(null);
-  };
-
-  const clearAllFiles = () => {
-    selectedFiles.forEach(f => {
-      if (f.preview) URL.revokeObjectURL(f.preview);
-    });
-    setSelectedFiles([]);
-    setFileError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   // Helper to get file type icon and label
@@ -294,6 +295,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       // Append to existing text with a space if there's already content
+      draftRevision.current += 1;
       setInput(prev => prev ? `${prev} ${transcript}` : transcript);
     };
 
@@ -324,8 +326,22 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     }
   };
 
-  const handleSend = () => {
-    if ((input.trim() || selectedFiles.length > 0) && !disabled) {
+  const clearSubmittedDraft = useCallback((submitted: { input: string; files?: File[]; revision: number }) => {
+    const current = draftRef.current;
+    // Text and attachments form one draft. Retrying an old attempt cannot
+    // partially clear a newer message that still happens to use the same files.
+    if (draftRevision.current !== submitted.revision || current.input !== submitted.input || current.selectedFiles.length !== (submitted.files || []).length
+      || !current.selectedFiles.every((item, index) => item.file === submitted.files?.[index])) return;
+    draftRevision.current += 1;
+    setInput('');
+    current.selectedFiles.forEach(item => { if (item.preview) URL.revokeObjectURL(item.preview); });
+    setSelectedFiles([]);
+    setFileError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const handleSend = async () => {
+    if ((input.trim() || selectedFiles.length > 0) && !disabled && !submittingRef.current) {
       // Default message based on file types
       let defaultMessage = 'What does this say?';
       if (selectedFiles.length > 0) {
@@ -352,12 +368,37 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
       // Haptic feedback on send (mobile)
       triggerHaptic('light');
       
-      onSend(input.trim() || defaultMessage, files);
+      const message = input.trim() || defaultMessage;
+      const submitted = { input, message, files, revision: draftRevision.current };
+      const previews = selectedFiles;
+      lastSubmission.current = submitted;
+      submittingRef.current = true;
+      setSubmitting(true);
+      // Start a fresh draft immediately. Keep its predecessor privately until
+      // accepted, so rejection can restore it without overwriting newer typing.
+      const clearedRevision = ++draftRevision.current;
+      pendingPreviews.current = previews;
       setInput('');
-      clearAllFiles();
-      // Reset height after sending
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
+      setSelectedFiles([]);
+      setFileError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      let accepted = false;
+      try {
+        accepted = (await onSend(message, files)) !== false;
+      } catch {
+        setFileError('Your message was not sent. Please try again.');
+      } finally {
+        if (!accepted && draftRevision.current === clearedRevision) {
+          submitted.revision = ++draftRevision.current;
+          setInput(submitted.input);
+          setSelectedFiles(previews);
+        } else {
+          previews.forEach(item => { if (item.preview) URL.revokeObjectURL(item.preview); });
+        }
+        pendingPreviews.current = [];
+
+        submittingRef.current = false;
+        setSubmitting(false);
       }
     }
   };
@@ -366,6 +407,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
     // Detect if mobile device (small screen or touch device)
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     
+    if (e.nativeEvent.isComposing) return;
     if (e.key === 'Enter') {
       if (isMobile) {
         // Mobile: Enter = new line (default behavior, do nothing)
@@ -379,13 +421,17 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
           handleSend();
         }
       }
-    } else if (e.key === 'Escape') {
-      setInput('');
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
     }
   };
+
+  useEffect(() => {
+    const submitted = lastSubmission.current;
+    if (!completedSend || !submitted || completedSend.message !== submitted.message) return;
+    const sameFiles = (completedSend.files || []).length === (submitted.files || []).length
+      && (completedSend.files || []).every((file, index) => file === submitted.files?.[index]);
+    if (!sameFiles) return;
+    clearSubmittedDraft(submitted);
+  }, [completedSend, clearSubmittedDraft]);
 
   const canAddMoreFiles = selectedFiles.length < MAX_FILES;
 
@@ -432,7 +478,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
             {canAddMoreFiles && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={disabled}
+                disabled={disabled || submitting}
                 className="h-20 w-20 rounded-lg border-2 border-dashed border-cream-300 dark:border-gray-600 flex flex-col items-center justify-center text-brown-500 dark:text-gray-400 hover:border-coral-400 dark:hover:border-ocean-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Add more files"
                 title={`Add more files (${MAX_FILES - selectedFiles.length} remaining)`}
@@ -473,7 +519,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
           {/* Microphone Button */}
           <button
             onClick={isListening ? stopListening : startListening}
-            disabled={disabled}
+            disabled={disabled || submitting}
             className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
               isListening
                 ? 'animate-pulse bg-red-500 text-white hover:bg-red-600'
@@ -512,9 +558,9 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => { draftRevision.current += 1; setInput(e.target.value); }}
             onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
+            onPaste={submitting ? undefined : handlePaste}
             placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}
             rows={1}
             className="min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-base leading-6 text-brown-900 placeholder-brown-400 focus:outline-none disabled:cursor-pointer dark:text-gray-100 dark:placeholder-gray-500 sm:px-3"
@@ -536,7 +582,7 @@ export function MessageInput({ onSend, disabled, inputRef, placeholder, contextL
           ) : (
             <button
               onClick={handleSend}
-              disabled={disabled || (!input.trim() && selectedFiles.length === 0)}
+              disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)}
               className="flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-xl bg-coral-600 px-3 font-medium text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-500 dark:hover:bg-ocean-600 sm:px-4"
               aria-label="Send message"
               title="Send message (Enter)"

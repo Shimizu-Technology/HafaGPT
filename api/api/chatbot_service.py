@@ -965,79 +965,83 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
         cursor.close()
         conn.close()
         
-        # Build conversation history (already in chronological order)
-        # Preserve every uploaded image. Request routing below chooses a vision
-        # model even when only a historical message contains images.
-        history = []
-        for user_msg, bot_msg, img_url, file_urls, timestamp in rows:
-            if isinstance(file_urls, str):
-                try:
-                    file_urls = json.loads(file_urls)
-                except ValueError:
-                    file_urls = []
-            attachments = file_urls if isinstance(file_urls, list) else []
-            image_references = []
-            for attachment in attachments:
-                if not isinstance(attachment, dict):
-                    continue
-                reference = attachment.get("url")
-                if reference and (
-                    attachment.get("type") == "image"
-                    or str(attachment.get("content_type") or "").startswith("image/")
-                    or urlsplit(reference).path.lower().endswith(VALID_IMAGE_EXTENSIONS)
-                ):
-                    image_references.append(reference)
-            if img_url and urlsplit(img_url).path.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                image_references.append(img_url)
+        return conversation_rows_to_history(rows)
 
-            image_parts = []
-            unavailable_images = 0
-            for reference in dict.fromkeys(image_references):
-                try:
-                    resolved = resolve_private_upload_reference(reference)
-                except Exception:
-                    resolved = None
-                # Stored attachment metadata already identifies an image. The
-                # legacy image_url field was checked by suffix above.
-                if resolved:
-                    image_parts.append({
-                        "type": "image_url",
-                        "image_url": {"url": resolved, "detail": "low"},
-                    })
-                else:
-                    unavailable_images += 1
-            has_user_text = bool(user_msg and user_msg.strip())
-
-            # Defensive guard for malformed historical rows. If we have neither
-            # user text nor a valid image, don't fabricate a placeholder user turn.
-            if not has_user_text and not image_references:
-                continue
-
-            text_content = user_msg or "What does this say?"
-            if unavailable_images:
-                text_content += (
-                    f"\n[{unavailable_images} earlier image(s) are unavailable; "
-                    "ask the user to re-upload them before relying on their contents.]"
-                )
-            if image_parts:
-                history.append({
-                    "role": "user",
-                    "content": [{"type": "text", "text": text_content}, *image_parts],
-                })
-            else:
-                history.append({"role": "user", "content": text_content})
-            
-            # Skip blank assistant messages. Some historical rows can contain
-            # NULL/empty bot responses, which OpenAI-compatible APIs reject.
-            if bot_msg and bot_msg.strip():
-                history.append({"role": "assistant", "content": bot_msg})
-        
-        return history
-        
     except Exception as e:
         # Don't break the app if history retrieval fails
         print(f"⚠️  Failed to retrieve conversation history: {e}")
         return []
+
+
+
+def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
+    """Format persisted row contents without introducing tentative edited turns."""
+    history = []
+    for user_msg, bot_msg, img_url, file_urls, timestamp in rows:
+        if isinstance(file_urls, str):
+            try:
+                file_urls = json.loads(file_urls)
+            except ValueError:
+                file_urls = []
+        attachments = file_urls if isinstance(file_urls, list) else []
+        image_references = []
+        for attachment in attachments:
+            if not isinstance(attachment, dict):
+                continue
+            reference = attachment.get("url")
+            if reference and (
+                attachment.get("type") == "image"
+                or str(attachment.get("content_type") or "").startswith("image/")
+                or urlsplit(reference).path.lower().endswith(VALID_IMAGE_EXTENSIONS)
+            ):
+                image_references.append(reference)
+        if img_url and urlsplit(img_url).path.lower().endswith(VALID_IMAGE_EXTENSIONS):
+            image_references.append(img_url)
+
+        image_parts = []
+        unavailable_images = 0
+        for reference in dict.fromkeys(image_references):
+            try:
+                resolved = resolve_private_upload_reference(reference)
+            except Exception:
+                resolved = None
+            # Stored attachment metadata already identifies an image. The
+            # legacy image_url field was checked by suffix above.
+            if resolved:
+                image_parts.append({
+                    "type": "image_url",
+                    "image_url": {"url": resolved, "detail": "low"},
+                })
+            else:
+                unavailable_images += 1
+        has_user_text = bool(user_msg and user_msg.strip())
+
+        # Defensive guard for malformed historical rows. If we have neither
+        # user text nor a valid image, don't fabricate a placeholder user turn.
+        if not has_user_text and not image_references:
+            continue
+
+        text_content = user_msg or "What does this say?"
+        if unavailable_images:
+            text_content += (
+                f"\n[{unavailable_images} earlier image(s) are unavailable; "
+                "ask the user to re-upload them before relying on their contents.]"
+            )
+        if image_parts:
+            history.append({
+                "role": "user",
+                "content": [{"type": "text", "text": text_content}, *image_parts],
+            })
+        else:
+            history.append({"role": "user", "content": text_content})
+
+        # Skip blank assistant messages. Some historical rows can contain
+        # NULL/empty bot responses, which OpenAI-compatible APIs reject.
+        if bot_msg and bot_msg.strip():
+            history.append({"role": "assistant", "content": bot_msg})
+
+    return history
+
 
 
 def log_conversation(
@@ -1307,7 +1311,8 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
                               conversation_id: str | None, image_url: str | None,
                               file_urls: list[dict] | None, pending_id: str | None,
                               start_time: float, past_messages: list[dict],
-                              skill_level: str | None, intent: str | None = None) -> Iterator[dict]:
+                              skill_level: str | None, intent: str | None = None,
+                              persist: bool = True) -> Iterator[dict]:
     """Persist the same validated page response for streaming and ordinary requests."""
     client, model = get_client_for_request(has_image=True)
     effective_message, image_translation = build_image_translation_query(message, image_context)
@@ -1325,6 +1330,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     text_parts = []
     sources = []
     incomplete = False
+    generation_complete = False
     was_cancelled = False
 
     def complete(**kwargs: Any) -> Any:
@@ -1343,21 +1349,26 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             sources = format_source_citations(event["sources"])
             event = {**event, "sources": sources, "used_rag": bool(sources)}
             incomplete = event["translation_incomplete"]
+            generation_complete = event.get("generation_complete") is True
         elif event["type"] == "cancelled":
             was_cancelled = True
         yield event
     response_time = time.time() - start_time
-    log_conversation(
-        user_message=message_for_logging,
-        bot_response="[Message was cancelled by user]" if was_cancelled else "".join(text_parts),
-        mode=mode, sources=sources, used_rag=bool(sources), used_web_search=False,
-        response_time=response_time, session_id=session_id, user_id=user_id,
-        conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
-        pending_id=pending_id,
-    )
-    cleanup_cancelled_message(pending_id)
+    if persist:
+        log_conversation(
+            user_message=message_for_logging,
+            bot_response="[Message was cancelled by user]" if was_cancelled else "".join(text_parts),
+            mode=mode, sources=sources, used_rag=bool(sources), used_web_search=False,
+            response_time=response_time, session_id=session_id, user_id=user_id,
+            conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
+            pending_id=pending_id,
+        )
+        cleanup_cancelled_message(pending_id)
     if not was_cancelled:
-        yield {"type": "done", "response_time": response_time, "translation_incomplete": incomplete}
+        done = {"type": "done", "response_time": response_time, "translation_incomplete": incomplete}
+        if not persist:
+            done["complete"] = generation_complete
+        yield done
 
 
 def get_chatbot_response(
@@ -1776,7 +1787,9 @@ def get_chatbot_response_stream(
     skill_level: str = None,  # User's skill level for personalized responses
     intent: str | None = None,
     learning_topic_id: str | None = None,
-):
+    history_override: list[dict] | None = None,
+    persist: bool = True,
+) -> Iterator[dict]:
     """
     Streaming version of get_chatbot_response.
     
@@ -1786,6 +1799,8 @@ def get_chatbot_response_stream(
         message: Full message to send to LLM (may include document content)
         original_message: User's original message (for logging/display). If None, uses message.
         skill_level: User's skill level ("beginner", "intermediate", "advanced") for personalized responses
+        history_override: Already validated prefix for an atomic edit; None loads normal history.
+        persist: False defers all logging and cancellation cleanup to the atomic edit owner.
     
     Yields:
         dict: Either a chunk {"type": "chunk", "content": "..."} 
@@ -1805,20 +1820,20 @@ def get_chatbot_response_stream(
     # Check for early cancellation
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        cleanup_cancelled_message(pending_id)
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
 
     # Fetch history before retrieval so ambiguous follow-ups keep the user's
     # explicit prior topic. The same list is reused below for the model prompt.
-    past_messages = (
-        get_conversation_history(conversation_id)
-        if conversation_id
-        else []
+    past_messages = history_override if history_override is not None else (
+        get_conversation_history(conversation_id) if conversation_id else []
     )
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        cleanup_cancelled_message(pending_id)
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
@@ -1829,7 +1844,7 @@ def get_chatbot_response_stream(
             mode=mode, session_id=session_id, user_id=user_id,
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id, start_time=start_time,
-            past_messages=past_messages, skill_level=skill_level, intent=intent,
+            past_messages=past_messages, skill_level=skill_level, intent=intent, persist=persist,
         )
         yield from image_events
         return
@@ -1854,7 +1869,8 @@ def get_chatbot_response_stream(
     if use_web:
         if is_message_cancelled(pending_id):
             yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-            cleanup_cancelled_message(pending_id)
+            if persist:
+                cleanup_cancelled_message(pending_id)
             return
         search_result = web_search(message, search_type=search_type, max_results=3)
         if search_result["success"] and search_result["results"]:
@@ -1864,7 +1880,8 @@ def get_chatbot_response_stream(
     # Check for cancellation before RAG
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        cleanup_cancelled_message(pending_id)
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     
     # Get RAG context with token limit
@@ -1960,7 +1977,8 @@ def get_chatbot_response_stream(
     # Check for cancellation before GPT call
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        cleanup_cancelled_message(pending_id)
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     
     # Format sources for metadata
@@ -1993,21 +2011,22 @@ def get_chatbot_response_stream(
         
         # IMPORTANT: Save the user message even when we hit token limit
         # This ensures the message is never lost
-        log_conversation(
-            user_message=message_for_logging,
-            bot_response=f"[Token limit exceeded: {total_input_tokens} tokens]",
-            mode=mode,
-            sources=[],
-            used_rag=used_rag,
-            used_web_search=web_results_used,
-            response_time=time.time() - start_time,
-            session_id=session_id,
-            user_id=user_id,
-            conversation_id=conversation_id,
-            image_url=image_url,
-            file_urls=file_urls,
-            pending_id=pending_id,
-        )
+        if persist:
+            log_conversation(
+                user_message=message_for_logging,
+                bot_response=f"[Token limit exceeded: {total_input_tokens} tokens]",
+                mode=mode,
+                sources=[],
+                used_rag=used_rag,
+                used_web_search=web_results_used,
+                response_time=time.time() - start_time,
+                session_id=session_id,
+                user_id=user_id,
+                conversation_id=conversation_id,
+                image_url=image_url,
+                file_urls=file_urls,
+                pending_id=pending_id,
+            )
         
         yield {"type": "error", "content": error_message}
         return
@@ -2035,22 +2054,24 @@ def get_chatbot_response_stream(
                     if is_message_cancelled(pending_id):
                         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                         # Log partial response as cancelled
-                        log_conversation(
-                            user_message=message_for_logging,  # Use original message for logging
-                            bot_response="[Message was cancelled by user]",
-                            mode=mode,
-                            sources=formatted_sources,
-                            used_rag=used_rag,
-                            used_web_search=web_results_used,
-                            response_time=time.time() - start_time,
-                            session_id=session_id,
-                            user_id=user_id,
-                            conversation_id=conversation_id,
-                            image_url=image_url,
-                            file_urls=file_urls,
-                            pending_id=pending_id,
-                        )
-                        cleanup_cancelled_message(pending_id)
+                        if persist:
+                            log_conversation(
+                                user_message=message_for_logging,  # Use original message for logging
+                                bot_response="[Message was cancelled by user]",
+                                mode=mode,
+                                sources=formatted_sources,
+                                used_rag=used_rag,
+                                used_web_search=web_results_used,
+                                response_time=time.time() - start_time,
+                                session_id=session_id,
+                                user_id=user_id,
+                                conversation_id=conversation_id,
+                                image_url=image_url,
+                                file_urls=file_urls,
+                                pending_id=pending_id,
+                            )
+                        if persist:
+                            cleanup_cancelled_message(pending_id)
                         return
 
                     choices = getattr(chunk, "choices", None) or []
@@ -2123,24 +2144,26 @@ def get_chatbot_response_stream(
         
         # IMPORTANT: Save the user message even when LLM fails
         # This ensures the message is never lost
-        log_conversation(
-            user_message=message_for_logging,
-            bot_response=f"[Error: {str(e)[:200]}]",  # Truncate error for DB
-            mode=mode,
-            sources=[],
-            used_rag=used_rag,
-            used_web_search=web_results_used,
-            response_time=time.time() - start_time,
-            session_id=session_id,
-            user_id=user_id,
-            conversation_id=conversation_id,
-            image_url=image_url,
-            file_urls=file_urls,
-            pending_id=pending_id,
-        )
+        if persist:
+            log_conversation(
+                user_message=message_for_logging,
+                bot_response=f"[Error: {str(e)[:200]}]",  # Truncate error for DB
+                mode=mode,
+                sources=[],
+                used_rag=used_rag,
+                used_web_search=web_results_used,
+                response_time=time.time() - start_time,
+                session_id=session_id,
+                user_id=user_id,
+                conversation_id=conversation_id,
+                image_url=image_url,
+                file_urls=file_urls,
+                pending_id=pending_id,
+            )
         
         yield {"type": "error", "content": error_message}
-        cleanup_cancelled_message(pending_id)
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     
     logger.info("CHAT_COMPLETION model=%s finish=%s", request_model, finish_reason)
@@ -2157,26 +2180,28 @@ def get_chatbot_response_stream(
     response_time = time.time() - start_time
 
     # Log the complete conversation (use original message for display, not doc-augmented)
-    log_conversation(
-        user_message=message_for_logging,  # Use original message for logging
-        bot_response=full_response,
-        mode=mode,
-        sources=formatted_sources,
-        used_rag=used_rag,
-        used_web_search=web_results_used,
-        response_time=response_time,
-        session_id=session_id,
-        user_id=user_id,
-        conversation_id=conversation_id,
-        image_url=image_url,
-        file_urls=file_urls,
-        pending_id=pending_id,
-    )
+    if persist:
+        log_conversation(
+            user_message=message_for_logging,  # Use original message for logging
+            bot_response=full_response,
+            mode=mode,
+            sources=formatted_sources,
+            used_rag=used_rag,
+            used_web_search=web_results_used,
+            response_time=response_time,
+            session_id=session_id,
+            user_id=user_id,
+            conversation_id=conversation_id,
+            image_url=image_url,
+            file_urls=file_urls,
+            pending_id=pending_id,
+        )
     
-    cleanup_cancelled_message(pending_id)
+    if persist:
+        cleanup_cancelled_message(pending_id)
     
     # Send completion signal with response time
-    yield {
-        "type": "done",
-        "response_time": response_time
-    }
+    done = {"type": "done", "response_time": response_time}
+    if not persist:
+        done["complete"] = finish_reason == "stop"
+    yield done

@@ -110,13 +110,68 @@ export function useChatbot() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const { user } = useUser();
-  const { getToken } = useAuth();
+  const { user, isLoaded } = useUser();
+  const { getToken, isSignedIn, userId: authUserId, sessionId: authSessionId } = useAuth();
+  const ownerId = isSignedIn === false ? null : authUserId || user?.id || null;
+  const ownerRef = useRef({ ownerId, authSessionId });
+  if (ownerRef.current.ownerId !== ownerId || ownerRef.current.authSessionId !== authSessionId) {
+    ownerRef.current = { ownerId, authSessionId };
+  }
+  const owner = ownerRef.current;
+  const mounted = useRef(true);
   
-  // AbortController for cancelling requests
-  const abortControllerRef = useRef<AbortController | null>(null);
-  // Track current pending_id for cancel requests
-  const pendingIdRef = useRef<string | null>(null);
+  type Request = {
+    controller: AbortController;
+    pendingId: string;
+    owner: typeof owner;
+    token: string | null;
+    sent: boolean;
+  };
+  const requestRef = useRef<Request | null>(null);
+
+  const isCurrent = (request: Request) => mounted.current
+    && ownerRef.current === request.owner && requestRef.current === request;
+  const assertCurrent = (request: Request) => {
+    if (!isCurrent(request) || request.controller.signal.aborted) throw new CancelledError();
+  };
+  const startRequest = (): Request => {
+    if (!mounted.current || ownerRef.current !== owner) throw new CancelledError();
+    requestRef.current?.controller.abort();
+    const request = {
+      controller: new AbortController(), pendingId: generatePendingId(), owner,
+      token: null, sent: false,
+    };
+    requestRef.current = request;
+    setLoading(true);
+    setError(null);
+    return request;
+  };
+  const tokenForRequest = async (request: Request) => {
+    assertCurrent(request);
+    if (isLoaded === false || (user && user.id !== request.owner.ownerId)) {
+      throw new Error('Wait for sign-in to finish before sending a message.');
+    }
+    if (!request.owner.ownerId) {
+      if (isSignedIn === true) throw new Error('Sign in again before sending a message.');
+      return null;
+    }
+    const token = await getToken();
+    assertCurrent(request);
+    if (!token) throw new Error('Sign in again before sending a message.');
+    request.token = token;
+    return token;
+  };
+
+  useEffect(() => {
+    mounted.current = true;
+    setLoading(false);
+    setError(null);
+    return () => {
+      mounted.current = false;
+      requestRef.current?.controller.abort();
+      requestRef.current = null;
+    };
+  }, [owner]);
 
   // Initialize session (check localStorage first)
   useEffect(() => {
@@ -133,31 +188,22 @@ export function useChatbot() {
     }
   }, []);
 
-  // Cancel any in-progress request
+  // Capture this request before awaiting; stopping it cannot clear a replacement.
   const cancelMessage = async () => {
-    const currentPendingId = pendingIdRef.current;
-    
-    // Abort the fetch request on the client side
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    
-    // Tell the server to cancel and not save the response
-    if (currentPendingId) {
-      try {
-        await fetch(`${API_URL}/api/chat/cancel/${currentPendingId}`, {
-          method: 'POST',
-        });
-        console.log(`✅ Server notified to cancel message: ${currentPendingId}`);
-      } catch (e) {
-        // Server cancel is best-effort - don't fail if it doesn't work
-        console.warn('Could not notify server of cancellation:', e);
-      }
-      pendingIdRef.current = null;
-    }
-    
+    const request = requestRef.current;
+    if (!request || !isCurrent(request)) return;
+    request.controller.abort();
     setLoading(false);
+    if (request.sent) {
+      try {
+        await fetch(`${API_URL}/api/chat/cancel/${request.pendingId}`, {
+          method: 'POST',
+          headers: request.token ? { Authorization: `Bearer ${request.token}` } : {},
+        });
+      } catch {
+        // The client is stopped even if best-effort server cancellation fails.
+      }
+    }
   };
 
   const sendMessage = async (
@@ -168,32 +214,12 @@ export function useChatbot() {
     intent?: ChatIntent,
     learningTopicId?: string,
   ): Promise<ChatResponse> => {
-    // Cancel any existing request before starting a new one
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Create new AbortController for this request
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-    
-    // Generate unique pending_id for this request (for cancel tracking)
-    const pendingId = generatePendingId();
-    pendingIdRef.current = pendingId;
-    
-    setLoading(true);
-    setError(null);
+    const request = startRequest();
+    const signal = request.controller.signal;
+    const pendingId = request.pendingId;
 
     try {
-      // Get auth token if user is signed in
-      let token = null;
-      if (user && getToken) {
-        try {
-          token = await getToken();
-        } catch (e) {
-          console.warn('Could not get auth token:', e);
-        }
-      }
+      const token = await tokenForRequest(request);
       
       // Use FormData if file is present, otherwise JSON
       let body: FormData | string;
@@ -226,13 +252,15 @@ export function useChatbot() {
           intent,
           learning_topic_id: learningTopicId,
           session_id: sessionId,
-          user_id: user?.id || null,
+          user_id: request.owner.ownerId,
           conversation_id: conversationId,
           pending_id: pendingId, // Add pending_id for cancel tracking
           conversation_history: null,
         });
       }
       
+      assertCurrent(request);
+      request.sent = true;
       const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers,
@@ -240,25 +268,28 @@ export function useChatbot() {
         signal, // Pass the abort signal
       });
 
+      assertCurrent(request);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data: ChatResponse = await response.json();
+      assertCurrent(request);
       if (data.error) throw new Error(data.error);
       return data;
     } catch (err) {
       // Check if this was a cancellation
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (!isCurrent(request) || signal.aborted || err instanceof CancelledError || (err instanceof Error && err.name === 'AbortError')) {
         throw new CancelledError();
       }
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       setError(errorMessage);
       throw err;
     } finally {
-      setLoading(false);
-      abortControllerRef.current = null;
-      pendingIdRef.current = null;
+      if (isCurrent(request)) {
+        setLoading(false);
+        requestRef.current = null;
+      }
     }
   };
 
@@ -284,35 +315,20 @@ export function useChatbot() {
     skillLevel?: 'beginner' | 'intermediate' | 'advanced',
     intent?: ChatIntent,
     learningTopicId?: string,
+    edit?: { messageId: number; revision: string },
   ): Promise<void> => {
-    // Cancel any existing request before starting a new one
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    // Create new AbortController for this request
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-    
-    // Generate unique pending_id for this request
-    const pendingId = generatePendingId();
-    pendingIdRef.current = pendingId;
-    
-    setLoading(true);
-    setError(null);
-
-    const textBatcher = createStreamTextBatcher(callbacks.onChunk);
+    const request = startRequest();
+    const signal = request.controller.signal;
+    const pendingId = request.pendingId;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    const cancelReader = () => { void reader?.cancel().catch(() => undefined); };
+    signal.addEventListener('abort', cancelReader, { once: true });
+    const textBatcher = createStreamTextBatcher((chunk, content) => {
+      if (isCurrent(request) && !signal.aborted) callbacks.onChunk(chunk, content);
+    });
 
     try {
-      // Get auth token if user is signed in
-      let token = null;
-      if (user && getToken) {
-        try {
-          token = await getToken();
-        } catch (e) {
-          console.warn('Could not get auth token:', e);
-        }
-      }
+      const token = await tokenForRequest(request);
       
       // Use FormData if files are present, otherwise JSON
       let body: FormData | string;
@@ -328,6 +344,7 @@ export function useChatbot() {
         if (learningTopicId) formData.append('learning_topic_id', learningTopicId);
         formData.append('session_id', sessionId || '');
         formData.append('pending_id', pendingId);
+        if (edit) formData.append('edit_revision', edit.revision);
         if (conversationId) {
           formData.append('conversation_id', conversationId);
         }
@@ -347,27 +364,37 @@ export function useChatbot() {
           intent,
           learning_topic_id: learningTopicId,
           session_id: sessionId,
-          user_id: user?.id || null,
+          user_id: request.owner.ownerId,
           conversation_id: conversationId,
           pending_id: pendingId,
           skill_level: skillLevel,
+          ...(edit && { edit_revision: edit.revision }),
         });
       }
       
       // Use streaming endpoint
-      const response = await fetch(`${API_URL}/api/chat/stream`, {
+      assertCurrent(request);
+      request.sent = true;
+      if (edit && !conversationId) throw new Error('Reopen the conversation before editing.');
+      const endpoint = edit
+        ? `${API_URL}/api/conversations/${encodeURIComponent(conversationId!)}/messages/${edit.messageId}/regenerate`
+        : `${API_URL}/api/chat/stream`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body,
         signal,
       });
 
+      assertCurrent(request);
       if (!response.ok) {
+        if (edit && response.status === 409) throw new Error('This conversation changed. Reopen it before editing.');
+        if (edit && (response.status === 404 || response.status === 405)) throw new Error('Editing is temporarily unavailable. Your original conversation is unchanged.');
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       // Read the SSE stream
-      const reader = response.body?.getReader();
+      reader = response.body?.getReader();
       if (!reader) {
         throw new Error('No response body');
       }
@@ -378,7 +405,7 @@ export function useChatbot() {
 
       while (true) {
         const { done, value } = await reader.read();
-        
+        assertCurrent(request);
         if (done) break;
         
         buffer += decoder.decode(value, { stream: true });
@@ -388,6 +415,7 @@ export function useChatbot() {
         buffer = lines.pop() || ''; // Keep incomplete line in buffer
         
         for (const line of lines) {
+          assertCurrent(request);
           if (line.startsWith('data: ')) {
             const data = line.slice(6); // Remove 'data: ' prefix
             
@@ -445,12 +473,9 @@ export function useChatbot() {
         throw new StreamResponseError('The response ended unexpectedly. Please try again.');
       }
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
-        callbacks.onCancelled();
+      if (!isCurrent(request) || signal.aborted || err instanceof CancelledError || (err instanceof Error && err.name === 'AbortError')) {
+        if (isCurrent(request) && (!(err instanceof CancelledError) || signal.aborted)) callbacks.onCancelled();
         throw new CancelledError();
-      }
-      if (err instanceof CancelledError) {
-        throw err;
       }
       const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
       setError(errorMessage);
@@ -458,9 +483,12 @@ export function useChatbot() {
       throw err;
     } finally {
       textBatcher.cancel();
-      setLoading(false);
-      abortControllerRef.current = null;
-      pendingIdRef.current = null;
+      signal.removeEventListener('abort', cancelReader);
+      reader?.releaseLock();
+      if (isCurrent(request)) {
+        setLoading(false);
+        requestRef.current = null;
+      }
     }
   };
 

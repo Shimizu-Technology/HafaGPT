@@ -141,11 +141,16 @@ def translate_image_pages(
     """
     sources = []
     incomplete = False
+    generation_complete = True
     for index, image in enumerate(images):
         if cancelled():
             yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
             return
         page = next((page for page in context.pages if page.image_index == index), None)
+        # A valid unreadable-page warning is a completed result. A missing page
+        # or failed extraction is an infrastructure/generation failure instead.
+        if page is None or "extraction_failed" in page.issues:
+            generation_complete = False
         yield {"type": "chunk", "content": f"\n\n## Image {index + 1}\n\n"}
         if page is None or not page.items or page.text_confidence == "low":
             incomplete = True
@@ -251,6 +256,10 @@ def translate_image_pages(
             if cancelled():
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 return
+            # Translation coverage/confidence is separate from whether the
+            # provider and final review completed a validated batch at all.
+            if translated is None:
+                generation_complete = False
             if translated and translated["notes"].strip():
                 yield {"type": "chunk", "content": _plain_markdown(translated["notes"]) + "\n\n"}
             for item in batch:
@@ -264,4 +273,5 @@ def translate_image_pages(
                 text += f"**{'Uncertain translation' if uncertain else 'Translation'}:** {_plain_markdown(translation)}\n\n"
                 yield {"type": "chunk", "content": text}
     yield {"type": "metadata", "sources": sources, "used_rag": bool(sources),
-           "used_web_search": False, "translation_incomplete": incomplete}
+           "used_web_search": False, "translation_incomplete": incomplete,
+           "generation_complete": generation_complete}

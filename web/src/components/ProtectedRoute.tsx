@@ -142,7 +142,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             <button
               type="button"
               onClick={() => void window.__hafagptRecoverStaleBuild?.()}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Repair and reload
             </button>
@@ -221,7 +221,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Primary CTA - Sign Up */}
               <SignUpButton mode="modal">
-                <button className="w-full py-3.5 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                <button className="w-full py-3.5 bg-gradient-to-r from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
                   <UserPlus className="w-5 h-5" />
                   Create Free Account
                 </button>

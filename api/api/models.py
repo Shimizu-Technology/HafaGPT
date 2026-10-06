@@ -147,6 +147,8 @@ class MessageResponse(BaseModel):
     """Response model for a single message"""
     id: int = Field(..., description="Message ID")
     role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
+    edit_protocol: Optional[Literal["atomic-v1"]] = Field(default=None, description="Supported owner edit protocol")
+    edit_revision: Optional[str] = Field(default=None, description="Opaque transcript revision required for atomic edits")
     content: str = Field(..., description="Message content")
     timestamp: datetime = Field(..., description="Message timestamp")
     sources: list[SourceInfo] = Field(default=[], description="Sources used (for assistant messages)")

@@ -38,7 +38,7 @@ export class StartupErrorBoundary extends Component<StartupErrorBoundaryProps, S
           </p>
           <button
             type="button"
-            className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-offset-slate-900"
+            className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800 dark:focus-visible:ring-offset-slate-900"
             onClick={() => {
               if (window.__hafagptRecoverStaleBuild) {
                 void window.__hafagptRecoverStaleBuild();
