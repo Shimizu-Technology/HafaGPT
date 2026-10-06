@@ -236,8 +236,11 @@ def _get_clerk_jwks(force_refresh: bool = False):
 
 def _decode_clerk_token(token: str, force_jwks_refresh: bool = False) -> dict:
     from jose import jwt
+    from jose.exceptions import JWTError
 
     unverified_header = jwt.get_unverified_header(token)
+    if unverified_header.get("alg") != "RS256":
+        raise JWTError("Only RS256 Clerk tokens are accepted")
     kid = unverified_header.get("kid")
 
     signing_key = None

@@ -29,7 +29,12 @@ jobs:
       - name: Audit production dependencies
         # python-jose installs ecdsa, but HåfaGPT accepts RS256 only; the ECDSA-only
         # timing advisory is therefore not reachable. Keep the exception narrow.
-        run: pip-audit --local --ignore-vuln PYSEC-2026-1325
+        # CVE-2026-85394 requires HS256/algorithm confusion with a DER RSA key.
+        # _decode_clerk_token rejects all non-RS256 headers and pins RS256 again
+        # at verification. The real DER-forgery regression guards both fences.
+        # No patched python-jose release exists; revisit this narrow exception
+        # when upstream ships one: https://github.com/mpdavis/python-jose/issues/414
+        run: pip-audit --local --ignore-vuln PYSEC-2026-1325 --ignore-vuln CVE-2026-85394
 
       - name: Run backend tests
         env:
