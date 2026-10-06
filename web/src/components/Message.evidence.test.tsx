@@ -26,8 +26,8 @@ vi.mock('../hooks/useSpeech', () => ({
 describe('Message evidence disclosure', () => {
   it('makes reference context readable without a hover tooltip', () => {
     render(<Message role="assistant" content="Referenced answer" sources={[
-      { name: 'Linked reference', url: 'https://example.com/reference', locator: 'Section 2', content_role: 'lexical evidence', region: 'Guam', temporal_scope: 'Current' },
-      { name: 'Local reference', locator: 'Entry 4', region: 'Guam' },
+      { name: 'Linked reference', page: null, url: 'https://example.com/reference', locator: 'Section 2', content_role: 'lexical evidence', region: 'Guam', temporal_scope: 'Current' },
+      { name: 'Local reference', page: null, locator: 'Entry 4', region: 'Guam' },
     ]} />);
     fireEvent.click(document.querySelector('summary')!);
     expect(screen.getByText('Section 2 • lexical evidence • Guam • Current')).toBeVisible();
