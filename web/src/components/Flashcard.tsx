@@ -23,7 +23,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
     setIsFlipped(false);
     if (frontContent.current) frontContent.current.scrollTop = 0;
     if (backContent.current) backContent.current.scrollTop = 0;
-  }, [front, back]);
+  }, [front, back, pronunciation, example]);
 
   const handleFlip = () => {
     const newFlippedState = !isFlipped;
@@ -37,10 +37,13 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
     const steps: Record<string, number> = { ArrowDown: 40, ArrowUp: -40, PageDown: content.clientHeight, PageUp: -content.clientHeight };
     const direction = steps[event.key];
     if (direction === undefined && event.key !== 'Home' && event.key !== 'End') return;
-    event.preventDefault();
     const maximum = content.scrollHeight - content.clientHeight;
-    content.scrollTop = event.key === 'Home' ? 0 : event.key === 'End' ? maximum
-      : Math.max(0, Math.min(maximum, content.scrollTop + (direction || 0)));
+    const current = content.scrollTop;
+    const target = event.key === 'Home' ? 0 : event.key === 'End' ? maximum
+      : Math.max(0, Math.min(maximum, current + (direction || 0)));
+    if (target === current) return;
+    event.preventDefault();
+    content.scrollTop = target;
   };
 
   const toggleSpeech = () => {
