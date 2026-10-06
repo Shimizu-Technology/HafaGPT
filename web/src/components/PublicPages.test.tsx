@@ -10,7 +10,7 @@ import SupportPage from './SupportPage';
 vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ isSignedIn: false }),
   useClerk: () => ({ openUserProfile: vi.fn() }),
-  SignInButton: ({ children }: { children: React.ReactNode }) => children,
+  SignUpButton: ({ children }: { children: React.ReactNode }) => children,
   PricingTable: () => <div>Checkout options</div>,
 }));
 
