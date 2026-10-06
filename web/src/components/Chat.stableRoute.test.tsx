@@ -500,12 +500,13 @@ describe('Chat stable conversation route', () => {
     const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
     state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer' }];
     state.editRequest.mockResolvedValue({ messages: state.messages });
-    state.sendMessageStream.mockRejectedValueOnce(new Error('Provider unavailable')).mockImplementationOnce(async (_message, _mode, _id, callbacks) => {
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => { callbacks.onError('Provider unavailable'); throw new Error('Provider unavailable'); }).mockImplementationOnce(async (_message, _mode, _id, callbacks) => {
       callbacks.onChunk('Successful edit', 'Successful edit');
       callbacks.onDone(0.1);
     });
     renderChat('/chat/conv-old');
-    fireEvent.click(await screen.findByRole('button', { name: 'Chat input' }));
+    await screen.findByRole('button', { name: 'Edit message' });
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
     await screen.findByRole('button', { name: 'Retry' });
     fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Test message' } });
