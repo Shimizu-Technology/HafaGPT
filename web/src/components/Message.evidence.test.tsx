@@ -202,6 +202,8 @@ describe('edit failure while a dialog is open', () => {
         {open && <div role="dialog" aria-modal="true"><button autoFocus>Close preview</button></div>}
       </>;
     }
+    const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(1);
+    try {
     render(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Edit message text' }), { target: { value: 'Retain this edited question' } });
@@ -211,10 +213,13 @@ describe('edit failure while a dialog is open', () => {
     await act(async () => {
       if (outcome === 'declined') resolve(false);
       else reject(new Error('Controlled failure'));
-      await new Promise(done => setTimeout(done, 40));
     });
+    const recover = frame.mock.calls.at(-1)?.[0];
+    expect(recover).toBeDefined();
+    act(() => recover!(0));
     expect(close).toHaveFocus();
     expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
     expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
+    } finally { frame.mockRestore(); }
   });
 });
