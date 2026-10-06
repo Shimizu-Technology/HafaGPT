@@ -138,3 +138,75 @@ describe('MessageInput', () => {
   });
 
 });
+
+
+async function withDesktopKeyboard(run: () => Promise<void>) {
+  const width = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+  const touch = Object.getOwnPropertyDescriptor(window, 'ontouchstart');
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+  Reflect.deleteProperty(window, 'ontouchstart');
+  try { await run(); }
+  finally {
+    if (width) Object.defineProperty(window, 'innerWidth', width);
+    if (touch) Object.defineProperty(window, 'ontouchstart', touch);
+  }
+}
+
+describe('MessageInput keyboard activation', () => {
+  it.each(['Enter', ' '])('opens sign-in with %j on the read-only guest composer without sending', key => {
+    const onSend = vi.fn();
+    const onDisabledClick = vi.fn();
+    render(<MessageInput onSend={onSend} disabled onDisabledClick={onDisabledClick} />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveAttribute('readonly');
+    input.focus();
+    expect(input).toHaveFocus();
+    expect(fireEvent.keyDown(input, { key })).toBe(false);
+    expect(onDisabledClick).toHaveBeenCalledOnce();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(input).toHaveValue('');
+  });
+
+  it.each(['Enter', ' '])('does not activate sign-in during IME composition with %j', key => {
+    const onSend = vi.fn();
+    const onDisabledClick = vi.fn();
+    render(<MessageInput onSend={onSend} disabled onDisabledClick={onDisabledClick} />);
+    expect(fireEvent.keyDown(screen.getByRole('textbox'), { key, isComposing: true })).toBe(true);
+    expect(onDisabledClick).not.toHaveBeenCalled();
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it('keeps enabled desktop send, composition, Shift+Enter, Space and Escape semantics', async () => {
+    await withDesktopKeyboard(async () => {
+      const onSend = vi.fn().mockResolvedValue(true);
+      const onDisabledClick = vi.fn();
+      render(<MessageInput onSend={onSend} onDisabledClick={onDisabledClick} />);
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'Keep this draft' } });
+      expect(fireEvent.keyDown(input, { key: ' ', code: 'Space' })).toBe(true);
+      expect(fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })).toBe(true);
+      expect(fireEvent.keyDown(input, { key: 'Enter', isComposing: true })).toBe(true);
+      fireEvent.keyDown(input, { key: 'Escape' });
+      expect(input).toHaveValue('Keep this draft');
+      expect(onSend).not.toHaveBeenCalled();
+      await act(async () => fireEvent.keyDown(input, { key: 'Enter' }));
+      expect(onSend).toHaveBeenCalledWith('Keep this draft', undefined);
+      expect(onDisabledClick).not.toHaveBeenCalled();
+      expect(input).toHaveValue('');
+    });
+  });
+
+  it('does nothing when disabled without an activation handler', async () => {
+    await withDesktopKeyboard(async () => {
+      const onSend = vi.fn();
+      render(<MessageInput onSend={onSend} disabled />);
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'Retained draft' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.keyDown(input, { key: ' ' });
+      fireEvent.keyDown(input, { key: 'Escape' });
+      expect(onSend).not.toHaveBeenCalled();
+      expect(input).toHaveValue('Retained draft');
+    });
+  });
+});

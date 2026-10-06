@@ -405,6 +405,11 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     
     if (e.nativeEvent.isComposing) return;
+    if (disabled && onDisabledClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onDisabledClick();
+      return;
+    }
     if (e.key === 'Enter') {
       if (isMobile) {
         // Mobile: Enter = new line (default behavior, do nothing)
