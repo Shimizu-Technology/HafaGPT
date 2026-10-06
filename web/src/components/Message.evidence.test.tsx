@@ -30,6 +30,7 @@ describe('Message evidence disclosure', () => {
       />,
     );
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: References attached' }),
     ).toHaveTextContent('They may support only parts of this answer.');
@@ -38,6 +39,7 @@ describe('Message evidence disclosure', () => {
   it('shows web-informed when current web context was used without RAG citations', () => {
     render(<Message role="assistant" content="Current answer" used_web_search />);
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: Web-informed' }),
     ).toHaveTextContent('Current web results were used.');
@@ -46,6 +48,7 @@ describe('Message evidence disclosure', () => {
   it('clearly marks an answer with no attached references', () => {
     render(<Message role="assistant" content="Possible answer" />);
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: No references attached' }),
     ).toHaveTextContent('Check important claims against the original material.');
@@ -66,6 +69,41 @@ describe('streaming Markdown identity', () => {
     rerender(<Message role="assistant" content={`${content}| 2 | Second item |\n\nMore explanation.`} isStreaming={false} response_time={4} />);
     expect(screen.getByRole('table')).toBe(table);
     expect(paragraph.isConnected).toBe(true);
+  });
+});
+
+
+describe('message actions', () => {
+  it('has one Copy action and one disclosure without internal badges or latency', () => {
+    const { container } = render(<Message role="assistant" content="Answer" used_rag used_web_search response_time={2.5}
+      sources={[{ name: 'Dictionary', page: 3, url: 'https://example.com/reference' }]} />);
+    expect(screen.getAllByRole('button', { name: 'Copy message' })).toHaveLength(1);
+    expect(container.querySelectorAll('details')).toHaveLength(1);
+    expect(screen.queryByText('KB')).not.toBeInTheDocument();
+    expect(screen.queryByText('Web Search')).not.toBeInTheDocument();
+    expect(screen.queryByText('2.50s')).not.toBeInTheDocument();
+    fireEvent.click(container.querySelector('summary')!);
+    expect(screen.getByRole('link', { name: 'Dictionary (p. 3)' })).toHaveAttribute('href', 'https://example.com/reference');
+  });
+
+  it('reports failed copying instead of claiming success and restores focus', async () => {
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn(() => false) });
+    render(<Message role="assistant" content="Answer" />);
+    const copy = screen.getByRole('button', { name: 'Copy message' });
+    copy.focus();
+    fireEvent.click(copy);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not copy this message.');
+    expect(screen.queryByRole('button', { name: 'Message copied' })).not.toBeInTheDocument();
+    expect(copy).toHaveFocus();
+    expect(document.querySelector('textarea')).toBeNull();
+  });
+
+  it('confirms success only when the browser reports successful copying', async () => {
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn(() => true) });
+    render(<Message role="user" content="Question" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(await screen.findByRole('button', { name: 'Message copied' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 
