@@ -261,7 +261,9 @@ def deferred_stream_namespace(failure: str) -> dict[str, Any]:
     def chunks() -> Iterator[Any]:
         yield NS(choices=[NS(finish_reason=None)], content='Edited reply')
         if failure == 'cancel': cancelled['value'] = True
-        yield NS(choices=[NS(finish_reason='length' if failure == 'length' else 'stop')], content=None)
+        if failure == 'interrupted': raise RuntimeError('Interrupted provider stream')
+        reason = 'length' if failure == 'length' else None if failure == 'missing_finish' else 'stop'
+        yield NS(choices=[NS(finish_reason=reason)], content=None)
     create = Mock(side_effect=RuntimeError('provider detail')) if failure == 'provider' else Mock(side_effect=lambda **kwargs: chunks())
     budget = NS(rag_context=100, conversation_history=1000, current_message=1000, response_buffer=100, total=10000)
     return {
@@ -333,7 +335,7 @@ def test_image_page_pipeline_defers_logging_only_for_atomic_edits(persist: bool)
         'MODE_PROMPTS': {'english': {'prompt': ''}}, 'SKILL_LEVEL_MODIFIERS': {},
         'tutor_task_guidance': lambda intent: '', 'build_translation_structure_hints': lambda message: '',
         'translate_image_pages': lambda **kwargs: iter([
-            {'type': 'metadata', 'sources': [], 'translation_incomplete': False},
+            {'type': 'metadata', 'sources': [], 'translation_incomplete': False, 'generation_complete': True},
             {'type': 'chunk', 'content': 'Complete page reply'},
         ]), 'get_rag_context': Mock(), 'format_source_citations': lambda sources: sources,
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
@@ -364,3 +366,108 @@ def test_already_disconnected_client_never_starts_immediately_complete_provider(
     namespace['get_chatbot_response_stream'].assert_not_called()
     namespace['upload_file_to_s3'].assert_not_called()
     namespace['conversations'].replace_regenerated_exchange.assert_not_called()
+
+
+def test_unexpected_atomic_failure_is_logged_without_exposing_private_details(caplog: pytest.LogCaptureFixture) -> None:
+    replace = Mock(side_effect=RuntimeError('private persistence detail'))
+    with caplog.at_level(logging.ERROR, logger='api.atomic_regeneration'):
+        result = list(atomic_regeneration_events(lambda: iter(COMPLETE), lambda: [], replace, lambda: False))
+    assert result[-1]['type'] == 'error' and 'private persistence detail' not in result[-1]['content']
+    assert any(record.message == 'Atomic regeneration failed before commit' and record.exc_info is not None for record in caplog.records)
+
+
+@pytest.mark.parametrize('failure', ['length', 'missing_finish', 'interrupted', 'provider'])
+def test_unconfirmed_or_interrupted_real_text_stream_cannot_replace_original(failure: str) -> None:
+    namespace = deferred_stream_namespace(failure)
+    source = ROOT / 'chatbot_service.py'
+    node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.FunctionDef) and node.name == 'get_chatbot_response_stream')
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
+    generate = lambda: namespace['get_chatbot_response_stream']('Edited question', conversation_id='conv-a', pending_id='pending', history_override=[], persist=False)
+    store, replace = Mock(), Mock()
+    result = list(atomic_regeneration_events(generate, store, replace, lambda: False))
+    assert result[-1]['type'] == 'error' and not any(event['type'] == 'done' for event in result)
+    store.assert_not_called(); replace.assert_not_called(); namespace['log_conversation'].assert_not_called()
+    text = ''.join(event.get('content', '') for event in result if event['type'] == 'chunk')
+    if failure == 'length': assert 'length limit and is incomplete' in text
+    if failure == 'missing_finish': assert 'ended before completion could be confirmed' in text
+
+
+def actual_image_edit_generator(case: str) -> tuple[Any, Mock]:
+    """Run the real page generator and staged image adapter with a fake provider."""
+    import time
+    from api.image_translation import translate_image_pages
+    from src.rag.image_translation_context import ImagePageContext, ImageTextItem, ImageTranslationContext
+    item = ImageTextItem(id='item-1', text='Printed source', kind='unclear' if case == 'unclear' else 'body')
+    page = ImagePageContext(image_index=0, items=(item,), text_confidence='low' if case == 'low_confidence' else 'high', complete=case != 'partial_reading')
+    context = ImageTranslationContext(pages=(page,))
+    calls = 0
+    def complete(**kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        if case == 'provider_failure': raise RuntimeError('Provider unavailable')
+        if case == 'review_failure' and calls == 2: raise RuntimeError('Review unavailable')
+        translations = [] if case == 'invalid_coverage' else [{'id': item.id, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'}]
+        finish = 'length' if case == 'truncated' else 'stop'
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason=finish, message=SimpleNamespace(content=json.dumps({'translations': translations, 'notes': ''})))])
+    provider = Mock(side_effect=complete)
+    source = ROOT / 'chatbot_service.py'
+    node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.FunctionDef) and node.name == '_image_translation_events')
+    namespace = {
+        'ImageTranslationContext': ImageTranslationContext, 'Iterator': Iterator, 'Any': Any, 'time': time,
+        'get_client_for_request': lambda **kwargs: (SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=provider))), 'fake'),
+        'build_image_translation_query': lambda message, context: (message, None),
+        'resolve_school_message_context': lambda *args, **kwargs: ('', False, []),
+        'MODE_PROMPTS': {'english': {'prompt': ''}}, 'SKILL_LEVEL_MODIFIERS': {},
+        'tutor_task_guidance': lambda intent: '', 'build_translation_structure_hints': lambda message: '',
+        'translate_image_pages': translate_image_pages, 'get_rag_context': lambda *args, **kwargs: ('', []),
+        'format_source_citations': lambda sources: sources, 'optional_chat_completion_kwargs': lambda model: {},
+        'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
+    }
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
+    def generate() -> Iterator[dict[str, Any]]:
+        return namespace['_image_translation_events'](image_context=context, images=[{'data': 'fake-bytes', 'content_type': 'image/png'}],
+            message='Edited request', message_for_logging='Edited request', mode='english', session_id=None,
+            user_id='learner-a', conversation_id='conv-a', image_url=None, file_urls=None, pending_id='pending',
+            start_time=time.time(), past_messages=[], skill_level=None, persist=False)
+    return generate, namespace['log_conversation']
+
+
+@pytest.mark.parametrize('case', ['uncertain', 'unclear', 'low_confidence', 'partial_reading'])
+def test_completed_uncertain_image_result_can_commit_atomic_edit(case: str) -> None:
+    generate, log = actual_image_edit_generator(case)
+    store = Mock(return_value=[]); replace = Mock(return_value=99)
+    result = list(atomic_regeneration_events(generate, store, replace, lambda: False))
+    metadata = next(event for event in result if event['type'] == 'metadata')
+    assert metadata['translation_incomplete'] is True and metadata['generation_complete'] is True
+    assert result[-1]['type'] == 'done' and result[-1]['complete'] is True and result[-1]['message_id'] == 99
+    store.assert_called_once(); replace.assert_called_once(); log.assert_not_called()
+
+
+@pytest.mark.parametrize('case', ['provider_failure', 'review_failure', 'invalid_coverage', 'truncated'])
+def test_failed_or_unvalidated_image_generation_preserves_original(case: str) -> None:
+    generate, log = actual_image_edit_generator(case)
+    store, replace = Mock(), Mock()
+    result = list(atomic_regeneration_events(generate, store, replace, lambda: False))
+    metadata = next(event for event in result if event['type'] == 'metadata')
+    assert metadata['translation_incomplete'] is True and metadata['generation_complete'] is False
+    assert result[-1]['type'] == 'error' and not any(event['type'] == 'done' for event in result)
+    store.assert_not_called(); replace.assert_not_called(); log.assert_not_called()
+
+
+def test_confirmed_stop_remains_complete_after_trailing_usage_only_chunk() -> None:
+    namespace = deferred_stream_namespace('success')
+    def chunks() -> Iterator[Any]:
+        yield SimpleNamespace(choices=[SimpleNamespace(finish_reason=None)], content='Complete reply')
+        yield SimpleNamespace(choices=[SimpleNamespace(finish_reason='stop')], content=None)
+        yield SimpleNamespace(choices=[], content=None)
+    client, _ = namespace['get_client_for_request'](has_image=False)
+    client.chat.completions.create.side_effect = lambda **kwargs: chunks()
+    source = ROOT / 'chatbot_service.py'
+    node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.FunctionDef) and node.name == 'get_chatbot_response_stream')
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
+    generate = lambda: namespace['get_chatbot_response_stream']('Edited', conversation_id='conv-a', pending_id='pending', history_override=[], persist=False)
+    replace = Mock(return_value=99)
+    result = list(atomic_regeneration_events(generate, lambda: [], replace, lambda: False))
+    assert result[-1]['type'] == 'done' and result[-1]['complete'] is True
+    replace.assert_called_once()
+    assert replace.call_args.args[0] == 'Complete reply'

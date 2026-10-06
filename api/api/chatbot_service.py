@@ -1330,6 +1330,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     text_parts = []
     sources = []
     incomplete = False
+    generation_complete = False
     was_cancelled = False
 
     def complete(**kwargs: Any) -> Any:
@@ -1348,6 +1349,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             sources = format_source_citations(event["sources"])
             event = {**event, "sources": sources, "used_rag": bool(sources)}
             incomplete = event["translation_incomplete"]
+            generation_complete = event.get("generation_complete") is True
         elif event["type"] == "cancelled":
             was_cancelled = True
         yield event
@@ -1365,7 +1367,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     if not was_cancelled:
         done = {"type": "done", "response_time": response_time, "translation_incomplete": incomplete}
         if not persist:
-            done["complete"] = not incomplete
+            done["complete"] = generation_complete
         yield done
 
 
