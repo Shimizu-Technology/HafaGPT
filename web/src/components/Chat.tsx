@@ -742,7 +742,6 @@ function ChatSession() {
       if (attempt.edit && editCommitted && isCurrent()) {
         setError(null);
         setFailedAttempt(null);
-        if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
         return true;
       }
       restoreEdit();
