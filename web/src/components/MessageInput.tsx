@@ -405,6 +405,11 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     
     if (e.nativeEvent.isComposing) return;
+    if (disabled && onDisabledClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onDisabledClick();
+      return;
+    }
     if (e.key === 'Enter') {
       if (isMobile) {
         // Mobile: Enter = new line (default behavior, do nothing)
@@ -457,6 +462,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
             onKeyDown={handleKeyDown} onPaste={submitting ? undefined : handlePaste}
             placeholder={placeholder || 'Message HåfaGPT…'} rows={2}
             readOnly={Boolean(disabled && onDisabledClick)}
+            aria-description={disabled && onDisabledClick ? 'Press Enter or Space to sign in and start chatting.' : undefined}
             aria-label="Message input" title={disabled && onDisabledClick ? 'Sign in to start chatting' : 'Message HåfaGPT'}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
             className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent px-2 py-2 text-base leading-6 text-brown-900 placeholder-brown-600 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder-gray-400"
