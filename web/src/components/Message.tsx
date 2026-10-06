@@ -483,13 +483,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     <div key={index}>
                       {file.type === 'image' ? (
                         // Image preview
-                        <img 
-                          src={file.url} 
-                          alt={file.filename}
-                          className="max-h-32 max-w-[150px] rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200 object-cover"
+                        <button
+                          type="button"
+                          aria-label={`Open image: ${file.filename}`}
+                          disabled={!onImageClick}
                           onClick={() => onImageClick?.(file.url)}
-                          title={`Click to enlarge: ${file.filename}`}
-                        />
+                          className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
+                        >
+                          <img src={file.url} alt={file.filename} className="max-h-32 max-w-[150px] rounded-lg shadow-md object-cover" />
+                        </button>
                       ) : (
                         // Document preview (PDF, Word, Text)
                         <a
@@ -524,13 +526,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <div className="mb-2">
                   {getFileTypeFromUrl(imageUrl) === 'image' ? (
                     // Image preview
-                    <img 
-                      src={imageUrl} 
-                      alt="Uploaded content" 
-                      className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                    <button
+                      type="button"
+                      aria-label="Open uploaded image"
+                      disabled={!onImageClick}
                       onClick={() => onImageClick?.(imageUrl)}
-                      title="Click to enlarge"
-                    />
+                      className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
+                    >
+                      <img src={imageUrl} alt="Uploaded content" className="max-h-48 max-w-full rounded-lg shadow-md" />
+                    </button>
                   ) : (
                     // Document preview (PDF, Word, Text)
                     <a

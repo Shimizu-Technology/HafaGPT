@@ -169,3 +169,21 @@ it('keeps a later edit failure visible alongside an unavailable-file warning', a
   expect(alerts.some(text => text?.includes('Your edit is still here.'))).toBe(true);
   expect(alerts.some(text => text?.includes('old-note.txt'))).toBe(true);
 });
+
+
+describe('attached image preview controls', () => {
+  it.each(['files', 'legacy'] as const)('opens the correct %s image through a named control', kind => {
+    const url = 'https://example.com/qa-image.png';
+    const onImageClick = vi.fn();
+    render(<Message role="user" content="Attached QA image" onImageClick={onImageClick}
+      {...(kind === 'files' ? { file_urls: [{ url, filename: 'qa-image.png', type: 'image' as const }] } : { imageUrl: url })} />);
+    fireEvent.click(screen.getByRole('button', { name: kind === 'files' ? 'Open image: qa-image.png' : 'Open uploaded image' }));
+    expect(onImageClick).toHaveBeenCalledWith(url);
+  });
+
+  it('does not expose an enabled preview action when the viewer is read-only', () => {
+    render(<Message role="user" content="Read-only image" imageUrl="https://example.com/qa-image.png" />);
+    expect(screen.getByRole('button', { name: 'Open uploaded image' })).toBeDisabled();
+    expect(screen.getByRole('img', { name: 'Uploaded content' })).toBeInTheDocument();
+  });
+});
