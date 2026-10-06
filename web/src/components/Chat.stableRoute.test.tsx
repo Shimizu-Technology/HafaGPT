@@ -8,6 +8,7 @@ import { CancelledError } from '../hooks/useChatbot';
 const state = vi.hoisted(() => ({
   userId: 'user-1',
   realMessages: false,
+  composerReceipt: undefined as { message: string; files?: File[] } | undefined,
   error: null as string | null,
   isLoaded: true,
   isSignedIn: true,
@@ -99,12 +100,17 @@ vi.mock('./MessageInput', () => ({
   MessageInput: ({
     disabled,
     onSend,
+    completedSend,
   }: {
     disabled: boolean;
     onSend: (message: string) => void;
-  }) => (
+    completedSend?: { message: string; files?: File[] };
+  }) => {
+    state.composerReceipt = completedSend;
+    return (
     <button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>
-  ),
+    );
+  },
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
@@ -152,6 +158,7 @@ describe('Chat stable conversation route', () => {
   beforeEach(() => {
     state.userId = 'user-1';
     state.realMessages = false;
+    state.composerReceipt = undefined;
     state.error = null;
     state.isLoaded = true;
     state.isSignedIn = true;
@@ -486,6 +493,25 @@ describe('Chat stable conversation route', () => {
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
     if (newerDraft) expect(screen.getByRole('textbox')).toHaveValue('A newer edited question');
     else expect(screen.queryByRole('button', { name: 'Save & Regenerate' })).not.toBeInTheDocument();
+  });
+
+  it('does not acknowledge an unsent composer draft when an unrelated edit commits identical text', async () => {
+    state.realMessages = true;
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer' }];
+    state.editRequest.mockResolvedValue({ messages: state.messages });
+    state.sendMessageStream.mockRejectedValueOnce(new Error('Provider unavailable')).mockImplementationOnce(async (_message, _mode, _id, callbacks) => {
+      callbacks.onChunk('Successful edit', 'Successful edit');
+      callbacks.onDone(0.1);
+    });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Chat input' }));
+    await screen.findByRole('button', { name: 'Retry' });
+    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Test message' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
+    await screen.findByText('Successful edit');
+    expect(state.composerReceipt).toBeUndefined();
   });
 
   it('restores an explicitly cancelled edit instead of accepting a partial replacement', async () => {

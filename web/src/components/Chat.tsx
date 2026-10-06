@@ -735,14 +735,14 @@ function ChatSession() {
         attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined
       );
       if (!isCurrent()) return false;
-      setCompletedSend({ message: attempt.message, files: attempt.files });
+      if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
       return true;
       
     } catch (err) {
       if (attempt.edit && editCommitted && isCurrent()) {
         setError(null);
         setFailedAttempt(null);
-        setCompletedSend({ message: attempt.message, files: attempt.files });
+        if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
         return true;
       }
       restoreEdit();
