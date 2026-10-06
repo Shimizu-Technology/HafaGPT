@@ -1,5 +1,5 @@
 import { useCallback, useState, KeyboardEvent, ClipboardEvent, RefObject, useEffect, useRef } from 'react';
-import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Plus, GraduationCap, Sparkles } from 'lucide-react';
+import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Paperclip, Sparkles } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
 
 // Supported file types
@@ -55,20 +55,11 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
   const draftRef = useRef({ input, selectedFiles });
   draftRef.current = { input, selectedFiles };
   const [fileError, setFileError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const localRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = inputRef || localRef;
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFilesRef = useRef<FileWithPreview[]>([]);
-
-  // Detect mobile for responsive placeholder
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Auto-resize textarea as content grows (respects CSS max-height)
   useEffect(() => {
@@ -78,7 +69,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
         // Reset height to auto to get accurate scrollHeight
         textareaRef.current.style.height = 'auto';
         // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
-        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        textareaRef.current.style.height = `${Math.max(64, textareaRef.current.scrollHeight)}px`;
       } else {
         // When empty, use the minimum height from CSS
         textareaRef.current.style.height = '';
@@ -434,168 +425,51 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
   const canAddMoreFiles = selectedFiles.length < MAX_FILES;
 
   return (
-    <div className="pb-1 sm:pb-4 pt-1.5 sm:pt-3 px-3 sm:px-4">
-      <div className="w-full max-w-3xl mx-auto">
-        {/* File Previews */}
-        {selectedFiles.length > 0 && (
-          <div className="mb-2 flex flex-wrap gap-2 items-end">
-            {selectedFiles.map((fileItem) => (
-              <div key={fileItem.id} className="relative group">
-                {fileItem.preview ? (
-                  // Image preview
-                  <img 
-                    src={fileItem.preview} 
-                    alt={fileItem.file.name}
-                    className="h-20 w-20 object-cover rounded-lg shadow-md"
-                  />
-                ) : (
-                  // Document preview (non-image)
-                  <div className="flex items-center gap-2 px-3 py-2 bg-cream-100 dark:bg-gray-700 rounded-lg shadow-md h-20">
-                    {getFileTypeInfo(fileItem.file).icon}
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-brown-600 dark:text-gray-300">
-                        {getFileTypeInfo(fileItem.file).label}
-                      </span>
-                      <span className="text-xs text-brown-800 dark:text-gray-100 max-w-[80px] truncate">
-                        {fileItem.file.name}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <button
-                  onClick={() => removeFile(fileItem.id)}
-                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                  aria-label={`Remove ${fileItem.file.name}`}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-            
-            {/* Add more files button */}
-            {canAddMoreFiles && (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={disabled || submitting}
-                className="h-20 w-20 rounded-lg border-2 border-dashed border-cream-300 dark:border-gray-600 flex flex-col items-center justify-center text-brown-500 dark:text-gray-400 hover:border-coral-400 dark:hover:border-ocean-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Add more files"
-                title={`Add more files (${MAX_FILES - selectedFiles.length} remaining)`}
-              >
-                <Plus className="w-5 h-5" />
-                <span className="text-xs mt-1">{MAX_FILES - selectedFiles.length} left</span>
-              </button>
-            )}
-          </div>
-        )}
-        {fileError && (
-          <div
-            className="mb-2 rounded-xl border border-hibiscus-200 dark:border-red-900/60 bg-hibiscus-50 dark:bg-red-950/30 px-3 py-2 text-xs text-hibiscus-800 dark:text-red-300"
-            role="status"
-            aria-live="polite"
-          >
-            {fileError}
-          </div>
-        )}
-        {selectedFiles.length > 0 && !fileError && (
-          <div className="mb-2 flex items-center gap-2 px-1 text-[11px] sm:text-xs text-brown-600 dark:text-gray-400">
-            <GraduationCap
-              className="h-4 w-4 shrink-0 text-teal-600 dark:text-ocean-400"
-              aria-hidden="true"
-            />
-            <span>School notice? Ask: “Translate this and tell me what I need to do.”</span>
-          </div>
-        )}
-
-        <div className="rounded-2xl border border-cream-300 bg-white p-1.5 shadow-sm transition-colors focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-800 dark:focus-within:border-ocean-400 dark:focus-within:ring-ocean-400/20">
-          {contextLabel && !disabled && (
-            <div className="flex items-center gap-1.5 px-2 pb-0.5 pt-1 text-[11px] font-semibold text-coral-700 dark:text-ocean-300">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-              <span>{contextLabel}</span>
+    <div className="px-3 py-2 sm:px-4 sm:py-3">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="rounded-2xl border border-cream-300 bg-white p-2 shadow-sm focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700/20 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-ocean-300 dark:focus-within:ring-ocean-300/20">
+          {fileError && <div role="status" aria-live="polite" className="mb-2 max-h-16 overflow-y-auto rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800 dark:bg-red-950/30 dark:text-red-200">{fileError}</div>}
+          {selectedFiles.length > 0 && (
+            <div className="mb-2 flex gap-2 overflow-x-auto py-1" aria-label="Attached files">
+              {selectedFiles.map(item => <div key={item.id} className="flex h-12 max-w-60 flex-none items-center gap-2 rounded-xl bg-cream-100 pl-2 dark:bg-slate-800">
+                {item.preview ? <img src={item.preview} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <span className="flex h-10 w-8 shrink-0 items-center justify-center text-brown-600 dark:text-gray-300">{getFileTypeInfo(item.file).icon}</span>}
+                <div className="min-w-0">
+                  <span className="block max-w-32 truncate text-xs font-medium text-brown-900 dark:text-gray-100" title={item.file.name}>{item.file.name}</span>
+                  <span className="block text-[11px] text-brown-600 dark:text-gray-400">{getFileTypeInfo(item.file).label}</span>
+                </div>
+                <button type="button" onClick={() => removeFile(item.id)} aria-label={`Remove ${item.file.name}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-700"><X className="h-4 w-4" /></button>
+              </div>)}
             </div>
           )}
-          <div className="flex items-end gap-0.5 sm:gap-1">
-          {/* Microphone Button */}
-          <button
-            onClick={isListening ? stopListening : startListening}
-            disabled={disabled || submitting}
-            className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-              isListening
-                ? 'animate-pulse bg-red-500 text-white hover:bg-red-600'
-                : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
-            }`}
-            aria-label={isListening ? 'Stop recording' : 'Start voice input'}
-            title={isListening ? 'Stop recording' : 'Start voice input'}
-          >
-            <Mic className="h-5 w-5" />
-          </button>
-
-          {/* Camera/File Upload Button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled || !canAddMoreFiles}
-            className={`flex h-11 flex-none items-center justify-center rounded-xl px-3 text-brown-600 transition-colors hover:bg-cream-100 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-700 ${
-              selectedFiles.length > 0 ? 'bg-coral-50 text-coral-700 ring-1 ring-coral-300 dark:bg-ocean-950 dark:text-ocean-300 dark:ring-ocean-700' : ''
-            }`}
-            aria-label="Upload files"
-            title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
-          >
-            <Camera className="h-5 w-5" />
-            {selectedFiles.length > 0 && (
-              <span className="ml-1 text-xs font-bold">{selectedFiles.length}</span>
-            )}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={FILE_ACCEPT}
-            onChange={handleFileSelect}
-            multiple
-            className="hidden"
-          />
-
           <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => { draftRevision.current += 1; setInput(e.target.value); }}
-            onKeyDown={handleKeyDown}
-            onPaste={submitting ? undefined : handlePaste}
-            placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}
-            rows={1}
-            className="min-w-0 flex-1 resize-none overflow-y-auto bg-transparent px-2 py-2.5 text-base leading-6 text-brown-900 placeholder-brown-400 focus:outline-none disabled:cursor-pointer dark:text-gray-100 dark:placeholder-gray-500 sm:px-3"
-            aria-label="Message input"
-            title={disabled && onDisabledClick ? "Sign in to start chatting" : "Focus input (⌘K)"}
+            ref={textareaRef} value={input}
+            onChange={event => { draftRevision.current += 1; setInput(event.target.value); }}
+            onKeyDown={handleKeyDown} onPaste={submitting ? undefined : handlePaste}
+            placeholder={placeholder || 'Message HåfaGPT…'} rows={2}
+            readOnly={Boolean(disabled && onDisabledClick)}
+            aria-label="Message input" title={disabled && onDisabledClick ? 'Sign in to start chatting' : 'Message HåfaGPT'}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            style={{ height: input.trim() ? undefined : '44px', minHeight: '44px', maxHeight: '160px' }}
+            className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent px-2 py-2 text-base leading-6 text-brown-900 placeholder-brown-600 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder-gray-400"
+            style={{ height: input.trim() ? undefined : '64px', minHeight: '64px', maxHeight: 'min(160px, 25dvh)' }}
           />
-          {loading ? (
-            <button
-              onClick={onCancel}
-              className="flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-xl bg-hibiscus-600 px-3 font-medium text-white transition-colors hover:bg-hibiscus-700 dark:bg-red-600 dark:hover:bg-red-700 sm:px-4"
-              aria-label="Stop generating"
-              title="Stop generating"
-            >
-              <Square className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-              <span className="hidden sm:inline">Stop</span>
+          <div className="mt-1 flex items-center gap-1">
+            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled || submitting || !canAddMoreFiles} aria-label="Upload files"
+              title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
+              className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl px-2 text-brown-600 hover:bg-cream-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-800">
+              <Paperclip className="h-5 w-5" />{selectedFiles.length > 0 && <span className="text-xs font-semibold">{selectedFiles.length}</span>}
             </button>
-          ) : (
-            <button
-              onClick={handleSend}
-              disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)}
-              className="flex h-11 min-w-11 flex-none items-center justify-center gap-2 rounded-xl bg-coral-600 px-3 font-medium text-white transition-colors hover:bg-coral-700 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-500 dark:hover:bg-ocean-600 sm:px-4"
-              aria-label="Send message"
-              title="Send message (Enter)"
-            >
-              <Send className="h-5 w-5" />
-              <span className="hidden sm:inline">Send</span>
-            </button>
-          )}
+            <button type="button" onClick={isListening ? stopListening : startListening} disabled={disabled || submitting}
+              aria-label={isListening ? 'Stop recording' : 'Start voice input'} title={isListening ? 'Stop English dictation' : 'Dictate in English'}
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl disabled:opacity-40 ${isListening ? 'bg-red-700 text-white motion-safe:animate-pulse' : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-800'}`}><Mic className="h-5 w-5" /></button>
+            <input ref={fileInputRef} type="file" accept={FILE_ACCEPT} onChange={handleFileSelect} multiple className="hidden" />
+            {contextLabel && <span className="ml-1 flex min-w-0 items-center gap-1 text-xs font-medium text-brown-600 dark:text-gray-300"><Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{contextLabel}</span></span>}
+            <div className="flex-1" />
+            {loading ? <button type="button" onClick={onCancel} aria-label="Stop generating" title="Stop generating" className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800"><Square className="h-4 w-4 fill-current" /><span className="hidden sm:inline">Stop</span></button>
+              : <button type="button" onClick={handleSend} disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)} aria-label="Send message" title="Send message"
+                className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Send className="h-5 w-5" /><span className="hidden sm:inline">Send</span></button>}
           </div>
         </div>
-        
-        {/* Disclaimer */}
-        <p className="text-center text-[10px] sm:text-xs text-brown-600 dark:text-gray-400 mt-1 sm:mt-2">
-          HåfaGPT can make mistakes. Check important info.
-        </p>
+        <p className="mt-1.5 text-center text-[11px] leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>
       </div>
     </div>
   );
