@@ -514,56 +514,56 @@ function ChatSession() {
     // Reset scroll tracking - user wants to see the response
     resetScrollTracking();
 
-    // Create local preview URLs for ALL files (for immediate display)
-    const localFileUrls = files?.map(file => ({
-      url: URL.createObjectURL(file),
-      filename: file.name,
-      type: (file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
-      content_type: file.type
-    }));
-
-    localFileUrls?.forEach(file => previewUrls.current.add(file.url));
-
-    // Generate unique IDs for optimistic messages (so we can remove them if needed)
-    const userMessageId = `user_${Date.now()}`;
-    const assistantMessageId = `streaming_${Date.now()}`;
-
-    // INSTANT: Add user message immediately
-    const userMessage: ChatMessage = {
-      id: userMessageId,
-      renderKey: userMessageId,
-      role: 'user',
-      content: message,
-      file_urls: localFileUrls,
-      timestamp: Date.now(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    // INSTANT: Add thinking indicator immediately
-    const placeholderMessage: ChatMessage = {
-      id: assistantMessageId,
-      renderKey: assistantMessageId,
-      isStreaming: true,
-      role: 'assistant',
-      content: '',  // Empty - will show thinking animation
-      timestamp: Date.now(),
-      sources: [],
-      used_rag: false,
-      used_web_search: false,
-    };
-    setMessages((prev) => [...prev, placeholderMessage]);
-
-    // Helper to remove optimistic messages on failure
-    const removeOptimisticMessages = () => {
-      if (!isCurrent()) return;
-      localFileUrls?.forEach(file => { URL.revokeObjectURL(file.url); previewUrls.current.delete(file.url); });
-      setMessages((prev) => prev.filter(
-        (msg) => msg.id !== userMessageId && msg.id !== assistantMessageId
-      ));
-      isSendingMessageRef.current = false;
-    };
-
     try {
+      // Create local preview URLs for ALL files (for immediate display)
+      const localFileUrls = files?.map(file => ({
+        url: URL.createObjectURL(file),
+        filename: file.name,
+        type: (file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
+        content_type: file.type
+      }));
+
+      localFileUrls?.forEach(file => previewUrls.current.add(file.url));
+
+      // Generate unique IDs for optimistic messages (so we can remove them if needed)
+      const userMessageId = `user_${Date.now()}`;
+      const assistantMessageId = `streaming_${Date.now()}`;
+
+      // INSTANT: Add user message immediately
+      const userMessage: ChatMessage = {
+        id: userMessageId,
+        renderKey: userMessageId,
+        role: 'user',
+        content: message,
+        file_urls: localFileUrls,
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+
+      // INSTANT: Add thinking indicator immediately
+      const placeholderMessage: ChatMessage = {
+        id: assistantMessageId,
+        renderKey: assistantMessageId,
+        isStreaming: true,
+        role: 'assistant',
+        content: '',  // Empty - will show thinking animation
+        timestamp: Date.now(),
+        sources: [],
+        used_rag: false,
+        used_web_search: false,
+      };
+      setMessages((prev) => [...prev, placeholderMessage]);
+
+      // Helper to remove optimistic messages on failure
+      const removeOptimisticMessages = () => {
+        if (!isCurrent()) return;
+        localFileUrls?.forEach(file => { URL.revokeObjectURL(file.url); previewUrls.current.delete(file.url); });
+        setMessages((prev) => prev.filter(
+          (msg) => msg.id !== userMessageId && msg.id !== assistantMessageId
+        ));
+        isSendingMessageRef.current = false;
+      };
+
       let conversationPromise: Promise<string> | null = null;
       let currentConversationId = attempt.conversationId;
 

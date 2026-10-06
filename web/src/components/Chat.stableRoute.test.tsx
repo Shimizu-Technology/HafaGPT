@@ -163,6 +163,8 @@ describe('Chat stable conversation route', () => {
     state.setError.mockImplementation(message => { state.error = message; });
     state.sendMessageStream.mockReset();
     window.localStorage.clear();
+    URL.createObjectURL = vi.fn(() => 'blob:qa-file');
+    URL.revokeObjectURL = vi.fn();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
       configurable: true,
       value: vi.fn(),
