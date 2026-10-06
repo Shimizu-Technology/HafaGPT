@@ -3,6 +3,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
 
 describe('MessageInput', () => {
+  it('keeps focus in an active message editor when composing becomes available again', async () => {
+    const pointer = vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
+    try {
+      const view = render(<><textarea aria-label="Active message edit" /><MessageInput onSend={vi.fn()} disabled /></>);
+      const editor = screen.getByRole('textbox', { name: 'Active message edit' });
+      view.rerender(<><textarea aria-label="Active message edit" /><MessageInput onSend={vi.fn()} /></>);
+      editor.focus();
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 150)); });
+      expect(editor).toHaveFocus();
+      view.unmount();
+    } finally { pointer.mockRestore(); }
+  });
+
   it('keeps intent guidance outside its concise placeholder', () => {
     render(
       <MessageInput
