@@ -112,7 +112,10 @@ function ClerkWrapper() {
         elements: {
           // Hide "Development mode" badge
           badge: 'hidden',
-          formButtonPrimary: isDark ? '!bg-ocean-700 !text-white hover:!bg-ocean-800' : '!bg-coral-700 !text-white hover:!bg-coral-800',
+          formButtonPrimary: isDark ? '!min-h-11 !bg-ocean-700 !text-white hover:!bg-ocean-800' : '!min-h-11 !bg-coral-700 !text-white hover:!bg-coral-800',
+          socialButtonsBlockButton: isDark ? '!min-h-11 !text-white !border-slate-500 hover:!bg-slate-700' : '!min-h-11',
+          socialButtonsBlockButtonText: isDark ? '!text-white' : '',
+          formFieldInput: '!min-h-11 !text-base',
           rootBox: '[&_[data-localization-key="badge__development"]]:hidden',
           // Force white text in dark mode
           userButtonPopoverCard: isDark ? 'text-white' : '',
