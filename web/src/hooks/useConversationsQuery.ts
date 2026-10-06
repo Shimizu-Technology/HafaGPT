@@ -38,6 +38,8 @@ export interface ConversationMessage {
   file_urls?: FileInfo[]; // New: All uploaded files
   mode?: string;
   response_time?: number;
+  edit_protocol?: 'atomic-v1';
+  edit_revision?: string;
 }
 
 interface InitResponse {

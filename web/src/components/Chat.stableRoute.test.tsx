@@ -3,9 +3,11 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
+import { CancelledError } from '../hooks/useChatbot';
 
 const state = vi.hoisted(() => ({
   userId: 'user-1',
+  realMessages: false,
   error: null as string | null,
   isLoaded: true,
   isSignedIn: true,
@@ -19,7 +21,7 @@ const state = vi.hoisted(() => ({
     isError: false,
   },
   messagesError: false,
-  messages: [] as Array<{ id: number; role: string; content: string; timestamp: string }>,
+  messages: [] as Array<{ id: number; role: string; content: string; timestamp: string; edit_protocol?: 'atomic-v1'; edit_revision?: string }>,
   editRequest: vi.fn(),
   initData: { conversations: [] as never[] },
   refetchMessages: vi.fn(),
@@ -106,9 +108,13 @@ vi.mock('./MessageInput', () => ({
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
-vi.mock('./Message', () => ({
-  Message: ({ content, onEdit, messageIndex }: { content: string; onEdit: (content: string, index: number, skip?: boolean) => void; messageIndex: number }) => <div>{content || 'Thinking'}{content === 'Original message' && <><button onClick={() => onEdit('Updated message', messageIndex)}>Edit original</button><button onClick={() => onEdit('Updated message', messageIndex, true)}>Skip unavailable</button></>}</div>,
-}));
+vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: vi.fn(), stop: vi.fn(), extractChamorroText: (value: string) => value, isSpeaking: false, isSupported: false }) }));
+vi.mock('./Message', async importOriginal => {
+  const actual = await importOriginal<typeof import('./Message')>();
+  return { Message: (props: React.ComponentProps<typeof actual.Message>) => state.realMessages
+    ? <actual.Message {...props} />
+    : <div>{props.content || 'Thinking'}{props.content === 'Original message' && <><button onClick={() => props.onEdit?.('Updated message', props.messageIndex)}>Edit original</button><button onClick={() => props.onEdit?.('Updated message', props.messageIndex, true)}>Skip unavailable</button></>}</div> };
+});
 vi.mock('./Toast', () => ({ Toast: () => null }));
 vi.mock('./ImageModal', () => ({ ImageModal: () => null }));
 vi.mock('./UpgradePrompt', () => ({ UpgradePrompt: () => null }));
@@ -145,6 +151,7 @@ function renderChat(path: string) {
 describe('Chat stable conversation route', () => {
   beforeEach(() => {
     state.userId = 'user-1';
+    state.realMessages = false;
     state.error = null;
     state.isLoaded = true;
     state.isSignedIn = true;
@@ -250,7 +257,7 @@ describe('Chat stable conversation route', () => {
     renderChat('/chat?intent=practice&topic=greetings');
     fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
-    expect(state.sendMessageStream.mock.calls[0].slice(5)).toEqual(['beginner', 'practice', 'greetings']);
+    expect(state.sendMessageStream.mock.calls[0].slice(5, 8)).toEqual(['beginner', 'practice', 'greetings']);
     expect(screen.getByTestId('chat-path')).toHaveTextContent('intent=practice');
   });
 
@@ -264,7 +271,7 @@ describe('Chat stable conversation route', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
     expect(state.sendMessageStream.mock.calls[0][0]).toBe('Test message');
-    expect(state.sendMessageStream.mock.calls[0].slice(5)).toEqual(['beginner', 'practice', 'greetings']);
+    expect(state.sendMessageStream.mock.calls[0].slice(5, 8)).toEqual(['beginner', 'practice', 'greetings']);
   });
 
   it('does not navigate or start a send if the learner leaves during conversation creation', async () => {
@@ -329,43 +336,56 @@ describe('Chat stable conversation route', () => {
     expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b');
   });
 
-  it('waits for the persisted edit boundary before sending the replacement', async () => {
-    state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z' }];
+  it('prepares the owned exchange before atomically regenerating without a pre-send deletion', async () => {
+    state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1', edit_revision: 'rev-original' }];
     let finish!: () => void;
-    state.editRequest.mockResolvedValueOnce({ messages: state.messages })
-      .mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve({ success: true }); }));
+    state.editRequest.mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve({ messages: state.messages }); }));
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
-    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
-    expect(state.editRequest.mock.calls[1][0]).toContain('/messages/from/42');
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledOnce());
     expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(state.tryUse).not.toHaveBeenCalled();
     await act(async () => finish());
-    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
     expect(state.sendMessageStream.mock.calls[0][0]).toBe('Updated message');
-    expect(state.tryUse).toHaveBeenCalledTimes(1);
+    expect(state.sendMessageStream.mock.calls[0][8]).toEqual({ messageId: 42, revision: 'rev-original' });
+    expect(state.tryUse).toHaveBeenCalledOnce();
+    expect(state.editRequest.mock.calls.every(call => call[1]?.method !== 'DELETE')).toBe(true);
   });
 
-  it('keeps the original transcript and does not regenerate when the edit boundary fails', async () => {
+  it('keeps the original transcript and spends no usage when the edit preflight fails', async () => {
     state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z' }];
-    state.editRequest.mockResolvedValueOnce({ messages: state.messages }).mockRejectedValueOnce(new Error('offline'));
+    state.editRequest.mockRejectedValueOnce(new Error('offline'));
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
-    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledOnce());
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(screen.getByText('Original message')).toBeInTheDocument();
+  });
+
+  it('fails closed before usage against an API without the atomic edit protocol', async () => {
+    state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z' }];
+    state.editRequest.mockResolvedValueOnce({ messages: state.messages });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledOnce());
+    expect(state.tryUse).not.toHaveBeenCalled();
     expect(state.sendMessageStream).not.toHaveBeenCalled();
     expect(screen.getByText('Original message')).toBeInTheDocument();
   });
 
   it('reopens only owned attachment bytes before editing and preserves them in the regenerated request', async () => {
-    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'https://private-storage.invalid/signed', filename: 'note.txt', type: 'document', content_type: 'text/plain' }] };
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original', file_urls: [{ url: 'https://private-storage.invalid/signed', filename: 'note.txt', type: 'document', content_type: 'text/plain' }] };
     state.messages = [original];
     state.editRequest.mockResolvedValueOnce({ messages: [original] })
-      .mockResolvedValueOnce(new Blob(['safe fixture'], { type: 'text/plain' }))
-      .mockResolvedValueOnce({ success: true });
+      .mockResolvedValueOnce(new Blob(['safe fixture'], { type: 'text/plain' }));
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
     expect(state.editRequest.mock.calls[1][0]).toContain('/messages/42/files/0');
-    expect(state.editRequest.mock.calls[2][0]).toContain('/messages/from/42');
+    expect(state.editRequest).toHaveBeenCalledTimes(2);
+    expect(state.sendMessageStream.mock.calls[0][8]).toEqual({ messageId: 42, revision: 'rev-original' });
     const file = state.sendMessageStream.mock.calls[0][4][0];
     expect(file).toBeInstanceOf(File);
     expect(file.name).toBe('note.txt');
@@ -373,11 +393,11 @@ describe('Chat stable conversation route', () => {
   });
 
   it('requires explicit confirmation before excluding an unavailable attachment', async () => {
-    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'https://legacy.invalid/file', filename: 'old-note.txt', type: 'document', content_type: 'text/plain' }] };
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original', file_urls: [{ url: 'https://legacy.invalid/file', filename: 'old-note.txt', type: 'document', content_type: 'text/plain' }] };
     state.messages = [original];
     state.editRequest.mockResolvedValueOnce({ messages: [original] })
       .mockRejectedValueOnce(Object.assign(new Error('unavailable'), { status: 404 }))
-      .mockResolvedValueOnce({ messages: [original] }).mockResolvedValueOnce({ success: true });
+      .mockResolvedValueOnce({ messages: [original] });
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
     await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
@@ -386,12 +406,13 @@ describe('Chat stable conversation route', () => {
     expect(screen.getByText('Original message')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Skip unavailable' }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
-    expect(state.editRequest.mock.calls[3][0]).toContain('/messages/from/42');
+    expect(state.editRequest).toHaveBeenCalledTimes(3);
+    expect(state.sendMessageStream.mock.calls[0][8]).toEqual({ messageId: 42, revision: 'rev-original' });
     expect(state.sendMessageStream.mock.calls[0][4]).toBeUndefined();
   });
 
   it('does not discard live attachments while background persistence is still pending', async () => {
-    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'blob:qa-file', filename: 'pending-note.txt', type: 'document', content_type: 'text/plain' }] };
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original', file_urls: [{ url: 'blob:qa-file', filename: 'pending-note.txt', type: 'document', content_type: 'text/plain' }] };
     state.messages = [original];
     state.editRequest.mockResolvedValueOnce({ messages: [{ ...original, file_urls: undefined }] });
     renderChat('/chat/conv-old');
@@ -413,4 +434,84 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat'));
     expect(screen.getByTestId('chat-path')).not.toHaveTextContent('/chat/conv-1');
   });
+  it('restores the complete transcript after a failed replacement and retries its original revision once', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer', timestamp: '2026-10-06T00:01:00Z' }];
+    state.editRequest.mockResolvedValue({ messages: state.messages });
+    state.sendMessageStream.mockRejectedValueOnce(new Error('Provider unavailable')).mockResolvedValueOnce(undefined);
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await screen.findByRole('button', { name: 'Retry' });
+    expect(screen.getByText('Original message')).toBeInTheDocument();
+    expect(screen.getByText('Original answer')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(2));
+    expect(state.tryUse).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream.mock.calls.map(call => call[8])).toEqual([
+      { messageId: 42, revision: 'rev-original' }, { messageId: 42, revision: 'rev-original' },
+    ]);
+    expect(state.editRequest.mock.calls.every(call => call[1]?.method !== 'DELETE')).toBe(true);
+  });
+
+  it.each([false, true])('preserves the live editor on failure and settles a successful retry (newer draft: %s)', async (newerDraft) => {
+    state.realMessages = true;
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer', timestamp: '2026-10-06T00:01:00Z' }];
+    state.editRequest.mockResolvedValue({ messages: state.messages });
+    let reject!: (error: Error) => void;
+    state.sendMessageStream.mockImplementationOnce(() => new Promise((_resolve, failure) => { reject = failure; }));
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit message' }));
+    const editor = screen.getByRole('textbox');
+    fireEvent.change(editor, { target: { value: 'Keep this edited question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
+    expect(screen.getByRole('textbox')).toBe(editor);
+    expect(editor).toHaveValue('Keep this edited question');
+    await act(async () => reject(new Error('Provider unavailable')));
+    expect(screen.getByRole('textbox')).toBe(editor);
+    expect(editor).toHaveValue('Keep this edited question');
+    expect(editor).not.toHaveAttribute('readonly');
+    await waitFor(() => expect(editor).toHaveFocus());
+    expect(screen.getByText('Original answer')).toBeInTheDocument();
+    expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
+    if (newerDraft) fireEvent.change(editor, { target: { value: 'A newer edited question' } });
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => {
+      callbacks.onChunk('Successful replacement', 'Successful replacement');
+      callbacks.onDone(0.1);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await screen.findByText('Successful replacement');
+    expect(screen.queryByText('Could not update this message. Your edit is still here.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    if (newerDraft) expect(screen.getByRole('textbox')).toHaveValue('A newer edited question');
+    else expect(screen.queryByRole('button', { name: 'Save & Regenerate' })).not.toBeInTheDocument();
+  });
+
+  it('restores an explicitly cancelled edit instead of accepting a partial replacement', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer', timestamp: '2026-10-06T00:01:00Z' }];
+    state.editRequest.mockResolvedValue({ messages: state.messages });
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => { callbacks.onCancelled(); throw new CancelledError(); });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await screen.findByRole('button', { name: 'Retry' });
+    expect(screen.getByText('Original message')).toBeInTheDocument();
+    expect(screen.getByText('Original answer')).toBeInTheDocument();
+    expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
+  });
+
+  it('retains committed replacement content if the connection ends after its success receipt', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer', timestamp: '2026-10-06T00:01:00Z' }];
+    state.editRequest.mockResolvedValue({ messages: state.messages });
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => { callbacks.onChunk('New answer', 'New answer'); callbacks.onDone(0.1); throw new Error('Late transport failure'); });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(screen.getByText('Updated message')).toBeInTheDocument());
+    expect(screen.getByText('New answer')).toBeInTheDocument();
+    expect(screen.queryByText('Original answer')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+
 });

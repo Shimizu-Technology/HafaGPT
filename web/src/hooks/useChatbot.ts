@@ -315,6 +315,7 @@ export function useChatbot() {
     skillLevel?: 'beginner' | 'intermediate' | 'advanced',
     intent?: ChatIntent,
     learningTopicId?: string,
+    edit?: { messageId: number; revision: string },
   ): Promise<void> => {
     const request = startRequest();
     const signal = request.controller.signal;
@@ -343,6 +344,7 @@ export function useChatbot() {
         if (learningTopicId) formData.append('learning_topic_id', learningTopicId);
         formData.append('session_id', sessionId || '');
         formData.append('pending_id', pendingId);
+        if (edit) formData.append('edit_revision', edit.revision);
         if (conversationId) {
           formData.append('conversation_id', conversationId);
         }
@@ -366,13 +368,18 @@ export function useChatbot() {
           conversation_id: conversationId,
           pending_id: pendingId,
           skill_level: skillLevel,
+          ...(edit && { edit_revision: edit.revision }),
         });
       }
       
       // Use streaming endpoint
       assertCurrent(request);
       request.sent = true;
-      const response = await fetch(`${API_URL}/api/chat/stream`, {
+      if (edit && !conversationId) throw new Error('Reopen the conversation before editing.');
+      const endpoint = edit
+        ? `${API_URL}/api/conversations/${encodeURIComponent(conversationId!)}/messages/${edit.messageId}/regenerate`
+        : `${API_URL}/api/chat/stream`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body,
@@ -381,6 +388,8 @@ export function useChatbot() {
 
       assertCurrent(request);
       if (!response.ok) {
+        if (edit && response.status === 409) throw new Error('This conversation changed. Reopen it before editing.');
+        if (edit && (response.status === 404 || response.status === 405)) throw new Error('Editing is temporarily unavailable. Your original conversation is unchanged.');
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 

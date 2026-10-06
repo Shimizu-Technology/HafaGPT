@@ -132,4 +132,26 @@ describe('tutor request ownership', () => {
     expect(transport.mock.calls[0][1]?.headers).toMatchObject({ Authorization: 'Bearer token-a' });
     expect(result.current.loading).toBe(false);
   });
+  it.each([false, true])('uses the atomic endpoint and captured revision for an edit with files=%s', async withFiles => {
+    const transport = vi.spyOn(globalThis, 'fetch').mockResolvedValue(completedStream());
+    const { result } = renderHook(() => useChatbot());
+    const files = withFiles ? [new File(['fixture'], 'note.txt', { type: 'text/plain' })] : undefined;
+    await act(async () => result.current.sendMessageStream('Edited question', 'english', 'conv-a', callbacks(), files, 'beginner', 'explain', undefined, { messageId: 42, revision: 'rev-original' }));
+    expect(transport).toHaveBeenCalledOnce();
+    expect(transport.mock.calls[0][0]).toContain('/api/conversations/conv-a/messages/42/regenerate');
+    const body = transport.mock.calls[0][1]?.body;
+    const revision = body instanceof FormData ? body.get('edit_revision') : JSON.parse(String(body)).edit_revision;
+    expect(revision).toBe('rev-original');
+  });
+
+  it('does not fall back to appending when the atomic endpoint is unavailable', async () => {
+    const transport = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 404 }));
+    const { result } = renderHook(() => useChatbot());
+    await act(async () => {
+      await expect(result.current.sendMessageStream('Edited question', 'english', 'conv-a', callbacks(), undefined, undefined, undefined, undefined, { messageId: 42, revision: 'rev-original' })).rejects.toThrow('Editing is temporarily unavailable');
+    });
+    expect(transport).toHaveBeenCalledOnce();
+    expect(transport.mock.calls[0][0]).toContain('/regenerate');
+  });
+
 });

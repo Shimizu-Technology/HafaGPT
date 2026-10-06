@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useChatAutoScroll } from './useChatAutoScroll';
 import type { ChatScrollMessage } from '../lib/chatScroll';
@@ -13,9 +13,10 @@ const messages = (content: string): ChatScrollMessage[] => [
 
 function Harness({ content = 'Streaming', initial = false }: { content?: string; initial?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { showScrollButton, resumeFollowing } = useChatAutoScroll(ref, initial ? messages(content).slice(2) : messages(content));
+  const { showScrollButton, resumeFollowing, restoreScrollPosition } = useChatAutoScroll(ref, initial ? messages(content).slice(2) : messages(content));
   return <>
     <div ref={ref} data-testid="scroller" style={{ paddingBottom: 200 }}><div>{content}</div></div>
+    <button onClick={() => restoreScrollPosition(240)}>Restore reading position</button>
     {showScrollButton && <button onClick={resumeFollowing}>Latest</button>}
   </>;
 }
@@ -46,7 +47,7 @@ beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => setTimeout(() => callback(0), 16));
   vi.stubGlobal('cancelAnimationFrame', (id: ReturnType<typeof setTimeout>) => clearTimeout(id));
 });
-afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 describe('chat follow and reading modes', () => {
   it('keeps a short first exchange at the header instead of scrolling through composer space', () => {
@@ -133,4 +134,13 @@ describe('chat follow and reading modes', () => {
     act(() => vi.advanceTimersByTime(100));
     expect(scrollTo).not.toHaveBeenCalled();
   });
+  it('restores an edit recovery position and keeps later content from pulling the reader away', () => {
+    const { container, grow } = setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore reading position' }));
+    // Restore and transcript rerender share the same React update, before RAF.
+    grow(2000, 'Original transcript restored');
+    act(() => vi.advanceTimersByTime(20));
+    expect(container.scrollTop).toBe(240);
+  });
+
 });

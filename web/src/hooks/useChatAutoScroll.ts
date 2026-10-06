@@ -13,6 +13,7 @@ export function useChatAutoScroll(
   const preserveInitialPosition = useRef(true);
   const touching = useRef(false);
   const frame = useRef<number>();
+  const pendingRestoreTop = useRef<number>();
   const pinInitialExchange = shouldPinInitialExchangeToTop(messages);
   const pinInitialExchangeRef = useRef(pinInitialExchange);
   pinInitialExchangeRef.current = pinInitialExchange;
@@ -44,7 +45,11 @@ export function useChatAutoScroll(
     frame.current = requestAnimationFrame(() => {
       frame.current = undefined;
       const container = containerRef.current;
-      if (container && following.current && !touching.current) {
+      const restoredTop = pendingRestoreTop.current;
+      pendingRestoreTop.current = undefined;
+      if (container && !touching.current && restoredTop !== undefined) {
+        container.scrollTo({ top: restoredTop, behavior: 'instant' });
+      } else if (container && following.current && !touching.current) {
         // Instant writes cannot leave a smooth animation fighting a later gesture.
         const top = targetTop();
         if (Math.abs(container.scrollTop - top) > 1) container.scrollTo({ top, behavior: 'instant' });
@@ -54,12 +59,21 @@ export function useChatAutoScroll(
   }, [cancelFrame, containerRef, targetTop, updateButton]);
 
   const resetScrollTracking = useCallback(() => {
+    pendingRestoreTop.current = undefined;
     following.current = true;
     preserveInitialPosition.current = true;
     scheduleFollow();
   }, [scheduleFollow]);
 
+  const restoreScrollPosition = useCallback((top: number) => {
+    following.current = false;
+    preserveInitialPosition.current = false;
+    pendingRestoreTop.current = top;
+    scheduleFollow();
+  }, [scheduleFollow]);
+
   const resumeFollowing = useCallback(() => {
+    pendingRestoreTop.current = undefined;
     following.current = true;
     preserveInitialPosition.current = false;
     const container = containerRef.current;
@@ -73,6 +87,7 @@ export function useChatAutoScroll(
     let lastTop = container.scrollTop;
     let touchedTowardBottom = false;
     const pause = () => {
+      pendingRestoreTop.current = undefined;
       following.current = false;
       cancelFrame();
     };
@@ -121,6 +136,7 @@ export function useChatAutoScroll(
     observer?.observe(container);
     if (container.firstElementChild) observer?.observe(container.firstElementChild);
     return () => {
+      pendingRestoreTop.current = undefined;
       cancelFrame();
       observer?.disconnect();
       container.removeEventListener('touchstart', onTouchStart);
@@ -135,5 +151,5 @@ export function useChatAutoScroll(
 
   useEffect(scheduleFollow, [messages, scheduleFollow]);
 
-  return { showScrollButton, resumeFollowing, resetScrollTracking };
+  return { showScrollButton, resumeFollowing, resetScrollTracking, restoreScrollPosition };
 }

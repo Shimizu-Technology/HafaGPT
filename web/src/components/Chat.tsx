@@ -48,6 +48,7 @@ interface SendAttempt {
   todayStep?: string;
   todayDay?: string;
   skillLevel: 'beginner' | 'intermediate' | 'advanced';
+  edit?: { messageId: number; revision: string; messageIndex: number; originalMessages: ChatMessage[]; scrollTop: number };
 }
 
 export function Chat() {
@@ -180,6 +181,7 @@ function ChatSession() {
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
     originalContent: string; files: { index: number; name: string }[]; skipAll?: boolean;
   } | null>(null);
+  const [completedEdit, setCompletedEdit] = useState<{ renderKey: string; message: string }>();
   const [completedSend, setCompletedSend] = useState<{ message: string; files?: File[] }>();
   const [preparingSend, setPreparingSend] = useState(false);
   const mountedRef = useRef(true);
@@ -211,7 +213,8 @@ function ChatSession() {
   }, [activeConversationId]);
 
   useEffect(() => {
-    const displayed = new Set(messages.flatMap(message => message.file_urls?.map(file => file.url) || []));
+    const recoverable = pendingAttemptRef.current?.edit?.originalMessages || [];
+    const displayed = new Set([...messages, ...recoverable].flatMap(message => message.file_urls?.map(file => file.url) || []));
     previewUrls.current.forEach(url => {
       if (!displayed.has(url)) { URL.revokeObjectURL(url); previewUrls.current.delete(url); }
     });
@@ -456,7 +459,7 @@ function ChatSession() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const { showScrollButton, resumeFollowing, resetScrollTracking } = useChatAutoScroll(
+  const { showScrollButton, resumeFollowing, resetScrollTracking, restoreScrollPosition } = useChatAutoScroll(
     messagesContainerRef, messages,
   );
   useEffect(() => {
@@ -490,9 +493,18 @@ function ChatSession() {
       topicId: sendTopic?.id || requestedTopic?.id, skillLevel: preferences.skill_level,
       returnTo: requestedReturnPath, todayStep: searchParams.get('today_step') || undefined, todayDay: searchParams.get('today_day') || undefined,
     };
+    const approvedUsage = usageApproved || Boolean(attempt.edit);
+    let editCommitted = false;
     const generation = ++sendGeneration.current;
     pendingAttemptRef.current = attempt;
-    const isCurrent = () => mountedRef.current && generation === sendGeneration.current;
+    const isCurrent = () => mountedRef.current && generation === sendGeneration.current
+      && (!attempt.edit || scopeConversation.current === attempt.conversationId);
+    const restoreEdit = () => {
+      if (isCurrent() && attempt.edit) {
+        setMessages(attempt.edit.originalMessages);
+        restoreScrollPosition(attempt.edit.scrollTop);
+      }
+    };
     const fail = (reason: string) => {
       if (!isCurrent()) return;
       setFailedAttempt(attempt);
@@ -507,7 +519,7 @@ function ChatSession() {
     // ========================================================================
     
     // Quick sync check - if we already know they're over limit, block immediately
-    if (!usageApproved && isSignedIn && !canUse('chat')) {
+    if (!approvedUsage && isSignedIn && !canUse('chat')) {
       setShowUpgradePrompt(true);
       setPreparingSend(false);
       return false;
@@ -531,19 +543,19 @@ function ChatSession() {
       localFileUrls?.forEach(file => previewUrls.current.add(file.url));
 
       // Generate unique IDs for optimistic messages (so we can remove them if needed)
-      const userMessageId = `user_${Date.now()}`;
+      const editedOriginal = attempt.edit?.originalMessages[attempt.edit.messageIndex];
+      const userMessageId = editedOriginal?.id || `user_${Date.now()}`;
       const assistantMessageId = `streaming_${Date.now()}`;
 
       // INSTANT: Add user message immediately
       const userMessage: ChatMessage = {
         id: userMessageId,
-        renderKey: userMessageId,
+        renderKey: editedOriginal ? editedOriginal.renderKey || (editedOriginal.id ? `${editedOriginal.id}-${editedOriginal.role}` : String(attempt.edit!.messageIndex)) : userMessageId,
         role: 'user',
         content: message,
         file_urls: localFileUrls,
         timestamp: Date.now(),
       };
-      setMessages((prev) => [...prev, userMessage]);
 
       // INSTANT: Add thinking indicator immediately
       const placeholderMessage: ChatMessage = {
@@ -557,15 +569,16 @@ function ChatSession() {
         used_rag: false,
         used_web_search: false,
       };
-      setMessages((prev) => [...prev, placeholderMessage]);
+      setMessages(prev => attempt.edit
+        ? [...attempt.edit.originalMessages.slice(0, attempt.edit.messageIndex), userMessage, placeholderMessage]
+        : [...prev, userMessage, placeholderMessage]);
 
       // Helper to remove optimistic messages on failure
       const removeOptimisticMessages = () => {
         if (!isCurrent()) return;
         localFileUrls?.forEach(file => { URL.revokeObjectURL(file.url); previewUrls.current.delete(file.url); });
-        setMessages((prev) => prev.filter(
-          (msg) => msg.id !== userMessageId && msg.id !== assistantMessageId
-        ));
+        if (attempt.edit) restoreEdit();
+        else setMessages(prev => prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId));
         isSendingMessageRef.current = false;
       };
 
@@ -574,7 +587,7 @@ function ChatSession() {
 
       // Check usage before creating a durable record so a denied send cannot
       // leave an empty conversation or trigger late navigation.
-      if (!usageApproved && isSignedIn) {
+      if (!approvedUsage && isSignedIn) {
         let allowed: boolean;
         try {
           allowed = await tryUse('chat');
@@ -660,6 +673,8 @@ function ChatSession() {
           },
           onDone: (response_time) => {
             if (!isCurrent()) return;
+            editCommitted = Boolean(attempt.edit);
+            if (attempt.edit) setCompletedEdit({ renderKey: userMessage.renderKey!, message: attempt.message });
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
@@ -676,6 +691,7 @@ function ChatSession() {
           },
           onError: (errorMsg) => {
             if (!isCurrent()) return;
+            if (editCommitted) { setError(null); return; }
             fail(errorMsg);
             console.error('Streaming error:', errorMsg);
             removeOptimisticMessages();
@@ -683,6 +699,13 @@ function ChatSession() {
           },
           onCancelled: () => {
             if (!isCurrent()) return;
+            if (attempt.edit) {
+              if (!editCommitted) {
+                removeOptimisticMessages();
+                fail('Editing stopped. Your edit is still here.');
+              }
+              return;
+            }
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
@@ -708,17 +731,28 @@ function ChatSession() {
         attempt.files,
         attempt.skillLevel,
         attempt.intent,
-        attempt.topicId
+        attempt.topicId,
+        attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined
       );
       if (!isCurrent()) return false;
       setCompletedSend({ message: attempt.message, files: attempt.files });
       return true;
       
     } catch (err) {
+      if (attempt.edit && editCommitted && isCurrent()) {
+        setError(null);
+        setFailedAttempt(null);
+        setCompletedSend({ message: attempt.message, files: attempt.files });
+        return true;
+      }
+      restoreEdit();
       if (!(err instanceof CancelledError)) {
         console.error('Failed to send message:', err);
       }
-      if (err instanceof CancelledError) return isCurrent();
+      if (err instanceof CancelledError) {
+        if (attempt.edit) { fail('Editing stopped. Your edit is still here.'); return false; }
+        return isCurrent();
+      }
       fail(err instanceof Error ? err.message : 'Could not send your message.');
       return false;
     } finally {
@@ -920,6 +954,9 @@ function ChatSession() {
         || (editedMessage.id && /^\d+$/.test(editedMessage.id) && String(original.id) !== editedMessage.id)) {
         throw new Error('This conversation changed. Reopen it before editing.');
       }
+      if (original.edit_protocol !== 'atomic-v1' || !original.edit_revision) {
+        throw new Error('Editing is temporarily unavailable. Your original conversation is unchanged.');
+      }
       // Reopen only attachments belonging to this owned persisted exchange.
       // Read through the authenticated API instead of a signed storage URL.
       const storedFiles = original.file_urls?.length ? original.file_urls
@@ -972,14 +1009,12 @@ function ChatSession() {
         return false;
       }
       if (!current()) return false;
-      await editOwner.request(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages/from/${original.id}`,
-        { method: 'DELETE', signal: controller.signal },
-      );
-      if (!current()) return false;
-      setMessages(messages.slice(0, messageIndex));
+      attempt.files = files.length ? files : undefined;
+      attempt.edit = { messageId: original.id, revision: original.edit_revision, messageIndex, originalMessages: messages, scrollTop: messagesContainerRef.current?.scrollTop || 0 };
       isSendingMessageRef.current = false;
-      return await handleSend(newContent, files.length ? files : undefined, linkedTopic?.id, undefined, true);
+      // The server replaces the suffix only when the complete new exchange persists.
+      // Keep the original render identity and a private recovery snapshot until then.
+      return await handleSend(newContent, attempt.files, linkedTopic?.id, attempt, true);
     } catch (error) {
       if (current()) console.error('Could not update message:', error);
       return false;
@@ -1292,6 +1327,7 @@ End of Export
                       && (message.id === String(unavailableAttachments.persistedId)
                         || Boolean(unavailableAttachments.renderKey) && message.renderKey === unavailableAttachments.renderKey && message.content === unavailableAttachments.originalContent)
                       ? unavailableAttachments.files.map(file => file.name) : undefined}
+                    acceptedEdit={completedEdit?.renderKey === (message.renderKey || (message.id ? `${message.id}-${message.role}` : String(index))) ? completedEdit : undefined}
                     messageIndex={index}
                   />
                 );
