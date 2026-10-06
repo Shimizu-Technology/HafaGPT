@@ -1,6 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useMutation, type MutateOptions } from '@tanstack/react-query';
 import { useAuth } from '@clerk/clerk-react';
+
+/** Preserve status so callers can offer the right recovery without exposing bodies. */
+export class HttpError extends Error {
+  constructor(readonly status: number, message = 'The request failed. Please try again.') {
+    super(message);
+    this.name = 'HttpError';
+  }
+}
 
 /** Keep token acquisition, transport and cache commits tied to one mounted owner. */
 export function useAccountRequest() {
@@ -14,7 +22,7 @@ export function useAccountRequest() {
   const mounted = useRef(true);
   const pending = useRef(new Set<AbortController>());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     mounted.current = true;
     const requests = pending.current;
     return () => {
@@ -51,7 +59,7 @@ export function useAccountRequest() {
         headers: { ...init.headers, Authorization: `Bearer ${token}` },
       });
       assertCurrent();
-      if (!response.ok) throw new Error('The request failed. Please try again.');
+      if (!response.ok) throw new HttpError(response.status);
       const data = await read(response);
       assertCurrent();
       return data;
