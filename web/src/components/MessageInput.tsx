@@ -73,13 +73,13 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
         // Reset height to auto to get accurate scrollHeight
         textareaRef.current.style.height = 'auto';
         // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
-        textareaRef.current.style.height = `${Math.max(64, textareaRef.current.scrollHeight)}px`;
+        textareaRef.current.style.height = `${Math.max(compact ? 40 : 64, textareaRef.current.scrollHeight)}px`;
       } else {
         // When empty, use the minimum height from CSS
         textareaRef.current.style.height = '';
       }
     }
-  }, [input, textareaRef]);
+  }, [input, compact, textareaRef]);
 
   // Auto-focus input on mount (desktop only - don't show keyboard on mobile)
   useEffect(() => {

@@ -685,6 +685,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
                     {label}<ExternalLink className="h-3 w-3 flex-none" aria-hidden="true" />
                   </a> : <span title={detail} className="font-medium text-brown-800 dark:text-gray-200">{label}</span>}
+                  {detail && <p className="break-words text-xs leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>}
                 </li>;
               })}</ul>}
             </div>
