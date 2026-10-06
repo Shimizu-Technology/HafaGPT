@@ -4,6 +4,7 @@ Chamorro Chatbot FastAPI Application
 A simple API wrapper around the chatbot core logic.
 """
 
+from starlette.concurrency import run_in_threadpool
 from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -1872,11 +1873,11 @@ async def delete_messages_from_endpoint(
     conversation_id: str,
     message_id: int,
     authorization: Optional[str] = Header(None),
-):
+) -> dict[str, int | bool]:
     """Remove the selected owned exchange and later history for edit/regenerate."""
     try:
         user_id = await verify_user(authorization)
-        deleted_count = conversations.delete_messages_from(conversation_id, message_id, user_id)
+        deleted_count = await run_in_threadpool(conversations.delete_messages_from, conversation_id, message_id, user_id)
         if deleted_count is None:
             raise HTTPException(status_code=404, detail="Conversation message not found")
         return {"success": True, "deleted_count": deleted_count}

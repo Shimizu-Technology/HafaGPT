@@ -82,4 +82,16 @@ describe('MessageInput', () => {
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
 
+  it('starts a fresh draft immediately and does not restore a failed older draft over newer text', async () => {
+    let finish!: (accepted: boolean) => void;
+    const onSend = vi.fn(() => new Promise<boolean>(resolve => { finish = resolve; }));
+    render(<MessageInput onSend={onSend} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'First message' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(screen.getByRole('textbox')).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New draft' } });
+    await act(async () => finish(false));
+    expect(screen.getByRole('textbox')).toHaveValue('New draft');
+  });
+
 });

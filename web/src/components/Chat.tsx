@@ -576,7 +576,7 @@ function ChatSession() {
         } catch (usageError) {
           console.error('Failed to verify chat usage:', usageError);
           removeOptimisticMessages();
-          fail('Unable to verify chat usage. Your draft is still here.');
+          fail('Unable to verify chat usage. Please try again.');
           return false;
         }
         if (!isCurrent()) return false;
@@ -915,14 +915,16 @@ function ChatSession() {
         || (editedMessage.id && /^\d+$/.test(editedMessage.id) && String(original.id) !== editedMessage.id)) {
         throw new Error('This conversation changed. Reopen it before editing.');
       }
-      // Keep the original attachments with the edited question. Fetch without
-      // credentials; an auth token must never be sent to an upload host.
+      // Reopen only attachments belonging to this owned persisted exchange.
+      // Read through the authenticated API instead of a signed storage URL.
       const originals = original.file_urls?.length ? original.file_urls
         : original.image_url ? [{ url: original.image_url, filename: 'attachment', content_type: undefined }] : [];
-      const files = await Promise.all(originals.map(async file => {
-        const response = await fetch(file.url, { credentials: 'omit', signal: controller.signal });
-        if (!response.ok) throw new Error('Could not reopen the attachment.');
-        const blob = await response.blob();
+      const files = await Promise.all(originals.map(async (file, index) => {
+        const blob = await editOwner.request<Blob>(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages/${original.id}/files/${index}`,
+          { signal: controller.signal },
+          response => response.blob(),
+        );
         if (blob.size > 20 * 1024 * 1024) throw new Error('This attachment is too large to resend.');
         return new File([blob], file.filename, { type: file.content_type || blob.type });
       }));
@@ -1288,6 +1290,7 @@ End of Export
           <div role="alert" className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30 sm:mx-auto sm:max-w-3xl">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-red-900 dark:text-red-200">Message not sent</p>
+              <p className="truncate text-xs text-red-900 dark:text-red-200" title={failedAttempt.message}>{failedAttempt.message}{failedAttempt.files?.length ? ` · ${failedAttempt.files.length} file${failedAttempt.files.length === 1 ? '' : 's'}` : ''}</p>
               <p className="mt-0.5 text-xs text-red-800 dark:text-red-300">{error}</p>
             </div>
             <button type="button" onClick={handleRetry} disabled={preparingSend || loading} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">

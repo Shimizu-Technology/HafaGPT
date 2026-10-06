@@ -1,3 +1,4 @@
+from starlette.concurrency import run_in_threadpool
 """Persisted edit boundaries must never depend on client time or another owner."""
 import ast
 import logging
@@ -134,7 +135,7 @@ def client_for(deletion, authenticated=True):
         if not authenticated or authorization != 'Bearer test-token':
             raise HTTPException(status_code=401, detail='Sign in required')
         return 'learner-a'
-    namespace = {"app": app, "Optional": Optional, "Header": Header, "HTTPException": HTTPException, "verify_user": verify, "conversations": SimpleNamespace(delete_messages_from=deletion), "logger": logging.getLogger(__name__)}
+    namespace = {"run_in_threadpool": run_in_threadpool, "app": app, "Optional": Optional, "Header": Header, "HTTPException": HTTPException, "verify_user": verify, "conversations": SimpleNamespace(delete_messages_from=deletion), "logger": logging.getLogger(__name__)}
     isolated_function('main.py', 'delete_messages_from_endpoint', namespace)
     return TestClient(app)
 

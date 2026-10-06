@@ -47,7 +47,9 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const lastSubmission = useRef<{ input: string; message: string; files?: File[] } | null>(null);
+  const draftRevision = useRef(0);
+  const pendingPreviews = useRef<FileWithPreview[]>([]);
+  const lastSubmission = useRef<{ input: string; message: string; files?: File[]; revision: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
   const draftRef = useRef({ input, selectedFiles });
@@ -104,7 +106,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
         recognitionRef.current.abort();
       }
       // Cleanup all preview URLs
-      selectedFilesRef.current.forEach(f => {
+      [...selectedFilesRef.current, ...pendingPreviews.current].forEach(f => {
         if (f.preview) URL.revokeObjectURL(f.preview);
       });
     };
@@ -214,6 +216,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     );
 
     if (newFiles.length > 0) {
+      draftRevision.current += 1;
       setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
@@ -244,6 +247,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
   };
 
   const removeFile = (id: string) => {
+    draftRevision.current += 1;
     setSelectedFiles(prev => {
       const fileToRemove = prev.find(f => f.id === id);
       if (fileToRemove?.preview) {
@@ -289,6 +293,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
       // Append to existing text with a space if there's already content
+      draftRevision.current += 1;
       setInput(prev => prev ? `${prev} ${transcript}` : transcript);
     };
 
@@ -319,12 +324,13 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     }
   };
 
-  const clearSubmittedDraft = useCallback((submitted: { input: string; files?: File[] }) => {
+  const clearSubmittedDraft = useCallback((submitted: { input: string; files?: File[]; revision: number }) => {
     const current = draftRef.current;
     // Text and attachments form one draft. Retrying an old attempt cannot
     // partially clear a newer message that still happens to use the same files.
-    if (current.input !== submitted.input || current.selectedFiles.length !== (submitted.files || []).length
+    if (draftRevision.current !== submitted.revision || current.input !== submitted.input || current.selectedFiles.length !== (submitted.files || []).length
       || !current.selectedFiles.every((item, index) => item.file === submitted.files?.[index])) return;
+    draftRevision.current += 1;
     setInput('');
     current.selectedFiles.forEach(item => { if (item.preview) URL.revokeObjectURL(item.preview); });
     setSelectedFiles([]);
@@ -361,19 +367,34 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
       triggerHaptic('light');
       
       const message = input.trim() || defaultMessage;
-      const submitted = { input, message, files };
+      const submitted = { input, message, files, revision: draftRevision.current };
+      const previews = selectedFiles;
       lastSubmission.current = submitted;
       submittingRef.current = true;
       setSubmitting(true);
+      // Start a fresh draft immediately. Keep its predecessor privately until
+      // accepted, so rejection can restore it without overwriting newer typing.
+      const clearedRevision = ++draftRevision.current;
+      pendingPreviews.current = previews;
+      setInput('');
+      setSelectedFiles([]);
+      setFileError(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      let accepted = false;
       try {
-        // A denied/failed send leaves the exact text and attachments available.
-        const accepted = await onSend(message, files);
-        if (accepted !== false) {
-          clearSubmittedDraft(submitted);
-        }
+        accepted = (await onSend(message, files)) !== false;
       } catch {
         setFileError('Your message was not sent. Please try again.');
       } finally {
+        if (!accepted && draftRevision.current === clearedRevision) {
+          submitted.revision = ++draftRevision.current;
+          setInput(submitted.input);
+          setSelectedFiles(previews);
+        } else {
+          previews.forEach(item => { if (item.preview) URL.revokeObjectURL(item.preview); });
+        }
+        pendingPreviews.current = [];
+
         submittingRef.current = false;
         setSubmitting(false);
       }
@@ -535,7 +556,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => { draftRevision.current += 1; setInput(e.target.value); }}
             onKeyDown={handleKeyDown}
             onPaste={submitting ? undefined : handlePaste}
             placeholder={placeholder || (isMobile ? "Message..." : "Type or speak your message...")}

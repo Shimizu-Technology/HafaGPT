@@ -219,9 +219,9 @@ describe('Chat stable conversation route', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
 
     await waitFor(() => expect(state.setError).toHaveBeenCalledWith(
-      'Unable to verify chat usage. Your draft is still here.',
+      'Unable to verify chat usage. Please try again.',
     ));
-    expect(screen.queryByText('Test message')).not.toBeInTheDocument();
+    expect(screen.getByTestId('chat-messages')).not.toHaveTextContent('Test message');
     expect(screen.queryByText('Thinking')).not.toBeInTheDocument();
     expect(state.createConversation).not.toHaveBeenCalled();
   });
@@ -267,7 +267,7 @@ describe('Chat stable conversation route', () => {
 
   it('does not navigate or start a send if the learner leaves during conversation creation', async () => {
     let finish!: (value: { id: string }) => void;
-    state.createConversation.mockImplementation(() => new Promise(resolve => { finish = () => resolve(undefined); }));
+    state.createConversation.mockImplementation(() => new Promise(resolve => { finish = value => resolve(value); }));
     renderChat('/chat/conv-old');
     fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
     await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat'));
@@ -351,6 +351,23 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
     expect(state.sendMessageStream).not.toHaveBeenCalled();
     expect(screen.getByText('Original message')).toBeInTheDocument();
+  });
+
+  it('reopens only owned attachment bytes before editing and preserves them in the regenerated request', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'https://private-storage.invalid/signed', filename: 'note.txt', type: 'document', content_type: 'text/plain' }] };
+    state.messages = [original];
+    state.editRequest.mockResolvedValueOnce({ messages: [original] })
+      .mockResolvedValueOnce(new Blob(['safe fixture'], { type: 'text/plain' }))
+      .mockResolvedValueOnce({ success: true });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.editRequest.mock.calls[1][0]).toContain('/messages/42/files/0');
+    expect(state.editRequest.mock.calls[2][0]).toContain('/messages/from/42');
+    const file = state.sendMessageStream.mock.calls[0][4][0];
+    expect(file).toBeInstanceOf(File);
+    expect(file.name).toBe('note.txt');
+    expect(file.type).toBe('text/plain');
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {
