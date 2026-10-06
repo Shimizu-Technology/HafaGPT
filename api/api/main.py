@@ -1867,6 +1867,26 @@ async def delete_conversation_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/api/conversations/{conversation_id}/messages/from/{message_id}", tags=["Conversations"])
+async def delete_messages_from_endpoint(
+    conversation_id: str,
+    message_id: int,
+    authorization: Optional[str] = Header(None),
+):
+    """Remove the selected owned exchange and later history for edit/regenerate."""
+    try:
+        user_id = await verify_user(authorization)
+        deleted_count = conversations.delete_messages_from(conversation_id, message_id, user_id)
+        if deleted_count is None:
+            raise HTTPException(status_code=404, detail="Conversation message not found")
+        return {"success": True, "deleted_count": deleted_count}
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Failed to delete messages from persisted boundary")
+        raise HTTPException(status_code=500, detail="Unable to update conversation. Please try again.")
+
+
 @app.delete("/api/conversations/{conversation_id}/messages/after/{timestamp}", tags=["Conversations"])
 async def delete_messages_after_endpoint(
     conversation_id: str,

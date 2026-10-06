@@ -89,6 +89,8 @@ def test_get_conversation_messages_skips_blank_assistant_messages():
         "Second question",
         "Real answer",
     ]
-    assert fake_connection.cursor_instance.executions[0][1] == ("conv-123",)
+    query, params = fake_connection.cursor_instance.executions[0]
+    assert params == ("conv-123",)
+    assert "ORDER BY timestamp ASC, id ASC" in query
     assert fake_connection.cursor_instance.closed is True
     assert fake_connection.closed is True

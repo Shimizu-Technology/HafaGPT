@@ -242,7 +242,7 @@ def get_conversation_messages(conversation_id: str) -> MessagesResponse:
                 file_urls
             FROM conversation_logs
             WHERE conversation_id = %s
-            ORDER BY timestamp ASC
+            ORDER BY timestamp ASC, id ASC
         """, (conversation_id,))
         
         rows = cursor.fetchall()
@@ -449,6 +449,75 @@ def update_conversation_title(conversation_id: str, title: str, user_id: Optiona
     except Exception as e:
         logger.error(f"Failed to update conversation: {e}")
         raise
+
+
+def delete_messages_from(conversation_id: str, message_id: int, user_id: str) -> Optional[int]:
+    """Delete an owned log row and its chronological suffix atomically.
+
+    One persisted log row holds both sides of an exchange. The database's exact
+    timestamp and ID tie-breaker match message history ordering; no client clock,
+    timezone conversion or lost millisecond precision determines the boundary.
+    Upload references remain available for reuse by the regenerated exchange.
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = get_db_connection_with_retry()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT logs.timestamp, logs.id
+            FROM conversations AS conversation
+            JOIN conversation_logs AS logs ON logs.conversation_id = conversation.id
+            WHERE conversation.id = %s
+              AND conversation.user_id = %s
+              AND conversation.deleted_at IS NULL
+              AND logs.id = %s
+              AND logs.user_id = %s
+            FOR UPDATE OF conversation, logs
+            """,
+            (conversation_id, user_id, message_id, user_id),
+        )
+        boundary = cursor.fetchone()
+        if boundary is None:
+            conn.rollback()
+            return None
+
+        timestamp, boundary_id = boundary
+        # PostgreSQL ASC puts NULL timestamps last. Preserve that ordering for
+        # legacy rows too, while ID orders exchanges sharing one timestamp.
+        if timestamp is None:
+            cursor.execute(
+                """
+                DELETE FROM conversation_logs
+                WHERE conversation_id = %s AND user_id = %s
+                  AND timestamp IS NULL AND id >= %s
+                """,
+                (conversation_id, user_id, boundary_id),
+            )
+        else:
+            cursor.execute(
+                """
+                DELETE FROM conversation_logs
+                WHERE conversation_id = %s AND user_id = %s
+                  AND (timestamp > %s OR (timestamp = %s AND id >= %s)
+                       OR timestamp IS NULL)
+                """,
+                (conversation_id, user_id, timestamp, timestamp, boundary_id),
+            )
+        deleted_count = cursor.rowcount
+        conn.commit()
+        return deleted_count
+    except Exception:
+        if conn is not None:
+            conn.rollback()
+        logger.exception("Failed to delete messages from persisted boundary")
+        raise
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 def delete_messages_after(conversation_id: str, timestamp: int, user_id: Optional[str] = None) -> int:
