@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from api.auth_policy import (
@@ -57,7 +59,7 @@ def test_optional_issuer_is_normalized(monkeypatch):
     assert configured_clerk_issuer() == "https://example.clerk.accounts.dev"
 
 
-def test_clerk_verifier_accepts_real_rs256_and_rejects_der_hmac_forgery(monkeypatch):
+def test_clerk_verifier_accepts_real_rs256_and_rejects_der_hmac_forgery(monkeypatch: pytest.MonkeyPatch) -> None:
     import ast
     import base64
     import hashlib
@@ -82,7 +84,7 @@ def test_clerk_verifier_accepts_real_rs256_and_rejects_der_hmac_forgery(monkeypa
     key = jwk.construct(public_pem, algorithm='RS256').to_dict()
     key['kid'] = 'trusted-key'
     key_reads = []
-    def get_keys(force_refresh=False):
+    def get_keys(force_refresh: bool = False) -> list[dict[str, Any]]:
         key_reads.append(force_refresh)
         return [key]
     namespace = {'_get_clerk_jwks': get_keys, '_key_to_dict': lambda value: value,
@@ -93,7 +95,7 @@ def test_clerk_verifier_accepts_real_rs256_and_rejects_der_hmac_forgery(monkeypa
     claims = {'sub': 'real-learner', 'iss': 'https://auth.example', 'azp': 'https://hafagpt.com', 'exp': int(time.time()) + 60}
     calls = []
     decode = jwt.decode
-    def tracked_decode(*args, **kwargs):
+    def tracked_decode(*args: Any, **kwargs: Any) -> dict[str, Any]:
         calls.append(kwargs)
         return decode(*args, **kwargs)
     monkeypatch.setattr(jwt, 'decode', tracked_decode)

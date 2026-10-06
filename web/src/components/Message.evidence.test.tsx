@@ -113,3 +113,15 @@ it('identifies unavailable files and asks before regenerating without them', asy
   await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Regenerate without these attachments' })));
   expect(onEdit).toHaveBeenCalledWith('Updated', 1, true);
 });
+
+it('keeps a later edit failure visible alongside an unavailable-file warning', async () => {
+  const onEdit = vi.fn().mockResolvedValue(false);
+  render(<Message role="user" content="Original" canEdit onEdit={onEdit} unavailableAttachments={['old-note.txt']} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Keep my edit' } });
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Regenerate without these attachments' })));
+  expect(screen.getByRole('textbox')).toHaveValue('Keep my edit');
+  const alerts = screen.getAllByRole('alert').map(element => element.textContent);
+  expect(alerts.some(text => text?.includes('Your edit is still here.'))).toBe(true);
+  expect(alerts.some(text => text?.includes('old-note.txt'))).toBe(true);
+});

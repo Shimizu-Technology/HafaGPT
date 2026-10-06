@@ -623,7 +623,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                       }
                     }}
                   />
-                  {editError && !unavailableAttachments?.length && <p role="alert" className="text-xs text-white">{editError}</p>}
+                  {editError && <p role="alert" className="text-xs text-white">{editError}</p>}
                   {unavailableAttachments?.length ? <div role="alert" className="rounded-lg bg-white/10 p-3 text-sm text-white">
                     <p>Could not reopen: {unavailableAttachments.join(', ')}. Your saved message is unchanged.</p>
                     <p className="mt-1">Try again, or leave these attachments out of the edited message.</p>
