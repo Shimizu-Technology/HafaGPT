@@ -1,5 +1,5 @@
 import { BookOpen, BookOpenCheck, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles } from 'lucide-react';
-import { useState, memo, useMemo } from 'react';
+import { useState, useRef, memo, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -116,7 +116,7 @@ interface MessageProps {
   isStreaming?: boolean; // Whether this message is currently streaming
   // Edit & Regenerate props
   canEdit?: boolean; // Whether this message can be edited
-  onEdit?: (newContent: string, messageIndex?: number) => void;
+  onEdit?: (newContent: string, messageIndex?: number) => Promise<boolean> | boolean | void;
   messageIndex?: number; // Callback when user saves edited message
 }
 
@@ -247,6 +247,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const editSubmittingRef = useRef(false);
   const { speak, stop, extractChamorroText, isSpeaking, isSupported } = useSpeech();
   const evidenceStatus = useMemo(
     () => getChatEvidenceStatus(sources?.length ?? 0, Boolean(used_web_search)),
@@ -257,16 +260,27 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
 
   // Handle edit submission
-  const handleEditSubmit = () => {
-    if (editContent.trim() && editContent !== content && onEdit) {
-      onEdit(editContent.trim(), messageIndex);
-      setIsEditing(false);
+  const handleEditSubmit = async () => {
+    if (!editContent.trim() || editContent === content || !onEdit || editSubmittingRef.current) return;
+    editSubmittingRef.current = true;
+    setEditSubmitting(true);
+    setEditError(null);
+    try {
+      const accepted = await onEdit(editContent.trim(), messageIndex);
+      if (accepted === false) setEditError('Could not update this message. Your edit is still here.');
+      else setIsEditing(false);
+    } catch {
+      setEditError('Could not update this message. Your edit is still here.');
+    } finally {
+      editSubmittingRef.current = false;
+      setEditSubmitting(false);
     }
   };
 
   // Handle edit cancel
   const handleEditCancel = () => {
     setEditContent(content);
+    setEditError(null);
     setIsEditing(false);
   };
 
@@ -594,6 +608,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               {isEditing ? (
                 <div className="space-y-2">
                   <textarea
+                    readOnly={editSubmitting}
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
                     className="w-full min-h-[60px] p-2 rounded-lg bg-white/20 dark:bg-black/20 border border-white/30 dark:border-white/20 text-white placeholder-white/60 text-sm sm:text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
@@ -602,13 +617,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleEditSubmit();
-                      } else if (e.key === 'Escape') {
+                      } else if (e.key === 'Escape' && !editSubmitting) {
                         handleEditCancel();
                       }
                     }}
                   />
+                  {editError && <p role="alert" className="text-xs text-white">{editError}</p>}
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      disabled={editSubmitting}
                       onClick={handleEditCancel}
                       className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1"
                     >
@@ -617,11 +634,11 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     </button>
                     <button
                       onClick={handleEditSubmit}
-                      disabled={!editContent.trim() || editContent === content}
+                      disabled={editSubmitting || !editContent.trim() || editContent === content}
                       className="px-3 py-1.5 text-xs font-medium text-coral-900 dark:text-ocean-900 bg-white hover:bg-white/90 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <RotateCcw className="w-3 h-3" />
-                      Save & Regenerate
+                      {editSubmitting ? 'Updating…' : 'Save & Regenerate'}
                     </button>
                   </div>
                 </div>
@@ -854,6 +871,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   setIsEditing(true);
                 }}
                 className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+                aria-label="Edit message"
                 title="Edit message"
               >
                 <Pencil className="w-3 h-3" />

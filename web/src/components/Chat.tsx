@@ -1,7 +1,9 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
+import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
+import { useAccountRequest } from '../hooks/useAccountRequest';
+import { useLearnerAuth } from '../hooks/useLearnerAuth';
 import { useTheme } from '../hooks/useTheme';
 import { 
   useInitUserData, 
@@ -12,7 +14,7 @@ import {
   useUpdateConversationTitle,
   ConversationMessage 
 } from '../hooks/useConversationsQuery';
-import { useUser, useClerk, useAuth } from '@clerk/clerk-react';
+import { useUser, useClerk } from '@clerk/clerk-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '../hooks/useSubscription';
 import { useUserPreferences } from '../hooks/useUserPreferences';
@@ -35,7 +37,25 @@ import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
 import { appRoutes, safeInternalReturnPath } from '../lib/routes';
 
+interface SendAttempt {
+  message: string;
+  files?: File[];
+  conversationId: string | null;
+  mode: 'english' | 'chamorro' | 'learn';
+  intent: ChatIntent;
+  topicId?: string;
+  returnTo?: string;
+  todayStep?: string;
+  todayDay?: string;
+  skillLevel: 'beginner' | 'intermediate' | 'advanced';
+}
+
 export function Chat() {
+  const { user } = useUser();
+  return <ChatSession key={user?.id || 'guest'} />;
+}
+
+function ChatSession() {
   const navigate = useNavigate();
   const { conversationId: routeConversationId } = useParams<{ conversationId: string }>();
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
@@ -74,7 +94,8 @@ export function Chat() {
   const { theme, toggleTheme } = useTheme();
   const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
-  const { getToken } = useAuth();
+  const { getToken } = useLearnerAuth();
+  const editOwner = useAccountRequest();
   const queryClient = useQueryClient();
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
@@ -88,6 +109,7 @@ export function Chat() {
   const chatIntent = normalizeChatIntent(searchParams.get('intent'));
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
   const intentLabel = getChatIntentLabel(chatIntent);
+  const [queuedUrlMessage, setQueuedUrlMessage] = useState<string | null>(null);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
   // React Query hooks - replaces old useConversations hook
@@ -153,6 +175,43 @@ export function Chat() {
     initialFocusRef: shareCloseRef,
   });
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
+  const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
+  const [completedSend, setCompletedSend] = useState<{ message: string; files?: File[] }>();
+  const [preparingSend, setPreparingSend] = useState(false);
+  const mountedRef = useRef(true);
+  const navigationGeneration = useRef(0);
+  const sendGeneration = useRef(0);
+  const editAbort = useRef<AbortController | null>(null);
+  const previewUrls = useRef(new Set<string>());
+  const pendingAttemptRef = useRef<SendAttempt | null>(null);
+  const scopeConversation = useRef(activeConversationId);
+  scopeConversation.current = activeConversationId;
+  useEffect(() => {
+    mountedRef.current = true;
+    const urls = previewUrls.current;
+    return () => { mountedRef.current = false; sendGeneration.current += 1; editAbort.current?.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
+  }, []);
+  useEffect(() => {
+    if (pendingAttemptRef.current && activeConversationId !== pendingAttemptRef.current.conversationId) {
+      sendGeneration.current += 1;
+      pendingAttemptRef.current = null;
+      isSendingMessageRef.current = false;
+      void cancelMessage();
+      editAbort.current?.abort();
+      setPreparingSend(false);
+    }
+    setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
+  // cancelMessage is invoked only when the conversation scope changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    const displayed = new Set(messages.flatMap(message => message.file_urls?.map(file => file.url) || []));
+    previewUrls.current.forEach(url => {
+      if (!displayed.has(url)) { URL.revokeObjectURL(url); previewUrls.current.delete(url); }
+    });
+  }, [messages]);
+
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
   const previousRouteConversationIdRef = useRef(routeConversationId);
 
@@ -365,20 +424,15 @@ export function Chat() {
     // Remove only the one-shot message; preserve topic and return context.
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('message');
-    setSearchParams(nextParams, { replace: true });
+    navigate(`${appRoutes.chat()}?${nextParams.toString()}`, { replace: true });
     
     // Start a new chat by clearing the active conversation
     setActiveConversationId(null);
     setMessages([]);
     browserStorage.remove('active_conversation_id');
     
-    // Send the message after a brief delay to ensure state is updated
-    const messageToSend = messageFromUrl;
-    setTimeout(() => {
-      handleSend(messageToSend);
-      // Reset the flag after sending so future URL messages work
-      hasProcessedUrlMessage.current = false;
-    }, 50);
+    // Send from the next committed new-chat scope, never a delayed old closure.
+    setQueuedUrlMessage(messageFromUrl);
     
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isSignedIn, loading, conversationsLoading, setSearchParams]); // handleSend is stable
@@ -423,17 +477,35 @@ export function Chat() {
     requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
-  const handleSend = async (message: string, files?: File[], learningTopicOverride?: string) => {
+  const handleSend = async (message: string, files?: File[], learningTopicOverride?: string, retry?: SendAttempt, usageApproved = false): Promise<boolean> => {
+    if (!mountedRef.current || activeConversationId !== scopeConversation.current || !isSignedIn || isSendingMessageRef.current || (retry && retry.conversationId !== scopeConversation.current)) return false;
     const sendTopic = getTopic(learningTopicOverride || '') || linkedTopic;
+    const attempt: SendAttempt = retry || {
+      message, files, conversationId: activeConversationId, mode, intent: chatIntent,
+      topicId: sendTopic?.id || requestedTopic?.id, skillLevel: preferences.skill_level,
+      returnTo: requestedReturnPath, todayStep: searchParams.get('today_step') || undefined, todayDay: searchParams.get('today_day') || undefined,
+    };
+    const generation = ++sendGeneration.current;
+    pendingAttemptRef.current = attempt;
+    const isCurrent = () => mountedRef.current && generation === sendGeneration.current;
+    const fail = (reason: string) => {
+      if (!isCurrent()) return;
+      setFailedAttempt(attempt);
+      setError(reason);
+    };
+    setError(null);
+    setFailedAttempt(null);
+    setPreparingSend(true);
     // ========================================================================
     // OPTIMISTIC UI: Show messages IMMEDIATELY before any API calls
     // This makes the UI feel instant even if backend operations take time
     // ========================================================================
     
     // Quick sync check - if we already know they're over limit, block immediately
-    if (isSignedIn && !canUse('chat')) {
+    if (!usageApproved && isSignedIn && !canUse('chat')) {
       setShowUpgradePrompt(true);
-      return;
+      setPreparingSend(false);
+      return false;
     }
     
     // Mark that we're sending a message (prevents race condition with message loading)
@@ -449,6 +521,8 @@ export function Chat() {
       type: (file.type.startsWith('image/') ? 'image' : 'document') as 'image' | 'document',
       content_type: file.type
     }));
+
+    localFileUrls?.forEach(file => previewUrls.current.add(file.url));
 
     // Generate unique IDs for optimistic messages (so we can remove them if needed)
     const userMessageId = `user_${Date.now()}`;
@@ -481,6 +555,8 @@ export function Chat() {
 
     // Helper to remove optimistic messages on failure
     const removeOptimisticMessages = () => {
+      if (!isCurrent()) return;
+      localFileUrls?.forEach(file => { URL.revokeObjectURL(file.url); previewUrls.current.delete(file.url); });
       setMessages((prev) => prev.filter(
         (msg) => msg.id !== userMessageId && msg.id !== assistantMessageId
       ));
@@ -489,24 +565,25 @@ export function Chat() {
 
     try {
       let conversationPromise: Promise<string> | null = null;
-      let currentConversationId = activeConversationId;
+      let currentConversationId = attempt.conversationId;
 
       // Check usage before creating a durable record so a denied send cannot
       // leave an empty conversation or trigger late navigation.
-      if (isSignedIn) {
+      if (!usageApproved && isSignedIn) {
         let allowed: boolean;
         try {
           allowed = await tryUse('chat');
         } catch (usageError) {
           console.error('Failed to verify chat usage:', usageError);
           removeOptimisticMessages();
-          setError('Unable to verify chat usage. Please try again.');
-          return;
+          fail('Unable to verify chat usage. Your draft is still here.');
+          return false;
         }
+        if (!isCurrent()) return false;
         if (!allowed) {
           removeOptimisticMessages();
           setShowUpgradePrompt(true);
-          return;
+          return false;
         }
       }
 
@@ -514,20 +591,20 @@ export function Chat() {
         const generatedTitle = message.trim().slice(0, 50);
         conversationPromise = createConversationMutation.mutateAsync({
           title: generatedTitle,
-          learningTopicId: sendTopic?.id || requestedTopic?.id,
+          learningTopicId: attempt.topicId,
         })
           .then((newConv) => {
+            if (!isCurrent()) throw new CancelledError();
+            attempt.conversationId = newConv.id;
             setActiveConversationId(newConv.id);
             browserStorage.set('active_conversation_id', newConv.id);
             const conversationUrl = new URL(appRoutes.conversation(newConv.id, {
               topicId: newConv.learning_topic_id || sendTopic?.id || requestedTopic?.id,
-              returnTo: requestedReturnPath,
+              returnTo: attempt.returnTo,
             }), window.location.origin);
-            conversationUrl.searchParams.set('intent', chatIntent);
-            for (const key of ['today_step', 'today_day']) {
-              const value = searchParams.get(key);
-              if (value) conversationUrl.searchParams.set(key, value);
-            }
+            conversationUrl.searchParams.set('intent', attempt.intent);
+            if (attempt.todayStep) conversationUrl.searchParams.set('today_step', attempt.todayStep);
+            if (attempt.todayDay) conversationUrl.searchParams.set('today_day', attempt.todayDay);
             navigate(conversationUrl.pathname + conversationUrl.search, { replace: true });
             return newConv.id;
           });
@@ -540,8 +617,8 @@ export function Chat() {
         } catch (err) {
           console.error('Failed to create conversation:', err);
           removeOptimisticMessages();
-          setError('Failed to create conversation');
-          return;
+          fail('Could not start the conversation. Your draft is still here.');
+          return false;
         }
       }
 
@@ -549,12 +626,15 @@ export function Chat() {
       // STREAMING: Now send the actual message
       // ========================================================================
       
+      if (!isCurrent()) return false;
+      setPreparingSend(false);
       await sendMessageStream(
-        message,
-        mode,
+        attempt.message,
+        attempt.mode,
         currentConversationId,
         {
           onChunk: (_chunk, fullContent) => {
+            if (!isCurrent()) return;
             setMessages((prev) => 
               prev.map((msg) => 
                 msg.id === assistantMessageId 
@@ -564,6 +644,7 @@ export function Chat() {
             );
           },
           onMetadata: (metadata) => {
+            if (!isCurrent()) return;
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -573,6 +654,7 @@ export function Chat() {
             );
           },
           onDone: (response_time) => {
+            if (!isCurrent()) return;
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
@@ -588,21 +670,14 @@ export function Chat() {
             isSendingMessageRef.current = false;
           },
           onError: (errorMsg) => {
+            if (!isCurrent()) return;
+            fail(errorMsg);
             console.error('Streaming error:', errorMsg);
-            setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === assistantMessageId) {
-                  return { ...msg, id: undefined, isStreaming: false, content: `Error: ${errorMsg}` };
-                }
-                if (msg.id === userMessageId) {
-                  return { ...msg, id: undefined };
-                }
-                return msg;
-              })
-            );
+            removeOptimisticMessages();
             isSendingMessageRef.current = false;
           },
           onCancelled: () => {
+            if (!isCurrent()) return;
             setMessages((prev) =>
               prev.map((msg) => {
                 if (msg.id === assistantMessageId) {
@@ -625,24 +700,53 @@ export function Chat() {
             isSendingMessageRef.current = false;
           },
         },
-        files,
-        preferences.skill_level,
-        chatIntent,
-        sendTopic?.id
+        attempt.files,
+        attempt.skillLevel,
+        attempt.intent,
+        attempt.topicId
       );
+      if (!isCurrent()) return false;
+      setCompletedSend({ message: attempt.message, files: attempt.files });
+      return true;
       
     } catch (err) {
       if (!(err instanceof CancelledError)) {
         console.error('Failed to send message:', err);
       }
-      isSendingMessageRef.current = false;
+      if (err instanceof CancelledError) return isCurrent();
+      fail(err instanceof Error ? err.message : 'Could not send your message.');
+      return false;
+    } finally {
+      if (isCurrent()) {
+        isSendingMessageRef.current = false;
+        pendingAttemptRef.current = null;
+        setPreparingSend(false);
+      }
+
     }
   };
 
+  useEffect(() => {
+    if (queuedUrlMessage && hasProcessedUrlMessage.current && !activeConversationId && !routeConversationId) {
+      hasProcessedUrlMessage.current = false;
+      setQueuedUrlMessage(null);
+      void handleSend(queuedUrlMessage);
+    }
+  // handleSend must come from the committed new-chat scope, not the URL effect.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queuedUrlMessage, activeConversationId, routeConversationId]);
+
   const handleNewConversation = async () => {
+    const navigation = ++navigationGeneration.current;
+    sendGeneration.current += 1;
+    pendingAttemptRef.current = null;
+    editAbort.current?.abort();
+    setPreparingSend(false);
+    setError(null);
     try {
       // Cancel any in-progress streaming to prevent callbacks from affecting new chat
       await cancelMessage();
+      if (!mountedRef.current || navigation !== navigationGeneration.current) return;
       
       // Clear the sending flag so message loading works correctly
       isSendingMessageRef.current = false;
@@ -666,14 +770,21 @@ export function Chat() {
   };
 
   const handleSelectConversation = async (conversationId: string) => {
+    const navigation = ++navigationGeneration.current;
     // Skip if already on this conversation
     if (conversationId === activeConversationId) {
       setSidebarOpen(false);
       return;
     }
     
+    sendGeneration.current += 1;
+    pendingAttemptRef.current = null;
+    editAbort.current?.abort();
+    setPreparingSend(false);
+    setError(null);
     // Cancel any in-progress streaming to prevent callbacks from affecting new conversation
     await cancelMessage();
+    if (!mountedRef.current || navigation !== navigationGeneration.current) return;
     
     // Clear the sending flag so message loading works correctly
     isSendingMessageRef.current = false;
@@ -700,9 +811,11 @@ export function Chat() {
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
+    const navigation = navigationGeneration.current;
     try {
       await deleteConversationMutation.mutateAsync(conversationId);
-      if (conversationId === activeConversationId) {
+      if (!mountedRef.current || navigation !== navigationGeneration.current) return;
+      if (conversationId === scopeConversation.current) {
         setMessages([]);
         setActiveConversationId(null);
         browserStorage.remove('active_conversation_id');
@@ -771,39 +884,81 @@ export function Chat() {
   };
 
   // Edit & Regenerate: Edit a user message and regenerate the response
-  const handleEditMessage = async (messageIndex: number, newContent: string) => {
-    // Get the timestamp of the message being edited (for backend deletion)
+  const handleEditMessage = async (messageIndex: number, newContent: string): Promise<boolean> => {
     const editedMessage = messages[messageIndex];
-    if (!editedMessage || editedMessage.role !== 'user') return;
-
-    // INSTANT: Delete all messages after this one in state immediately
-    const messagesBeforeEdit = messages.slice(0, messageIndex);
-    setMessages(messagesBeforeEdit);
-
-    // Fire backend delete in background (don't wait for it)
-    if (activeConversationId && editedMessage.timestamp) {
-      clerk.session?.getToken().then(token => {
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${activeConversationId}/messages/after/${editedMessage.timestamp}`, {
-          method: 'DELETE',
-          headers: {
-            ...(token && { 'Authorization': `Bearer ${token}` })
-          }
-        }).catch(err => {
-          console.error('Failed to delete messages after edit:', err);
-          // Continue anyway - orphaned messages in DB are fine
-        });
-      });
+    if (!editedMessage || editedMessage.role !== 'user' || !activeConversationId
+      || activeConversationId !== scopeConversation.current || isSendingMessageRef.current) return false;
+    const conversationId = activeConversationId;
+    const generation = ++sendGeneration.current;
+    const attempt: SendAttempt = {
+      message: newContent, conversationId, mode, intent: chatIntent,
+      topicId: linkedTopic?.id, skillLevel: preferences.skill_level,
+    };
+    pendingAttemptRef.current = attempt;
+    isSendingMessageRef.current = true;
+    setPreparingSend(true);
+    const controller = new AbortController();
+    editAbort.current = controller;
+    const current = () => mountedRef.current && generation === sendGeneration.current
+      && scopeConversation.current === conversationId && !controller.signal.aborted;
+    try {
+      // Resolve a persisted row before editing an optimistic message. Never derive
+      // a destructive boundary from the phone's clock or timezone.
+      const history = await editOwner.request<{ messages: ConversationMessage[] }>(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages`,
+        { signal: controller.signal },
+      );
+      if (!current()) return false;
+      const ordinal = messages.slice(0, messageIndex + 1).filter(item => item.role === 'user').length - 1;
+      const original = history.messages.filter(item => item.role === 'user')[ordinal];
+      if (!original || original.content !== editedMessage.content
+        || (editedMessage.id && /^\d+$/.test(editedMessage.id) && String(original.id) !== editedMessage.id)) {
+        throw new Error('This conversation changed. Reopen it before editing.');
+      }
+      // Keep the original attachments with the edited question. Fetch without
+      // credentials; an auth token must never be sent to an upload host.
+      const originals = original.file_urls?.length ? original.file_urls
+        : original.image_url ? [{ url: original.image_url, filename: 'attachment', content_type: undefined }] : [];
+      const files = await Promise.all(originals.map(async file => {
+        const response = await fetch(file.url, { credentials: 'omit', signal: controller.signal });
+        if (!response.ok) throw new Error('Could not reopen the attachment.');
+        const blob = await response.blob();
+        if (blob.size > 20 * 1024 * 1024) throw new Error('This attachment is too large to resend.');
+        return new File([blob], file.filename, { type: file.content_type || blob.type });
+      }));
+      if (files.reduce((size, file) => size + file.size, 0) > 50 * 1024 * 1024) throw new Error('These attachments are too large to resend.');
+      if (!current()) return false;
+      if (!await tryUse('chat')) {
+        if (current()) setShowUpgradePrompt(true);
+        return false;
+      }
+      if (!current()) return false;
+      await editOwner.request(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages/from/${original.id}`,
+        { method: 'DELETE', signal: controller.signal },
+      );
+      if (!current()) return false;
+      setMessages(messages.slice(0, messageIndex));
+      isSendingMessageRef.current = false;
+      return await handleSend(newContent, files.length ? files : undefined, linkedTopic?.id, undefined, true);
+    } catch (error) {
+      if (current()) console.error('Could not update message:', error);
+      return false;
+    } finally {
+      if (current()) {
+        isSendingMessageRef.current = false;
+        pendingAttemptRef.current = null;
+        setPreparingSend(false);
+      }
+      if (editAbort.current === controller) editAbort.current = null;
     }
-
-    // INSTANT: Send the edited message (this will add user message + thinking indicator immediately)
-    handleSend(newContent);
   };
 
   // Stable prop identity lets memoized history messages skip streaming renders.
   const editMessageRef = useRef(handleEditMessage);
   useEffect(() => { editMessageRef.current = handleEditMessage; });
   const editMessage = useCallback((newContent: string, index?: number) => {
-    if (index !== undefined) void editMessageRef.current(index, newContent);
+    return index !== undefined ? editMessageRef.current(index, newContent) : Promise.resolve(false);
   }, []);
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -881,12 +1036,8 @@ End of Export
   };
 
   const handleRetry = () => {
-    if (messages.length > 0) {
-      const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-      if (lastUserMessage) {
-        setError(null);
-        handleSend(lastUserMessage.content);
-      }
+    if (failedAttempt && failedAttempt.conversationId === activeConversationId) {
+      void handleSend(failedAttempt.message, failedAttempt.files, failedAttempt.topicId, failedAttempt);
     }
   };
 
@@ -1104,30 +1255,10 @@ End of Export
               })}
               {/* Only show loading indicator when not streaming (fallback for non-streaming requests) */}
               {loading && !isCurrentlyStreaming && <LoadingIndicator />}
-              {error && (
-                <div className="flex justify-center mb-4 animate-fade-in">
-                  <div className="bg-hibiscus-50 dark:bg-red-950/30 border border-hibiscus-200 dark:border-red-800 rounded-2xl px-4 py-3 max-w-md">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-hibiscus-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm text-hibiscus-800 dark:text-red-300 font-medium mb-2">
-                          Failed to send message
-                        </p>
-                        <p className="text-xs text-hibiscus-700 dark:text-red-400 mb-3">{error}</p>
-                        <button
-                          onClick={handleRetry}
-                          className="text-xs bg-hibiscus-600 dark:bg-red-600 text-white px-3 py-1.5 rounded-lg hover:bg-hibiscus-700 dark:hover:bg-red-700 transition-colors flex items-center gap-1 active:scale-95"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          Retry
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
+
             </>
           )}
+
           </div>
         </div>
       </div>
@@ -1135,7 +1266,7 @@ End of Export
       {/* Message Input - Fixed at Bottom (raised on mobile for bottom nav + safe area) */}
       <div className="fixed left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 above-bottom-nav sm:bottom-0">
         {/* Scroll to Bottom Button */}
-        {showScrollButton && (
+        {messages.length > 0 && showScrollButton && (
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
             <button
               onClick={() => {
@@ -1153,9 +1284,21 @@ End of Export
             </button>
           </div>
         )}
+        {error && failedAttempt && (
+          <div role="alert" className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30 sm:mx-auto sm:max-w-3xl">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-red-900 dark:text-red-200">Message not sent</p>
+              <p className="mt-0.5 text-xs text-red-800 dark:text-red-300">{error}</p>
+            </div>
+            <button type="button" onClick={handleRetry} disabled={preparingSend || loading} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
+            </button>
+          </div>
+        )}
         <MessageInput 
-          onSend={handleSend} 
-          disabled={!isSignedIn || loading || savedConversationRequiresSignIn || conversationUnavailable}
+          onSend={handleSend}
+          completedSend={completedSend}
+          disabled={!isSignedIn || loading || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           contextLabel={isSignedIn ? intentLabel : undefined}

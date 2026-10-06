@@ -6,12 +6,13 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDirectory, '..');
 const repositoryRoot = path.resolve(webRoot, '..');
 
-const [builtHtml, serviceWorker, legacyRecovery, sourceHtml, netlifyConfig] = await Promise.all([
+const [builtHtml, serviceWorker, legacyRecovery, sourceHtml, netlifyConfig, entry] = await Promise.all([
   readFile(path.join(webRoot, 'dist/index.html'), 'utf8'),
   readFile(path.join(webRoot, 'dist/sw.js'), 'utf8'),
   readFile(path.join(webRoot, 'dist/stale-build-recovery.js'), 'utf8'),
   readFile(path.join(webRoot, 'index.html'), 'utf8'),
   readFile(path.join(repositoryRoot, 'netlify.toml'), 'utf8'),
+  readFile(path.join(webRoot, 'src/main.tsx'), 'utf8'),
 ]);
 
 const failures = [];
@@ -54,6 +55,9 @@ assert(
     && legacyRecovery.includes('window.location.replace'),
   'The stable legacy-profile recovery module must remain data-safe and functional.',
 );
+
+assert(!entry.includes('virtual:pwa-register'), 'Active pages must not use the auto-reloading registration client.');
+assert(!builtHtml.includes('registerSW.js'), 'The plugin must not inject a second registration.');
 
 const assetRuleIndex = netlifyConfig.indexOf('from = "/assets/*"');
 const spaRuleIndex = netlifyConfig.indexOf('from = "/*"');

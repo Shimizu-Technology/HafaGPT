@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
 
 const state = vi.hoisted(() => ({
+  userId: 'user-1',
+  error: null as string | null,
   isLoaded: true,
   isSignedIn: true,
   conversation: {
@@ -17,12 +19,15 @@ const state = vi.hoisted(() => ({
     isError: false,
   },
   messagesError: false,
-  messages: [] as never[],
+  messages: [] as Array<{ id: number; role: string; content: string; timestamp: string }>,
+  editRequest: vi.fn(),
   initData: { conversations: [] as never[] },
   refetchMessages: vi.fn(),
   refetchConversation: vi.fn(),
   tryUse: vi.fn(async () => true),
   createConversation: vi.fn(),
+  deleteConversation: vi.fn(),
+  cancelMessage: vi.fn(async () => undefined),
   setError: vi.fn(),
   openSignIn: vi.fn(),
   sendMessageStream: vi.fn(),
@@ -32,22 +37,23 @@ vi.mock('@clerk/clerk-react', () => ({
   useUser: () => ({
     isLoaded: state.isLoaded,
     isSignedIn: state.isSignedIn,
-    user: state.isSignedIn ? { id: 'user-1' } : null,
+    user: state.isSignedIn ? { id: state.userId } : null,
   }),
   useClerk: () => ({ openSignIn: state.openSignIn, session: null }),
-  useAuth: () => ({ getToken: vi.fn(async () => 'token') }),
+  useAuth: () => ({ userId: state.isSignedIn ? state.userId : null, getToken: vi.fn(async () => 'token') }),
 }));
 
 vi.mock('../hooks/useChatbot', () => ({
   CancelledError: class CancelledError extends Error {},
   useChatbot: () => ({
     sendMessageStream: state.sendMessageStream,
-    cancelMessage: vi.fn(async () => undefined),
+    cancelMessage: state.cancelMessage,
     loading: false,
-    error: null,
+    error: state.error,
     setError: state.setError,
   }),
 }));
+vi.mock('../hooks/useAccountRequest', () => ({ useAccountRequest: () => ({ request: state.editRequest, isCurrent: () => true }) }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
@@ -74,14 +80,18 @@ vi.mock('../hooks/useConversationsQuery', () => ({
   }),
   useConversation: () => ({ ...state.conversation, refetch: state.refetchConversation }),
   useCreateConversation: () => ({ mutateAsync: state.createConversation }),
-  useDeleteConversation: () => ({ mutateAsync: vi.fn() }),
+  useDeleteConversation: () => ({ mutateAsync: state.deleteConversation }),
   useUpdateConversationTitle: () => ({ mutateAsync: vi.fn() }),
 }));
 vi.mock('../hooks/useModalAccessibility', () => ({ useModalAccessibility: vi.fn() }));
 
 vi.mock('./AuthButton', () => ({ AuthButton: () => null }));
 vi.mock('./ModeSelector', () => ({ ModeSelector: () => null }));
-vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: () => null }));
+vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: ({ onSelectConversation, onDeleteConversation }: { onSelectConversation: (id: string) => void; onDeleteConversation: (id: string) => void }) => <>
+  <button onClick={() => onSelectConversation('conv-a')}>Select A</button>
+  <button onClick={() => onSelectConversation('conv-b')}>Select B</button>
+  <button onClick={() => onDeleteConversation('conv-old')}>Delete old</button>
+</> }));
 vi.mock('./PublicBanner', () => ({ PublicBanner: () => <div>Public tutor</div> }));
 vi.mock('./MessageInput', () => ({
   MessageInput: ({
@@ -97,7 +107,7 @@ vi.mock('./MessageInput', () => ({
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
 vi.mock('./Message', () => ({
-  Message: ({ content }: { content: string }) => <div>{content || 'Thinking'}</div>,
+  Message: ({ content, onEdit, messageIndex }: { content: string; onEdit: (content: string, index: number) => void; messageIndex: number }) => <div>{content || 'Thinking'}{content === 'Original message' && <button onClick={() => onEdit('Updated message', messageIndex)}>Edit original</button>}</div>,
 }));
 vi.mock('./Toast', () => ({ Toast: () => null }));
 vi.mock('./ImageModal', () => ({ ImageModal: () => null }));
@@ -134,15 +144,23 @@ function renderChat(path: string) {
 
 describe('Chat stable conversation route', () => {
   beforeEach(() => {
+    state.userId = 'user-1';
+    state.error = null;
     state.isLoaded = true;
     state.isSignedIn = true;
     state.conversation = { data: undefined, isLoading: false, isError: false };
     state.messagesError = false;
+    state.messages = [];
+    state.editRequest.mockReset();
     state.openSignIn.mockClear();
     state.tryUse.mockReset();
     state.tryUse.mockResolvedValue(true);
     state.createConversation.mockReset();
+    state.cancelMessage.mockReset();
+    state.cancelMessage.mockResolvedValue(undefined);
+    state.deleteConversation.mockReset();
     state.setError.mockReset();
+    state.setError.mockImplementation(message => { state.error = message; });
     state.sendMessageStream.mockReset();
     window.localStorage.clear();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
@@ -201,7 +219,7 @@ describe('Chat stable conversation route', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
 
     await waitFor(() => expect(state.setError).toHaveBeenCalledWith(
-      'Unable to verify chat usage. Please try again.',
+      'Unable to verify chat usage. Your draft is still here.',
     ));
     expect(screen.queryByText('Test message')).not.toBeInTheDocument();
     expect(screen.queryByText('Thinking')).not.toBeInTheDocument();
@@ -232,6 +250,107 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
     expect(state.sendMessageStream.mock.calls[0].slice(5)).toEqual(['beginner', 'practice', 'greetings']);
     expect(screen.getByTestId('chat-path')).toHaveTextContent('intent=practice');
+  });
+
+  it('retries the failed payload after preflight failure rather than an older successful message', async () => {
+    state.tryUse.mockRejectedValueOnce(new Error('offline'));
+    state.createConversation.mockResolvedValue({ id: 'conv-created' });
+    renderChat('/chat?intent=practice&topic=greetings');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await screen.findByRole('button', { name: 'Retry' });
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.sendMessageStream.mock.calls[0][0]).toBe('Test message');
+    expect(state.sendMessageStream.mock.calls[0].slice(5)).toEqual(['beginner', 'practice', 'greetings']);
+  });
+
+  it('does not navigate or start a send if the learner leaves during conversation creation', async () => {
+    let finish!: (value: { id: string }) => void;
+    state.createConversation.mockImplementation(() => new Promise(resolve => { finish = () => resolve(undefined); }));
+    renderChat('/chat/conv-old');
+    fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat'));
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.createConversation).toHaveBeenCalled());
+    state.userId = 'user-2';
+    fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
+    await act(async () => finish({ id: 'conv-late' }));
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(screen.getByTestId('chat-path')).not.toHaveTextContent('conv-late');
+  });
+
+  it('starts a URL prompt in a new record rather than a restored saved conversation', async () => {
+    window.localStorage.setItem('active_conversation_id', 'conv-old');
+    state.createConversation.mockResolvedValue({ id: 'conv-new' });
+    renderChat('/chat?message=Explain%20this&intent=explain');
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.sendMessageStream.mock.calls[0][0]).toBe('Explain this');
+    expect(state.sendMessageStream.mock.calls[0][2]).toBe('conv-new');
+  });
+
+  it('unlocks a new chat when navigation cancels a pending preflight', async () => {
+    let finish!: (allowed: boolean) => void;
+    state.tryUse.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    state.createConversation.mockResolvedValue({ id: 'conv-new' });
+    renderChat('/chat/conv-old');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.tryUse).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Leave saved chat' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    await act(async () => finish(true));
+    expect(state.sendMessageStream).toHaveBeenCalledTimes(1);
+    expect(state.createConversation).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the latest selection when cancellation notifications resolve out of order', async () => {
+    let finish!: () => void;
+    state.cancelMessage.mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve(undefined); }));
+    renderChat('/chat/conv-old');
+    fireEvent.click(screen.getByRole('button', { name: 'Select A' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select B' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b'));
+    await act(async () => finish());
+    expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b');
+  });
+
+  it('does not leave a newly selected chat when deletion of the previous chat finishes', async () => {
+    let finish!: () => void;
+    state.deleteConversation.mockImplementation(() => new Promise(resolve => { finish = () => resolve(undefined); }));
+    renderChat('/chat/conv-old');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete old' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select B' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b'));
+    await act(async () => finish());
+    expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b');
+  });
+
+  it('waits for the persisted edit boundary before sending the replacement', async () => {
+    state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z' }];
+    let finish!: () => void;
+    state.editRequest.mockResolvedValueOnce({ messages: state.messages })
+      .mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve({ success: true }); }));
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
+    expect(state.editRequest.mock.calls[1][0]).toContain('/messages/from/42');
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    await act(async () => finish());
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.sendMessageStream.mock.calls[0][0]).toBe('Updated message');
+    expect(state.tryUse).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the original transcript and does not regenerate when the edit boundary fails', async () => {
+    state.messages = [{ id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z' }];
+    state.editRequest.mockResolvedValueOnce({ messages: state.messages }).mockRejectedValueOnce(new Error('offline'));
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(screen.getByText('Original message')).toBeInTheDocument();
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {

@@ -33,10 +33,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // Keep updates automatic so installations running the previous worker
-      // migrate immediately. HTML is deliberately never cached below, which
-      // prevents a new worker from pairing stale markup with new assets.
-      registerType: 'autoUpdate',
+      // Native registration owns updates. Activate migration workers immediately,
+      // but never let the plugin's autoUpdate client reload an active session.
+      injectRegister: false,
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.png'],
       manifest: {
         name: 'HåfaGPT - Chamorro Language Tutor',
@@ -105,6 +104,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         // Navigations must always receive the HTML from the active Netlify
         // deploy. Caching index.html was the root cause of blank startup pages
         // after a deploy removed the hashes referenced by stale markup.

@@ -8,38 +8,13 @@ import { StartupErrorBoundary } from './components/StartupErrorBoundary';
 import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
 import { browserStorage } from './lib/browserStorage';
 import './index.css';
-import { registerSW } from 'virtual:pwa-register';
+import { registerServiceWorker } from './lib/registerServiceWorker';
 
 // Route imports own stale-build recovery in App. Optional analytics and PWA
 // imports must reject into their own handlers without refreshing a working app.
 
-// Register service worker for PWA
-registerSW({
-  immediate: true,
-  onRegisteredSW(_serviceWorkerUrl, registration) {
-    // Ask immediately on every current-page startup. Returning mobile profiles
-    // cannot depend on the browser's delayed background update schedule.
-    if (registration) {
-      if (navigator.onLine) {
-        void registration.update().catch((error: unknown) => {
-          console.warn('[PWA] Initial service worker update check failed:', error);
-        });
-      }
-
-      // Keep long-running installed sessions current too.
-      window.setInterval(() => {
-        if (navigator.onLine) {
-          void registration.update().catch((error: unknown) => {
-            console.warn('[PWA] Service worker update check failed:', error);
-          });
-        }
-      }, 60 * 60 * 1000);
-    }
-  },
-  onRegisterError(error) {
-    console.warn('[PWA] Service worker registration failed:', error);
-  },
-});
+// The worker migrates old caches without replacing a healthy page or its drafts.
+registerServiceWorker();
 
 // Analytics are optional in local, test, and privacy-restricted deployments.
 // Do not initialize the SDK without a key because it reports a configuration
