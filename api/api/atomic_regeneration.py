@@ -1,9 +1,12 @@
 """Generate edits without deleting or exposing an incomplete persisted replacement."""
 
+import logging
 from collections.abc import Callable, Iterator
 from typing import Any
 
 from .conversations import RegenerationCancelled, RegenerationConflict
+
+logger = logging.getLogger(__name__)
 
 
 def atomic_regeneration_events(
@@ -53,6 +56,7 @@ def atomic_regeneration_events(
     except RegenerationConflict:
         yield {"type": "error", "content": "This conversation changed. Reopen it before editing. Your saved conversation is unchanged."}
     except Exception:
+        logger.exception("Atomic regeneration failed before commit")
         yield {"type": "error", "content": "Could not update this message. Your saved conversation is unchanged. Please try again."}
     finally:
         close = getattr(events, "close", None)
