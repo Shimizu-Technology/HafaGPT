@@ -113,7 +113,7 @@ export function TopicWorkspacePage() {
           <h1 className="text-xl font-bold text-brown-950 dark:text-white">Topic workspace unavailable</h1>
           <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">Your lesson and learning path are still available.</p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button type="button" onClick={() => void refetch()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+            <button type="button" onClick={() => void refetch()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
             <Link to={withLearningContext(appRoutes.lesson(localTopic.id), localTopic, { source: 'topic' })} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-cream-100 px-4 font-semibold text-brown-800 hover:bg-cream-200 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">Open lesson</Link>
           </div>
         </div>

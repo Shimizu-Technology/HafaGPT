@@ -54,7 +54,7 @@ export function QuizList() {
               aria-pressed={quizMode === 'curated'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 quizMode === 'curated'
-                  ? 'bg-coral-600 text-white'
+                  ? 'bg-coral-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
@@ -67,7 +67,7 @@ export function QuizList() {
               aria-pressed={quizMode === 'dictionary'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 quizMode === 'dictionary'
-                  ? 'bg-coral-600 text-white'
+                  ? 'bg-coral-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >

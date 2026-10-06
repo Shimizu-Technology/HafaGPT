@@ -145,7 +145,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             <Link
               to="/pricing"
               onClick={onClose}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <Zap className="w-5 h-5" />
               Upgrade Now

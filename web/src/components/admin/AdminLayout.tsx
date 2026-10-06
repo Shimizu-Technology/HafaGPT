@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { 
@@ -33,32 +33,45 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user } = useUser();
   const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Mobile sidebar backdrop */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-white dark:bg-slate-800 border-r border-cream-200 dark:border-slate-700 
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-      `}>
+
+  const mobileDialogRef = useRef<HTMLDialogElement>(null);
+
+  // Native dialog keeps closed navigation out of the tab order and makes the
+  // open drawer modal, including focus containment and Escape support.
+  useEffect(() => {
+    const dialog = mobileDialogRef.current;
+    if (!dialog) return;
+    if (sidebarOpen && !dialog.open) {
+      dialog.showModal();
+      dialog.querySelector<HTMLButtonElement>('button')?.focus();
+    }
+    if (!sidebarOpen && dialog.open) dialog.close();
+    if (!sidebarOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [sidebarOpen]);
+
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setSidebarOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
+
+  const sidebarContent = (
+    <>
         {/* Sidebar Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-cream-200 dark:border-slate-700">
-          <Link to="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="min-h-16 flex flex-none items-center justify-between px-4 pt-[env(safe-area-inset-top)] border-b border-cream-200 dark:border-slate-700">
+          <Link to="/admin" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Shield className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
             <span className="font-bold text-brown-800 dark:text-white">Admin</span>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close admin navigation"
             className="lg:hidden p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg"
           >
             <X className="w-5 h-5 text-brown-600 dark:text-gray-400" />
@@ -66,19 +79,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
         
         {/* Navigation */}
-        <nav className="p-4 space-y-1">
+        <nav aria-label="Admin" className="flex-1 overflow-y-auto p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = item.path === '/admin'
+              ? location.pathname === item.path
+              : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
                   ${isActive 
-                    ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-600 dark:text-ocean-400' 
+                    ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-400'
                     : 'text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700'
                   }
                 `}
@@ -91,17 +107,36 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-cream-200 dark:border-slate-700">
+        <div className="flex-none p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-cream-200 dark:border-slate-700">
           <Link
             to="/"
+            onClick={() => setSidebarOpen(false)}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to App
           </Link>
         </div>
+
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800 lg:flex">
+        {sidebarContent}
       </aside>
-      
+      <dialog
+        ref={mobileDialogRef}
+        aria-label="Admin navigation"
+        onCancel={() => setSidebarOpen(false)}
+        onClose={() => setSidebarOpen(false)}
+        onClick={(event) => { if (event.target === mobileDialogRef.current) setSidebarOpen(false); }}
+        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(88vw,20rem)] max-w-none border-0 bg-white p-0 text-brown-800 backdrop:bg-black/50 dark:bg-slate-800 dark:text-white lg:hidden"
+      >
+        <div className="flex h-full flex-col">{sidebarContent}</div>
+      </dialog>
+
       {/* Main Content */}
       <div className="lg:ml-64">
         {/* Top Header */}
@@ -110,6 +145,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             {/* Mobile menu button */}
             <button 
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open admin navigation"
+              aria-expanded={sidebarOpen}
               className="lg:hidden p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg"
             >
               <Menu className="w-5 h-5 text-brown-600 dark:text-gray-400" />

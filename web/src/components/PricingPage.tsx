@@ -195,7 +195,7 @@ export function PricingPage() {
             <div className="mt-8">
               {!isSignedIn ? (
                 <SignInButton mode="modal">
-                  <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
+                  <button className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
                     <Zap className="w-5 h-5" />
                     Sign Up & Upgrade
                   </button>
@@ -203,7 +203,7 @@ export function PricingPage() {
               ) : isPremium ? (
                 /* Already subscribed - show current plan status */
                 <div className="space-y-3">
-                  <div className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white dark:bg-teal-600">
+                  <div className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white dark:bg-teal-700">
                     <Check className="h-4 w-4" aria-hidden="true" /> Current plan
                   </div>
                   <button
@@ -227,7 +227,7 @@ export function PricingPage() {
                     onClick={() => setShowCheckout(!showCheckout)}
                     aria-expanded={showCheckout}
                     aria-controls="pricing-checkout"
-                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
                   >
                     <Zap className="w-5 h-5" />
                     {showCheckout ? 'Hide Options' : 'Upgrade Now'}

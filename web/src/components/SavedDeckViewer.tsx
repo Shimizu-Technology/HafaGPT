@@ -42,7 +42,7 @@ function DeckState({
         <button
           type="button"
           onClick={onRetry}
-          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           <RotateCw className="h-4 w-4" aria-hidden="true" />
           {action}
@@ -50,7 +50,7 @@ function DeckState({
       ) : (
         <Link
           to="/flashcards/my-decks"
-          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {action}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

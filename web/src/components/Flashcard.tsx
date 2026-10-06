@@ -45,7 +45,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
   };
 
   return (
-    <div className="relative w-full aspect-[3/4] perspective-1000">
+    <div className="relative h-[clamp(12rem,30dvh,17rem)] w-full perspective-1000 sm:h-[clamp(16rem,40dvh,24rem)]">
       <button
         type="button"
         onClick={handleFlip}
@@ -56,45 +56,49 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4 rounded-2xl`}
       >
         {/* Front of card */}
-        <div className="absolute inset-0 backface-hidden">
-          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl border-2 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center p-8">
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
-                {front}
-              </p>
+        <div className="absolute inset-0 backface-hidden" aria-hidden={isFlipped}>
+          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-cream-300 dark:border-gray-700 flex flex-col p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center">
+                <p className="w-full break-words text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
+                  {front}
+                </p>
+              </div>
             </div>
-            
-            <p className="text-sm text-brown-500 dark:text-gray-400 mt-4">
+
+            <p className="shrink-0 text-center text-sm text-brown-500 dark:text-gray-400 mt-4">
               Tap to flip
             </p>
           </div>
         </div>
 
         {/* Back of card */}
-        <div className="absolute inset-0 backface-hidden rotate-y-180">
-          <div className="w-full h-full bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-600 dark:to-ocean-700 rounded-2xl shadow-xl border-2 border-coral-400 dark:border-ocean-600 flex flex-col items-center justify-center p-8 text-white">
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              <p className="text-2xl sm:text-3xl font-semibold text-center">
-                {back}
-              </p>
-              
-              {pronunciation && (
-                <p className="text-lg text-white/90 italic text-center">
-                  ({pronunciation})
+        <div className="absolute inset-0 backface-hidden rotate-y-180" aria-hidden={!isFlipped}>
+          <div className="w-full h-full bg-coral-700 dark:bg-teal-800 rounded-2xl shadow-sm border border-coral-800 dark:border-teal-700 flex flex-col p-6 text-white">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="flex min-h-full flex-col items-center justify-center gap-3">
+                <p className="w-full break-words text-2xl sm:text-3xl font-semibold text-center">
+                  {back}
                 </p>
-              )}
-              
-              {example && (
-                <div className="mt-4 pt-4 border-t border-white/30 w-full">
-                  <p className="text-sm text-white/70 text-center mb-1">Example:</p>
-                  <p className="text-base text-center">
-                    {example}
+
+                {pronunciation && (
+                  <p className="w-full break-words text-lg text-white/90 italic text-center">
+                    ({pronunciation})
                   </p>
-                </div>
-              )}
+                )}
+
+                {example && (
+                  <div className="mt-4 pt-4 border-t border-white/30 w-full">
+                    <p className="text-sm text-white/90 text-center mb-1">Example:</p>
+                    <p className="break-words text-base text-center">
+                      {example}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-            
-            <p className="text-sm text-white/70 mt-4">
+
+            <p className="shrink-0 text-center text-sm text-white/90 mt-4">
               Tap to flip back
             </p>
           </div>

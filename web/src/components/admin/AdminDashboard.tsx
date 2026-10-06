@@ -188,7 +188,7 @@ export function AdminDashboard() {
           </div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-500 dark:bg-ocean-500 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
           >
             <Users className="w-4 h-4" />
             Manage Users

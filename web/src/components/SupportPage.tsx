@@ -32,7 +32,7 @@ export default function SupportPage() {
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
           Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
-        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700">
+        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800">
           <Mail className="h-5 w-5" aria-hidden="true" />
           Email support
         </a>

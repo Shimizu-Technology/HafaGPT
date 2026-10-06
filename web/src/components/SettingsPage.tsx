@@ -414,7 +414,7 @@ export function SettingsPage() {
       </main>
 
       {hasChanges && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 sm:bottom-0">
+        <div className="fixed above-bottom-nav left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
           <div className="mx-auto max-w-3xl">
             {saveError && <p role="alert" className="mb-2 text-sm font-semibold text-red-700 dark:text-red-300">{saveError}</p>}
             <div className="flex items-center justify-between gap-3">
@@ -431,7 +431,7 @@ export function SettingsPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoadingXP}
-                className="inline-flex min-h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-600 dark:hover:bg-teal-700"
+                className="inline-flex min-h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {isSaving ? 'Saving…' : 'Save changes'}
@@ -444,7 +444,7 @@ export function SettingsPage() {
       {saved && !hasChanges && (
         <div
           role="status"
-          className="fixed bottom-20 left-4 right-4 z-40 mx-auto flex max-w-sm items-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-white shadow-lg sm:bottom-4"
+          className="fixed learner-toast-offset left-4 right-4 z-40 mx-auto flex max-w-sm items-center gap-2 rounded-xl bg-green-700 px-4 py-3 text-white shadow-lg"
         >
           <Check className="h-5 w-5" aria-hidden="true" />
           <span className="font-semibold">Preferences saved</span>

@@ -361,7 +361,7 @@ export function Hangman() {
     
     return (
       <GamePage>
-        <GamePageHeader title="Hangman" subtitle="Guess the Chamorro word one letter at a time." icon={Target} />
+        <GamePageHeader title="Word Guess" subtitle="Guess the Chamorro word one letter at a time." icon={Target} />
 
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8">
           {/* Game Description */}
@@ -492,7 +492,7 @@ export function Hangman() {
     
     return (
       <GamePage>
-        <GamePageHeader title="Hangman" subtitle="See how many Chamorro words you can uncover." icon={Target} />
+        <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
         <main className="max-w-md mx-auto px-4 py-8">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 shadow-lg text-center">
@@ -561,7 +561,7 @@ export function Hangman() {
   return (
     <GamePage>
       <GamePageHeader
-        title="Hangman"
+        title="Word Guess"
         subtitle={`${totalScore} points · ${wordsCompleted} words`}
         icon={Target}
         onBack={handleBackToGames}

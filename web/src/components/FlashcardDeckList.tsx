@@ -144,7 +144,7 @@ export function FlashcardDeckList() {
               aria-pressed={cardType === 'curated'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'curated'
-                  ? 'bg-coral-600 text-white'
+                  ? 'bg-coral-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
@@ -157,7 +157,7 @@ export function FlashcardDeckList() {
               aria-pressed={cardType === 'dictionary'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'dictionary'
-                  ? 'bg-coral-600 text-white'
+                  ? 'bg-coral-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >

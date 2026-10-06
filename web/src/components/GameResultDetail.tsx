@@ -69,7 +69,7 @@ export function GameResultDetail() {
           <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-slate-800">
             <h2 className="text-xl font-bold text-brown-950 dark:text-white">Game result unavailable</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">The record may not exist or may belong to another account.</p>
-            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
           </section>
         ) : (
           <div className="space-y-6">
@@ -130,7 +130,7 @@ export function GameResultDetail() {
             </section>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">Play another game</Link>
+              <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Play another game</Link>
               <Link to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
             </div>
           </div>
