@@ -16,7 +16,7 @@ export function BottomNav() {
   const { keyboardOpen } = useChatViewport(tutor);
   const keyboardHidden = tutor && keyboardOpen;
   if (pathname.startsWith('/admin') || pathname.startsWith('/share/')) return null;
-  const immersive = ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/', '/learn/'].some(path => pathname.startsWith(path));
+  const immersive = pathname !== '/flashcards/my-decks' && ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/', '/learn/'].some(path => pathname.startsWith(path));
   return (
     <nav aria-label="Primary" hidden={keyboardHidden} aria-hidden={keyboardHidden || undefined} {...(keyboardHidden ? { inert: '' } : {})} className={`${keyboardHidden ? '!hidden' : ''} border-cream-200 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 sm:relative sm:border-b ${immersive ? 'hidden sm:block' : 'fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-sm safe-area-bottom sm:block sm:border-t-0'}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-around sm:h-12 sm:justify-center sm:gap-2">
