@@ -101,3 +101,15 @@ describe('edit acceptance', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Could not update this message.');
   });
 });
+
+
+it('identifies unavailable files and asks before regenerating without them', async () => {
+  const onEdit = vi.fn().mockResolvedValue(true);
+  render(<Message role="user" content="Original" canEdit onEdit={onEdit} messageIndex={1} unavailableAttachments={['old-note.txt']} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Updated' } });
+  expect(screen.getByRole('alert')).toHaveTextContent('old-note.txt');
+  expect(onEdit).not.toHaveBeenCalled();
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Regenerate without these attachments' })));
+  expect(onEdit).toHaveBeenCalledWith('Updated', 1, true);
+});

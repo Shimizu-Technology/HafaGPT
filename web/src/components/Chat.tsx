@@ -176,6 +176,10 @@ function ChatSession() {
   });
   const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
   const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
+  const [unavailableAttachments, setUnavailableAttachments] = useState<{
+    conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
+    originalContent: string; files: { index: number; name: string }[]; skipAll?: boolean;
+  } | null>(null);
   const [completedSend, setCompletedSend] = useState<{ message: string; files?: File[] }>();
   const [preparingSend, setPreparingSend] = useState(false);
   const mountedRef = useRef(true);
@@ -201,6 +205,7 @@ function ChatSession() {
       setPreparingSend(false);
     }
     setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
+    setUnavailableAttachments(previous => previous?.conversationId === activeConversationId ? previous : null);
   // cancelMessage is invoked only when the conversation scope changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId]);
@@ -884,7 +889,7 @@ function ChatSession() {
   };
 
   // Edit & Regenerate: Edit a user message and regenerate the response
-  const handleEditMessage = async (messageIndex: number, newContent: string): Promise<boolean> => {
+  const handleEditMessage = async (messageIndex: number, newContent: string, skipUnavailableAttachments = false): Promise<boolean> => {
     const editedMessage = messages[messageIndex];
     if (!editedMessage || editedMessage.role !== 'user' || !activeConversationId
       || activeConversationId !== scopeConversation.current || isSendingMessageRef.current) return false;
@@ -917,17 +922,49 @@ function ChatSession() {
       }
       // Reopen only attachments belonging to this owned persisted exchange.
       // Read through the authenticated API instead of a signed storage URL.
-      const originals = original.file_urls?.length ? original.file_urls
+      const storedFiles = original.file_urls?.length ? original.file_urls
         : original.image_url ? [{ url: original.image_url, filename: 'attachment', content_type: undefined }] : [];
-      const files = await Promise.all(originals.map(async (file, index) => {
-        const blob = await editOwner.request<Blob>(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages/${original.id}/files/${index}`,
-          { signal: controller.signal },
-          response => response.blob(),
-        );
-        if (blob.size > 20 * 1024 * 1024) throw new Error('This attachment is too large to resend.');
-        return new File([blob], file.filename, { type: file.content_type || blob.type });
+      const displayedFiles = editedMessage.file_urls?.length ? editedMessage.file_urls
+        : editedMessage.imageUrl ? [{ url: editedMessage.imageUrl, filename: 'attachment', content_type: undefined }] : [];
+      const matchingRecovery = unavailableAttachments?.conversationId === conversationId
+        && unavailableAttachments.messageIndex === messageIndex && unavailableAttachments.persistedId === original.id;
+      const skipAll = skipUnavailableAttachments && matchingRecovery && unavailableAttachments.skipAll;
+      // Background persistence can finish after the reply. Never silently drop
+      // a live attachment just because its stored reference has not arrived yet.
+      if (displayedFiles.length > storedFiles.length && !skipAll) {
+        setUnavailableAttachments({ conversationId, messageIndex, persistedId: original.id,
+          renderKey: editedMessage.renderKey, originalContent: editedMessage.content,
+          files: displayedFiles.map((file, index) => ({ index, name: file.filename })), skipAll: true });
+        return false;
+      }
+      const originals = skipAll ? [] : storedFiles;
+      const confirmedSkips = skipUnavailableAttachments && unavailableAttachments?.conversationId === conversationId
+        && unavailableAttachments.messageIndex === messageIndex && unavailableAttachments.persistedId === original.id
+        ? unavailableAttachments.files : [];
+      const reopened = await Promise.all(originals.map(async (file, index) => {
+        if (confirmedSkips.some(skipped => skipped.index === index && skipped.name === file.filename)) return { skipped: true };
+        try {
+          const blob = await editOwner.request<Blob>(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/${conversationId}/messages/${original.id}/files/${index}`,
+            { signal: controller.signal }, response => response.blob(),
+          );
+          if (blob.size > 20 * 1024 * 1024) return { unavailable: { index, name: file.filename } };
+          return { file: new File([blob], file.filename, { type: file.content_type || blob.type }) };
+        } catch (error) {
+          const status = error && typeof error === 'object' && 'status' in error ? Number(error.status) : undefined;
+          if (status === 404 || status === 413 || status === 502) return { unavailable: { index, name: file.filename } };
+          throw error;
+        }
       }));
+      if (!current()) return false;
+      const missing = reopened.flatMap(item => item.unavailable ? [item.unavailable] : []);
+      if (missing.length) {
+        setUnavailableAttachments({ conversationId, messageIndex, persistedId: original.id,
+          renderKey: editedMessage.renderKey, originalContent: editedMessage.content, files: missing });
+        return false;
+      }
+      setUnavailableAttachments(null);
+      const files = reopened.flatMap(item => item.file ? [item.file] : []);
       if (files.reduce((size, file) => size + file.size, 0) > 50 * 1024 * 1024) throw new Error('These attachments are too large to resend.');
       if (!current()) return false;
       if (!await tryUse('chat')) {
@@ -959,8 +996,8 @@ function ChatSession() {
   // Stable prop identity lets memoized history messages skip streaming renders.
   const editMessageRef = useRef(handleEditMessage);
   useEffect(() => { editMessageRef.current = handleEditMessage; });
-  const editMessage = useCallback((newContent: string, index?: number) => {
-    return index !== undefined ? editMessageRef.current(index, newContent) : Promise.resolve(false);
+  const editMessage = useCallback((newContent: string, index?: number, skipUnavailableAttachments?: boolean) => {
+    return index !== undefined ? editMessageRef.current(index, newContent, skipUnavailableAttachments) : Promise.resolve(false);
   }, []);
 
   const handleExportChat = (format: 'txt' | 'json') => {
@@ -1251,6 +1288,10 @@ End of Export
                     isStreaming={message.isStreaming}
                     canEdit={canEditMessage}
                     onEdit={editMessage}
+                    unavailableAttachments={unavailableAttachments?.messageIndex === index
+                      && (message.id === String(unavailableAttachments.persistedId)
+                        || Boolean(unavailableAttachments.renderKey) && message.renderKey === unavailableAttachments.renderKey && message.content === unavailableAttachments.originalContent)
+                      ? unavailableAttachments.files.map(file => file.name) : undefined}
                     messageIndex={index}
                   />
                 );

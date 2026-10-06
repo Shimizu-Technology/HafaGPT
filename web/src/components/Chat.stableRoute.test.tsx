@@ -107,7 +107,7 @@ vi.mock('./MessageInput', () => ({
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
 vi.mock('./Message', () => ({
-  Message: ({ content, onEdit, messageIndex }: { content: string; onEdit: (content: string, index: number) => void; messageIndex: number }) => <div>{content || 'Thinking'}{content === 'Original message' && <button onClick={() => onEdit('Updated message', messageIndex)}>Edit original</button>}</div>,
+  Message: ({ content, onEdit, messageIndex }: { content: string; onEdit: (content: string, index: number, skip?: boolean) => void; messageIndex: number }) => <div>{content || 'Thinking'}{content === 'Original message' && <><button onClick={() => onEdit('Updated message', messageIndex)}>Edit original</button><button onClick={() => onEdit('Updated message', messageIndex, true)}>Skip unavailable</button></>}</div>,
 }));
 vi.mock('./Toast', () => ({ Toast: () => null }));
 vi.mock('./ImageModal', () => ({ ImageModal: () => null }));
@@ -370,6 +370,36 @@ describe('Chat stable conversation route', () => {
     expect(file).toBeInstanceOf(File);
     expect(file.name).toBe('note.txt');
     expect(file.type).toBe('text/plain');
+  });
+
+  it('requires explicit confirmation before excluding an unavailable attachment', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'https://legacy.invalid/file', filename: 'old-note.txt', type: 'document', content_type: 'text/plain' }] };
+    state.messages = [original];
+    state.editRequest.mockResolvedValueOnce({ messages: [original] })
+      .mockRejectedValueOnce(Object.assign(new Error('unavailable'), { status: 404 }))
+      .mockResolvedValueOnce({ messages: [original] }).mockResolvedValueOnce({ success: true });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(2));
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(screen.getByText('Original message')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip unavailable' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
+    expect(state.editRequest.mock.calls[3][0]).toContain('/messages/from/42');
+    expect(state.sendMessageStream.mock.calls[0][4]).toBeUndefined();
+  });
+
+  it('does not discard live attachments while background persistence is still pending', async () => {
+    const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', file_urls: [{ url: 'blob:qa-file', filename: 'pending-note.txt', type: 'document', content_type: 'text/plain' }] };
+    state.messages = [original];
+    state.editRequest.mockResolvedValueOnce({ messages: [{ ...original, file_urls: undefined }] });
+    renderChat('/chat/conv-old');
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
+    await waitFor(() => expect(state.editRequest).toHaveBeenCalledTimes(1));
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    expect(screen.getByText('Original message')).toBeInTheDocument();
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {
