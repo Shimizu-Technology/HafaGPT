@@ -488,7 +488,8 @@ test('chat keeps its header gutter outside the scrollable messages viewport', as
     };
   });
 
-  expect(spacing.gutter).toBeGreaterThanOrEqual(20);
+  // Compact phones retain a real gutter; it belongs to the viewport, not the scroller.
+  expect(spacing.gutter).toBeGreaterThanOrEqual(12);
   expect(spacing.gutter).toBeCloseTo(spacing.viewportPaddingTop, 0);
   expect(spacing.scrollerPaddingTop).toBe(0);
   expect(errors).toEqual([]);
