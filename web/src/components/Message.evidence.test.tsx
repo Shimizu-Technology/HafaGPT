@@ -204,22 +204,22 @@ describe('edit failure while a dialog is open', () => {
     }
     const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(1);
     try {
-    render(<Harness />);
-    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Edit message text' }), { target: { value: 'Retain this edited question' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
-    const close = screen.getByRole('button', { name: 'Close preview' });
-    expect(close).toHaveFocus();
-    await act(async () => {
-      if (outcome === 'declined') resolve(false);
-      else reject(new Error('Controlled failure'));
-    });
-    const recover = frame.mock.calls.at(-1)?.[0];
-    expect(recover).toBeDefined();
-    act(() => recover!(0));
-    expect(close).toHaveFocus();
-    expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
-    expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Edit message text' }), { target: { value: 'Retain this edited question' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
+      const close = screen.getByRole('button', { name: 'Close preview' });
+      expect(close).toHaveFocus();
+      await act(async () => {
+        if (outcome === 'declined') resolve(false);
+        else reject(new Error('Controlled failure'));
+      });
+      const recover = frame.mock.calls[frame.mock.calls.length - 1]?.[0];
+      expect(recover).toBeDefined();
+      act(() => recover!(0));
+      expect(close).toHaveFocus();
+      expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
+      expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
     } finally { frame.mockRestore(); }
   });
 });
