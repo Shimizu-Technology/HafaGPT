@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUser } from '@clerk/clerk-react';
 import { 
@@ -35,6 +35,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const mobileDialogRef = useRef<HTMLDialogElement>(null);
+  const mainContentRef = useRef<HTMLElement>(null);
 
   // Native dialog keeps closed navigation out of the tab order and makes the
   // open drawer modal, including focus containment and Escape support.
@@ -52,7 +53,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return () => { document.body.style.overflow = previousOverflow; };
   }, [sidebarOpen]);
 
-  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+  useLayoutEffect(() => {
+    setSidebarOpen(false);
+    // Close before focusing: native dialog restoration must not put focus back
+    // on the menu button after the destination main has received it.
+    if (mobileDialogRef.current?.open) mobileDialogRef.current.close();
+    mainContentRef.current?.focus({ preventScroll: true });
+  }, [location.pathname]);
 
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1024px)');
@@ -189,7 +196,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </header>
         
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main ref={mainContentRef} tabIndex={-1} className="p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

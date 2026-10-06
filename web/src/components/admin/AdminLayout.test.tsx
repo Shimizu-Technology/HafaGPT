@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminLayout } from './AdminLayout';
 
@@ -46,6 +46,7 @@ describe('Admin mobile navigation', () => {
     render(<MemoryRouter><AdminLayout><p>Dashboard content</p></AdminLayout></MemoryRouter>);
     fireEvent.click(within(openNavigation()).getByRole('link', { name: 'Analytics' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveFocus();
     expect(within(openNavigation()).getByRole('link', { name: 'Analytics' })).toHaveAttribute('aria-current', 'page');
   });
 
@@ -58,4 +59,38 @@ describe('Admin mobile navigation', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(document.body.style.overflow).not.toBe('hidden');
   });
+});
+
+
+function DashboardRoute() {
+  return <AdminLayout><h1>Dashboard page</h1></AdminLayout>;
+}
+
+function AnalyticsRoute() {
+  return <AdminLayout><h1>Analytics page</h1></AdminLayout>;
+}
+
+it('focuses the new route main when navigation unmounts the previous page layout', () => {
+  document.body.style.overflow = 'auto';
+  render(<MemoryRouter initialEntries={['/admin']}><Routes>
+    <Route path="/admin" element={<DashboardRoute />} />
+    <Route path="/admin/analytics" element={<AnalyticsRoute />} />
+  </Routes></MemoryRouter>);
+  const oldMain = screen.getByRole('main');
+  expect(oldMain).toHaveFocus();
+  const destinationLink = within(openNavigation()).getByRole('link', { name: 'Analytics' });
+  destinationLink.focus();
+  expect(destinationLink).toHaveFocus();
+  fireEvent.click(destinationLink);
+  const newMain = screen.getByRole('main');
+  expect(screen.getByRole('heading', { name: 'Analytics page' })).toBeInTheDocument();
+  expect(oldMain.isConnected).toBe(false);
+  expect(destinationLink.isConnected).toBe(false);
+  expect(newMain).not.toBe(oldMain);
+  expect(newMain).toHaveAttribute('tabindex', '-1');
+  expect(newMain).toHaveFocus();
+  expect(document.body).not.toHaveFocus();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Open admin navigation' })).toHaveAttribute('aria-expanded', 'false');
+  expect(document.body.style.overflow).toBe('auto');
 });
