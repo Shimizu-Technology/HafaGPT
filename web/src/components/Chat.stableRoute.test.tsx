@@ -9,6 +9,8 @@ const state = vi.hoisted(() => ({
   userId: 'user-1',
   realMessages: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
+  preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
+  viewport: { isMobile: true, top: 0, height: 844, keyboardOpen: false },
   error: null as string | null,
   isLoaded: true,
   isSignedIn: true,
@@ -40,7 +42,7 @@ vi.mock('@clerk/clerk-react', () => ({
   useUser: () => ({
     isLoaded: state.isLoaded,
     isSignedIn: state.isSignedIn,
-    user: state.isSignedIn ? { id: state.userId } : null,
+    user: state.isSignedIn ? { id: state.userId, unsafeMetadata: { preferred_mode: state.preferredMode } } : null,
   }),
   useClerk: () => ({ openSignIn: state.openSignIn, session: null }),
   useAuth: () => ({ userId: state.isSignedIn ? state.userId : null, getToken: vi.fn(async () => 'token') }),
@@ -56,6 +58,7 @@ vi.mock('../hooks/useChatbot', () => ({
     setError: state.setError,
   }),
 }));
+vi.mock('../hooks/useChatViewport', () => ({ useChatViewport: () => state.viewport }));
 vi.mock('../hooks/useAccountRequest', () => ({ useAccountRequest: () => ({ request: state.editRequest, isCurrent: () => true }) }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
 vi.mock('../hooks/useSubscription', () => ({
@@ -89,7 +92,7 @@ vi.mock('../hooks/useConversationsQuery', () => ({
 vi.mock('../hooks/useModalAccessibility', () => ({ useModalAccessibility: vi.fn() }));
 
 vi.mock('./AuthButton', () => ({ AuthButton: () => null }));
-vi.mock('./ModeSelector', () => ({ ModeSelector: () => null }));
+vi.mock('./ModeSelector', () => ({ ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div> }));
 vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: ({ onSelectConversation, onDeleteConversation }: { onSelectConversation: (id: string) => void; onDeleteConversation: (id: string) => void }) => <>
   <button onClick={() => onSelectConversation('conv-a')}>Select A</button>
   <button onClick={() => onSelectConversation('conv-b')}>Select B</button>
@@ -112,7 +115,7 @@ vi.mock('./MessageInput', () => ({
     );
   },
 }));
-vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: () => <h2>Start chatting</h2> }));
+vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt }: { onPrompt: (prompt: string) => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button></> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: vi.fn(), stop: vi.fn(), extractChamorroText: (value: string) => value, isSpeaking: false, isSupported: false }) }));
 vi.mock('./Message', async importOriginal => {
@@ -159,6 +162,8 @@ describe('Chat stable conversation route', () => {
     state.userId = 'user-1';
     state.realMessages = false;
     state.composerReceipt = undefined;
+    state.preferredMode = undefined;
+    state.viewport = { isMobile: true, top: 0, height: 844, keyboardOpen: false };
     state.error = null;
     state.isLoaded = true;
     state.isSignedIn = true;
@@ -203,6 +208,7 @@ describe('Chat stable conversation route', () => {
     };
     renderChat('/chat/conv-1?return_to=%2Flearning%2Fgreetings');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Tutor options' }));
     expect(screen.getByRole('link', { name: 'Back to Greetings & Basics' }))
       .toHaveAttribute('href', '/learning/greetings');
     expect(screen.getByRole('heading', { name: 'Start chatting' })).toBeInTheDocument();
@@ -297,7 +303,7 @@ describe('Chat stable conversation route', () => {
   });
 
   it('starts a URL prompt in a new record rather than a restored saved conversation', async () => {
-    window.localStorage.setItem('active_conversation_id', 'conv-old');
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-old');
     state.createConversation.mockResolvedValue({ id: 'conv-new' });
     renderChat('/chat?message=Explain%20this&intent=explain');
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
@@ -431,7 +437,7 @@ describe('Chat stable conversation route', () => {
   });
 
   it('does not restore a stale record after navigating back to the base chat route', async () => {
-    window.localStorage.setItem('active_conversation_id', 'conv-1');
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-1');
     renderChat('/chat');
 
     await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-1'));
@@ -540,4 +546,85 @@ describe('Chat stable conversation route', () => {
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 
+});
+
+
+describe('Tutor shell and continuity', () => {
+  beforeEach(() => {
+    state.userId = 'user-1'; state.isLoaded = true; state.isSignedIn = true;
+    state.preferredMode = undefined; state.viewport = { isMobile: true, top: 0, height: 844, keyboardOpen: false };
+    state.error = null; state.messages = []; state.messagesError = false;
+    state.conversation = { data: undefined, isLoading: false, isError: false };
+    state.initData = { conversations: [] };
+    state.tryUse.mockReset(); state.tryUse.mockResolvedValue(true);
+    state.createConversation.mockReset(); state.createConversation.mockResolvedValue({ id: 'conv-new' });
+    state.sendMessageStream.mockReset(); state.sendMessageStream.mockResolvedValue(undefined);
+    state.cancelMessage.mockResolvedValue(undefined); state.setError.mockImplementation(message => { state.error = message; });
+    window.localStorage.clear();
+  });
+  it('does not restore another learner’s scoped or legacy conversation', async () => {
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-private-a');
+    window.localStorage.setItem('active_conversation_id', 'conv-private-a');
+    state.userId = 'user-2';
+    renderChat('/chat');
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat'));
+    expect(screen.getByTestId('chat-path')).not.toHaveTextContent('conv-private-a');
+    expect(screen.getByRole('heading', { name: 'Start chatting' })).toBeInTheDocument();
+  });
+  it('restores the current learner’s generic tutor visit', async () => {
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-private-a');
+    window.localStorage.setItem('active_conversation_id:user-2', 'conv-private-b');
+    state.userId = 'user-2';
+    renderChat('/chat');
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-private-b'));
+    expect(screen.getByTestId('chat-path')).not.toHaveTextContent('conv-private-a');
+  });
+  it('starts explicit topic/task links fresh and sends their examples with the requested context', async () => {
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-older');
+    renderChat('/chat?topic=greetings&intent=practice');
+    expect(screen.getByTestId('chat-path')).not.toHaveTextContent('conv-older');
+    fireEvent.click(screen.getByRole('button', { name: 'Example prompt' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
+    expect(state.createConversation).toHaveBeenCalledWith({ title: 'A useful example', learningTopicId: 'greetings' });
+    expect(state.sendMessageStream.mock.calls[0][0]).toBe('A useful example');
+    expect(state.sendMessageStream.mock.calls[0][6]).toBe('practice');
+    expect(state.sendMessageStream.mock.calls[0][7]).toBe('greetings');
+  });
+  it('honors initial answer preference and exposes optional language, theme, share and export in Tutor options', async () => {
+    state.preferredMode = 'learn';
+    state.messages = [{ id: 1, role: 'user', content: 'Saved question', timestamp: '2026-10-06T00:00:00Z' }];
+    renderChat('/chat/conv-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Tutor options' }));
+    expect(screen.getByRole('dialog', { name: 'Tutor options' })).toBeInTheDocument();
+    const language = screen.getByRole('combobox', { name: 'Answer language' });
+    expect(language).toHaveValue('learn');
+    fireEvent.change(language, { target: { value: 'chamorro' } });
+    expect(screen.queryByText(/Switched to/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use dark theme' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Share conversation' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Export chat' }));
+    expect(screen.getByRole('dialog', { name: 'Export chat history' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Tutor options' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
+    expect(state.sendMessageStream.mock.calls[0][1]).toBe('chamorro');
+  });
+  it('uses a bounded visible viewport, collapses task controls for the keyboard and keeps the composer in flow', () => {
+    state.viewport = { isMobile: true, top: 18, height: 390, keyboardOpen: true };
+    renderChat('/chat');
+    expect(screen.getByRole('main').style.top).toBe('18px');
+    expect(screen.getByRole('main').style.height).toBe('390px');
+    expect(screen.getByRole('main').style.getPropertyValue('--chat-viewport-height')).toBe('390px');
+    expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
+    expect(screen.getByTestId('chat-composer')).toContainElement(screen.getByRole('button', { name: 'Chat input' }));
+    expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
+  });
+  it('uses the visible viewport below the desktop navigation on a wide touch keyboard', () => {
+    state.viewport = { isMobile: false, top: 20, height: 420, keyboardOpen: true };
+    renderChat('/chat');
+    expect(screen.getByRole('main').style.top).toBe('68px');
+    expect(screen.getByRole('main').style.height).toBe('372px');
+    expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
+  });
 });
