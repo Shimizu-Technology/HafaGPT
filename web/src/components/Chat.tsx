@@ -1119,19 +1119,20 @@ End of Export
           className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
+            {linkedTopic && <Link to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
             {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
               aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
               className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
               <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
             </button>}
-            <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
+            {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
               <span aria-hidden="true">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
-            </Link>
+            </Link>}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : 'HåfaGPT'}>
-                {activeConversationId ? conversationTitle : 'HåfaGPT'}
+              <p className="truncate text-sm font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
+                {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
               </p>
-              <p className="truncate text-xs text-brown-500 dark:text-gray-400">{activeConversationId ? 'HåfaGPT tutor' : 'Chamorro language tutor'}</p>
+              <p className="truncate text-xs text-brown-500 dark:text-gray-400">{activeConversationId || linkedTopic ? 'HåfaGPT tutor' : 'Chamorro language tutor'}</p>
             </div>
             <div className="shrink-0"><AuthButton /></div>
             <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
@@ -1320,7 +1321,6 @@ End of Export
                 className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Share2 className="h-4 w-4" />Share conversation</button>
               <button type="button" disabled={messages.length === 0} onClick={() => { setShowOptions(false); setShowExportModal(true); }}
                 className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Download className="h-4 w-4" />Export chat</button>
-              {linkedTopic && <Link to={topicReturnPath} onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><ArrowLeft className="h-4 w-4" />Back to {linkedTopic.title}</Link>}
               {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><Settings className="h-4 w-4" />Settings</Link>}
               <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
             </div>
