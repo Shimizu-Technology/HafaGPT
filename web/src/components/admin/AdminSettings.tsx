@@ -129,7 +129,7 @@ export function AdminSettings() {
             disabled={!hasChanges || updateSettings.isPending || Boolean(themeValidationError)}
             className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all ${
               hasChanges && !themeValidationError
-                ? 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600 shadow-lg'
+                ? 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800 shadow-lg'
                 : 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500 cursor-not-allowed'
             }`}
           >

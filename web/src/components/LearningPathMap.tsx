@@ -66,30 +66,28 @@ function TopicNode({
   
   const statusColors = {
     locked: 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
-    available: 'bg-white dark:bg-gray-800 border-coral-300 dark:border-ocean-400 shadow-md',
-    in_progress: 'bg-gradient-to-br from-coral-50 to-white dark:from-ocean-600/20 dark:to-ocean-500/10 border-coral-400 dark:border-ocean-400 shadow-lg ring-2 ring-coral-200 dark:ring-ocean-400/50',
-    completed: 'bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-600/20 dark:to-emerald-500/10 border-emerald-400 dark:border-emerald-400 shadow-md ring-1 ring-emerald-200 dark:ring-emerald-500/30',
+    available: 'bg-white dark:bg-gray-800 border-cream-200 dark:border-gray-700',
+    in_progress: 'bg-coral-50 dark:bg-teal-900/20 border-coral-400 dark:border-teal-500 ring-1 ring-coral-200 dark:ring-teal-700',
+    completed: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700',
   };
 
   const iconColors = {
     locked: 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500',
     available: 'bg-coral-100 dark:bg-ocean-800 text-coral-600 dark:text-ocean-400',
-    in_progress: 'bg-coral-500 dark:bg-ocean-500 text-white',
+    in_progress: 'bg-coral-700 dark:bg-ocean-700 text-white',
     completed: 'bg-emerald-500 text-white',
   };
 
   const content = (
     <div
       className={`relative p-3 sm:p-4 rounded-xl border-2 transition-all ${statusColors[status]} ${
-        isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:scale-[1.02] cursor-pointer active:scale-[0.98]'
+        isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-coral-400 dark:hover:border-teal-500 cursor-pointer'
       }`}
     >
-      {/* Topic number badge */}
-      <div className="absolute -top-2 -left-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brown-600 dark:bg-ocean-500 text-white text-[10px] sm:text-xs font-bold flex items-center justify-center shadow-sm">
-        {index + 1}
-      </div>
-
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-3">
+        <span className="w-5 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-brown-500 dark:text-gray-400" aria-hidden="true">
+          {index + 1}
+        </span>
         {/* Icon */}
         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 ${iconColors[status]}`}>
           {status === 'completed' ? (
@@ -103,7 +101,7 @@ function TopicNode({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h3 className={`font-semibold text-sm truncate ${
+          <h3 className={`font-semibold text-sm leading-snug ${
             isLocked ? 'text-gray-400 dark:text-gray-500' : 'text-brown-800 dark:text-white'
           }`}>
             {topic.title}
@@ -128,13 +126,13 @@ function TopicNode({
               </>
             )}
             {status === 'in_progress' && (
-              <span className="text-xs text-coral-600 dark:text-ocean-400 font-medium flex items-center gap-1">
+              <span className="text-xs text-coral-700 dark:text-ocean-400 font-medium flex items-center gap-1">
                 <Play className="w-3 h-3 fill-current" />
                 In Progress
               </span>
             )}
             {status === 'available' && (
-              <span className="text-xs text-coral-600 dark:text-ocean-400 font-medium">
+              <span className="text-xs text-brown-500 dark:text-gray-400 font-medium">
                 Ready to start
               </span>
             )}
@@ -169,7 +167,7 @@ function TopicNode({
   }
 
   return (
-    <Link to={appRoutes.topic(topic.id)}>
+    <Link className="block rounded-xl" to={appRoutes.topic(topic.id)}>
       {content}
     </Link>
   );
@@ -228,6 +226,8 @@ function LevelSection({
       {/* Level Header */}
       <button
         onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-controls={`learning-topics-${level}`}
         disabled={isLocked}
         className={`w-full p-3 sm:p-4 flex items-center justify-between ${colors.bg} ${
           isLocked ? 'cursor-not-allowed' : 'hover:brightness-95 transition-all'
@@ -275,7 +275,7 @@ function LevelSection({
 
       {/* Topics List */}
       {isExpanded && !isLocked && (
-        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 bg-white dark:bg-gray-800">
+        <div id={`learning-topics-${level}`} className="grid gap-3 p-3 sm:gap-4 sm:p-4 bg-white dark:bg-gray-800">
           {topics.map((topic, index) => {
             const progress = progressMap.get(topic.id);
             const status = getTopicStatus(progress);

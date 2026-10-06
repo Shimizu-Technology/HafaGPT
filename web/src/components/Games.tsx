@@ -95,7 +95,7 @@ export function Games() {
             </div>
             <Link
               to="/games/sound-match"
-              className="flex min-h-12 flex-none items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 py-3 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"
+              className="flex min-h-12 flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 py-3 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               Play Sound Match <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>
@@ -118,7 +118,7 @@ export function Games() {
                   aria-pressed={selectedGroup === group.id}
                   className={`min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors ${
                     selectedGroup === group.id
-                      ? 'border-coral-600 bg-coral-600 text-white dark:border-teal-500 dark:bg-teal-600'
+                      ? 'border-coral-600 bg-coral-700 text-white dark:border-teal-500 dark:bg-teal-700'
                       : 'border-cream-300 bg-white text-brown-700 hover:border-coral-300 hover:bg-coral-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:border-teal-600 dark:hover:bg-slate-700'
                   }`}
                 >

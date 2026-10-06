@@ -1,9 +1,8 @@
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect, type CSSProperties } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye } from 'lucide-react';
+import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye, MoreHorizontal, Menu, Settings, Plus } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { useAccountRequest } from '../hooks/useAccountRequest';
-import { useLearnerAuth } from '../hooks/useLearnerAuth';
 import { useTheme } from '../hooks/useTheme';
 import { 
   useInitUserData, 
@@ -32,6 +31,7 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { getChatIntentLabel, getChatIntentPlaceholder, normalizeChatIntent, type ChatIntent } from '../lib/chatIntent';
 import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
+import { useChatViewport } from '../hooks/useChatViewport';
 import { browserStorage } from '../lib/browserStorage';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
@@ -59,7 +59,16 @@ export function Chat() {
 function ChatSession() {
   const navigate = useNavigate();
   const { conversationId: routeConversationId } = useParams<{ conversationId: string }>();
-  const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>('english');
+  const { isSignedIn, user, isLoaded } = useUser();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeStorageKey = user?.id ? `active_conversation_id:${user.id}` : null;
+  const viewport = useChatViewport();
+  const [sidebarModalOpen, setSidebarModalOpen] = useState(false);
+  const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>(() => {
+    const saved = user?.unsafeMetadata?.preferred_mode;
+    return saved === 'english' || saved === 'learn' || saved === 'chamorro' ? saved : 'english';
+  });
+  const [showOptions, setShowOptions] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastData, setToastData] = useState<{ icon: string; message: string; description: string } | null>(null);
@@ -81,10 +90,9 @@ function ChatSession() {
   const restoredConversationIdRef = useRef<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
     if (routeConversationId) return routeConversationId;
-    if (typeof window !== 'undefined') {
-      const savedId = browserStorage.get('active_conversation_id');
-      // Only restore if user is already signed in (page refresh scenario)
-      // For fresh login, this will be null and we'll start with new chat
+    if (activeStorageKey && !searchParams.toString()) {
+      const savedId = browserStorage.get(activeStorageKey);
+      // Each learner restores only their own generic tutor entry. Explicit task/topic links start fresh.
       restoredConversationIdRef.current = savedId;
       return savedId;
     }
@@ -93,15 +101,12 @@ function ChatSession() {
   
   const { sendMessageStream, cancelMessage, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
-  const { isSignedIn, user, isLoaded } = useUser();
   const clerk = useClerk();
-  const { getToken } = useLearnerAuth();
   const editOwner = useAccountRequest();
   const queryClient = useQueryClient();
   const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const requestedTopic = getTopic(searchParams.get('topic') || '');
   const requestedReturnPath = safeInternalReturnPath(
     searchParams.get('return_to'),
@@ -175,7 +180,9 @@ function ChatSession() {
     dialogRef: shareDialogRef,
     initialFocusRef: shareCloseRef,
   });
-  const previousModeRef = useRef<'english' | 'chamorro' | 'learn'>(mode);
+  const optionsDialogRef = useRef<HTMLDivElement>(null);
+  const optionsCloseRef = useRef<HTMLButtonElement>(null);
+  useModalAccessibility({ isOpen: showOptions, onClose: () => setShowOptions(false), dialogRef: optionsDialogRef, initialFocusRef: optionsCloseRef });
   const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
   const [unavailableAttachments, setUnavailableAttachments] = useState<{
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
@@ -223,15 +230,6 @@ function ChatSession() {
   const isSendingMessageRef = useRef(false); // Track if we're currently sending a message
   const previousRouteConversationIdRef = useRef(routeConversationId);
 
-  const getModeDetails = (modeName: 'english' | 'chamorro' | 'learn') => {
-    const modes = {
-      english: { icon: '🇺🇸', label: 'English', description: 'English responses with Chamorro examples' },
-      chamorro: { icon: '🇬🇺', label: 'Chamorro', description: 'Chamorro-only responses' },
-      learn: { icon: '📚', label: 'Both languages', description: 'Chamorro with English support' },
-    };
-    return modes[modeName];
-  };
-
   // Keep the stable route and active record synchronized during back/forward navigation.
   useEffect(() => {
     if (routeConversationId && isSignedIn) {
@@ -239,17 +237,17 @@ function ChatSession() {
     } else if (previousRouteConversationIdRef.current) {
       setActiveConversationId(null);
       setMessages([]);
-      browserStorage.remove('active_conversation_id');
+      if (activeStorageKey) browserStorage.remove(activeStorageKey);
     }
     previousRouteConversationIdRef.current = routeConversationId;
-  }, [isSignedIn, routeConversationId]);
+  }, [activeStorageKey, isSignedIn, routeConversationId]);
 
   // Persist a direct record ID only after the owner-scoped message request succeeds.
   useEffect(() => {
     if (routeConversationId && isSignedIn && conversationMessages && !messagesError) {
-      browserStorage.set('active_conversation_id', routeConversationId);
+      if (activeStorageKey) browserStorage.set(activeStorageKey, routeConversationId);
     }
-  }, [conversationMessages, isSignedIn, messagesError, routeConversationId]);
+  }, [activeStorageKey, conversationMessages, isSignedIn, messagesError, routeConversationId]);
 
   // Upgrade the legacy restored-chat state to a stable, refreshable record URL.
   useEffect(() => {
@@ -275,9 +273,8 @@ function ChatSession() {
     if (isLoaded && !isSignedIn) {
       setActiveConversationId(null);
       setMessages([]);
-      browserStorage.remove('active_conversation_id');
     }
-  }, [isLoaded, isSignedIn]);
+  }, [activeStorageKey, isLoaded, isSignedIn]);
 
   // On mount: Invalidate messages for active conversation to catch any background completions
   // This handles the case where user left during streaming and returned to the chat page
@@ -339,61 +336,11 @@ function ChatSession() {
     if (isSignedIn === false) {
         setMessages([]);
       setActiveConversationId(null);
-      browserStorage.remove('active_conversation_id');
       // Invalidate all queries to clear cache
       queryClient.clear();
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignedIn]); // Only depend on isSignedIn
-
-  // Detect mode changes and add system message + toast
-  useEffect(() => {
-    if (previousModeRef.current !== mode && messages.length > 0) {
-      const modeDetails = getModeDetails(mode);
-      
-      // Add system message to local chat
-      const systemMessage: ChatMessage = {
-        role: 'system',
-        content: `Switched to ${modeDetails.label} mode`,
-        timestamp: Date.now(),
-        systemType: 'mode_change',
-        mode: mode,
-      };
-      setMessages((prev) => [...prev, systemMessage]);
-
-      // Save system message to database if there's an active conversation
-      if (activeConversationId) {
-        void (async () => {
-          try {
-            const token = await getToken();
-            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/conversations/system-message`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token && { 'Authorization': `Bearer ${token}` }),
-              },
-              body: JSON.stringify({
-                conversation_id: activeConversationId,
-                content: `Switched to ${modeDetails.label} mode`,
-                mode: mode,
-              }),
-            });
-          } catch (err) {
-            console.error('Failed to save system message:', err);
-          }
-        })();
-      }
-
-      // Show toast notification
-      setToastData({
-        icon: modeDetails.icon,
-        message: `Switched to ${modeDetails.label} mode`,
-        description: modeDetails.description,
-      });
-      setShowToast(true);
-    }
-    previousModeRef.current = mode;
-  }, [mode, messages.length, activeConversationId, getToken]);
 
   // Load messages when activeConversationId changes
   // NOTE: This is now handled by React Query (initUserData), but we keep this
@@ -409,7 +356,6 @@ function ChatSession() {
     if (isSignedIn === false) {
       setMessages([]);
       setActiveConversationId(null);
-      browserStorage.remove('active_conversation_id');
       // Invalidate all queries to clear cache
       queryClient.clear();
     }
@@ -437,7 +383,7 @@ function ChatSession() {
     // Start a new chat by clearing the active conversation
     setActiveConversationId(null);
     setMessages([]);
-    browserStorage.remove('active_conversation_id');
+    if (activeStorageKey) browserStorage.remove(activeStorageKey);
     
     // Send from the next committed new-chat scope, never a delayed old closure.
     setQueuedUrlMessage(messageFromUrl);
@@ -615,7 +561,7 @@ function ChatSession() {
             if (!isCurrent()) throw new CancelledError();
             attempt.conversationId = newConv.id;
             setActiveConversationId(newConv.id);
-            browserStorage.set('active_conversation_id', newConv.id);
+            if (activeStorageKey) browserStorage.set(activeStorageKey, newConv.id);
             const conversationUrl = new URL(appRoutes.conversation(newConv.id, {
               topicId: newConv.learning_topic_id || sendTopic?.id || requestedTopic?.id,
               returnTo: attempt.returnTo,
@@ -792,12 +738,12 @@ function ChatSession() {
       // Don't create conversation yet - just clear messages
       // Conversation will be created when user sends first message
       setActiveConversationId(null);
-      browserStorage.remove('active_conversation_id');
+      if (activeStorageKey) browserStorage.remove(activeStorageKey);
       setMessages([]);
       // Ensure switching state is cleared (prevents loading flash)
       setIsSwitchingConversation(false);
       // Always close sidebar for cleaner UX
-      setSidebarOpen(false);
+      if (sidebarModalOpen) setSidebarOpen(false);
       navigate(appRoutes.chat({
         topicId: linkedTopic?.id,
         returnTo: topicReturnPath,
@@ -811,7 +757,7 @@ function ChatSession() {
     const navigation = ++navigationGeneration.current;
     // Skip if already on this conversation
     if (conversationId === activeConversationId) {
-      setSidebarOpen(false);
+      if (sidebarModalOpen) setSidebarOpen(false);
       return;
     }
     
@@ -836,7 +782,7 @@ function ChatSession() {
     queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
     
     setActiveConversationId(conversationId);
-    browserStorage.set('active_conversation_id', conversationId);
+    if (activeStorageKey) browserStorage.set(activeStorageKey, conversationId);
     const selectedConversation = conversations.find((item) => item.id === conversationId);
     const selectedTopic = getTopic(selectedConversation?.learning_topic_id || '');
     navigate(appRoutes.conversation(conversationId, {
@@ -845,7 +791,7 @@ function ChatSession() {
     }));
     
     // Always close sidebar for cleaner UX
-    setSidebarOpen(false);
+    if (sidebarModalOpen) setSidebarOpen(false);
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -856,7 +802,7 @@ function ChatSession() {
       if (conversationId === scopeConversation.current) {
         setMessages([]);
         setActiveConversationId(null);
-        browserStorage.remove('active_conversation_id');
+        if (activeStorageKey) browserStorage.remove(activeStorageKey);
         navigate(appRoutes.chat({
           topicId: linkedTopic?.id,
           returnTo: topicReturnPath,
@@ -864,10 +810,12 @@ function ChatSession() {
       }
     } catch (err) {
       console.error('Failed to delete conversation:', err);
+      throw err;
     }
   };
 
   const handleShareConversation = async (conversationId: string) => {
+    if (sidebarModalOpen) setSidebarOpen(false);
     setShareLoading(true);
     setShowShareModal(true);
     setShareInfo(null);
@@ -918,6 +866,7 @@ function ChatSession() {
       await updateConversationTitleMutation.mutateAsync({ conversationId, title });
     } catch (err) {
       console.error('Failed to rename conversation:', err);
+      throw err;
     }
   };
 
@@ -1114,15 +1063,31 @@ End of Export
     }
   };
 
+  const conversationTitle = resolvedConversationRecord?.title
+    || conversations.find(item => item.id === activeConversationId)?.title
+    || 'New conversation';
+  const compactKeyboard = viewport.keyboardOpen && viewport.height < 260;
+  const inlineComposer = viewport.keyboardOpen && viewport.height < 160;
+  // Reserve the visible header, navigation, toolbar and safe-area padding before expanding a draft.
+  const composerBodyRoom = viewport.height - (compactKeyboard ? 0 : viewport.keyboardOpen ? 72 : 142)
+    - (viewport.keyboardOpen ? 0 : viewport.isMobile ? 64 : 48) - (inlineComposer ? 28 : 100);
+  const composerBodyHeight = viewport.height < 420
+    ? `max(40px, calc(${composerBodyRoom}px - ${compactKeyboard ? '0px' : 'max(0px, calc(env(safe-area-inset-top, 0px) - 16px))'} - ${inlineComposer ? '0px' : 'max(0px, calc(env(safe-area-inset-bottom, 0px) - 16px))'}))`
+    : undefined;
+  const viewportStyle: CSSProperties & { '--chat-viewport-height': string; '--chat-viewport-top': string } = {
+    '--chat-viewport-height': `${viewport.height}px`,
+    '--chat-viewport-top': `${viewport.top}px`,
+    ...(viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? {
+    top: viewport.top + (!viewport.isMobile && !viewport.keyboardOpen ? 48 : 0),
+    height: viewport.isMobile && !viewport.keyboardOpen
+      ? `calc(${viewport.height}px - 64px - env(safe-area-inset-bottom, 0px))`
+      : `${viewport.height - (!viewport.isMobile && !viewport.keyboardOpen ? 48 : 0)}px`,
+    } : {}),
+  };
+
   return (
-    <main id="main-content" className="flex h-full sm:h-[calc(100dvh-3rem)] bg-cream-100 dark:bg-gray-950 transition-colors duration-300 overflow-x-hidden">
-      {/* Public Banner - Only show if not signed in */}
-      {!isSignedIn && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <PublicBanner />
-        </div>
-      )}
-      
+    <main id="main-content" style={viewportStyle}
+      className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-gray-950 ${viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
       {/* Sidebar - Only show if signed in */}
       {isSignedIn && (
         <ConversationSidebar
@@ -1136,118 +1101,55 @@ End of Export
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           isLoading={conversationsLoading}
+          onModalChange={setSidebarModalOpen}
         />
       )}
 
       {/* Main chat area */}
-      <div className={`flex min-h-0 flex-1 flex-col h-full w-full overflow-x-hidden ${!isSignedIn ? 'pt-[52px] sm:pt-[56px]' : ''}`}>
+      <div {...(sidebarModalOpen ? { inert: '' } : {})} className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        {!isSignedIn && <div className="shrink-0"><PublicBanner /></div>}
         {/* Header stays in the chat column's layout so messages can never slide underneath it. */}
         <header
           data-testid="chat-header"
-          className="relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95"
+          hidden={compactKeyboard}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95`}
         >
-          <div className="px-3 py-2 sm:px-6 sm:py-3">
-            <div className="flex items-center justify-between w-full sm:max-w-5xl sm:mx-auto gap-2 sm:gap-3">
-              <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
-                {/* Sidebar toggle button - only show if signed in */}
-                {isSignedIn && (
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="flex items-center gap-2 p-2 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 flex-shrink-0"
-                    aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-                    title="View conversations"
-                  >
-                    {/* Hamburger icon */}
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                    {/* Label - hidden on very small screens */}
-                    <span className="hidden sm:inline text-sm font-medium">Chats</span>
-                  </button>
-                )}
-                
-                <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
-                  <div className={`w-7 h-7 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-base sm:text-2xl shadow-lg flex-shrink-0 ${
-                    isChristmasTheme 
-                      ? 'bg-gradient-to-br from-red-500 to-green-600 shadow-red-500/20' 
-                      : 'bg-gradient-to-br from-coral-400 to-coral-600 shadow-coral-500/20'
-                  }`}>
-                    {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-                  </div>
-                  <div className="min-w-0">
-                    <h1 className="text-sm sm:text-xl md:text-2xl font-bold text-brown-800 dark:text-white truncate leading-tight">
-                      HåfaGPT
-                    </h1>
-                    <p className="hidden truncate text-xs leading-tight text-brown-500 dark:text-gray-400 sm:block">
-                      Chamorro language tutor
-                    </p>
-                  </div>
-                </Link>
-              </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {/* Auth Button - Always visible */}
-              <AuthButton />
-              
-              <button
-                onClick={toggleTheme}
-                className="p-1 sm:p-2.5 rounded-lg sm:rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 flex items-center justify-center"
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? <Moon className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <Sun className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
-              </button>
-              {messages.length > 0 && isSignedIn && activeConversationId && (
-                <button
-                  onClick={() => handleShareConversation(activeConversationId)}
-                  className="flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center"
-                  aria-label="Share conversation"
-                  title="Share conversation"
-                >
-                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              )}
-              {messages.length > 0 && (
-                <button
-                  onClick={() => setShowExportModal(true)}
-                  className="hidden sm:flex p-1.5 sm:p-2.5 rounded-xl hover:bg-cream-200 dark:hover:bg-gray-800 transition-all duration-200 text-brown-700 dark:text-gray-300 active:scale-95 items-center justify-center"
-                  aria-label="Export chat"
-                  title="Export chat history"
-                >
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              )}
+          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
+            {linkedTopic && <Link to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
+            {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
+              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
+              className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
+            </button>}
+            {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
+              <span aria-hidden="true">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
+            </Link>}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
+                {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
+              </p>
+              <p className="truncate text-xs text-brown-500 dark:text-gray-400">{activeConversationId || linkedTopic ? 'HåfaGPT tutor' : 'Chamorro language tutor'}</p>
             </div>
+            <div className="shrink-0"><AuthButton /></div>
+            <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
-        </div>
-        <ModeSelector mode={mode} onModeChange={setMode} intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading} />
-        {linkedTopic && (
-          <div className="border-t border-cream-200 px-3 py-2 dark:border-gray-800 sm:px-6">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-              <Link
-                to={topicReturnPath}
-                className="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-coral-700 hover:text-coral-800 dark:text-ocean-300 dark:hover:text-ocean-200"
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                Back to {linkedTopic.title}
-              </Link>
-              <span className="hidden text-xs text-brown-500 dark:text-gray-400 sm:inline">
-                Saved with this topic
-              </span>
-            </div>
-          </div>
-        )}
+          {!viewport.keyboardOpen && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
       <div
         data-testid="chat-messages-viewport"
-        className="min-h-0 flex-1 pt-5 sm:pt-6"
+        className={`${viewport.keyboardOpen && viewport.height < 160 ? 'hidden' : ''} min-h-0 flex-1 pt-3 sm:pt-5`}
       >
         <div
           ref={messagesContainerRef}
           data-testid="chat-messages"
           tabIndex={0}
           aria-label="Conversation messages"
-          className="h-full min-h-0 overflow-y-auto overflow-x-hidden px-4 sm:px-4 pb-[200px] sm:pb-[140px] custom-scrollbar"
+          className="h-full min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-3 sm:pb-5 custom-scrollbar"
         >
           <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
@@ -1289,7 +1191,7 @@ End of Export
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (
-            <WelcomeMessage onSelect={handleStarterSelect} disabled={loading} intent={chatIntent} onStartPractice={() => void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings")} />
+            <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : handleSignInClick()} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => isSignedIn ? void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings") : handleSignInClick()} />
           ) : (
             <>
               {messages.map((message, index) => {
@@ -1341,20 +1243,16 @@ End of Export
         </div>
       </div>
 
-      {/* Message Input - Fixed at Bottom (raised on mobile for bottom nav + safe area) */}
-      <div className="fixed left-0 right-0 z-40 bg-cream-100 dark:bg-gray-950 above-bottom-nav sm:bottom-0">
+      {/* The composer owns its actual height; the scroller uses the remaining space. */}
+      <div data-testid="chat-composer" className="relative z-20 shrink-0 border-t border-cream-200 bg-cream-100 dark:border-gray-800 dark:bg-gray-950">
         {/* Scroll to Bottom Button */}
         {messages.length > 0 && showScrollButton && (
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
+          <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
             <button
               onClick={() => {
                 resumeFollowing();
               }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                resumeFollowing();
-              }}
-              className="p-3 bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
+              className="flex h-11 w-11 items-center justify-center bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >
@@ -1362,8 +1260,13 @@ End of Export
             </button>
           </div>
         )}
-        {error && failedAttempt && (
-          <div role="alert" className="mx-3 mt-2 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30 sm:mx-auto sm:max-w-3xl">
+        <MessageInput
+          onSend={handleSend}
+          compact={viewport.height < 420}
+          inline={inlineComposer}
+          bodyMaxHeight={composerBodyHeight}
+          sendError={error && failedAttempt ? (
+          <div role="alert" className="mb-2 flex max-h-24 items-center gap-3 overflow-y-auto rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-red-900 dark:text-red-200">Message not sent</p>
               <p className="truncate text-xs text-red-900 dark:text-red-200" title={failedAttempt.message}>{failedAttempt.message}{failedAttempt.files?.length ? ` · ${failedAttempt.files.length} file${failedAttempt.files.length === 1 ? '' : 's'}` : ''}</p>
@@ -1373,9 +1276,7 @@ End of Export
               <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
             </button>
           </div>
-        )}
-        <MessageInput 
-          onSend={handleSend}
+          ) : undefined}
           completedSend={completedSend}
           disabled={!isSignedIn || loading || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
@@ -1387,16 +1288,53 @@ End of Export
         />
       </div>
 
+      {showOptions && (
+        <div className="fixed left-0 right-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+          style={{ top: viewport.top, height: viewport.height }} onClick={() => setShowOptions(false)} role="presentation">
+          <div ref={optionsDialogRef} role="dialog" aria-modal="true" aria-labelledby="tutor-options-title" tabIndex={-1}
+            style={{ maxHeight: Math.max(0, viewport.height - 32) }}
+            className="w-full max-w-sm overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900" onClick={event => event.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 id="tutor-options-title" className="text-lg font-semibold text-brown-900 dark:text-white">Tutor options</h2>
+              <button ref={optionsCloseRef} type="button" onClick={() => setShowOptions(false)} aria-label="Close tutor options"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
+            </div>
+            <label className="block text-sm font-semibold text-brown-800 dark:text-gray-200" htmlFor="tutor-answer-language">Answer language</label>
+            <select id="tutor-answer-language" value={mode} disabled={loading || preparingSend}
+              onChange={event => setMode(event.target.value as SendAttempt['mode'])}
+              className="mt-2 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-800 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+              <option value="english">English</option><option value="learn">Both languages</option><option value="chamorro">Chamorro</option>
+            </select>
+            <p className="mb-4 mt-2 text-xs leading-relaxed text-brown-600 dark:text-gray-400">For replies in this chat. You can type in either language.</p>
+            <div className="grid gap-1 text-sm text-brown-800 dark:text-gray-200">
+              <button type="button" onClick={toggleTheme} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-gray-800">
+                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}Use {theme === 'light' ? 'dark' : 'light'} theme
+              </button>
+              {isSignedIn && <button type="button" onClick={() => { setShowOptions(false); void handleNewConversation(); }}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-gray-800"><Plus className="h-4 w-4" />New chat</button>}
+              <button type="button" disabled={!isSignedIn || !activeConversationId || messages.length === 0}
+                onClick={() => { setShowOptions(false); if (activeConversationId) void handleShareConversation(activeConversationId); }}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Share2 className="h-4 w-4" />Share conversation</button>
+              <button type="button" disabled={messages.length === 0} onClick={() => { setShowOptions(false); setShowExportModal(true); }}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Download className="h-4 w-4" />Export chat</button>
+              {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><Settings className="h-4 w-4" />Settings</Link>}
+              <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Export Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" role="presentation">
+        <div className="fixed left-0 right-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50" style={{ top: viewport.top, height: viewport.height }} role="presentation">
           <div
             ref={exportDialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="export-chat-title"
             tabIndex={-1}
-            className="bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up"
+            style={{ maxHeight: Math.max(0, viewport.height - 32) }}
+            className="overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800"
           >
             <h2 id="export-chat-title" className="text-lg font-bold text-brown-800 dark:text-white mb-2">Export chat history</h2>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-5">
@@ -1405,7 +1343,7 @@ End of Export
             <div className="space-y-3">
               <button
                 onClick={() => handleExportChat('txt')}
-                className="w-full px-4 py-3 bg-teal-500 hover:bg-teal-600 dark:bg-ocean-500 dark:hover:bg-ocean-600 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
+                className="w-full px-4 py-3 bg-teal-700 hover:bg-teal-800 dark:bg-ocean-700 dark:hover:bg-ocean-800 text-white rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
                   <FileText className="h-5 w-5" aria-hidden="true" />
@@ -1437,14 +1375,15 @@ End of Export
 
       {/* Share Modal */}
       {showShareModal && (
-        <div className="fixed inset-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in" onClick={() => setShowShareModal(false)} role="presentation">
+        <div className="fixed left-0 right-0 bg-brown-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50" style={{ top: viewport.top, height: viewport.height }} onClick={() => setShowShareModal(false)} role="presentation">
           <div
             ref={shareDialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="share-chat-title"
             tabIndex={-1}
-            className="max-h-[calc(100dvh-2rem)] overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800 animate-slide-up"
+            style={{ maxHeight: Math.max(0, viewport.height - 32) }}
+            className="overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -1486,7 +1425,7 @@ End of Export
                     className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-all flex-shrink-0 ${
                       shareCopied
                         ? 'bg-green-500 text-white'
-                        : 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600'
+                        : 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800'
                     }`}
                   >
                     {shareCopied ? (

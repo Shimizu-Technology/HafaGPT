@@ -1,6 +1,13 @@
+import { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Message } from './Message';
+
+const originalExecCommand = Object.getOwnPropertyDescriptor(document, 'execCommand');
+afterEach(() => {
+  if (originalExecCommand) Object.defineProperty(document, 'execCommand', originalExecCommand);
+  else Reflect.deleteProperty(document, 'execCommand');
+});
 
 vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ getToken: vi.fn() }),
@@ -17,6 +24,16 @@ vi.mock('../hooks/useSpeech', () => ({
 }));
 
 describe('Message evidence disclosure', () => {
+  it('makes reference context readable without a hover tooltip', () => {
+    render(<Message role="assistant" content="Referenced answer" sources={[
+      { name: 'Linked reference', page: null, url: 'https://example.com/reference', locator: 'Section 2', content_role: 'lexical evidence', region: 'Guam', temporal_scope: 'Current' },
+      { name: 'Local reference', page: null, locator: 'Entry 4', region: 'Guam' },
+    ]} />);
+    fireEvent.click(document.querySelector('summary')!);
+    expect(screen.getByText('Section 2 • lexical evidence • Guam • Current')).toBeVisible();
+    expect(screen.getByText('Entry 4 • Guam')).toBeVisible();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -30,6 +47,7 @@ describe('Message evidence disclosure', () => {
       />,
     );
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: References attached' }),
     ).toHaveTextContent('They may support only parts of this answer.');
@@ -38,6 +56,7 @@ describe('Message evidence disclosure', () => {
   it('shows web-informed when current web context was used without RAG citations', () => {
     render(<Message role="assistant" content="Current answer" used_web_search />);
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: Web-informed' }),
     ).toHaveTextContent('Current web results were used.');
@@ -46,6 +65,7 @@ describe('Message evidence disclosure', () => {
   it('clearly marks an answer with no attached references', () => {
     render(<Message role="assistant" content="Possible answer" />);
 
+    fireEvent.click(document.querySelector('summary')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: No references attached' }),
     ).toHaveTextContent('Check important claims against the original material.');
@@ -66,6 +86,41 @@ describe('streaming Markdown identity', () => {
     rerender(<Message role="assistant" content={`${content}| 2 | Second item |\n\nMore explanation.`} isStreaming={false} response_time={4} />);
     expect(screen.getByRole('table')).toBe(table);
     expect(paragraph.isConnected).toBe(true);
+  });
+});
+
+
+describe('message actions', () => {
+  it('has one Copy action and one disclosure without internal badges or latency', () => {
+    const { container } = render(<Message role="assistant" content="Answer" used_rag used_web_search response_time={2.5}
+      sources={[{ name: 'Dictionary', page: 3, url: 'https://example.com/reference' }]} />);
+    expect(screen.getAllByRole('button', { name: 'Copy message' })).toHaveLength(1);
+    expect(container.querySelectorAll('details')).toHaveLength(1);
+    expect(screen.queryByText('KB')).not.toBeInTheDocument();
+    expect(screen.queryByText('Web Search')).not.toBeInTheDocument();
+    expect(screen.queryByText('2.50s')).not.toBeInTheDocument();
+    fireEvent.click(container.querySelector('summary')!);
+    expect(screen.getByRole('link', { name: 'Dictionary (p. 3)' })).toHaveAttribute('href', 'https://example.com/reference');
+  });
+
+  it('reports failed copying instead of claiming success and restores focus', async () => {
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn(() => false) });
+    render(<Message role="assistant" content="Answer" />);
+    const copy = screen.getByRole('button', { name: 'Copy message' });
+    copy.focus();
+    fireEvent.click(copy);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not copy this message.');
+    expect(screen.queryByRole('button', { name: 'Message copied' })).not.toBeInTheDocument();
+    expect(copy).toHaveFocus();
+    expect(document.querySelector('textarea')).toBeNull();
+  });
+
+  it('confirms success only when the browser reports successful copying', async () => {
+    Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn(() => true) });
+    render(<Message role="user" content="Question" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+    expect(await screen.findByRole('button', { name: 'Message copied' })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 
@@ -124,4 +179,57 @@ it('keeps a later edit failure visible alongside an unavailable-file warning', a
   const alerts = screen.getAllByRole('alert').map(element => element.textContent);
   expect(alerts.some(text => text?.includes('Your edit is still here.'))).toBe(true);
   expect(alerts.some(text => text?.includes('old-note.txt'))).toBe(true);
+});
+
+
+describe('attached image preview controls', () => {
+  it.each(['files', 'legacy'] as const)('opens the correct %s image through a named control', kind => {
+    const url = 'https://example.com/qa-image.png';
+    const onImageClick = vi.fn();
+    render(<Message role="user" content="Attached QA image" onImageClick={onImageClick}
+      {...(kind === 'files' ? { file_urls: [{ url, filename: 'qa-image.png', type: 'image' as const }] } : { imageUrl: url })} />);
+    fireEvent.click(screen.getByRole('button', { name: kind === 'files' ? 'Open image: qa-image.png' : 'Open uploaded image' }));
+    expect(onImageClick).toHaveBeenCalledWith(url);
+  });
+
+  it('does not expose an enabled preview action when the viewer is read-only', () => {
+    render(<Message role="user" content="Read-only image" imageUrl="https://example.com/qa-image.png" />);
+    expect(screen.getByRole('button', { name: 'Open uploaded image' })).toBeDisabled();
+    expect(screen.getByRole('img', { name: 'Uploaded content' })).toBeInTheDocument();
+  });
+});
+
+
+describe('edit failure while a dialog is open', () => {
+  it.each(['declined', 'rejected'] as const)('keeps dialog focus when an edit is %s', async outcome => {
+    let resolve!: (value: boolean) => void;
+    let reject!: (error: Error) => void;
+    const pending = new Promise<boolean>((accepted, failed) => { resolve = accepted; reject = failed; });
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return <>
+        <Message role="user" content="Original question" canEdit onEdit={() => { setOpen(true); return pending; }} />
+        {open && <div role="dialog" aria-modal="true"><button autoFocus>Close preview</button></div>}
+      </>;
+    }
+    const frame = vi.spyOn(globalThis, 'requestAnimationFrame').mockReturnValue(1);
+    try {
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Edit message text' }), { target: { value: 'Retain this edited question' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
+      const close = screen.getByRole('button', { name: 'Close preview' });
+      expect(close).toHaveFocus();
+      await act(async () => {
+        if (outcome === 'declined') resolve(false);
+        else reject(new Error('Controlled failure'));
+      });
+      const recover = frame.mock.calls[frame.mock.calls.length - 1]?.[0];
+      expect(recover).toBeDefined();
+      act(() => recover!(0));
+      expect(close).toHaveFocus();
+      expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
+      expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
+    } finally { frame.mockRestore(); }
+  });
 });

@@ -370,7 +370,7 @@ export function AdminUserDetail() {
                 <button
                   onClick={handleSavePreferences}
                   disabled={updatePreferences.isPending}
-                  className="flex-1 px-4 py-2 bg-coral-500 dark:bg-ocean-500 text-white rounded-lg hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-lg hover:opacity-90 transition-colors flex items-center justify-center gap-2"
                 >
                   {updatePreferences.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save
@@ -544,7 +544,7 @@ export function AdminUserDetail() {
                   className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
                     showConfirm.includes('ban') || showConfirm.includes('revoke') || showConfirm.includes('unwhitelist')
                       ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-coral-500 dark:bg-ocean-500 hover:opacity-90 text-white'
+                      : 'bg-coral-700 dark:bg-ocean-700 hover:opacity-90 text-white'
                   }`}
                 >
                   {updateUser.isPending && <Loader2 className="w-4 h-4 animate-spin" />}

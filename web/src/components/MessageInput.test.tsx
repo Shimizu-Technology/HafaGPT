@@ -3,6 +3,36 @@ import { describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
 
 describe('MessageInput', () => {
+  it('updates the typed height floor when the compact layout changes', () => {
+    const onSend = vi.fn();
+    const view = render(<MessageInput onSend={onSend} />);
+    const input = screen.getByRole('textbox');
+    Object.defineProperty(input, 'scrollHeight', { configurable: true, value: 24 });
+    fireEvent.change(input, { target: { value: 'Short draft' } });
+    expect(input).toHaveStyle({ height: '64px' });
+    view.rerender(<MessageInput onSend={onSend} compact />);
+    expect(input).toHaveStyle({ height: '40px' });
+    expect(input).toHaveValue('Short draft');
+    view.rerender(<MessageInput onSend={onSend} />);
+    expect(input).toHaveStyle({ height: '64px' });
+  });
+
+  it.each(['dialog', 'preview'] as const)('retains %s focus when a response finishes', async target => {
+    const pointer = vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
+    const outside = target === 'dialog'
+      ? <div role="dialog" aria-modal="true"><button>Close image preview</button></div>
+      : <button data-image-preview="true">Open image preview</button>;
+    try {
+      const view = render(<>{outside}<MessageInput onSend={vi.fn()} disabled /></>);
+      const control = screen.getByRole('button', { name: target === 'dialog' ? 'Close image preview' : 'Open image preview' });
+      view.rerender(<>{outside}<MessageInput onSend={vi.fn()} /></>);
+      control.focus();
+      await act(async () => { await new Promise(resolve => setTimeout(resolve, 150)); });
+      expect(control).toHaveFocus();
+      view.unmount();
+    } finally { pointer.mockRestore(); }
+  });
+
   it('keeps focus in an active message editor when composing becomes available again', async () => {
     const pointer = vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList);
     try {

@@ -120,13 +120,15 @@ function ReviewQueueSession() {
           <p className="mt-2 text-brown-600 dark:text-gray-300">
             Nice work. New reviews will appear here when they are due.
           </p>
-          <Link to="/" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
-          <Link
-            to="/flashcards"
-            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
-          >
-            Study more cards
-          </Link>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link to="/" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
+            <Link
+              to="/flashcards"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 py-2.5 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
+            >
+              Study more cards
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -152,7 +154,7 @@ function ReviewQueueSession() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-6 sm:py-10">
+      <div className="mx-auto flex max-w-4xl flex-col items-center px-4 py-4 sm:py-8">
         <div className="w-full max-w-md">
           <Flashcard
             key={currentCard.card_id}

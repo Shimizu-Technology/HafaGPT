@@ -4,7 +4,7 @@
 
 @layer base {
   * {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:focus-visible:ring-ocean-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-ocean-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
   }
 
   body {
@@ -88,6 +88,17 @@
   @media (min-width: 640px) {
     .above-bottom-nav {
       bottom: 0;
+    }
+  }
+
+  /* Keep transient feedback above navigation and the home indicator. */
+  .learner-toast-offset {
+    bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  @media (min-width: 640px) {
+    .learner-toast-offset {
+      bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     }
   }
 

@@ -1,74 +1,46 @@
 import type { ChatIntent } from '../lib/chatIntent';
-import { GraduationCap, Languages, MessageCircle } from 'lucide-react';
+import { ArrowUpRight, MessageCircle } from 'lucide-react';
 
 interface WelcomeMessageProps {
   onSelect: (intent: ChatIntent) => void;
+  onPrompt?: (prompt: string) => void;
   disabled?: boolean;
   intent?: ChatIntent;
   onStartPractice?: () => void;
 }
 
-const STARTERS = [
-  {
-    label: 'Translate',
-    description: 'Understand a phrase or school notice',
-    intent: 'translate' as const,
-    icon: Languages,
-  },
-  {
-    label: 'Explain',
-    description: 'Learn about a word, grammar, or culture',
-    intent: 'explain' as const,
-    icon: MessageCircle,
-  },
-  {
-    label: 'Practice',
-    description: 'Work through a useful everyday phrase',
-    intent: 'practice' as const,
-    icon: GraduationCap,
-  },
-] as const;
+const EXAMPLES: Record<ChatIntent, string[]> = {
+  translate: ["Translate ‘Good morning’ into Chamorro.", "Translate ‘Thank you’ into Chamorro."],
+  explain: ['Explain how to introduce myself in Chamorro.', 'How are Chamorro words pronounced?'],
+  practice: ['Practice a short conversation about family.', 'Help me practice ordering food in Chamorro.'],
+};
+const DESCRIPTIONS: Record<ChatIntent, string> = {
+  translate: 'Paste a phrase or notice, or try a short translation.',
+  explain: 'Ask about a word, grammar, or life in Guam.',
+  practice: 'Try a short exchange. Ask for a hint whenever you need one.',
+};
 
-export function WelcomeMessage({ onSelect, disabled = false, intent, onStartPractice }: WelcomeMessageProps) {
+export function WelcomeMessage({ onSelect, onPrompt, disabled = false, intent = 'explain', onStartPractice }: WelcomeMessageProps) {
   return (
-    <div className="flex w-full items-start justify-center px-1 py-2 sm:px-4 sm:py-8">
-      <div className="w-full max-w-2xl animate-fade-in">
-        <div className="mb-5 text-center sm:mb-7">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">
-            <MessageCircle className="h-6 w-6" aria-hidden="true" />
-          </span>
-          <h1 className="mt-3 text-2xl font-bold text-brown-950 dark:text-white sm:text-3xl">How can I help?</h1>
-          <p className="mx-auto mt-1.5 max-w-lg text-sm leading-relaxed text-brown-600 dark:text-gray-300 sm:text-base">
-            Translate Chamorro, ask about Guam, or learn a phrase step by step.
-          </p>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
-          {STARTERS.map(({ label, description, intent, icon: Icon }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => onSelect(intent)}
-              disabled={disabled}
-              aria-label={label}
-              className="group flex min-h-[84px] items-center gap-3 rounded-2xl border border-cream-200 bg-white p-3 text-left transition-colors hover:border-coral-300 hover:bg-coral-50/40 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-700 dark:hover:bg-ocean-950/20 sm:min-h-[132px] sm:flex-col sm:items-start sm:p-4"
-            >
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-cream-100 text-coral-700 group-hover:bg-coral-100 dark:bg-slate-700 dark:text-ocean-300 dark:group-hover:bg-ocean-950">
-                <Icon className="h-5 w-5" aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-brown-900 dark:text-white">{label}</span>
-                <span className="mt-0.5 block text-xs leading-snug text-brown-500 dark:text-gray-400">{description}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+    <div className="mx-auto w-full max-w-xl px-2 py-5 sm:px-4 sm:py-12">
+      <div className="mb-5 text-center">
+        <MessageCircle className="mx-auto mb-3 h-7 w-7 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
+        <h1 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">How can I help?</h1>
+        <p className="mt-2 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{DESCRIPTIONS[intent]}</p>
+      </div>
+      <div className="grid gap-2" aria-label="Example prompts">
         {intent === 'practice' && onStartPractice && (
-          <div className="mt-4 rounded-xl border border-cream-200 bg-cream-50 p-4 text-center dark:border-slate-700 dark:bg-slate-800">
-            <p className="text-sm text-brown-600 dark:text-gray-300">Start with a short exchange. Ask for a hint whenever you need one.</p>
-            <button type="button" disabled={disabled} onClick={onStartPractice} className="mt-3 min-h-11 rounded-lg bg-coral-700 px-4 font-semibold text-white dark:bg-ocean-700">Start guided practice</button>
-          </div>
+          <button type="button" disabled={disabled} onClick={onStartPractice}
+            className="min-h-11 rounded-xl bg-coral-700 px-4 py-3 text-left text-sm font-semibold text-white hover:bg-coral-800 disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800">
+            Start guided practice
+          </button>
         )}
+        {EXAMPLES[intent].map(prompt => (
+          <button key={prompt} type="button" disabled={disabled} onClick={() => onPrompt ? onPrompt(prompt) : onSelect(intent)}
+            className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-cream-300 bg-white px-4 py-3 text-left text-sm leading-relaxed text-brown-800 transition-colors hover:border-coral-300 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:border-ocean-600">
+            <span>{prompt}</span><ArrowUpRight className="h-4 w-4 flex-none text-brown-500 dark:text-gray-400" aria-hidden="true" />
+          </button>
+        ))}
       </div>
     </div>
   );

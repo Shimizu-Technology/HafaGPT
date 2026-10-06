@@ -341,7 +341,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
             type="button"
             onClick={handleContinue}
             disabled={isSaving}
-            className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-600 px-4 py-2.5 font-semibold text-white hover:bg-coral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-500 dark:hover:bg-ocean-600 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900"
+            className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 py-2.5 font-semibold text-white hover:bg-coral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-gray-900"
           >
             {isSaving ? 'Saving…' : step === STEP_COPY.length - 1 ? 'Start learning' : 'Continue'}
             {!isSaving && <ArrowRight className="h-4 w-4" aria-hidden="true" />}

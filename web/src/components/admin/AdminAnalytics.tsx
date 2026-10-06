@@ -82,7 +82,7 @@ export function AdminAnalytics() {
                 onClick={() => setPeriod(p)}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   period === p
-                    ? 'bg-coral-500 dark:bg-ocean-500 text-white'
+                    ? 'bg-coral-700 dark:bg-ocean-700 text-white'
                     : 'bg-white dark:bg-slate-800 text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
                 }`}
               >

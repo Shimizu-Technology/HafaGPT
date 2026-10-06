@@ -128,14 +128,14 @@ export function GameHistory() {
           <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-slate-800">
             <h2 className="text-xl font-bold text-brown-950 dark:text-white">Game history is unavailable</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">Your results are still saved. Try loading this page again.</p>
-            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
           </section>
         ) : !data || data.results.length === 0 ? (
           <section className="rounded-3xl border border-emerald-200 bg-white p-6 text-center dark:border-emerald-900 dark:bg-slate-800">
             <Gamepad2 className="mx-auto h-10 w-10 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No matching game results</h2>
             <p className="mx-auto mt-2 max-w-sm text-brown-600 dark:text-gray-400">Play a game and its saved result will appear here.</p>
-            <Link to={appRoutes.games} className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">Choose a game</Link>
+            <Link to={appRoutes.games} className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Choose a game</Link>
           </section>
         ) : (
           <>

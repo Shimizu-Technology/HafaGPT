@@ -472,8 +472,8 @@ export function AdminAudioReview() {
                       disabled={!word.url}
                       className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         playingWord === word.chamorro 
-                          ? 'bg-coral-600 text-white' 
-                          : 'bg-coral-500 text-white hover:bg-coral-600'
+                          ? 'bg-coral-700 text-white'
+                          : 'bg-coral-700 text-white hover:bg-coral-800'
                       }`}
                       title="Play audio"
                     >

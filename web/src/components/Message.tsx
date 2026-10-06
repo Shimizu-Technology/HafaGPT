@@ -1,9 +1,8 @@
-import { BookOpen, BookOpenCheck, Search, Clock, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles } from 'lucide-react';
-import { useState, useRef, memo, useMemo, useEffect } from 'react';
+import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { SourceCitation } from './SourceCitation';
 import { useSpeech } from '../hooks/useSpeech';
 import type { SourceInfo } from '../types/source';
 import { getChatEvidenceStatus } from '../lib/chatEvidence';
@@ -126,7 +125,7 @@ interface MessageProps {
 const markdownComponents: Components = {
   // Paragraphs
   p: ({ children }) => (
-    <p className="text-sm sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
+    <p className="text-base sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
       {children}
     </p>
   ),
@@ -155,12 +154,12 @@ const markdownComponents: Components = {
   em: ({ children }) => <em className="italic">{children}</em>,
   // Lists
   ul: ({ children }) => (
-    <ul className="list-disc ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+    <ul className="list-disc ml-4 my-2 space-y-1 text-base sm:text-[15px]">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal ml-4 my-2 space-y-1 text-sm sm:text-[15px]">
+    <ol className="list-decimal ml-4 my-2 space-y-1 text-base sm:text-[15px]">
       {children}
     </ol>
   ),
@@ -245,6 +244,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const isSystem = role === 'system';
   const { getToken } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -269,6 +271,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   // Clean content to prevent unwanted code blocks from leading whitespace
   const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
 
+  const recoverEditFocus = () => {
+    requestAnimationFrame(() => {
+      if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.matches('[data-image-preview]')) return;
+      editInputRef.current?.focus();
+    });
+  };
+
   // Handle edit submission
   const handleEditSubmit = async (skipUnavailableAttachments = false) => {
     if (!editContent.trim() || (!skipUnavailableAttachments && editContent === content) || !onEdit || editSubmittingRef.current) return;
@@ -279,12 +290,12 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
       const accepted = await (skipUnavailableAttachments ? onEdit(editContent.trim(), messageIndex, true) : onEdit(editContent.trim(), messageIndex));
       if (accepted === false) {
         setEditError('Could not update this message. Your edit is still here.');
-        requestAnimationFrame(() => editInputRef.current?.focus());
+        recoverEditFocus();
       }
       else setIsEditing(false);
     } catch {
       setEditError('Could not update this message. Your edit is still here.');
-      requestAnimationFrame(() => editInputRef.current?.focus());
+      recoverEditFocus();
     } finally {
       editSubmittingRef.current = false;
       setEditSubmitting(false);
@@ -299,54 +310,38 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   };
 
   const handleCopy = async () => {
-    console.log('🔵 Copy button clicked!'); // Debug log
-    
+    setCopyFailed(false);
+    setCopied(false);
+    let successful = false;
     try {
-      // Method 1: Try modern clipboard API first (works on desktop and some mobile)
       if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(content);
-        console.log('✅ Text copied via Clipboard API');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        return;
+        await navigator.clipboard.writeText(content);
+        successful = true;
       }
-    } catch (err) {
-      console.warn('⚠️ Clipboard API failed, trying fallback...', err);
-    }
-    
-    // Method 2: Fallback for iOS Safari and older browsers
-    try {
+    } catch { /* Try the browser's fallback below. */ }
+    if (!successful) {
+      const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       const textArea = document.createElement('textarea');
       textArea.value = content;
-      
-      // Make it invisible but accessible
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      textArea.style.top = '-999999px';
-      textArea.style.opacity = '0';
-      
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      
-      // For iOS
-      textArea.setSelectionRange(0, 99999);
-      
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      
-      if (successful) {
-        console.log('✅ Text copied via fallback method');
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } else {
-        throw new Error('execCommand failed');
+      textArea.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      try {
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        textArea.setSelectionRange(0, content.length);
+        successful = document.execCommand('copy');
+      } catch { successful = false; }
+      finally {
+        textArea.remove();
+        if (previouslyFocused?.isConnected) previouslyFocused.focus();
       }
-    } catch (err) {
-      console.error('❌ All copy methods failed:', err);
-      // Still show feedback even if copy failed
+    }
+    if (successful) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 2000);
+    } else {
+      setCopyFailed(true);
     }
   };
 
@@ -473,66 +468,18 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 animate-fade-in`}>
       <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] ${isUser ? 'order-2' : 'order-1'}`}>
-        {/* Bot Header */}
         {!isUser && (
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-2 px-1 flex-wrap relative">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-teal-500 to-teal-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
-              🤖
-            </div>
-            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
-            {timestamp && (
-              <span className="text-[10px] text-brown-600 dark:text-gray-400">
-                {getRelativeTime(timestamp)}
-              </span>
-            )}
-            {used_rag && !isStreaming && (
-              <span className="text-[10px] sm:text-xs font-medium bg-teal-500 dark:bg-ocean-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
-                <BookOpen className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                <span className="hidden sm:inline">Knowledge Base</span>
-                <span className="sm:hidden">KB</span>
-              </span>
-            )}
-            {used_web_search && !isStreaming && (
-              <span className="text-[10px] sm:text-xs font-medium bg-hibiscus-500 dark:bg-purple-600 text-white px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm animate-fade-in">
-                <Search className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                <span className="hidden sm:inline">Web Search</span>
-                <span className="sm:hidden">Web</span>
-              </span>
-            )}
-            {/* Copy button - only show when not streaming */}
-            {!isStreaming && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy();
-                }}
-                className="ml-auto min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation relative z-10 cursor-pointer animate-fade-in"
-                title="Copy message"
-                aria-label="Copy message"
-                style={{ WebkitTapHighlightColor: 'rgba(20, 184, 166, 0.3)', userSelect: 'none' }}
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
-                    <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span className="hidden sm:inline">Copy</span>
-                  </>
-                )}
-              </button>
-            )}
+          <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
+            <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
+            {timestamp && <span>{getRelativeTime(timestamp)}</span>}
           </div>
         )}
-        
+
         {/* Message Bubble */}
         <div
           className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
             isUser
-              ? 'bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 text-white rounded-tr-md'
+              ? 'bg-gradient-to-br from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 text-white rounded-tr-md'
               : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
           }`}
         >
@@ -545,13 +492,16 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     <div key={index}>
                       {file.type === 'image' ? (
                         // Image preview
-                        <img 
-                          src={file.url} 
-                          alt={file.filename}
-                          className="max-h-32 max-w-[150px] rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200 object-cover"
+                        <button
+                          type="button"
+                          aria-label={`Open image: ${file.filename}`}
+                          data-image-preview="true"
+                          disabled={!onImageClick}
                           onClick={() => onImageClick?.(file.url)}
-                          title={`Click to enlarge: ${file.filename}`}
-                        />
+                          className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
+                        >
+                          <img src={file.url} alt={file.filename} className="max-h-32 max-w-[150px] rounded-lg shadow-md object-cover" />
+                        </button>
                       ) : (
                         // Document preview (PDF, Word, Text)
                         <a
@@ -574,7 +524,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                               {file.filename}
                             </span>
                           </div>
-                          <ExternalLink className="w-3 h-3 opacity-60" />
+                          <ExternalLink className="w-4 h-4 opacity-60" />
                         </a>
                       )}
                     </div>
@@ -586,13 +536,16 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <div className="mb-2">
                   {getFileTypeFromUrl(imageUrl) === 'image' ? (
                     // Image preview
-                    <img 
-                      src={imageUrl} 
-                      alt="Uploaded content" 
-                      className="max-h-48 rounded-lg shadow-md cursor-pointer hover:opacity-90 transition-opacity duration-200"
+                    <button
+                      type="button"
+                      aria-label="Open uploaded image"
+                      data-image-preview="true"
+                      disabled={!onImageClick}
                       onClick={() => onImageClick?.(imageUrl)}
-                      title="Click to enlarge"
-                    />
+                      className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
+                    >
+                      <img src={imageUrl} alt="Uploaded content" className="max-h-48 max-w-full rounded-lg shadow-md" />
+                    </button>
                   ) : (
                     // Document preview (PDF, Word, Text)
                     <a
@@ -622,12 +575,13 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               {isEditing ? (
                 <div className="space-y-2">
                   <textarea
+                    aria-label="Edit message text"
                     readOnly={editSubmitting}
                     ref={editInputRef}
-                    aria-label="Edit message"
+                    aria-busy={editSubmitting}
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full min-h-[60px] p-2 rounded-lg bg-white/20 dark:bg-black/20 border border-white/30 dark:border-white/20 text-white placeholder-white/60 text-sm sm:text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full min-h-[60px] p-2 rounded-lg bg-white/20 dark:bg-black/20 border border-white/30 dark:border-white/20 text-white placeholder-white/60 text-base sm:text-[15px] resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
@@ -650,7 +604,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                       onClick={handleEditCancel}
                       className="px-3 py-1.5 text-xs font-medium text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-lg transition-colors flex items-center gap-1"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-4 h-4" />
                       Cancel
                     </button>
                     <button
@@ -658,13 +612,13 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                       disabled={editSubmitting || !editContent.trim() || editContent === content}
                       className="px-3 py-1.5 text-xs font-medium text-coral-900 dark:text-ocean-900 bg-white hover:bg-white/90 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-4 h-4" />
                       {editSubmitting ? 'Updating…' : 'Save & Regenerate'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap break-words leading-relaxed text-sm sm:text-[15px]">
+                <div className="whitespace-pre-wrap break-words leading-relaxed text-base sm:text-[15px]">
                   {content}
                 </div>
               )}
@@ -702,78 +656,62 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             </div>
           )}
           
-          {/* Response Time - with subtle fade-in */}
-          {!isUser && response_time && !isStreaming && (
-            <div 
-              className="flex items-center gap-1 text-xs text-brown-600 dark:text-gray-400 mt-3 pt-2 border-t border-cream-300 dark:border-gray-700 opacity-0 animate-fade-in"
-              style={{ animationDelay: '50ms', animationFillMode: 'forwards' }}
-            >
-              <Clock className="w-3 h-3" />
-              <span className="font-medium">{response_time.toFixed(2)}s</span>
-            </div>
-          )}
         </div>
-        
-        {/* Sources - Only show when streaming is complete (with staggered delay) */}
-        {!isUser && sources && sources.length > 0 && !isStreaming && (
-          <div 
-            className="opacity-0 animate-fade-in"
-            style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
-          >
-            <SourceCitation sources={sources} />
-          </div>
-        )}
 
         {!isUser && !isSystem && !isStreaming && (
-          <p
-            className={`mt-2 flex items-start gap-1.5 rounded-lg border px-2.5 py-2 text-[11px] leading-4 ${
-              evidenceStatus.level === 'source_supported'
-                ? 'border-teal-200 bg-teal-50/70 text-teal-800 dark:border-teal-800/70 dark:bg-teal-950/30 dark:text-teal-200'
-                : evidenceStatus.level === 'web_informed'
-                  ? 'border-purple-200 bg-purple-50/70 text-purple-800 dark:border-purple-800/70 dark:bg-purple-950/30 dark:text-purple-200'
-                  : 'border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-800/70 dark:bg-amber-950/30 dark:text-amber-200'
-            }`}
-            role="note"
-            aria-label={`Answer evidence: ${evidenceStatus.label}`}
-          >
-            {evidenceStatus.level === 'source_supported' ? (
-              <BookOpenCheck className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
-            ) : evidenceStatus.level === 'web_informed' ? (
-              <Search className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
-            ) : (
-              <Sparkles className="mt-0.5 h-3.5 w-3.5 flex-none" aria-hidden="true" />
-            )}
-            <span>
-              <span className="font-semibold">{evidenceStatus.label}</span>
-              <span className="text-current/80"> · {evidenceStatus.detail}</span>
-            </span>
-          </p>
+          <details className="group mt-2 text-xs text-brown-600 dark:text-gray-300">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 hover:bg-cream-100 dark:hover:bg-gray-800">
+              {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
+                : evidenceStatus.level === 'web_informed' ? <Search className="h-4 w-4 flex-none" aria-hidden="true" />
+                  : <Sparkles className="h-4 w-4 flex-none" aria-hidden="true" />}
+              <span>{sources?.length ? `Sources (${sources.length}) · ${evidenceStatus.label}` : evidenceStatus.label}</span>
+              <ChevronDown className="ml-auto h-3.5 w-3.5 flex-none transition-transform group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <div className="space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+              <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="text-xs leading-relaxed">
+                <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
+              </p>
+              {sources && sources.length > 0 && <ul className="space-y-1">{sources.map((source, index) => {
+                const names: Record<string, string> = {
+                  hafagpt_canonical_evaluation: 'HåfaGPT vocabulary ledger',
+                  local_revised_dictionary_snapshot: 'Revised Chamorro dictionary',
+                  chamoru_info_dictionary: 'Chamoru.info dictionary',
+                  topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
+                };
+                const label = `${names[source.source_id || ''] || source.name}${typeof source.page === 'number' ? ` (p. ${source.page})` : ''}`;
+                const detail = [source.locator, source.content_role, source.region, source.temporal_scope].filter(Boolean).join(' • ');
+                return <li key={`${source.source_id || source.name}-${source.page || source.locator || index}`}>
+                  {source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer" title={detail}
+                    className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
+                    {label}<ExternalLink className="h-3 w-3 flex-none" aria-hidden="true" />
+                  </a> : <span title={detail} className="font-medium text-brown-800 dark:text-gray-200">{label}</span>}
+                  {detail && <p className="break-words text-xs leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>}
+                </li>;
+              })}</ul>}
+            </div>
+          </details>
         )}
-        
-        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete (with staggered delay) */}
+
+        {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
         {!isUser && !isSystem && !isStreaming && (
           <div 
-            className="flex items-center gap-2 mt-2 opacity-0 animate-fade-in"
-            style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
+            className="mt-1 flex flex-wrap items-center gap-1"
           >
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleCopy();
-              }}
-              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
               {copied ? (
                 <>
-                  <Check className="w-3 h-3 text-teal-600 dark:text-green-400" />
+                  <Check className="w-4 h-4 text-teal-600 dark:text-green-400" />
                   <span className="hidden sm:inline text-teal-600 dark:text-green-400 font-medium">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-4 h-4" />
                   <span className="hidden sm:inline">Copy</span>
                 </>
               )}
@@ -791,30 +729,22 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     speak(textToSpeak);
                   }
                 }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  if (isSpeaking) {
-                    stop();
-                  } else {
-                    const textToSpeak = extractChamorroText(content);
-                    speak(textToSpeak);
-                  }
-                }}
-                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   isSpeaking 
                     ? 'text-coral-600 dark:text-coral-400 bg-coral-100 dark:bg-coral-900/30' 
                     : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
                 }`}
+                aria-label={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
                 title={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
               >
                 {isSpeaking ? (
                   <>
-                    <VolumeX className="w-3 h-3 animate-pulse" />
+                    <VolumeX className="w-4 h-4 animate-pulse" />
                     <span className="hidden sm:inline font-medium">Stop</span>
                   </>
                 ) : (
                   <>
-                    <Volume2 className="w-3 h-3" />
+                    <Volume2 className="w-4 h-4" />
                     <span className="hidden sm:inline">Listen</span>
                   </>
                 )}
@@ -827,33 +757,39 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               <button
                 onClick={() => handleFeedback('up')}
                 disabled={feedbackSubmitting || feedback === 'up'}
-                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'up'
                     ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
                     : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
                 } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                aria-label="This was helpful"
+                aria-pressed={feedback === 'up'}
                 title="This was helpful"
               >
-                <ThumbsUp className={`w-3 h-3 ${feedback === 'up' ? 'fill-current' : ''}`} />
+                <ThumbsUp className={`w-4 h-4 ${feedback === 'up' ? 'fill-current' : ''}`} />
               </button>
 
               {/* Thumbs Down */}
               <button
                 onClick={() => handleFeedback('down')}
                 disabled={feedbackSubmitting || feedback === 'down'}
-                className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'down'
                     ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
                     : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
                 } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
+                aria-label="This wasn't helpful"
+                aria-pressed={feedback === 'down'}
                 title="This wasn't helpful"
               >
-                <ThumbsDown className={`w-3 h-3 ${feedback === 'down' ? 'fill-current' : ''}`} />
+                <ThumbsDown className={`w-4 h-4 ${feedback === 'down' ? 'fill-current' : ''}`} />
               </button>
             </div>
           </div>
         )}
         
+        {copyFailed && <p role="alert" className="mt-1 px-2 text-xs text-red-700 dark:text-red-300">Could not copy this message. Select the text and copy it manually.</p>}
+
         {/* User Avatar and Actions */}
         {isUser && !isEditing && (
           <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 px-1 justify-end">
@@ -865,21 +801,18 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                handleCopy();
-              }}
-              className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
               {copied ? (
                 <>
-                  <Check className="w-3 h-3 text-coral-600 dark:text-green-400" />
+                  <Check className="w-4 h-4 text-coral-600 dark:text-green-400" />
                   <span className="hidden sm:inline text-coral-600 dark:text-green-400 font-medium">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-4 h-4" />
                   <span className="hidden sm:inline">Copy</span>
                 </>
               )}
@@ -889,13 +822,14 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               <button
                 onClick={() => {
                   setEditContent(content);
+                  setEditError(null);
                   setIsEditing(true);
                 }}
-                className="min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+                className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
                 aria-label="Edit message"
                 title="Edit message"
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-4 h-4" />
                 <span className="hidden sm:inline">Edit</span>
               </button>
             )}

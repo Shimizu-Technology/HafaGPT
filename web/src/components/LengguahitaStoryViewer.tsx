@@ -190,7 +190,7 @@ function WordPopup({
               <button
                 type="button"
                 onClick={() => onAskChatbot(word, chamorroContext)}
-                className="min-h-11 w-full rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
+                className="min-h-11 w-full rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-800"
               >
                 Ask HåfaGPT about "{word}"
               </button>
@@ -454,7 +454,7 @@ export function LengguahitaStoryViewer() {
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
                 currentParagraph === story.paragraphs.length - 1
                   ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-teal-600 text-white hover:bg-teal-700'
+                  : 'bg-teal-700 text-white hover:bg-teal-800'
               }`}
             >
               <span className="hidden sm:inline">Next</span>

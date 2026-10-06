@@ -65,7 +65,7 @@ export function VocabularyCategory() {
           {error && <button type="button" onClick={() => void refetch()} className="min-h-11 px-4 text-coral-700 dark:text-ocean-300">Try again</button>}
           <button
             onClick={() => navigate('/vocabulary')}
-            className="min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-700"
+            className="min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
           >
             Back to Vocabulary
           </button>
@@ -243,7 +243,7 @@ export function VocabularyCategory() {
             <button
               onClick={() => void fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="px-6 py-3 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl hover:bg-coral-700 dark:hover:bg-ocean-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              className="px-6 py-3 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl hover:bg-coral-800 dark:hover:bg-ocean-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
             >
               {isFetchingNextPage ? (
                 <>

@@ -241,7 +241,7 @@ export function ConversationPractice() {
           </p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-500 text-white rounded-lg hover:bg-coral-800 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-700 text-white rounded-lg hover:bg-coral-800 transition-colors"
           >
             ← Back to Home
           </Link>

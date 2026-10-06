@@ -175,7 +175,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                     onClick={handleSpeak}
                     className={`p-2 rounded-lg transition-all flex items-center justify-center ${
                       isSpeaking
-                        ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
+                        ? 'bg-coral-700 dark:bg-ocean-700 text-white animate-pulse'
                         : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 border border-coral-200 dark:border-ocean-500/50'
                     }`}
                   >
@@ -222,7 +222,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                   onClick={handleSpeak}
                   className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                     isSpeaking
-                      ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
+                      ? 'bg-coral-700 dark:bg-ocean-700 text-white animate-pulse'
                       : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 hover:bg-coral-50 dark:hover:bg-slate-600 border border-coral-200 dark:border-ocean-500/50'
                   }`}
                 >
@@ -263,7 +263,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
                 className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
                   added
                     ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
-                    : 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600 active:scale-98'
+                    : 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800 active:scale-98'
                 }`}
               >
                 {added ? (<><span>✓</span>Added!</>) : (<><Plus className="w-4 h-4" />Add to Flashcards</>)}
@@ -314,7 +314,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
               onClick={handleSpeak}
               className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                 isSpeaking
-                  ? 'bg-coral-500 dark:bg-ocean-500 text-white animate-pulse'
+                  ? 'bg-coral-700 dark:bg-ocean-700 text-white animate-pulse'
                   : 'bg-white dark:bg-slate-700 text-coral-600 dark:text-ocean-300 hover:bg-coral-50 dark:hover:bg-slate-600 border border-coral-200 dark:border-ocean-500/50'
               }`}
               aria-label="Listen to pronunciation"
@@ -368,7 +368,7 @@ export function DailyWord({ onAddToFlashcards, compactOnMobile = false }: DailyW
             className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all ${
               added
                 ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
-                : 'bg-coral-500 dark:bg-ocean-500 text-white hover:bg-coral-600 dark:hover:bg-ocean-600 active:scale-98'
+                : 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800 active:scale-98'
             }`}
           >
             {added ? (

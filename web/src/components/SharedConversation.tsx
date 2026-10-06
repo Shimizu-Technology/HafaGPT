@@ -134,7 +134,7 @@ export function SharedConversation() {
           <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">Unable to load conversation</h2>
           <p role="alert" className="mt-2 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{error}</p>
           <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
-            <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-600 px-5 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700">
+            <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
             </button>
             <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 px-5 font-semibold text-brown-700 hover:bg-cream-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700">Go to HåfaGPT</Link>
@@ -175,7 +175,7 @@ export function SharedConversation() {
               <div
                 className={`max-w-[90%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 ${
                   message.role === 'user'
-                    ? 'bg-coral-500 dark:bg-ocean-600 text-white'
+                    ? 'bg-coral-700 dark:bg-ocean-700 text-white'
                     : message.role === 'system'
                     ? 'bg-cream-200 dark:bg-gray-800 text-brown-600 dark:text-gray-400 text-sm italic text-center mx-auto'
                     : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-gray-700 shadow-sm'
@@ -432,7 +432,7 @@ export function SharedConversation() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
             <Link
               to="/chat"
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 dark:bg-teal-600 dark:hover:bg-teal-700 sm:w-auto"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800 sm:w-auto"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               Start Chatting

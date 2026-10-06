@@ -282,10 +282,10 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
         </div>
       </section>
 
-      <footer className="border-t border-cream-200 py-6 text-center text-sm text-brown-500 dark:border-slate-700 dark:text-gray-400">
-        <Link to="/about" className="font-semibold text-coral-700 hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
-        <span className="mx-2" aria-hidden="true">·</span>
-        <Link to="/privacy" className="hover:underline">Privacy</Link>
+      <footer className="flex flex-wrap items-center justify-center gap-3 border-t border-cream-200 py-6 text-center text-sm text-brown-500 dark:border-slate-700 dark:text-gray-400">
+        <Link to="/about" className="inline-flex min-h-11 items-center justify-center font-semibold text-coral-700 hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
+        <span aria-hidden="true">·</span>
+        <Link to="/privacy" className="inline-flex min-h-11 items-center justify-center hover:underline">Privacy</Link>
       </footer>
     </main>
   );
@@ -391,8 +391,8 @@ export function HomePage() {
           />
 
           <footer className="flex flex-col items-center justify-between gap-3 border-t border-cream-200 py-6 text-sm text-brown-500 dark:border-slate-700 dark:text-gray-400 sm:flex-row">
-            <Link to="/about" className="font-semibold text-coral-700 hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
-            <div className="flex items-center gap-3"><Link to="/privacy" className="hover:underline">Privacy</Link><Link to="/support" className="hover:underline">Help</Link><Link to="/dashboard" className="inline-flex items-center gap-1 hover:underline"><BarChart3 className="h-4 w-4" aria-hidden="true" /> Progress</Link></div>
+            <Link to="/about" className="inline-flex min-h-11 items-center justify-center font-semibold text-coral-700 hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
+            <nav aria-label="Home information" className="flex flex-wrap items-center justify-center gap-3"><Link to="/privacy" className="inline-flex min-h-11 items-center justify-center hover:underline">Privacy</Link><Link to="/support" className="inline-flex min-h-11 items-center justify-center hover:underline">Help</Link><Link to="/dashboard" className="inline-flex min-h-11 items-center justify-center gap-1 hover:underline"><BarChart3 className="h-4 w-4" aria-hidden="true" /> Progress</Link></nav>
           </footer>
         </main>
       ) : (

@@ -101,7 +101,7 @@ function ClerkWrapper() {
       publishableKey={CLERK_PUBLISHABLE_KEY}
       appearance={{
         variables: {
-          colorPrimary: isDark ? '#5DAFB0' : '#E85D4B',  // Teal for dark, Coral for light
+          colorPrimary: isDark ? '#88D5D6' : '#B83730',  // Teal for dark, Coral for light
           colorBackground: isDark ? '#1e293b' : '#ffffff',  // Lighter slate or white
           colorInputBackground: isDark ? '#334155' : '#FFF8F0',  // Even lighter slate or cream
           colorInputText: isDark ? '#ffffff' : '#3A2A1D',  // Pure white or brown
@@ -112,6 +112,10 @@ function ClerkWrapper() {
         elements: {
           // Hide "Development mode" badge
           badge: 'hidden',
+          formButtonPrimary: isDark ? '!min-h-11 !bg-ocean-700 !text-white hover:!bg-ocean-800' : '!min-h-11 !bg-coral-700 !text-white hover:!bg-coral-800',
+          socialButtonsBlockButton: isDark ? '!min-h-11 !text-white !border-slate-500 hover:!bg-slate-700' : '!min-h-11',
+          socialButtonsBlockButtonText: isDark ? '!text-white' : '',
+          formFieldInput: '!min-h-11 !text-base',
           rootBox: '[&_[data-localization-key="badge__development"]]:hidden',
           // Force white text in dark mode
           userButtonPopoverCard: isDark ? 'text-white' : '',

@@ -33,8 +33,6 @@ export function Dashboard() {
   const isChristmasTheme = promo?.theme === 'christmas';
   const isNewYearTheme = promo?.theme === 'newyear';
 
-  const isLoading = conversationsLoading || quizLoading || gamesLoading;
-
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
 
@@ -71,31 +69,31 @@ export function Dashboard() {
   const stats = [
     {
       label: 'Chats',
-      value: isLoading ? '…' : totalConversations,
+      value: conversationsLoading ? '…' : totalConversations,
       icon: MessageSquare,
       tone: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50',
     },
     {
       label: 'Quizzes',
-      value: totalQuizzes,
+      value: quizLoading ? '…' : totalQuizzes,
       icon: Brain,
       tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
     },
     {
       label: 'Average quiz',
-      value: totalQuizzes > 0 ? `${averageScore}%` : '—',
+      value: quizLoading ? '…' : totalQuizzes > 0 ? `${averageScore}%` : '—',
       icon: Trophy,
       tone: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/50',
     },
     {
       label: 'Games',
-      value: totalGames,
+      value: gamesLoading ? '…' : totalGames,
       icon: Gamepad2,
       tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
     },
     {
       label: 'Average stars',
-      value: totalGames > 0 ? averageStars.toFixed(1) : '—',
+      value: gamesLoading ? '…' : totalGames > 0 ? averageStars.toFixed(1) : '—',
       icon: Star,
       tone: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950/50',
     },
@@ -164,14 +162,14 @@ export function Dashboard() {
         <StreakWidget />
 
         <section aria-labelledby="progress-summary-title">
-          <div className="mb-3 flex items-end justify-between gap-3">
+          <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
             <div>
               <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">At a glance</p>
               <h2 id="progress-summary-title" className="text-xl font-bold text-brown-950 dark:text-white">
                 Your activity
               </h2>
             </div>
-            <div className="flex flex-wrap justify-end gap-1">
+            <div className="flex flex-wrap gap-1 sm:justify-end">
               <Link
                 to="/dashboard/quiz-history"
                 className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
@@ -381,7 +379,7 @@ export function Dashboard() {
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 to="/chat"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-600 px-6 font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-600 dark:hover:bg-teal-700"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 Ask a question
               </Link>

@@ -476,7 +476,7 @@ export function FlashcardViewer() {
           <p className="text-red-600 dark:text-red-400 mb-4 font-medium">{error}</p>
           <button
             onClick={() => navigate('/flashcards')}
-            className="min-h-11 rounded-xl bg-coral-600 px-6 py-2.5 font-semibold text-white hover:bg-coral-700 dark:bg-ocean-600 dark:hover:bg-ocean-700"
+            className="min-h-11 rounded-xl bg-coral-700 px-6 py-2.5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
           >
             Back to Decks
           </button>
@@ -550,7 +550,7 @@ export function FlashcardViewer() {
         below={(
           <div className="flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Flashcard progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-              <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-coral-700 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
             </div>
             <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {flashcards.length}</span>
           </div>
@@ -559,7 +559,7 @@ export function FlashcardViewer() {
 
       {/* Flashcard Area */}
       <div
-        className="flex-1 flex flex-col items-center justify-center px-4 py-8"
+        className="flex-1 flex flex-col items-center justify-center px-4 py-4 sm:py-8"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -615,12 +615,12 @@ export function FlashcardViewer() {
         )}
 
         {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-8">
+        <div className="flex items-center justify-center gap-4 mt-4 sm:mt-6">
           <button
             onClick={handlePrevious}
             aria-label="Previous flashcard"
             disabled={currentIndex === 0}
-            className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
+            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
           >
             <ChevronLeft className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
           </button>
@@ -642,7 +642,7 @@ export function FlashcardViewer() {
             onClick={handleNext}
             aria-label="Next flashcard"
             disabled={currentIndex === flashcards.length - 1}
-            className="p-4 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
+            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
           >
             <ChevronRight className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
           </button>
@@ -666,7 +666,7 @@ export function FlashcardViewer() {
                 <button
                   onClick={loadMoreDictionaryCards}
                   disabled={isDictionaryLoading}
-                  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                 >
                   {isDictionaryLoading ? (
                     <>
@@ -704,7 +704,7 @@ export function FlashcardViewer() {
 
       {/* Generating More Indicator */}
       {isGeneratingMore && !showNewCardsNotification && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="fixed learner-toast-offset left-1/2 transform -translate-x-1/2 z-20">
           <div className="bg-white dark:bg-slate-800 rounded-full shadow-xl border-2 border-coral-200 dark:border-ocean-900/50 px-6 py-3 flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-coral-500 dark:text-ocean-400" />
             <span className="text-sm font-semibold text-brown-800 dark:text-white">
@@ -716,8 +716,8 @@ export function FlashcardViewer() {
 
       {/* New Cards Ready - Auto-adding Notification */}
       {showNewCardsNotification && newCards.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20 animate-fade-in">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600 rounded-xl shadow-xl px-6 py-4 flex items-center gap-3">
+        <div className="fixed learner-toast-offset left-1/2 transform -translate-x-1/2 z-20 animate-fade-in">
+          <div className="bg-gradient-to-r from-emerald-700 to-teal-700 rounded-xl shadow-xl px-6 py-4 flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-white" />
             <span className="text-white font-bold">
               {newCards.length} new cards added to deck!
