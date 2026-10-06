@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Message } from './Message';
@@ -185,5 +186,35 @@ describe('attached image preview controls', () => {
     render(<Message role="user" content="Read-only image" imageUrl="https://example.com/qa-image.png" />);
     expect(screen.getByRole('button', { name: 'Open uploaded image' })).toBeDisabled();
     expect(screen.getByRole('img', { name: 'Uploaded content' })).toBeInTheDocument();
+  });
+});
+
+
+describe('edit failure while a dialog is open', () => {
+  it.each(['declined', 'rejected'] as const)('keeps dialog focus when an edit is %s', async outcome => {
+    let resolve!: (value: boolean) => void;
+    let reject!: (error: Error) => void;
+    const pending = new Promise<boolean>((accepted, failed) => { resolve = accepted; reject = failed; });
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return <>
+        <Message role="user" content="Original question" canEdit onEdit={() => { setOpen(true); return pending; }} />
+        {open && <div role="dialog" aria-modal="true"><button autoFocus>Close preview</button></div>}
+      </>;
+    }
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Edit message text' }), { target: { value: 'Retain this edited question' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
+    const close = screen.getByRole('button', { name: 'Close preview' });
+    expect(close).toHaveFocus();
+    await act(async () => {
+      if (outcome === 'declined') resolve(false);
+      else reject(new Error('Controlled failure'));
+      await new Promise(done => setTimeout(done, 40));
+    });
+    expect(close).toHaveFocus();
+    expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
+    expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
   });
 });

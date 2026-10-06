@@ -271,6 +271,15 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   // Clean content to prevent unwanted code blocks from leading whitespace
   const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
 
+  const recoverEditFocus = () => {
+    requestAnimationFrame(() => {
+      if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.matches('[data-image-preview]')) return;
+      editInputRef.current?.focus();
+    });
+  };
+
   // Handle edit submission
   const handleEditSubmit = async (skipUnavailableAttachments = false) => {
     if (!editContent.trim() || (!skipUnavailableAttachments && editContent === content) || !onEdit || editSubmittingRef.current) return;
@@ -281,12 +290,12 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
       const accepted = await (skipUnavailableAttachments ? onEdit(editContent.trim(), messageIndex, true) : onEdit(editContent.trim(), messageIndex));
       if (accepted === false) {
         setEditError('Could not update this message. Your edit is still here.');
-        requestAnimationFrame(() => editInputRef.current?.focus());
+        recoverEditFocus();
       }
       else setIsEditing(false);
     } catch {
       setEditError('Could not update this message. Your edit is still here.');
-      requestAnimationFrame(() => editInputRef.current?.focus());
+      recoverEditFocus();
     } finally {
       editSubmittingRef.current = false;
       setEditSubmitting(false);
