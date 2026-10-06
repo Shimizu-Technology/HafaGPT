@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useId, type KeyboardEvent } from 'react';
 import { Volume2 } from 'lucide-react';
 import { useSpeech } from '../hooks/useSpeech';
 
@@ -13,16 +13,35 @@ interface FlashcardProps {
 export function Flashcard({ front, back, pronunciation, example, onFlip }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const { speak, stop, isSpeaking, isSupported } = useSpeech();
+  const frontContent = useRef<HTMLDivElement>(null);
+  const backContent = useRef<HTMLDivElement>(null);
+  const readingHintId = useId();
+  const backContentId = useId();
 
   // Reset flip state when card content changes
   useEffect(() => {
     setIsFlipped(false);
+    if (frontContent.current) frontContent.current.scrollTop = 0;
+    if (backContent.current) backContent.current.scrollTop = 0;
   }, [front, back]);
 
   const handleFlip = () => {
     const newFlippedState = !isFlipped;
     setIsFlipped(newFlippedState);
     onFlip?.(newFlippedState);
+  };
+
+  const handleReadingKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const content = (isFlipped ? backContent : frontContent).current;
+    if (!content || content.scrollHeight <= content.clientHeight) return;
+    const steps: Record<string, number> = { ArrowDown: 40, ArrowUp: -40, PageDown: content.clientHeight, PageUp: -content.clientHeight };
+    const direction = steps[event.key];
+    if (direction === undefined && event.key !== 'Home' && event.key !== 'End') return;
+    event.preventDefault();
+    event.stopPropagation();
+    const maximum = content.scrollHeight - content.clientHeight;
+    content.scrollTop = event.key === 'Home' ? 0 : event.key === 'End' ? maximum
+      : Math.max(0, Math.min(maximum, content.scrollTop + (direction || 0)));
   };
 
   const toggleSpeech = () => {
@@ -49,6 +68,8 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
       <button
         type="button"
         onClick={handleFlip}
+        onKeyDown={handleReadingKey}
+        aria-describedby={isFlipped ? `${backContentId} ${readingHintId}` : readingHintId}
         aria-pressed={isFlipped}
         aria-label={isFlipped ? `Show the Chamorro side for ${back}` : `Show the meaning of ${front}`}
         className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
@@ -58,7 +79,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden" aria-hidden={isFlipped}>
           <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-cream-300 dark:border-gray-700 flex flex-col p-6">
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full items-center justify-center">
                 <p className="w-full break-words text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
                   {front}
@@ -75,7 +96,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         {/* Back of card */}
         <div className="absolute inset-0 backface-hidden rotate-y-180" aria-hidden={!isFlipped}>
           <div className="w-full h-full bg-coral-700 dark:bg-teal-800 rounded-2xl shadow-sm border border-coral-800 dark:border-teal-700 flex flex-col p-6 text-white">
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div ref={backContent} id={backContentId} data-testid="flashcard-back-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full flex-col items-center justify-center gap-3">
                 <p className="w-full break-words text-2xl sm:text-3xl font-semibold text-center">
                   {back}
@@ -105,6 +126,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         </div>
       </button>
 
+      <p id={readingHintId} className="sr-only">Press Enter or Space to flip. Use the up and down arrows or Page Up and Page Down to read long cards.</p>
       {!isFlipped && isSupported && (
         <button
           type="button"
