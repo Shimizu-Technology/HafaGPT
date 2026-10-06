@@ -160,6 +160,7 @@ describe('MessageInput keyboard activation', () => {
     render(<MessageInput onSend={onSend} disabled onDisabledClick={onDisabledClick} />);
     const input = screen.getByRole('textbox');
     expect(input).toHaveAttribute('readonly');
+    expect(input).toHaveAccessibleDescription('Press Enter or Space to sign in and start chatting.');
     input.focus();
     expect(input).toHaveFocus();
     expect(fireEvent.keyDown(input, { key })).toBe(false);
