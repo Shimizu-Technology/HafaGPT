@@ -498,7 +498,7 @@ describe('Chat stable conversation route', () => {
   it('does not acknowledge an unsent composer draft when an unrelated edit commits identical text', async () => {
     state.realMessages = true;
     const original = { id: 42, role: 'user', content: 'Original message', timestamp: '2026-10-06T00:00:00Z', edit_protocol: 'atomic-v1' as const, edit_revision: 'rev-original' };
-    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer' }];
+    state.messages = [original, { id: 43, role: 'assistant', content: 'Original answer', timestamp: '2026-10-06T00:01:00Z' }];
     state.editRequest.mockResolvedValue({ messages: state.messages });
     state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => { callbacks.onError('Provider unavailable'); throw new Error('Provider unavailable'); }).mockImplementationOnce(async (_message, _mode, _id, callbacks) => {
       callbacks.onChunk('Successful edit', 'Successful edit');
