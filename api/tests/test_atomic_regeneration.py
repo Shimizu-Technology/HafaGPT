@@ -232,7 +232,11 @@ def test_disconnect_before_completion_cancels_without_swap() -> None:
     namespace['cleanup_cancelled_message'].side_effect = lambda pending: finished.set()
     async def run() -> None:
         async def body() -> dict[str, Any]: return request_body(original.revision)
-        async def disconnected() -> bool: return True
+        disconnect_checks = 0
+        async def disconnected() -> bool:
+            nonlocal disconnect_checks
+            disconnect_checks += 1
+            return disconnect_checks > 1
         request = SimpleNamespace(headers={'content-type': 'application/json'}, json=body, is_disconnected=disconnected)
         response = await endpoint('conv-a', 2, request, authorization='Bearer token')
         assert [frame async for frame in response.body_iterator] == []
@@ -344,3 +348,19 @@ def test_image_page_pipeline_defers_logging_only_for_atomic_edits(persist: bool)
     else:
         namespace['log_conversation'].assert_not_called(); namespace['cleanup_cancelled_message'].assert_not_called()
         assert events[-1]['complete'] is True
+
+
+def test_already_disconnected_client_never_starts_immediately_complete_provider() -> None:
+    original = snapshot(); namespace = endpoint_namespace(original); endpoint = load_endpoint(namespace)
+    async def run() -> None:
+        async def body() -> dict[str, Any]: return request_body(original.revision)
+        async def disconnected() -> bool: return True
+        request = SimpleNamespace(headers={'content-type': 'application/json'}, json=body, is_disconnected=disconnected)
+        response = await endpoint('conv-a', 2, request, authorization='Bearer token')
+        assert [frame async for frame in response.body_iterator] == []
+    # This provider returns COMPLETE immediately, with no synchronization wait
+    # allowing the consumer's later frame check to hide a producer-side commit.
+    asyncio.run(run())
+    namespace['get_chatbot_response_stream'].assert_not_called()
+    namespace['upload_file_to_s3'].assert_not_called()
+    namespace['conversations'].replace_regenerated_exchange.assert_not_called()

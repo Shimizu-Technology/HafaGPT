@@ -1991,6 +1991,11 @@ async def regenerate_conversation_message(
         return persisted_id
 
     async def generate_sse() -> AsyncIterator[str]:
+        # A closed client must not start a fast producer that can commit before
+        # the first queued frame gives the consumer another cancellation check.
+        if await request.is_disconnected():
+            aborted.set()
+            return
         events: queue.Queue = queue.Queue()
         finished = threading.Event()
 
