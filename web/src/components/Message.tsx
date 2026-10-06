@@ -486,6 +486,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                         <button
                           type="button"
                           aria-label={`Open image: ${file.filename}`}
+                          data-image-preview="true"
                           disabled={!onImageClick}
                           onClick={() => onImageClick?.(file.url)}
                           className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
@@ -529,6 +530,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     <button
                       type="button"
                       aria-label="Open uploaded image"
+                      data-image-preview="true"
                       disabled={!onImageClick}
                       onClick={() => onImageClick?.(imageUrl)}
                       className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"

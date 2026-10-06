@@ -89,7 +89,9 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
       // Small delay to ensure component is fully rendered
       const timer = setTimeout(() => {
         const active = document.activeElement;
-        if (active !== textareaRef.current && active instanceof HTMLElement && active.matches('textarea, input, [contenteditable="true"]')) return;
+        if (active !== textareaRef.current && active instanceof HTMLElement
+          && (active.matches('textarea, input, [contenteditable="true"], [data-image-preview]')
+            || active.closest('[aria-modal="true"], dialog[open]'))) return;
         textareaRef.current?.focus();
       }, 100);
       return () => clearTimeout(timer);
