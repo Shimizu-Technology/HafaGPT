@@ -148,6 +148,7 @@ async function withDesktopKeyboard(run: () => Promise<void>) {
   try { await run(); }
   finally {
     if (width) Object.defineProperty(window, 'innerWidth', width);
+    else Reflect.deleteProperty(window, 'innerWidth');
     if (touch) Object.defineProperty(window, 'ontouchstart', touch);
   }
 }
