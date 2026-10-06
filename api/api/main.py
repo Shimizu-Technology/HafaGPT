@@ -7,7 +7,9 @@ A simple API wrapper around the chatbot core logic.
 from starlette.concurrency import run_in_threadpool
 from fastapi import FastAPI, HTTPException, Request, Header, File, UploadFile, Form, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, Response
+from starlette.concurrency import run_in_threadpool
+from urllib.parse import quote
 from pydantic import BaseModel, Field
 import time
 import os
@@ -36,6 +38,7 @@ from .auth_policy import (
     validate_clerk_session_claims,
 )
 from .upload_storage import make_private_upload_reference
+from . import upload_storage
 from .sse import queue_sse_events
 
 from .models import (
@@ -1866,6 +1869,54 @@ async def delete_conversation_endpoint(
     except Exception as e:
         logger.error(f"Failed to delete conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/conversations/{conversation_id}/messages/{message_id}/files/{file_index}", tags=["Conversations"])
+async def get_conversation_attachment_endpoint(
+    conversation_id: str,
+    message_id: int,
+    file_index: int,
+    authorization: Optional[str] = Header(None),
+):
+    """Read an owned attachment for safe edit/regenerate without public URL proxying."""
+    try:
+        user_id = await verify_user(authorization)
+        if not 0 <= file_index < MAX_UPLOAD_FILES:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        metadata = await run_in_threadpool(
+            conversations.get_conversation_attachment, conversation_id, message_id, file_index, user_id,
+        )
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        reference = metadata.get("url")
+        if not isinstance(reference, str):
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        extensions = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+            ".webp": "image/webp", ".gif": "image/gif", ".pdf": "application/pdf",
+            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".doc": "application/msword", ".txt": "text/plain",
+        }
+        filename = str(metadata.get("filename") or reference.rsplit("/", 1)[-1])
+        filename = filename.replace("\\", "/").rsplit("/", 1)[-1].replace("\r", "").replace("\n", "") or "attachment"
+        content_type = metadata.get("content_type") or extensions.get(os.path.splitext(filename.lower())[1])
+        if not isinstance(content_type, str) or content_type not in SUPPORTED_FILE_TYPES:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        content = await run_in_threadpool(upload_storage.read_private_upload, reference)
+        if content is None:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+        return Response(content, media_type=content_type, headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename, safe='')}",
+        })
+    except HTTPException:
+        raise
+    except upload_storage.PrivateUploadTooLarge:
+        raise HTTPException(status_code=413, detail="Attachment exceeds the 20MB limit")
+    except Exception:
+        logger.exception("Unable to read owned chat attachment")
+        raise HTTPException(status_code=502, detail="Unable to retrieve attachment. Please try again.")
 
 
 @app.delete("/api/conversations/{conversation_id}/messages/from/{message_id}", tags=["Conversations"])

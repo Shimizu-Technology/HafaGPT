@@ -210,6 +210,39 @@ def get_conversation(conversation_id: str, user_id: str) -> Optional[Conversatio
         raise
 
 
+def get_conversation_attachment(
+    conversation_id: str, message_id: int, file_index: int, user_id: str,
+) -> Optional[dict]:
+    """Return one raw stored reference only from an owned, active exchange."""
+    if file_index < 0 or file_index >= 10:
+        return None
+    with closing(get_db_connection_with_retry()) as conn:
+        with closing(conn.cursor()) as cursor:
+            cursor.execute(
+                """
+                SELECT logs.file_urls, logs.image_url
+                FROM conversations AS conversation
+                JOIN conversation_logs AS logs ON logs.conversation_id = conversation.id
+                WHERE conversation.id = %s AND conversation.user_id = %s
+                  AND conversation.deleted_at IS NULL
+                  AND logs.id = %s AND logs.user_id = %s
+                """,
+                (conversation_id, user_id, message_id, user_id),
+            )
+            row = cursor.fetchone()
+    if row is None:
+        return None
+    files, image_url = row
+    if files:
+        if not isinstance(files, list) or file_index >= len(files):
+            return None
+        metadata = files[file_index]
+        return metadata if isinstance(metadata, dict) else None
+    if file_index == 0 and image_url:
+        return {"url": image_url, "type": "image"}
+    return None
+
+
 def get_conversation_messages(conversation_id: str) -> MessagesResponse:
     """
     Get all messages for a conversation.

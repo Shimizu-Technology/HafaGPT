@@ -69,3 +69,34 @@ def delete_private_upload_references(references: list[str]) -> int:
         _storage_client().delete_object(Bucket=parsed[0], Key=parsed[1])
         deleted += 1
     return deleted
+
+
+MAX_PRIVATE_DOWNLOAD_BYTES = 20 * 1024 * 1024
+
+
+class PrivateUploadTooLarge(ValueError):
+    """The owned stored attachment exceeds the chat file limit."""
+
+
+def read_private_upload(reference: str | None) -> bytes | None:
+    """Read only an approved private object, bounded in memory and always closed."""
+    parsed = parse_private_upload_reference(reference)
+    configured_bucket = os.getenv("AWS_PRIVATE_UPLOADS_BUCKET", "").strip()
+    if not parsed or not configured_bucket or parsed[0] != configured_bucket:
+        return None
+    response = _storage_client().get_object(Bucket=parsed[0], Key=parsed[1])
+    body = response["Body"]
+    try:
+        length = response.get("ContentLength")
+        if not isinstance(length, int) or isinstance(length, bool) or length < 0:
+            raise ValueError("Invalid private upload length")
+        if length > MAX_PRIVATE_DOWNLOAD_BYTES:
+            raise PrivateUploadTooLarge()
+        content = body.read(MAX_PRIVATE_DOWNLOAD_BYTES + 1)
+        if len(content) > MAX_PRIVATE_DOWNLOAD_BYTES:
+            raise PrivateUploadTooLarge()
+        if len(content) != length:
+            raise ValueError("Incomplete private upload")
+        return content
+    finally:
+        body.close()
