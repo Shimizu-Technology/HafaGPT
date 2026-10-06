@@ -14,13 +14,15 @@ export function useChatAutoScroll(
   const touching = useRef(false);
   const frame = useRef<number>();
   const pendingRestoreTop = useRef<number>();
+  const empty = useRef(messages.length === 0);
+  empty.current = messages.length === 0;
   const pinInitialExchange = shouldPinInitialExchangeToTop(messages);
   const pinInitialExchangeRef = useRef(pinInitialExchange);
   pinInitialExchangeRef.current = pinInitialExchange;
 
   const targetTop = useCallback((preserveInitialExchange = preserveInitialPosition.current) => {
     const container = containerRef.current;
-    if (!container) return 0;
+    if (!container || empty.current) return 0;
     return getChatScrollTop({
       scrollHeight: container.scrollHeight,
       clientHeight: container.clientHeight,

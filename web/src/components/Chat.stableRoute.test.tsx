@@ -104,18 +104,18 @@ vi.mock('./MessageInput', () => ({
     disabled,
     onSend,
     completedSend,
+    sendError,
   }: {
     disabled: boolean;
+    sendError?: React.ReactNode;
     onSend: (message: string) => void;
     completedSend?: { message: string; files?: File[] };
   }) => {
     state.composerReceipt = completedSend;
-    return (
-    <button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>
-    );
+    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button></>;
   },
 }));
-vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt }: { onPrompt: (prompt: string) => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button></> }));
+vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt, onStartPractice }: { onPrompt: (prompt: string) => void; onStartPractice: () => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button><button onClick={onStartPractice}>Start guided practice</button></> }));
 vi.mock('./LoadingIndicator', () => ({ LoadingIndicator: () => null }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: vi.fn(), stop: vi.fn(), extractChamorroText: (value: string) => value, isSpeaking: false, isSupported: false }) }));
 vi.mock('./Message', async importOriginal => {
@@ -620,11 +620,27 @@ describe('Tutor shell and continuity', () => {
     expect(screen.getByTestId('chat-composer')).toContainElement(screen.getByRole('button', { name: 'Chat input' }));
     expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
   });
-  it('uses the visible viewport below the desktop navigation on a wide touch keyboard', () => {
+  it('uses the full visible viewport on a wide touch keyboard', () => {
     state.viewport = { isMobile: false, top: 20, height: 420, keyboardOpen: true };
     renderChat('/chat');
-    expect(screen.getByRole('main').style.top).toBe('68px');
-    expect(screen.getByRole('main').style.height).toBe('372px');
+    expect(screen.getByRole('main').style.top).toBe('20px');
+    expect(screen.getByRole('main').style.height).toBe('420px');
     expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
   });
+  it('opens sign-in for a guest guided-practice starter without spending usage', () => {
+    state.isSignedIn = false;
+    renderChat('/chat?intent=practice');
+    fireEvent.click(screen.getByRole('button', { name: 'Start guided practice' }));
+    expect(state.openSignIn).toHaveBeenCalledOnce();
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+  });
+  it('keeps composing available in the native landscape keyboard viewport', () => {
+    state.viewport = { isMobile: false, top: 218, height: 77, keyboardOpen: true };
+    renderChat('/chat');
+    expect(screen.getByTestId('chat-header')).not.toBeVisible();
+    expect(screen.getByRole('main')).toHaveStyle({ top: '218px', height: '77px' });
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeVisible();
+  });
+
 });

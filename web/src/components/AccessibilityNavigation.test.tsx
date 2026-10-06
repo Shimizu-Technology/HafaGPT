@@ -114,7 +114,9 @@ describe('shared navigation and modal accessibility', () => {
     expect(screen.getByRole('button', { name: 'School phrases' })).toHaveAttribute('aria-current', 'true');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Close sidebar' })).toHaveFocus());
 
-    const deleteButton = screen.getByRole('button', { name: 'Delete School phrases' });
+    const actions = screen.getByRole('button', { name: 'Actions for School phrases' });
+    fireEvent.click(actions);
+    const deleteButton = screen.getByRole('button', { name: 'Delete' });
     deleteButton.focus();
     fireEvent.click(deleteButton);
     expect(screen.getByRole('alertdialog', { name: 'Delete conversation?' })).toBeInTheDocument();
@@ -122,32 +124,29 @@ describe('shared navigation and modal accessibility', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
-    expect(deleteButton).toHaveFocus();
+    expect(actions).toHaveFocus();
   });
 
   it('closes only the active sidebar layer and restores rename focus', async () => {
     render(<MemoryRouter><SidebarHarness /></MemoryRouter>);
-    const conversationButton = screen.getByRole('button', { name: 'School phrases' });
-
-    fireEvent.doubleClick(conversationButton);
-    const renameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
-    fireEvent.contextMenu(renameInput, { clientX: 20, clientY: 20 });
-    expect(screen.getByRole('menu', { name: 'Conversation actions' })).toBeInTheDocument();
-    expect(screen.queryByRole('textbox', { name: 'Rename School phrases' })).not.toBeInTheDocument();
-    fireEvent.keyDown(document, { key: 'Escape' });
-
-    expect(screen.queryByRole('menu', { name: 'Conversation actions' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Close sidebar' })).toHaveFocus());
+    let actions = screen.getByRole('button', { name: 'Actions for School phrases' });
+    fireEvent.click(actions);
+    expect(screen.getByRole('group', { name: 'Actions for School phrases' })).toBeInTheDocument();
+    fireEvent.keyDown(actions, { key: 'Escape' });
+    expect(screen.queryByRole('group', { name: 'Actions for School phrases' })).not.toBeInTheDocument();
     expect(screen.getByRole('dialog', { name: 'Conversations' })).toBeInTheDocument();
-
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'School phrases' }));
-    const reopenedRenameInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
-    fireEvent.keyDown(reopenedRenameInput, { key: 'Escape' });
-    expect(screen.getByRole('button', { name: 'School phrases' })).toHaveFocus();
-
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'School phrases' }));
+    fireEvent.click(actions);
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    const input = screen.getByRole('textbox', { name: 'Rename School phrases' });
+    fireEvent.keyDown(input, { key: 'Escape' });
+    actions = screen.getByRole('button', { name: 'Actions for School phrases' });
+    await waitFor(() => expect(actions).toHaveFocus());
+    fireEvent.click(actions);
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
     const saveInput = screen.getByRole('textbox', { name: 'Rename School phrases' });
     fireEvent.change(saveInput, { target: { value: 'Updated school phrases' } });
     fireEvent.keyDown(saveInput, { key: 'Enter' });
-    await waitFor(() => expect(screen.getByRole('button', { name: 'School phrases' })).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Actions for School phrases' })).toHaveFocus());
   });
 });

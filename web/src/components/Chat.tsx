@@ -63,6 +63,7 @@ function ChatSession() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeStorageKey = user?.id ? `active_conversation_id:${user.id}` : null;
   const viewport = useChatViewport();
+  const [sidebarModalOpen, setSidebarModalOpen] = useState(false);
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>(() => {
     const saved = user?.unsafeMetadata?.preferred_mode;
     return saved === 'english' || saved === 'learn' || saved === 'chamorro' ? saved : 'english';
@@ -746,7 +747,7 @@ function ChatSession() {
       // Ensure switching state is cleared (prevents loading flash)
       setIsSwitchingConversation(false);
       // Always close sidebar for cleaner UX
-      if (viewport.isMobile) setSidebarOpen(false);
+      if (sidebarModalOpen) setSidebarOpen(false);
       navigate(appRoutes.chat({
         topicId: linkedTopic?.id,
         returnTo: topicReturnPath,
@@ -760,7 +761,7 @@ function ChatSession() {
     const navigation = ++navigationGeneration.current;
     // Skip if already on this conversation
     if (conversationId === activeConversationId) {
-      if (viewport.isMobile) setSidebarOpen(false);
+      if (sidebarModalOpen) setSidebarOpen(false);
       return;
     }
     
@@ -794,7 +795,7 @@ function ChatSession() {
     }));
     
     // Always close sidebar for cleaner UX
-    if (viewport.isMobile) setSidebarOpen(false);
+    if (sidebarModalOpen) setSidebarOpen(false);
   };
 
   const handleDeleteConversation = async (conversationId: string) => {
@@ -818,6 +819,7 @@ function ChatSession() {
   };
 
   const handleShareConversation = async (conversationId: string) => {
+    if (sidebarModalOpen) setSidebarOpen(false);
     setShareLoading(true);
     setShowShareModal(true);
     setShareInfo(null);
@@ -1068,20 +1070,28 @@ End of Export
   const conversationTitle = resolvedConversationRecord?.title
     || conversations.find(item => item.id === activeConversationId)?.title
     || 'New conversation';
+  const compactKeyboard = viewport.keyboardOpen && viewport.height < 260;
+  const inlineComposer = viewport.keyboardOpen && viewport.height < 160;
+  // Reserve the visible header, navigation, toolbar and safe-area padding before expanding a draft.
+  const composerBodyRoom = viewport.height - (compactKeyboard ? 0 : viewport.keyboardOpen ? 72 : 142)
+    - (viewport.keyboardOpen ? 0 : viewport.isMobile ? 64 : 48) - (inlineComposer ? 28 : 100);
+  const composerBodyHeight = viewport.height < 420
+    ? `max(40px, calc(${composerBodyRoom}px - ${compactKeyboard ? '0px' : 'max(0px, calc(env(safe-area-inset-top, 0px) - 16px))'} - ${inlineComposer ? '0px' : 'max(0px, calc(env(safe-area-inset-bottom, 0px) - 16px))'}))`
+    : undefined;
   const viewportStyle: CSSProperties & { '--chat-viewport-height': string; '--chat-viewport-top': string } = {
     '--chat-viewport-height': `${viewport.height}px`,
     '--chat-viewport-top': `${viewport.top}px`,
-    ...(viewport.isMobile || viewport.keyboardOpen ? {
-    top: viewport.top + (viewport.isMobile ? 0 : 48),
+    ...(viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? {
+    top: viewport.top + (!viewport.isMobile && !viewport.keyboardOpen ? 48 : 0),
     height: viewport.isMobile && !viewport.keyboardOpen
       ? `calc(${viewport.height}px - 64px - env(safe-area-inset-bottom, 0px))`
-      : `${Math.max(0, viewport.height - (viewport.isMobile ? 0 : 48))}px`,
+      : `${viewport.height - (!viewport.isMobile && !viewport.keyboardOpen ? 48 : 0)}px`,
     } : {}),
   };
 
   return (
     <main id="main-content" style={viewportStyle}
-      className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-gray-950 ${viewport.isMobile || viewport.keyboardOpen ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
+      className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-gray-950 ${viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
       {/* Sidebar - Only show if signed in */}
       {isSignedIn && (
         <ConversationSidebar
@@ -1095,16 +1105,18 @@ End of Export
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           isLoading={conversationsLoading}
+          onModalChange={setSidebarModalOpen}
         />
       )}
 
       {/* Main chat area */}
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div {...(sidebarModalOpen ? { inert: '' } : {})} className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {!isSignedIn && <div className="shrink-0"><PublicBanner /></div>}
         {/* Header stays in the chat column's layout so messages can never slide underneath it. */}
         <header
           data-testid="chat-header"
-          className="relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95"
+          hidden={compactKeyboard}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
             {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
@@ -1133,7 +1145,7 @@ End of Export
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
       <div
         data-testid="chat-messages-viewport"
-        className="min-h-0 flex-1 pt-3 sm:pt-5"
+        className={`${viewport.keyboardOpen && viewport.height < 160 ? 'hidden' : ''} min-h-0 flex-1 pt-3 sm:pt-5`}
       >
         <div
           ref={messagesContainerRef}
@@ -1182,7 +1194,7 @@ End of Export
               </p>
             </div>
           ) : messages.length === 0 && !loading ? (
-            <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : handleSignInClick()} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings")} />
+            <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : handleSignInClick()} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => isSignedIn ? void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings") : handleSignInClick()} />
           ) : (
             <>
               {messages.map((message, index) => {
@@ -1251,8 +1263,13 @@ End of Export
             </button>
           </div>
         )}
-        {error && failedAttempt && (
-          <div role="alert" className="mx-3 mt-2 flex max-h-24 items-center gap-3 overflow-y-auto rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30 sm:mx-auto sm:max-w-3xl">
+        <MessageInput
+          onSend={handleSend}
+          compact={viewport.height < 420}
+          inline={inlineComposer}
+          bodyMaxHeight={composerBodyHeight}
+          sendError={error && failedAttempt ? (
+          <div role="alert" className="mb-2 flex max-h-24 items-center gap-3 overflow-y-auto rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-red-900 dark:text-red-200">Message not sent</p>
               <p className="truncate text-xs text-red-900 dark:text-red-200" title={failedAttempt.message}>{failedAttempt.message}{failedAttempt.files?.length ? ` · ${failedAttempt.files.length} file${failedAttempt.files.length === 1 ? '' : 's'}` : ''}</p>
@@ -1262,9 +1279,7 @@ End of Export
               <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
             </button>
           </div>
-        )}
-        <MessageInput 
-          onSend={handleSend}
+          ) : undefined}
           completedSend={completedSend}
           disabled={!isSignedIn || loading || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}

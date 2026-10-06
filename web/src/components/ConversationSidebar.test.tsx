@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationSidebar } from './ConversationSidebar';
@@ -57,10 +57,10 @@ describe('ConversationSidebar', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
     await waitFor(() => expect(value.onRenameConversation).toHaveBeenCalledWith('conv-1', 'New title'));
     await waitFor(() => expect(screen.getByRole('button', { name: `Actions for ${conversation.title}` })).toHaveFocus());
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /Rename/ })).not.toBeInTheDocument();
   });
 
-  it('closes actions with Escape and confirms deletion only once explicitly requested', () => {
+  it('closes actions with Escape and confirms deletion only once explicitly requested', async () => {
     viewport(true);
     const value = props();
     show(value);
@@ -74,6 +74,7 @@ describe('ConversationSidebar', () => {
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }));
     expect(value.onDeleteConversation).toHaveBeenCalledWith('conv-1');
     expect(value.onDeleteConversation).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
   });
 
   it('keeps a failed rename editable with an accurate error', async () => {
@@ -83,10 +84,66 @@ describe('ConversationSidebar', () => {
     show(value);
     fireEvent.click(screen.getByRole('button', { name: `Actions for ${conversation.title}` }));
     fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
-    const input = screen.getByRole('textbox');
+    const input = screen.getByRole('textbox', { name: `Rename ${conversation.title}` });
     fireEvent.change(input, { target: { value: 'Keep my title' } });
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not rename');
     expect(input).toHaveValue('Keep my title');
   });
+  it('retains a newer rename draft when an earlier rename finishes', async () => {
+    viewport(true); const value = props();
+    let resolve!: () => void;
+    value.onRenameConversation.mockImplementationOnce(() => new Promise<undefined>(done => { resolve = () => done(undefined); }));
+    const second = { ...conversation, id: 'conv-2', title: 'Second conversation' };
+    show({ ...value, conversations: [conversation, second] });
+    fireEvent.click(screen.getByRole('button', { name: `Actions for ${conversation.title}` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    const first = screen.getByRole('textbox', { name: `Rename ${conversation.title}` });
+    fireEvent.change(first, { target: { value: 'First rename' } });
+    fireEvent.blur(first);
+    fireEvent.click(screen.getByRole('button', { name: 'Actions for Second conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    const next = screen.getByRole('textbox', { name: 'Rename Second conversation' });
+    fireEvent.change(next, { target: { value: 'Keep this newer draft' } });
+    await act(async () => resolve());
+    expect(next).toHaveValue('Keep this newer draft');
+    expect(next).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('retains typing in the same editor while its earlier save finishes', async () => {
+    viewport(true); const value = props();
+    let resolve!: () => void;
+    value.onRenameConversation.mockImplementationOnce(() => new Promise<undefined>(done => { resolve = () => done(undefined); }));
+    show(value);
+    fireEvent.click(screen.getByRole('button', { name: `Actions for ${conversation.title}` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    const input = screen.getByRole('textbox', { name: `Rename ${conversation.title}` });
+    fireEvent.change(input, { target: { value: 'First title' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.change(input, { target: { value: 'Keep my newer title' } });
+    await act(async () => resolve());
+    expect(input).toHaveValue('Keep my newer title');
+    expect(input).toBeInTheDocument();
+  });
+
+  it('filters saved titles without fetching private message bodies', () => {
+    viewport(true); show();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'not present' } });
+    expect(screen.getByText('No chats match your search')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: conversation.title })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'FAMILY' } });
+    expect(screen.getByRole('button', { name: conversation.title })).toBeInTheDocument();
+  });
+  it('retains deletion confirmation when a request fails', async () => {
+    viewport(true); const value = props();
+    value.onDeleteConversation.mockRejectedValueOnce(new Error('offline'));
+    show(value);
+    fireEvent.click(screen.getByRole('button', { name: `Actions for ${conversation.title}` }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not delete');
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
 });

@@ -53,7 +53,7 @@ describe('useChatViewport', () => {
     resize(400, 0, 1);
     expect(result.current.keyboardOpen).toBe(true);
   });
-  it('recognizes a keyboard on a wide touch viewport while keeping the desktop navigation layout', () => {
+  it('recognizes a keyboard on a wide touch viewport without treating desktop window resize as a keyboard', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
     const { result } = renderHook(() => useChatViewport());
     const input = document.createElement('input'); input.type = 'text'; document.body.appendChild(input); input.focus();
@@ -110,12 +110,13 @@ describe('Tutor keyboard navigation', () => {
     expect(nav).not.toHaveAttribute('inert');
     expect(screen.getByRole('link', { name: 'Today' })).toBeInTheDocument();
   });
-  it('keeps wide navigation available when a touch keyboard opens', () => {
+  it('hides wide navigation too when a touch keyboard opens', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 844 });
     render(<MemoryRouter initialEntries={['/chat']}><BottomNav /></MemoryRouter>);
+    const nav = screen.getByRole('navigation', { name: 'Primary' });
     const input = document.createElement('textarea'); document.body.appendChild(input); input.focus();
     resize(400);
-    expect(screen.getByRole('navigation', { name: 'Primary' })).not.toHaveAttribute('hidden');
-    expect(screen.getByRole('link', { name: 'Today' })).toBeInTheDocument();
+    expect(nav).toHaveAttribute('hidden');
+    expect(screen.queryByRole('link', { name: 'Today' })).not.toBeInTheDocument();
   });
 });

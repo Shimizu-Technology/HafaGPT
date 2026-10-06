@@ -13,8 +13,8 @@ const destinations = [
 export function BottomNav() {
   const { pathname } = useLocation();
   const tutor = pathname === '/chat' || pathname.startsWith('/chat/');
-  const { isMobile, keyboardOpen } = useChatViewport(tutor);
-  const keyboardHidden = tutor && isMobile && keyboardOpen;
+  const { keyboardOpen } = useChatViewport(tutor);
+  const keyboardHidden = tutor && keyboardOpen;
   if (pathname.startsWith('/admin') || pathname.startsWith('/share/')) return null;
   const immersive = ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/', '/learn/'].some(path => pathname.startsWith(path));
   return (
