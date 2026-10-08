@@ -56,3 +56,34 @@ def test_oversized_response_stops_reading_and_unknown_model_never_calls_provider
         speech.generate_speech("test", model="eleven_v4")
     monkeypatch.setattr(speech.requests, "post", lambda *args, **kwargs: pytest.fail("must validate before request"))
     with pytest.raises(ValueError): speech.generate_speech("test", model="invented")
+
+
+def test_live_v4_missing_key_fallback_restores_the_requested_hint(monkeypatch):
+    import ast, asyncio, base64, logging, os, time
+    from pathlib import Path
+    from types import SimpleNamespace
+    from fastapi import HTTPException
+    import openai
+    source = Path(__file__).parents[1] / 'api/main.py'
+    node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.AsyncFunctionDef) and node.name=='text_to_speech')
+    node.decorator_list=[]
+    namespace={'__package__':'api','Request':object,'Form':lambda *args,**kwargs:kwargs.get('default'),
+        'HTTPException':HTTPException,'logger':logging.getLogger('audio-test'),'check_tts_rate_limit':lambda ip:True,
+        'get_pronunciation':lambda text:'explicit-test-hint','asyncio':asyncio,'base64':base64,'os':os,'time':time}
+    exec(compile(ast.Module(body=[node],type_ignores=[]),str(source),'exec'),namespace)
+    captured=[]
+    def create(**kwargs): captured.append(kwargs); return SimpleNamespace(content=b'ID3audio')
+    monkeypatch.setattr(openai,'OpenAI',lambda **kwargs:SimpleNamespace(audio=SimpleNamespace(speech=SimpleNamespace(create=create))))
+    monkeypatch.setenv('ELEVENLABS_LIVE_MODEL','eleven_v4');monkeypatch.delenv('ELEVENLABS_API_KEY',raising=False);monkeypatch.setenv('OPENAI_API_KEY','test-only')
+    asyncio.run(namespace['text_to_speech'](SimpleNamespace(client=SimpleNamespace(host='127.0.0.1')),text='test',voice='shimmer',phonetic=True,provider='elevenlabs'))
+    assert captured[0]['input']=='explicit-test-hint'
+
+
+def test_batch_direct_execution_can_import_the_shared_adapter(monkeypatch):
+    import runpy, sys
+    from pathlib import Path
+    from types import SimpleNamespace
+    monkeypatch.setitem(sys.modules,'api.audio_synthesis',SimpleNamespace(generate_speech=lambda *args,**kwargs:(b'ID3fixture',{})))
+    script=Path(__file__).parents[1]/'audio_generation/generate_audio.py'
+    namespace=runpy.run_path(str(script))
+    assert namespace['generate_audio_elevenlabs']('test')==b'ID3fixture'

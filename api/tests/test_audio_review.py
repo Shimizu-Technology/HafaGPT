@@ -104,9 +104,9 @@ def test_admin_routes_fail_before_storage_access(method, path, body, role, heade
     assert store.calls == []
 
 
-def synthesis_stub(monkeypatch, function):
+def synthesis_stub(monkeypatch, function, error_type=None):
     import api
-    stub = SimpleNamespace(generate_speech=function, SpeechGenerationError=type("SafeSpeechError", (RuntimeError,), {}))
+    stub = SimpleNamespace(generate_speech=function, SpeechGenerationError=error_type or type("SafeSpeechError", (RuntimeError,), {}))
     monkeypatch.setitem(sys.modules, "api.audio_synthesis", stub)
     monkeypatch.setattr(api, "audio_synthesis", stub, raising=False)
 
@@ -408,6 +408,20 @@ def test_candidate_cap_uses_word_lock_before_blob_insert(monkeypatch):
 def test_safe_provider_access_error_remains_actionable(monkeypatch):
     class SpeechGenerationError(RuntimeError): pass
     def generate(*args,**kwargs): raise SpeechGenerationError("ElevenLabs is not configured. Ask the site administrator to check its API key.")
-    monkeypatch.setitem(sys.modules,"api.audio_synthesis",SimpleNamespace(generate_speech=generate,SpeechGenerationError=SpeechGenerationError))
+    synthesis_stub(monkeypatch, generate, SpeechGenerationError)
     response = client(Store()).post(f"/api/admin/audio/{WORD}/regenerate",json={},headers=auth())
     assert response.status_code == 502 and "not configured" in response.json()["detail"]
+
+
+def test_public_manifest_cache_is_invalidated_by_publication():
+    store=Store()
+    calls=[]
+    def manifest(): calls.append('read');return {'words':{WORD:{'file':f'version_{len(calls)}.mp3'}}}
+    store.manifest=manifest
+    store.publish=lambda *args:{'success':True,'manifest_synced':True}
+    browser=client(store)
+    assert browser.get('/api/audio/manifest').json()['words'][WORD]['file']=='version_1.mp3'
+    assert browser.get('/api/audio/manifest').json()['words'][WORD]['file']=='version_1.mp3'
+    assert calls==['read']
+    assert browser.post(f'/api/admin/audio/{WORD}/candidates/{CANDIDATE}/publish',headers=auth()).status_code==200
+    assert browser.get('/api/audio/manifest').json()['words'][WORD]['file']=='version_2.mp3'

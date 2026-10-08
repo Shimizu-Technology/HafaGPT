@@ -77,7 +77,7 @@ function getStaticAudioUrl(text: string): string | null {
     // Add cache-buster to ensure we get the latest audio after regeneration
     const url = new URL(entry.url || `${STATIC_AUDIO_BASE_URL}${filename}`);
     if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-    url.searchParams.set('v', String(manifestLoadTime));
+    if (!entry.url) url.searchParams.set('v', String(manifestLoadTime));
     return url.toString();
   }
   return null;
@@ -520,7 +520,8 @@ export function useSpeech() {
     text: string,
     isCurrent: () => boolean = playbackStillCurrent,
   ): Promise<boolean> => {
-    await loadStaticAudioManifest();
+    if (staticAudioManifest) void loadStaticAudioManifest();
+    else await loadStaticAudioManifest();
     if (!isCurrent()) return false;
     const staticUrl = getStaticAudioUrl(text);
     if (!staticUrl) return false;

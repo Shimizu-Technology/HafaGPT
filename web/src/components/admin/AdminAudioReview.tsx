@@ -106,10 +106,14 @@ export function AdminAudioReview() {
   );
   const library = useQuery<Library>({
     queryKey: ["admin-audio", debouncedSearch, filter],
-    queryFn: () =>
-      request(`/api/admin/audio?${new URLSearchParams({ search: debouncedSearch, status_filter: filter })}`).then(
-        jsonResponse
-      ),
+    queryFn: async () => {
+      const result = await jsonResponse(
+        await request(`/api/admin/audio?${new URLSearchParams({ search: debouncedSearch, status_filter: filter })}`)
+      );
+      if (!Array.isArray(result.config?.models))
+        throw new Error("The pronunciation studio is updating. Try again in a moment.");
+      return result;
+    },
   });
   const syncManifest = useMutation({
     mutationFn: () => request("/api/admin/audio/sync-manifest", { method: "POST" }).then(jsonResponse),
@@ -398,7 +402,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider: model === "tts-1" ? "openai" : "elevenlabs",
+          provider: config.models.find((item) => item.id === model)?.provider ?? "elevenlabs",
           model,
           input_mode: mode,
           pronunciation: mode === "original" ? undefined : pronunciation,
@@ -569,11 +573,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
                   <h4 className="font-semibold">
                     {candidate.provider === "human_recording"
                       ? "Native recording"
-                      : candidate.model === "eleven_v4"
-                        ? "Eleven v4"
-                        : candidate.model === "eleven_multilingual_v2"
-                          ? "Eleven Multilingual v2"
-                          : "OpenAI"}{" "}
+                      : (config.models.find((item) => item.id === candidate.model)?.label ?? candidate.model)}{" "}
                     ·{" "}
                     {candidate.input_mode === "ipa"
                       ? "IPA"

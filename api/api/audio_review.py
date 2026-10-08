@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import copy
+import asyncio
+from functools import lru_cache
+import time
 import hashlib
 import json
 import logging
@@ -63,8 +66,13 @@ class PilotItemRequest(BaseModel):
     english: str = Field(min_length=1, max_length=4096)
 
 
+@lru_cache(maxsize=2)
+def _baseline_snapshot(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def baseline_manifest() -> dict:
-    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    manifest = copy.deepcopy(_baseline_snapshot(MANIFEST_PATH))
     for entry in manifest["words"].values():
         if entry.get("review_status") == "approved" and not (entry.get("reviewed_by") and entry.get("reviewed_at")):
             entry["review_status"] = "needs_native_review"
@@ -321,6 +329,8 @@ class AudioReviewStore:
 
 def create_audio_review_router(verify_admin: Callable, *, store_factory: Callable = AudioReviewStore) -> APIRouter:
     router = APIRouter(tags=["Audio"])
+    public_cache = {"until": 0.0, "manifest": None}
+    public_cache_lock = asyncio.Lock()
 
     async def operation(method: str, *args):
         try:
@@ -337,7 +347,11 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
 
     @router.get("/api/audio/manifest")
     async def public_manifest():
-        return JSONResponse(await operation("manifest"), headers={"Cache-Control": "no-cache"})
+        async with public_cache_lock:
+            if time.monotonic() >= public_cache["until"]:
+                public_cache["manifest"] = await operation("manifest")
+                public_cache["until"] = time.monotonic() + 10.0
+        return JSONResponse(public_cache["manifest"], headers={"Cache-Control": "no-cache"})
 
     @router.get("/api/audio/published/{word:path}")
     async def published_audio(word: str):
@@ -363,7 +377,9 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
     @router.post("/api/admin/audio/sync-manifest")
     async def synchronize_manifest(authorization: str | None = Header(None)):
         await verify_admin(authorization)
-        return await operation("sync_manifest")
+        result = await operation("sync_manifest")
+        public_cache["until"] = 0.0
+        return result
 
     @router.post("/api/admin/audio/pilot-items")
     async def add_pilot(body: PilotItemRequest, authorization: str | None = Header(None)):
@@ -442,7 +458,9 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
     @router.post("/api/admin/audio/{word:path}/candidates/{candidate_id}/publish")
     async def publish(word: str, candidate_id: UUID, authorization: str | None = Header(None)):
         admin = await verify_admin(authorization)
-        return await operation("publish", word, candidate_id, admin)
+        result = await operation("publish", word, candidate_id, admin)
+        public_cache["until"] = 0.0
+        return result
 
     @router.patch("/api/admin/audio/{word:path}/status")
     async def legacy_status(word: str, authorization: str | None = Header(None)):

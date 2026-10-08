@@ -2621,6 +2621,7 @@ async def text_to_speech(
             if not elevenlabs_api_key:
                 logger.warning("ElevenLabs key not set, falling back to OpenAI")
                 provider = "openai"
+                text_to_speak = get_pronunciation(original_text) if phonetic else original_text
             else:
                 try:
                     audio_bytes, _ = await asyncio.to_thread(

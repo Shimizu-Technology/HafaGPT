@@ -199,3 +199,16 @@ it("ignores queued playback events from a previous candidate", async () => {
   expect(audios[1].pause).not.toHaveBeenCalled();
   expect(screen.queryByText("This recording could not be played. Please try again.")).not.toBeInTheDocument();
 });
+
+it("shows a retryable update state when the API has not deployed the studio yet", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => Response.json({ words: [word], stats: { total: 1, approved: 0 } }))
+  );
+  mount();
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "The pronunciation studio is updating. Try again in a moment."
+  );
+  expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Generate candidate" })).not.toBeInTheDocument();
+});

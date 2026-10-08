@@ -9,7 +9,7 @@ Usage:
     python generate_audio.py --tier 1              # Generate Tier 1 (games/UI)
     python generate_audio.py --tier 1 --dry-run    # Preview without generating
     python generate_audio.py --word "Håfa Adai"    # Generate single word
-    python generate_audio.py --upload              # Upload to S3 after generation
+    # Publish reviewed candidates through /admin/audio; direct upload is disabled.
     python generate_audio.py --provider elevenlabs # Use ElevenLabs instead of OpenAI
 """
 
@@ -30,6 +30,8 @@ load_dotenv()
 
 # Constants
 BASE_DIR = Path(__file__).parent
+if str(BASE_DIR.parent) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR.parent))
 AUDIO_DIR = BASE_DIR / "audio_files"
 MANIFEST_PATH = BASE_DIR / "manifest.json"
 TIER1_PATH = BASE_DIR / "tier1_words.json"
