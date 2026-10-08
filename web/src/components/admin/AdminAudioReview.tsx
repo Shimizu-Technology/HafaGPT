@@ -1,763 +1,996 @@
-import { useState, useRef, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@clerk/clerk-react';
-import { 
-  Volume2, 
-  Check, 
-  X, 
-  RefreshCw, 
-  Search,
-  Play,
-  Pause,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Music,
-  Mic,
-  Square,
-  Upload
-} from 'lucide-react';
-import { AdminLayout } from './AdminLayout';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/clerk-react";
+import { ArrowLeft, Check, Mic, Pause, Play, Plus, Search, Square, Upload } from "lucide-react";
+import { AdminLayout } from "./AdminLayout";
 
-interface AudioWord {
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const button =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600";
+const primary = `${button} border-transparent bg-coral-700 text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800`;
+const field =
+  "mt-1 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white";
+interface Word {
   chamorro: string;
   english: string;
   tier: string;
-  category: string;
-  status: 'approved' | 'needs_review' | 'needs_fix';
+  status: string;
   url: string;
-  phonetic_used: string;
-  generated_at: string;
-  needs_regeneration: boolean;
 }
-
-interface AudioStats {
-  total: number;
-  approved: number;
-  needs_review: number;
-  needs_fix: number;
-  by_tier: {
-    '1': number;
-    '2': number;
-    'flashcards': number;
+interface Candidate {
+  id: string;
+  word: string;
+  provider: string;
+  model: string;
+  input_mode: string;
+  input_text: string;
+  created_at: string;
+  status: "pending" | "approved" | "rejected";
+  reviewer_name?: string;
+  reviewed_at?: string;
+  dialect?: string;
+  notes?: string;
+  published: boolean;
+  consent_reference?: string;
+}
+interface Library {
+  words: Word[];
+  stats: { total: number; approved: number; needs_review: number };
+  config: {
+    models: { id: string; label: string; provider: string }[];
+    default_model: string;
+    voice_id: string;
+    can_record: boolean;
+    manifest_sync_pending?: boolean;
+    elevenlabs_configured?: boolean;
   };
 }
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+type RequestAPI = (path: string, init?: RequestInit) => Promise<Response>;
+async function jsonResponse(response: Response) {
+  return response.json();
+}
 
 export function AdminAudioReview() {
   const { getToken } = useAuth();
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filter, setFilter] = useState("");
+  const [selected, setSelected] = useState<Word | null>(null);
+  const [limit, setLimit] = useState(40);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newText, setNewText] = useState("");
+  const [newEnglish, setNewEnglish] = useState("");
   const queryClient = useQueryClient();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [tierFilter, setTierFilter] = useState<string>('');
-  const [search, setSearch] = useState('');
-  const [playingWord, setPlayingWord] = useState<string | null>(null);
-  const [editingWord, setEditingWord] = useState<string | null>(null);
-  const [phoneticHint, setPhoneticHint] = useState('');
-  const [ttsProvider, setTtsProvider] = useState<'openai' | 'elevenlabs'>('elevenlabs');
-  
-  // Recording state
-  const [recordingWord, setRecordingWord] = useState<AudioWord | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Fetch audio words
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['admin-audio', statusFilter, tierFilter, search],
-    queryFn: async () => {
+  const librarySearch = useRef<HTMLInputElement>(null);
+  const previousSelection = useRef<Word | null>(null);
+  const detailHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search);
+      setLimit(40);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  const request = useCallback<RequestAPI>(
+    async (path, init = {}) => {
       const token = await getToken();
-      const params = new URLSearchParams();
-      if (statusFilter) params.append('status_filter', statusFilter);
-      if (tierFilter) params.append('tier_filter', tierFilter);
-      if (search) params.append('search', search);
-      
-      const response = await fetch(
-        `${API_URL}/api/admin/audio?${params.toString()}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
+      if (!token) throw new Error("Your sign-in expired. Sign in again to review audio.");
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 90000);
+      try {
+        const response = await fetch(`${API_URL}${path}`, {
+          ...init,
+          signal: controller.signal,
+          headers: { ...init.headers, Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(
+            typeof error.detail === "string"
+              ? error.detail
+              : typeof error.error === "string"
+                ? error.error
+                : "The request failed. Please try again."
+          );
         }
-      );
-      if (!response.ok) throw new Error('Failed to fetch audio words');
-      return response.json();
-    }
-  });
-
-  // Update status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ word, status, phonetic_hint }: { word: string; status: string; phonetic_hint?: string }) => {
-      const token = await getToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/audio/${encodeURIComponent(word)}/status`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status, phonetic_hint })
-        }
-      );
-      if (!response.ok) throw new Error('Failed to update status');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-audio'] });
-    }
-  });
-
-  // Regenerate audio mutation
-  const regenerateMutation = useMutation({
-    mutationFn: async ({ word, phonetic_hint, provider }: { word: string; phonetic_hint?: string; provider?: string }) => {
-      const token = await getToken();
-      const response = await fetch(
-        `${API_URL}/api/admin/audio/${encodeURIComponent(word)}/regenerate`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ phonetic_hint, provider })
-        }
-      );
-      if (!response.ok) throw new Error('Failed to regenerate audio');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-audio'] });
-      setEditingWord(null);
-      setPhoneticHint('');
-    }
-  });
-
-  // Upload recording mutation
-  const uploadRecordingMutation = useMutation({
-    mutationFn: async ({ word, audioBlob }: { word: string; audioBlob: Blob }) => {
-      const token = await getToken();
-      const formData = new FormData();
-      formData.append('audio_file', audioBlob, 'recording.webm');
-      
-      const response = await fetch(
-        `${API_URL}/api/admin/audio/${encodeURIComponent(word)}/upload-recording`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          body: formData
-        }
-      );
-      if (!response.ok) throw new Error('Failed to upload recording');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-audio'] });
-      closeRecordingModal();
-    }
-  });
-
-  // Recording functions
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-      
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-          ? 'audio/webm;codecs=opus' 
-          : 'audio/webm'
-      });
-      
-      const chunks: BlobPart[] = [];
-      
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
-        setRecordedBlob(blob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-      setRecordingDuration(0);
-      
-      // Start duration counter
-      recordingIntervalRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 0.1);
-      }, 100);
-      
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      alert('Could not access microphone. Please check permissions.');
-    }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
+        return response;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError")
+          throw new Error("This request took too long. Refresh the candidate list before retrying.");
+        throw error;
+      } finally {
+        window.clearTimeout(timer);
       }
-    }
-  }, [isRecording]);
-
-  const playPreview = useCallback(() => {
-    if (!recordedBlob) return;
-    
-    if (isPlayingPreview && previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      setIsPlayingPreview(false);
-      return;
-    }
-    
-    const url = URL.createObjectURL(recordedBlob);
-    const audio = new Audio(url);
-    previewAudioRef.current = audio;
-    
-    audio.onplay = () => setIsPlayingPreview(true);
-    audio.onended = () => {
-      setIsPlayingPreview(false);
-      URL.revokeObjectURL(url);
-    };
-    audio.onerror = () => setIsPlayingPreview(false);
-    
-    audio.play();
-  }, [recordedBlob, isPlayingPreview]);
-
-  const closeRecordingModal = useCallback(() => {
-    if (isRecording) {
-      stopRecording();
-    }
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-    }
-    setRecordingWord(null);
-    setRecordedBlob(null);
-    setRecordingDuration(0);
-    setIsPlayingPreview(false);
-  }, [isRecording, stopRecording]);
-
-  const uploadRecording = useCallback(() => {
-    if (recordingWord && recordedBlob) {
-      uploadRecordingMutation.mutate({ 
-        word: recordingWord.chamorro, 
-        audioBlob: recordedBlob 
-      });
-    }
-  }, [recordingWord, recordedBlob, uploadRecordingMutation]);
-
-  const playAudio = (word: AudioWord) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    
-    if (playingWord === word.chamorro) {
-      setPlayingWord(null);
-      return;
-    }
-
-    // Add cache-busting parameter to ensure we get the latest audio from S3
-    const cacheBuster = Date.now();
-    const audioUrl = word.url.includes('?') 
-      ? `${word.url}&t=${cacheBuster}` 
-      : `${word.url}?t=${cacheBuster}`;
-    
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    
-    audio.onplay = () => setPlayingWord(word.chamorro);
-    audio.onended = () => setPlayingWord(null);
-    audio.onerror = () => setPlayingWord(null);
-    
-    audio.play().catch(() => setPlayingWord(null));
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case 'needs_fix':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-yellow-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-      case 'needs_fix':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      default:
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-    }
-  };
-
-  const getTierLabel = (tier: string) => {
-    switch (tier) {
-      case '1': return 'Games';
-      case '2': return 'Dictionary';
-      case 'flashcards': return 'Flashcards';
-      default: return tier;
-    }
-  };
-
-  const words: AudioWord[] = data?.words || [];
-  const stats: AudioStats = data?.stats || { total: 0, approved: 0, needs_review: 0, needs_fix: 0, by_tier: { '1': 0, '2': 0, 'flashcards': 0 } };
-
+    },
+    [getToken]
+  );
+  const library = useQuery<Library>({
+    queryKey: ["admin-audio", debouncedSearch, filter],
+    queryFn: async () => {
+      const result = await jsonResponse(
+        await request(`/api/admin/audio?${new URLSearchParams({ search: debouncedSearch, status_filter: filter })}`)
+      );
+      if (!Array.isArray(result.config?.models))
+        throw new Error("The pronunciation studio is updating. Try again in a moment.");
+      return result;
+    },
+  });
+  const syncManifest = useMutation({
+    mutationFn: () => request("/api/admin/audio/sync-manifest", { method: "POST" }).then(jsonResponse),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-audio"] }),
+  });
+  const addItem = useMutation({
+    mutationFn: () =>
+      request("/api/admin/audio/pilot-items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: newText, english: newEnglish }),
+      }).then(jsonResponse),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-audio"] });
+      setSearch(newText);
+      setNewText("");
+      setNewEnglish("");
+      setShowAdd(false);
+    },
+  });
+  useEffect(() => {
+    if (selected) detailHeading.current?.focus();
+    else if (previousSelection.current) librarySearch.current?.focus();
+    previousSelection.current = selected;
+  }, [selected]);
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Audio Review</h1>
-          <p className="text-gray-600 dark:text-gray-400">Review and manage pre-generated TTS audio</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Words</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-              </div>
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
-                <Music className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-              </div>
-              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-xl">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Needs Review</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.needs_review}</p>
-              </div>
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
-                <Clock className="w-5 h-5 text-yellow-500" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Needs Fix</p>
-                <p className="text-2xl font-bold text-red-600">{stats.needs_fix}</p>
-              </div>
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search words..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-coral-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-coral-500"
+      <div className="mx-auto max-w-6xl space-y-6 text-brown-900 dark:text-white">
+        <header>
+          <h1 className="text-2xl font-bold sm:text-3xl">Pronunciation studio</h1>
+          <p className="mt-2 max-w-2xl text-brown-600 dark:text-slate-300">
+            Listen, compare, and publish audio reviewed with a qualified Chamorro speaker. New candidates stay private
+            until you publish them.
+          </p>
+        </header>
+        {library.data && (
+          <p className="text-sm text-brown-600 dark:text-slate-300">
+            {library.data.stats.total} words and phrases · {library.data.stats.approved} reviewed
+          </p>
+        )}
+        {library.data?.config.manifest_sync_pending && (
+          <div role="status" className="rounded-xl border border-amber-300 p-4 text-sm">
+            Published audio is saved. The distribution library still needs to sync.
+            <button
+              className={`${button} mt-2 sm:ml-3`}
+              disabled={syncManifest.isPending}
+              onClick={() => syncManifest.mutate()}
             >
-              <option value="">All Status</option>
-              <option value="needs_review">Needs Review</option>
-              <option value="approved">Approved</option>
-              <option value="needs_fix">Needs Fix</option>
-            </select>
-            
-            <select
-              value={tierFilter}
-              onChange={(e) => setTierFilter(e.target.value)}
-              className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-coral-500"
-            >
-              <option value="">All Tiers</option>
-              <option value="1">Games</option>
-              <option value="2">Dictionary</option>
-              <option value="flashcards">Flashcards</option>
-            </select>
+              {syncManifest.isPending ? "Syncing…" : "Retry library sync"}
+            </button>
+            {syncManifest.error && <p role="alert">{syncManifest.error.message}</p>}
           </div>
-        </div>
-
-        {/* Words List */}
-        {isLoading ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            <div className="animate-spin w-8 h-8 border-2 border-coral-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-            <p className="text-gray-500">Loading audio words...</p>
+        )}
+        {library.error && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-300 bg-red-50 p-4 text-red-900 dark:bg-red-950 dark:text-red-200"
+          >
+            {library.error.message}
+            <button className={`${button} ml-3`} onClick={() => library.refetch()}>
+              Try again
+            </button>
           </div>
-        ) : error ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-            <p className="text-red-500">Error loading audio words</p>
-          </div>
-        ) : words.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-12 shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-            <Volume2 className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500">No words found</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {words.map((word) => (
-              <div 
-                key={word.chamorro} 
-                className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow"
+        )}
+        <div className="grid items-start gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <section
+            aria-label="Audio library"
+            className={`${selected ? "hidden lg:block" : ""} rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800`}
+          >
+            <label className="block text-sm font-semibold">
+              <span className="flex items-center gap-2">
+                <Search size={16} />
+                Find a word or phrase
+              </span>
+              <input
+                ref={librarySearch}
+                className={field}
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Chamorro or English"
+              />
+            </label>
+            <label className="mt-3 block text-sm font-semibold">
+              Review status
+              <select
+                className={field}
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value);
+                  setLimit(40);
+                }}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  {/* Word Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{word.chamorro}</h3>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${getStatusBadge(word.status)}`}>
-                        {getStatusIcon(word.status)}
-                        <span className="hidden sm:inline">{word.status.replace('_', ' ')}</span>
-                      </span>
-                      <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                        {getTierLabel(word.tier)}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">{word.english}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                      Phonetic: {word.phonetic_used}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Play button */}
-                    <button
-                      onClick={() => playAudio(word)}
-                      disabled={!word.url}
-                      className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                        playingWord === word.chamorro 
-                          ? 'bg-coral-700 text-white'
-                          : 'bg-coral-700 text-white hover:bg-coral-800'
-                      }`}
-                      title="Play audio"
-                    >
-                      {playingWord === word.chamorro ? (
-                        <Pause className="w-5 h-5" />
-                      ) : (
-                        <Play className="w-5 h-5" />
-                      )}
-                    </button>
-                    
-                    {/* Approve button */}
-                    <button
-                      onClick={() => updateStatusMutation.mutate({ word: word.chamorro, status: 'approved' })}
-                      disabled={updateStatusMutation.isPending || word.status === 'approved'}
-                      className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 ${
-                        word.status === 'approved' 
-                          ? 'bg-green-100 text-green-600 dark:bg-green-900/30' 
-                          : 'bg-green-500 text-white hover:bg-green-600'
-                      }`}
-                      title="Approve"
-                    >
-                      <Check className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Needs Fix button */}
-                    <button
-                      onClick={() => updateStatusMutation.mutate({ word: word.chamorro, status: 'needs_fix' })}
-                      disabled={updateStatusMutation.isPending || word.status === 'needs_fix'}
-                      className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 ${
-                        word.status === 'needs_fix' 
-                          ? 'bg-red-100 text-red-600 dark:bg-red-900/30' 
-                          : 'bg-red-500 text-white hover:bg-red-600'
-                      }`}
-                      title="Needs Fix"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Record button */}
-                    <button
-                      onClick={() => setRecordingWord(word)}
-                      className="p-2.5 rounded-lg transition-colors bg-purple-500 text-white hover:bg-purple-600"
-                      title="Record pronunciation"
-                    >
-                      <Mic className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Regenerate button */}
-                    <button
-                      onClick={() => {
-                        if (editingWord === word.chamorro) {
-                          regenerateMutation.mutate({ word: word.chamorro, phonetic_hint: phoneticHint || undefined, provider: ttsProvider });
-                        } else {
-                          setEditingWord(word.chamorro);
-                          setPhoneticHint(word.phonetic_used);
-                        }
-                      }}
-                      disabled={regenerateMutation.isPending}
-                      className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 ${
-                        editingWord === word.chamorro 
-                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                          : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500'
-                      }`}
-                      title={editingWord === word.chamorro ? 'Confirm regenerate' : 'Regenerate'}
-                    >
-                      <RefreshCw className={`w-5 h-5 ${regenerateMutation.isPending && editingWord === word.chamorro ? 'animate-spin' : ''}`} />
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Phonetic hint input when editing */}
-                {editingWord === word.chamorro && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex flex-col gap-3">
-                      {/* TTS Provider selector */}
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TTS Provider:</span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setTtsProvider('elevenlabs')}
-                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                              ttsProvider === 'elevenlabs'
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            ElevenLabs ✨
-                          </button>
-                          <button
-                            onClick={() => setTtsProvider('openai')}
-                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                              ttsProvider === 'openai'
-                                ? 'bg-green-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            OpenAI
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Phonetic input */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <input
-                          type="text"
-                          placeholder={ttsProvider === 'elevenlabs' 
-                            ? "Phonetic hint (e.g., 'Haw-fa Ah-dye')" 
-                            : "Phonetic hint (e.g., 'Hawfa Adaee')"
-                          }
-                          value={phoneticHint}
-                          onChange={(e) => setPhoneticHint(e.target.value)}
-                          className="flex-1 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => regenerateMutation.mutate({ word: word.chamorro, phonetic_hint: phoneticHint || undefined, provider: ttsProvider })}
-                            disabled={regenerateMutation.isPending}
-                            className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                          >
-                            <RefreshCw className={`w-4 h-4 ${regenerateMutation.isPending ? 'animate-spin' : ''}`} />
-                            Regenerate
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingWord(null);
-                              setPhoneticHint('');
-                            }}
-                            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {ttsProvider === 'elevenlabs' 
-                        ? "ElevenLabs has better pronunciation. Use simple phonetic spelling like 'Haw-fa Ah-dye'."
-                        : "OpenAI TTS. Phonetic hint will be used directly without conversion."
-                      }
-                    </p>
-                  </div>
+                <option value="">All audio</option>
+                <option value="needs_review">Needs review</option>
+                <option value="approved">Reviewed</option>
+              </select>
+            </label>
+            <button className={`${button} mt-3 w-full`} onClick={() => setShowAdd(!showAdd)} aria-expanded={showAdd}>
+              <Plus size={16} />
+              Add a pilot phrase
+            </button>
+            {showAdd && (
+              <form
+                className="mt-4 space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  addItem.mutate();
+                }}
+              >
+                <label className="block text-sm">
+                  Chamorro text
+                  <input
+                    required
+                    maxLength={4096}
+                    className={field}
+                    value={newText}
+                    onChange={(e) => setNewText(e.target.value)}
+                  />
+                </label>
+                <label className="block text-sm">
+                  English meaning
+                  <input
+                    required
+                    maxLength={1000}
+                    className={field}
+                    value={newEnglish}
+                    onChange={(e) => setNewEnglish(e.target.value)}
+                  />
+                </label>
+                <p className="text-xs text-brown-600 dark:text-slate-300">
+                  Use source-backed text. Adding a pilot phrase does not publish a lesson or new learner audio.
+                </p>
+                {addItem.error && (
+                  <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+                    {addItem.error.message}
+                  </p>
                 )}
+                <button className={primary} disabled={addItem.isPending}>
+                  {addItem.isPending ? "Adding…" : "Add phrase"}
+                </button>
+              </form>
+            )}
+            {library.isLoading && (
+              <p role="status" className="py-6">
+                Loading audio library…
+              </p>
+            )}
+            {library.data?.words.length === 0 && (
+              <p className="py-6 text-sm">No matching audio. Try another word or add a pilot phrase.</p>
+            )}
+            <ul className="mt-4 max-h-[55vh] space-y-1 overflow-y-auto" aria-label="Words and phrases">
+              {library.data?.words.slice(0, limit).map((word) => (
+                <li key={word.chamorro}>
+                  <button
+                    aria-pressed={selected?.chamorro === word.chamorro}
+                    onClick={() => setSelected(word)}
+                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left hover:bg-cream-100 dark:hover:bg-slate-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-slate-700" : ""}`}
+                  >
+                    <span className="block font-semibold">{word.chamorro}</span>
+                    <span className="block text-sm text-brown-600 dark:text-slate-300">{word.english}</span>
+                    <span className="text-xs text-brown-500 dark:text-slate-400">
+                      {word.status === "approved" ? "Reviewed" : "Needs review"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {(library.data?.words.length || 0) > limit && (
+              <button className={`${button} mt-3 w-full`} onClick={() => setLimit(limit + 40)}>
+                Show more
+              </button>
+            )}
+          </section>
+          <section className="min-w-0" aria-label="Audio comparison">
+            {selected && library.data ? (
+              <>
+                <button className={`${button} mb-4 lg:hidden`} onClick={() => setSelected(null)}>
+                  <ArrowLeft size={16} />
+                  Back to library
+                </button>
+                <h2 ref={detailHeading} tabIndex={-1} className="break-words text-2xl font-bold outline-offset-4">
+                  {selected.chamorro}
+                </h2>
+                <p className="mb-5 mt-1 text-brown-600 dark:text-slate-300">{selected.english}</p>
+                <AudioComparison
+                  key={selected.chamorro}
+                  word={selected}
+                  config={library.data.config}
+                  request={request}
+                />
+              </>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-cream-300 p-8 text-brown-600 dark:border-slate-600 dark:text-slate-300">
+                Choose a word or phrase to hear its current audio and compare new candidates.
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Footer info */}
-        {words.length > 0 && (
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-            Showing {words.length} of {stats.total} words
-          </div>
-        )}
+            )}
+          </section>
+        </div>
       </div>
+    </AdminLayout>
+  );
+}
 
-      {/* Recording Modal */}
-      {recordingWord && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl">
-            {/* Modal Header */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Record Pronunciation
-                </h3>
+function AudioComparison({ word, config, request }: { word: Word; config: Library["config"]; request: RequestAPI }) {
+  const path = `/api/admin/audio/${encodeURIComponent(word.chamorro)}`;
+  const queryClient = useQueryClient();
+  const [model, setModel] = useState(config.default_model || "eleven_v4");
+  const [mode, setMode] = useState("original");
+  const [pronunciation, setPronunciation] = useState("");
+  const [message, setMessage] = useState("");
+  const [playing, setPlaying] = useState<string | null>(null);
+  const [playbackError, setPlaybackError] = useState("");
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const blobUrl = useRef<string | null>(null);
+  const playbackSequence = useRef(0);
+  const stop = useCallback(() => {
+    playbackSequence.current++;
+    if (audio.current) {
+      audio.current.onended = null;
+      audio.current.onerror = null;
+      audio.current.pause();
+    }
+    audio.current = null;
+    if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+    blobUrl.current = null;
+    setPlaying(null);
+  }, []);
+  useEffect(
+    () => () => {
+      playbackSequence.current++;
+      if (audio.current) {
+        audio.current.onended = null;
+        audio.current.onerror = null;
+        audio.current.pause();
+      }
+      if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
+    },
+    []
+  );
+  const play = async (id: string, source: string, privateAudio = false) => {
+    if (playing === id) {
+      stop();
+      return;
+    }
+    stop();
+    setPlaybackError("");
+    const sequence = playbackSequence.current;
+    try {
+      const url = privateAudio ? URL.createObjectURL(await (await request(source)).blob()) : source;
+      if (sequence !== playbackSequence.current) {
+        if (privateAudio) URL.revokeObjectURL(url);
+        return;
+      }
+      if (privateAudio) blobUrl.current = url;
+      const next = new Audio(url);
+      audio.current = next;
+      setPlaying(id);
+      next.onended = () => {
+        if (sequence === playbackSequence.current && audio.current === next) stop();
+      };
+      next.onerror = () => {
+        if (sequence !== playbackSequence.current || audio.current !== next) return;
+        stop();
+        setPlaybackError("This recording could not be played. Please try again.");
+      };
+      await next.play();
+    } catch (error) {
+      if (sequence === playbackSequence.current) {
+        stop();
+        setPlaybackError(error instanceof Error ? error.message : "Audio playback failed.");
+      }
+    }
+  };
+  const candidates = useQuery<{ candidates: Candidate[] }>({
+    queryKey: ["audio-candidates", word.chamorro],
+    queryFn: () => request(`${path}/candidates`).then(jsonResponse),
+  });
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["audio-candidates", word.chamorro] });
+    queryClient.invalidateQueries({ queryKey: ["admin-audio"] });
+  };
+  const generate = useMutation({
+    mutationFn: () =>
+      request(`${path}/regenerate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: config.models.find((item) => item.id === model)?.provider ?? "elevenlabs",
+          model,
+          input_mode: mode,
+          pronunciation: mode === "original" ? undefined : pronunciation,
+        }),
+      }).then(jsonResponse),
+    onSuccess: () => {
+      refresh();
+      setMessage("Candidate ready. Listen and review it before publishing.");
+    },
+  });
+  const publish = useMutation({
+    mutationFn: (id: string) => request(`${path}/candidates/${id}/publish`, { method: "POST" }).then(jsonResponse),
+    onSuccess: (result) => {
+      stop();
+      refresh();
+      setMessage(
+        result.manifest_synced === false
+          ? "Published audio is saved. Retry the distribution library sync above."
+          : "Published. Learners will hear this recording when the audio library refreshes."
+      );
+    },
+  });
+  const current = candidates.data?.candidates.find((candidate) => candidate.published);
+  const currentUrl = current ? `${path}/candidates/${current.id}/audio` : word.url;
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold">Current learner audio</h3>
+            <p className="text-sm text-brown-600 dark:text-slate-300">
+              {current
+                ? `Reviewed by ${current.reviewer_name} · ${current.dialect}`
+                : "Existing recording · native review pending"}
+            </p>
+          </div>
+          <button
+            className={button}
+            disabled={!currentUrl}
+            onClick={() => play("current", currentUrl, Boolean(current))}
+          >
+            {playing === "current" ? <Pause size={16} /> : <Play size={16} />}
+            {playing === "current" ? "Stop current audio" : "Play current audio"}
+          </button>
+        </div>
+      </div>
+      {playbackError && (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+          {playbackError}
+        </p>
+      )}
+      <form
+        className="space-y-4 rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"
+        onSubmit={(e) => {
+          e.preventDefault();
+          setMessage("");
+          generate.mutate();
+        }}
+      >
+        <h3 className="text-lg font-semibold">Create a comparison</h3>
+        <p className="text-sm text-brown-600 dark:text-slate-300">
+          Generate one private candidate at a time. Each request uses provider credits.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="text-sm font-semibold">
+            Speech model
+            <select
+              className={field}
+              value={model}
+              onChange={(e) => {
+                setModel(e.target.value);
+                if (e.target.value !== "eleven_v4" && mode === "ipa") setMode("original");
+              }}
+            >
+              {config.models.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-sm font-semibold">
+            Pronunciation input
+            <select className={field} value={mode} onChange={(e) => setMode(e.target.value)}>
+              <option value="original">Original Chamorro spelling</option>
+              {model === "eleven_v4" && <option value="ipa">IPA transcription</option>}
+              <option value="respelling">Pronunciation hint</option>
+            </select>
+          </label>
+        </div>
+        {mode !== "original" && (
+          <label className="block text-sm font-semibold">
+            {mode === "ipa" ? "IPA transcription" : "Pronunciation hint"}
+            <textarea
+              aria-label={mode === "ipa" ? "IPA transcription" : "Pronunciation hint"}
+              required
+              maxLength={4096}
+              rows={3}
+              className={field}
+              value={pronunciation}
+              onChange={(e) => setPronunciation(e.target.value)}
+            />
+            <span className="mt-1 block text-xs font-normal text-brown-600 dark:text-slate-300">
+              {mode === "ipa"
+                ? "Use a transcription checked by a qualified speaker or linguist. We add the synthesis delimiters for you."
+                : "This affects spoken audio only. The Chamorro spelling stays unchanged."}
+            </span>
+          </label>
+        )}
+        {generate.error && (
+          <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+            {generate.error.message}
+          </p>
+        )}
+        <button className={primary} disabled={generate.isPending}>
+          {generate.isPending ? "Generating candidate…" : "Generate candidate"}
+        </button>
+      </form>
+      <NativeRecording
+        path={path}
+        request={request}
+        onSaved={() => {
+          refresh();
+          setMessage("Native recording saved privately. Review it before publishing.");
+        }}
+        canRecord={config.can_record}
+      />
+      {message && (
+        <p
+          role="status"
+          className="rounded-xl bg-green-50 p-3 text-sm text-green-900 dark:bg-green-950 dark:text-green-200"
+        >
+          {message}
+        </p>
+      )}
+      {publish.error && (
+        <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+          {publish.error.message}
+        </p>
+      )}
+      <div>
+        <h3 className="text-lg font-semibold">Candidates</h3>
+        <p className="mb-4 text-sm text-brown-600 dark:text-slate-300">
+          Compare pronunciation first, then delivery. Publishing is a separate step after review.
+        </p>
+        {candidates.isLoading && <p role="status">Loading candidates…</p>}
+        {candidates.error && (
+          <p role="alert">
+            {candidates.error.message}
+            <button className={`${button} ml-2`} onClick={() => candidates.refetch()}>
+              Try again
+            </button>
+          </p>
+        )}
+        {candidates.data?.candidates.length === 0 && (
+          <p className="rounded-xl border border-dashed border-cream-300 p-5 text-sm dark:border-slate-600">
+            No candidates yet. Generate audio above or add a native recording.
+          </p>
+        )}
+        <div className="space-y-4">
+          {candidates.data?.candidates.map((candidate) => (
+            <article
+              key={candidate.id}
+              className="rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold">
+                    {candidate.provider === "human_recording"
+                      ? "Native recording"
+                      : (config.models.find((item) => item.id === candidate.model)?.label ?? candidate.model)}{" "}
+                    ·{" "}
+                    {candidate.input_mode === "ipa"
+                      ? "IPA"
+                      : candidate.input_mode === "respelling"
+                        ? "Pronunciation hint"
+                        : "Original spelling"}
+                  </h4>
+                  <p className="mt-1 text-xs text-brown-600 dark:text-slate-300">
+                    {new Date(candidate.created_at).toLocaleString()} ·{" "}
+                    {candidate.published
+                      ? "Published"
+                      : candidate.status === "approved"
+                        ? "Reviewed · ready to publish"
+                        : candidate.status === "rejected"
+                          ? "Rejected"
+                          : "Needs review"}
+                  </p>
+                </div>
                 <button
-                  onClick={closeRecordingModal}
-                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className={button}
+                  onClick={() => play(candidate.id, `${path}/candidates/${candidate.id}/audio`, true)}
                 >
-                  <X className="w-5 h-5" />
+                  {playing === candidate.id ? <Pause size={16} /> : <Play size={16} />}
+                  {playing === candidate.id ? "Stop candidate" : "Play candidate"}
                 </button>
               </div>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-6 space-y-6">
-              {/* Word to record */}
-              <div className="text-center">
-                <p className="text-3xl font-bold text-coral-600 dark:text-coral-400 mb-2">
-                  {recordingWord.chamorro}
+              <details className="mt-3 text-sm">
+                <summary className="min-h-11 cursor-pointer py-3">Synthesis text and review details</summary>
+                <p className="whitespace-pre-wrap break-words rounded-lg bg-cream-50 p-3 dark:bg-slate-900">
+                  {candidate.input_text}
                 </p>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {recordingWord.english}
-                </p>
-              </div>
-
-              {/* Recording visualization */}
-              <div className="flex flex-col items-center space-y-4">
-                {/* Recording button */}
-                {!recordedBlob ? (
+                {candidate.reviewer_name && (
+                  <p className="mt-2">
+                    Reviewed by {candidate.reviewer_name} · {candidate.dialect}
+                  </p>
+                )}
+                {candidate.notes && <p className="mt-2 whitespace-pre-wrap">{candidate.notes}</p>}
+              </details>
+              {candidate.status === "pending" && (
+                <CandidateReview
+                  candidate={candidate}
+                  path={path}
+                  request={request}
+                  onSaved={() => {
+                    refresh();
+                    setMessage("Review saved. Approved audio is ready for a separate publish step.");
+                  }}
+                />
+              )}
+              {candidate.status === "approved" && (
+                <div className="mt-3">
+                  <p className="mb-3 text-sm text-brown-600 dark:text-slate-300">
+                    {candidate.published
+                      ? "This is the current learner recording."
+                      : "Publishing replaces the current learner recording. Earlier reviewed candidates remain available to restore."}
+                  </p>
                   <button
-                    onClick={isRecording ? stopRecording : startRecording}
-                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                      isRecording
-                        ? 'bg-red-500 animate-pulse'
-                        : 'bg-purple-500 hover:bg-purple-600'
-                    }`}
+                    className={primary}
+                    disabled={candidate.published || publish.isPending}
+                    onClick={() => publish.mutate(candidate.id)}
                   >
-                    {isRecording ? (
-                      <Square className="w-10 h-10 text-white" />
-                    ) : (
-                      <Mic className="w-10 h-10 text-white" />
-                    )}
+                    <Check size={16} />
+                    {publish.isPending && publish.variables === candidate.id
+                      ? "Publishing…"
+                      : candidate.published
+                        ? "Published"
+                        : "Publish for learners"}
                   </button>
-                ) : (
-                  <div className="flex gap-4">
-                    <button
-                      onClick={playPreview}
-                      className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
-                        isPlayingPreview
-                          ? 'bg-coral-600'
-                          : 'bg-coral-500 hover:bg-coral-600'
-                      }`}
-                    >
-                      {isPlayingPreview ? (
-                        <Pause className="w-8 h-8 text-white" />
-                      ) : (
-                        <Play className="w-8 h-8 text-white" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setRecordedBlob(null);
-                        setRecordingDuration(0);
-                      }}
-                      className="w-16 h-16 rounded-full flex items-center justify-center bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <RefreshCw className="w-8 h-8 text-gray-700 dark:text-gray-200" />
-                    </button>
-                  </div>
-                )}
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-                {/* Duration / Status */}
-                <p className="text-lg font-mono text-gray-700 dark:text-gray-300">
-                  {isRecording ? (
-                    <span className="text-red-500">● Recording: {recordingDuration.toFixed(1)}s</span>
-                  ) : recordedBlob ? (
-                    <span className="text-green-500">✓ Recorded: {recordingDuration.toFixed(1)}s</span>
-                  ) : (
-                    <span className="text-gray-400">Tap to record</span>
-                  )}
-                </p>
-
-                {/* Instructions */}
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-                  {isRecording 
-                    ? 'Speak clearly, then tap to stop'
-                    : recordedBlob
-                    ? 'Preview your recording or re-record'
-                    : 'Make sure you\'re in a quiet environment'
-                  }
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex gap-3">
-              <button
-                onClick={closeRecordingModal}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={uploadRecording}
-                disabled={!recordedBlob || uploadRecordingMutation.isPending}
-                className="flex-1 px-4 py-3 rounded-xl bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
-              >
-                {uploadRecordingMutation.isPending ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5" />
-                    Save Recording
-                  </>
-                )}
-              </button>
-            </div>
+function CandidateReview({
+  candidate,
+  path,
+  request,
+  onSaved,
+}: {
+  candidate: Candidate;
+  path: string;
+  request: RequestAPI;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [dialect, setDialect] = useState("");
+  const [notes, setNotes] = useState("");
+  const [consent, setConsent] = useState(candidate.consent_reference || "");
+  const [confirmed, setConfirmed] = useState(false);
+  const [pronunciationScore, setPronunciationScore] = useState("");
+  const [naturalnessScore, setNaturalnessScore] = useState("");
+  const review = useMutation({
+    mutationFn: (status: string) =>
+      request(`${path}/candidates/${candidate.id}/review`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          reviewer_name: name,
+          dialect,
+          notes,
+          consent_reference: consent,
+          native_review_confirmed: confirmed,
+          pronunciation_score: pronunciationScore ? Number(pronunciationScore) : undefined,
+          naturalness_score: naturalnessScore ? Number(naturalnessScore) : undefined,
+        }),
+      }).then(jsonResponse),
+    onSuccess: onSaved,
+  });
+  return (
+    <div className="mt-3">
+      <button className={button} aria-expanded={open} onClick={() => setOpen(!open)}>
+        {open ? "Close review" : "Review this candidate"}
+      </button>
+      {open && (
+        <form
+          className="mt-4 space-y-4 border-t border-cream-200 pt-4 dark:border-slate-600"
+          onSubmit={(e) => {
+            e.preventDefault();
+            review.mutate("approved");
+          }}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold">
+              Chamorro reviewer name
+              <input
+                required
+                maxLength={200}
+                className={field}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            <label className="text-sm font-semibold">
+              Island / regional pronunciation
+              <input
+                required
+                maxLength={200}
+                className={field}
+                value={dialect}
+                onChange={(e) => setDialect(e.target.value)}
+                placeholder="Reviewer’s regional expertise"
+              />
+            </label>
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[
+              ["Pronunciation accuracy", pronunciationScore, setPronunciationScore],
+              ["Naturalness", naturalnessScore, setNaturalnessScore],
+            ].map(([label, value, setter]) => (
+              <label key={label as string} className="text-sm">
+                {label as string}
+                <select
+                  className={field}
+                  value={value as string}
+                  onChange={(e) => (setter as (value: string) => void)(e.target.value)}
+                >
+                  <option value="">Optional score</option>
+                  {[1, 2, 3, 4, 5].map((score) => (
+                    <option key={score} value={score}>
+                      {score} / 5
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+          <label className="block text-sm">
+            Review notes
+            <textarea
+              rows={2}
+              maxLength={2000}
+              className={field}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
+          </label>
+          {candidate.provider === "human_recording" && (
+            <label className="block text-sm font-semibold">
+              Speaker consent reference
+              <input
+                required
+                maxLength={500}
+                className={field}
+                value={consent}
+                onChange={(e) => setConsent(e.target.value)}
+              />
+              <span className="mt-1 block text-xs font-normal">
+                Reference permission for public use in HåfaGPT. Keep private consent documents outside this form.
+              </span>
+            </label>
+          )}
+          <label className="flex min-h-11 items-start gap-3 text-sm">
+            <input
+              className="mt-1 h-5 w-5 shrink-0"
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+            />
+            <span>
+              I listened to this exact recording and reviewed its pronunciation with the named qualified Chamorro
+              speaker.
+            </span>
+          </label>
+          {review.error && (
+            <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+              {review.error.message}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            <button className={primary} disabled={review.isPending || !confirmed}>
+              Approve review
+            </button>
+            <button
+              type="button"
+              className={button}
+              disabled={review.isPending || !notes.trim() || !name.trim() || !dialect.trim()}
+              onClick={() => review.mutate("rejected")}
+            >
+              Reject with notes
+            </button>
+          </div>
+          <p className="text-xs text-brown-600 dark:text-slate-300">
+            Approval records the review. Learners hear it only after you publish.
+          </p>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function NativeRecording({
+  path,
+  request,
+  onSaved,
+  canRecord,
+}: {
+  path: string;
+  request: RequestAPI;
+  onSaved: () => void;
+  canRecord: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [clip, setClip] = useState<Blob | null>(null);
+  const [consent, setConsent] = useState("");
+  const [error, setError] = useState("");
+  const [preview, setPreview] = useState("");
+  const startingRef = useRef(false);
+  const recordingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const stream = useRef<MediaStream | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (recordingTimer.current) clearTimeout(recordingTimer.current);
+      if (recorder.current) {
+        recorder.current.onstop = null;
+        if (recorder.current.state !== "inactive") recorder.current.stop();
+      }
+      stream.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+  useEffect(() => {
+    if (!clip) {
+      setPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(clip);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [clip]);
+  const start = async () => {
+    if (startingRef.current || recorder.current?.state === "recording") return;
+    startingRef.current = true;
+    setStarting(true);
+    setError("");
+    try {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder)
+        throw new Error("This browser cannot record audio. Upload a recording instead.");
+      const nextStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      if (!mounted.current) {
+        nextStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      stream.current = nextStream;
+      const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) =>
+        MediaRecorder.isTypeSupported(type)
+      );
+      const next = new MediaRecorder(nextStream, mime ? { mimeType: mime } : undefined);
+      recorder.current = next;
+      const chunks: BlobPart[] = [];
+      let bytes = 0;
+      next.ondataavailable = (event) => {
+        bytes += event.data.size;
+        chunks.push(event.data);
+        if (bytes > 5 * 1024 * 1024 && next.state !== "inactive") next.stop();
+      };
+      next.onstop = () => {
+        if (recordingTimer.current) clearTimeout(recordingTimer.current);
+        nextStream.getTracks().forEach((track) => track.stop());
+        if (mounted.current) {
+          setRecording(false);
+          if (bytes > 5 * 1024 * 1024) {
+            setClip(null);
+            setError("Recording exceeded 5 MB. Record a shorter clip.");
+          } else setClip(new Blob(chunks, { type: next.mimeType }));
+        }
+      };
+      next.start(1000);
+      setClip(null);
+      setRecording(true);
+      recordingTimer.current = setTimeout(() => {
+        if (next.state !== "inactive") next.stop();
+      }, 60000);
+    } catch (failure) {
+      stream.current?.getTracks().forEach((track) => track.stop());
+      setError(failure instanceof Error ? failure.message : "Microphone access failed.");
+    } finally {
+      startingRef.current = false;
+      if (mounted.current) setStarting(false);
+    }
+  };
+  const upload = useMutation({
+    mutationFn: () => {
+      const data = new FormData();
+      data.append("audio_file", clip!, clip?.type.includes("mp4") ? "recording.m4a" : "recording.webm");
+      data.append("consent_reference", consent);
+      return request(`${path}/upload-recording`, { method: "POST", body: data }).then(jsonResponse);
+    },
+    onSuccess: () => {
+      setClip(null);
+      setOpen(false);
+      onSaved();
+    },
+  });
+  return (
+    <section className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+      <button className={button} aria-expanded={open} onClick={() => setOpen(!open)} disabled={recording || starting}>
+        <Mic size={16} />
+        {open ? "Close native recording" : "Add a native recording"}
+      </button>
+      {open && (
+        <div className="mt-4 space-y-4">
+          <p className="text-sm text-brown-600 dark:text-slate-300">
+            Record a consenting speaker or upload a short recording (up to 60 seconds and 5 MB). It stays private until
+            reviewed and published.
+          </p>
+          {!canRecord && (
+            <p role="alert" className="text-sm">
+              Recording uploads are unavailable until the audio converter is installed on the API.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
+            <button
+              className={button}
+              disabled={!canRecord || upload.isPending || starting}
+              onClick={() => (recording ? recorder.current?.stop() : start())}
+            >
+              {recording ? <Square size={16} /> : <Mic size={16} />}
+              {starting ? "Opening microphone…" : recording ? "Stop recording" : "Record audio"}
+            </button>
+            <label className={`${button} cursor-pointer`}>
+              <Upload size={16} />
+              Choose audio file
+              <input
+                className="sr-only"
+                type="file"
+                accept="audio/*"
+                disabled={recording || starting || upload.isPending || !canRecord}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && file.size <= 5 * 1024 * 1024) {
+                    setClip(file);
+                    setError("");
+                  } else setError("Choose an audio file smaller than 5 MB.");
+                }}
+              />
+            </label>
+          </div>
+          {recording && <p role="status">Recording… Stop when the word or phrase is complete.</p>}
+          {preview && <audio controls src={preview} className="w-full" aria-label="Preview native recording" />}
+          <label className="block text-sm font-semibold">
+            Speaker consent reference
+            <input
+              className={field}
+              maxLength={500}
+              value={consent}
+              onChange={(e) => setConsent(e.target.value)}
+              placeholder="Permission record or agreement reference"
+            />
+          </label>
+          {(error || upload.error) && (
+            <p role="alert" className="text-sm text-red-700 dark:text-red-300">
+              {error || upload.error?.message}
+            </p>
+          )}
+          <button
+            className={primary}
+            disabled={!clip || recording || !consent.trim() || upload.isPending || !canRecord}
+            onClick={() => upload.mutate()}
+          >
+            {upload.isPending ? "Saving recording…" : "Save private candidate"}
+          </button>
         </div>
       )}
-    </AdminLayout>
+    </section>
   );
 }

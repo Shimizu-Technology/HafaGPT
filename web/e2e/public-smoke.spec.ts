@@ -7,6 +7,8 @@ const legacyRecoveryModule = readFile(
 );
 const currentBuiltHtml = readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
 
+const baselineAudioManifest = readFile(new URL('../public/audio_manifest.json', import.meta.url), 'utf8').then(JSON.parse);
+
 const promoStatus = {
   active: false,
   end_date: null,
@@ -19,6 +21,11 @@ const promoStatus = {
 async function mockPublicApi(page: Page) {
   await page.route('**/api/**', async (route) => {
     const url = new URL(route.request().url());
+
+    if (url.pathname === '/api/audio/manifest') {
+      await route.fulfill({ json: await baselineAudioManifest });
+      return;
+    }
 
     if (url.pathname === '/api/promo/status') {
       await route.fulfill({ json: promoStatus });

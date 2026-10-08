@@ -91,6 +91,8 @@ idna==3.18
     #   httpx
     #   httpx2
     #   requests
+imageio-ffmpeg==0.6.0
+    # via hafagpt-api (pyproject.toml)
 jiter==0.16.0
     # via openai
 jmespath==1.1.0
