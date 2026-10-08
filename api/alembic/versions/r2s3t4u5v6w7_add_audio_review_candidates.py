@@ -9,6 +9,11 @@ depends_on = None
 
 def upgrade():
     op.execute("""
+        CREATE TABLE audio_manifest_sync (
+            id SMALLINT PRIMARY KEY CHECK(id=1), revision BIGINT NOT NULL DEFAULT 0,
+            pending BOOLEAN NOT NULL DEFAULT false, synced_at TIMESTAMPTZ, last_error TEXT
+        );
+        INSERT INTO audio_manifest_sync(id) VALUES(1);
         CREATE TABLE audio_pilot_items (
             word TEXT PRIMARY KEY, english TEXT NOT NULL, created_by TEXT NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -45,3 +50,4 @@ def downgrade():
     op.drop_table("audio_publications")
     op.drop_table("audio_candidates")
     op.drop_table("audio_pilot_items")
+    op.drop_table("audio_manifest_sync")

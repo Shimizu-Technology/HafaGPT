@@ -28,6 +28,15 @@ class Store:
             raise KeyError(word)
         return {"english": "Hello", "file": "old.mp3"}
 
+    def preflight(self, word):
+        pass
+
+    def sync_status(self):
+        return {"pending": False}
+
+    def sync_manifest(self):
+        return {"success": True, "manifest_synced": True}
+
     def words(self):
         self.calls.append(("words",))
         return [{"chamorro": WORD, "english": "Hello", "tier": "1", "category": "greetings", "status": "needs_native_review", "url": "old.mp3"}]
@@ -78,6 +87,7 @@ def auth():
 
 @pytest.mark.parametrize("method,path,body", [
     ("get", "/api/admin/audio", None),
+    ("post", "/api/admin/audio/sync-manifest", None),
     ("get", f"/api/admin/audio/{WORD}/candidates", None),
     ("get", f"/api/admin/audio/{WORD}/candidates/{CANDIDATE}/audio", None),
     ("post", f"/api/admin/audio/{WORD}/regenerate", {}),
@@ -223,46 +233,58 @@ def approved_row(**overrides):
     return {"id": CANDIDATE, "word": WORD, "provider": "elevenlabs", "model": "eleven_v4", "voice_id": "voice", "input_mode": "original", "input_text": WORD, "settings": {}, "created_at": datetime.now(timezone.utc), "status": "approved", "reviewer_name": "Native speaker", "reviewed_by": "trusted-admin", "reviewed_at": datetime.now(timezone.utc), "dialect": "Guam", "notes": "Reviewed", "consent_reference": None, "native_review_confirmed": True, "pronunciation_score": 5, "naturalness_score": 4, "audio_bytes": AUDIO, "sha256": hashlib.sha256(AUDIO).hexdigest(), "snapshot": {"english": "Hello", "tier": 1, "category": "greetings"}, **overrides}
 
 
+class CursorContext:
+    def __init__(self, conn): self.conn = conn
+    def __enter__(self): return self.conn
+    def __exit__(self, *_): pass
+
+
 class Connection:
-    def __init__(self, row, state):
-        self.row = row
-        self.state = state
-        self.statements = []
-        self.staged = state["pointer"]
-        self.rolled_back = False
-    def __enter__(self):
-        return self
+    def __init__(self, row, state, fail_pointer=False, fail_sync=False):
+        self.row, self.state, self.staged = row, state, deepcopy(state)
+        self.fail_pointer, self.fail_sync = fail_pointer, fail_sync
+        self.statements, self.rolled_back = [], False
+    def __enter__(self): return self
     def __exit__(self, exception_type, *_):
         if exception_type:
             self.rolled_back = True
-        else:
-            self.state["pointer"] = self.staged
-    def cursor(self, **kwargs):
-        return self
+        elif (self.fail_pointer and any(sql.startswith("INSERT INTO audio_publications") for sql, _ in self.statements)) or (self.fail_sync and any("SET pending=false" in sql for sql, _ in self.statements)):
+            self.rolled_back = True
+            raise RuntimeError("private commit failure")
+        else: self.state.update(self.staged)
+    def cursor(self, **kwargs): return CursorContext(self)
     def execute(self, sql, params=None):
         self.statements.append((sql, params))
-        if sql.startswith("INSERT INTO audio_publications"):
-            self.staged = params[1]
+        if sql.startswith("INSERT INTO audio_publications"): self.staged["pointer"] = params[1]
+        if "SET revision=revision+1" in sql:
+            self.staged["revision"] += 1
+            self.staged["pending"] = True
+        if "SET pending=false" in sql: self.staged["pending"] = False
+        if "SET pending=true,last_error" in sql:
+            self.staged.update(pending=True,last_error="manifest_sync_failed")
     def fetchone(self):
+        if "SELECT revision FROM audio_manifest_sync" in self.statements[-1][0]: return {"revision": self.staged["revision"]}
         return self.row
     def fetchall(self):
-        return [{**self.row, "size_bytes": len(AUDIO)}]
+        assert self.staged["pointer"] == self.state["pointer"], "Export cannot precede commit"
+        return [{**self.row, "id": self.state["pointer"], "size_bytes": len(AUDIO)}]
 
 
-def publication_setup(monkeypatch, row, *, fail_manifest=False):
-    state = {"pointer": "previous-approved"}
-    connections = []
+def publication_setup(monkeypatch, row, fail_manifest=False, fail_pointer=False, fail_sync=False):
+    state = {"pointer": "previous-approved", "pending": False, "revision": 0, "last_error": None}
+    connections, writes = [], []
     def connect():
-        connection = Connection(row, state)
-        connections.append(connection)
-        return connection
+        conn = Connection(row, state, fail_pointer, fail_sync)
+        connections.append(conn)
+        return conn
     monkeypatch.setattr(review, "get_db_connection", connect)
     monkeypatch.setattr(review, "baseline_manifest", lambda: {"words": {WORD: {"file": "previous.mp3"}}, "total_words": 1})
-    writes = []
     def put_object(**kwargs):
         writes.append(kwargs)
-        if fail_manifest and kwargs["Key"] == "audio/manifest.json":
-            raise RuntimeError("private AWS failure")
+        if kwargs["Key"] == "audio/manifest.json":
+            import json
+            assert json.loads(kwargs["Body"])["words"][WORD]["candidate_id"] == str(state["pointer"])
+            if fail_manifest: raise RuntimeError("private AWS error")
     monkeypatch.setattr(review.boto3, "client", lambda *args, **kwargs: SimpleNamespace(put_object=put_object))
     return state, connections, writes
 
@@ -270,31 +292,46 @@ def publication_setup(monkeypatch, row, *, fail_manifest=False):
 @pytest.mark.parametrize("row", [approved_row(status="pending"), approved_row(reviewed_by=None), approved_row(native_review_confirmed=False)])
 def test_store_publication_gate_precedes_all_s3_writes(monkeypatch, row):
     state, connections, writes = publication_setup(monkeypatch, row)
-    with pytest.raises(review.ReviewConflict):
-        review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
+    with pytest.raises(review.ReviewConflict): review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
     assert writes == [] and state["pointer"] == "previous-approved"
     assert connections[0].rolled_back
 
 
-def test_failed_remote_manifest_rolls_back_pointer_and_keeps_prior_audio(monkeypatch):
+def test_failed_remote_manifest_keeps_committed_pointer_and_retry_outbox(monkeypatch):
     state, connections, writes = publication_setup(monkeypatch, approved_row(), fail_manifest=True)
-    with pytest.raises(RuntimeError):
-        review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
-    assert state["pointer"] == "previous-approved"
+    result = review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
+    assert result["success"] and not result["manifest_synced"]
+    assert state["pointer"] == CANDIDATE and state["pending"]
+    assert state["last_error"] == "manifest_sync_failed"
     assert writes[0]["Key"] == f"audio/candidate_{CANDIDATE}.mp3"
-    assert connections[0].rolled_back
-    assert any("publication_failed" in sql for sql, _ in connections[1].statements)
+    assert any("publication_error=%s" in sql and params[0] == "manifest_sync_failed" for conn in connections for sql, params in conn.statements)
 
 
-def test_publication_serializes_global_manifest_and_supports_retry_or_historical_republish(monkeypatch):
+def test_pointer_commit_failure_never_exports_uncommitted_manifest(monkeypatch):
+    state, connections, writes = publication_setup(monkeypatch, approved_row(), fail_pointer=True)
+    with pytest.raises(RuntimeError): review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
+    assert state["pointer"] == "previous-approved" and not state["pending"]
+    assert [write["Key"] for write in writes] == [f"audio/candidate_{CANDIDATE}.mp3"]
+
+
+def test_sync_commit_failure_exports_committed_pointer_and_retains_outbox(monkeypatch):
+    state, connections, writes = publication_setup(monkeypatch, approved_row(), fail_sync=True)
+    result = review.AudioReviewStore().publish(WORD, CANDIDATE, "admin")
+    assert not result["manifest_synced"] and state["pointer"] == CANDIDATE and state["pending"]
+    assert writes[-1]["Key"] == "audio/manifest.json"
+    assert any(conn.rolled_back for conn in connections)
+
+
+def test_publication_serializes_manifest_and_retries_historical_candidates(monkeypatch):
     state, connections, writes = publication_setup(monkeypatch, approved_row())
     store = review.AudioReviewStore()
-    first = store.publish(WORD, CANDIDATE, "admin")
-    second = store.publish(WORD, CANDIDATE, "admin")
+    first, second = store.publish(WORD, CANDIDATE, "admin"), store.publish(WORD, CANDIDATE, "admin")
     assert first == second and state["pointer"] == CANDIDATE
+    assert not state["pending"] and state["revision"] == 2
     assert {write["Key"] for write in writes} == {f"audio/candidate_{CANDIDATE}.mp3", "audio/manifest.json"}
-    assert all("pg_advisory_xact_lock" in connection.statements[1][0] for connection in connections)
-    assert all(connection.statements[1][1] == (review.PUBLICATION_LOCK,) for connection in connections)
+    for conn in connections:
+        if any("audio_publications" in sql or "SET pending=false" in sql for sql, _ in conn.statements):
+            assert any("pg_advisory_xact_lock" in sql and params == (review.PUBLICATION_LOCK,) for sql, params in conn.statements)
     assert all(write["Key"] != "audio/previous.mp3" for write in writes)
 
 
@@ -332,3 +369,42 @@ def test_public_playback_redirects_current_approved_pointer_without_caching():
     assert response.headers["location"] == f"https://audio.example/candidate_{CANDIDATE}.mp3"
     assert response.headers["cache-control"] == "no-store"
     assert browser.get("/api/audio/published/unknown", follow_redirects=False).status_code == 404
+
+
+def test_rejection_requires_notes_before_storage():
+    store = Store()
+    response = client(store).patch(f"/api/admin/audio/{WORD}/candidates/{CANDIDATE}/review", json={"status":"rejected","reviewer_name":"Reviewer","dialect":"Guam"}, headers=auth())
+    assert response.status_code == 422 and not store.calls
+
+
+def test_slash_word_binding_for_private_preview():
+    store = Store()
+    word = "Provided / item"
+    store.rows[(word,CANDIDATE)] = ({},AUDIO)
+    response = client(store).get(f"/api/admin/audio/{word}/candidates/{CANDIDATE}/audio", headers=auth())
+    assert response.status_code == 200 and response.content == AUDIO
+    assert store.calls[-1][1] == word
+
+
+def test_public_manifest_revalidates_and_sync_retry_requires_auth():
+    browser = client(Store())
+    assert browser.get("/api/audio/manifest").headers["cache-control"] == "no-cache"
+    assert browser.post("/api/admin/audio/sync-manifest", headers=auth()).json()["manifest_synced"]
+    assert not browser.get("/api/admin/audio",headers=auth()).json()["config"]["manifest_sync_pending"]
+
+
+def test_candidate_cap_uses_word_lock_before_blob_insert(monkeypatch):
+    conn = Connection({"candidate_count":50},{"pointer":None})
+    monkeypatch.setattr(review,"get_db_connection",lambda:conn)
+    with pytest.raises(review.ReviewConflict,match="50-candidate"):
+        review.AudioReviewStore().save(WORD,AUDIO,{}, {}, "admin")
+    assert "pg_advisory_xact_lock(hashtextextended" in conn.statements[0][0]
+    assert not any(sql.startswith("INSERT") for sql,_ in conn.statements)
+
+
+def test_safe_provider_access_error_remains_actionable(monkeypatch):
+    class SpeechGenerationError(RuntimeError): pass
+    def generate(*args,**kwargs): raise SpeechGenerationError("ElevenLabs is not configured. Ask the site administrator to check its API key.")
+    monkeypatch.setitem(sys.modules,"api.audio_synthesis",SimpleNamespace(generate_speech=generate,SpeechGenerationError=SpeechGenerationError))
+    response = client(Store()).post(f"/api/admin/audio/{WORD}/regenerate",json={},headers=auth())
+    assert response.status_code == 502 and "not configured" in response.json()["detail"]
