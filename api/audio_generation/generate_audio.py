@@ -52,7 +52,7 @@ OPENAI_TTS_VOICE = "shimmer"  # Best for Chamorro/Spanish sounds
 # ElevenLabs TTS settings
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 ELEVENLABS_VOICE_ID = os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL")  # "Sarah" - clear female voice
-ELEVENLABS_MODEL = "eleven_multilingual_v2"  # Best for non-English languages
+ELEVENLABS_MODEL = os.getenv("ELEVENLABS_MODEL") or "eleven_multilingual_v2"  # Best for non-English languages
 
 
 def load_pronunciation_dictionary() -> dict:
@@ -251,48 +251,15 @@ def generate_audio_openai(client: OpenAI, text: str, phonetic_hint: str = None) 
 
 def generate_audio_elevenlabs(text: str, phonetic_hint: str = None) -> bytes:
     """Generate audio using ElevenLabs TTS."""
-    if not ELEVENLABS_API_KEY:
-        raise ValueError("ELEVENLABS_API_KEY not set in environment")
-    
-    # Get pronunciation from: 1) hint, 2) dictionary, 3) original text
-    # For ElevenLabs, we prefer the pronunciation dictionary but don't apply auto-conversion
-    # because ElevenLabs handles pronunciation better with its multilingual model
-    if phonetic_hint:
-        text_to_speak = phonetic_hint
-    else:
-        # Check pronunciation dictionary first
-        pron_dict = load_pronunciation_dictionary()
-        if text in pron_dict:
-            text_to_speak = pron_dict[text]
-        else:
-            # Use original text (ElevenLabs multilingual handles it well)
-            text_to_speak = text
-    
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{ELEVENLABS_VOICE_ID}"
-    
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": ELEVENLABS_API_KEY
-    }
-    
-    data = {
-        "text": text_to_speak,
-        "model_id": ELEVENLABS_MODEL,
-        "voice_settings": {
-            "stability": 0.85,        # Higher = more consistent
-            "similarity_boost": 0.75,  # Balance between clarity and naturalness
-            "style": 0.0,             # No style exaggeration
-            "use_speaker_boost": True  # Improve clarity
-        }
-    }
-    
-    response = requests.post(url, json=data, headers=headers)
-    
-    if response.status_code != 200:
-        raise Exception(f"ElevenLabs API error: {response.status_code} - {response.text}")
-    
-    return response.content
+    from api.audio_synthesis import generate_speech
+    hint = phonetic_hint
+    if not hint and ELEVENLABS_MODEL != "eleven_v4":
+        hint = load_pronunciation_dictionary().get(text)
+    audio, _ = generate_speech(
+        text, model=ELEVENLABS_MODEL,
+        input_mode="respelling" if hint else "original", pronunciation=hint,
+    )
+    return audio
 
 
 def generate_audio(text: str, phonetic_hint: str = None, provider: str = None, openai_client: OpenAI = None) -> bytes:
@@ -705,55 +672,10 @@ def generate_single_word(word: str, phonetic: str = None, provider: str = None):
 
 def upload_to_s3():
     """Upload generated audio files to S3."""
-    print("📤 Uploading to S3...")
-    
-    try:
-        import boto3
-    except ImportError:
-        print("❌ boto3 not installed. Run: pip install boto3")
-        sys.exit(1)
-    
-    bucket = os.getenv("AWS_S3_BUCKET", "hafagpt")
-    
-    s3 = boto3.client(
-        's3',
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    raise RuntimeError(
+        "Direct publication is disabled. Create, review, and publish candidates in the pronunciation studio. "
+        "Generated local files are for research only; do not replace the learner manifest."
     )
-    
-    manifest = load_manifest()
-    audio_files = list(AUDIO_DIR.glob("*.mp3"))
-    
-    print(f"📁 Found {len(audio_files)} audio files")
-    
-    uploaded = 0
-    for filepath in audio_files:
-        key = f"audio/{filepath.name}"
-        try:
-            s3.upload_file(
-                str(filepath),
-                bucket,
-                key,
-                ExtraArgs={'ContentType': 'audio/mpeg'}
-            )
-            print(f"  ✅ Uploaded: {key}")
-            uploaded += 1
-        except Exception as e:
-            print(f"  ❌ Failed: {key} - {e}")
-    
-    # Upload manifest
-    try:
-        s3.upload_file(
-            str(MANIFEST_PATH),
-            bucket,
-            "audio/manifest.json",
-            ExtraArgs={'ContentType': 'application/json'}
-        )
-        print("  ✅ Uploaded: audio/manifest.json")
-    except Exception as e:
-        print(f"  ❌ Failed: audio/manifest.json - {e}")
-    
-    print(f"\n🎉 Uploaded {uploaded} files to s3://{bucket}/audio/")
 
 
 def main():

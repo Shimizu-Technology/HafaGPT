@@ -105,7 +105,10 @@ def test_admin_routes_fail_before_storage_access(method, path, body, role, heade
 
 
 def synthesis_stub(monkeypatch, function):
-    monkeypatch.setitem(sys.modules, "api.audio_synthesis", SimpleNamespace(generate_speech=function))
+    import api
+    stub = SimpleNamespace(generate_speech=function, SpeechGenerationError=type("SafeSpeechError", (RuntimeError,), {}))
+    monkeypatch.setitem(sys.modules, "api.audio_synthesis", stub)
+    monkeypatch.setattr(api, "audio_synthesis", stub, raising=False)
 
 
 def test_generation_saves_private_candidate_with_original_snapshot_and_trusted_creator(monkeypatch):

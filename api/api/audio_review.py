@@ -78,15 +78,33 @@ def validate_audio(audio: bytes) -> bytes:
     return audio
 
 
+def ffmpeg_executable() -> str | None:
+    system = shutil.which("ffmpeg")
+    if system:
+        return system
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except (ImportError, RuntimeError, OSError):
+        return None
+
+
 def normalize_recording(audio: bytes) -> bytes:
     validate_audio(audio)
-    # Pipe input/output: user-supplied filenames never become filesystem paths.
+    executable = ffmpeg_executable()
+    if not executable:
+        raise ValueError("Audio conversion is unavailable")
+    # Only pipe input is allowed: playlists cannot fetch URLs or local files.
     result = subprocess.run(
-        ["ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-i", "pipe:0",
-         "-t", "60", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", "44100", "-ac", "1",
+        [executable, "-nostdin", "-hide_banner", "-loglevel", "error", "-protocol_whitelist", "pipe", "-i", "pipe:0",
+         "-t", "61", "-progress", "pipe:2", "-threads", "1", "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ar", "44100", "-ac", "1",
          "-b:a", "128k", "-f", "mp3", "pipe:1"],
         input=audio, capture_output=True, timeout=30, check=True,
     )
+    durations = [int(line.split("=", 1)[1]) for line in result.stderr.decode("utf-8", errors="replace").splitlines()
+                 if line.startswith("out_time_us=") and line.split("=", 1)[1].isdigit()]
+    if durations and max(durations) > 60500000:
+        raise ValueError("Recording must be at most 60 seconds")
     return validate_audio(result.stdout)
 
 
@@ -340,7 +358,7 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
         def normalized(text):
             return text.lower().replace("å", "a").replace("ñ", "n").replace("'", "").replace("-", " ")
         filtered = [word for word in words if (not status_filter or word["status"] == status_filter or (status_filter == "needs_review" and word["status"] == "needs_native_review")) and (not tier_filter or word["tier"] == tier_filter) and (not search or normalized(search) in normalized(word["chamorro"]) or normalized(search) in normalized(word["english"]))]
-        return {"words": filtered, "total": len(filtered), "stats": stats, "config": {"manifest_sync_pending": sync["pending"], "default_model": "eleven_v4", "voice_id": os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"), "models": MODELS, "can_record": bool(shutil.which("ffmpeg")), "elevenlabs_configured": bool(os.getenv("ELEVENLABS_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY"))}}
+        return {"words": filtered, "total": len(filtered), "stats": stats, "config": {"manifest_sync_pending": sync["pending"], "default_model": "eleven_v4", "voice_id": os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"), "models": MODELS, "can_record": bool(ffmpeg_executable()), "elevenlabs_configured": bool(os.getenv("ELEVENLABS_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY"))}}
 
     @router.post("/api/admin/audio/sync-manifest")
     async def synchronize_manifest(authorization: str | None = Header(None)):
@@ -403,8 +421,8 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
             audio = await audio_file.read(MAX_AUDIO_BYTES + 1)
             validate_audio(audio)
             audio = await run_in_threadpool(normalize_recording, audio)
-        except ValueError:
-            raise HTTPException(413, "Recording must be nonempty and at most 5 MB") from None
+        except ValueError as error:
+            raise HTTPException(413, str(error)) from None
         except Exception:
             raise HTTPException(422, "Recording could not be normalized; existing audio is unchanged") from None
         finally:

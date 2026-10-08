@@ -13,39 +13,52 @@ export type SpeechPlaybackSource = 'reviewed' | 'generated' | 'device';
 // Pre-generated audio manifest (loaded from S3)
 // Maps Chamorro text to filename
 const STATIC_AUDIO_BASE_URL = 'https://hafagpt.s3.ap-southeast-2.amazonaws.com/audio/';
-let staticAudioManifest: Record<string, string> | null = null;
-let manifestLoaded = false;
-let manifestLoading = false;
+let staticAudioManifest: Record<string, { file: string; url?: string; reviewed: boolean }> | null = null;
+let manifestLoadedAt = 0;
+let manifestLoading: Promise<void> | null = null;
 
-/**
- * Load the pre-generated audio manifest from S3
- */
+/** Refresh approved publication pointers; bundled baseline preserves offline audio. */
 async function loadStaticAudioManifest(): Promise<void> {
-  if (manifestLoaded || manifestLoading) return;
-  
-  manifestLoading = true;
-  try {
-    // Add cache-buster to manifest fetch to get latest version
-    const response = await fetch(`${STATIC_AUDIO_BASE_URL}manifest.json?t=${Date.now()}`);
-    if (response.ok) {
-      const manifest = await response.json();
-      staticAudioManifest = {};
-      // Update manifest load time for cache-busting audio URLs
-      manifestLoadTime = Date.now();
-      // Build lookup: Chamorro text -> filename
-      for (const [text, info] of Object.entries(manifest.words || {})) {
-        staticAudioManifest[text] = (info as { file: string }).file;
-        // Also add lowercase version for case-insensitive matching
-        staticAudioManifest[text.toLowerCase()] = (info as { file: string }).file;
+  if (Date.now() - manifestLoadedAt < 60000) return;
+  if (manifestLoading) return manifestLoading;
+  manifestLoading = (async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/audio/manifest`, { signal: controller.signal, cache: 'no-cache' });
+      if (!response.ok) throw new Error('Audio library unavailable');
+      applyManifest(await response.json());
+    } catch {
+      // Keep a previous authoritative manifest on transient failures. At first
+      // load use the synchronized baseline, without claiming native review.
+      if (!staticAudioManifest) {
+        try {
+          const fallbackController = new AbortController();
+          const fallbackTimeout = window.setTimeout(() => fallbackController.abort(), 3000);
+          try {
+            const fallback = await fetch('/audio_manifest.json', { signal: fallbackController.signal });
+            if (fallback.ok) applyManifest(await fallback.json());
+          } finally { window.clearTimeout(fallbackTimeout); }
+        } catch { /* Device/generated fallback remains available. */ }
       }
-      console.log(`📋 Loaded static audio manifest: ${Object.keys(staticAudioManifest).length / 2} words`);
-    }
-  } catch (error) {
-    console.warn('⚠️ Failed to load static audio manifest:', error);
-  } finally {
-    manifestLoaded = true;
-    manifestLoading = false;
+      // Retry on the next interaction after a short cooldown.
+      manifestLoadedAt = Date.now() - 50000;
+    } finally { window.clearTimeout(timeout); manifestLoading = null; }
+  })();
+  return manifestLoading;
+}
+
+function applyManifest(manifest: { words?: Record<string, { file: string; url?: string; review_status?: string; reviewed_by?: string; reviewed_at?: string; reviewer_name?: string; dialect?: string }> }) {
+  const next: NonNullable<typeof staticAudioManifest> = {};
+  for (const [text, entry] of Object.entries(manifest.words || {})) {
+    if (!entry.file) continue;
+    const reviewed = entry.review_status === 'approved' && Boolean(entry.reviewed_by && entry.reviewed_at && entry.reviewer_name && entry.dialect);
+    next[text] = { file: entry.file, url: entry.url, reviewed };
+    next[text.toLowerCase()] = { file: entry.file, url: entry.url, reviewed };
   }
+  staticAudioManifest = next;
+  manifestLoadedAt = Date.now();
+  manifestLoadTime = Date.now();
 }
 
 /**
@@ -58,10 +71,14 @@ function getStaticAudioUrl(text: string): string | null {
   if (!staticAudioManifest) return null;
   
   // Try exact match first, then lowercase
-  const filename = staticAudioManifest[text] || staticAudioManifest[text.toLowerCase()];
+  const entry = staticAudioManifest[text] || staticAudioManifest[text.toLowerCase()];
+  const filename = entry?.file;
   if (filename) {
     // Add cache-buster to ensure we get the latest audio after regeneration
-    return `${STATIC_AUDIO_BASE_URL}${filename}?v=${manifestLoadTime}`;
+    const url = new URL(entry.url || `${STATIC_AUDIO_BASE_URL}${filename}`);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    url.searchParams.set('v', String(manifestLoadTime));
+    return url.toString();
   }
   return null;
 }
@@ -503,13 +520,16 @@ export function useSpeech() {
     text: string,
     isCurrent: () => boolean = playbackStillCurrent,
   ): Promise<boolean> => {
+    await loadStaticAudioManifest();
+    if (!isCurrent()) return false;
     const staticUrl = getStaticAudioUrl(text);
     if (!staticUrl) return false;
     
     try {
       console.log(`🎯 Playing pre-generated audio: "${text}"`);
       setIsSpeaking(true);
-      setPlaybackSource('reviewed');
+      const entry = staticAudioManifest?.[text] || staticAudioManifest?.[text.toLowerCase()];
+      setPlaybackSource(entry?.reviewed ? 'reviewed' : 'generated');
       
       // Stop any currently playing audio
       if (audioRef.current) {

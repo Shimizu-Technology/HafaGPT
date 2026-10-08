@@ -1,276 +1,105 @@
-# 🔊 How HåfaGPT's Text-to-Speech (TTS) Works
+# Pronunciation audio and the Eleven v4 studio
 
-> A guide to understanding the pronunciation features across the app.
+The admin pronunciation studio lives at `/admin/audio`. It compares private
+candidates before a reviewed recording becomes learner audio. Existing vocabulary,
+flashcard, game, story, and tutor speaker controls continue to use `useSpeech`.
 
----
+## Create, review, publish
 
-## 📖 What is TTS?
+1. Find a word in the library, or add a source-backed pilot phrase.
+2. Play its current learner recording. Generate a candidate with Eleven v4,
+   Multilingual v2, or the OpenAI baseline. Each generation uses provider credits.
+3. Choose original spelling, an explicit pronunciation hint, or IPA with v4.
+   A qualified speaker or linguist must verify the IPA; the app does not invent it.
+4. Compare candidates and authentic reference recordings. Rate pronunciation
+   separately from naturalness. Repeat difficult examples to check consistency.
+5. Record the qualified Chamorro reviewer's name, regional expertise, notes,
+   optional scores, and confirmation that this exact candidate was reviewed.
+6. Approve the review, then explicitly select **Publish for learners**.
 
-Text-to-Speech (TTS) converts written text into spoken audio. HåfaGPT uses TTS to help users hear Chamorro pronunciation in:
+A consenting speaker can record in the browser or upload an audio file. Recordings
+are limited to 60 seconds and 5 MB, normalized to MP3, and saved privately for
+review. Reference the permission for public use without pasting private consent
+documents into the interface. Uploading never publishes the recording.
 
-- **Vocabulary Browser** - Click speaker icon to hear words
-- **Flashcards** - Hear pronunciation while studying
-- **Games** - Audio feedback and word pronunciation
-- **Stories** - Listen to Chamorro text
-- **Word of the Day** - Hear the daily word
-- **Quizzes** - Hear questions and answer options
+Publication preserves previous approved candidates. To restore an earlier
+recording, publish that reviewed candidate again. Reviewed candidates are
+immutable; create a new candidate to change audio or review evidence.
 
----
+## Storage and recovery
 
-## 🏗️ Architecture Overview (Current)
+PostgreSQL stores private candidate bytes, exact synthesis input, provider/model,
+voice/settings, creator identity, review evidence, and current publication pointers.
+Admin preview endpoints require normal Clerk admin authorization and return
+`Cache-Control: no-store`. Lists never return audio bytes.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                     TTS ARCHITECTURE (2026)                              │
-└─────────────────────────────────────────────────────────────────────────┘
+Only approved candidates with native-review evidence can be published. Publication
+uploads an immutable `audio/candidate_<uuid>.mp3` file to S3, then commits the
+publication pointer and a durable manifest-sync request. A separate, globally
+serialized sync exports committed publication state to S3. If sync fails, the
+pointer remains durable and the studio offers **Retry library sync**. Repeated
+syncs and historical republishing are safe. No pending recording becomes learner
+audio during a failed generation or publication.
 
-    USER CLICKS         useSpeech.ts                  AUDIO SOURCE
-    SPEAKER ICON        ┌───────────────┐
-        │               │               │
-        │               │  1. Check     │     ┌─────────────────────┐
-        ▼               │     manifest  │────▶│  S3 Pre-Generated   │
-   ┌─────────┐          │               │     │  (712 words)        │
-   │   🔊    │          │  2. If found, │     │  - Instant playback │
-   │  Icon   │          │     play S3   │     │  - Consistent audio │
-   └─────────┘          │               │     └─────────────────────┘
-                        │  3. If not,   │
-                        │     call API  │     ┌─────────────────────┐
-                        │               │────▶│  OpenAI TTS API     │
-                        │  4. Cache     │     │  - /api/tts         │
-                        │     result    │     │  - Phonetic preproc │
-                        │               │     └─────────────────────┘
-                        │  5. Fallback  │
-                        │     browser   │     ┌─────────────────────┐
-                        │               │────▶│  Browser Speech     │
-                        └───────────────┘     │  (Web Speech API)   │
-                                              └─────────────────────┘
-```
+The public `/api/audio/manifest` is authoritative: it merges the checked-in baseline
+with approved database publication pointers. `useSpeech` refreshes it during use
+and retains the synchronized bundled baseline for API/offline failures. Public
+metadata includes the language reviewer's name and region, not private consent
+references or administrative Clerk IDs. Legacy entries without reviewer evidence
+are not represented as reviewed.
 
----
+The two checked-in manifests remain synchronized baseline fixtures. Runtime admin
+writes do not modify checkout files or require committing generated audio, user
+records, or production exports. The S3 runtime manifest is a distribution copy of
+the authoritative API state.
 
-## 🎯 Three TTS Sources (Priority Order)
+## Configuration
 
-### 1. Pre-Generated Audio (S3) - **Preferred**
+- `ELEVENLABS_API_KEY`: existing generation-enabled key; never expose it to the web.
+- `ELEVENLABS_VOICE_ID`: shared voice for live, batch, and admin synthesis.
+- `ELEVENLABS_MODEL`: default batch/live model, initially `eleven_multilingual_v2`.
+- `ELEVENLABS_LIVE_MODEL`: optional live override; remains v2 until evaluation passes.
+- The studio explicitly selects `eleven_v4` by default. V4 original/IPA input
+  bypasses the legacy automatic respelling.
+- Existing S3 and PostgreSQL configuration is reused. Render runs the additive
+  Alembic migration before deploying the API.
+- The API includes a packaged FFmpeg converter, with the system converter preferred
+  when available. Conversion failure rejects the upload; it never publishes raw
+  bytes mislabeled as MP3.
 
-For 712 core vocabulary words, we have pre-generated audio stored in S3 for instant, consistent playback.
+The historical batch generator uses the shared synthesis service, but direct S3
+upload is disabled. Its local outputs are research artifacts. Use the studio's
+private-candidate and approval flow for production publication.
 
-**Coverage:**
-| Category | Words | Description |
-|----------|-------|-------------|
-| Games & UI | 73 | All game words, feedback phrases ("Bunitu!", "Tåya'!") |
-| Dictionary | 500 | Most common vocabulary words |
-| Flashcards | 142 | All curated flashcard decks |
-| **Total** | **712** | Core learning features |
+## Pronunciation pilot
 
-**Why Pre-Generated?**
-- ✅ **100% consistent** - Same audio every time
-- ✅ **Instant playback** - No API latency
-- ✅ **No per-request cost** - Audio already generated
-- ✅ **Works offline** - If cached by browser
-- ✅ **Manually reviewable** - Can improve individual words
+Start with 30 troublesome existing words and 10 source-backed sentences, chosen
+with qualified speakers. Compare current v2, v4 original spelling, and verified
+IPA. Keep the voice constant initially. Two independent qualified reviewers should
+assess the pilot, including glottal stops, stress, diacritics, words inside sentences,
+and regional variants. Resolve disagreements before promoting a wider library.
 
-**How it works:**
-1. `useSpeech.ts` loads `audio_manifest.json` on app start
-2. When speaking a word, check if it's in the manifest
-3. If found → play directly from S3 URL
-4. Audio files stored at `https://hafagpt.s3.amazonaws.com/audio/`
+Model access and a successful synthesis request establish technical integration;
+they do not establish Chamorro pronunciation accuracy. No new language approval is
+created automatically by this release.
 
-### 2. OpenAI TTS API (Fallback)
+## Verification
 
-For words not in the pre-generated library, we call OpenAI's TTS API in real-time.
+Run `./scripts/check.sh`. Focused backend and interface tests cover auth,
+word/candidate binding (including slash-containing words), input modes, review
+requirements, private playback, publication and sync recovery, and separate approval
+and publish actions.
 
-**Configuration:**
-- **Model**: `tts-1` (standard, 2x faster than HD)
-- **Voice**: `shimmer` (female, good for Spanish/Chamorro sounds)
-- **Phonetic preprocessing**: Converts Chamorro → English-like pronunciation
-
-**Phonetic Preprocessing:**
-```python
-# Backend: api/main.py
-def chamorro_to_phonetic(text):
-    # Y → dz (Chamorro Y sounds like "dz")
-    # CH → ts (softer than English "ch")
-    # Å → aw (open back rounded vowel)
-    # Ñ → ny (like Spanish ñ)
-    # Glottal stop (') → handled naturally
-```
-
-**Examples:**
-| Chamorro | Phonetic | Sounds Like |
-|----------|----------|-------------|
-| Håfa | Hawfa | "Haw-fa" |
-| Yanggen | Dzanggen | "Jahng-gen" |
-| Chålan | Tsawlan | "Tsah-lan" |
-| Maila' | Maila | "My-la" |
-
-### 3. Browser Speech API (Last Resort)
-
-If OpenAI TTS fails (network error, rate limit), fall back to browser's Web Speech API.
-
-```typescript
-// Uses Spanish locale for better å/ñ sounds
-utterance.lang = 'es-ES';
-utterance.rate = 0.85;  // Slower for clarity
-```
-
-**Pros:** Free, works offline
-**Cons:** Quality varies by browser, less natural
-
----
-
-## 🔧 Implementation: useSpeech Hook
-
-All TTS functionality is centralized in `useSpeech.ts`:
-
-```typescript
-// web/src/hooks/useSpeech.ts
-
-const { speak, preload, isSpeaking, clearCache } = useSpeech();
-
-// Speak a word (checks manifest first, then API)
-await speak('Håfa Adai');
-
-// Preload for instant playback later
-await preload('Bunitu!');
-
-// Force fresh audio (bypass cache)
-await speakFresh('Håfa Adai');
-```
-
-**Features:**
-- **Manifest priority** - Pre-generated audio played first
-- **Aggressive caching** - API responses cached in memory
-- **Audio validation** - Rejects truncated audio before caching
-- **Previous audio cancellation** - Stops current audio before new
-- **Promise deduplication** - Multiple calls = one API request
-
----
-
-## 📁 Key Files
-
-| File | Purpose |
-|------|---------|
-| **Frontend** | |
-| `src/hooks/useSpeech.ts` | Main TTS hook with manifest, caching, fallback |
-| `public/audio_manifest.json` | List of pre-generated words + S3 URLs |
-| `src/components/TTSDisclaimer.tsx` | "Pronunciation may vary" disclaimer |
-| **Backend** | |
-| `api/main.py` → `/api/tts` | OpenAI TTS endpoint with phonetic preprocessing |
-| `audio_generation/manifest.json` | Master manifest (source of truth) |
-| `audio_generation/generate_audio.py` | Script to generate + upload to S3 |
-
----
-
-## 🎵 Pre-Generated Audio Management
-
-### Adding New Words
+Real PostgreSQL transaction tests are opt-in and require a disposable local database:
 
 ```bash
-cd api && source .venv/bin/activate
-
-# Generate single word
-python -m audio_generation.generate_audio --word "Bunitu"
-
-# Generate + upload flashcard words
-python -m audio_generation.generate_audio --flashcards --upload
-
-# Generate tier 2 dictionary words
-python -m audio_generation.generate_audio --tier 2 --upload
-
-# Preview what would be generated (no actual generation)
-python -m audio_generation.generate_audio --flashcards --dry-run
+cd api
+AUDIO_REVIEW_TEST_DATABASE_URL=postgresql://localhost/hafagpt_audio_qa \
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q \
+  tests/test_audio_review_postgres.py
 ```
 
-### Manifest Format
-
-```json
-{
-  "version": 1,
-  "last_updated": "2026-01-09",
-  "total_words": 712,
-  "words": {
-    "Håfa Adai": {
-      "file": "hafa_adai.mp3",
-      "english": "Hello",
-      "category": "greetings",
-      "tier": 1,
-      "phonetic_used": "Hawfa Adai",
-      "size_bytes": 15360,
-      "generated_at": "2026-01-05"
-    }
-  }
-}
-```
-
-### After Adding Words
-
-1. Copy manifest to frontend: `cp audio_generation/manifest.json ../web/public/audio_manifest.json`
-2. Commit both repos
-3. Push to deploy
-
----
-
-## 💰 Cost Considerations
-
-| Method | Cost | Quality | Speed | Use Case |
-|--------|------|---------|-------|----------|
-| **Pre-Generated (S3)** | $0 (already generated) | ⭐⭐⭐⭐⭐ | Instant | Core vocab (712 words) |
-| **OpenAI TTS API** | ~$0.015/1K chars | ⭐⭐⭐⭐ | ~1-2s | New words, chat |
-| **Browser Speech** | Free | ⭐⭐⭐ | Instant | Fallback only |
-
-**Monthly TTS Costs:** ~$0.50-2 (most words pre-generated)
-
----
-
-## 🐛 Common Issues & Fixes
-
-### Issue: Inconsistent pronunciation
-
-**Cause:** OpenAI TTS is non-deterministic - slightly different each time.
-
-**Fix:** Pre-generated audio solves this. For non-pre-generated words, we cache the first successful response.
-
-### Issue: Word sounds truncated
-
-**Cause:** OpenAI occasionally returns incomplete audio.
-
-**Fix:** Audio validation before caching - rejects if duration < expected minimum.
-
-### Issue: No audio on mobile
-
-**Cause:** Mobile browsers require user interaction before playing audio.
-
-**Fix:** TTS is always triggered by user click (speaker icon), never automatically.
-
-### Issue: Audio overlaps
-
-**Cause:** User clicks multiple speaker icons quickly.
-
-**Fix:** `useSpeech.ts` stops previous audio before starting new.
-
----
-
-## 💡 Future Improvements
-
-- [x] Pre-generated audio for core vocabulary (712 words)
-- [x] Phonetic preprocessing for better pronunciation
-- [x] Aggressive caching for API responses
-- [x] Audio validation before caching
-- [ ] **ElevenLabs voice cloning** - Clone native Chamorro speaker
-- [ ] **Native speaker recordings** - Partner with Chamorro community
-- [ ] **Expand pre-generated library** - Story vocabulary, more dictionary words
-- [ ] **Custom TTS model** - Train on Chamorro audio (long-term)
-
----
-
-## 📖 Pronunciation Disclaimer
-
-Since AI TTS doesn't natively understand Chamorro, we show a disclaimer:
-
-> **Note on Pronunciation:** This uses AI text-to-speech, which may not perfectly capture Chamorro pronunciation. For authentic pronunciation, we recommend consulting native speakers or educational resources like [LearningChamoru.com](https://learningchamoru.com).
-
-This appears in the `TTSDisclaimer.tsx` component as a tooltip or banner.
-
----
-
-**Questions?** Check the [IMPROVEMENT_GUIDE.md](./IMPROVEMENT_GUIDE.md) for TTS roadmap and status! 🌺
+The tests create and remove their own schema. They replace S3 transport with a
+controlled test double and never publish language approvals or recordings to
+production. Browser QA uses existing development Clerk admin authentication;
+there is no development-token bypass in the shipped application.
