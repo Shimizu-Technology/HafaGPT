@@ -468,7 +468,7 @@ def get_conversation_messages(conversation_id: str, user_id: Optional[str] = Non
                 messages.append(MessageResponse(
                     id=row[0],
                     role="user",
-                    pending_id=row[12],
+                    pending_id=row[12] if user_id is not None else None,
                     edit_protocol="atomic-v1" if edit_revision and role in (None, "user") else None,
                     edit_revision=edit_revision if role in (None, "user") else None,
                     content=row[2],
@@ -492,7 +492,7 @@ def get_conversation_messages(conversation_id: str, user_id: Optional[str] = Non
                 messages.append(MessageResponse(
                     id=row[0],
                     role="assistant",
-                    pending_id=row[12],
+                    pending_id=row[12] if user_id is not None else None,
                     content=row[3],
                     timestamp=row[4],
                     sources=sources,
