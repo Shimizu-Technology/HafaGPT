@@ -385,6 +385,29 @@ describe('Chat stable conversation route', () => {
     }
   });
 
+  it('never mistakes an earlier identical question for the reply being recovered', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.realMessages = true;
+      const earlier = [
+        { id: 3, role: 'user', content: 'Test message', timestamp: '2026-10-15T00:00:00Z' },
+        { id: 3, role: 'assistant', content: 'Earlier reply', timestamp: '2026-10-15T00:00:01Z' },
+      ];
+      state.messages = earlier;
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_6'));
+      state.checkReplyStatus.mockResolvedValueOnce('complete');
+      renderChat('/chat/conv-a');
+      state.queryClient!.setQueryData(['messages', 'conv-a', 'user-1'], earlier);
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+      expect(await screen.findByText(/Your reply was saved but couldn’t be shown right now/)).toBeInTheDocument();
+      expect(screen.getAllByText('Test message')).toHaveLength(2);
+      expect(screen.getAllByText('Earlier reply')).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps the exchange when the reply status cannot be confirmed', async () => {
     state.realMessages = true;
     state.createConversation.mockResolvedValue({ id: 'conv-created' });

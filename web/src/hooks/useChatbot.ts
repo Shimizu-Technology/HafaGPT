@@ -529,7 +529,11 @@ export function useChatbot() {
   /** Ask the API what happened to a reply whose connection dropped. */
   const checkReplyStatus = async (pendingId: string, signal?: AbortSignal): Promise<ReplyStatus> => {
     const token = await getToken();
-    if (!token) throw new Error('Sign in again to check this reply.');
+    if (!token) {
+      // Offline, sign-in cannot refresh its token: treat it like a network drop.
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new TypeError('Sign-in token unavailable offline');
+      throw new Error('Sign in again to check this reply.');
+    }
     const response = await fetch(`${API_URL}/api/chat/requests/${encodeURIComponent(pendingId)}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',

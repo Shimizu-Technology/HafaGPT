@@ -45,6 +45,8 @@ interface ReplyRecovery {
   controller: AbortController;
   /** Set when the learner presses Stop; resolves whether the server received it. */
   cancelled?: Promise<boolean>;
+  /** The server outcome is known; only the saved copy is still loading. */
+  settled?: boolean;
 }
 
 interface SendAttempt {
@@ -66,11 +68,20 @@ interface SendAttempt {
 // The API saves failed replies with a bracketed marker instead of reply text.
 const FAILED_REPLY = /^\[(?:Error:|Token limit exceeded)/;
 
-/** Whether a saved transcript ends with this question and a reply to it. */
-function transcriptHasExchange(saved: ConversationMessage[], message: string): boolean {
-  const lastQuestion = saved.map(row => row.role).lastIndexOf('user');
-  return lastQuestion >= 0 && saved[lastQuestion].content === message
-    && saved.slice(lastQuestion + 1).some(row => row.role === 'assistant');
+/**
+ * Whether a saved transcript contains this question, asked after the first
+ * `priorQuestions` questions, followed by a reply. Counting earlier questions
+ * keeps a repeated phrase from matching an older identical exchange.
+ */
+function transcriptHasExchange(saved: ConversationMessage[], message: string, priorQuestions: number): boolean {
+  let questions = 0;
+  for (let index = 0; index < saved.length; index += 1) {
+    if (saved[index].role !== 'user') continue;
+    questions += 1;
+    if (questions > priorQuestions && saved[index].content === message
+      && saved.slice(index + 1).some(row => row.role === 'assistant')) return true;
+  }
+  return false;
 }
 
 function toChatMessages(conversationMessages: ConversationMessage[]): ChatMessage[] {
@@ -237,7 +248,7 @@ function ChatSession() {
   const recoveryRef = useRef<ReplyRecovery | null>(null);
   // An exchange whose saved copy has not loaded yet stays on screen until the
   // server transcript contains it, so a stale refresh cannot make it vanish.
-  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; messages: ChatMessage[] } | null>(null);
+  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; priorQuestions: number; messages: ChatMessage[] } | null>(null);
   const [recoveringReply, setRecoveringReply] = useState(false);
   const [unavailableAttachments, setUnavailableAttachments] = useState<{
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
@@ -270,6 +281,7 @@ function ChatSession() {
       editAbort.current?.abort();
       setPreparingSend(false);
     }
+    if (pinnedExchangeRef.current && pinnedExchangeRef.current.conversationId !== activeConversationId) pinnedExchangeRef.current = null;
     setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
     setUnavailableAttachments(previous => previous?.conversationId === activeConversationId ? previous : null);
   // cancelMessage is invoked only when the conversation scope changes.
@@ -367,7 +379,7 @@ function ChatSession() {
         });
         const pinned = pinnedExchangeRef.current;
         if (!pinned || pinned.conversationId !== activeConversationId) return loaded;
-        if (transcriptHasExchange(conversationMessages, pinned.message)) {
+        if (transcriptHasExchange(conversationMessages, pinned.message, pinned.priorQuestions)) {
           pinnedExchangeRef.current = null;
           return loaded;
         }
@@ -507,6 +519,10 @@ function ChatSession() {
     setError(null);
     setFailedAttempt(null);
     setPreparingSend(true);
+    // A new send supersedes any pinned, unconfirmed exchange; later refreshes show the server's truth.
+    pinnedExchangeRef.current = null;
+    const priorQuestions = (attempt.edit ? attempt.edit.originalMessages.slice(0, attempt.edit.messageIndex) : messages)
+      .filter(msg => msg.role === 'user').length;
     // ========================================================================
     // OPTIMISTIC UI: Show messages IMMEDIATELY before any API calls
     // This makes the UI feel instant even if backend operations take time
@@ -660,7 +676,7 @@ function ChatSession() {
           const note: ChatMessage = {
             renderKey: assistantMessageId, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
           };
-          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, messages: [question, note] };
+          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, priorQuestions, messages: [question, note] };
           setMessages(prev => [
             ...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId),
             question, note,
@@ -690,7 +706,7 @@ function ChatSession() {
             if (!isCurrent()) return null;
             const saved = queryClient.getQueriesData<ConversationMessage[]>({ queryKey: ['messages', currentConversationId] })
               .find(([, data]) => Array.isArray(data))?.[1];
-            if (saved && transcriptHasExchange(saved, attempt.message)) return toChatMessages(saved);
+            if (saved && transcriptHasExchange(saved, attempt.message, priorQuestions)) return toChatMessages(saved);
           }
           return null;
         };
@@ -709,12 +725,14 @@ function ChatSession() {
           return false;
         }
         if (outcome === 'stopped') {
-          finishRecovery();
-          // Say "cancelled" only if the server actually received the Stop.
+          // Say "cancelled" only if the server actually received the Stop. Keep the
+          // composer locked while waiting so a new send cannot start underneath.
           const confirmed = await Promise.race([
             recovery.cancelled ?? Promise.resolve(false),
             new Promise<boolean>(resolve => setTimeout(() => resolve(false), 4000)),
           ]);
+          finishRecovery();
+          if (!isCurrent()) return false;
           setMessages(prev => prev.map(msg => {
             if (msg.id === assistantMessageId) {
               return { ...msg, id: undefined, recovery: undefined, role: 'system' as const, systemType: confirmed ? 'cancelled' : 'notice', cancelled: confirmed,
@@ -726,6 +744,8 @@ function ChatSession() {
           return true;
         }
         if (outcome === 'complete' || outcome === 'failed' || outcome === 'cancelled') {
+          // The server has finished; there is nothing left to stop.
+          recovery.settled = true;
           updatePlaceholder({ recovery: 'checking' });
           const recovered = await loadSavedExchange();
           finishRecovery();
@@ -1240,6 +1260,7 @@ End of Export
   const handleStop = () => {
     const recovery = recoveryRef.current;
     if (recovery) {
+      if (recovery.settled) return;
       recovery.cancelled = cancelPendingReply(recovery.pendingId);
       recovery.controller.abort();
       return;
