@@ -1389,7 +1389,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
         context=image_context, images=images, message=message,
         stream_text=stream_text, complete=complete, retrieve=get_rag_context,
         guidance=guidance, history=past_messages, target=target,
-        school_announcement=school_announcement,
+        school_announcement=school_announcement, image_detail=transcription_image_detail(model),
         cancelled=lambda: is_message_cancelled(pending_id),
     ):
         if event["type"] == "chunk":
