@@ -207,8 +207,11 @@ def test_cancel_still_stops_an_owned_local_stream_when_recording_fails():
     client, _, local_cancel = endpoint_client(cancel_error=OSError('down'), local_owner=True)
     assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
     local_cancel.assert_called_once_with('pending_abcdefgh')
+
+
+def test_cancel_reports_failure_when_neither_this_worker_nor_the_record_can_stop_the_reply():
     client, _, local_cancel = endpoint_client(cancel_error=OSError('down'), local_owner=False)
-    assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
+    assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 503
     local_cancel.assert_not_called()
 
 
@@ -250,3 +253,25 @@ def test_outcome_is_recorded_even_when_registration_finishes_after_the_reply():
     assert len(start_cursor.executed) == 2 and finish_cursor.executed[0][1][0] == 'complete'
     cancelled.assert_not_called()
     assert not chat_requests.owns_local_stream('pending_abcdefgh', 'learner-a')
+
+
+def test_finish_during_registration_never_joins_an_unstarted_heartbeat():
+    release = threading.Event()
+    class SlowStart(threading.Thread):
+        def start(self):
+            release.wait(2)
+            super().start()
+    original = threading.Thread
+    connect, _ = connections(FakeCursor([(False,)]), FakeCursor([]))
+    tracker = RequestTracker('pending_abcdefgh', 'learner-a', None, Mock(), connect=connect, heartbeat_seconds=60)
+    chat_requests.threading.Thread = SlowStart
+    try:
+        starter = original(target=tracker.start)
+        starter.start()
+        finisher = original(target=tracker.finish, args=('complete',))
+        finisher.start()
+        release.set()
+        finisher.join(5); starter.join(5)
+        assert not finisher.is_alive() and not starter.is_alive()
+    finally:
+        chat_requests.threading.Thread = original

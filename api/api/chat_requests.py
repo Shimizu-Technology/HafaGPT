@@ -24,7 +24,7 @@ HEARTBEAT_SECONDS = 2.0
 CONNECT_TIMEOUT_SECONDS = 5
 
 
-def _connect_quickly():
+def _connect_quickly() -> Any:
     return get_db_connection_with_retry(max_retries=2, connect_timeout=CONNECT_TIMEOUT_SECONDS)
 # A running request whose owner stopped refreshing it (worker restart, deploy,
 # crash) is reported as interrupted instead of leaving the client waiting.
@@ -114,8 +114,11 @@ class RequestTracker:
             return True
         if row[0] and not self._stop.is_set():
             self._on_cancel()
-        self._thread = threading.Thread(target=self._heartbeat, name="chat-request-heartbeat", daemon=True)
-        self._thread.start()
+        # Publish the thread only once it is running, so finish() never joins
+        # a thread that has not started.
+        heartbeat = threading.Thread(target=self._heartbeat, name="chat-request-heartbeat", daemon=True)
+        heartbeat.start()
+        self._thread = heartbeat
         return True
 
     def _heartbeat(self) -> None:

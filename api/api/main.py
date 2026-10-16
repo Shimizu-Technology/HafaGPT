@@ -1234,18 +1234,23 @@ async def cancel_chat_message(pending_id: str, authorization: Optional[str] = He
     user_id = await verify_user(authorization)
     if not chat_requests.valid_pending_id(pending_id):
         raise HTTPException(status_code=400, detail="Invalid pending message ID")
+    recorded = True
     try:
         owned = await run_in_threadpool(chat_requests.request_cancel, pending_id, user_id)
     except Exception as error:
         logger.warning("CHAT_REQUEST cancel_record_failed=%s", type(error).__name__)
-        owned = False
+        owned, recorded = False, False
     # Set the in-process flag only for this worker's own stream; other workers
     # pick up the durable record. This never stops another account's reply and
     # leaves no stray flags behind on workers that do not run the stream.
     if chat_requests.owns_local_stream(pending_id, user_id):
         cancel_pending_message(pending_id)
+    elif not recorded:
+        # Neither this worker nor the shared record can stop the reply: say so,
+        # so the client does not claim the reply was cancelled.
+        raise HTTPException(status_code=503, detail="Couldn't stop this reply right now")
     elif not owned:
-        logger.info("CHAT_REQUEST cancel_not_owned_or_unrecorded")
+        logger.info("CHAT_REQUEST cancel_not_owned")
     return {"success": True, "message": "Message cancelled"}
 
 
@@ -1516,8 +1521,10 @@ async def chat_stream(
                     # first, then record the outcome without delaying the client.
                     stream_done.set()
                     if tracker is not None:
-                        tracker.finish(chat_requests.terminal_status(event_types))
-                        cleanup_cancelled_message(pending_id)
+                        try:
+                            tracker.finish(chat_requests.terminal_status(event_types))
+                        finally:
+                            cleanup_cancelled_message(pending_id)
             
             # Start the sync generator in a background thread
             thread = threading.Thread(target=run_sync_generator, daemon=True)
