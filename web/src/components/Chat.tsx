@@ -1641,7 +1641,7 @@ End of Export
           disabled={!isSignedIn || loading || replyPending || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
-          taskControl={Boolean(activeConversationId || routeConversationId || messages.length > 0)
+          taskControl={activeConversationId || routeConversationId || messages.length > 0
             ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || replyPending} />
             : undefined}
           showDisclaimer={messages.length === 0}
