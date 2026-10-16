@@ -76,8 +76,8 @@ class FakeConnection:
 def test_get_conversation_messages_skips_blank_assistant_messages():
     get_conversation_messages = _load_get_conversation_messages()
     rows = [
-        (1, "user", "First question", "   ", None, None, False, False, None, "english", None, None),
-        (2, "user", "Second question", "Real answer", None, None, False, False, None, "english", None, None),
+        (1, "user", "First question", "   ", None, None, False, False, None, "english", None, None, None),
+        (2, "user", "Second question", "Real answer", None, None, False, False, None, "english", None, None, None),
     ]
     fake_connection = FakeConnection(rows)
 

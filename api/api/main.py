@@ -1188,6 +1188,7 @@ async def chat(
                 sources=[],
                 used_rag=False,
                 used_web_search=False,
+                saved=result.get("saved"), save_warning=result.get("save_warning"),
                 response_time=result["response_time"]
             )
         
@@ -1207,6 +1208,7 @@ async def chat(
             sources=sources,
             used_rag=result["used_rag"],
             used_web_search=result["used_web_search"],
+            saved=result.get("saved"), save_warning=result.get("save_warning"),
             response_time=result["response_time"]
         )
         
@@ -1510,15 +1512,17 @@ async def chat_stream(
                         learning_topic_id=learning_topic_id
                     ):
                         if event.get("type") in ("done", "cancelled", "error"):
-                            event_types.append(event["type"])
+                            # Generation completion is not durable completion when the
+                            # transcript transaction failed. Preserve the live event/text.
+                            event_types.append("error" if event.get("saved") is False else event["type"])
                         event_queue.put(event)
                 except Exception as e:
                     logger.error("Stream generation failed: %s", type(e).__name__, exc_info=True)
                     event_types.append("error")
                     event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
                 finally:
-                    # The reply (or its failure) is already saved: end the stream
-                    # first, then record the outcome without delaying the client.
+                    # End the stream, then record the actual persistence-aware outcome.
+                    # A generated reply can remain visible even when saving failed.
                     stream_done.set()
                     if tracker is not None:
                         try:

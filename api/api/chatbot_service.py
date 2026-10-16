@@ -1058,7 +1058,7 @@ def log_conversation(
     image_url: str = None,  # NEW: S3 URL of uploaded image
     file_urls: list[dict] | None = None,
     pending_id: str = None,
-):
+) -> bool:
     """
     Log conversation to PostgreSQL database for future training/analysis.
     
@@ -1112,10 +1112,12 @@ def log_conversation(
                         (conversation_id, user_id),
                     )
                 conn.commit()
+        return True
         
     except Exception as e:
-        # Don't break the app if logging fails
-        logger.error(f"⚠️  Failed to log conversation to database: {e}")
+        # Preserve the generated answer, but do not claim its saved copy exists.
+        logger.error("Conversation save failed: %s", type(e).__name__)
+        return False
 
 
 def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
@@ -1352,10 +1354,12 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             generation_complete = event.get("generation_complete") is True
         elif event["type"] == "cancelled":
             was_cancelled = True
+            continue
         yield event
     response_time = time.time() - start_time
+    saved = None
     if persist:
-        log_conversation(
+        saved = log_conversation(
             user_message=message_for_logging,
             bot_response="[Message was cancelled by user]" if was_cancelled else "".join(text_parts),
             mode=mode, sources=sources, used_rag=bool(sources), used_web_search=False,
@@ -1364,11 +1368,17 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             pending_id=pending_id,
         )
         cleanup_cancelled_message(pending_id)
-    if not was_cancelled:
+    if was_cancelled:
+        done = {"type": "cancelled", "content": "[Message was cancelled by user]"}
+    else:
         done = {"type": "done", "response_time": response_time, "translation_incomplete": incomplete}
         if not persist:
             done["complete"] = generation_complete
-        yield done
+    if persist:
+        done["saved"] = saved
+        if not saved:
+            done["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
+    yield done
 
 
 def get_chatbot_response(
@@ -1429,8 +1439,9 @@ def get_chatbot_response(
         response_time = time.time() - start_time
         
         # Still save the user's message with a "cancelled" response (Option B behavior)
+        saved = None
         if log_user_message:
-            log_conversation(
+            saved = log_conversation(
                 user_message=message_for_logging,  # Use original message for logging
                 bot_response="[Message was cancelled by user]",
                 mode=mode,
@@ -1453,7 +1464,9 @@ def get_chatbot_response(
             "used_rag": False,
             "used_web_search": False,
             "response_time": response_time,
-            "cancelled": True
+            "cancelled": True,
+            "saved": saved,
+            "save_warning": None if saved else "This reply could not be saved. Keep this page open and copy it before leaving.",
         }
     
     # Check for early cancellation before starting any expensive operations
@@ -1486,12 +1499,14 @@ def get_chatbot_response(
         events = list(image_events)
         metadata = next((event for event in reversed(events) if event["type"] == "metadata"), {})
         was_cancelled = any(event["type"] == "cancelled" for event in events)
+        terminal = next((event for event in reversed(events) if event["type"] in ("done", "cancelled")), {})
         return {
             "response": "[Message was cancelled by user]" if was_cancelled else "".join(
                 event["content"] for event in events if event["type"] == "chunk"),
             "sources": metadata.get("sources", []), "used_rag": metadata.get("used_rag", False),
             "used_web_search": False, "response_time": time.time() - start_time,
             "cancelled": was_cancelled,
+            "saved": terminal.get("saved"), "save_warning": terminal.get("save_warning"),
         }
     effective_translation_message, image_translation = build_image_translation_query(
         message,
@@ -1643,7 +1658,7 @@ def get_chatbot_response(
             "used_rag": False,
             "used_web_search": False,
             "response_time": response_time,
-            "cancelled": False
+            "cancelled": False,
         }
     
     # Get LLM response
@@ -1716,7 +1731,7 @@ def get_chatbot_response(
     if was_cancelled:
         # Save user message with cancelled indicator (Option B behavior)
         print(f"⚠️  Message {pending_id} was cancelled - saving user message with cancelled response")
-        log_conversation(
+        saved = log_conversation(
             user_message=message_for_logging,  # Use original message for logging
             bot_response="[Message was cancelled by user]",
             mode=mode,
@@ -1738,11 +1753,13 @@ def get_chatbot_response(
             "used_rag": used_rag,
             "used_web_search": web_results_used,
             "response_time": response_time,
-            "cancelled": True
+            "cancelled": True,
+            "saved": saved,
+            "save_warning": None if saved else "This reply could not be saved. Keep this page open and copy it before leaving.",
         }
     
     # Log the conversation (only if not cancelled) - use original message for display
-    log_conversation(
+    saved = log_conversation(
         user_message=message_for_logging,  # Use original message for logging
         bot_response=response_text,
         mode=mode,
@@ -1767,7 +1784,9 @@ def get_chatbot_response(
         "used_rag": used_rag,
         "used_web_search": web_results_used,
         "response_time": response_time,
-        "cancelled": False
+        "cancelled": False,
+        "saved": saved,
+        "save_warning": None if saved else "This reply could not be saved. Keep this page open and copy it before leaving.",
     }
 
 
@@ -1817,11 +1836,24 @@ def get_chatbot_response_stream(
     # Initialize token manager for this request
     token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
     
+    def cancelled_event() -> dict:
+        event = {"type": "cancelled", "content": "[Message was cancelled by user]"}
+        if persist:
+            event["saved"] = log_conversation(
+                user_message=message_for_logging, bot_response=event["content"],
+                mode=mode, sources=[], used_rag=False, used_web_search=False,
+                response_time=time.time() - start_time, session_id=session_id,
+                user_id=user_id, conversation_id=conversation_id, image_url=image_url,
+                file_urls=file_urls, pending_id=pending_id,
+            )
+            if not event["saved"]:
+                event["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
+            cleanup_cancelled_message(pending_id)
+        return event
+
     # Check for early cancellation
     if is_message_cancelled(pending_id):
-        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        if persist:
-            cleanup_cancelled_message(pending_id)
+        yield cancelled_event()
         return
 
     # Fetch history before retrieval so ambiguous follow-ups keep the user's
@@ -1835,9 +1867,7 @@ def get_chatbot_response_stream(
                else f"Reading your {len(normalized_image_inputs)} photos…"}
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
     if is_message_cancelled(pending_id):
-        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        if persist:
-            cleanup_cancelled_message(pending_id)
+        yield cancelled_event()
         return
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
@@ -1872,9 +1902,7 @@ def get_chatbot_response_stream(
     
     if use_web:
         if is_message_cancelled(pending_id):
-            yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-            if persist:
-                cleanup_cancelled_message(pending_id)
+            yield cancelled_event()
             return
         search_result = web_search(message, search_type=search_type, max_results=3)
         if search_result["success"] and search_result["results"]:
@@ -1883,9 +1911,7 @@ def get_chatbot_response_stream(
     
     # Check for cancellation before RAG
     if is_message_cancelled(pending_id):
-        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        if persist:
-            cleanup_cancelled_message(pending_id)
+        yield cancelled_event()
         return
     
     yield {"type": "status", "content": "Checking Chamorro sources…"}
@@ -1981,9 +2007,7 @@ def get_chatbot_response_stream(
     
     # Check for cancellation before GPT call
     if is_message_cancelled(pending_id):
-        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        if persist:
-            cleanup_cancelled_message(pending_id)
+        yield cancelled_event()
         return
     
     # Format sources for metadata
@@ -2058,26 +2082,7 @@ def get_chatbot_response_stream(
                 for chunk in stream:
                     # Check for cancellation during streaming
                     if is_message_cancelled(pending_id):
-                        yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
-                        # Log partial response as cancelled
-                        if persist:
-                            log_conversation(
-                                user_message=message_for_logging,  # Use original message for logging
-                                bot_response="[Message was cancelled by user]",
-                                mode=mode,
-                                sources=formatted_sources,
-                                used_rag=used_rag,
-                                used_web_search=web_results_used,
-                                response_time=time.time() - start_time,
-                                session_id=session_id,
-                                user_id=user_id,
-                                conversation_id=conversation_id,
-                                image_url=image_url,
-                                file_urls=file_urls,
-                                pending_id=pending_id,
-                            )
-                        if persist:
-                            cleanup_cancelled_message(pending_id)
+                        yield cancelled_event()
                         return
 
                     choices = getattr(chunk, "choices", None) or []
@@ -2186,8 +2191,9 @@ def get_chatbot_response_stream(
     response_time = time.time() - start_time
 
     # Log the complete conversation (use original message for display, not doc-augmented)
+    saved = None
     if persist:
-        log_conversation(
+        saved = log_conversation(
             user_message=message_for_logging,  # Use original message for logging
             bot_response=full_response,
             mode=mode,
@@ -2208,6 +2214,10 @@ def get_chatbot_response_stream(
     
     # Send completion signal with response time
     done = {"type": "done", "response_time": response_time}
+    if persist:
+        done["saved"] = saved
+        if not saved:
+            done["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
     if not persist:
         done["complete"] = finish_reason == "stop"
     yield done
