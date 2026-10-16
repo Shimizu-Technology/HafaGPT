@@ -406,11 +406,22 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
         nonlocal calls
         calls += 1
         if case == 'provider_failure': raise RuntimeError('Provider unavailable')
-        if case == 'review_failure' and calls == 2: raise RuntimeError('Review unavailable')
+        if case == 'interrupted_stream' and calls == 2: raise RuntimeError('Follow-up unavailable')
         identifiers = [entry['id'] for entry in json.loads(kwargs['messages'][1]['content'][0]['text'])['items']]
-        translations = [] if case == 'invalid_coverage' else [{'id': identifier, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'} for identifier in identifiers]
         finish = 'length' if case == 'truncated' else 'stop'
-        return SimpleNamespace(choices=[SimpleNamespace(finish_reason=finish, message=SimpleNamespace(content=json.dumps({'translations': translations, 'notes': ''})))])
+        if kwargs.get('stream'):
+            def chunks() -> Iterator[Any]:
+                if case == 'interrupted_stream': raise RuntimeError('Connection reset')
+                if case in ('invalid_coverage', 'truncated'):
+                    yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content='A page.'), finish_reason=finish)])
+                    return
+                marker = '? ' if case == 'uncertain' else ''
+                text = 'A page.\n\n' + ''.join(f'[[{identifier}]] Printed source >> {marker}Possible interpretation\n' for identifier in identifiers)
+                yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=text), finish_reason=None)])
+                yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None), finish_reason='stop')])
+            return chunks()
+        translations = [] if case == 'invalid_coverage' else [{'id': identifier, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'} for identifier in identifiers]
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason=finish, message=SimpleNamespace(content=json.dumps({'translations': translations})))])
     provider = Mock(side_effect=complete)
     source = ROOT / 'chatbot_service.py'
     node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.FunctionDef) and node.name == '_image_translation_events')
@@ -424,6 +435,7 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
         'translate_image_pages': translate_image_pages, 'get_rag_context': lambda *args, **kwargs: ('', []),
         'format_source_citations': lambda sources: sources, 'optional_chat_completion_kwargs': lambda model: {},
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
+        '_extract_stream_chunk_content_and_empty_choice': lambda chunk: (chunk.choices[0].delta.content or '', False),
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     def generate() -> Iterator[dict[str, Any]]:
@@ -445,7 +457,7 @@ def test_completed_uncertain_image_result_can_commit_atomic_edit(case: str) -> N
     store.assert_called_once(); replace.assert_called_once(); log.assert_not_called()
 
 
-@pytest.mark.parametrize('case', ['provider_failure', 'review_failure', 'invalid_coverage', 'truncated'])
+@pytest.mark.parametrize('case', ['provider_failure', 'interrupted_stream', 'invalid_coverage', 'truncated'])
 def test_failed_or_unvalidated_image_generation_preserves_original(case: str) -> None:
     generate, log = actual_image_edit_generator(case)
     store, replace = Mock(), Mock()
@@ -519,6 +531,7 @@ def extracted_image_context(case: str) -> tuple[Any, list[dict[str, Any]]]:
         'IMAGE_CONTEXT_CARD_IDS': {}, 'get_client_for_request': get_client,
         'model_supports_temperature': lambda model: False, 'merge_image_translation_contexts': merge_image_translation_contexts,
         'try_parse_image_context_response': try_parse_image_context_response, 'logger': logging.getLogger(__name__),
+        'transcription_image_detail': lambda model: 'high', 'reasoning_effort_kwargs': lambda model, effort: {},
     }
     source = ROOT / 'chatbot_service.py'; module = ast.parse(source.read_text())
     nodes = [node for node in module.body if isinstance(node, ast.FunctionDef) and node.name in ('_build_current_user_message', 'detect_image_context')]
@@ -545,7 +558,7 @@ def test_failed_actual_extraction_cannot_swap_atomic_edit(case: str) -> None:
     assert result[-1]['type'] == 'error' and not any(event['type'] == 'done' for event in result)
     store.assert_not_called(); replace.assert_not_called(); log.assert_not_called()
     if case in ('mixed_failure', 'missing_page'):
-        assert sum(event.get('content', '').startswith('\n\n## Image') for event in result) == 2
+        assert sum(event.get('content', '').startswith('\n\n## Photo') for event in result) == 2
     if case == 'mixed_failure':
         assert 'Possible interpretation' in ''.join(event.get('content', '') for event in result)
 
