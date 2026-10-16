@@ -97,6 +97,7 @@ from .chatbot_service import (
     is_message_cancelled, cleanup_cancelled_message, conversation_rows_to_history,
 )
 from .atomic_regeneration import atomic_regeneration_events
+from . import chat_requests
 from . import conversations
 from .spaced_repetition import (
     calculate_sm2 as _calculate_sm2,
@@ -1223,35 +1224,40 @@ async def chat(
 # --- Cancel Message Endpoint ---
 
 @app.post("/api/chat/cancel/{pending_id}", tags=["Chat"])
-async def cancel_chat_message(pending_id: str):
+async def cancel_chat_message(pending_id: str, authorization: Optional[str] = Header(None)):
     """
-    Cancel a pending chat message.
-    
-    This prevents the response from being saved to the database.
-    Call this when the user clicks "Stop" to cancel a generating message.
-    
-    Args:
-        pending_id: The unique ID of the pending message to cancel
-        
-    Returns:
-        {"success": bool, "message": str}
+    Stop an owned pending reply so it is not saved.
+
+    The worker that receives this call may not be the one streaming the reply,
+    so the request is also recorded durably for the owning worker to observe.
     """
+    user_id = await verify_user(authorization)
+    if not chat_requests.valid_pending_id(pending_id):
+        raise HTTPException(status_code=400, detail="Invalid pending message ID")
+    cancel_pending_message(pending_id)
     try:
-        success = cancel_pending_message(pending_id)
-        
-        if success:
-            logger.info(f"✅ Message {pending_id} marked as cancelled")
-            return {"success": True, "message": f"Message {pending_id} cancelled"}
-        else:
-            logger.warning(f"⚠️  Message {pending_id} was already cancelled")
-            return {"success": True, "message": f"Message {pending_id} was already cancelled"}
-            
-    except Exception as e:
-        logger.error(f"❌ Failed to cancel message {pending_id}: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to cancel message: {str(e)}"
-        )
+        await run_in_threadpool(chat_requests.request_cancel, pending_id, user_id)
+    except Exception as error:
+        # The local worker still stops; another worker may finish this reply.
+        logger.warning("CHAT_REQUEST cancel_record_failed=%s", type(error).__name__)
+    return {"success": True, "message": "Message cancelled"}
+
+
+@app.get("/api/chat/requests/{pending_id}", tags=["Chat"])
+async def get_chat_request_status(pending_id: str, authorization: Optional[str] = Header(None)):
+    """
+    Report whether an owned reply is running, saved, failed, cancelled, or interrupted.
+
+    Clients use this after a dropped connection instead of assuming the message
+    was lost: the server keeps writing and saving replies after a disconnect.
+    """
+    user_id = await verify_user(authorization)
+    if not chat_requests.valid_pending_id(pending_id):
+        raise HTTPException(status_code=404, detail="Request not found")
+    status = await run_in_threadpool(chat_requests.get_request_status, pending_id, user_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return status
 
 
 # --- Streaming Chat Endpoint ---
@@ -1467,6 +1473,14 @@ async def chat_stream(
             
             def run_sync_generator():
                 """Run the sync generator in a thread and put events in queue"""
+                tracker = None
+                if chat_requests.valid_pending_id(pending_id):
+                    tracker = chat_requests.RequestTracker(
+                        pending_id, user_id, conversation_id,
+                        on_cancel=lambda: cancel_pending_message(pending_id),
+                    )
+                    tracker.start()
+                event_types: list[str] = []
                 try:
                     for event in get_chatbot_response_stream(
                         message=final_message,  # Full message with doc content for LLM
@@ -1484,10 +1498,18 @@ async def chat_stream(
                         intent=intent,
                         learning_topic_id=learning_topic_id
                     ):
+                        if event.get("type") in ("done", "cancelled", "error"):
+                            event_types.append(event["type"])
                         event_queue.put(event)
                 except Exception as e:
-                    event_queue.put({"type": "error", "content": str(e)})
+                    logger.error("Stream generation failed: %s", type(e).__name__, exc_info=True)
+                    event_types.append("error")
+                    event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
                 finally:
+                    # Record the outcome only after the reply (or its failure) is saved.
+                    if tracker is not None:
+                        tracker.finish(chat_requests.terminal_status(event_types))
+                        cleanup_cancelled_message(pending_id)
                     stream_done.set()
             
             # Start the sync generator in a background thread
@@ -2877,7 +2899,10 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         logger.info("🎴 [FLASHCARDS] Calling GPT-4o-mini...")
         gpt_start = time.time()
         
-        response = client.chat.completions.create(
+        # Run the blocking provider call off the event loop so this worker's
+        # streaming chat replies keep flowing while flashcards generate.
+        response = await asyncio.to_thread(
+            client.chat.completions.create,
             model="gpt-4o",  # Premium model: 96% accuracy, perfect grammar, faster than 4o-mini
             messages=[
                 {

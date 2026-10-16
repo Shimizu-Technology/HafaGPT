@@ -1829,6 +1829,10 @@ def get_chatbot_response_stream(
     past_messages = history_override if history_override is not None else (
         get_conversation_history(conversation_id) if conversation_id else []
     )
+    if normalized_image_inputs:
+        # Status events are progress for an empty reply, never saved reply text.
+        yield {"type": "status", "content": "Reading your photo…" if len(normalized_image_inputs) == 1
+               else f"Reading your {len(normalized_image_inputs)} photos…"}
     image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
     if is_message_cancelled(pending_id):
         yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
@@ -1884,6 +1888,7 @@ def get_chatbot_response_stream(
             cleanup_cancelled_message(pending_id)
         return
     
+    yield {"type": "status", "content": "Checking Chamorro sources…"}
     # Get RAG context with token limit
     analysis_guidance, school_announcement, contextual_card_ids = (
         resolve_school_message_context(
@@ -1994,6 +1999,7 @@ def get_chatbot_response_stream(
         "used_web_search": web_results_used
     }
     
+    yield {"type": "status", "content": "Writing your answer…"}
     # Stream LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
     request_client, request_model = get_client_for_request(

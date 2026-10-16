@@ -4,6 +4,8 @@ import type { SourceInfo } from '../types/source';
 import type { ChatIntent } from '../lib/chatIntent';
 import { browserStorage } from '../lib/browserStorage';
 import { createStreamTextBatcher } from '../lib/streamTextBatcher';
+import type { RecoveryPhase, ReplyStatus } from '../lib/replyRecovery';
+import { ConnectionLostError, HttpStatusError, describeSendFailure, isConnectionFailure, readErrorDetail } from '../lib/sendErrors';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -30,6 +32,13 @@ class StreamResponseError extends Error {
   }
 }
 
+class StreamEndedError extends Error {
+  constructor() {
+    super('The response ended unexpectedly. Please try again.');
+    this.name = 'StreamEndedError';
+  }
+}
+
 export interface FileInfo {
   url: string;
   filename: string;
@@ -51,10 +60,12 @@ export interface ChatMessage {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
-  systemType?: 'mode_change' | 'cancelled'; // Type of system message
+  systemType?: 'mode_change' | 'cancelled' | 'failed'; // Type of system message
   mode?: 'english' | 'chamorro' | 'learn'; // For mode change messages
   conversation_id?: string; // Conversation UUID
   cancelled?: boolean; // Whether this message request was cancelled
+  statusText?: string; // Server progress shown until the first reply text arrives
+  recovery?: RecoveryPhase; // Checking for a reply after the connection dropped
 }
 
 export interface ChatResponse {
@@ -95,7 +106,13 @@ interface StreamError {
   content: string;
 }
 
-type StreamEvent = StreamMetadata | StreamChunk | StreamDone | StreamCancelled | StreamError;
+interface StreamStatus {
+  type: 'status';
+  content: string;
+}
+
+type StreamEvent = StreamMetadata | StreamChunk | StreamDone | StreamCancelled | StreamError | StreamStatus;
+const REPLY_STATUSES: ReplyStatus[] = ['running', 'complete', 'failed', 'cancelled', 'interrupted'];
 
 // Callback for streaming updates
 export interface StreamCallbacks {
@@ -104,6 +121,7 @@ export interface StreamCallbacks {
   onDone: (response_time: number) => void;
   onError: (error: string) => void;
   onCancelled: () => void;
+  onStatus?: (label: string) => void;
 }
 
 export function useChatbot() {
@@ -390,7 +408,7 @@ export function useChatbot() {
       if (!response.ok) {
         if (edit && response.status === 409) throw new Error('This conversation changed. Reopen it before editing.');
         if (edit && (response.status === 404 || response.status === 405)) throw new Error('Editing is temporarily unavailable. Your original conversation is unchanged.');
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new HttpStatusError(response.status, await readErrorDetail(response));
       }
 
       // Read the SSE stream
@@ -421,7 +439,7 @@ export function useChatbot() {
             
             if (data === '[DONE]') {
               if (!receivedTerminalEvent) {
-                throw new StreamResponseError('The response ended unexpectedly. Please try again.');
+                throw new StreamEndedError();
               }
               return;
             }
@@ -454,6 +472,10 @@ export function useChatbot() {
                   
                 case 'error':
                   throw new StreamResponseError(event.content);
+
+                case 'status':
+                  callbacks.onStatus?.(event.content);
+                  break;
               }
             } catch (parseError) {
               // Skip invalid JSON (might be partial)
@@ -470,14 +492,23 @@ export function useChatbot() {
       }
 
       if (!receivedTerminalEvent) {
-        throw new StreamResponseError('The response ended unexpectedly. Please try again.');
+        throw new StreamEndedError();
       }
     } catch (err) {
       if (!isCurrent(request) || signal.aborted || err instanceof CancelledError || (err instanceof Error && err.name === 'AbortError')) {
         if (isCurrent(request) && (!(err instanceof CancelledError) || signal.aborted)) callbacks.onCancelled();
         throw new CancelledError();
       }
-      const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+      // Once a new message reaches the server it keeps replying and saves the
+      // result even if the phone drops the connection. Let the caller check
+      // for that reply instead of reporting the message as unsent. Edits are
+      // atomic and roll back on disconnect, so they fail normally.
+      if (!edit && request.sent && (err instanceof StreamEndedError
+        || (!(err instanceof HttpStatusError) && !(err instanceof StreamResponseError) && isConnectionFailure(err)))) {
+        textBatcher.flush();
+        throw new ConnectionLostError(pendingId);
+      }
+      const errorMessage = describeSendFailure(err);
       setError(errorMessage);
       callbacks.onError(errorMessage);
       throw err;
@@ -492,5 +523,33 @@ export function useChatbot() {
     }
   };
 
-  return { sendMessage, sendMessageStream, cancelMessage, resetSession, loading, error, setError, sessionId };
+  /** Ask the API what happened to a reply whose connection dropped. */
+  const checkReplyStatus = async (pendingId: string): Promise<ReplyStatus> => {
+    const token = await getToken();
+    if (!token) throw new Error('Sign in again to check this reply.');
+    const response = await fetch(`${API_URL}/api/chat/requests/${encodeURIComponent(pendingId)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (response.status === 404) return 'not_found';
+    if (!response.ok) throw new HttpStatusError(response.status, await readErrorDetail(response));
+    const body = await response.json() as { status?: string };
+    if (!REPLY_STATUSES.includes(body.status as ReplyStatus)) throw new Error('Unknown reply status');
+    return body.status as ReplyStatus;
+  };
+
+  /** Stop a reply that is still running on the server after the connection dropped. */
+  const cancelPendingReply = async (pendingId: string) => {
+    try {
+      const token = await getToken();
+      await fetch(`${API_URL}/api/chat/cancel/${encodeURIComponent(pendingId)}`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch {
+      // Best effort: the local reply is already stopped.
+    }
+  };
+
+  return { sendMessage, sendMessageStream, cancelMessage, checkReplyStatus, cancelPendingReply, resetSession, loading, error, setError, sessionId };
 }

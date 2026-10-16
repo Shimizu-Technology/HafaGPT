@@ -142,6 +142,11 @@ def translate_image_pages(
     sources = []
     incomplete = False
     generation_complete = True
+    total_batches = sum(
+        len(list(_batches(page.items))) for page in context.pages
+        if page.items and page.text_confidence != "low"
+    )
+    batch_number = 0
     for index, image in enumerate(images):
         if cancelled():
             yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
@@ -170,6 +175,10 @@ def translate_image_pages(
             if cancelled():
                 yield {"type": "cancelled", "content": "[Message was cancelled by user]"}
                 return
+            batch_number += 1
+            yield {"type": "status", "content": (
+                "Translating…" if total_batches <= 1 else f"Translating part {batch_number} of {total_batches}…"
+            )}
             query = "Translate this passage into English:\n\n" + "\n".join(item.text for item in batch)
             try:
                 references, batch_sources = retrieve(query, contextual_card_ids=context.card_ids, max_tokens=7000, passage_match_limit=64)
