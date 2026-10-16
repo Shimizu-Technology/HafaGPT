@@ -3,12 +3,28 @@ import { createRoot } from 'react-dom/client';
 import { Message } from '../../src/components/Message';
 import { useChatAutoScroll } from '../../src/hooks/useChatAutoScroll';
 import { useChatbot, type ChatMessage } from '../../src/hooks/useChatbot';
+import { ConnectionLostError } from '../../src/lib/sendErrors';
 import '../../src/index.css';
 
 // Synthetic SSE only: no model calls, authentication, account data, or production writes.
 let chunkDelay = 150;
+const outcomes = new Map<string, 'running' | 'complete' | 'cancelled'>();
 window.fetch = async (input, options) => {
+  const url = String(input);
+  if (url.includes('/api/chat/cancel/')) {
+    outcomes.set(url.split('?')[0].split('/').pop()!, 'cancelled');
+    return Response.json({ success: true });
+  }
+  if (url.includes('/api/chat/requests/')) {
+    const pendingId = url.split('?')[0].split('/').pop()!;
+    const status = outcomes.get(pendingId);
+    return status ? Response.json({ status }) : Response.json({}, { status: 404 });
+  }
   if (!String(input).endsWith('/api/chat/stream')) return new Response('{}', { status: 200 });
+  const pendingId = options?.body instanceof FormData
+    ? String(options.body.get('pending_id'))
+    : String(JSON.parse(String(options?.body)).pending_id);
+  outcomes.set(pendingId, 'running');
   const encoder = new TextEncoder();
   const chunks = Array.from({ length: 3 }, (_, page) => [
     `\n\n## Page ${page + 1}\n\nRead this page while the remaining answer arrives.\n\n| Item | Source | Translation |\n| --- | --- | --- |\n`,
@@ -26,6 +42,7 @@ window.fetch = async (input, options) => {
           send({ type: 'chunk', content: chunks[index++] });
           timer = setTimeout(tick, chunkDelay);
         } else {
+          outcomes.set(pendingId, 'complete');
           send({ type: 'metadata', sources: [], used_rag: false, used_web_search: false });
           send({ type: 'done', response_time: 12 });
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
@@ -44,7 +61,7 @@ export function StreamingFixture() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [delay, setDelay] = useState(chunkDelay);
   const ref = useRef<HTMLDivElement>(null);
-  const { sendMessageStream, cancelMessage, loading } = useChatbot();
+  const { sendMessageStream, cancelMessage, checkReplyStatus, loading } = useChatbot();
   const { showScrollButton, resumeFollowing, resetScrollTracking } = useChatAutoScroll(ref, messages);
   const send = async () => {
     resetScrollTracking();
@@ -62,7 +79,18 @@ export function StreamingFixture() {
         onError: content => update({ isStreaming: false, content }),
         onCancelled: () => update({ isStreaming: false, content: 'Message cancelled' }),
       });
-    } catch { /* Cancellation is displayed in the conversation. */ }
+    } catch (error) {
+      // Stop's HTTP acknowledgement alone is not a terminal outcome. Model
+      // the same status reconciliation required by the real Chat component.
+      if (error instanceof ConnectionLostError) {
+        let cancelled = false;
+        try { cancelled = await checkReplyStatus(error.pendingId) === 'cancelled'; }
+        catch { /* An unavailable status must remain an unknown outcome. */ }
+        update({ isStreaming: false, content: cancelled ? 'Message cancelled' : 'Connection lost; reply outcome unknown' });
+      } else {
+        update({ isStreaming: false, content: 'Streaming fixture failed' });
+      }
+    }
   };
   return <main style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff8f0' }}>
     <header style={{ padding: '12px 16px', borderBottom: '1px solid #ddd' }}>

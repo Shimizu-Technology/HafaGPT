@@ -94,11 +94,15 @@ interface StreamChunk {
 interface StreamDone {
   type: 'done';
   response_time: number;
+  saved?: boolean;
+  save_warning?: string;
 }
 
 interface StreamCancelled {
   type: 'cancelled';
   content: string;
+  saved?: boolean;
+  save_warning?: string;
 }
 
 interface StreamError {
@@ -118,10 +122,12 @@ const REPLY_STATUSES: ReplyStatus[] = ['running', 'complete', 'failed', 'cancell
 export interface StreamCallbacks {
   onChunk: (content: string, fullContent: string) => void;
   onMetadata: (metadata: { sources: SourceInfo[]; used_rag: boolean; used_web_search: boolean }) => void;
-  onDone: (response_time: number) => void;
+  onDone: (response_time: number, saved?: boolean, saveWarning?: string) => void;
   onError: (error: string) => void;
-  onCancelled: () => void;
+  onCancelled: (saved?: boolean, saveWarning?: string) => void;
   onStatus?: (label: string) => void;
+  /** Called before dispatch so a reload can find the in-flight reply. */
+  onRequestStarted?: (pendingId: string) => void;
 }
 
 export function useChatbot() {
@@ -144,6 +150,8 @@ export function useChatbot() {
     owner: typeof owner;
     token: string | null;
     sent: boolean;
+    detached?: boolean;
+    stopConfirmation?: Promise<boolean>;
   };
   const requestRef = useRef<Request | null>(null);
 
@@ -207,21 +215,17 @@ export function useChatbot() {
   }, []);
 
   // Capture this request before awaiting; stopping it cannot clear a replacement.
-  const cancelMessage = async () => {
+  const cancelMessage = async (notifyServer = true): Promise<void> => {
     const request = requestRef.current;
     if (!request || !isCurrent(request)) return;
+    request.detached = !notifyServer;
+    // Publish confirmation before aborting the reader. Its catch waits for this
+    // result rather than announcing cancellation while Stop may still fail.
+    request.stopConfirmation = !notifyServer || !request.sent
+      ? Promise.resolve(true)
+      : postCancellation(request.pendingId, request.token);
     request.controller.abort();
-    setLoading(false);
-    if (request.sent) {
-      try {
-        await fetch(`${API_URL}/api/chat/cancel/${request.pendingId}`, {
-          method: 'POST',
-          headers: request.token ? { Authorization: `Bearer ${request.token}` } : {},
-        });
-      } catch {
-        // The client is stopped even if best-effort server cancellation fails.
-      }
-    }
+    await request.stopConfirmation;
   };
 
   const sendMessage = async (
@@ -398,6 +402,7 @@ export function useChatbot() {
       const endpoint = edit
         ? `${API_URL}/api/conversations/${encodeURIComponent(conversationId!)}/messages/${edit.messageId}/regenerate`
         : `${API_URL}/api/chat/stream`;
+      if (!edit) callbacks.onRequestStarted?.(pendingId);
       const response = await fetch(endpoint, {
         method: 'POST',
         headers,
@@ -463,11 +468,14 @@ export function useChatbot() {
                 case 'done':
                   textBatcher.flush();
                   receivedTerminalEvent = true;
-                  callbacks.onDone(event.response_time);
+                  if (event.saved === undefined) callbacks.onDone(event.response_time);
+                  else callbacks.onDone(event.response_time, event.saved, event.save_warning);
                   break;
                   
                 case 'cancelled':
-                  callbacks.onCancelled();
+                  if (event.saved === false) textBatcher.flush();
+                  if (event.saved === undefined) callbacks.onCancelled();
+                  else callbacks.onCancelled(event.saved, event.save_warning);
                   throw new CancelledError();
                   
                 case 'error':
@@ -496,7 +504,18 @@ export function useChatbot() {
       }
     } catch (err) {
       if (!isCurrent(request) || signal.aborted || err instanceof CancelledError || (err instanceof Error && err.name === 'AbortError')) {
-        if (isCurrent(request) && (!(err instanceof CancelledError) || signal.aborted)) callbacks.onCancelled();
+        if (!isCurrent(request)) throw new CancelledError();
+        if (receivedTerminalEvent && isCurrent(request)) return;
+        const confirmed = request.stopConfirmation ? await request.stopConfirmation : true;
+        if (isCurrent(request) && !request.detached && (!(err instanceof CancelledError) || signal.aborted)) {
+          // HTTP 200 confirms only that Stop was recorded. Reconcile the
+          // terminal status and saved exchange before acknowledging the send.
+          if (request.stopConfirmation && request.sent && !edit) {
+            textBatcher.flush();
+            throw new ConnectionLostError(pendingId, confirmed);
+          }
+          callbacks.onCancelled();
+        }
         throw new CancelledError();
       }
       // The reply already completed; a connection that drops while the server
@@ -528,7 +547,9 @@ export function useChatbot() {
 
   /** Ask the API what happened to a reply whose connection dropped. */
   const checkReplyStatus = async (pendingId: string, signal?: AbortSignal): Promise<ReplyStatus> => {
+    if (!mounted.current || ownerRef.current !== owner || signal?.aborted) throw new CancelledError();
     const token = await getToken();
+    if (!mounted.current || ownerRef.current !== owner || signal?.aborted) throw new CancelledError();
     if (!token) {
       // Offline, sign-in cannot refresh its token: treat it like a network drop.
       if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new TypeError('Sign-in token unavailable offline');
@@ -548,17 +569,45 @@ export function useChatbot() {
 
   /** Stop a reply still running on the server; resolves whether the server got the request. */
   const cancelPendingReply = async (pendingId: string): Promise<boolean> => {
+    const controller = new AbortController();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const token = await getToken();
-      const response = await fetch(`${API_URL}/api/chat/cancel/${encodeURIComponent(pendingId)}`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      return response.ok;
+      if (!mounted.current || ownerRef.current !== owner) return false;
+      return await Promise.race([
+        (async () => {
+          const token = await getToken();
+          if (!mounted.current || ownerRef.current !== owner || !token || controller.signal.aborted) return false;
+          return postCancellation(pendingId, token, controller.signal);
+        })(),
+        new Promise<boolean>(resolve => { timeout = setTimeout(() => { controller.abort(); resolve(false); }, 4000); }),
+      ]);
     } catch {
       return false;
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
   return { sendMessage, sendMessageStream, cancelMessage, checkReplyStatus, cancelPendingReply, resetSession, loading, error, setError, sessionId };
+}
+
+/** Bound Stop even when the connection stalls after the phone goes offline. */
+async function postCancellation(pendingId: string, token: string | null, outer?: AbortSignal): Promise<boolean> {
+  const controller = new AbortController();
+  const stop = () => controller.abort();
+  outer?.addEventListener('abort', stop, { once: true });
+  const timeout = setTimeout(() => controller.abort(), 4000);
+  try {
+    const response = await fetch(`${API_URL}/api/chat/cancel/${encodeURIComponent(pendingId)}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+    outer?.removeEventListener('abort', stop);
+  }
 }

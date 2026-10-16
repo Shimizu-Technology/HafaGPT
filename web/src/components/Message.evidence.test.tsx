@@ -29,7 +29,7 @@ describe('Message evidence disclosure', () => {
       { name: 'Linked reference', page: null, url: 'https://example.com/reference', locator: 'Section 2', content_role: 'lexical evidence', region: 'Guam', temporal_scope: 'Current' },
       { name: 'Local reference', page: null, locator: 'Entry 4', region: 'Guam' },
     ]} />);
-    fireEvent.click(document.querySelector('summary')!);
+    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(screen.getByText('Section 2 • lexical evidence • Guam • Current')).toBeVisible();
     expect(screen.getByText('Entry 4 • Guam')).toBeVisible();
   });
@@ -47,7 +47,7 @@ describe('Message evidence disclosure', () => {
       />,
     );
 
-    fireEvent.click(document.querySelector('summary')!);
+    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: References attached' }),
     ).toHaveTextContent('They may support only parts of this answer.');
@@ -56,7 +56,7 @@ describe('Message evidence disclosure', () => {
   it('shows web-informed when current web context was used without RAG citations', () => {
     render(<Message role="assistant" content="Current answer" used_web_search />);
 
-    fireEvent.click(document.querySelector('summary')!);
+    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: Web-informed' }),
     ).toHaveTextContent('Current web results were used.');
@@ -65,7 +65,7 @@ describe('Message evidence disclosure', () => {
   it('clearly marks an answer with no attached references', () => {
     render(<Message role="assistant" content="Possible answer" />);
 
-    fireEvent.click(document.querySelector('summary')!);
+    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: No references attached' }),
     ).toHaveTextContent('Check important claims against the original material.');
@@ -95,11 +95,15 @@ describe('message actions', () => {
     const { container } = render(<Message role="assistant" content="Answer" used_rag used_web_search response_time={2.5}
       sources={[{ name: 'Dictionary', page: 3, url: 'https://example.com/reference' }]} />);
     expect(screen.getAllByRole('button', { name: 'Copy message' })).toHaveLength(1);
-    expect(container.querySelectorAll('details')).toHaveLength(1);
+    const disclosure = container.querySelectorAll('button[aria-expanded]');
+    expect(disclosure).toHaveLength(1);
+    expect(disclosure[0]).toHaveTextContent('Sources (1)');
+    expect(disclosure[0]).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('KB')).not.toBeInTheDocument();
     expect(screen.queryByText('Web Search')).not.toBeInTheDocument();
     expect(screen.queryByText('2.50s')).not.toBeInTheDocument();
-    fireEvent.click(container.querySelector('summary')!);
+    fireEvent.click(disclosure[0]);
+    expect(disclosure[0]).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: 'Dictionary (p. 3)' })).toHaveAttribute('href', 'https://example.com/reference');
   });
 

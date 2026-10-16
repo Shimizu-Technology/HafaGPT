@@ -9,12 +9,12 @@ describe('MessageInput', () => {
     const input = screen.getByRole('textbox');
     Object.defineProperty(input, 'scrollHeight', { configurable: true, value: 24 });
     fireEvent.change(input, { target: { value: 'Short draft' } });
-    expect(input).toHaveStyle({ height: '64px' });
+    expect(input).toHaveStyle({ height: '44px' });
     view.rerender(<MessageInput onSend={onSend} compact />);
     expect(input).toHaveStyle({ height: '40px' });
     expect(input).toHaveValue('Short draft');
     view.rerender(<MessageInput onSend={onSend} />);
-    expect(input).toHaveStyle({ height: '64px' });
+    expect(input).toHaveStyle({ height: '44px' });
   });
 
   it.each(['dialog', 'preview'] as const)('retains %s focus when a response finishes', async target => {

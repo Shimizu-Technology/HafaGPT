@@ -32,6 +32,10 @@ interface MessageInputProps {
   inputRef?: RefObject<HTMLTextAreaElement>;
   placeholder?: string;
   contextLabel?: string;
+  /** Interactive task switcher shown in the toolbar instead of the static label. */
+  taskControl?: ReactNode;
+  /** The accuracy reminder belongs with a new chat, not under every turn. */
+  showDisclaimer?: boolean;
   compact?: boolean;
   inline?: boolean;
   bodyMaxHeight?: string;
@@ -47,7 +51,7 @@ interface FileWithPreview {
   id: string; // Unique ID for React keys
 }
 
-export function MessageInput({ onSend, completedSend, disabled, inputRef, placeholder, contextLabel, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, loading, onCancel }: MessageInputProps) {
+export function MessageInput({ onSend, completedSend, disabled, inputRef, placeholder, contextLabel, taskControl, showDisclaimer = true, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
@@ -73,7 +77,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
         // Reset height to auto to get accurate scrollHeight
         textareaRef.current.style.height = 'auto';
         // Let CSS max-h-[100px] sm:max-h-[200px] handle the capping
-        textareaRef.current.style.height = `${Math.max(compact ? 40 : 64, textareaRef.current.scrollHeight)}px`;
+        textareaRef.current.style.height = `${Math.max(compact ? 40 : 44, textareaRef.current.scrollHeight)}px`;
       } else {
         // When empty, use the minimum height from CSS
         textareaRef.current.style.height = '';
@@ -441,7 +445,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
     <div className={`px-3 ${inline ? 'py-1' : compact ? 'pt-1 pb-[max(16px,env(safe-area-inset-bottom))]' : 'py-2 sm:py-3'} sm:px-4`}>
       <div className="mx-auto w-full max-w-3xl">
         <div className={`${inline ? 'flex items-center gap-2' : ''} rounded-2xl border border-cream-300 bg-white p-2 shadow-sm focus-within:border-teal-700 focus-within:ring-2 focus-within:ring-teal-700/20 dark:border-slate-700 dark:bg-slate-900 dark:focus-within:border-ocean-300 dark:focus-within:ring-ocean-300/20`}>
-          <div className={`${inline ? 'min-w-0 flex-1' : ''} min-h-0 overflow-y-auto overscroll-contain`} style={{ maxHeight: bodyMaxHeight !== undefined ? bodyMaxHeight : inline ? 'max(40px, calc(var(--chat-viewport-height, 100dvh) - 28px))' : compact ? 'max(40px, calc(var(--chat-viewport-height, 100dvh) - 76px - env(safe-area-inset-bottom, 0px)))' : 'max(64px, min(220px, calc(var(--chat-viewport-height, 100dvh) * .5 - 64px)))' }}>
+          <div className={`${inline ? 'min-w-0 flex-1' : ''} min-h-0 overflow-y-auto overscroll-contain`} style={{ maxHeight: bodyMaxHeight !== undefined ? bodyMaxHeight : inline ? 'max(40px, calc(var(--chat-viewport-height, 100dvh) - 28px))' : compact ? 'max(40px, calc(var(--chat-viewport-height, 100dvh) - 76px - env(safe-area-inset-bottom, 0px)))' : 'max(44px, min(220px, calc(var(--chat-viewport-height, 100dvh) * .5 - 64px)))' }}>
           {sendError}
           {fileError && <div role="status" aria-live="polite" className="mb-2 max-h-16 overflow-y-auto rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800 dark:bg-red-950/30 dark:text-red-200">{fileError}</div>}
           {selectedFiles.length > 0 && (
@@ -460,16 +464,16 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
             ref={textareaRef} value={input}
             onChange={event => { draftRevision.current += 1; setInput(event.target.value); }}
             onKeyDown={handleKeyDown} onPaste={submitting ? undefined : handlePaste}
-            placeholder={placeholder || 'Message HåfaGPT…'} rows={2}
+            placeholder={placeholder || 'Message HåfaGPT…'} rows={1}
             readOnly={Boolean(disabled && onDisabledClick)}
             aria-description={disabled && onDisabledClick ? 'Press Enter or Space to sign in and start chatting.' : undefined}
             aria-label="Message input" title={disabled && onDisabledClick ? 'Sign in to start chatting' : 'Message HåfaGPT'}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
             className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent px-2 py-2 text-base leading-6 text-brown-900 placeholder-brown-600 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder-gray-400"
-            style={{ height: compact ? '40px' : input.trim() ? undefined : '64px', minHeight: compact ? '40px' : '64px', maxHeight: 'min(160px, calc(var(--chat-viewport-height, 100dvh) * .25))' }}
+            style={{ height: compact ? '40px' : input.trim() ? undefined : '44px', minHeight: compact ? '40px' : '44px', maxHeight: 'min(160px, calc(var(--chat-viewport-height, 100dvh) * .25))' }}
           />
           </div>
-          <div className={`${inline ? 'shrink-0' : 'mt-1'} flex items-center gap-1`}>
+          <div className={`${inline ? 'shrink-0' : 'mt-1'} relative flex items-center gap-1`}>
             <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled || submitting || !canAddMoreFiles} aria-label="Upload files"
               title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
               className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl px-2 text-brown-600 hover:bg-cream-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-800">
@@ -479,14 +483,14 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
               aria-label={isListening ? 'Stop recording' : 'Start voice input'} title={isListening ? 'Stop English dictation' : 'Dictate in English'}
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl disabled:opacity-40 ${isListening ? 'bg-red-700 text-white motion-safe:animate-pulse' : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-800'}`}><Mic className="h-5 w-5" /></button>
             <input ref={fileInputRef} type="file" accept={FILE_ACCEPT} onChange={handleFileSelect} multiple className="hidden" />
-            {contextLabel && !inline && <span className="ml-1 flex min-w-0 items-center gap-1 text-xs font-medium text-brown-600 dark:text-gray-300"><Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{contextLabel}</span></span>}
+            {!inline && (taskControl || (contextLabel && <span className="ml-1 flex min-w-0 items-center gap-1 text-xs font-medium text-brown-600 dark:text-gray-300"><Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{contextLabel}</span></span>))}
             <div className="flex-1" />
             {loading ? <button type="button" onClick={onCancel} aria-label="Stop generating" title="Stop generating" className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800"><Square className="h-4 w-4 fill-current" /><span className="hidden sm:inline">Stop</span></button>
               : <button type="button" onClick={handleSend} disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)} aria-label="Send message" title="Send message"
                 className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Send className="h-5 w-5" /><span className="hidden sm:inline">Send</span></button>}
           </div>
         </div>
-        {!compact && <p className="mt-1.5 text-center text-[11px] leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
+        {!compact && showDisclaimer && <p className="mt-1.5 text-center text-[11px] leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
       </div>
     </div>
   );

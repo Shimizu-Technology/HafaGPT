@@ -14,11 +14,13 @@ export class HttpStatusError extends Error {
 /** The connection dropped after the request left; the server may still be replying. */
 export class ConnectionLostError extends Error {
   readonly pendingId: string;
+  readonly stopRequested: boolean;
 
-  constructor(pendingId: string) {
+  constructor(pendingId: string, stopRequested = false) {
     super('Connection lost');
     this.name = 'ConnectionLostError';
     this.pendingId = pendingId;
+    this.stopRequested = stopRequested;
   }
 }
 
