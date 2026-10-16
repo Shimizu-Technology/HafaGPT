@@ -1,5 +1,8 @@
 import ast
+import os
 from pathlib import Path
+
+import pytest
 
 
 CHATBOT_SOURCE = (
@@ -42,6 +45,7 @@ def _load_request_helpers(extra_functions: tuple[str, ...] = ()):
             },
         },
         "Any": object,
+        "os": os,
     }
     exec(compile(ast.Module(body=functions, type_ignores=[]), "chatbot_service.py", "exec"), namespace)
     return namespace
@@ -89,3 +93,13 @@ def test_image_detail_and_reasoning_effort_are_opt_in_per_model() -> None:
     }
     assert namespace["reasoning_effort_kwargs"]("deepseek/deepseek-chat", "low") == {}
     assert namespace["reasoning_effort_kwargs"]("unknown/model", "low") == {}
+
+
+@pytest.mark.parametrize('configured,enabled', [(None, False), ('', False), ('false', False), ('1', False), ('yes', False), ('true', True), (' TRUE ', True)])
+def test_photo_streaming_requires_explicit_server_opt_in(monkeypatch, configured, enabled) -> None:
+    if configured is None:
+        monkeypatch.delenv('HAFAGPT_PHOTO_TRANSLATION_STREAMING_ENABLED', raising=False)
+    else:
+        monkeypatch.setenv('HAFAGPT_PHOTO_TRANSLATION_STREAMING_ENABLED', configured)
+    helpers = _load_request_helpers(('photo_translation_streaming_enabled',))
+    assert helpers['photo_translation_streaming_enabled']() is enabled

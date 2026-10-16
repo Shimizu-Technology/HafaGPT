@@ -340,6 +340,7 @@ def test_image_page_pipeline_defers_logging_only_for_atomic_edits(persist: bool)
         ]), 'get_rag_context': Mock(), 'format_source_citations': lambda sources: sources,
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
         'transcription_image_detail': lambda model: 'high',
+        'photo_translation_streaming_enabled': lambda: True,
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     context = SimpleNamespace(school_announcement=False, card_ids=[])
@@ -438,6 +439,7 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
         '_extract_stream_chunk_content_and_empty_choice': lambda chunk: (chunk.choices[0].delta.content or '', False),
         'transcription_image_detail': lambda model: 'high',
+        'photo_translation_streaming_enabled': lambda: True,
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     def generate() -> Iterator[dict[str, Any]]:
@@ -533,7 +535,8 @@ def extracted_image_context(case: str) -> tuple[Any, list[dict[str, Any]]]:
         'IMAGE_CONTEXT_CARD_IDS': {}, 'get_client_for_request': get_client,
         'model_supports_temperature': lambda model: False, 'merge_image_translation_contexts': merge_image_translation_contexts,
         'try_parse_image_context_response': try_parse_image_context_response, 'logger': logging.getLogger(__name__),
-        'transcription_image_detail': lambda model: 'high', 'reasoning_effort_kwargs': lambda model, effort: {},
+        'transcription_image_detail': lambda model: 'high',
+        'photo_translation_streaming_enabled': lambda: True, 'reasoning_effort_kwargs': lambda model, effort: {},
     }
     source = ROOT / 'chatbot_service.py'; module = ast.parse(source.read_text())
     nodes = [node for node in module.body if isinstance(node, ast.FunctionDef) and node.name in ('_build_current_user_message', 'detect_image_context')]

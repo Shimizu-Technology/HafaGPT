@@ -30,6 +30,7 @@ def _detector_json(
 def _load_image_helpers(
     detector_text: str | list[str | Exception] = _detector_json(),
     detector_error: Exception | None = None,
+    streaming_enabled: bool = True,
 ):
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
     module = ast.parse(source_path.read_text())
@@ -90,6 +91,7 @@ def _load_image_helpers(
         "get_client_for_request": lambda **_kwargs: (client, "vision-model"),
         "transcription_image_detail": lambda _model: "original",
         "reasoning_effort_kwargs": lambda _model, effort: {"extra_body": {"reasoning": {"effort": effort}}},
+        "photo_translation_streaming_enabled": lambda: streaming_enabled,
         "logger": FakeLogger(),
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
@@ -369,3 +371,14 @@ def test_image_detector_reads_at_full_resolution_with_low_reasoning_effort() -> 
     image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
     assert image_part["image_url"]["detail"] == "original"
     assert call["extra_body"] == {"reasoning": {"effort": "low"}}
+
+
+def test_established_detector_settings_are_preserved_without_opt_in() -> None:
+    _, _, _, detect_image_context, completions = _load_image_helpers(
+        detector_text=_detector_json(lines=["Håfa adai!"]), streaming_enabled=False,
+    )
+    detect_image_context([{"data": "image", "content_type": "image/png"}])
+    call = completions.calls[0]
+    image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
+    assert image_part["image_url"]["detail"] == "high"
+    assert 'extra_body' not in call
