@@ -1,5 +1,5 @@
 import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown, AlertCircle, Loader2, WifiOff } from 'lucide-react';
-import { useState, useEffect, useRef, memo, useMemo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo, useId } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -257,6 +257,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   const copyTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
+  const [showSources, setShowSources] = useState(false);
+  const sourcesPanelId = useId();
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
@@ -483,11 +485,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
     return (
       <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
         <div className="max-w-[85%] sm:max-w-[75%]">
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 flex items-center justify-center text-xs sm:text-sm shadow-sm">
-              🤖
-            </div>
-            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
+          <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
+            <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
+            {timestamp && <span>{getRelativeTime(timestamp)}</span>}
           </div>
           <div className="bg-cream-100 dark:bg-gray-800/50 border border-cream-300 dark:border-gray-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
             <div className="flex items-center gap-2 text-brown-500 dark:text-gray-400">
@@ -516,7 +516,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
         <div
           className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
             isUser
-              ? 'bg-gradient-to-br from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 text-white rounded-tr-md'
+              ? 'bg-coral-700 dark:bg-ocean-700 text-white rounded-tr-md'
               : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
           }`}
         >
@@ -671,13 +671,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 {/* Only render content if it's not the thinking placeholder */}
                 {content !== '...' ? cleanedContent : ''}
               </ReactMarkdown>
-              {/* Streaming cursor - always rendered, uses CSS to fade in/out */}
-              {content && content.length > 0 && (
-                <span 
-                  className={`inline-block w-2 h-4 ml-0.5 bg-teal-500 dark:bg-ocean-400 rounded-sm transition-opacity duration-300 ${
-                    isStreaming ? 'opacity-100 animate-pulse' : 'opacity-0'
-                  }`}
-                />
+              {/* Streaming cursor; removed when done so finished replies have no trailing blank line. */}
+              {isStreaming && content && !statusText && (
+                <span className="inline-block h-4 w-2 animate-pulse rounded-sm bg-teal-500 dark:bg-ocean-400" aria-hidden="true" />
               )}
               {/* Thinking indicator - show animated dots while waiting for first chunk */}
               {isStreaming && (!content || content.length === 0) && (
@@ -709,45 +705,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           
         </div>
 
-        {!isUser && !isSystem && !isStreaming && !recovery && (
-          <details className="group mt-2 text-xs text-brown-600 dark:text-gray-300">
-            <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 hover:bg-cream-100 dark:hover:bg-gray-800">
-              {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
-                : evidenceStatus.level === 'web_informed' ? <Search className="h-4 w-4 flex-none" aria-hidden="true" />
-                  : <Sparkles className="h-4 w-4 flex-none" aria-hidden="true" />}
-              <span>{sources?.length ? `Sources (${sources.length}) · ${evidenceStatus.label}` : evidenceStatus.label}</span>
-              <ChevronDown className="ml-auto h-3.5 w-3.5 flex-none transition-transform group-open:rotate-180" aria-hidden="true" />
-            </summary>
-            <div className="space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-              <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="text-xs leading-relaxed">
-                <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
-              </p>
-              {sources && sources.length > 0 && <ul className="space-y-1">{sources.map((source, index) => {
-                const names: Record<string, string> = {
-                  hafagpt_canonical_evaluation: 'HåfaGPT vocabulary ledger',
-                  local_revised_dictionary_snapshot: 'Revised Chamorro dictionary',
-                  chamoru_info_dictionary: 'Chamoru.info dictionary',
-                  topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
-                };
-                const label = `${names[source.source_id || ''] || source.name}${typeof source.page === 'number' ? ` (p. ${source.page})` : ''}`;
-                const detail = [source.locator, source.content_role, source.region, source.temporal_scope].filter(Boolean).join(' • ');
-                return <li key={`${source.source_id || source.name}-${source.page || source.locator || index}`}>
-                  {source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer" title={detail}
-                    className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
-                    {label}<ExternalLink className="h-3 w-3 flex-none" aria-hidden="true" />
-                  </a> : <span title={detail} className="font-medium text-brown-800 dark:text-gray-200">{label}</span>}
-                  {detail && <p className="break-words text-xs leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>}
-                </li>;
-              })}</ul>}
-            </div>
-          </details>
-        )}
-
         {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
         {!isUser && !isSystem && !isStreaming && !recovery && (
-          <div 
-            className="mt-1 flex flex-wrap items-center gap-1"
-          >
+          <div className="mt-1 flex items-center gap-1">
             {/* Copy Button */}
             <button
               onClick={handleCopy}
@@ -803,7 +763,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             )}
 
             {/* Feedback Buttons */}
-            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-cream-300 dark:border-gray-600">
+            <span className="mx-1 h-5 w-px shrink-0 bg-cream-300 dark:bg-gray-600" aria-hidden="true" />
+            <div className="flex items-center gap-1">
               {/* Thumbs Up */}
               <button
                 onClick={() => handleFeedback('up')}
@@ -836,16 +797,49 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <ThumbsDown className={`w-4 h-4 ${feedback === 'down' ? 'fill-current' : ''}`} />
               </button>
             </div>
+            {/* Sources live in the same row as the actions to keep each reply compact. */}
+            <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={sourcesPanelId}
+              className="ml-auto flex min-h-11 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-gray-800">
+              {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
+                : evidenceStatus.level === 'web_informed' ? <Search className="h-4 w-4 flex-none" aria-hidden="true" />
+                  : <Sparkles className="h-4 w-4 flex-none" aria-hidden="true" />}
+              <span className="truncate">{sources?.length ? `Sources (${sources.length})` : evidenceStatus.label}</span>
+              <ChevronDown className={`h-3.5 w-3.5 flex-none transition-transform ${showSources ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
           </div>
+        )}
+        {!isUser && !isSystem && !isStreaming && !recovery && showSources && (
+            <div id={sourcesPanelId} className="mt-1 space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 text-xs text-brown-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="text-xs leading-relaxed">
+                <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
+              </p>
+              {sources && sources.length > 0 && <ul className="space-y-1">{sources.map((source, index) => {
+                const names: Record<string, string> = {
+                  hafagpt_canonical_evaluation: 'HåfaGPT vocabulary ledger',
+                  local_revised_dictionary_snapshot: 'Revised Chamorro dictionary',
+                  chamoru_info_dictionary: 'Chamoru.info dictionary',
+                  topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
+                };
+                const label = `${names[source.source_id || ''] || source.name}${typeof source.page === 'number' ? ` (p. ${source.page})` : ''}`;
+                const detail = [source.locator, source.content_role, source.region, source.temporal_scope].filter(Boolean).join(' • ');
+                return <li key={`${source.source_id || source.name}-${source.page || source.locator || index}`}>
+                  {source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer" title={detail}
+                    className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
+                    {label}<ExternalLink className="h-3 w-3 flex-none" aria-hidden="true" />
+                  </a> : <span title={detail} className="font-medium text-brown-800 dark:text-gray-200">{label}</span>}
+                  {detail && <p className="break-words text-xs leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>}
+                </li>;
+              })}</ul>}
+            </div>
         )}
         
         {copyFailed && <p role="alert" className="mt-1 px-2 text-xs text-red-700 dark:text-red-300">Could not copy this message. Select the text and copy it manually.</p>}
 
         {/* User Avatar and Actions */}
         {isUser && !isEditing && (
-          <div className="flex items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 px-1 justify-end">
+          <div className="mt-0.5 flex items-center justify-end gap-1 px-1">
             {timestamp && (
-              <span className="text-[10px] text-brown-600 dark:text-gray-400">
+              <span className="mr-1 text-xs text-brown-500 dark:text-gray-400">
                 {getRelativeTime(timestamp)}
               </span>
             )}
@@ -884,10 +878,6 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <span className="hidden sm:inline">Edit</span>
               </button>
             )}
-            <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">You</span>
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 flex items-center justify-center text-xs sm:text-sm flex-shrink-0 shadow-sm">
-              👤
-            </div>
           </div>
         )}
       </div>

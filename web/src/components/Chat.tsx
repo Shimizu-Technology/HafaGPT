@@ -21,7 +21,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useSubscription } from '../hooks/useSubscription';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { AuthButton } from './AuthButton';
-import { ModeSelector } from './ModeSelector';
+import { ModeSelector, TaskMenu } from './ModeSelector';
 import { Message } from './Message';
 import { MessageInput } from './MessageInput';
 import { WelcomeMessage } from './WelcomeMessage';
@@ -32,7 +32,7 @@ import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
-import { getChatIntentLabel, getChatIntentPlaceholder, normalizeChatIntent, type ChatIntent } from '../lib/chatIntent';
+import { forgetConversationIntent, getChatIntentPlaceholder, normalizeChatIntent, rememberConversationIntent, rememberedConversationIntent, type ChatIntent } from '../lib/chatIntent';
 import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
 import { useChatViewport } from '../hooks/useChatViewport';
 import { browserStorage } from '../lib/browserStorage';
@@ -171,9 +171,17 @@ function ChatSession() {
     searchParams.get('return_to'),
     requestedTopic ? appRoutes.topic(requestedTopic.id) : '',
   );
-  const chatIntent = normalizeChatIntent(searchParams.get('intent'));
+  // An explicit link wins; otherwise a reopened conversation keeps the task it was using.
+  const urlIntent = searchParams.get('intent');
+  const chatIntent = urlIntent
+    ? normalizeChatIntent(urlIntent)
+    : (user?.id && activeConversationId && rememberedConversationIntent(user.id, activeConversationId)) || 'explain';
+  useEffect(() => {
+    if (urlIntent && user?.id && activeConversationId) {
+      rememberConversationIntent(user.id, activeConversationId, normalizeChatIntent(urlIntent));
+    }
+  }, [activeConversationId, urlIntent, user?.id]);
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
-  const intentLabel = getChatIntentLabel(chatIntent);
   const [queuedUrlMessage, setQueuedUrlMessage] = useState<string | null>(null);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
   
@@ -1021,6 +1029,7 @@ function ChatSession() {
     const navigation = navigationGeneration.current;
     try {
       await deleteConversationMutation.mutateAsync(conversationId);
+      if (user?.id) forgetConversationIntent(user.id, conversationId);
       if (!mountedRef.current || navigation !== navigationGeneration.current) return;
       if (conversationId === scopeConversation.current) {
         setMessages([]);
@@ -1363,19 +1372,21 @@ End of Export
             {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
               <span aria-hidden="true">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
             </Link>}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
-                {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
-              </p>
-              <p className="truncate text-xs text-brown-500 dark:text-gray-400">{activeConversationId || linkedTopic ? 'HåfaGPT tutor' : 'Chamorro language tutor'}</p>
-            </div>
+            <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
+              {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
+            </h1>
+            {isSignedIn && activeConversationId && <button type="button" onClick={() => void handleNewConversation()} aria-label="New chat" title="New chat"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              <Plus className="h-5 w-5" aria-hidden="true" />
+            </button>}
             <div className="shrink-0"><AuthButton /></div>
             <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
               <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
-          {!viewport.keyboardOpen && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
+          {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
+          {!viewport.keyboardOpen && messages.length === 0 && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
@@ -1488,17 +1499,20 @@ End of Export
       <div data-testid="chat-composer" className="relative z-20 shrink-0 border-t border-cream-200 bg-cream-100 dark:border-gray-800 dark:bg-gray-950">
         {/* Scroll to Bottom Button */}
         {messages.length > 0 && showScrollButton && (
-          <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-50 animate-scale-in pointer-events-auto">
+          // Aligned to the conversation column so it sits beside the replies on wide screens.
+          <div className="pointer-events-none absolute inset-x-0 -top-14 z-50 px-4">
+            <div className="mx-auto flex w-full max-w-4xl justify-end">
             <button
               onClick={() => {
                 resumeFollowing();
               }}
-              className="flex h-11 w-11 items-center justify-center bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 border border-cream-300 dark:border-gray-700 hover:scale-110 active:scale-95 touch-manipulation"
+              className="pointer-events-auto flex h-11 w-11 animate-scale-in items-center justify-center rounded-full border border-cream-300 bg-cream-50/95 text-brown-700 shadow-md backdrop-blur transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/95 dark:text-gray-300 dark:hover:bg-gray-700 touch-manipulation"
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >
               <ArrowDown className="w-5 h-5" />
             </button>
+            </div>
           </div>
         )}
         <MessageInput
@@ -1525,7 +1539,10 @@ End of Export
           disabled={!isSignedIn || loading || recoveringReply || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
-          contextLabel={isSignedIn ? intentLabel : undefined}
+          taskControl={messages.length > 0
+            ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || recoveringReply} />
+            : undefined}
+          showDisclaimer={messages.length === 0}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
           loading={loading || recoveringReply}
           onCancel={handleStop}

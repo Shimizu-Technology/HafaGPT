@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
@@ -98,7 +98,10 @@ vi.mock('../hooks/useConversationsQuery', () => ({
 vi.mock('../hooks/useModalAccessibility', () => ({ useModalAccessibility: vi.fn() }));
 
 vi.mock('./AuthButton', () => ({ AuthButton: () => null }));
-vi.mock('./ModeSelector', () => ({ ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div> }));
+vi.mock('./ModeSelector', () => ({
+  ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div>,
+  TaskMenu: ({ intent }: { intent: string }) => <div data-testid="task-menu">{intent}</div>,
+}));
 vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: ({ onSelectConversation, onDeleteConversation }: { onSelectConversation: (id: string) => void; onDeleteConversation: (id: string) => void }) => <>
   <button onClick={() => onSelectConversation('conv-a')}>Select A</button>
   <button onClick={() => onSelectConversation('conv-b')}>Select B</button>
@@ -113,8 +116,10 @@ vi.mock('./MessageInput', () => ({
     sendError,
     loading,
     onCancel,
+    taskControl,
   }: {
     disabled: boolean;
+    taskControl?: React.ReactNode;
     loading?: boolean;
     onCancel?: () => void;
     sendError?: React.ReactNode;
@@ -122,7 +127,7 @@ vi.mock('./MessageInput', () => ({
     completedSend?: { message: string; files?: File[] };
   }) => {
     state.composerReceipt = completedSend;
-    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}</>;
+    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}{taskControl}</>;
   },
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt, onStartPractice }: { onPrompt: (prompt: string) => void; onStartPractice: () => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button><button onClick={onStartPractice}>Start guided practice</button></> }));
@@ -149,6 +154,11 @@ function ChatRouteHarness() {
       <div data-testid="chat-path">{location.pathname}{location.search}</div>
     </>
   );
+}
+
+function cleanupAndRender(path: string) {
+  cleanup();
+  renderChat(path);
 }
 
 function renderChat(path: string) {
@@ -461,6 +471,30 @@ describe('Chat stable conversation route', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('uses the full task strip for a new chat and the composer task menu once chatting', () => {
+    renderChat('/chat?intent=translate');
+    expect(screen.getByTestId('task-strip')).toBeInTheDocument();
+    expect(screen.queryByTestId('task-menu')).not.toBeInTheDocument();
+    state.messages = [
+      { id: 1, role: 'user', content: 'Saved question', timestamp: '2026-10-16T00:00:00Z' },
+      { id: 1, role: 'assistant', content: 'Saved answer', timestamp: '2026-10-16T00:00:01Z' },
+    ];
+    cleanupAndRender('/chat/conv-a?intent=translate');
+    expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
+    expect(screen.getByTestId('task-menu')).toHaveTextContent('translate');
+    expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument();
+  });
+
+  it('reopens a saved conversation with the task it was last using', () => {
+    state.messages = [{ id: 1, role: 'user', content: 'Saved question', timestamp: '2026-10-16T00:00:00Z' }];
+    renderChat('/chat/conv-a?intent=translate');
+    expect(window.localStorage.getItem('chat_intent:user-1:conv-a')).toBe('translate');
+    cleanupAndRender('/chat/conv-a');
+    expect(screen.getByTestId('task-menu')).toHaveTextContent('translate');
+    cleanupAndRender('/chat/conv-b');
+    expect(screen.getByTestId('task-menu')).toHaveTextContent('explain');
   });
 
   it('does not navigate or start a send if the learner leaves during conversation creation', async () => {

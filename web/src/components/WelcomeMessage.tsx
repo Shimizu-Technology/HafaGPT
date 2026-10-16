@@ -25,7 +25,7 @@ export function WelcomeMessage({ onSelect, onPrompt, disabled = false, intent = 
     <div className="mx-auto w-full max-w-xl px-2 py-5 sm:px-4 sm:py-12">
       <div className="mb-5 text-center">
         <MessageCircle className="mx-auto mb-3 h-7 w-7 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
-        <h1 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">How can I help?</h1>
+        <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">How can I help?</h2>
         <p className="mt-2 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{DESCRIPTIONS[intent]}</p>
       </div>
       <div className="grid gap-2" aria-label="Example prompts">
