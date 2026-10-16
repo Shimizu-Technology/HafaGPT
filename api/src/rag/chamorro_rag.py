@@ -7,8 +7,16 @@ import os
 import re
 import unicodedata
 import time
+from contextlib import closing
 from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
+from src.rag.retrieval_runtime import (
+    CONNECT_TIMEOUT_SECONDS,
+    EMBEDDING_TIMEOUT_SECONDS,
+    RetrievalStopped,
+    check_retrieval,
+    database_connect_options,
+)
 
 from src.rag.source_policy import (
     assert_collection_use_allowed,
@@ -32,6 +40,16 @@ from src.rag.embedding_contract import (
     validate_collection_contract,
 )
 from src.rag.collection_names import configured_collection_name
+
+
+class ResponsiveOpenAIEmbeddings(OpenAIEmbeddings):
+    """Check Stop between the embedding HTTP call and the vector SQL query."""
+
+    def embed_query(self, text: str, **kwargs) -> list[float]:
+        check_retrieval()
+        result = super().embed_query(text, **kwargs)
+        check_retrieval()
+        return result
 
 
 def normalize_chamorro_text(text: str) -> str:
@@ -338,10 +356,12 @@ class ChamorroRAG:
             # Cons: ~$0.0001 per query, network latency, requires API key
             # Good for: Low-medium traffic, memory-constrained servers, Render free/starter
             print("☁️  Using CLOUD embeddings (OpenAI)")
-            self.embeddings = OpenAIEmbeddings(
+            self.embeddings = ResponsiveOpenAIEmbeddings(
                 model="text-embedding-3-small",
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
-                dimensions=384  # Match HuggingFace model dimensions for compatibility
+                dimensions=384,  # Match the governed collection contract.
+                request_timeout=EMBEDDING_TIMEOUT_SECONDS,
+                max_retries=0,
             )
         
         # Initialize vector store connection
@@ -360,7 +380,12 @@ class ChamorroRAG:
             use_jsonb=True,
             embedding_length=384,  # Explicit embedding dimensions for PGVector
             # Add connection pool settings for better reliability
-            pre_delete_collection=False  # Don't delete collection on init
+            pre_delete_collection=False,  # Don't delete collection on init.
+            engine_args={
+                "connect_args": database_connect_options(),
+                "pool_timeout": CONNECT_TIMEOUT_SECONDS,
+                "pool_pre_ping": True,
+            },
         )
         self._assert_embedding_contract()
 
@@ -389,9 +414,13 @@ class ChamorroRAG:
         retry_delay = 0.5  # Reduced from 1 - faster retry
         
         for attempt in range(max_retries):
+            check_retrieval()
             try:
                 return func(*args, **kwargs)
+            except RetrievalStopped:
+                raise
             except Exception as e:
+                check_retrieval()
                 error_msg = str(e)
                 # Check if it's a connection error
                 if any(keyword in error_msg.lower() for keyword in ['ssl', 'connection', 'closed', 'timeout']):
@@ -400,8 +429,9 @@ class ChamorroRAG:
                         if attempt == 0:
                             print(f"⚠️  Database connection issue, reconnecting...")
                         time.sleep(retry_delay * (attempt + 1))  # Exponential backoff: 0.5s, 1s
-                        # Reinitialize connection
-                        self._init_vectorstore()
+                        # SQLAlchemy invalidates disconnected connections. Keep
+                        # the shared store/engine instead of leaking a new pool
+                        # on every request retry.
                         continue
                 # If not a connection error or max retries reached, raise
                 raise
@@ -421,8 +451,9 @@ class ChamorroRAG:
         
         last_error = None
         for attempt in range(max_retries):
+            check_retrieval()
             try:
-                conn = psycopg.connect(os.getenv("DATABASE_URL"))
+                conn = psycopg.connect(os.getenv("DATABASE_URL"), **database_connect_options())
                 return conn
             except Exception as e:
                 last_error = e
@@ -468,40 +499,39 @@ class ChamorroRAG:
             
             # SQL search for Chamorro headwords (fast and accurate)
             try:
-                conn = self._get_db_connection_with_retry()
-                cur = conn.cursor()
-                
-                # Search for Chamorro headword entries
-                # Priority: exact headword match > word in definition > word anywhere
-                cur.execute("""
-                    SELECT 
-                        embedding.document,
-                        embedding.cmetadata,
-                        CASE
-                            -- Priority 1: Exact headword match (at start of entry)
-                            WHEN embedding.document ILIKE %s OR embedding.document ILIKE %s THEN 1
-                            -- Priority 2: Word in first few lines (definition area)
-                            WHEN embedding.document ILIKE %s THEN 2
-                            ELSE 3
-                        END as priority
-                    FROM langchain_pg_embedding AS embedding
-                    JOIN langchain_pg_collection AS collection
-                      ON collection.uuid = embedding.collection_id
-                    WHERE collection.name = %s
-                    AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
-                         OR embedding.cmetadata->>'source' ILIKE '%%TOD%%')
-                    AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
-                    AND (
-                        embedding.document ILIKE %s
-                        OR embedding.document ILIKE %s
-                        OR embedding.document ILIKE %s
-                    )
-                    ORDER BY priority ASC, LENGTH(embedding.document) ASC
-                    LIMIT %s
-                """, _chamorro_keyword_query_params(target_lower, self.collection_name, k))
-                
-                results = cur.fetchall()
-                conn.close()
+                with closing(self._get_db_connection_with_retry()) as conn, closing(conn.cursor()) as cur:
+
+                    # Search for Chamorro headword entries
+                    # Priority: exact headword match > word in definition > word anywhere
+                    cur.execute("""
+                        SELECT
+                            embedding.document,
+                            embedding.cmetadata,
+                            CASE
+                                -- Priority 1: Exact headword match (at start of entry)
+                                WHEN embedding.document ILIKE %s OR embedding.document ILIKE %s THEN 1
+                                -- Priority 2: Word in first few lines (definition area)
+                                WHEN embedding.document ILIKE %s THEN 2
+                                ELSE 3
+                            END as priority
+                        FROM langchain_pg_embedding AS embedding
+                        JOIN langchain_pg_collection AS collection
+                          ON collection.uuid = embedding.collection_id
+                        WHERE collection.name = %s
+                        AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
+                             OR embedding.cmetadata->>'source' ILIKE '%%TOD%%')
+                        AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
+                        AND (
+                            embedding.document ILIKE %s
+                            OR embedding.document ILIKE %s
+                            OR embedding.document ILIKE %s
+                        )
+                        ORDER BY priority ASC, LENGTH(embedding.document) ASC
+                        LIMIT %s
+                    """, _chamorro_keyword_query_params(target_lower, self.collection_name, k))
+
+                    results = cur.fetchall()
+                    check_retrieval()
                 
                 if results:
                     docs = []
@@ -532,6 +562,8 @@ class ChamorroRAG:
                     if docs:
                         return docs
                         
+            except RetrievalStopped:
+                raise
             except Exception as e:
                 error_msg = str(e).lower()
                 # Let connection errors bubble up for retry (don't try semantic search which will also fail)
@@ -542,6 +574,7 @@ class ChamorroRAG:
                 # Fall through to semantic search
             
             # Fall back to semantic search + filtering if SQL failed
+            check_retrieval()
             results = self.vectorstore.similarity_search(
                 target_word,
                 k=k*5,
@@ -571,6 +604,8 @@ class ChamorroRAG:
             
             return dict_results
             
+        except RetrievalStopped:
+            raise
         except Exception as e:
             error_msg = str(e).lower()
             # Let connection errors bubble up for retry
@@ -609,55 +644,54 @@ class ChamorroRAG:
             
             # SQL search for English words in dictionary definitions
             try:
-                conn = self._get_db_connection_with_retry()
-                cur = conn.cursor()
-                
-                # Search for English words in definitions
-                # KEY FIX: Prioritize DIRECT translations over compound phrases
-                # Direct translation: "hand, arm" (word + comma/semicolon/dash)
-                # Compound phrase: "hand over" (word + space + another word)
-                cur.execute("""
-                    SELECT 
-                        embedding.document,
-                        embedding.cmetadata,
-                        CASE
-                            -- Priority 1: exact primary meaning on its own line.
-                            -- This keeps "tree." ahead of qualified senses such
-                            -- as "tree--bent" for a generic tree lookup.
-                            WHEN embedding.document ~* %s THEN 1
-                            -- Current revised-dictionary tables use | English | Chamorro | rows.
-                            WHEN embedding.cmetadata->>'source' ILIKE '%%Revised-Chamorro-Dictionary%%'
-                                 AND embedding.document ~* %s THEN 1
-                            -- Priority 2: a qualified primary noun, e.g. "banana (ripe)".
-                            WHEN embedding.document ~* %s THEN 2
-                            -- Priority 3: Word as a complete alternative meaning (after comma/semicolon)
-                            -- e.g., ", angry" or "; mad"
-                            WHEN embedding.document ~* %s THEN 3
-                            -- Priority 4: Word in parenthetical - e.g., "(hand)" or "(fish)"
-                            WHEN embedding.document ~* %s THEN 4
-                            -- Priority 5: qualified primary meaning, e.g. "tree--bent".
-                            WHEN embedding.document ~* %s THEN 5
-                            -- Priority 6 (LOWER): COMPOUND PHRASE - word followed by space + another word
-                            -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
-                            WHEN embedding.document ~* %s THEN 6
-                            -- Priority 7: Word appears anywhere else
-                            ELSE 7
-                        END as priority
-                    FROM langchain_pg_embedding AS embedding
-                    JOIN langchain_pg_collection AS collection
-                      ON collection.uuid = embedding.collection_id
-                    WHERE collection.name = %s
-                    AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
-                         OR embedding.cmetadata->>'source' ILIKE '%%TOD%%'
-                         OR embedding.cmetadata->>'source' ILIKE '%%chamoru_info%%')
-                    AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
-                    AND embedding.document ~* %s
-                    ORDER BY priority ASC, LENGTH(embedding.document) ASC
-                    LIMIT %s
-                """, _english_keyword_query_params(target_lower, self.collection_name, k))
-                
-                results = cur.fetchall()
-                conn.close()
+                with closing(self._get_db_connection_with_retry()) as conn, closing(conn.cursor()) as cur:
+
+                    # Search for English words in definitions
+                    # KEY FIX: Prioritize DIRECT translations over compound phrases
+                    # Direct translation: "hand, arm" (word + comma/semicolon/dash)
+                    # Compound phrase: "hand over" (word + space + another word)
+                    cur.execute("""
+                        SELECT
+                            embedding.document,
+                            embedding.cmetadata,
+                            CASE
+                                -- Priority 1: exact primary meaning on its own line.
+                                -- This keeps "tree." ahead of qualified senses such
+                                -- as "tree--bent" for a generic tree lookup.
+                                WHEN embedding.document ~* %s THEN 1
+                                -- Current revised-dictionary tables use | English | Chamorro | rows.
+                                WHEN embedding.cmetadata->>'source' ILIKE '%%Revised-Chamorro-Dictionary%%'
+                                     AND embedding.document ~* %s THEN 1
+                                -- Priority 2: a qualified primary noun, e.g. "banana (ripe)".
+                                WHEN embedding.document ~* %s THEN 2
+                                -- Priority 3: Word as a complete alternative meaning (after comma/semicolon)
+                                -- e.g., ", angry" or "; mad"
+                                WHEN embedding.document ~* %s THEN 3
+                                -- Priority 4: Word in parenthetical - e.g., "(hand)" or "(fish)"
+                                WHEN embedding.document ~* %s THEN 4
+                                -- Priority 5: qualified primary meaning, e.g. "tree--bent".
+                                WHEN embedding.document ~* %s THEN 5
+                                -- Priority 6 (LOWER): COMPOUND PHRASE - word followed by space + another word
+                                -- e.g., "hand over" or "fish by poisoning" - these are VERBS not NOUNS
+                                WHEN embedding.document ~* %s THEN 6
+                                -- Priority 7: Word appears anywhere else
+                                ELSE 7
+                            END as priority
+                        FROM langchain_pg_embedding AS embedding
+                        JOIN langchain_pg_collection AS collection
+                          ON collection.uuid = embedding.collection_id
+                        WHERE collection.name = %s
+                        AND (embedding.cmetadata->>'source' ILIKE '%%dictionary%%'
+                             OR embedding.cmetadata->>'source' ILIKE '%%TOD%%'
+                             OR embedding.cmetadata->>'source' ILIKE '%%chamoru_info%%')
+                        AND embedding.cmetadata->>'source' NOT ILIKE '%%supplemental%%'
+                        AND embedding.document ~* %s
+                        ORDER BY priority ASC, LENGTH(embedding.document) ASC
+                        LIMIT %s
+                    """, _english_keyword_query_params(target_lower, self.collection_name, k))
+
+                    results = cur.fetchall()
+                    check_retrieval()
                 
                 if results:
                     docs = []
@@ -687,6 +721,8 @@ class ChamorroRAG:
                     if docs:
                         return docs
                         
+            except RetrievalStopped:
+                raise
             except Exception as e:
                 error_msg = str(e).lower()
                 # Let connection errors bubble up for retry
@@ -698,6 +734,8 @@ class ChamorroRAG:
             
             return []
             
+        except RetrievalStopped:
+            raise
         except Exception as e:
             error_msg = str(e).lower()
             # Let connection errors bubble up for retry
@@ -726,6 +764,7 @@ class ChamorroRAG:
     
     def _search_impl(self, query, k=3, card_type=None):
         """Implementation of search with retry wrapper."""
+        check_retrieval()
         query_lower = query.lower()
         
         # PHASE 1 FIX: Clean query before embedding search
@@ -800,6 +839,7 @@ class ChamorroRAG:
         targeted_results = []
         for source_entry in sources_explicitly_mentioned(query, query_type):
             for source_pattern in source_entry["match"].get("source_contains", []):
+                check_retrieval()
                 targeted_results.extend(
                     self.vectorstore.similarity_search_with_score(
                         search_query,
@@ -810,6 +850,7 @@ class ChamorroRAG:
 
         grammar_results = []
         if _requires_grammar_evidence(query, query_type):
+            check_retrieval()
             grammar_results = self.vectorstore.similarity_search_with_score(
                 search_query,
                 k=max(k * 2, 10),
@@ -823,12 +864,14 @@ class ChamorroRAG:
         # The previous search-all-then-filter flow allowed blocked collections to
         # consume the complete candidate window, producing an empty governed
         # context even when eligible evidence existed deeper in the collection.
+        check_retrieval()
         eligible_results = self.vectorstore.similarity_search_with_score(
             search_query,
             k=max(k * 8, 20),
             filter=retrieval_metadata_filter(query_type),
         )
         results = targeted_results + grammar_results + eligible_results
+        check_retrieval()
         
         # The source registry replaces the old global era-priority boosts. A
         # newspaper, tourism page, or cultural source can no longer outrank a
