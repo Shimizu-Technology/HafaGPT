@@ -66,7 +66,7 @@ export function StreamingFixture() {
   };
   return <main style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#fff8f0' }}>
     <header style={{ padding: '12px 16px', borderBottom: '1px solid #ddd' }}>
-      <strong>Streaming regression fixture</strong><span role="status"> — {loading ? 'Streaming' : 'Ready'}</span>
+      <strong>Streaming regression fixture</strong><span role="status" data-testid="fixture-status"> — {loading ? 'Streaming' : 'Ready'}</span>
     </header>
     <div ref={ref} data-testid="chat-messages" tabIndex={0} style={{ overflowY: 'auto', flex: 1, minHeight: 0, padding: '16px 16px 140px' }}>
       <div style={{ maxWidth: 850, margin: 'auto' }}>

@@ -1,4 +1,4 @@
-import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown } from 'lucide-react';
+import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown, AlertCircle, Loader2, WifiOff } from 'lucide-react';
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
@@ -6,6 +6,13 @@ import remarkGfm from 'remark-gfm';
 import { useSpeech } from '../hooks/useSpeech';
 import type { SourceInfo } from '../types/source';
 import { getChatEvidenceStatus } from '../lib/chatEvidence';
+import type { RecoveryPhase } from '../lib/replyRecovery';
+
+const RECOVERY_LABELS: Record<RecoveryPhase, string> = {
+  checking: 'Connection lost. Checking for your reply…',
+  waiting: 'Still working on your reply. It will appear here.',
+  offline: 'Waiting for your connection to come back…',
+};
 
 /**
  * Clean markdown content to prevent unwanted code blocks.
@@ -106,8 +113,10 @@ interface MessageProps {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
-  systemType?: 'mode_change' | 'cancelled';
+  systemType?: 'mode_change' | 'cancelled' | 'failed' | 'notice';
   mode?: 'english' | 'chamorro' | 'learn';
+  statusText?: string; // Server progress while the reply has no text yet
+  recovery?: RecoveryPhase; // Checking for the reply after a dropped connection
   onImageClick?: (imageUrl: string) => void; // Callback for image clicks
   messageId?: string; // Message UUID for feedback
   conversationId?: string; // Conversation UUID for feedback
@@ -239,7 +248,7 @@ const markdownComponents: Components = {
 };
 const markdownPlugins = [remarkGfm];
 
-export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit, messageIndex, unavailableAttachments, acceptedEdit }: MessageProps) {
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, statusText, recovery, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit, messageIndex, unavailableAttachments, acceptedEdit }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
   const { getToken } = useAuth();
@@ -436,6 +445,34 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           <p className="text-xs text-brown-600 dark:text-gray-400 text-center mt-1">
             {modeDetails.description}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (systemType === 'notice') {
+    return (
+      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+        <div role="status" className="flex max-w-[85%] items-start gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-700 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 sm:max-w-[75%]">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          <span>{content}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (systemType === 'failed') {
+    return (
+      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+        <div className="max-w-[85%] sm:max-w-[75%]">
+          <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
+            <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
+            {timestamp && <span>{getRelativeTime(timestamp)}</span>}
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+            <AlertCircle className="h-4 w-4 flex-none" aria-hidden="true" />
+            <span>HåfaGPT couldn’t finish this reply.</span>
+          </div>
         </div>
       </div>
     );
@@ -650,7 +687,21 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
                     <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
                   </div>
-                  <span className="text-sm text-brown-500 dark:text-gray-400 animate-pulse">Thinking...</span>
+                  <span role="status" className="text-sm text-brown-500 dark:text-gray-400 animate-pulse">{statusText || 'Thinking…'}</span>
+                </div>
+              )}
+              {isStreaming && content && statusText && (
+                <div role="status" className="mt-2 flex items-center gap-2 text-sm text-brown-500 dark:text-gray-400">
+                  <Loader2 className="h-4 w-4 flex-none animate-spin" aria-hidden="true" />
+                  <span>{statusText}</span>
+                </div>
+              )}
+              {recovery && (
+                <div role="status" className={`flex items-center gap-2 text-sm text-brown-600 dark:text-gray-300 ${content ? 'mt-3 border-t border-cream-200 pt-3 dark:border-gray-700' : 'py-1'}`}>
+                  {recovery === 'offline'
+                    ? <WifiOff className="h-4 w-4 flex-none" aria-hidden="true" />
+                    : <Loader2 className="h-4 w-4 flex-none animate-spin" aria-hidden="true" />}
+                  <span>{RECOVERY_LABELS[recovery]}</span>
                 </div>
               )}
             </div>
@@ -658,7 +709,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           
         </div>
 
-        {!isUser && !isSystem && !isStreaming && (
+        {!isUser && !isSystem && !isStreaming && !recovery && (
           <details className="group mt-2 text-xs text-brown-600 dark:text-gray-300">
             <summary className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-lg px-2 hover:bg-cream-100 dark:hover:bg-gray-800">
               {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
@@ -693,7 +744,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
         )}
 
         {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
-        {!isUser && !isSystem && !isStreaming && (
+        {!isUser && !isSystem && !isStreaming && !recovery && (
           <div 
             className="mt-1 flex flex-wrap items-center gap-1"
           >

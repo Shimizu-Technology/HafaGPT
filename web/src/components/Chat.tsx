@@ -2,6 +2,9 @@ import { useCallback, useState, useRef, useEffect, type CSSProperties } from 're
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye, MoreHorizontal, Menu, Settings, Plus } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
+import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
+import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
+import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
 import { useTheme } from '../hooks/useTheme';
 import { 
@@ -37,9 +40,20 @@ import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
 import { appRoutes, safeInternalReturnPath } from '../lib/routes';
 
+interface ReplyRecovery {
+  pendingId: string;
+  controller: AbortController;
+  /** Set when the learner presses Stop; resolves whether the server received it. */
+  cancelled?: Promise<boolean>;
+  /** The server outcome is known; only the saved copy is still loading. */
+  settled?: boolean;
+}
+
 interface SendAttempt {
   message: string;
   files?: File[];
+  /** Upload-ready copies (large photos shrunk); `files` stays the composer's identity. */
+  uploadFiles?: File[];
   conversationId: string | null;
   mode: 'english' | 'chamorro' | 'learn';
   intent: ChatIntent;
@@ -49,6 +63,51 @@ interface SendAttempt {
   todayDay?: string;
   skillLevel: 'beginner' | 'intermediate' | 'advanced';
   edit?: { messageId: number; revision: string; messageIndex: number; originalMessages: ChatMessage[]; scrollTop: number };
+}
+
+// The API saves failed replies with a bracketed marker instead of reply text.
+const FAILED_REPLY = /^\[(?:Error:|Token limit exceeded)/;
+
+/**
+ * Whether a saved transcript contains this question, asked after the first
+ * `priorQuestions` questions, followed by a reply. Counting earlier questions
+ * keeps a repeated phrase from matching an older identical exchange.
+ */
+function transcriptHasExchange(saved: ConversationMessage[], message: string, priorQuestions: number): boolean {
+  let questions = 0;
+  for (let index = 0; index < saved.length; index += 1) {
+    if (saved[index].role !== 'user') continue;
+    questions += 1;
+    if (questions > priorQuestions && saved[index].content === message
+      && saved.slice(index + 1).some(row => row.role === 'assistant')) return true;
+  }
+  return false;
+}
+
+function toChatMessages(conversationMessages: ConversationMessage[]): ChatMessage[] {
+  return conversationMessages.map((msg) => {
+    const isCancelled = msg.role === 'assistant' && msg.content === '[Message was cancelled by user]';
+    const isFailed = msg.role === 'assistant' && FAILED_REPLY.test(msg.content);
+    return {
+      id: String(msg.id),
+      role: msg.role,
+      content: msg.content,
+      imageUrl: msg.image_url || undefined,
+      file_urls: msg.file_urls || undefined, // Multi-file support
+      timestamp: new Date(msg.timestamp).getTime(),
+      sources: msg.sources?.map((src) => ({
+        ...src,
+        name: src.name,
+        page: src.page ?? null
+      })) || [],
+      used_rag: msg.used_rag || false,
+      used_web_search: msg.used_web_search || false,
+      response_time: msg.response_time || undefined,
+      systemType: msg.role === 'system' ? 'mode_change' : isCancelled ? 'cancelled' : isFailed ? 'failed' : undefined,
+      mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined,
+      cancelled: isCancelled
+    };
+  });
 }
 
 export function Chat() {
@@ -99,7 +158,7 @@ function ChatSession() {
     return null;
   });
   
-  const { sendMessageStream, cancelMessage, loading, error, setError } = useChatbot();
+  const { sendMessageStream, cancelMessage, checkReplyStatus, cancelPendingReply, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const clerk = useClerk();
   const editOwner = useAccountRequest();
@@ -184,6 +243,13 @@ function ChatSession() {
   const optionsCloseRef = useRef<HTMLButtonElement>(null);
   useModalAccessibility({ isOpen: showOptions, onClose: () => setShowOptions(false), dialogRef: optionsDialogRef, initialFocusRef: optionsCloseRef });
   const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
+  const [failureTitle, setFailureTitle] = useState('Message not sent');
+  // A dropped connection on a sent message: check the server before calling it lost.
+  const recoveryRef = useRef<ReplyRecovery | null>(null);
+  // An exchange whose saved copy has not loaded yet stays on screen until the
+  // server transcript contains it, so a stale refresh cannot make it vanish.
+  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; priorQuestions: number; messages: ChatMessage[] } | null>(null);
+  const [recoveringReply, setRecoveringReply] = useState(false);
   const [unavailableAttachments, setUnavailableAttachments] = useState<{
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
     originalContent: string; files: { index: number; name: string }[]; skipAll?: boolean;
@@ -202,17 +268,20 @@ function ChatSession() {
   useEffect(() => {
     mountedRef.current = true;
     const urls = previewUrls.current;
-    return () => { mountedRef.current = false; sendGeneration.current += 1; editAbort.current?.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
+    return () => { mountedRef.current = false; sendGeneration.current += 1; editAbort.current?.abort(); recoveryRef.current?.controller.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
   }, []);
   useEffect(() => {
     if (pendingAttemptRef.current && activeConversationId !== pendingAttemptRef.current.conversationId) {
       sendGeneration.current += 1;
+      // Leaving stops checking; the server still saves the reply in its conversation.
+      recoveryRef.current?.controller.abort();
       pendingAttemptRef.current = null;
       isSendingMessageRef.current = false;
       void cancelMessage();
       editAbort.current?.abort();
       setPreparingSend(false);
     }
+    if (pinnedExchangeRef.current && pinnedExchangeRef.current.conversationId !== activeConversationId) pinnedExchangeRef.current = null;
     setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
     setUnavailableAttachments(previous => previous?.conversationId === activeConversationId ? previous : null);
   // cancelMessage is invoked only when the conversation scope changes.
@@ -301,31 +370,21 @@ function ChatSession() {
     
     // Load messages from the separate conversation messages query
     if (conversationMessages) {
-      const chatMessages: ChatMessage[] = conversationMessages.map((msg: ConversationMessage) => {
-        // Detect cancelled messages from the database
-        const isCancelled = msg.role === 'assistant' && msg.content === '[Message was cancelled by user]';
-        
-        return {
-          id: String(msg.id),
-          role: msg.role,
-          content: msg.content,
-          imageUrl: msg.image_url || undefined,
-          file_urls: msg.file_urls || undefined, // Multi-file support
-          timestamp: new Date(msg.timestamp).getTime(),
-          sources: msg.sources?.map((src) => ({
-            ...src,
-            name: src.name,
-            page: src.page ?? null
-          })) || [],
-          used_rag: msg.used_rag || false,
-          used_web_search: msg.used_web_search || false,
-          response_time: msg.response_time || undefined,
-          systemType: msg.role === 'system' ? 'mode_change' : (isCancelled ? 'cancelled' : undefined),
-          mode: msg.mode as 'english' | 'chamorro' | 'learn' | undefined,
-          cancelled: isCancelled
-        };
+      // Keep each saved message's on-screen identity so a refresh never remounts it.
+      setMessages(prev => {
+        const keys = new Map(prev.flatMap(msg => msg.id && msg.renderKey ? [[`${msg.id}-${msg.role}`, msg.renderKey] as const] : []));
+        const loaded = toChatMessages(conversationMessages).map(msg => {
+          const renderKey = keys.get(`${msg.id}-${msg.role}`);
+          return renderKey ? { ...msg, renderKey } : msg;
+        });
+        const pinned = pinnedExchangeRef.current;
+        if (!pinned || pinned.conversationId !== activeConversationId) return loaded;
+        if (transcriptHasExchange(conversationMessages, pinned.message, pinned.priorQuestions)) {
+          pinnedExchangeRef.current = null;
+          return loaded;
+        }
+        return [...loaded, ...pinned.messages];
       });
-      setMessages(chatMessages);
       // Clear switching state once messages are loaded
       setIsSwitchingConversation(false);
     }
@@ -451,14 +510,19 @@ function ChatSession() {
         restoreScrollPosition(attempt.edit.scrollTop);
       }
     };
-    const fail = (reason: string) => {
+    const fail = (reason: string, title = 'Message not sent') => {
       if (!isCurrent()) return;
       setFailedAttempt(attempt);
+      setFailureTitle(title);
       setError(reason);
     };
     setError(null);
     setFailedAttempt(null);
     setPreparingSend(true);
+    // A new send supersedes any pinned, unconfirmed exchange; later refreshes show the server's truth.
+    pinnedExchangeRef.current = null;
+    const priorQuestions = (attempt.edit ? attempt.edit.originalMessages.slice(0, attempt.edit.messageIndex) : messages)
+      .filter(msg => msg.role === 'user').length;
     // ========================================================================
     // OPTIMISTIC UI: Show messages IMMEDIATELY before any API calls
     // This makes the UI feel instant even if backend operations take time
@@ -591,95 +655,252 @@ function ChatSession() {
       // ========================================================================
       
       if (!isCurrent()) return false;
+      if (attempt.files?.length && !attempt.uploadFiles) {
+        attempt.uploadFiles = await prepareFilesForUpload(attempt.files);
+        if (!isCurrent()) return false;
+      }
       setPreparingSend(false);
-      await sendMessageStream(
-        attempt.message,
-        attempt.mode,
-        currentConversationId,
-        {
-          onChunk: (_chunk, fullContent) => {
-            if (!isCurrent()) return;
-            setMessages((prev) => 
-              prev.map((msg) => 
-                msg.id === assistantMessageId 
-                  ? { ...msg, content: fullContent }
-                  : msg
-              )
-            );
-          },
-          onMetadata: (metadata) => {
-            if (!isCurrent()) return;
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, ...metadata }
-                  : msg
-              )
-            );
-          },
-          onDone: (response_time) => {
-            if (!isCurrent()) return;
-            editCommitted = Boolean(attempt.edit);
-            if (attempt.edit) setCompletedEdit({ renderKey: userMessage.renderKey!, message: attempt.message });
-            setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === assistantMessageId) {
-                  return { ...msg, response_time, id: undefined, isStreaming: false };
-                }
-                // Also clear the user message ID (it's now persisted)
-                if (msg.id === userMessageId) {
-                  return { ...msg, id: undefined };
-                }
-                return msg;
-              })
-            );
-            isSendingMessageRef.current = false;
-          },
-          onError: (errorMsg) => {
-            if (!isCurrent()) return;
-            if (editCommitted) { setError(null); return; }
-            fail(errorMsg);
-            console.error('Streaming error:', errorMsg);
-            removeOptimisticMessages();
-            isSendingMessageRef.current = false;
-          },
-          onCancelled: () => {
-            if (!isCurrent()) return;
-            if (attempt.edit) {
-              if (!editCommitted) {
-                removeOptimisticMessages();
-                fail('Editing stopped. Your edit is still here.');
-              }
-              return;
+
+      const recoverDroppedReply = async (pendingId: string): Promise<boolean> => {
+        const controller = new AbortController();
+        const recovery: ReplyRecovery = { pendingId, controller };
+        recoveryRef.current = recovery;
+        setRecoveringReply(true);
+        const updatePlaceholder = (update: Partial<ChatMessage>) => {
+          if (!isCurrent()) return;
+          setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? { ...msg, ...update } : msg));
+        };
+        const showPinnedNotice = (notice: string) => {
+          if (!isCurrent() || !currentConversationId) return;
+          const question: ChatMessage = { ...userMessage, id: undefined };
+          const note: ChatMessage = {
+            renderKey: assistantMessageId, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
+          };
+          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, priorQuestions, messages: [question, note] };
+          setMessages(prev => [
+            ...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId),
+            question, note,
+          ]);
+        };
+        const finishRecovery = () => {
+          if (recoveryRef.current === recovery) {
+            recoveryRef.current = null;
+            if (mountedRef.current) setRecoveringReply(false);
+          }
+        };
+        // The status says the exchange is saved; load it, confirm it is really the
+        // one just sent, and only then replace the on-screen copy.
+        const loadSavedExchange = async (loads = 5): Promise<ChatMessage[] | null> => {
+          for (let load = 0; load < loads; load += 1) {
+            if (load) {
+              try { await waitOrWake(1500 * load, controller.signal); } catch { return null; }
             }
-            setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === assistantMessageId) {
-                  return {
-                    ...msg,
-                    id: undefined,
-                    isStreaming: false,
-                    content: 'Message cancelled',
-                    systemType: 'cancelled',
-                    cancelled: true,
-                    role: 'system' as const,
-                  };
-                }
-                if (msg.id === userMessageId) {
-                  return { ...msg, id: undefined };
-                }
-                return msg;
-              })
-            );
+            try {
+              await Promise.race([
+                queryClient.refetchQueries({ queryKey: ['messages', currentConversationId], type: 'active' }, { throwOnError: true }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Load timed out')), 10000)),
+              ]);
+            } catch {
+              continue;
+            }
+            if (!isCurrent()) return null;
+            const saved = queryClient.getQueriesData<ConversationMessage[]>({ queryKey: ['messages', currentConversationId] })
+              .find(([, data]) => Array.isArray(data))?.[1];
+            if (saved && transcriptHasExchange(saved, attempt.message, priorQuestions)) return toChatMessages(saved);
+          }
+          return null;
+        };
+
+        let outcome: RecoveryOutcome | 'stopped';
+        try {
+          outcome = await waitForReplyOutcome({
+            check: checkSignal => checkReplyStatus(pendingId, checkSignal), signal: controller.signal,
+            onPhase: phase => updatePlaceholder({ isStreaming: false, recovery: phase }),
+          });
+        } catch {
+          outcome = 'stopped';
+        }
+        if (!isCurrent()) {
+          finishRecovery();
+          return false;
+        }
+        if (outcome === 'stopped') {
+          // Say "cancelled" only if the server actually received the Stop. Keep the
+          // composer locked while waiting so a new send cannot start underneath.
+          const confirmed = await Promise.race([
+            recovery.cancelled ?? Promise.resolve(false),
+            new Promise<boolean>(resolve => setTimeout(() => resolve(false), 4000)),
+          ]);
+          finishRecovery();
+          if (!isCurrent()) return false;
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === assistantMessageId) {
+              return { ...msg, id: undefined, recovery: undefined, role: 'system' as const, systemType: confirmed ? 'cancelled' : 'notice', cancelled: confirmed,
+                content: confirmed ? 'Message cancelled' : 'Stopped checking. If HåfaGPT finished this reply, it will appear when you reopen this chat.' };
+            }
+            return msg.id === userMessageId ? { ...msg, id: undefined } : msg;
+          }));
+          isSendingMessageRef.current = false;
+          return true;
+        }
+        if (outcome === 'not_found') {
+          // Usually the message never reached the server. In case only status
+          // tracking failed, look for a saved reply once before offering a resend
+          // that could duplicate it.
+          recovery.settled = true;
+          const found = await loadSavedExchange(1);
+          if (!isCurrent()) {
+            finishRecovery();
+            return false;
+          }
+          if (found) {
+            finishRecovery();
+            const [question, reply] = found.slice(-2);
+            if (question?.role === 'user' && reply?.role === 'assistant') {
+              question.renderKey = userMessage.renderKey;
+              reply.renderKey = assistantMessageId;
+            }
+            setMessages(found);
             isSendingMessageRef.current = false;
+            setCompletedSend({ message: attempt.message, files: attempt.files });
+            return true;
+          }
+        }
+        if (outcome === 'complete' || outcome === 'failed' || outcome === 'cancelled') {
+          // The server has finished; there is nothing left to stop.
+          recovery.settled = true;
+          updatePlaceholder({ recovery: 'checking' });
+          const recovered = await loadSavedExchange();
+          finishRecovery();
+          if (!isCurrent()) return false;
+          if (recovered) {
+            // Keep the on-screen exchange mounted while it becomes the saved copy.
+            const [question, reply] = recovered.slice(-2);
+            if (question?.role === 'user' && reply?.role === 'assistant') {
+              question.renderKey = userMessage.renderKey;
+              reply.renderKey = assistantMessageId;
+            }
+            setMessages(recovered);
+          } else {
+            showPinnedNotice('Your reply was saved but couldn’t be shown right now. Reopen this chat to see it.');
+          }
+          isSendingMessageRef.current = false;
+          if (outcome === 'failed') fail('HåfaGPT couldn’t finish this reply. Please try again.', 'Reply didn’t finish');
+          setCompletedSend({ message: attempt.message, files: attempt.files });
+          return true;
+        }
+        finishRecovery();
+        if (outcome === 'unavailable') {
+          // The outcome is unknown: keep the message on screen rather than hide a reply that may exist.
+          showPinnedNotice('HåfaGPT couldn’t confirm this reply. Reopen this chat in a moment to check for it.');
+          isSendingMessageRef.current = false;
+          setCompletedSend({ message: attempt.message, files: attempt.files });
+          return true;
+        }
+        removeOptimisticMessages();
+        if (outcome === 'not_found') fail('Couldn’t reach HåfaGPT. Check your connection, then try again.');
+        else if (outcome === 'timed_out') fail('HåfaGPT is taking too long to reply. Please try again.', 'Reply didn’t finish');
+        else fail('The connection was interrupted before your reply finished. Please try again.', 'Reply didn’t finish');
+        return false;
+      };
+
+      try {
+        await sendMessageStream(
+          attempt.message,
+          attempt.mode,
+          currentConversationId,
+          {
+            onStatus: (label) => {
+              if (!isCurrent()) return;
+              setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? { ...msg, statusText: label } : msg));
+            },
+            onChunk: (_chunk, fullContent) => {
+              if (!isCurrent()) return;
+              setMessages((prev) => 
+                prev.map((msg) => 
+                  msg.id === assistantMessageId 
+                    ? { ...msg, content: fullContent, statusText: undefined }
+                    : msg
+                )
+              );
+            },
+            onMetadata: (metadata) => {
+              if (!isCurrent()) return;
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, ...metadata }
+                    : msg
+                )
+              );
+            },
+            onDone: (response_time) => {
+              if (!isCurrent()) return;
+              editCommitted = Boolean(attempt.edit);
+              if (attempt.edit) setCompletedEdit({ renderKey: userMessage.renderKey!, message: attempt.message });
+              setMessages((prev) =>
+                prev.map((msg) => {
+                  if (msg.id === assistantMessageId) {
+                    return { ...msg, response_time, id: undefined, isStreaming: false };
+                  }
+                  // Also clear the user message ID (it's now persisted)
+                  if (msg.id === userMessageId) {
+                    return { ...msg, id: undefined };
+                  }
+                  return msg;
+                })
+              );
+              isSendingMessageRef.current = false;
+            },
+            onError: (errorMsg) => {
+              if (!isCurrent()) return;
+              if (editCommitted) { setError(null); return; }
+              fail(errorMsg);
+              console.error('Streaming error:', errorMsg);
+              removeOptimisticMessages();
+              isSendingMessageRef.current = false;
+            },
+            onCancelled: () => {
+              if (!isCurrent()) return;
+              if (attempt.edit) {
+                if (!editCommitted) {
+                  removeOptimisticMessages();
+                  fail('Editing stopped. Your edit is still here.');
+                }
+                return;
+              }
+              setMessages((prev) =>
+                prev.map((msg) => {
+                  if (msg.id === assistantMessageId) {
+                    return {
+                      ...msg,
+                      id: undefined,
+                      isStreaming: false,
+                      content: 'Message cancelled',
+                      systemType: 'cancelled',
+                      cancelled: true,
+                      role: 'system' as const,
+                    };
+                  }
+                  if (msg.id === userMessageId) {
+                    return { ...msg, id: undefined };
+                  }
+                  return msg;
+                })
+              );
+              isSendingMessageRef.current = false;
+            },
           },
-        },
-        attempt.files,
-        attempt.skillLevel,
-        attempt.intent,
-        attempt.topicId,
-        attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined
-      );
+          attempt.uploadFiles || attempt.files,
+          attempt.skillLevel,
+          attempt.intent,
+          attempt.topicId,
+          attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined
+        );
+      } catch (streamError) {
+        if (!(streamError instanceof ConnectionLostError) || !isCurrent()) throw streamError;
+        return await recoverDroppedReply(streamError.pendingId);
+      }
       if (!isCurrent()) return false;
       if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
       return true;
@@ -698,7 +919,7 @@ function ChatSession() {
         if (attempt.edit) { fail('Editing stopped. Your edit is still here.'); return false; }
         return isCurrent();
       }
-      fail(err instanceof Error ? err.message : 'Could not send your message.');
+      fail(describeSendFailure(err));
       return false;
     } finally {
       if (isCurrent()) {
@@ -723,6 +944,7 @@ function ChatSession() {
   const handleNewConversation = async () => {
     const navigation = ++navigationGeneration.current;
     sendGeneration.current += 1;
+    recoveryRef.current?.controller.abort();
     pendingAttemptRef.current = null;
     editAbort.current?.abort();
     setPreparingSend(false);
@@ -762,6 +984,7 @@ function ChatSession() {
     }
     
     sendGeneration.current += 1;
+    recoveryRef.current?.controller.abort();
     pendingAttemptRef.current = null;
     editAbort.current?.abort();
     setPreparingSend(false);
@@ -1057,6 +1280,22 @@ End of Export
     setShowExportModal(false);
   };
 
+  const handleStop = () => {
+    const recovery = recoveryRef.current;
+    if (recovery) {
+      if (recovery.settled) return;
+      recovery.cancelled = cancelPendingReply(recovery.pendingId);
+      recovery.controller.abort();
+      return;
+    }
+    void cancelMessage();
+  };
+
+  const dismissFailure = () => {
+    setError(null);
+    setFailedAttempt(null);
+  };
+
   const handleRetry = () => {
     if (failedAttempt && failedAttempt.conversationId === activeConversationId) {
       void handleSend(failedAttempt.message, failedAttempt.files, failedAttempt.topicId, failedAttempt);
@@ -1198,7 +1437,7 @@ End of Export
                 // Determine if this user message can be edited
                 // Can edit if: it's a user message, not currently streaming, and not a cancelled message
                 const isUserMessage = message.role === 'user';
-                const isNotStreaming = !loading && !isCurrentlyStreaming;
+                const isNotStreaming = !loading && !isCurrentlyStreaming && !recoveringReply;
                 const canEditMessage = isUserMessage && isNotStreaming && !message.cancelled;
 
                 return (
@@ -1222,6 +1461,8 @@ End of Export
                     conversationId={activeConversationId || undefined}
                     cancelled={message.cancelled}
                     isStreaming={message.isStreaming}
+                    statusText={message.statusText}
+                    recovery={message.recovery}
                     canEdit={canEditMessage}
                     onEdit={editMessage}
                     unavailableAttachments={unavailableAttachments?.messageIndex === index
@@ -1268,23 +1509,26 @@ End of Export
           sendError={error && failedAttempt ? (
           <div role="alert" className="mb-2 flex max-h-24 items-center gap-3 overflow-y-auto rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-red-900 dark:text-red-200">Message not sent</p>
+              <p className="text-sm font-semibold text-red-900 dark:text-red-200">{failureTitle}</p>
               <p className="truncate text-xs text-red-900 dark:text-red-200" title={failedAttempt.message}>{failedAttempt.message}{failedAttempt.files?.length ? ` · ${failedAttempt.files.length} file${failedAttempt.files.length === 1 ? '' : 's'}` : ''}</p>
               <p className="mt-0.5 text-xs text-red-800 dark:text-red-300">{error}</p>
             </div>
-            <button type="button" onClick={handleRetry} disabled={preparingSend || loading} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
+            <button type="button" onClick={handleRetry} disabled={preparingSend || loading || recoveringReply} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
+            </button>
+            <button type="button" onClick={dismissFailure} aria-label="Dismiss" className="-mr-1 inline-flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 dark:text-red-200 dark:hover:bg-red-900/40">
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
           ) : undefined}
           completedSend={completedSend}
-          disabled={!isSignedIn || loading || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
+          disabled={!isSignedIn || loading || recoveringReply || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           contextLabel={isSignedIn ? intentLabel : undefined}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
-          loading={loading}
-          onCancel={cancelMessage}
+          loading={loading || recoveringReply}
+          onCancel={handleStop}
         />
       </div>
 

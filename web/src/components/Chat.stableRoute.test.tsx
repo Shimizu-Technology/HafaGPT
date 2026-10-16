@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-rou
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
 import { CancelledError } from '../hooks/useChatbot';
+import { ConnectionLostError, HttpStatusError } from '../lib/sendErrors';
 
 const state = vi.hoisted(() => ({
   userId: 'user-1',
@@ -36,6 +37,9 @@ const state = vi.hoisted(() => ({
   setError: vi.fn(),
   openSignIn: vi.fn(),
   sendMessageStream: vi.fn(),
+  checkReplyStatus: vi.fn(),
+  cancelPendingReply: vi.fn<(pendingId: string) => Promise<boolean>>(async () => true),
+  queryClient: null as QueryClient | null,
 }));
 
 vi.mock('@clerk/clerk-react', () => ({
@@ -53,6 +57,8 @@ vi.mock('../hooks/useChatbot', () => ({
   useChatbot: () => ({
     sendMessageStream: state.sendMessageStream,
     cancelMessage: state.cancelMessage,
+    checkReplyStatus: state.checkReplyStatus,
+    cancelPendingReply: state.cancelPendingReply,
     loading: false,
     error: state.error,
     setError: state.setError,
@@ -105,14 +111,18 @@ vi.mock('./MessageInput', () => ({
     onSend,
     completedSend,
     sendError,
+    loading,
+    onCancel,
   }: {
     disabled: boolean;
+    loading?: boolean;
+    onCancel?: () => void;
     sendError?: React.ReactNode;
     onSend: (message: string) => void;
     completedSend?: { message: string; files?: File[] };
   }) => {
     state.composerReceipt = completedSend;
-    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button></>;
+    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}</>;
   },
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt, onStartPractice }: { onPrompt: (prompt: string) => void; onStartPractice: () => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button><button onClick={onStartPractice}>Start guided practice</button></> }));
@@ -145,6 +155,7 @@ function renderChat(path: string) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  state.queryClient = queryClient;
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[path]}>
@@ -181,6 +192,8 @@ describe('Chat stable conversation route', () => {
     state.setError.mockReset();
     state.setError.mockImplementation(message => { state.error = message; });
     state.sendMessageStream.mockReset();
+    state.checkReplyStatus.mockReset();
+    state.cancelPendingReply.mockClear();
     window.localStorage.clear();
     URL.createObjectURL = vi.fn(() => 'blob:qa-file');
     URL.revokeObjectURL = vi.fn();
@@ -285,6 +298,169 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
     expect(state.sendMessageStream.mock.calls[0][0]).toBe('Test message');
     expect(state.sendMessageStream.mock.calls[0].slice(5, 8)).toEqual(['beginner', 'practice', 'greetings']);
+  });
+
+  it('shows the saved reply instead of a failure when the connection drops after sending', async () => {
+    state.realMessages = true;
+    state.createConversation.mockResolvedValue({ id: 'conv-created' });
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onStatus('Reading your photo…');
+      throw new ConnectionLostError('pending_dropped_1');
+    });
+    let finish!: (status: string) => void;
+    state.checkReplyStatus.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    renderChat('/chat');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText('Connection lost. Checking for your reply…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
+    state.queryClient!.setQueryData(['messages', 'conv-created', 'user-1'], [
+      { id: 7, role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+      { id: 7, role: 'assistant', content: 'Saved translation', timestamp: '2026-10-16T00:00:05Z' },
+    ]);
+    await act(async () => finish('complete'));
+    expect(await screen.findByText('Saved translation')).toBeInTheDocument();
+    expect(state.checkReplyStatus).toHaveBeenCalledWith('pending_dropped_1', expect.any(AbortSignal));
+    expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+  });
+
+  it('offers a plain-language resend only when the server never received the message', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.createConversation.mockResolvedValue({ id: 'conv-created' });
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_2'));
+      state.checkReplyStatus.mockResolvedValue('not_found');
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+      expect(await screen.findByText('Message not sent')).toBeInTheDocument();
+      expect(state.checkReplyStatus.mock.calls.length).toBeGreaterThan(1);
+      expect(screen.getByText('Couldn’t reach HåfaGPT. Check your connection, then try again.')).toBeInTheDocument();
+      expect(screen.queryByText('Test message', { selector: 'div' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+      expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([[true, 'Message cancelled'], [false, 'Stopped checking.']] as const)(
+    'stops a reply still running after a dropped connection (server confirmed: %s)', async (confirmed, shown) => {
+      state.realMessages = true;
+      state.createConversation.mockResolvedValue({ id: 'conv-created' });
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_3'));
+      state.checkReplyStatus.mockResolvedValue('running');
+      state.cancelPendingReply.mockResolvedValueOnce(confirmed);
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      expect(await screen.findByText('Still working on your reply. It will appear here.')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Stop reply' }));
+      expect(await screen.findByText(new RegExp(shown))).toBeInTheDocument();
+      expect(state.cancelPendingReply).toHaveBeenCalledWith('pending_dropped_3');
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+    },
+  );
+
+  it('keeps the exchange and explains when a saved reply cannot be loaded yet', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.realMessages = true;
+      state.createConversation.mockResolvedValue({ id: 'conv-created' });
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_4'));
+      state.checkReplyStatus.mockResolvedValueOnce('complete');
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+      expect(await screen.findByText(/Your reply was saved but couldn’t be shown right now/)).toBeInTheDocument();
+      expect(screen.getByText('Test message')).toBeInTheDocument();
+      expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('never mistakes an earlier identical question for the reply being recovered', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.realMessages = true;
+      const earlier = [
+        { id: 3, role: 'user', content: 'Test message', timestamp: '2026-10-15T00:00:00Z' },
+        { id: 3, role: 'assistant', content: 'Earlier reply', timestamp: '2026-10-15T00:00:01Z' },
+      ];
+      state.messages = earlier;
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_6'));
+      state.checkReplyStatus.mockResolvedValueOnce('complete');
+      renderChat('/chat/conv-a');
+      state.queryClient!.setQueryData(['messages', 'conv-a', 'user-1'], earlier);
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
+      expect(await screen.findByText(/Your reply was saved but couldn’t be shown right now/)).toBeInTheDocument();
+      expect(screen.getAllByText('Test message')).toHaveLength(2);
+      expect(screen.getAllByText('Earlier reply')).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('hides Edit while a dropped reply is being recovered', async () => {
+    state.realMessages = true;
+    state.messages = [
+      { id: 3, role: 'user', content: 'Earlier question', timestamp: '2026-10-15T00:00:00Z' },
+      { id: 3, role: 'assistant', content: 'Earlier reply', timestamp: '2026-10-15T00:00:01Z' },
+    ];
+    state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_7'));
+    state.checkReplyStatus.mockResolvedValue('running');
+    renderChat('/chat/conv-a');
+    expect(screen.getAllByRole('button', { name: 'Edit message' }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText('Still working on your reply. It will appear here.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).not.toBeInTheDocument();
+  });
+
+  it('shows a saved reply instead of offering a duplicate resend when its status was never recorded', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.realMessages = true;
+      state.createConversation.mockResolvedValue({ id: 'conv-created' });
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_8'));
+      state.checkReplyStatus.mockResolvedValue('not_found');
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      state.queryClient!.setQueryData(['messages', 'conv-created', 'user-1'], [
+        { id: 9, role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+        { id: 9, role: 'assistant', content: 'Saved without tracking', timestamp: '2026-10-16T00:00:05Z' },
+      ]);
+      await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+      expect(await screen.findByText('Saved without tracking')).toBeInTheDocument();
+      expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('keeps the exchange when the reply status cannot be confirmed', async () => {
+    state.realMessages = true;
+    state.createConversation.mockResolvedValue({ id: 'conv-created' });
+    state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_5'));
+    state.checkReplyStatus.mockRejectedValue(new HttpStatusError(500));
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
+      expect(await screen.findByText(/couldn’t confirm this reply/)).toBeInTheDocument();
+      expect(screen.getByText('Test message')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not navigate or start a send if the learner leaves during conversation creation', async () => {
