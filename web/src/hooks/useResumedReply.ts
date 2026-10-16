@@ -56,11 +56,17 @@ export function useResumedReply(options: Options) {
           update({ record: null, retry: false, notice: loaded ? undefined
             : 'Your earlier reply ended without a confirmed saved copy. You can send another message.' });
         } else {
-          // Unknown does not mean unsent. Keep the next send locked until we can
-          // confirm an outcome; never invite a duplicate resend after a reload.
+          // Registration can fail while generation continues; a missing row
+          // does not prove the message was unsent. The API also derives
+          // interrupted/cancelled from a stale running heartbeat. Preserve the
+          // pointer until a saved exchange or authoritative failure is known.
           update({ retry: true, notice: outcome === 'complete'
             ? 'Your reply finished, but its saved copy could not be loaded. Check again in a moment.'
-            : 'HåfaGPT couldn’t confirm your earlier reply. Check again before sending another message.' });
+            : outcome === 'not_found'
+              ? 'HåfaGPT couldn’t track your earlier reply. It may still be finishing. Check again, or start a new chat while this one finishes.'
+              : outcome === 'interrupted' || outcome === 'cancelled'
+              ? 'Your earlier reply may still be finishing. Its saved outcome could not be confirmed. Check again before sending another message.'
+              : 'HåfaGPT couldn’t confirm your earlier reply. Check again before sending another message.' });
         }
       } catch {
         update({ retry: true, notice: 'HåfaGPT couldn’t check your earlier reply. Check your connection and try again.' });

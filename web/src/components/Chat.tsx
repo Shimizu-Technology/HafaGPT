@@ -778,9 +778,8 @@ function ChatSession() {
           return false;
         }
         if (outcome === 'not_found') {
-          // Usually the message never reached the server. In case only status
-          // tracking failed, look for a saved reply once before offering a resend
-          // that could duplicate it.
+          // Registration is best effort. A missing row can mean a worker is
+          // still generating without tracking, so never offer a duplicate resend.
           recovery.settled = true;
           const found = await loadSavedExchange(1);
           if (!isCurrent()) {
@@ -854,14 +853,11 @@ function ChatSession() {
           resumeAfterSend = true;
           return false;
         }
-        if (outcome !== 'not_found') {
-          showPinnedNotice('The reply outcome is still unknown. Check this chat again before sending another message.');
-          isSendingMessageRef.current = false;
-          resumeAfterSend = true;
-          return false;
-        }
-        removeOptimisticMessages();
-        fail('Couldn’t reach HåfaGPT. Check your connection, then try again.');
+        showPinnedNotice(outcome === 'not_found'
+          ? 'HåfaGPT couldn’t track this reply. It may still be finishing. Check again, or start a new chat while this one finishes.'
+          : 'The reply outcome is still unknown. Check this chat again before sending another message.');
+        isSendingMessageRef.current = false;
+        resumeAfterSend = true;
         return false;
       };
 

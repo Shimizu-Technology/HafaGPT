@@ -76,6 +76,46 @@ describe('resuming tutor replies after reload or route return', () => {
     expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
   });
 
+  it.each([false, true])('keeps an untracked worker guarded until its exact saved exchange loads (initially saved=%s)', async saved => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      rememberPendingReply('owner-a', pointer());
+      const handlers = options(); handlers.check.mockResolvedValue('not_found'); handlers.load.mockResolvedValue(saved);
+      const { result } = renderHook(() => useResumedReply(handlers));
+      await act(async () => { await vi.advanceTimersByTimeAsync(19000); });
+      expect(result.current.pending).toBe(true);
+      expect(handlers.load).not.toHaveBeenCalled();
+      expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(handlers.load).toHaveBeenCalledOnce();
+      expect(result.current.pending).toBe(!saved);
+      expect(result.current.canRetry).toBe(!saved);
+      if (!saved) {
+        expect(result.current.notice).toMatch(/couldn’t track your earlier reply/);
+        expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+        handlers.load.mockResolvedValue(true);
+        act(() => result.current.retry());
+        await act(async () => { await vi.advanceTimersByTimeAsync(22000); });
+        expect(result.current.pending).toBe(false);
+      }
+      expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
+    } finally { vi.useRealTimers(); }
+  });
+
+  it.each(['interrupted', 'cancelled'] as const)('keeps a stale-heartbeat %s locked until a later saved outcome is confirmed', async status => {
+    rememberPendingReply('owner-a', pointer());
+    const handlers = options(); handlers.check.mockResolvedValue(status); handlers.load.mockResolvedValue(false);
+    const { result } = renderHook(() => useResumedReply(handlers));
+    await waitFor(() => expect(result.current.canRetry).toBe(true));
+    expect(result.current.pending).toBe(true);
+    expect(result.current.notice).toMatch(/may still be finishing/);
+    expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+    handlers.check.mockResolvedValue('complete'); handlers.load.mockResolvedValue(true);
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.pending).toBe(false));
+    expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
+  });
+
   it('allows Stop again after a transient failure without discarding the pending pointer', async () => {
     rememberPendingReply('owner-a', pointer());
     const handlers = options();
