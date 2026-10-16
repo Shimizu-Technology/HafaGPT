@@ -151,6 +151,8 @@ function ChatRouteHarness() {
     <>
       <Chat />
       <button type="button" onClick={() => navigate('/chat')}>Leave saved chat</button>
+      <button type="button" onClick={() => navigate('/chat/conv-b?intent=practice')}>Open B practice</button>
+      <button type="button" onClick={() => navigate(-1)}>Browser back</button>
       <div data-testid="chat-path">{location.pathname}{location.search}</div>
     </>
   );
@@ -495,6 +497,20 @@ describe('Chat stable conversation route', () => {
     expect(screen.getByTestId('task-menu')).toHaveTextContent('translate');
     cleanupAndRender('/chat/conv-b');
     expect(screen.getByTestId('task-menu')).toHaveTextContent('explain');
+  });
+
+  it('keeps each conversation task when browser history changes the route before active state', async () => {
+    state.messages = [{ id: 1, role: 'user', content: 'Saved question', timestamp: '2026-10-16T00:00:00Z' }];
+    renderChat('/chat/conv-a?intent=translate');
+    fireEvent.click(screen.getByRole('button', { name: 'Open B practice' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b?intent=practice'));
+    expect(window.localStorage.getItem('chat_intent:user-1:conv-a')).toBe('translate');
+    expect(window.localStorage.getItem('chat_intent:user-1:conv-b')).toBe('practice');
+    fireEvent.click(screen.getByRole('button', { name: 'Browser back' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-a?intent=translate'));
+    expect(window.localStorage.getItem('chat_intent:user-1:conv-b')).toBe('practice');
+    fireEvent.click(screen.getByRole('button', { name: 'Select B' }));
+    await waitFor(() => expect(screen.getByTestId('task-menu')).toHaveTextContent('practice'));
   });
 
   it('does not navigate or start a send if the learner leaves during conversation creation', async () => {

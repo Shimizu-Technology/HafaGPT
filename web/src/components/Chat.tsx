@@ -177,10 +177,12 @@ function ChatSession() {
     ? normalizeChatIntent(urlIntent)
     : (user?.id && activeConversationId && rememberedConversationIntent(user.id, activeConversationId)) || 'explain';
   useEffect(() => {
-    if (urlIntent && user?.id && activeConversationId) {
+    // The URL changes before the route-sync effect updates the active chat.
+    // Never save the destination's task under the chat we are leaving.
+    if (urlIntent && user?.id && activeConversationId && routeConversationId === activeConversationId) {
       rememberConversationIntent(user.id, activeConversationId, normalizeChatIntent(urlIntent));
     }
-  }, [activeConversationId, urlIntent, user?.id]);
+  }, [activeConversationId, routeConversationId, urlIntent, user?.id]);
   const intentPlaceholder = getChatIntentPlaceholder(chatIntent);
   const [queuedUrlMessage, setQueuedUrlMessage] = useState<string | null>(null);
   const hasProcessedUrlMessage = useRef(false); // Prevent double-processing URL message
