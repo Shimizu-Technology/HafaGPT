@@ -50,17 +50,20 @@ export function useResumedReply(options: Options) {
         // Even a missing status may have a saved reply when tracking was unavailable.
         const loaded = await callbacks.current.load(record, signal);
         if (signal.aborted) return;
-        if (loaded || outcome === 'failed') {
+        if (loaded || outcome === 'failed' || outcome === 'not_found') {
           current.settled = true;
           forgetPendingReply(ownerId, conversationId, record.pendingId);
           update({ record: null, retry: false, notice: loaded ? undefined
             : 'Your earlier reply ended without a confirmed saved copy. You can send another message.' });
         } else {
-          // Unknown does not mean unsent. Keep the next send locked until we can
-          // confirm an outcome; never invite a duplicate resend after a reload.
+          // The API also derives interrupted/cancelled from a stale heartbeat
+          // on a running row. That worker may still save a reply, so neither
+          // status alone confirms it is safe to resend after a reload.
           update({ retry: true, notice: outcome === 'complete'
             ? 'Your reply finished, but its saved copy could not be loaded. Check again in a moment.'
-            : 'HåfaGPT couldn’t confirm your earlier reply. Check again before sending another message.' });
+            : outcome === 'interrupted' || outcome === 'cancelled'
+              ? 'Your earlier reply may still be finishing. Its saved outcome could not be confirmed. Check again before sending another message.'
+              : 'HåfaGPT couldn’t confirm your earlier reply. Check again before sending another message.' });
         }
       } catch {
         update({ retry: true, notice: 'HåfaGPT couldn’t check your earlier reply. Check your connection and try again.' });

@@ -881,6 +881,7 @@ function ChatSession() {
           return false;
         }
         removeOptimisticMessages();
+        if (user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
         fail('Couldn’t reach HåfaGPT. Check your connection, then try again.');
         return false;
       };

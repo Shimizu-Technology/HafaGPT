@@ -543,8 +543,13 @@ describe('Chat stable conversation route', () => {
       expect(state.checkReplyStatus.mock.calls.length).toBeGreaterThan(1);
       expect(screen.getByText('Couldn’t reach HåfaGPT. Check your connection, then try again.')).toBeInTheDocument();
       expect(screen.queryByText('Test message', { selector: 'div' })).not.toBeInTheDocument();
+      expect(readPendingReply('user-1', 'conv-created')).toBeNull();
       fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
       expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
+      const checks = state.checkReplyStatus.mock.calls.length;
+      cleanupAndRender('/chat/conv-created');
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      expect(state.checkReplyStatus).toHaveBeenCalledTimes(checks);
     } finally {
       vi.useRealTimers();
     }
