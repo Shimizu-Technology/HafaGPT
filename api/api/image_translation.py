@@ -363,6 +363,7 @@ def translate_image_pages(
         ]
         renderer = _PageRenderer(page.items)
         finish = None
+        stream_confirmed = False
         try:
             for text, finish_reason in stream_text(messages=messages, max_tokens=MAX_STREAM_TOKENS):
                 if cancelled():
@@ -371,7 +372,8 @@ def translate_image_pages(
                 finish = finish_reason or finish
                 for rendered in renderer.feed(text):
                     yield {"type": "chunk", "content": rendered}
-            for rendered in renderer.finish(complete=finish == "stop"):
+            stream_confirmed = finish == "stop"
+            for rendered in renderer.finish(complete=stream_confirmed):
                 yield {"type": "chunk", "content": rendered}
         except Exception as error:
             # Do not log provider bodies, which can contain private input.
@@ -380,6 +382,13 @@ def translate_image_pages(
             yield cancelled_event
             return
         missing = renderer.missing()
+        # Newlines prove item framing, not that the provider completed its
+        # response. A later fill confirms only its missing items, never earlier
+        # streamed text from a truncated, unconfirmed, or interrupted response.
+        unconfirmed_items = bool(renderer.seen) and not stream_confirmed
+        if unconfirmed_items:
+            generation_complete = False
+            incomplete = True
         logger.info("IMAGE_TRANSLATION image=%s items=%s streamed=%s finish=%s",
                     index, len(page.items), len(page.items) - len(missing), finish)
         incomplete |= any(renderer.seen.values())
@@ -410,6 +419,11 @@ def translate_image_pages(
                     yield {"type": "chunk", "content": rendered}
         for rendered in renderer.finish_notes():
             yield {"type": "chunk", "content": rendered}
+        if unconfirmed_items:
+            yield {"type": "chunk", "content": (
+                "*This photo reply ended before completion could be confirmed. "
+                "The visible lines may be incomplete; please try this page again.*\n\n"
+            )}
     yield {"type": "metadata", "sources": sources, "used_rag": bool(sources),
            "used_web_search": False, "translation_incomplete": incomplete,
            "generation_complete": generation_complete}

@@ -408,6 +408,18 @@ def test_filtered_contact_inside_body_cannot_claim_complete():
     assert 'example.com' not in context.visible_language_text
 
 
+def test_extracted_source_keeps_confusables_invisible_characters_and_combining_marks():
+    # These bytes are source evidence, not permission to assert an OCR correction.
+    raw = 'p\u0430pa h\u200bafa a\u030a'
+    context = parse_image_context_response(
+        _structured_response(lines=[{'text': raw, 'kind': 'body'}]),
+        card_ids_by_signal=CARD_IDS,
+    )
+    assert context.pages[0].items[0].text == raw
+    assert context.pages[0].visible_language_text == raw
+    assert context.visible_language_text == raw
+
+
 def test_explicit_request_not_to_translate_does_not_select_translation_pipeline():
     from src.rag.image_translation_context import is_image_translation_request
     assert not is_image_translation_request('Do not translate this; help me answer question 2.')

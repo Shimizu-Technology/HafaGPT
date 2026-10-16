@@ -399,7 +399,7 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
     import time
     from api.image_translation import translate_image_pages
     from src.rag.image_translation_context import ImagePageContext, ImageTextItem, ImageTranslationContext
-    item = ImageTextItem(id='item-1', text='Printed source', kind='unclear' if case == 'unclear' else 'body')
+    item = ImageTextItem(id='p1-i1', text='Printed source', kind='unclear' if case == 'unclear' else 'body')
     page = ImagePageContext(image_index=0, items=(item,), text_confidence='low' if case == 'low_confidence' else 'high', complete=case != 'partial_reading')
     context = context if context is not None else ImageTranslationContext(pages=(page,))
     images = images if images is not None else [{"data": "fake-bytes", "content_type": "image/png"}]
@@ -410,7 +410,7 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
         if case == 'provider_failure': raise RuntimeError('Provider unavailable')
         if case == 'interrupted_stream' and calls == 2: raise RuntimeError('Follow-up unavailable')
         identifiers = [entry['id'] for entry in json.loads(kwargs['messages'][1]['content'][0]['text'])['items']]
-        finish = 'length' if case == 'truncated' else 'stop'
+        finish = 'length' if case in ('truncated', 'truncated_after_items') else 'stop'
         if kwargs.get('stream'):
             def chunks() -> Iterator[Any]:
                 if case == 'interrupted_stream': raise RuntimeError('Connection reset')
@@ -420,7 +420,9 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
                 marker = '? ' if case == 'uncertain' else ''
                 text = 'A page.\n\n' + ''.join(f'[[{identifier}]] Printed source >> {marker}Possible interpretation\n' for identifier in identifiers)
                 yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=text), finish_reason=None)])
-                yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None), finish_reason='stop')])
+                if case == 'interrupted_after_items':
+                    raise RuntimeError('Connection reset after all newline-terminated items')
+                yield SimpleNamespace(choices=[SimpleNamespace(delta=SimpleNamespace(content=None), finish_reason=None if case == 'unconfirmed_after_items' else finish)])
             return chunks()
         translations = [] if case == 'invalid_coverage' else [{'id': identifier, 'translation': 'Possible interpretation', 'uncertain': case == 'uncertain'} for identifier in identifiers]
         return SimpleNamespace(choices=[SimpleNamespace(finish_reason=finish, message=SimpleNamespace(content=json.dumps({'translations': translations})))])
@@ -461,7 +463,8 @@ def test_completed_uncertain_image_result_can_commit_atomic_edit(case: str) -> N
     store.assert_called_once(); replace.assert_called_once(); log.assert_not_called()
 
 
-@pytest.mark.parametrize('case', ['provider_failure', 'interrupted_stream', 'invalid_coverage', 'truncated'])
+@pytest.mark.parametrize('case', ['provider_failure', 'interrupted_stream', 'invalid_coverage', 'truncated',
+                                  'truncated_after_items', 'unconfirmed_after_items', 'interrupted_after_items'])
 def test_failed_or_unvalidated_image_generation_preserves_original(case: str) -> None:
     generate, log = actual_image_edit_generator(case)
     store, replace = Mock(), Mock()
