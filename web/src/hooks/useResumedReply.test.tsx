@@ -76,7 +76,7 @@ describe('resuming tutor replies after reload or route return', () => {
     expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
   });
 
-  it.each([false, true])('waits through missing-status registration grace and checks the transcript before releasing (saved=%s)', async saved => {
+  it.each([false, true])('keeps an untracked worker guarded until its exact saved exchange loads (initially saved=%s)', async saved => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       rememberPendingReply('owner-a', pointer());
@@ -88,9 +88,16 @@ describe('resuming tutor replies after reload or route return', () => {
       expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
       await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
       expect(handlers.load).toHaveBeenCalledOnce();
-      expect(result.current.pending).toBe(false);
-      expect(result.current.canRetry).toBe(false);
-      expect(result.current.notice).toBe(saved ? undefined : 'Your earlier reply ended without a confirmed saved copy. You can send another message.');
+      expect(result.current.pending).toBe(!saved);
+      expect(result.current.canRetry).toBe(!saved);
+      if (!saved) {
+        expect(result.current.notice).toMatch(/couldn’t track your earlier reply/);
+        expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+        handlers.load.mockResolvedValue(true);
+        act(() => result.current.retry());
+        await act(async () => { await vi.advanceTimersByTimeAsync(22000); });
+        expect(result.current.pending).toBe(false);
+      }
       expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
     } finally { vi.useRealTimers(); }
   });

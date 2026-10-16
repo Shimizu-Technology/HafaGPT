@@ -530,26 +530,41 @@ describe('Chat stable conversation route', () => {
     expect(state.sendMessageStream).toHaveBeenCalledOnce();
   });
 
-  it('offers a plain-language resend only when the server never received the message', async () => {
+  it('preserves an untracked in-flight reply and checks its later exact saved exchange without a duplicate send', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       state.createConversation.mockResolvedValue({ id: 'conv-created' });
-      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_2'));
+      state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+        callbacks.onChunk('Useful untracked partial', 'Useful untracked partial');
+        throw new ConnectionLostError('pending_dropped_2');
+      });
       state.checkReplyStatus.mockResolvedValue('not_found');
       renderChat('/chat');
       fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
       await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
-      expect(await screen.findByText('Message not sent')).toBeInTheDocument();
+      // Let the live recovery hand ownership to the resumed checker before
+      // advancing its own registration grace and transcript retry window.
+      await act(async () => { await vi.advanceTimersByTimeAsync(40000); });
       expect(state.checkReplyStatus.mock.calls.length).toBeGreaterThan(1);
-      expect(screen.getByText('Couldn’t reach HåfaGPT. Check your connection, then try again.')).toBeInTheDocument();
-      expect(screen.queryByText('Test message', { selector: 'div' })).not.toBeInTheDocument();
-      expect(readPendingReply('user-1', 'conv-created')).toBeNull();
-      fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+      expect(screen.getByText('Useful untracked partial')).toBeInTheDocument();
+      expect(screen.getByText('Test message', { selector: 'div' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
       expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
-      const checks = state.checkReplyStatus.mock.calls.length;
-      cleanupAndRender('/chat/conv-created');
+      expect(screen.getByText(/couldn’t track your earlier reply/)).toHaveTextContent('start a new chat');
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(readPendingReply('user-1', 'conv-created')?.pendingId).toBe('pending_dropped_2');
+      expect(state.composerReceipt).toBeUndefined();
+      state.queryClient!.setQueryData(['messages', 'conv-created', 'user-1'], [
+        { id: 21, pending_id: 'pending_dropped_2', role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+        { id: 21, pending_id: 'pending_dropped_2', role: 'assistant', content: 'Completed untracked reply', timestamp: '2026-10-16T00:00:05Z' },
+      ]);
+      fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+      expect(screen.getByText('Completed untracked reply')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
-      expect(state.checkReplyStatus).toHaveBeenCalledTimes(checks);
+      expect(readPendingReply('user-1', 'conv-created')).toBeNull();
+      expect(state.sendMessageStream).toHaveBeenCalledOnce();
+      expect(state.tryUse).toHaveBeenCalledOnce();
     } finally {
       vi.useRealTimers();
     }
