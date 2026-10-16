@@ -1460,7 +1460,7 @@ End of Export
             </button>
           </div>
           {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
-          {!viewport.keyboardOpen && messages.length === 0 && !resumedReply.pending && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
+          {!viewport.keyboardOpen && !routeConversationId && !activeConversationId && !resumedReply.pending && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
@@ -1617,7 +1617,7 @@ End of Export
           disabled={!isSignedIn || loading || replyPending || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
-          taskControl={messages.length > 0
+          taskControl={Boolean(activeConversationId || routeConversationId || messages.length > 0)
             ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || replyPending} />
             : undefined}
           showDisclaimer={messages.length === 0}

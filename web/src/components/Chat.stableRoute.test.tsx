@@ -10,6 +10,7 @@ import { readPendingReply, rememberPendingReply } from '../lib/pendingReply';
 const state = vi.hoisted(() => ({
   userId: 'user-1',
   realMessages: false,
+  realTaskMenu: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
   preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
   viewport: { isMobile: true, top: 0, height: 844, keyboardOpen: false },
@@ -99,10 +100,15 @@ vi.mock('../hooks/useConversationsQuery', () => ({
 vi.mock('../hooks/useModalAccessibility', () => ({ useModalAccessibility: vi.fn() }));
 
 vi.mock('./AuthButton', () => ({ AuthButton: () => null }));
-vi.mock('./ModeSelector', () => ({
-  ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div>,
-  TaskMenu: ({ intent }: { intent: string }) => <div data-testid="task-menu">{intent}</div>,
-}));
+vi.mock('./ModeSelector', async importOriginal => {
+  const original = await importOriginal<typeof import('./ModeSelector')>();
+  return {
+    ...original,
+    ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div>,
+    TaskMenu: (props: import('react').ComponentProps<typeof original.TaskMenu>) => state.realTaskMenu
+      ? <original.TaskMenu {...props} /> : <div data-testid="task-menu">{props.intent}</div>,
+  };
+});
 vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: ({ onSelectConversation, onDeleteConversation }: { onSelectConversation: (id: string) => void; onDeleteConversation: (id: string) => void }) => <>
   <button onClick={() => onSelectConversation('conv-a')}>Select A</button>
   <button onClick={() => onSelectConversation('conv-b')}>Select B</button>
@@ -185,6 +191,7 @@ describe('Chat stable conversation route', () => {
   beforeEach(() => {
     state.userId = 'user-1';
     state.realMessages = false;
+    state.realTaskMenu = false;
     state.composerReceipt = undefined;
     state.preferredMode = undefined;
     state.viewport = { isMobile: true, top: 0, height: 844, keyboardOpen: false };
@@ -565,6 +572,19 @@ describe('Chat stable conversation route', () => {
     expect(screen.getByTestId('task-menu')).toHaveTextContent('translate');
     cleanupAndRender('/chat/conv-b');
     expect(screen.getByTestId('task-menu')).toHaveTextContent('explain');
+  });
+
+  it('uses the composer task menu on saved chats, including empty ones, and restores a selected task', async () => {
+    state.realTaskMenu = true;
+    renderChat('/chat/conv-a');
+    expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Task: Explain. Change task' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: /Translate/ }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('intent=translate'));
+    expect(window.localStorage.getItem('chat_intent:user-1:conv-a')).toBe('translate');
+    fireEvent.click(screen.getByRole('button', { name: 'Select B' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select A' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Task: Translate. Change task' })).toBeInTheDocument());
   });
 
   it('keeps each conversation task when browser history changes the route before active state', async () => {

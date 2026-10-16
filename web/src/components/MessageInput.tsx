@@ -473,7 +473,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
             style={{ height: compact ? '40px' : input.trim() ? undefined : '44px', minHeight: compact ? '40px' : '44px', maxHeight: 'min(160px, calc(var(--chat-viewport-height, 100dvh) * .25))' }}
           />
           </div>
-          <div className={`${inline ? 'shrink-0' : 'mt-1'} flex items-center gap-1`}>
+          <div className={`${inline ? 'shrink-0' : 'mt-1'} relative flex items-center gap-1`}>
             <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled || submitting || !canAddMoreFiles} aria-label="Upload files"
               title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
               className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl px-2 text-brown-600 hover:bg-cream-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-800">

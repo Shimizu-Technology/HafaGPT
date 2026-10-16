@@ -74,7 +74,7 @@ export function TaskMenu({ intent, onIntentChange, disabled }: ModeSelectorProps
   };
 
   return (
-    <div ref={rootRef} className="relative min-w-0">
+    <div ref={rootRef} className="min-w-0">
       <button ref={buttonRef} type="button" disabled={disabled} onClick={() => setOpen(value => !value)}
         aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined}
         aria-label={`Task: ${current.label}. Change task`}
@@ -85,7 +85,7 @@ export function TaskMenu({ intent, onIntentChange, disabled }: ModeSelectorProps
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label="Tutor task" onKeyDown={onMenuKeyDown}
-          className="absolute bottom-full left-0 z-50 mb-2 w-64 rounded-xl border border-cream-300 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-3rem)] rounded-xl border border-cream-300 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
           {TASKS.map(({ id, label, detail, icon: Icon }, index) => (
             <button key={id} ref={element => { itemRefs.current[index] = element; }} type="button" role="menuitemradio"
               aria-checked={intent === id} onClick={() => choose(id)}
