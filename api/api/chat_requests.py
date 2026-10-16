@@ -26,10 +26,19 @@ STALE_AFTER_SECONDS = 30
 RETENTION = "7 days"
 TERMINAL_STATUSES = ("complete", "failed", "cancelled")
 _PENDING_ID = re.compile(r"^[A-Za-z0-9_.:-]{8,200}$")
+# Owners of streams running in this worker, so Stop can be checked locally when
+# the database is unavailable.
+_local_owners: dict[str, str] = {}
+_local_owners_lock = threading.Lock()
 
 
 def valid_pending_id(pending_id: object) -> bool:
     return isinstance(pending_id, str) and bool(_PENDING_ID.fullmatch(pending_id))
+
+
+def owns_local_stream(pending_id: str, user_id: str) -> bool:
+    with _local_owners_lock:
+        return _local_owners.get(pending_id) == user_id
 
 
 class RequestTracker:
@@ -52,7 +61,15 @@ class RequestTracker:
         self._heartbeat_seconds = heartbeat_seconds
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        self._starter: threading.Thread | None = None
         self._tracking = False
+        with _local_owners_lock:
+            _local_owners[pending_id] = user_id
+
+    def start_in_background(self) -> None:
+        """Register without delaying the reply; finish() waits for registration."""
+        self._starter = threading.Thread(target=self.start, name="chat-request-start", daemon=True)
+        self._starter.start()
 
     def start(self) -> bool:
         try:
@@ -61,10 +78,10 @@ class RequestTracker:
                 # A cancel can arrive before the stream registers; keep its flag.
                 cursor.execute(
                     """
-                    INSERT INTO chat_requests (pending_id, user_id, conversation_id, status)
-                    VALUES (%s, %s, %s, 'running')
+                    INSERT INTO chat_requests (pending_id, user_id, conversation_id, status, registered)
+                    VALUES (%s, %s, %s, 'running', true)
                     ON CONFLICT (pending_id) DO UPDATE
-                        SET conversation_id = EXCLUDED.conversation_id, updated_at = now()
+                        SET conversation_id = EXCLUDED.conversation_id, registered = true, updated_at = now()
                         WHERE chat_requests.user_id = EXCLUDED.user_id
                           AND chat_requests.status = 'running'
                     RETURNING cancel_requested
@@ -125,7 +142,11 @@ class RequestTracker:
     def finish(self, status: str) -> None:
         if status not in TERMINAL_STATUSES:
             raise ValueError(f"Unknown terminal status: {status}")
+        if self._starter is not None:
+            self._starter.join(timeout=10)
         self._stop.set()
+        with _local_owners_lock:
+            _local_owners.pop(self.pending_id, None)
         if self._thread is not None:
             self._thread.join(timeout=self._heartbeat_seconds + 1)
         if not self._tracking:
@@ -180,7 +201,7 @@ def get_request_status(
     with closing(connect()) as conn, closing(conn.cursor()) as cursor:
         cursor.execute(
             """
-            SELECT status, conversation_id, cancel_requested,
+            SELECT status, conversation_id, cancel_requested, registered,
                    updated_at < now() - make_interval(secs => %s) AS stale
             FROM chat_requests WHERE pending_id = %s AND user_id = %s
             """,
@@ -189,7 +210,10 @@ def get_request_status(
         row = cursor.fetchone()
     if row is None:
         return None
-    status, conversation_id, cancel_requested, stale = row
+    status, conversation_id, cancel_requested, registered, stale = row
+    if not registered:
+        # Only an early Stop was recorded; no reply ever started for this ID.
+        return None
     if status == "running" and stale:
         status = "cancelled" if cancel_requested else "interrupted"
     return {"status": status, "conversation_id": conversation_id}

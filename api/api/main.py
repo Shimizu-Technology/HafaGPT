@@ -1234,12 +1234,15 @@ async def cancel_chat_message(pending_id: str, authorization: Optional[str] = He
     user_id = await verify_user(authorization)
     if not chat_requests.valid_pending_id(pending_id):
         raise HTTPException(status_code=400, detail="Invalid pending message ID")
-    cancel_pending_message(pending_id)
     try:
-        await run_in_threadpool(chat_requests.request_cancel, pending_id, user_id)
+        owned = await run_in_threadpool(chat_requests.request_cancel, pending_id, user_id)
     except Exception as error:
-        # The local worker still stops; another worker may finish this reply.
         logger.warning("CHAT_REQUEST cancel_record_failed=%s", type(error).__name__)
+        owned = False
+    # Never stop another account's reply: only an owner verified durably, or by
+    # this worker's own stream registry, can set the local cancellation flag.
+    if owned or chat_requests.owns_local_stream(pending_id, user_id):
+        cancel_pending_message(pending_id)
     return {"success": True, "message": "Message cancelled"}
 
 
@@ -1479,7 +1482,7 @@ async def chat_stream(
                         pending_id, user_id, conversation_id,
                         on_cancel=lambda: cancel_pending_message(pending_id),
                     )
-                    tracker.start()
+                    tracker.start_in_background()
                 event_types: list[str] = []
                 try:
                     for event in get_chatbot_response_stream(

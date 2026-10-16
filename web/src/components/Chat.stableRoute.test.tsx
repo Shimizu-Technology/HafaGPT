@@ -320,7 +320,7 @@ describe('Chat stable conversation route', () => {
     ]);
     await act(async () => finish('complete'));
     expect(await screen.findByText('Saved translation')).toBeInTheDocument();
-    expect(state.checkReplyStatus).toHaveBeenCalledWith('pending_dropped_1');
+    expect(state.checkReplyStatus).toHaveBeenCalledWith('pending_dropped_1', expect.any(AbortSignal));
     expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
     expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });

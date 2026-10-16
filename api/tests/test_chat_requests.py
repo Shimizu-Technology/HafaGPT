@@ -72,7 +72,7 @@ def test_start_registers_owned_running_request_and_preserves_an_early_cancel():
     cancelled.assert_called_once()
     retention, upsert = start_cursor.executed
     assert retention[0].startswith('DELETE FROM chat_requests WHERE created_at <')
-    assert 'ON CONFLICT (pending_id) DO UPDATE' in upsert[0]
+    assert 'ON CONFLICT (pending_id) DO UPDATE' in upsert[0] and 'registered = true' in upsert[0]
     assert 'chat_requests.user_id = EXCLUDED.user_id' in upsert[0] and "chat_requests.status = 'running'" in upsert[0]
     assert 'cancel_requested =' not in upsert[0].split('DO UPDATE')[1]
     assert upsert[1] == ('pending_abcdefgh', 'learner-a', 'conv-a')
@@ -131,10 +131,13 @@ def test_cancel_is_scoped_to_the_owner():
 
 @pytest.mark.parametrize('row,expected', [
     (None, None),
-    (('running', 'conv-a', False, False), {'status': 'running', 'conversation_id': 'conv-a'}),
-    (('running', 'conv-a', False, True), {'status': 'interrupted', 'conversation_id': 'conv-a'}),
-    (('running', None, True, True), {'status': 'cancelled', 'conversation_id': None}),
-    (('complete', 'conv-a', False, True), {'status': 'complete', 'conversation_id': 'conv-a'}),
+    (('running', 'conv-a', False, True, False), {'status': 'running', 'conversation_id': 'conv-a'}),
+    (('running', 'conv-a', False, True, True), {'status': 'interrupted', 'conversation_id': 'conv-a'}),
+    (('running', None, True, True, True), {'status': 'cancelled', 'conversation_id': None}),
+    (('complete', 'conv-a', False, True, True), {'status': 'complete', 'conversation_id': 'conv-a'}),
+    # An early Stop for a message that never reached the server is not a saved outcome.
+    (('running', None, True, False, True), None),
+    (('running', None, True, False, False), None),
 ])
 def test_status_reports_silent_running_requests_as_interrupted(row, expected):
     cursor = FakeCursor([row])
@@ -153,7 +156,7 @@ def isolated(name, namespace):
     return namespace[name]
 
 
-def endpoint_client(status=None, cancel_error=None):
+def endpoint_client(status=None, cancel_error=None, owned=True, local_owner=False):
     app = FastAPI()
     async def verify(authorization):
         if authorization != 'Bearer token-a':
@@ -162,7 +165,8 @@ def endpoint_client(status=None, cancel_error=None):
     store = Mock()
     store.valid_pending_id = valid_pending_id
     store.get_request_status = Mock(return_value=status)
-    store.request_cancel = Mock(side_effect=cancel_error)
+    store.request_cancel = Mock(side_effect=cancel_error, return_value=owned)
+    store.owns_local_stream = Mock(return_value=local_owner)
     local_cancel = Mock()
     namespace = {'app': app, 'Optional': Optional, 'Header': Header, 'HTTPException': HTTPException,
                  'run_in_threadpool': run_in_threadpool, 'verify_user': verify, 'chat_requests': store,
@@ -185,10 +189,20 @@ def test_cancel_requires_sign_in_and_records_owned_cancel_for_every_worker():
     store.request_cancel.assert_called_once_with('pending_abcdefgh', 'learner-a')
 
 
-def test_cancel_still_stops_the_local_worker_when_recording_fails():
-    client, _, local_cancel = endpoint_client(cancel_error=OSError('down'))
+def test_cancel_never_stops_another_accounts_reply():
+    client, store, local_cancel = endpoint_client(owned=False, local_owner=False)
     assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
-    local_cancel.assert_called_once()
+    local_cancel.assert_not_called()
+    store.owns_local_stream.assert_called_once_with('pending_abcdefgh', 'learner-a')
+
+
+def test_cancel_still_stops_an_owned_local_stream_when_recording_fails():
+    client, _, local_cancel = endpoint_client(cancel_error=OSError('down'), local_owner=True)
+    assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
+    local_cancel.assert_called_once_with('pending_abcdefgh')
+    client, _, local_cancel = endpoint_client(cancel_error=OSError('down'), local_owner=False)
+    assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
+    local_cancel.assert_not_called()
 
 
 def test_cancel_rejects_malformed_ids():
@@ -205,3 +219,25 @@ def test_status_is_owner_scoped_and_hides_unknown_requests():
     client, _, _ = endpoint_client(status={'status': 'complete', 'conversation_id': 'conv-a'})
     response = client.get('/api/chat/requests/pending_abcdefgh', headers=AUTH)
     assert response.json() == {'status': 'complete', 'conversation_id': 'conv-a'}
+
+
+def test_background_registration_completes_before_the_outcome_is_recorded():
+    started = threading.Event()
+    release = threading.Event()
+    start_cursor, finish_cursor = FakeCursor([(False,)]), FakeCursor([])
+    def connect():
+        if not started.is_set():
+            started.set()
+            release.wait(2)
+            return FakeConnection(start_cursor)
+        return FakeConnection(finish_cursor)
+    tracker = RequestTracker('pending_abcdefgh', 'learner-a', 'conv-a', Mock(), connect=connect, heartbeat_seconds=60)
+    assert chat_requests.owns_local_stream('pending_abcdefgh', 'learner-a')
+    tracker.start_in_background()
+    assert started.wait(2)
+    finisher = threading.Thread(target=tracker.finish, args=('complete',))
+    finisher.start()
+    release.set()
+    finisher.join(5)
+    assert len(start_cursor.executed) == 2 and finish_cursor.executed[0][1][0] == 'complete'
+    assert not chat_requests.owns_local_stream('pending_abcdefgh', 'learner-a')

@@ -58,7 +58,7 @@ describe('waitForReplyOutcome', () => {
     vi.useFakeTimers();
     try {
       let calls = 0;
-      const check = vi.fn(() => (++calls === 1 ? new Promise<ReplyStatus>(() => undefined) : Promise.resolve('complete' as const)));
+      const check = vi.fn<(signal: AbortSignal) => Promise<ReplyStatus>>(() => (++calls === 1 ? new Promise<ReplyStatus>(() => undefined) : Promise.resolve('complete' as const)));
       const phases: string[] = [];
       const outcome = waitForReplyOutcome({
         check, signal: new AbortController().signal, onPhase: phase => phases.push(phase),
@@ -67,15 +67,19 @@ describe('waitForReplyOutcome', () => {
       await vi.advanceTimersByTimeAsync(1000);
       await expect(outcome).resolves.toBe('complete');
       expect(phases).toEqual(['checking', 'offline']);
+      const firstSignal = check.mock.calls[0][0];
+      expect(firstSignal.aborted).toBe(true);
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('rejects promptly when the learner stops or leaves', async () => {
+  it('rejects promptly when the learner stops or leaves and aborts the in-flight check', async () => {
     const controller = new AbortController();
-    const check = vi.fn(async () => { controller.abort(); return 'running' as const; });
+    let checkSignal: AbortSignal | undefined;
+    const check = vi.fn(async (signal: AbortSignal) => { checkSignal = signal; controller.abort(); return 'running' as const; });
     await expect(waitForReplyOutcome({ check, signal: controller.signal })).rejects.toMatchObject({ name: 'AbortError' });
     expect(check).toHaveBeenCalledTimes(1);
+    expect(checkSignal?.aborted).toBe(true);
   });
 });

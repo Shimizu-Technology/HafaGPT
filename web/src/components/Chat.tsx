@@ -627,7 +627,7 @@ function ChatSession() {
         let outcome: RecoveryOutcome | 'stopped';
         try {
           outcome = await waitForReplyOutcome({
-            check: () => checkReplyStatus(pendingId), signal: controller.signal, onPhase: showRecovery,
+            check: checkSignal => checkReplyStatus(pendingId, checkSignal), signal: controller.signal, onPhase: showRecovery,
           });
         } catch {
           outcome = 'stopped';

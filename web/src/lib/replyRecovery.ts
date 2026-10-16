@@ -9,7 +9,7 @@ export type RecoveryPhase = 'checking' | 'waiting' | 'offline';
 
 interface RecoveryOptions {
   /** Resolve the server status; throw only for transient problems worth retrying. */
-  check: () => Promise<ReplyStatus>;
+  check: (signal: AbortSignal) => Promise<ReplyStatus>;
   signal: AbortSignal;
   onPhase?: (phase: RecoveryPhase) => void;
   pollMs?: number;
@@ -23,12 +23,24 @@ interface RecoveryOptions {
 
 const abortError = () => new DOMException('Recovery stopped', 'AbortError');
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+/** Run one check with its own abort signal, cancelled on timeout or when recovery stops. */
+function checkWithTimeout(
+  check: (signal: AbortSignal) => Promise<ReplyStatus>, ms: number, outer: AbortSignal,
+): Promise<ReplyStatus> {
+  const controller = new AbortController();
+  const stop = () => controller.abort();
+  outer.addEventListener('abort', stop, { once: true });
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error('Status check timed out')), ms);
+    timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Status check timed out'));
+    }, ms);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  return Promise.race([check(controller.signal), timeout]).finally(() => {
+    clearTimeout(timer);
+    outer.removeEventListener('abort', stop);
+  });
 }
 
 /** Sleep, waking early when the page becomes visible or the device reconnects. */
@@ -68,7 +80,7 @@ export async function waitForReplyOutcome({
     if (delay) await wait(delay, signal);
     if (signal.aborted) throw abortError();
     try {
-      const status = await withTimeout(check(), checkTimeoutMs);
+      const status = await checkWithTimeout(check, checkTimeoutMs, signal);
       if (signal.aborted) throw abortError();
       if (status !== 'running') return status;
       onPhase?.('waiting');

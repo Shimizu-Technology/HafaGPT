@@ -16,6 +16,8 @@ def upgrade():
             status TEXT NOT NULL DEFAULT 'running'
                 CHECK(status IN ('running','complete','failed','cancelled')),
             cancel_requested BOOLEAN NOT NULL DEFAULT false,
+            -- false while only an early cancel exists; the stream sets it on start
+            registered BOOLEAN NOT NULL DEFAULT false,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );

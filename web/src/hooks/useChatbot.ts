@@ -524,12 +524,13 @@ export function useChatbot() {
   };
 
   /** Ask the API what happened to a reply whose connection dropped. */
-  const checkReplyStatus = async (pendingId: string): Promise<ReplyStatus> => {
+  const checkReplyStatus = async (pendingId: string, signal?: AbortSignal): Promise<ReplyStatus> => {
     const token = await getToken();
     if (!token) throw new Error('Sign in again to check this reply.');
     const response = await fetch(`${API_URL}/api/chat/requests/${encodeURIComponent(pendingId)}`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
+      signal,
     });
     if (response.status === 404) return 'not_found';
     if (!response.ok) throw new HttpStatusError(response.status, await readErrorDetail(response));

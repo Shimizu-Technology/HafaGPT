@@ -25,7 +25,7 @@ test('streaming preserves reading position and Markdown nodes, then resumes foll
   expect(await scroller.evaluate(element => element.scrollTop)).toBe(100);
   await touchSession.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await touchSession.detach();
-  await expect(page.getByRole('status')).toHaveText(/Ready/);
+  await expect(page.getByTestId('fixture-status')).toHaveText(/Ready/);
   expect(await scroller.evaluate(element => element.scrollTop)).toBe(100);
   expect(await firstTable!.evaluate(element => element.isConnected)).toBe(true);
   expect(await firstParagraph!.evaluate(element => element.isConnected)).toBe(true);
@@ -35,7 +35,7 @@ test('streaming preserves reading position and Markdown nodes, then resumes foll
   await expect.poll(() => scroller.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThan(2);
   // A second exchange follows normally after explicit resume.
   await page.getByRole('button', { name: 'Send worksheet' }).click();
-  await expect(page.getByRole('status')).toHaveText(/Streaming/);
+  await expect(page.getByTestId('fixture-status')).toHaveText(/Streaming/);
   await expect.poll(() => scroller.evaluate(element => element.scrollHeight - element.clientHeight - element.scrollTop)).toBeLessThan(2);
   await page.getByRole('button', { name: 'Cancel response' }).click();
   await expect(page.getByText('Message cancelled')).toBeVisible();
