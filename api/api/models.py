@@ -71,6 +71,8 @@ class SourceInfo(BaseModel):
 
 class ChatResponse(BaseModel):
     """Response model for chat endpoint"""
+    saved: Optional[bool] = Field(default=None, description="Whether this exchange committed to saved history")
+    save_warning: Optional[str] = Field(default=None, description="User-facing warning when history could not be saved")
     response: str = Field(..., description="The chatbot's response")
     mode: str = Field(..., description="Current chat mode")
     sources: list[SourceInfo] = Field(
@@ -147,6 +149,7 @@ class MessageResponse(BaseModel):
     """Response model for a single message"""
     id: int = Field(..., description="Message ID")
     role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
+    pending_id: Optional[str] = Field(default=None, description="Client request identifier for reconciling this saved exchange")
     edit_protocol: Optional[Literal["atomic-v1"]] = Field(default=None, description="Supported owner edit protocol")
     edit_revision: Optional[str] = Field(default=None, description="Opaque transcript revision required for atomic edits")
     content: str = Field(..., description="Message content")
