@@ -20,6 +20,12 @@ from .database_connections import get_db_connection_with_retry
 logger = logging.getLogger(__name__)
 
 HEARTBEAT_SECONDS = 2.0
+# Status bookkeeping must never hold a reply hostage to a slow database.
+CONNECT_TIMEOUT_SECONDS = 5
+
+
+def _connect_quickly():
+    return get_db_connection_with_retry(max_retries=2, connect_timeout=CONNECT_TIMEOUT_SECONDS)
 # A running request whose owner stopped refreshing it (worker restart, deploy,
 # crash) is reported as interrupted instead of leaving the client waiting.
 STALE_AFTER_SECONDS = 30
@@ -50,7 +56,7 @@ class RequestTracker:
 
     def __init__(
         self, pending_id: str, user_id: str, conversation_id: str | None,
-        on_cancel: Callable[[], None], connect: Callable[[], Any] = get_db_connection_with_retry,
+        on_cancel: Callable[[], None], connect: Callable[[], Any] = _connect_quickly,
         heartbeat_seconds: float = HEARTBEAT_SECONDS,
     ) -> None:
         self.pending_id = pending_id
@@ -63,6 +69,8 @@ class RequestTracker:
         self._thread: threading.Thread | None = None
         self._starter: threading.Thread | None = None
         self._tracking = False
+        self._lock = threading.Lock()
+        self._final_status: str | None = None
         with _local_owners_lock:
             _local_owners[pending_id] = user_id
 
@@ -97,8 +105,14 @@ class RequestTracker:
             # Another account owns this ID or it already finished; never touch it.
             logger.warning("CHAT_REQUEST start_rejected")
             return False
-        self._tracking = True
-        if row[0]:
+        with self._lock:
+            self._tracking = True
+            late_status = self._final_status
+        if late_status is not None:
+            # The reply finished while registration was still connecting.
+            self._record(late_status)
+            return True
+        if row[0] and not self._stop.is_set():
             self._on_cancel()
         self._thread = threading.Thread(target=self._heartbeat, name="chat-request-heartbeat", daemon=True)
         self._thread.start()
@@ -121,7 +135,7 @@ class RequestTracker:
                     )
                     row = cursor.fetchone()
                 failures = 0
-                if row and row[0]:
+                if row and row[0] and not self._stop.is_set():
                     self._on_cancel()
             except Exception as error:
                 failures += 1
@@ -142,15 +156,18 @@ class RequestTracker:
     def finish(self, status: str) -> None:
         if status not in TERMINAL_STATUSES:
             raise ValueError(f"Unknown terminal status: {status}")
-        if self._starter is not None:
-            self._starter.join(timeout=10)
-        self._stop.set()
+        with self._lock:
+            self._final_status = status
+            self._stop.set()
+            tracking = self._tracking
         with _local_owners_lock:
             _local_owners.pop(self.pending_id, None)
         if self._thread is not None:
             self._thread.join(timeout=self._heartbeat_seconds + 1)
-        if not self._tracking:
-            return
+        if tracking:
+            self._record(status)
+
+    def _record(self, status: str) -> None:
         try:
             with closing(self._connect()) as conn, closing(conn.cursor()) as cursor:
                 cursor.execute(

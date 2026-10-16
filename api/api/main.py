@@ -1239,10 +1239,13 @@ async def cancel_chat_message(pending_id: str, authorization: Optional[str] = He
     except Exception as error:
         logger.warning("CHAT_REQUEST cancel_record_failed=%s", type(error).__name__)
         owned = False
-    # Never stop another account's reply: only an owner verified durably, or by
-    # this worker's own stream registry, can set the local cancellation flag.
-    if owned or chat_requests.owns_local_stream(pending_id, user_id):
+    # Set the in-process flag only for this worker's own stream; other workers
+    # pick up the durable record. This never stops another account's reply and
+    # leaves no stray flags behind on workers that do not run the stream.
+    if chat_requests.owns_local_stream(pending_id, user_id):
         cancel_pending_message(pending_id)
+    elif not owned:
+        logger.info("CHAT_REQUEST cancel_not_owned_or_unrecorded")
     return {"success": True, "message": "Message cancelled"}
 
 
@@ -1509,11 +1512,12 @@ async def chat_stream(
                     event_types.append("error")
                     event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
                 finally:
-                    # Record the outcome only after the reply (or its failure) is saved.
+                    # The reply (or its failure) is already saved: end the stream
+                    # first, then record the outcome without delaying the client.
+                    stream_done.set()
                     if tracker is not None:
                         tracker.finish(chat_requests.terminal_status(event_types))
                         cleanup_cancelled_message(pending_id)
-                    stream_done.set()
             
             # Start the sync generator in a background thread
             thread = threading.Thread(target=run_sync_generator, daemon=True)

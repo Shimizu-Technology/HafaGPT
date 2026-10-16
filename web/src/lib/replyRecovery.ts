@@ -1,10 +1,13 @@
+import { isConnectionFailure } from './sendErrors';
+
 /**
  * After a dropped connection, ask the API what happened to a reply instead of
  * assuming it was lost. The server keeps writing and saving replies after a
  * phone disconnects, so most "failures" are complete replies waiting to load.
  */
 export type ReplyStatus = 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted' | 'not_found';
-export type RecoveryOutcome = Exclude<ReplyStatus, 'running'> | 'timed_out';
+/** `unavailable`: the status service kept failing, so the outcome is unknown. */
+export type RecoveryOutcome = Exclude<ReplyStatus, 'running'> | 'timed_out' | 'unavailable';
 export type RecoveryPhase = 'checking' | 'waiting' | 'offline';
 
 interface RecoveryOptions {
@@ -15,6 +18,10 @@ interface RecoveryOptions {
   pollMs?: number;
   /** A check that never settles (stalled sign-in refresh, half-open socket) counts as offline. */
   checkTimeoutMs?: number;
+  /** The server registers a request shortly after it arrives; keep asking before calling it lost. */
+  notFoundGraceMs?: number;
+  /** Consecutive server or sign-in errors before giving up as `unavailable`. */
+  maxStatusErrors?: number;
   maxBackoffMs?: number;
   timeoutMs?: number;
   wait?: (ms: number, signal: AbortSignal) => Promise<void>;
@@ -22,6 +29,13 @@ interface RecoveryOptions {
 }
 
 const abortError = () => new DOMException('Recovery stopped', 'AbortError');
+
+class StatusCheckTimeout extends Error {
+  constructor() {
+    super('Status check timed out');
+    this.name = 'StatusCheckTimeout';
+  }
+}
 
 /** Run one check with its own abort signal, cancelled on timeout or when recovery stops. */
 function checkWithTimeout(
@@ -34,7 +48,7 @@ function checkWithTimeout(
   const timeout = new Promise<never>((_, reject) => {
     timer = setTimeout(() => {
       controller.abort();
-      reject(new Error('Status check timed out'));
+      reject(new StatusCheckTimeout());
     }, ms);
   });
   return Promise.race([check(controller.signal), timeout]).finally(() => {
@@ -69,12 +83,13 @@ export function waitOrWake(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 export async function waitForReplyOutcome({
-  check, signal, onPhase, pollMs = 3000, checkTimeoutMs = 15000, maxBackoffMs = 15000, timeoutMs = 10 * 60 * 1000,
-  wait = waitOrWake, now = Date.now,
+  check, signal, onPhase, pollMs = 3000, checkTimeoutMs = 15000, notFoundGraceMs = 20000, maxStatusErrors = 4,
+  maxBackoffMs = 15000, timeoutMs = 10 * 60 * 1000, wait = waitOrWake, now = Date.now,
 }: RecoveryOptions): Promise<RecoveryOutcome> {
   const startedAt = now();
   let delay = 0;
   let backoff = pollMs;
+  let statusErrors = 0;
   onPhase?.('checking');
   for (;;) {
     if (delay) await wait(delay, signal);
@@ -82,12 +97,24 @@ export async function waitForReplyOutcome({
     try {
       const status = await checkWithTimeout(check, checkTimeoutMs, signal);
       if (signal.aborted) throw abortError();
-      if (status !== 'running') return status;
-      onPhase?.('waiting');
-      delay = pollMs;
+      statusErrors = 0;
       backoff = pollMs;
-    } catch {
+      delay = pollMs;
+      if (status === 'not_found' && now() - startedAt < notFoundGraceMs) {
+        onPhase?.('checking');
+      } else if (status !== 'running') {
+        return status;
+      } else {
+        onPhase?.('waiting');
+      }
+    } catch (error) {
       if (signal.aborted) throw abortError();
+      if (!(error instanceof StatusCheckTimeout) && !isConnectionFailure(error)) {
+        // The server answered with an error (or sign-in failed): retrying
+        // forever would show a misleading "waiting for connection".
+        statusErrors += 1;
+        if (statusErrors >= maxStatusErrors) return 'unavailable';
+      }
       onPhase?.('offline');
       delay = backoff;
       backoff = Math.min(backoff * 2, maxBackoffMs);

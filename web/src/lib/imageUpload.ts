@@ -36,7 +36,10 @@ async function decodeImage(file: File): Promise<DecodedImage> {
     width: image.naturalWidth,
     height: image.naturalHeight,
     draw: (context, width, height) => context.drawImage(image, 0, 0, width, height),
-    release: () => URL.revokeObjectURL(url),
+    release: () => {
+      URL.revokeObjectURL(url);
+      image.src = '';
+    },
   };
 }
 
@@ -50,7 +53,12 @@ function encodeJpeg(width: number, height: number, draw: DecodedImage['draw']): 
   context.fillStyle = '#ffffff';
   context.fillRect(0, 0, width, height);
   draw(context, width, height);
-  return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', JPEG_QUALITY));
+  return new Promise(resolve => canvas.toBlob(blob => {
+    // Release the bitmap now; Safari keeps large canvases alive otherwise.
+    canvas.width = 0;
+    canvas.height = 0;
+    resolve(blob);
+  }, 'image/jpeg', JPEG_QUALITY));
 }
 
 export async function prepareImageForUpload(
@@ -73,7 +81,12 @@ export async function prepareImageForUpload(
   }
 }
 
-/** Prepare every attachment, preserving order; documents pass through unchanged. */
-export function prepareFilesForUpload(files: File[]): Promise<File[]> {
-  return Promise.all(files.map(file => prepareImageForUpload(file)));
+/**
+ * Prepare every attachment in order, one at a time: decoding ten 12MP photos at
+ * once can exhaust an iPhone Safari tab. Documents pass through unchanged.
+ */
+export async function prepareFilesForUpload(files: File[]): Promise<File[]> {
+  const prepared: File[] = [];
+  for (const file of files) prepared.push(await prepareImageForUpload(file));
+  return prepared;
 }

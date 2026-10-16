@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Check, Copy, X, FileText, Braces, Eye, MoreHorizontal, Menu, Settings, Plus } from 'lucide-react';
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
-import { waitForReplyOutcome, type RecoveryOutcome, type RecoveryPhase } from '../lib/replyRecovery';
+import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
 import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
 import { useTheme } from '../hooks/useTheme';
@@ -40,6 +40,13 @@ import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
 import { appRoutes, safeInternalReturnPath } from '../lib/routes';
 
+interface ReplyRecovery {
+  pendingId: string;
+  controller: AbortController;
+  /** Set when the learner presses Stop; resolves whether the server received it. */
+  cancelled?: Promise<boolean>;
+}
+
 interface SendAttempt {
   message: string;
   files?: File[];
@@ -58,6 +65,13 @@ interface SendAttempt {
 
 // The API saves failed replies with a bracketed marker instead of reply text.
 const FAILED_REPLY = /^\[(?:Error:|Token limit exceeded)/;
+
+/** Whether a saved transcript ends with this question and a reply to it. */
+function transcriptHasExchange(saved: ConversationMessage[], message: string): boolean {
+  const lastQuestion = saved.map(row => row.role).lastIndexOf('user');
+  return lastQuestion >= 0 && saved[lastQuestion].content === message
+    && saved.slice(lastQuestion + 1).some(row => row.role === 'assistant');
+}
 
 function toChatMessages(conversationMessages: ConversationMessage[]): ChatMessage[] {
   return conversationMessages.map((msg) => {
@@ -220,7 +234,10 @@ function ChatSession() {
   const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
   const [failureTitle, setFailureTitle] = useState('Message not sent');
   // A dropped connection on a sent message: check the server before calling it lost.
-  const recoveryRef = useRef<{ pendingId: string; controller: AbortController } | null>(null);
+  const recoveryRef = useRef<ReplyRecovery | null>(null);
+  // An exchange whose saved copy has not loaded yet stays on screen until the
+  // server transcript contains it, so a stale refresh cannot make it vanish.
+  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; messages: ChatMessage[] } | null>(null);
   const [recoveringReply, setRecoveringReply] = useState(false);
   const [unavailableAttachments, setUnavailableAttachments] = useState<{
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
@@ -341,7 +358,21 @@ function ChatSession() {
     
     // Load messages from the separate conversation messages query
     if (conversationMessages) {
-      setMessages(toChatMessages(conversationMessages));
+      // Keep each saved message's on-screen identity so a refresh never remounts it.
+      setMessages(prev => {
+        const keys = new Map(prev.flatMap(msg => msg.id && msg.renderKey ? [[`${msg.id}-${msg.role}`, msg.renderKey] as const] : []));
+        const loaded = toChatMessages(conversationMessages).map(msg => {
+          const renderKey = keys.get(`${msg.id}-${msg.role}`);
+          return renderKey ? { ...msg, renderKey } : msg;
+        });
+        const pinned = pinnedExchangeRef.current;
+        if (!pinned || pinned.conversationId !== activeConversationId) return loaded;
+        if (transcriptHasExchange(conversationMessages, pinned.message)) {
+          pinnedExchangeRef.current = null;
+          return loaded;
+        }
+        return [...loaded, ...pinned.messages];
+      });
       // Clear switching state once messages are loaded
       setIsSwitchingConversation(false);
     }
@@ -616,32 +647,78 @@ function ChatSession() {
 
       const recoverDroppedReply = async (pendingId: string): Promise<boolean> => {
         const controller = new AbortController();
-        recoveryRef.current = { pendingId, controller };
+        const recovery: ReplyRecovery = { pendingId, controller };
+        recoveryRef.current = recovery;
         setRecoveringReply(true);
-        const showRecovery = (phase: RecoveryPhase) => {
+        const updatePlaceholder = (update: Partial<ChatMessage>) => {
           if (!isCurrent()) return;
-          setMessages(prev => prev.map(msg => msg.id === assistantMessageId
-            ? { ...msg, isStreaming: false, recovery: phase }
-            : msg));
+          setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? { ...msg, ...update } : msg));
         };
-        let outcome: RecoveryOutcome | 'stopped';
-        try {
-          outcome = await waitForReplyOutcome({
-            check: checkSignal => checkReplyStatus(pendingId, checkSignal), signal: controller.signal, onPhase: showRecovery,
-          });
-        } catch {
-          outcome = 'stopped';
-        } finally {
-          if (recoveryRef.current?.controller === controller) {
+        const showPinnedNotice = (notice: string) => {
+          if (!isCurrent() || !currentConversationId) return;
+          const question: ChatMessage = { ...userMessage, id: undefined };
+          const note: ChatMessage = {
+            renderKey: assistantMessageId, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
+          };
+          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, messages: [question, note] };
+          setMessages(prev => [
+            ...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId),
+            question, note,
+          ]);
+        };
+        const finishRecovery = () => {
+          if (recoveryRef.current === recovery) {
             recoveryRef.current = null;
             if (mountedRef.current) setRecoveringReply(false);
           }
+        };
+        // The status says the exchange is saved; load it, confirm it is really the
+        // one just sent, and only then replace the on-screen copy.
+        const loadSavedExchange = async (): Promise<ChatMessage[] | null> => {
+          for (let load = 0; load < 5; load += 1) {
+            if (load) {
+              try { await waitOrWake(1500 * load, controller.signal); } catch { return null; }
+            }
+            try {
+              await Promise.race([
+                queryClient.refetchQueries({ queryKey: ['messages', currentConversationId], type: 'active' }, { throwOnError: true }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Load timed out')), 10000)),
+              ]);
+            } catch {
+              continue;
+            }
+            if (!isCurrent()) return null;
+            const saved = queryClient.getQueriesData<ConversationMessage[]>({ queryKey: ['messages', currentConversationId] })
+              .find(([, data]) => Array.isArray(data))?.[1];
+            if (saved && transcriptHasExchange(saved, attempt.message)) return toChatMessages(saved);
+          }
+          return null;
+        };
+
+        let outcome: RecoveryOutcome | 'stopped';
+        try {
+          outcome = await waitForReplyOutcome({
+            check: checkSignal => checkReplyStatus(pendingId, checkSignal), signal: controller.signal,
+            onPhase: phase => updatePlaceholder({ isStreaming: false, recovery: phase }),
+          });
+        } catch {
+          outcome = 'stopped';
         }
-        if (!isCurrent()) return false;
+        if (!isCurrent()) {
+          finishRecovery();
+          return false;
+        }
         if (outcome === 'stopped') {
+          finishRecovery();
+          // Say "cancelled" only if the server actually received the Stop.
+          const confirmed = await Promise.race([
+            recovery.cancelled ?? Promise.resolve(false),
+            new Promise<boolean>(resolve => setTimeout(() => resolve(false), 4000)),
+          ]);
           setMessages(prev => prev.map(msg => {
             if (msg.id === assistantMessageId) {
-              return { ...msg, id: undefined, recovery: undefined, content: 'Message cancelled', systemType: 'cancelled', cancelled: true, role: 'system' as const };
+              return { ...msg, id: undefined, recovery: undefined, role: 'system' as const, systemType: confirmed ? 'cancelled' : 'notice', cancelled: confirmed,
+                content: confirmed ? 'Message cancelled' : 'Stopped checking. If HåfaGPT finished this reply, it will appear when you reopen this chat.' };
             }
             return msg.id === userMessageId ? { ...msg, id: undefined } : msg;
           }));
@@ -649,23 +726,31 @@ function ChatSession() {
           return true;
         }
         if (outcome === 'complete' || outcome === 'failed' || outcome === 'cancelled') {
-          // The server saved this exchange; show the saved copy instead of the optimistic one.
-          isSendingMessageRef.current = false;
-          await queryClient.invalidateQueries({ queryKey: ['messages', currentConversationId] });
+          updatePlaceholder({ recovery: 'checking' });
+          const recovered = await loadSavedExchange();
+          finishRecovery();
           if (!isCurrent()) return false;
-          const saved = queryClient.getQueriesData<ConversationMessage[]>({ queryKey: ['messages', currentConversationId] })
-            .find(([, data]) => Array.isArray(data))?.[1];
-          if (saved) {
+          if (recovered) {
             // Keep the on-screen exchange mounted while it becomes the saved copy.
-            const recovered = toChatMessages(saved);
             const [question, reply] = recovered.slice(-2);
-            if (question?.role === 'user' && question.content === attempt.message && reply?.role === 'assistant') {
+            if (question?.role === 'user' && reply?.role === 'assistant') {
               question.renderKey = userMessage.renderKey;
               reply.renderKey = assistantMessageId;
             }
             setMessages(recovered);
+          } else {
+            showPinnedNotice('Your reply was saved but couldn’t be shown right now. Reopen this chat to see it.');
           }
+          isSendingMessageRef.current = false;
           if (outcome === 'failed') fail('HåfaGPT couldn’t finish this reply. Please try again.', 'Reply didn’t finish');
+          setCompletedSend({ message: attempt.message, files: attempt.files });
+          return true;
+        }
+        finishRecovery();
+        if (outcome === 'unavailable') {
+          // The outcome is unknown: keep the message on screen rather than hide a reply that may exist.
+          showPinnedNotice('HåfaGPT couldn’t confirm this reply. Reopen this chat in a moment to check for it.');
+          isSendingMessageRef.current = false;
           setCompletedSend({ message: attempt.message, files: attempt.files });
           return true;
         }
@@ -1155,7 +1240,7 @@ End of Export
   const handleStop = () => {
     const recovery = recoveryRef.current;
     if (recovery) {
-      void cancelPendingReply(recovery.pendingId);
+      recovery.cancelled = cancelPendingReply(recovery.pendingId);
       recovery.controller.abort();
       return;
     }

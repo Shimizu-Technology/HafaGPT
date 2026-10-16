@@ -113,7 +113,7 @@ interface MessageProps {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
-  systemType?: 'mode_change' | 'cancelled' | 'failed';
+  systemType?: 'mode_change' | 'cancelled' | 'failed' | 'notice';
   mode?: 'english' | 'chamorro' | 'learn';
   statusText?: string; // Server progress while the reply has no text yet
   recovery?: RecoveryPhase; // Checking for the reply after a dropped connection
@@ -445,6 +445,17 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           <p className="text-xs text-brown-600 dark:text-gray-400 text-center mt-1">
             {modeDetails.description}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (systemType === 'notice') {
+    return (
+      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+        <div role="status" className="flex max-w-[85%] items-start gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-700 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 sm:max-w-[75%]">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+          <span>{content}</span>
         </div>
       </div>
     );

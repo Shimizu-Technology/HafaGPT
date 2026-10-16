@@ -60,7 +60,7 @@ export interface ChatMessage {
   used_web_search?: boolean;
   response_time?: number;
   timestamp?: number;
-  systemType?: 'mode_change' | 'cancelled' | 'failed'; // Type of system message
+  systemType?: 'mode_change' | 'cancelled' | 'failed' | 'notice'; // Type of system message
   mode?: 'english' | 'chamorro' | 'learn'; // For mode change messages
   conversation_id?: string; // Conversation UUID
   cancelled?: boolean; // Whether this message request was cancelled
@@ -344,6 +344,7 @@ export function useChatbot() {
     const textBatcher = createStreamTextBatcher((chunk, content) => {
       if (isCurrent(request) && !signal.aborted) callbacks.onChunk(chunk, content);
     });
+    let receivedTerminalEvent = false;
 
     try {
       const token = await tokenForRequest(request);
@@ -419,7 +420,6 @@ export function useChatbot() {
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let receivedTerminalEvent = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -499,6 +499,9 @@ export function useChatbot() {
         if (isCurrent(request) && (!(err instanceof CancelledError) || signal.aborted)) callbacks.onCancelled();
         throw new CancelledError();
       }
+      // The reply already completed; a connection that drops while the server
+      // sends its closing frame is not a failure.
+      if (receivedTerminalEvent && isConnectionFailure(err)) return;
       // Once a new message reaches the server it keeps replying and saves the
       // result even if the phone drops the connection. Let the caller check
       // for that reply instead of reporting the message as unsent. Edits are
@@ -539,16 +542,17 @@ export function useChatbot() {
     return body.status as ReplyStatus;
   };
 
-  /** Stop a reply that is still running on the server after the connection dropped. */
-  const cancelPendingReply = async (pendingId: string) => {
+  /** Stop a reply still running on the server; resolves whether the server got the request. */
+  const cancelPendingReply = async (pendingId: string): Promise<boolean> => {
     try {
       const token = await getToken();
-      await fetch(`${API_URL}/api/chat/cancel/${encodeURIComponent(pendingId)}`, {
+      const response = await fetch(`${API_URL}/api/chat/cancel/${encodeURIComponent(pendingId)}`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      return response.ok;
     } catch {
-      // Best effort: the local reply is already stopped.
+      return false;
     }
   };
 

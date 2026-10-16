@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { waitForReplyOutcome, type ReplyStatus } from './replyRecovery';
+import { HttpStatusError } from './sendErrors';
 
 function harness(results: Array<ReplyStatus | Error>) {
   let clock = 0;
@@ -42,9 +43,25 @@ describe('waitForReplyOutcome', () => {
     expect(phases).toEqual(['checking', 'offline', 'offline', 'offline', 'waiting']);
   });
 
-  it('reports an unknown request so the composer can offer a resend', async () => {
-    const { check, wait, now } = harness(['not_found']);
-    await expect(waitForReplyOutcome({ check, wait, now, signal: new AbortController().signal })).resolves.toBe('not_found');
+  it('keeps checking an unknown request through a short grace period before reporting it', async () => {
+    const { check, wait, waits, now } = harness(['not_found', 'not_found', 'not_found']);
+    await expect(waitForReplyOutcome({ check, wait, now, signal: new AbortController().signal, notFoundGraceMs: 5000 }))
+      .resolves.toBe('not_found');
+    expect(waits).toEqual([3000, 3000]);
+  });
+
+  it('finds a request that registers during the grace period', async () => {
+    const { check, wait, now } = harness(['not_found', 'running', 'complete']);
+    await expect(waitForReplyOutcome({ check, wait, now, signal: new AbortController().signal })).resolves.toBe('complete');
+  });
+
+  it('gives up as unavailable after repeated server errors but not after network drops', async () => {
+    const server = new HttpStatusError(503);
+    const { check, wait, now } = harness([server, new TypeError('Load failed'), server, server, server]);
+    const phases: string[] = [];
+    await expect(waitForReplyOutcome({ check, wait, now, signal: new AbortController().signal, onPhase: phase => phases.push(phase) }))
+      .resolves.toBe('unavailable');
+    expect(check).toHaveBeenCalledTimes(5);
   });
 
   it('stops waiting after the time limit', async () => {

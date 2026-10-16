@@ -180,7 +180,7 @@ AUTH = {'Authorization': 'Bearer token-a'}
 
 
 def test_cancel_requires_sign_in_and_records_owned_cancel_for_every_worker():
-    client, store, local_cancel = endpoint_client()
+    client, store, local_cancel = endpoint_client(local_owner=True)
     assert client.post('/api/chat/cancel/pending_abcdefgh').status_code == 401
     local_cancel.assert_not_called()
     response = client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH)
@@ -194,6 +194,13 @@ def test_cancel_never_stops_another_accounts_reply():
     assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
     local_cancel.assert_not_called()
     store.owns_local_stream.assert_called_once_with('pending_abcdefgh', 'learner-a')
+
+
+def test_cancel_for_a_stream_on_another_worker_leaves_no_local_flag():
+    client, store, local_cancel = endpoint_client(owned=True, local_owner=False)
+    assert client.post('/api/chat/cancel/pending_abcdefgh', headers=AUTH).status_code == 200
+    store.request_cancel.assert_called_once_with('pending_abcdefgh', 'learner-a')
+    local_cancel.assert_not_called()
 
 
 def test_cancel_still_stops_an_owned_local_stream_when_recording_fails():
@@ -221,7 +228,7 @@ def test_status_is_owner_scoped_and_hides_unknown_requests():
     assert response.json() == {'status': 'complete', 'conversation_id': 'conv-a'}
 
 
-def test_background_registration_completes_before_the_outcome_is_recorded():
+def test_outcome_is_recorded_even_when_registration_finishes_after_the_reply():
     started = threading.Event()
     release = threading.Event()
     start_cursor, finish_cursor = FakeCursor([(False,)]), FakeCursor([])
@@ -231,13 +238,15 @@ def test_background_registration_completes_before_the_outcome_is_recorded():
             release.wait(2)
             return FakeConnection(start_cursor)
         return FakeConnection(finish_cursor)
-    tracker = RequestTracker('pending_abcdefgh', 'learner-a', 'conv-a', Mock(), connect=connect, heartbeat_seconds=60)
+    cancelled = Mock()
+    tracker = RequestTracker('pending_abcdefgh', 'learner-a', 'conv-a', cancelled, connect=connect, heartbeat_seconds=60)
     assert chat_requests.owns_local_stream('pending_abcdefgh', 'learner-a')
     tracker.start_in_background()
     assert started.wait(2)
-    finisher = threading.Thread(target=tracker.finish, args=('complete',))
-    finisher.start()
+    # The reply finishes (and the client gets [DONE]) before registration connects.
+    tracker.finish('complete')
     release.set()
-    finisher.join(5)
+    tracker._starter.join(5)
     assert len(start_cursor.executed) == 2 and finish_cursor.executed[0][1][0] == 'complete'
+    cancelled.assert_not_called()
     assert not chat_requests.owns_local_stream('pending_abcdefgh', 'learner-a')
