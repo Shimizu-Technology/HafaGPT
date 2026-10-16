@@ -37,7 +37,7 @@ async function start() {
 
 function selectAnswer(answer: string) {
   for (const character of answer) {
-    const tiles = screen.getAllByRole('button', { name: character === ' ' ? 'Space' : character, exact: true });
+    const tiles = screen.getAllByRole('button', { name: character === ' ' ? 'Space' : character });
     fireEvent.click(tiles.find(tile => tile.getAttribute('aria-pressed') === 'false')!);
   }
 }
@@ -78,7 +78,7 @@ describe('Word Scramble earned points and space tiles', () => {
     await start();
     for (let index = 0; index < 5; index++) {
       selectAnswer(Array.from(answers[index]).reverse().join(''));
-      fireEvent.click(screen.getByRole('button', { name: 'Check', exact: true }));
+      fireEvent.click(screen.getByRole('button', { name: 'Check' }));
       expect(screen.getByText(`The answer was: ${answers[index]}`)).toBeInTheDocument();
       await next(index);
     }
@@ -90,7 +90,7 @@ describe('Word Scramble earned points and space tiles', () => {
     for (let index = 0; index < 5; index++) {
       if (index < correctCount) {
         selectAnswer(answers[index]);
-        fireEvent.click(screen.getByRole('button', { name: 'Check', exact: true }));
+        fireEvent.click(screen.getByRole('button', { name: 'Check' }));
         expect(screen.getByText(`Correct! +${100 + index * 25} pts`)).toBeInTheDocument();
       } else {
         fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
@@ -110,11 +110,11 @@ describe('Word Scramble earned points and space tiles', () => {
     fireEvent.click(space);
     expect(space).toHaveAttribute('aria-pressed', 'false');
     selectAnswer('ABCD');
-    expect(screen.queryByRole('button', { name: 'Check', exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
     for (const tile of screen.getAllByRole('button', { pressed: true })) fireEvent.click(tile);
     selectAnswer('AB CD');
     expect(screen.getByText('AB CD', { exact: true })).toHaveClass('whitespace-pre-wrap');
-    fireEvent.click(screen.getByRole('button', { name: 'Check', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     expect(screen.getByText('Correct! +100 pts')).toBeInTheDocument();
   });
 });
