@@ -418,6 +418,13 @@ function ChatSession() {
     
     // Load messages from the separate conversation messages query
     if (conversationMessages) {
+      const pinned = pinnedExchangeRef.current;
+      if (unsavedReply && pinned && pinned.conversationId === activeConversationId
+        && transcriptHasExchange(conversationMessages, pinned.message, pinned.priorQuestions, pinned.pendingId)) {
+        if (user?.id && pinned.pendingId) forgetPendingReply(user.id, pinned.conversationId, pinned.pendingId);
+        setUnsavedReply(false);
+        setError(null);
+      }
       // Keep each saved message's on-screen identity so a refresh never remounts it.
       setMessages(prev => {
         const keys = new Map(prev.flatMap(msg => msg.id && msg.renderKey ? [[`${msg.id}-${msg.role}`, msg.renderKey] as const] : []));
@@ -436,7 +443,7 @@ function ChatSession() {
       // Clear switching state once messages are loaded
       setIsSwitchingConversation(false);
     }
-  }, [conversationMessages, activeConversationId]);
+  }, [conversationMessages, activeConversationId, unsavedReply, setError, user?.id]);
 
   // Clear data when user signs out
   useEffect(() => {
@@ -938,9 +945,10 @@ function ChatSession() {
               removeOptimisticMessages();
               isSendingMessageRef.current = false;
             },
-            onCancelled: () => {
+            onCancelled: (saved, saveWarning) => {
               if (!isCurrent()) return;
-              if (dispatchedPendingId && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, dispatchedPendingId);
+              saveFailed = saved === false;
+              if (!saveFailed && dispatchedPendingId && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, dispatchedPendingId);
               if (attempt.edit) {
                 if (!editCommitted) {
                   removeOptimisticMessages();
@@ -948,9 +956,19 @@ function ChatSession() {
                 }
                 return;
               }
-              setMessages((prev) =>
-                prev.map((msg) => {
+              if (saveFailed) {
+                setUnsavedReply(true);
+                setError(saveWarning || 'This stopped reply could not be saved. Keep this page open and copy it before leaving.');
+              }
+              setMessages((prev) => {
+                const stopped = prev.map((msg): ChatMessage => {
                   if (msg.id === assistantMessageId) {
+                    if (saveFailed) return {
+                      ...msg, id: undefined, isStreaming: false,
+                      content: msg.content ? `${msg.content}\n\nReply stopped before completion.` : 'Reply stopped before completion.',
+                      role: msg.content ? 'assistant' as const : 'system' as const,
+                      systemType: msg.content ? undefined : 'notice' as const,
+                    };
                     return {
                       ...msg,
                       id: undefined,
@@ -965,8 +983,13 @@ function ChatSession() {
                     return { ...msg, id: undefined };
                   }
                   return msg;
-                })
-              );
+                });
+                if (saveFailed && currentConversationId) pinnedExchangeRef.current = {
+                  conversationId: currentConversationId, message: attempt.message, priorQuestions,
+                  pendingId: dispatchedPendingId, messages: stopped.slice(-2),
+                };
+                return stopped;
+              });
               isSendingMessageRef.current = false;
             },
           },
@@ -996,6 +1019,7 @@ function ChatSession() {
         console.error('Failed to send message:', err);
       }
       if (err instanceof CancelledError) {
+        if (saveFailed) return false;
         if (attempt.edit) { fail('Editing stopped. Your edit is still here.'); return false; }
         return isCurrent();
       }

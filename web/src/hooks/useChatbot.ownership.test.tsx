@@ -171,6 +171,20 @@ describe('tutor request ownership', () => {
     expect(stream.onError).not.toHaveBeenCalled();
   });
 
+  it('flushes a stopped answer and passes its failed-save receipt without reporting a saved cancellation', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('data: {"type":"chunk","content":"Partial useful answer"}\n\ndata: {"type":"cancelled","content":"[Message was cancelled by user]","saved":false,"save_warning":"Stopped reply could not be saved"}\n\n'));
+    const { result } = renderHook(() => useChatbot());
+    const stream = callbacks();
+    await act(async () => {
+      await expect(result.current.sendMessageStream('A', 'english', 'conv-a', stream)).rejects.toBeInstanceOf(CancelledError);
+    });
+    expect(stream.onChunk).toHaveBeenCalledWith('Partial useful answer', 'Partial useful answer');
+    expect(stream.onChunk.mock.invocationCallOrder[0]).toBeLessThan(stream.onCancelled.mock.invocationCallOrder[0]);
+    expect(stream.onCancelled).toHaveBeenCalledExactlyOnceWith(false, 'Stopped reply could not be saved');
+    expect(stream.onDone).not.toHaveBeenCalled();
+    expect(stream.onError).not.toHaveBeenCalled();
+  });
+
   it('does not dispatch recovery or Stop with a token refreshed after the learner changes', async () => {
     const token = deferred<string>();
     auth.getToken.mockReturnValue(token.promise);

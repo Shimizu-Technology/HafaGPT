@@ -101,6 +101,8 @@ interface StreamDone {
 interface StreamCancelled {
   type: 'cancelled';
   content: string;
+  saved?: boolean;
+  save_warning?: string;
 }
 
 interface StreamError {
@@ -122,7 +124,7 @@ export interface StreamCallbacks {
   onMetadata: (metadata: { sources: SourceInfo[]; used_rag: boolean; used_web_search: boolean }) => void;
   onDone: (response_time: number, saved?: boolean, saveWarning?: string) => void;
   onError: (error: string) => void;
-  onCancelled: () => void;
+  onCancelled: (saved?: boolean, saveWarning?: string) => void;
   onStatus?: (label: string) => void;
   /** Called before dispatch so a reload can find the in-flight reply. */
   onRequestStarted?: (pendingId: string) => void;
@@ -471,7 +473,9 @@ export function useChatbot() {
                   break;
                   
                 case 'cancelled':
-                  callbacks.onCancelled();
+                  if (event.saved === false) textBatcher.flush();
+                  if (event.saved === undefined) callbacks.onCancelled();
+                  else callbacks.onCancelled(event.saved, event.save_warning);
                   throw new CancelledError();
                   
                 case 'error':

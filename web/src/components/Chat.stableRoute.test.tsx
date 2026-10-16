@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   realMessages: false,
   realTaskMenu: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
+  sendResult: undefined as boolean | undefined,
   preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
   viewport: { isMobile: true, top: 0, height: 844, keyboardOpen: false },
   error: null as string | null,
@@ -27,7 +28,7 @@ const state = vi.hoisted(() => ({
     isError: false,
   },
   messagesError: false,
-  messages: [] as Array<{ id: number; role: string; content: string; timestamp: string; edit_protocol?: 'atomic-v1'; edit_revision?: string }>,
+  messages: [] as Array<{ id: number; pending_id?: string; role: string; content: string; timestamp: string; edit_protocol?: 'atomic-v1'; edit_revision?: string }>,
   editRequest: vi.fn(),
   initData: { conversations: [] as never[] },
   refetchMessages: vi.fn(),
@@ -130,11 +131,11 @@ vi.mock('./MessageInput', () => ({
     loading?: boolean;
     onCancel?: () => void;
     sendError?: React.ReactNode;
-    onSend: (message: string) => void;
+    onSend: (message: string) => Promise<boolean>;
     completedSend?: { message: string; files?: File[] };
   }) => {
     state.composerReceipt = completedSend;
-    return <>{sendError}<button type="button" disabled={disabled} onClick={() => onSend('Test message')}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}{taskControl}</>;
+    return <>{sendError}<button type="button" disabled={disabled} onClick={() => { void onSend('Test message').then(result => { state.sendResult = result; }); }}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}{taskControl}</>;
   },
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt, onStartPractice }: { onPrompt: (prompt: string) => void; onStartPractice: () => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button><button onClick={onStartPractice}>Start guided practice</button></> }));
@@ -193,6 +194,7 @@ describe('Chat stable conversation route', () => {
     state.realMessages = false;
     state.realTaskMenu = false;
     state.composerReceipt = undefined;
+    state.sendResult = undefined;
     state.preferredMode = undefined;
     state.viewport = { isMobile: true, top: 0, height: 844, keyboardOpen: false };
     state.error = null;
@@ -385,6 +387,40 @@ describe('Chat stable conversation route', () => {
     expect(state.composerReceipt).toBeUndefined();
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
     expect(readPendingReply('user-1', 'conv-a')).not.toBeNull();
+  });
+
+  it('preserves an unsaved stopped answer and draft until that exact exchange is confirmed saved', async () => {
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_unsaved_stop');
+      callbacks.onChunk('Partial useful answer', 'Partial useful answer');
+      callbacks.onCancelled(false, 'This stopped reply could not be saved. Copy it before leaving.');
+      throw new CancelledError();
+    });
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText(/Partial useful answer/)).toHaveTextContent('Reply stopped before completion.');
+    expect(screen.getByRole('alert')).toHaveTextContent('This stopped reply could not be saved. Copy it before leaving.');
+    expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
+    await waitFor(() => expect(state.sendResult).toBe(false));
+    expect(state.composerReceipt).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(readPendingReply('user-1', 'conv-a')?.pendingId).toBe('pending_unsaved_stop');
+    state.messages = [
+      { id: 8, pending_id: 'pending_other', role: 'user', content: 'Other question', timestamp: '2026-10-16T00:00:00Z' },
+      { id: 8, pending_id: 'pending_other', role: 'assistant', content: 'Other reply', timestamp: '2026-10-16T00:00:05Z' },
+    ];
+    fireEvent.click(screen.getByRole('button', { name: 'Tutor options' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('This stopped reply could not be saved.');
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(screen.getByText(/Partial useful answer/)).toBeInTheDocument();
+    state.messages = [
+      { id: 9, pending_id: 'pending_unsaved_stop', role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+      { id: 9, pending_id: 'pending_unsaved_stop', role: 'assistant', content: '[Message was cancelled by user]', timestamp: '2026-10-16T00:00:05Z' },
+    ];
+    fireEvent.click(screen.getByRole('button', { name: 'Close tutor options' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+    expect(readPendingReply('user-1', 'conv-a')).toBeNull();
   });
 
   it('does not recover another learner’s pending request from a shared browser', () => {
