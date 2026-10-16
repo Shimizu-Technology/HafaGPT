@@ -88,6 +88,8 @@ def _load_image_helpers(
         "parse_image_context_response": parse_image_context_response,
         "try_parse_image_context_response": try_parse_image_context_response,
         "get_client_for_request": lambda **_kwargs: (client, "vision-model"),
+        "transcription_image_detail": lambda _model: "original",
+        "reasoning_effort_kwargs": lambda _model, effort: {"extra_body": {"reasoning": {"effort": effort}}},
         "logger": FakeLogger(),
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
@@ -354,3 +356,16 @@ def test_cancellation_between_images_stops_remaining_extraction_calls():
     ], cancelled=lambda: bool(completions.calls))
     assert len(completions.calls) == 1
     assert len(context.pages) == 1
+
+
+def test_image_detector_reads_at_full_resolution_with_low_reasoning_effort() -> None:
+    _, _, _, detect_image_context, completions = _load_image_helpers(
+        detector_text=_detector_json(lines=["Håfa adai!"])
+    )
+
+    detect_image_context([{"data": "image", "content_type": "image/png"}])
+
+    call = completions.calls[0]
+    image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
+    assert image_part["image_url"]["detail"] == "original"
+    assert call["extra_body"] == {"reasoning": {"effort": "low"}}
