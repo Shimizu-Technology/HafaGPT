@@ -901,7 +901,7 @@ function QuizViewerSession() {
                           : answerState === 'correct'
                           ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                           : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      } text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-gray-500 outline-none`}
+                      } text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-slate-500 outline-none`}
                     />
                     {answerState !== 'unanswered' && (
                       <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${

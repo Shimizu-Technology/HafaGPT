@@ -446,26 +446,6 @@ function ChatSession() {
     }
   }, [conversationMessages, activeConversationId, unsavedReply, setError, user?.id]);
 
-  // Clear data when user signs out
-  useEffect(() => {
-    if (isSignedIn === false) {
-        setMessages([]);
-      setActiveConversationId(null);
-      // Invalidate all queries to clear cache
-      queryClient.clear();
-      }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSignedIn]); // Only depend on isSignedIn
-
-  // Load messages when activeConversationId changes
-  // NOTE: This is now handled by React Query (initUserData), but we keep this
-  // for switching between conversations without full re-init
-  useEffect(() => {
-    // This effect is intentionally empty - messages are now loaded via React Query
-    // when activeConversationId changes, the `handleSelectConversation` invalidates
-    // the query which triggers a refetch automatically
-  }, [activeConversationId]);
-
   // Clear state when user signs out
   useEffect(() => {
     if (isSignedIn === false) {
@@ -1449,7 +1429,7 @@ End of Export
 
   return (
     <main id="main-content" style={viewportStyle}
-      className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-gray-950 ${viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
+      className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-slate-950 ${viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
       {/* Sidebar - Only show if signed in */}
       {isSignedIn && (
         <ConversationSidebar
@@ -1474,13 +1454,13 @@ End of Export
         <header
           data-testid="chat-header"
           hidden={compactKeyboard}
-          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-gray-800 dark:bg-gray-900/95`}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
-            {linkedTopic && <Link to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
+            {linkedTopic && <Link to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
             {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
               aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
-              className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
             </button>}
             {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
@@ -1490,12 +1470,12 @@ End of Export
               {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
             </h1>
             {isSignedIn && activeConversationId && <button type="button" onClick={() => void handleNewConversation()} aria-label="New chat" title="New chat"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <Plus className="h-5 w-5" aria-hidden="true" />
             </button>}
             <div className="shrink-0"><AuthButton /></div>
             <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800">
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
@@ -1518,7 +1498,7 @@ End of Export
           <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
           {savedConversationRequiresSignIn ? (
-            <div className="mx-auto max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <div className="mx-auto max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <h2 className="text-lg font-bold text-brown-900 dark:text-white">Sign in to open this saved chat</h2>
               <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">Saved conversations are private to their owner.</p>
               <button type="button" onClick={handleSignInClick} className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800">Sign in</button>
@@ -1529,7 +1509,7 @@ End of Export
               <p className="mt-2 text-sm text-hibiscus-700 dark:text-red-300">It may have been deleted, or it may belong to another account.</p>
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <button type="button" onClick={() => void Promise.all([refetchConversation(), refetchMessages()])} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-hibiscus-600 px-4 font-semibold text-white hover:bg-hibiscus-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
-                <Link to={appRoutes.chat()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 font-semibold text-brown-800 hover:bg-cream-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700">Start a new chat</Link>
+                <Link to={appRoutes.chat()} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-4 font-semibold text-brown-800 hover:bg-cream-100 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700">Start a new chat</Link>
               </div>
             </div>
           ) : conversationsLoading || (!!routeConversationId && conversationLoading) ? (
@@ -1610,10 +1590,10 @@ End of Export
       </div>
 
       {/* The composer owns its actual height; the scroller uses the remaining space. */}
-      <div data-testid="chat-composer" className="relative z-20 shrink-0 border-t border-cream-200 bg-cream-100 dark:border-gray-800 dark:bg-gray-950">
+      <div data-testid="chat-composer" className="relative z-20 shrink-0 border-t border-cream-200 bg-cream-100 dark:border-slate-800 dark:bg-slate-950">
         {resumedReply.notice && <div role="status" className="mx-auto flex max-w-4xl items-center gap-3 px-4 pt-3 text-sm text-brown-700 dark:text-gray-200">
           <p className="min-w-0 flex-1">{resumedReply.notice}</p>
-          {resumedReply.canRetry && <button type="button" onClick={resumedReply.retry} className="min-h-11 shrink-0 rounded-lg px-3 font-semibold text-teal-700 hover:bg-cream-200 dark:text-ocean-300 dark:hover:bg-gray-800">Check again</button>}
+          {resumedReply.canRetry && <button type="button" onClick={resumedReply.retry} className="min-h-11 shrink-0 rounded-lg px-3 font-semibold text-teal-700 hover:bg-cream-200 dark:text-ocean-300 dark:hover:bg-slate-800">Check again</button>}
         </div>}
         {/* Scroll to Bottom Button */}
         {messages.length > 0 && showScrollButton && (
@@ -1624,7 +1604,7 @@ End of Export
               onClick={() => {
                 resumeFollowing();
               }}
-              className="pointer-events-auto flex h-11 w-11 animate-scale-in items-center justify-center rounded-full border border-cream-300 bg-cream-50/95 text-brown-700 shadow-md backdrop-blur transition-colors hover:bg-white dark:border-gray-700 dark:bg-gray-800/95 dark:text-gray-300 dark:hover:bg-gray-700 touch-manipulation"
+              className="pointer-events-auto flex h-11 w-11 animate-scale-in items-center justify-center rounded-full border border-cream-300 bg-cream-50/95 text-brown-700 shadow-md backdrop-blur transition-colors hover:bg-white dark:border-slate-700 dark:bg-slate-800/95 dark:text-gray-300 dark:hover:bg-slate-700 touch-manipulation"
               aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >
@@ -1672,32 +1652,32 @@ End of Export
           style={{ top: viewport.top, height: viewport.height }} onClick={() => setShowOptions(false)} role="presentation">
           <div ref={optionsDialogRef} role="dialog" aria-modal="true" aria-labelledby="tutor-options-title" tabIndex={-1}
             style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="w-full max-w-sm overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900" onClick={event => event.stopPropagation()}>
+            className="w-full max-w-sm overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 p-4 shadow-xl dark:border-slate-700 dark:bg-slate-900" onClick={event => event.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 id="tutor-options-title" className="text-lg font-semibold text-brown-900 dark:text-white">Tutor options</h2>
               <button ref={optionsCloseRef} type="button" onClick={() => setShowOptions(false)} aria-label="Close tutor options"
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><X className="h-5 w-5" /></button>
             </div>
             <label className="block text-sm font-semibold text-brown-800 dark:text-gray-200" htmlFor="tutor-answer-language">Answer language</label>
             <select id="tutor-answer-language" value={mode} disabled={loading || preparingSend}
               onChange={event => setMode(event.target.value as SendAttempt['mode'])}
-              className="mt-2 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-800 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+              className="mt-2 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
               <option value="english">English</option><option value="learn">Both languages</option><option value="chamorro">Chamorro</option>
             </select>
             <p className="mb-4 mt-2 text-xs leading-relaxed text-brown-600 dark:text-gray-400">For replies in this chat. You can type in either language.</p>
             <div className="grid gap-1 text-sm text-brown-800 dark:text-gray-200">
-              <button type="button" onClick={toggleTheme} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-gray-800">
+              <button type="button" onClick={toggleTheme} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-slate-800">
                 {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}Use {theme === 'light' ? 'dark' : 'light'} theme
               </button>
               {isSignedIn && <button type="button" onClick={() => { setShowOptions(false); void handleNewConversation(); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-gray-800"><Plus className="h-4 w-4" />New chat</button>}
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-slate-800"><Plus className="h-4 w-4" />New chat</button>}
               <button type="button" disabled={!isSignedIn || !activeConversationId || messages.length === 0}
                 onClick={() => { setShowOptions(false); if (activeConversationId) void handleShareConversation(activeConversationId); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Share2 className="h-4 w-4" />Share conversation</button>
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-slate-800"><Share2 className="h-4 w-4" />Share conversation</button>
               <button type="button" disabled={messages.length === 0} onClick={() => { setShowOptions(false); setShowExportModal(true); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-gray-800"><Download className="h-4 w-4" />Export chat</button>
-              {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><Settings className="h-4 w-4" />Settings</Link>}
-              <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-gray-800"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
+                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-slate-800"><Download className="h-4 w-4" />Export chat</button>
+              {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-slate-800"><Settings className="h-4 w-4" />Settings</Link>}
+              <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-slate-800"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
             </div>
           </div>
         </div>
@@ -1713,7 +1693,7 @@ End of Export
             aria-labelledby="export-chat-title"
             tabIndex={-1}
             style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-gray-800"
+            className="overflow-y-auto bg-cream-50 dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-slate-800"
           >
             <h2 id="export-chat-title" className="text-lg font-bold text-brown-800 dark:text-white mb-2">Export chat history</h2>
             <p className="text-sm text-brown-600 dark:text-gray-400 mb-5">
@@ -1732,7 +1712,7 @@ End of Export
               </button>
               <button
                 onClick={() => handleExportChat('json')}
-                className="w-full px-4 py-3 bg-cream-200 dark:bg-gray-800 hover:bg-cream-300 dark:hover:bg-gray-700 text-brown-800 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
+                className="w-full px-4 py-3 bg-cream-200 dark:bg-slate-800 hover:bg-cream-300 dark:hover:bg-slate-700 text-brown-800 dark:text-gray-100 rounded-xl transition-colors font-medium flex items-center justify-between group"
               >
                 <span className="flex items-center gap-2">
                   <Braces className="h-5 w-5" aria-hidden="true" />
@@ -1743,7 +1723,7 @@ End of Export
               <button
                 ref={exportCancelRef}
                 onClick={() => setShowExportModal(false)}
-                className="w-full px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-gray-700 transition-colors font-medium mt-2"
+                className="w-full px-4 py-2.5 bg-cream-200 dark:bg-slate-800 text-brown-700 dark:text-gray-300 rounded-xl hover:bg-cream-300 dark:hover:bg-slate-700 transition-colors font-medium mt-2"
               >
                 Cancel
               </button>
@@ -1762,7 +1742,7 @@ End of Export
             aria-labelledby="share-chat-title"
             tabIndex={-1}
             style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="overflow-y-auto bg-cream-50 dark:bg-gray-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-gray-800"
+            className="overflow-y-auto bg-cream-50 dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-slate-800"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
@@ -1774,7 +1754,7 @@ End of Export
                 ref={shareCloseRef}
                 onClick={() => setShowShareModal(false)}
                 aria-label="Close share conversation"
-                className="p-1.5 hover:bg-cream-200 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-cream-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5 text-brown-500 dark:text-gray-400" />
               </button>
@@ -1793,7 +1773,7 @@ End of Export
                 
                 {/* Share URL - Stack on mobile, inline on desktop */}
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1 bg-cream-100 dark:bg-gray-800 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 border border-cream-200 dark:border-gray-700 min-w-0">
+                  <div className="flex-1 bg-cream-100 dark:bg-slate-800 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 border border-cream-200 dark:border-slate-700 min-w-0">
                     <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-500 flex-shrink-0" />
                     <span className="text-xs sm:text-sm text-brown-700 dark:text-gray-300 truncate">
                       {shareInfo.share_url}
@@ -1830,10 +1810,10 @@ End of Export
                 )}
                 
                 {/* Revoke button */}
-                <div className="pt-3 border-t border-cream-200 dark:border-gray-800">
+                <div className="pt-3 border-t border-cream-200 dark:border-slate-800">
                   <button
                     onClick={handleRevokeShare}
-                    className="w-full px-4 py-2.5 bg-cream-200 dark:bg-gray-800 text-brown-600 dark:text-gray-400 rounded-xl hover:bg-hibiscus-100 dark:hover:bg-red-950/30 hover:text-hibiscus-600 dark:hover:text-red-400 transition-colors text-sm font-medium"
+                    className="w-full px-4 py-2.5 bg-cream-200 dark:bg-slate-800 text-brown-600 dark:text-gray-400 rounded-xl hover:bg-hibiscus-100 dark:hover:bg-red-950/30 hover:text-hibiscus-600 dark:hover:text-red-400 transition-colors text-sm font-medium"
                   >
                     Revoke Share Link
                   </button>

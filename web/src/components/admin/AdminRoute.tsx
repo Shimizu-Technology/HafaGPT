@@ -14,8 +14,8 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const timedOut = useAuthLoadTimeout(isLoaded);
   if (!isLoaded && timedOut) {
     return (
-      <main className="grid min-h-screen place-items-center bg-cream-50 px-4 dark:bg-gray-950">
-        <section role="alert" className="max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center dark:border-gray-700 dark:bg-gray-900">
+      <main className="grid min-h-screen place-items-center bg-cream-50 px-4 dark:bg-slate-950">
+        <section role="alert" className="max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">
           <h1 className="text-xl font-bold text-brown-900 dark:text-white">We could not check your sign-in</h1>
           <p className="mt-3 text-brown-600 dark:text-gray-300">Check your connection and try again to open administration.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">

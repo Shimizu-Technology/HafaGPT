@@ -178,7 +178,7 @@ export function AdminSettings() {
               <button
                 onClick={() => setPromoEnabled(!promoEnabled)}
                 className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                  promoEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
+                  promoEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'
                 }`}
                 role="switch"
                 aria-checked={promoEnabled}
@@ -220,7 +220,7 @@ export function AdminSettings() {
                 value={promoTitle}
                 onChange={(e) => setPromoTitle(e.target.value)}
                 placeholder="Felis Påsgua! Holiday Gift: Unlimited Access!"
-                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
               />
             </div>
             
@@ -298,7 +298,7 @@ export function AdminSettings() {
                 type="button"
                 onClick={() => setThemeEnabled(!themeEnabled)}
                 className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                  themeEnabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-gray-600'
+                  themeEnabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-slate-600'
                 }`}
                 role="switch"
                 aria-checked={themeEnabled}

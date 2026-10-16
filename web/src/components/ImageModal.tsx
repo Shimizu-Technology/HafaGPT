@@ -48,7 +48,7 @@ export function ImageModal({ imageUrl, onClose }: ImageModalProps) {
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            className="order-last flex h-11 w-11 items-center justify-center rounded-lg bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+            className="order-last flex h-11 w-11 items-center justify-center rounded-lg bg-cream-50 dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-700 transition-colors"
             aria-label="Close image preview"
           >
             <X className="w-6 h-6" />
@@ -57,7 +57,7 @@ export function ImageModal({ imageUrl, onClose }: ImageModalProps) {
           {/* Download Button */}
           <button
             onClick={handleDownload}
-            className="flex h-11 w-11 items-center justify-center rounded-lg bg-cream-50 dark:bg-gray-800 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-700 transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-lg bg-cream-50 dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-700 transition-colors"
             aria-label="Download image"
             title="Download image"
           >

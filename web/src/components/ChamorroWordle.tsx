@@ -515,7 +515,7 @@ export function ChamorroWordle() {
     const stateStyles = {
       correct: 'bg-green-700 text-white border-green-500',
       present: 'bg-yellow-700 text-white border-yellow-500',
-      absent: 'bg-gray-600 dark:bg-gray-600 text-white border-gray-400 dark:border-gray-600',
+      absent: 'bg-gray-600 dark:bg-slate-600 text-white border-gray-400 dark:border-slate-600',
       empty: 'bg-white dark:bg-slate-800 border-cream-300 dark:border-slate-600',
     };
 

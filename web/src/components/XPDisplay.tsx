@@ -15,7 +15,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
 
   if (isLoading && !passedXpData) {
     return (
-      <div className={`animate-pulse ${compact ? 'h-8' : 'h-24'} bg-gray-100 dark:bg-gray-700 rounded-lg`} />
+      <div className={`animate-pulse ${compact ? 'h-8' : 'h-24'} bg-gray-100 dark:bg-slate-700 rounded-lg`} />
     );
   }
 

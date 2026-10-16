@@ -138,7 +138,7 @@ export function VocabularyList() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search all Chamorro words..."
-              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-400 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-ocean-400 dark:focus:ring-ocean-400/30"
+              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-400 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-ocean-400 dark:focus:ring-ocean-400/30"
             />
             {searchQuery && (
               <button

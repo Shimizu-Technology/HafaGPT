@@ -632,7 +632,7 @@ export function FlashcardViewer() {
                 className={`h-2 rounded-full transition-all ${
                   index === currentIndex
                     ? 'w-8 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 shadow-sm'
-                    : 'w-2 bg-gray-300 dark:bg-gray-600'
+                    : 'w-2 bg-gray-300 dark:bg-slate-600'
                 }`}
               />
             ))}

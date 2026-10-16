@@ -65,14 +65,14 @@ function TopicNode({
   const isLocked = status === 'locked';
   
   const statusColors = {
-    locked: 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700',
-    available: 'bg-white dark:bg-gray-800 border-cream-200 dark:border-gray-700',
+    locked: 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700',
+    available: 'bg-white dark:bg-slate-800 border-cream-200 dark:border-slate-700',
     in_progress: 'bg-coral-50 dark:bg-teal-900/20 border-coral-400 dark:border-teal-500 ring-1 ring-coral-200 dark:ring-teal-700',
     completed: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700',
   };
 
   const iconColors = {
-    locked: 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500',
+    locked: 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500',
     available: 'bg-coral-100 dark:bg-ocean-800 text-coral-600 dark:text-ocean-400',
     in_progress: 'bg-coral-700 dark:bg-ocean-700 text-white',
     completed: 'bg-emerald-500 text-white',
@@ -256,7 +256,7 @@ function LevelSection({
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Mini progress bar */}
           {!isLocked && (
-            <div className="hidden sm:block w-20 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="hidden sm:block w-20 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
                 className={`h-full bg-gradient-to-r ${colors.progress} rounded-full`}
                 style={{ width: `${(completedCount / topics.length) * 100}%` }}
@@ -275,7 +275,7 @@ function LevelSection({
 
       {/* Topics List */}
       {isExpanded && !isLocked && (
-        <div id={`learning-topics-${level}`} className="grid gap-3 p-3 sm:gap-4 sm:p-4 bg-white dark:bg-gray-800">
+        <div id={`learning-topics-${level}`} className="grid gap-3 p-3 sm:gap-4 sm:p-4 bg-white dark:bg-slate-800">
           {topics.map((topic, index) => {
             const progress = progressMap.get(topic.id);
             const status = getTopicStatus(progress);
@@ -329,12 +329,12 @@ export function LearningPathMap() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700">
         <div className="animate-pulse">
-          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+          <div className="h-6 w-48 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-100 dark:bg-gray-700 rounded-xl" />
+              <div key={i} className="h-24 bg-gray-100 dark:bg-slate-700 rounded-xl" />
             ))}
           </div>
         </div>
@@ -363,7 +363,7 @@ export function LearningPathMap() {
   const totalCompleted = beginnerCompleted + intermediateCompleted + advancedCompleted;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
@@ -379,7 +379,7 @@ export function LearningPathMap() {
 
       {/* Overall progress bar */}
       <div className="mb-4 sm:mb-6">
-        <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+        <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-amber-500 rounded-full transition-all duration-500"
             style={{ width: `${(totalCompleted / totalTopics) * 100}%` }}
@@ -427,7 +427,7 @@ export function LearningPathMap() {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-cream-200 dark:border-gray-700">
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-cream-200 dark:border-slate-700">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brown-600 dark:text-gray-300">
           <span className="text-brown-500 dark:text-gray-400">Stars:</span>
           <div className="flex items-center gap-1">

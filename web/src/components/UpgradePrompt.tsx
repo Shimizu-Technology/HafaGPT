@@ -76,7 +76,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg bg-cream-200/50 dark:bg-gray-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-gray-600 transition-colors z-10"
+          className="absolute top-4 right-4 p-2 rounded-lg bg-cream-200/50 dark:bg-slate-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-slate-600 transition-colors z-10"
           aria-label="Close upgrade offer"
         >
           <X className="w-5 h-5" />
@@ -124,7 +124,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
           </ul>
 
           {/* Pricing */}
-          <div className="bg-cream-100 dark:bg-gray-800 rounded-xl p-4 mb-6">
+          <div className="bg-cream-100 dark:bg-slate-800 rounded-xl p-4 mb-6">
             <div className="flex items-baseline justify-between">
               <div>
                 <span className="text-2xl font-bold text-brown-800 dark:text-white">{PREMIUM_PRICING.monthly}</span>

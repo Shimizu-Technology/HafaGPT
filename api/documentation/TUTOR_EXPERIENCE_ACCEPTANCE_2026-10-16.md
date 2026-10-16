@@ -70,3 +70,9 @@ Each PR: full scripts/check.sh, current-head CI, material findings resolved, fin
 ## Resources
 
 Lifecycle session 01a1447a-1f6e-7763-bfa5-d0fe9bcd91e1. Owned local stack and tab recorded through dev-lifecycle. Shared database/model/network services and borrowed simulator left untouched. Clean owned runtime after QA and preserve blocked work with exact continuation evidence.
+
+## Final combined polish acceptance
+
+Combined source eb798085: full scripts/check.sh passed862API tests/10optional skips (different optional local credentials),588web tests, lint/types/content/audio/build/PWA/bundle. Independent review pinned this exact merge and found no material blockers. The later merge of864dd2b changes documentation only. Final browser recheck uses the rebuilt local5174 artifact, including restored10-minute Settings, dark/light, and the final guarded recovery notice.
+
+Fixture cleanup: original local2026-10-16 usage count8 restored. The exact task-owned reconstructed worksheet object was validated by account/conversation/pending ID, filename, configured private bucket and420639-byte size, deleted and confirmed absent; attachment references were cleared only on that local QA transcript. Saved reply evidence remains. No customer object or record was modified.

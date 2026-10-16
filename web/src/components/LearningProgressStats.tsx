@@ -41,12 +41,12 @@ export function LearningProgressStats() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-cream-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
         <div className="animate-pulse">
-          <div className="h-6 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+          <div className="h-6 w-40 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 dark:bg-gray-700 rounded-xl" />
+              <div key={i} className="h-20 bg-gray-100 dark:bg-slate-700 rounded-xl" />
             ))}
           </div>
         </div>
@@ -95,7 +95,7 @@ export function LearningProgressStats() {
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white">
@@ -109,7 +109,7 @@ export function LearningProgressStats() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-cream-50 dark:bg-gray-700/50 text-center sm:text-left"
+            className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-cream-50 dark:bg-slate-700/50 text-center sm:text-left"
           >
             <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center mb-1 sm:mb-2 mx-auto sm:mx-0 ${stat.color} [&>svg]:w-3.5 [&>svg]:h-3.5 sm:[&>svg]:w-5 sm:[&>svg]:h-5`}>
               {stat.icon}

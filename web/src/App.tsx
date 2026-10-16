@@ -100,9 +100,9 @@ function RouteLoadingFallback() {
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center gap-3 rounded-2xl border border-cream-300 bg-white px-5 py-4 text-brown-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+      <div className="flex items-center gap-3 rounded-2xl border border-cream-300 bg-white px-5 py-4 text-brown-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200">
         <span
-          className="h-5 w-5 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600 dark:border-gray-600 dark:border-t-ocean-400"
+          className="h-5 w-5 animate-spin rounded-full border-2 border-teal-200 border-t-teal-600 dark:border-slate-600 dark:border-t-ocean-400"
           aria-hidden="true"
         />
         <span className="text-sm font-medium">Loading page…</span>
@@ -138,7 +138,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
     if (this.state.hasError) {
       return (
         <main className="flex min-h-[60vh] items-center justify-center px-4 pb-24">
-          <div className="max-w-sm rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="max-w-sm rounded-2xl border border-cream-300 bg-white p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <h1 className="text-lg font-semibold text-brown-800 dark:text-white">
               This page needs a refresh
             </h1>
@@ -147,7 +147,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
             </p>
             <button
               type="button"
-              className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coral-800 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-coral-800 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800"
               onClick={() => window.location.reload()}
             >
               Refresh page

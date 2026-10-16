@@ -177,12 +177,12 @@ export function SharedConversation() {
                   message.role === 'user'
                     ? 'bg-coral-700 dark:bg-ocean-700 text-white'
                     : message.role === 'system'
-                    ? 'bg-cream-200 dark:bg-gray-800 text-brown-600 dark:text-gray-400 text-sm italic text-center mx-auto'
-                    : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-gray-700 shadow-sm'
+                    ? 'bg-cream-200 dark:bg-slate-800 text-brown-600 dark:text-gray-400 text-sm italic text-center mx-auto'
+                    : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-slate-700 shadow-sm'
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-cream-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-cream-200 dark:border-slate-700">
                     <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral-100 text-coral-700 dark:bg-teal-950/60 dark:text-teal-300">
                       <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
@@ -274,7 +274,7 @@ export function SharedConversation() {
                         ),
                         // Headers
                         h1: ({ children }) => (
-                          <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-gray-600">
+                          <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-slate-600">
                             {children}
                           </h1>
                         ),
@@ -316,7 +316,7 @@ export function SharedConversation() {
                         ),
                         // Code blocks
                         pre: ({ children }) => (
-                          <pre className="my-3 max-w-full overflow-x-auto rounded-lg bg-cream-200 p-3 dark:bg-gray-700 sm:p-4">
+                          <pre className="my-3 max-w-full overflow-x-auto rounded-lg bg-cream-200 p-3 dark:bg-slate-700 sm:p-4">
                             {children}
                           </pre>
                         ),
@@ -324,7 +324,7 @@ export function SharedConversation() {
                           const isInline = !className;
                           if (isInline) {
                             return (
-                              <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
+                              <code className="bg-cream-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
                                 {children}
                               </code>
                             );
@@ -343,28 +343,28 @@ export function SharedConversation() {
                         ),
                         // Horizontal rule
                         hr: () => (
-                          <hr className="my-4 border-cream-300 dark:border-gray-600" />
+                          <hr className="my-4 border-cream-300 dark:border-slate-600" />
                         ),
                         // Tables
                         table: ({ children }) => (
-                          <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
+                          <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-slate-700">
                             <table className="min-w-full text-sm">
                               {children}
                             </table>
                           </div>
                         ),
                         thead: ({ children }) => (
-                          <thead className="bg-cream-100 dark:bg-gray-700 border-b border-cream-200 dark:border-gray-600">
+                          <thead className="bg-cream-100 dark:bg-slate-700 border-b border-cream-200 dark:border-slate-600">
                             {children}
                           </thead>
                         ),
                         tbody: ({ children }) => (
-                          <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
+                          <tbody className="divide-y divide-cream-200 dark:divide-slate-700">
                             {children}
                           </tbody>
                         ),
                         tr: ({ children }) => (
-                          <tr className="hover:bg-cream-50 dark:hover:bg-gray-700/50 transition-colors">
+                          <tr className="hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors">
                             {children}
                           </tr>
                         ),
@@ -385,11 +385,11 @@ export function SharedConversation() {
                   </div>
                 )}
                 {message.sources && message.sources.length > 0 && (
-                  <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-gray-700">
+                  <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-slate-700">
                     <p className="mb-1 text-xs text-brown-500 dark:text-gray-400">Sources:</p>
                     <div className="flex flex-wrap gap-1">
                       {message.sources.map((source, i) => {
-                        const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-gray-700 dark:text-gray-300";
+                        const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-slate-700 dark:text-gray-300";
                         const label = `${source.name}${typeof source.page === 'number' ? ` (p.${source.page})` : ''}`;
                         return source.url ? (
                           <a

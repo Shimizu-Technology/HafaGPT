@@ -39,7 +39,7 @@ export const WordleKeyboard = memo(function WordleKeyboard({
       case 'present':
         return `${baseStyle} flex-1 h-11 sm:h-14 bg-yellow-700 text-white`;
       case 'absent':
-        return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-gray-600 text-white`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-slate-600 text-white`;
       default:
         return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white hover:bg-cream-300 dark:hover:bg-slate-500`;
     }
