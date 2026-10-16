@@ -690,8 +690,8 @@ function ChatSession() {
         };
         // The status says the exchange is saved; load it, confirm it is really the
         // one just sent, and only then replace the on-screen copy.
-        const loadSavedExchange = async (): Promise<ChatMessage[] | null> => {
-          for (let load = 0; load < 5; load += 1) {
+        const loadSavedExchange = async (loads = 5): Promise<ChatMessage[] | null> => {
+          for (let load = 0; load < loads; load += 1) {
             if (load) {
               try { await waitOrWake(1500 * load, controller.signal); } catch { return null; }
             }
@@ -742,6 +742,29 @@ function ChatSession() {
           }));
           isSendingMessageRef.current = false;
           return true;
+        }
+        if (outcome === 'not_found') {
+          // Usually the message never reached the server. In case only status
+          // tracking failed, look for a saved reply once before offering a resend
+          // that could duplicate it.
+          recovery.settled = true;
+          const found = await loadSavedExchange(1);
+          if (!isCurrent()) {
+            finishRecovery();
+            return false;
+          }
+          if (found) {
+            finishRecovery();
+            const [question, reply] = found.slice(-2);
+            if (question?.role === 'user' && reply?.role === 'assistant') {
+              question.renderKey = userMessage.renderKey;
+              reply.renderKey = assistantMessageId;
+            }
+            setMessages(found);
+            isSendingMessageRef.current = false;
+            setCompletedSend({ message: attempt.message, files: attempt.files });
+            return true;
+          }
         }
         if (outcome === 'complete' || outcome === 'failed' || outcome === 'cancelled') {
           // The server has finished; there is nothing left to stop.
@@ -1414,7 +1437,7 @@ End of Export
                 // Determine if this user message can be edited
                 // Can edit if: it's a user message, not currently streaming, and not a cancelled message
                 const isUserMessage = message.role === 'user';
-                const isNotStreaming = !loading && !isCurrentlyStreaming;
+                const isNotStreaming = !loading && !isCurrentlyStreaming && !recoveringReply;
                 const canEditMessage = isUserMessage && isNotStreaming && !message.cancelled;
 
                 return (

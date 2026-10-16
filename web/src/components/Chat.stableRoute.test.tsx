@@ -408,6 +408,43 @@ describe('Chat stable conversation route', () => {
     }
   });
 
+  it('hides Edit while a dropped reply is being recovered', async () => {
+    state.realMessages = true;
+    state.messages = [
+      { id: 3, role: 'user', content: 'Earlier question', timestamp: '2026-10-15T00:00:00Z' },
+      { id: 3, role: 'assistant', content: 'Earlier reply', timestamp: '2026-10-15T00:00:01Z' },
+    ];
+    state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_7'));
+    state.checkReplyStatus.mockResolvedValue('running');
+    renderChat('/chat/conv-a');
+    expect(screen.getAllByRole('button', { name: 'Edit message' }).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText('Still working on your reply. It will appear here.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).not.toBeInTheDocument();
+  });
+
+  it('shows a saved reply instead of offering a duplicate resend when its status was never recorded', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.realMessages = true;
+      state.createConversation.mockResolvedValue({ id: 'conv-created' });
+      state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_8'));
+      state.checkReplyStatus.mockResolvedValue('not_found');
+      renderChat('/chat');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+      state.queryClient!.setQueryData(['messages', 'conv-created', 'user-1'], [
+        { id: 9, role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+        { id: 9, role: 'assistant', content: 'Saved without tracking', timestamp: '2026-10-16T00:00:05Z' },
+      ]);
+      await act(async () => { await vi.advanceTimersByTimeAsync(25000); });
+      expect(await screen.findByText('Saved without tracking')).toBeInTheDocument();
+      expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps the exchange when the reply status cannot be confirmed', async () => {
     state.realMessages = true;
     state.createConversation.mockResolvedValue({ id: 'conv-created' });
