@@ -114,14 +114,15 @@ def test_genuine_doubt_is_marked_once_without_inflating_other_items():
     assert events[-1]['translation_incomplete'] is True
 
 
-def test_model_correction_of_a_misread_line_is_shown_but_a_different_line_is_not():
+def test_model_reading_disagreement_preserves_extracted_source_and_is_uncertain():
     items = (ImageTextItem('p1-i1', "Påttern 1: Kinalamten i Lina'la'"), ImageTextItem('p1-i2', 'a. Hågon'))
     p = ImagePageContext(0, items, 'high', True)
     stream_text, _ = streamer("Worksheet.\n[[p1-i1]] Påtten 1: Kinalamten i Lina'la' >> Part 1\n"
                               "[[p1-i2]] Something entirely different >> a. Leaf\n")
     text = text_of(run([p], stream_text))
-    assert "**Påtten 1\\: Kinalamten i Lina'la'**" in text
+    assert "**Påttern 1\\: Kinalamten i Lina'la'**" in text
     assert '**a\\. Hågon**' in text and 'entirely different' not in text
+    assert text.count('check the wording in the photo') == 2
 
 
 def test_skipped_items_are_filled_by_a_validated_follow_up():
@@ -289,12 +290,15 @@ def test_a_line_without_separator_is_never_shown_as_its_own_translation():
     ('Bring $25 by October 12', 'Bring $26 by October 13'),
     ('Call the office tomorrow about the trip', 'Call the office tomorrow about the trip 671-555-0100'),
     ('Ti ya-hu', 'Si ya-hu'),
+    ('This is not due today', 'This is now due today'),
+    ('I can attend', "I can't attend"),
 ])
 def test_model_reading_cannot_change_words_numbers_or_add_contacts(transcribed, printed):
     p = ImagePageContext(0, (ImageTextItem('p1-i1', transcribed),), 'high', True)
     stream_text, _ = streamer(f'Page.\n[[p1-i1]] {printed} >> Meaning\n')
     text = text_of(run([p], stream_text))
     assert _plain(printed) not in text and _plain(transcribed) in text
+    assert 'check the wording in the photo' in text
 
 
 def _plain(text):
@@ -326,7 +330,7 @@ def test_equals_and_urls_never_become_markdown_structure():
             content=json.dumps({'translations': [{'id': 'p1-i2', 'translation': '=', 'uncertain': False}]})))])
     stream_text, _ = streamer('See https://evil.example/x\n[[p1-i1]] 1. Repeated option >> ==\n')
     text = text_of(run([p], stream_text, fill))
-    assert 'https\\://' in text and '\\=\\=' in text
+    assert 'evil.example' not in text and '\\[contact detail omitted\\]' in text and '\\=\\=' in text
     assert '**2\\. Repeated option**' not in text and '2\\. Repeated option\n\n' in text
 
 
@@ -360,3 +364,65 @@ def test_translation_call_uses_the_reading_resolution():
     stream_text, calls = streamer(tagged(p.items))
     run([p], stream_text, image_detail='original')
     assert calls[0]['messages'][1]['content'][1]['image_url']['detail'] == 'original'
+
+
+def test_out_of_order_stream_items_keep_the_source_reading_order():
+    p = page(0, 3)
+    stream_text, _ = streamer(tagged((p.items[2], p.items[0], p.items[1])))
+    events = run([p], stream_text)
+    text = text_of(events)
+    assert text.index('Translated p1\\-i1') < text.index('Translated p1\\-i2') < text.index('Translated p1\\-i3')
+    assert events[-1]['generation_complete'] is True
+
+
+@pytest.mark.parametrize('fill_succeeds', [True, False])
+def test_recovered_or_unavailable_item_stays_before_later_items_and_notes(fill_succeeds):
+    p = page(0, 3)
+    stream_text, _ = streamer(tagged((p.items[0], p.items[2])) + 'Notes: After the page.\n')
+    events = run([p], stream_text, lambda **kwargs: fill_response([p.items[1]], finish='stop' if fill_succeeds else 'length'))
+    text = text_of(events)
+    middle = text.index('Filled p1\\-i2') if fill_succeeds else text.index('translation unavailable')
+    assert text.index('Translated p1\\-i1') < middle < text.index('Translated p1\\-i3') < text.index('**Notes**')
+    assert text.count('Translated p1\\-i3') == 1
+    assert events[-1]['generation_complete'] is fill_succeeds
+
+
+def test_follow_up_keeps_user_language_choice_and_page_conversation():
+    p = page(0, 2)
+    stream_text, _ = streamer(tagged(p.items[:1]))
+    follow_ups = []
+    def complete(**kwargs):
+        follow_ups.append(kwargs)
+        return fill_response(p.items[1:])
+    run([p], stream_text, complete, message='Translate into Spanish.',
+        history=[{'role': 'user', 'content': 'This is the second page of the school notice.'}])
+    request = json.loads(follow_ups[0]['messages'][1]['content'][0]['text'])
+    assert request['request'] == 'Translate into Spanish.'
+    assert 'second page of the school notice' in request['recent_conversation']
+    assert request['items'] == [{'id': 'p1-i2', 'text': p.items[1].text}]
+
+
+def test_contact_details_cannot_reappear_in_overview_notes_translation_or_fill():
+    p = page(0, 2)
+    stream_text, calls = streamer('Contact person@example.com for more.\n'
+                                '[[p1-i1]] 1. Repeated option >> Call 671-555-0100.\n'
+                                'Notes: Visit https://private.example or @private_sender.\n')
+    events = run([p], stream_text, lambda **kwargs: fill_response(p.items[1:], translation='Email backup@example.com '))
+    text = text_of(events)
+    assert all(private not in text for private in ('person@example.com', '671-555-0100', 'private.example', '@private_sender', 'backup@example.com'))
+    assert text.count('contact detail omitted') == 5
+    assert 'Do not reintroduce personal names' in calls[0]['messages'][0]['content']
+    assert 'including in the overview or notes' in calls[0]['messages'][0]['content']
+
+
+@pytest.mark.parametrize('bad_id', [[], {}, None, 1])
+def test_malformed_fallback_ids_are_unavailable_without_aborting_later_photos(bad_id):
+    pages = [page(0, 1), page(1, 1)]
+    stream_text, _ = streamer('First page.\n', tagged(pages[1].items))
+    def complete(**kwargs):
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason='stop', message=SimpleNamespace(
+            content=json.dumps({'translations': [{'id': bad_id, 'translation': 'Wrong item', 'uncertain': False}]})))])
+    events = run(pages, stream_text, complete)
+    text = text_of(events)
+    assert 'translation unavailable' in text and 'Translated p2\\-i1' in text
+    assert events[-1]['generation_complete'] is False
