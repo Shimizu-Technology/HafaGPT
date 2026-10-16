@@ -30,6 +30,7 @@ def _detector_json(
 def _load_image_helpers(
     detector_text: str | list[str | Exception] = _detector_json(),
     detector_error: Exception | None = None,
+    streaming_enabled: bool = True,
 ):
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
     module = ast.parse(source_path.read_text())
@@ -88,6 +89,9 @@ def _load_image_helpers(
         "parse_image_context_response": parse_image_context_response,
         "try_parse_image_context_response": try_parse_image_context_response,
         "get_client_for_request": lambda **_kwargs: (client, "vision-model"),
+        "transcription_image_detail": lambda _model: "original",
+        "reasoning_effort_kwargs": lambda _model, effort: {"extra_body": {"reasoning": {"effort": effort}}},
+        "photo_translation_streaming_enabled": lambda: streaming_enabled,
         "logger": FakeLogger(),
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
@@ -354,3 +358,38 @@ def test_cancellation_between_images_stops_remaining_extraction_calls():
     ], cancelled=lambda: bool(completions.calls))
     assert len(completions.calls) == 1
     assert len(context.pages) == 1
+
+
+def test_image_detector_reads_at_full_resolution_with_low_reasoning_effort() -> None:
+    _, _, _, detect_image_context, completions = _load_image_helpers(
+        detector_text=_detector_json(lines=["Håfa adai!"])
+    )
+
+    detect_image_context([{"data": "image", "content_type": "image/png"}])
+
+    call = completions.calls[0]
+    image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
+    assert image_part["image_url"]["detail"] == "original"
+    assert call["extra_body"] == {"reasoning": {"effort": "low"}}
+
+
+def test_established_detector_settings_are_preserved_without_opt_in() -> None:
+    _, _, _, detect_image_context, completions = _load_image_helpers(
+        detector_text=_detector_json(lines=["Håfa adai!"]), streaming_enabled=False,
+    )
+    detect_image_context([{"data": "image", "content_type": "image/png"}])
+    call = completions.calls[0]
+    image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
+    assert image_part["image_url"]["detail"] == "high"
+    assert 'extra_body' not in call
+
+
+def test_both_detector_routes_preserve_raw_extracted_source():
+    raw = 'p\u0430pa h\u200bafa a\u030a'
+    payload = json.dumps({'signals': [], 'text_confidence': 'high', 'complete': True,
+                          'lines': [{'text': raw, 'kind': 'body'}]})
+    for enabled in (False, True):
+        _, _, _, detect, _ = _load_image_helpers(detector_text=payload, streaming_enabled=enabled)
+        context = detect([{'data': 'image', 'content_type': 'image/png'}])
+        assert context.pages[0].items[0].text == raw
+        assert context.visible_language_text == raw
