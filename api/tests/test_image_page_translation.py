@@ -1,6 +1,8 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from api.image_translation import _PageRenderer, looks_english, translate_image_pages
 from src.rag.image_translation_context import ImagePageContext, ImageTextItem, ImageTranslationContext
 
@@ -95,7 +97,7 @@ def test_items_already_in_the_target_language_are_shown_once_without_translation
     stream_text, _ = streamer("A worksheet.\n\n[[p1-i1]] Ecosystems: Interactions, Energy, and Dynamics >> =\n"
                               "[[p1-i2]] Poddong i simiya gi edda'. >> The seed falls onto the soil.\n")
     text = text_of(run([p], stream_text))
-    assert text.count('Ecosystems: Interactions, Energy, and Dynamics') == 1
+    assert text.count('Ecosystems\\: Interactions, Energy, and Dynamics') == 1
     assert '**Ecosystems' not in text
     assert "**Poddong i simiya gi edda'\\.**  \nThe seed falls onto the soil\\." in text
 
@@ -107,7 +109,7 @@ def test_genuine_doubt_is_marked_once_without_inflating_other_items():
                               "[[p1-i2]] Acho' >> Rock\n")
     events = run([p], stream_text)
     text = text_of(events)
-    assert 'The tree disappears *\\(unsure: the photo is blurred here\\)*' in text
+    assert 'The tree disappears *\\(unsure\\: the photo is blurred here\\)*' in text
     assert text.count('unsure') == 1
     assert events[-1]['translation_incomplete'] is True
 
@@ -118,7 +120,7 @@ def test_model_correction_of_a_misread_line_is_shown_but_a_different_line_is_not
     stream_text, _ = streamer("Worksheet.\n[[p1-i1]] Påtten 1: Kinalamten i Lina'la' >> Part 1\n"
                               "[[p1-i2]] Something entirely different >> a. Leaf\n")
     text = text_of(run([p], stream_text))
-    assert "**Påtten 1: Kinalamten i Lina'la'**" in text
+    assert "**Påtten 1\\: Kinalamten i Lina'la'**" in text
     assert '**a\\. Hågon**' in text and 'entirely different' not in text
 
 
@@ -263,3 +265,98 @@ def test_english_detection_is_conservative():
     assert looks_english('Write your name and the date on the line.')
     assert not looks_english("Håfa ma susedi annai ha' kåkanno' i fanihi i fruta?")
     assert not looks_english('a. Fruta')
+
+
+def test_a_cut_off_last_line_is_filled_instead_of_saved_half_translated():
+    p = page(0, 2)
+    stream_text, _ = streamer('Page.\n[[p1-i1]] 1. Repeated option >> One\n[[p1-i2]] 2. Repeated option >> Half a transl', finish='length')
+    events = run([p], stream_text, lambda **kwargs: fill_response([p.items[1]]))
+    text = text_of(events)
+    assert 'Half a transl' not in text and 'Filled p1\\-i2' in text
+    assert events[-1]['generation_complete'] is True
+
+
+def test_a_line_without_separator_is_never_shown_as_its_own_translation():
+    p = ImagePageContext(0, (ImageTextItem('p1-i1', 'Håfa adai'),), 'high', True)
+    stream_text, _ = streamer('Page.\n[[p1-i1]] Håfa adai\n>> Hello\n')
+    text = text_of(run([p], stream_text, lambda **kwargs: fill_response(p.items, translation='Hello ')))
+    assert text.count('Håfa adai') == 1 and 'Hello p1' in text
+
+
+@pytest.mark.parametrize('transcribed,printed', [
+    ('Ti ya-hu', 'Ya-hu'),
+    ("Hu tungo' i lepblo", "Ti hu tungo' i lepblo"),
+    ('Bring $25 by October 12', 'Bring $26 by October 13'),
+    ('Call the office tomorrow about the trip', 'Call the office tomorrow about the trip 671-555-0100'),
+    ('Ti ya-hu', 'Si ya-hu'),
+])
+def test_model_reading_cannot_change_words_numbers_or_add_contacts(transcribed, printed):
+    p = ImagePageContext(0, (ImageTextItem('p1-i1', transcribed),), 'high', True)
+    stream_text, _ = streamer(f'Page.\n[[p1-i1]] {printed} >> Meaning\n')
+    text = text_of(run([p], stream_text))
+    assert _plain(printed) not in text and _plain(transcribed) in text
+
+
+def _plain(text):
+    from api.image_translation import _plain_markdown
+    return _plain_markdown(text)
+
+
+def test_worksheet_blanks_survive_and_unclear_items_keep_their_warning():
+    items = (ImageTextItem('p1-i1', 'Ha ______ i lepblo'), ImageTextItem('p1-i2', '[unclear] Grades', 'unclear'))
+    p = ImagePageContext(0, items, 'high', False)
+    stream_text, _ = streamer('Page.\n[[p1-i1]] Ha ______ i lepblo >> He ______ the book\n[[p1-i2]] [unclear] Grades >> =\n')
+    events = run([p], stream_text)
+    text = text_of(events)
+    assert '\\_\\_\\_\\_\\_\\_' in text and 'He \\_\\_\\_\\_\\_\\_ the book' in text
+    assert 'unsure' in text and events[-1]['translation_incomplete'] is True
+
+
+def test_dashes_in_a_confident_translation_are_not_mistaken_for_a_reason():
+    p = ImagePageContext(0, (ImageTextItem('p1-i1', 'Grådo 1 - 5'),), 'high', True)
+    stream_text, _ = streamer('Page.\n[[p1-i1]] Grådo 1 - 5 >> Grades 1 - 5 must attend\n')
+    text = text_of(run([p], stream_text))
+    assert 'Grades 1 \\- 5 must attend' in text and 'unsure' not in text
+
+
+def test_equals_and_urls_never_become_markdown_structure():
+    p = page(0, 2)
+    def fill(**kwargs):
+        return SimpleNamespace(choices=[SimpleNamespace(finish_reason='stop', message=SimpleNamespace(
+            content=json.dumps({'translations': [{'id': 'p1-i2', 'translation': '=', 'uncertain': False}]})))])
+    stream_text, _ = streamer('See https://evil.example/x\n[[p1-i1]] 1. Repeated option >> ==\n')
+    text = text_of(run([p], stream_text, fill))
+    assert 'https\\://' in text and '\\=\\=' in text
+    assert '**2\\. Repeated option**' not in text and '2\\. Repeated option\n\n' in text
+
+
+def test_notes_are_capped():
+    p = page(0, 1)
+    stream_text, _ = streamer('Page.\n[[p1-i1]] 1. Repeated option >> One\nNotes: first\nsecond\nthird\nfourth\nfifth\n')
+    text = text_of(run([p], stream_text))
+    assert 'third' in text and 'fourth' not in text and 'fifth' not in text
+
+
+def test_numbered_item_lines_are_recognised():
+    p = page(0, 2)
+    stream_text, _ = streamer('Page.\n1. [[p1-i1]] 1. Repeated option >> One\n2) [[p1-i2]] 2. Repeated option >> Two\n')
+    text = text_of(run([p], stream_text))
+    assert 'One' in text and 'Two' in text and 'p1' not in text.replace('\\-', '-').replace('Repeated', '')
+
+
+def test_cancel_during_the_follow_up_is_honoured():
+    p = page(0, 2)
+    state = {'cancel': False}
+    stream_text, _ = streamer('Page.\n[[p1-i1]] 1. Repeated option >> One\n')
+    def complete(**kwargs):
+        state['cancel'] = True
+        return fill_response([p.items[1]])
+    events = run([p], stream_text, complete, cancelled=lambda: state['cancel'])
+    assert events[-1]['type'] == 'cancelled'
+
+
+def test_translation_call_uses_the_reading_resolution():
+    p = page(0, 1)
+    stream_text, calls = streamer(tagged(p.items))
+    run([p], stream_text, image_detail='original')
+    assert calls[0]['messages'][1]['content'][1]['image_url']['detail'] == 'original'

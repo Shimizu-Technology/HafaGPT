@@ -17,16 +17,17 @@ import logging
 import re
 from collections.abc import Callable, Iterator, Sequence
 
-from src.rag.image_translation_context import ImageTranslationContext, ImageTextItem
+from src.rag.image_translation_context import _CONTACT_METADATA, ImageTranslationContext, ImageTextItem
 from src.utils.token_manager import truncate_text
 
 logger = logging.getLogger(__name__)
 
 MAX_STREAM_TOKENS = 8000
 MAX_REFERENCE_TOKENS = 4000
-# A model-corrected reading of the printed line replaces the transcript only when
-# it is plainly the same line (fixing an OCR slip), never a different sentence.
-MIN_ORIGINAL_SIMILARITY = 0.75
+# A model-corrected reading replaces the transcript only for within-word fixes
+# (an OCR slip or a missing diacritic): same words, same digits, no contact data.
+MIN_WORD_SIMILARITY = 0.6
+MAX_NOTE_LINES = 3
 
 FILL_RESPONSE_FORMAT = {
     "type": "json_schema",
@@ -92,15 +93,17 @@ _OVERVIEW = ("One or two plain sentences saying what the page is and anything th
 _SCHOOL_OVERVIEW = ("Up to three short plain sentences: what the message asks the family to do, "
                     "with any dates, times, places, and things to bring, then what it is about.")
 
-_ITEM_LINE = re.compile(r"^\s*[-*•]?\s*\[\[\s*(p\d+-i\d+)\s*\]\]\s*(.*)$")
-_EMPHASIS = re.compile(r"(\*\*|__|`+)")
+_ITEM_LINE = re.compile(r"^\s*(?:[-*•]|\d+[.)])?\s*\[\[\s*(p\d+-i\d+)\s*\]\]\s*(.*)$")
+# Bold markers and code ticks only: runs of underscores are worksheet blanks.
+_EMPHASIS = re.compile(r"(\*\*|`+)")
 _LEADING_MARKUP = re.compile(r"^\s*(?:#{1,6}\s+|[-*•]\s+|>\s*)")
 
 
 def _plain_markdown(text: str) -> str:
     """Display model/source strings as text, not arbitrary links, images or HTML."""
     text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    return re.sub(r"([\\`*_{}\[\]()#+.!|~-])", r"\\\1", text).replace("\n", " ")
+    # ":" stops URL autolinking and "=" stops setext headings.
+    return re.sub(r"([\\`*_{}\[\]()#+.!|~:=-])", r"\\\1", text).replace("\n", " ")
 
 
 def _clean_model_text(text: str) -> str:
@@ -126,17 +129,23 @@ def looks_english(text: str) -> bool:
 
 
 def _choose_original(transcribed: str, printed: str) -> str:
+    """Accept the model's reading only when it corrects letters within the same words."""
     printed = _clean_model_text(printed)
-    if not printed or printed == transcribed:
+    if not printed or printed == transcribed or _CONTACT_METADATA.search(printed):
         return transcribed
-    ratio = difflib.SequenceMatcher(None, transcribed.casefold(), printed.casefold()).ratio()
-    return printed if ratio >= MIN_ORIGINAL_SIMILARITY else transcribed
+    before, after = transcribed.split(), printed.split()
+    if len(before) != len(after) or re.findall(r"\d", transcribed) != re.findall(r"\d", printed):
+        return transcribed
+    for old, new in zip(before, after):
+        if old != new and difflib.SequenceMatcher(None, old.casefold(), new.casefold()).ratio() < MIN_WORD_SIMILARITY:
+            return transcribed
+    return printed
 
 
 def _render_item(original: str, translation: str, *, same: bool = False,
                  uncertain: bool = False, reason: str = "") -> str:
     shown = _plain_markdown(original)
-    if same:
+    if same or translation.strip() == "=":
         return f"{shown}\n\n"
     text = f"**{shown}**  \n"
     if translation:
@@ -157,6 +166,7 @@ class _PageRenderer:
         self.buffer = ""
         self.in_notes = False
         self.overview_lines = 0
+        self.note_lines = 0
 
     def feed(self, text: str) -> Iterator[str]:
         self.buffer += text
@@ -164,9 +174,11 @@ class _PageRenderer:
             line, self.buffer = self.buffer.split("\n", 1)
             yield from self._line(line)
 
-    def finish(self) -> Iterator[str]:
-        if self.buffer:
-            line, self.buffer = self.buffer, ""
+    def finish(self, complete: bool = True) -> Iterator[str]:
+        """Render the last line only if the stream ended normally; a cut-off
+        line stays missing so the follow-up call translates it in full."""
+        line, self.buffer = self.buffer, ""
+        if line and complete:
             yield from self._line(line)
 
     def missing(self) -> list[ImageTextItem]:
@@ -180,39 +192,41 @@ class _PageRenderer:
             if item is None or item_id in self.seen:
                 return
             printed, separator, translated = rest.partition(">>")
-            if not separator:
-                printed, translated = "", rest
             translated = _clean_model_text(translated)
-            original = _choose_original(item.text, printed)
-            if translated == "=":
-                self.seen[item_id] = False
-                yield _render_item(original, "", same=True)
+            if not separator or not translated:
+                # Malformed or empty: leave it missing for the validated follow-up.
                 return
-            uncertain = item.kind == "unclear" or translated.startswith("?") or not translated
-            translated = translated.lstrip("? ").strip()
-            reading, _, reason = translated.partition(" — ")
-            if not reason and uncertain:
-                reading, _, reason = translated.partition(" - ")
-            if not uncertain:
-                reading, reason = translated, ""
+            original = _choose_original(item.text, printed)
+            unclear = item.kind == "unclear"
+            if translated == "=":
+                self.seen[item_id] = unclear
+                yield _render_item(original, "", same=not unclear, uncertain=unclear)
+                return
+            reading, reason = translated, ""
+            doubtful = translated.startswith("?")
+            if doubtful:
+                reading, _, reason = translated.lstrip("? ").partition(" — ")
+            uncertain = doubtful or unclear
             self.seen[item_id] = uncertain
             yield _render_item(original, reading.strip(), uncertain=uncertain, reason=reason.strip())
             return
         text = _clean_model_text(line)
         if not text:
             return
-        if text.casefold().startswith("notes:"):
+        if text.casefold().startswith("notes:") and not self.in_notes:
             self.in_notes = True
             text = text[len("notes:"):].strip()
             yield "**Notes**\n\n"
-            if text:
+            if not text:
+                return
+        # Prose belongs before the items (overview) or in a short notes section;
+        # anything else is the model drifting from the format and is dropped.
+        if self.in_notes:
+            if self.note_lines < MAX_NOTE_LINES:
+                self.note_lines += 1
                 yield _plain_markdown(text) + "\n\n"
-            return
-        # Prose belongs before the items (overview) or in the notes; anything else
-        # is the model drifting from the format and is dropped.
-        if self.in_notes or (not self.seen and self.overview_lines < 4):
-            if not self.in_notes:
-                self.overview_lines += 1
+        elif not self.seen and self.overview_lines < 4:
+            self.overview_lines += 1
             yield _plain_markdown(text) + "\n\n"
 
 
@@ -263,7 +277,7 @@ def translate_image_pages(
     stream_text: Callable[..., Iterator[tuple[str, str | None]]], complete: Callable,
     retrieve: Callable, cancelled: Callable[[], bool], guidance: str = "",
     history: list[dict] | None = None, target: str = "Translate into English unless the person asks for another language.",
-    school_announcement: bool = False,
+    school_announcement: bool = False, image_detail: str = "high",
 ) -> Iterator[dict]:
     """Stream readable page translations; every item is translated or reported.
 
@@ -320,7 +334,9 @@ def translate_image_pages(
             "items": [{"id": item.id, "text": item.text} for item in page.items],
         }, ensure_ascii=False)
         image_part = {"type": "image_url", "image_url": {
-            "url": f"data:{image['content_type']};base64,{image['data']}", "detail": "high",
+            # Same resolution as the transcription, so its corrections are not
+            # made from a blurrier copy of the page.
+            "url": f"data:{image['content_type']};base64,{image['data']}", "detail": image_detail,
         }}
         messages = [
             {"role": "system", "content": system},
@@ -336,7 +352,7 @@ def translate_image_pages(
                 finish = finish_reason or finish
                 for rendered in renderer.feed(text):
                     yield {"type": "chunk", "content": rendered}
-            for rendered in renderer.finish():
+            for rendered in renderer.finish(complete=finish == "stop"):
                 yield {"type": "chunk", "content": rendered}
         except Exception as error:
             # Do not log provider bodies, which can contain private input.
@@ -351,6 +367,9 @@ def translate_image_pages(
         filled: dict[str, dict] | None = {}
         if missing:
             filled = _fill_missing(missing, messages, complete)
+            if cancelled():
+                yield cancelled_event
+                return
             if filled is None or len(filled) < len(missing):
                 generation_complete = False
         if renderer.seen or filled:

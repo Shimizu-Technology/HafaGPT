@@ -339,6 +339,7 @@ def test_image_page_pipeline_defers_logging_only_for_atomic_edits(persist: bool)
             {'type': 'chunk', 'content': 'Complete page reply'},
         ]), 'get_rag_context': Mock(), 'format_source_citations': lambda sources: sources,
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
+        'transcription_image_detail': lambda model: 'high',
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     context = SimpleNamespace(school_announcement=False, card_ids=[])
@@ -436,6 +437,7 @@ def actual_image_edit_generator(case: str, context: Any = None, images: Optional
         'format_source_citations': lambda sources: sources, 'optional_chat_completion_kwargs': lambda model: {},
         'is_message_cancelled': lambda pending: False, 'log_conversation': Mock(), 'cleanup_cancelled_message': Mock(),
         '_extract_stream_chunk_content_and_empty_choice': lambda chunk: (chunk.choices[0].delta.content or '', False),
+        'transcription_image_detail': lambda model: 'high',
     }
     exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), namespace)
     def generate() -> Iterator[dict[str, Any]]:
