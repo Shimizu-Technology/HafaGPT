@@ -33,7 +33,9 @@ While disabled, `image_translation_legacy.py` retains the established structured
 batched translation and separate final-review call, with the original mode,
 skill-level, task, and school guidance. Transcription retains `high` image detail
 and the established reasoning settings. The legacy module was copied unchanged
-from commit `da576913`; shared transcript Unicode normalization remains active.
+from commit `da576913`. Shared transcription also preserves the established raw
+Unicode text: it does not silently rewrite confusable letters, invisible
+characters, or combining marks in either route.
 
 For local candidate QA, set the variable to `true` in the API process environment
 before starting the stack. Exercise both settings against the same fixtures.
@@ -67,6 +69,10 @@ cancellation, and continuing after a failed photo/provider response.
 When the translator's claimed printed wording differs from the extracted item,
 the candidate preserves the extracted source and marks the result uncertain.
 Character similarity is not evidence that changing a word preserves its meaning.
+Newline-terminated items from a stream that truncates, lacks a normal stop, or
+throws after output remain visibly incomplete and cannot replace an existing
+exchange during an atomic edit. A validated follow-up confirms only the items it
+actually translates.
 
 Names in form fields and sender labels are excluded by the transcription and
 translation prompts. Contact strings also have deterministic output filtering.

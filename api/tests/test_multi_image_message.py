@@ -382,3 +382,14 @@ def test_established_detector_settings_are_preserved_without_opt_in() -> None:
     image_part = next(part for part in call["messages"][1]["content"] if part["type"] == "image_url")
     assert image_part["image_url"]["detail"] == "high"
     assert 'extra_body' not in call
+
+
+def test_both_detector_routes_preserve_raw_extracted_source():
+    raw = 'p\u0430pa h\u200bafa a\u030a'
+    payload = json.dumps({'signals': [], 'text_confidence': 'high', 'complete': True,
+                          'lines': [{'text': raw, 'kind': 'body'}]})
+    for enabled in (False, True):
+        _, _, _, detect, _ = _load_image_helpers(detector_text=payload, streaming_enabled=enabled)
+        context = detect([{'data': 'image', 'content_type': 'image/png'}])
+        assert context.pages[0].items[0].text == raw
+        assert context.visible_language_text == raw

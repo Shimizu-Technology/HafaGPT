@@ -274,7 +274,8 @@ def test_a_cut_off_last_line_is_filled_instead_of_saved_half_translated():
     events = run([p], stream_text, lambda **kwargs: fill_response([p.items[1]]))
     text = text_of(events)
     assert 'Half a transl' not in text and 'Filled p1\\-i2' in text
-    assert events[-1]['generation_complete'] is True
+    assert events[-1]['generation_complete'] is False
+    assert 'ended before completion could be confirmed' in text
 
 
 def test_a_line_without_separator_is_never_shown_as_its_own_translation():
@@ -425,4 +426,19 @@ def test_malformed_fallback_ids_are_unavailable_without_aborting_later_photos(ba
     events = run(pages, stream_text, complete)
     text = text_of(events)
     assert 'translation unavailable' in text and 'Translated p2\\-i1' in text
+    assert events[-1]['generation_complete'] is False
+
+
+@pytest.mark.parametrize('ending', ['length', 'unconfirmed', 'exception'])
+def test_newline_terminated_items_without_a_normal_stream_finish_remain_incomplete(ending):
+    p = page(0, 2)
+    def stream_text(**kwargs):
+        yield tagged(p.items), None
+        if ending == 'exception':
+            raise RuntimeError('Connection lost after the last item')
+        yield '', 'length' if ending == 'length' else None
+    events = run([p], stream_text)
+    assert all(f'Translated p1\\-i{number}' in text_of(events) for number in (1, 2))
+    assert 'ended before completion could be confirmed' in text_of(events)
+    assert events[-1]['translation_incomplete'] is True
     assert events[-1]['generation_complete'] is False
