@@ -1405,9 +1405,11 @@ End of Export
     const recovery = recoveryRef.current;
     if (recovery) {
       if (recovery.settled || recovery.cancelled) return;
-      recovery.cancelled = cancelPendingReply(recovery.pendingId);
-      void recovery.cancelled.then(confirmed => {
-        if (!confirmed || recoveryRef.current !== recovery || recovery.settled) return;
+      const cancellation = cancelPendingReply(recovery.pendingId).catch(() => false);
+      recovery.cancelled = cancellation;
+      void cancellation.then(confirmed => {
+        if (recoveryRef.current !== recovery || recovery.settled || recovery.cancelled !== cancellation) return;
+        if (!confirmed) { recovery.cancelled = undefined; return; }
         recovery.stopRequested = true;
         setMessages(prev => prev.map(msg => msg.recovery ? { ...msg, recovery: 'stopping' as const } : msg));
       });

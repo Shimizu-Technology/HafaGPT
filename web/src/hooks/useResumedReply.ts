@@ -77,8 +77,10 @@ export function useResumedReply(options: Options) {
     const current = operation.current;
     if (!current || current.controller.signal.aborted || current.stopping || current.settled) return;
     current.stopping = true;
-    const confirmed = await callbacks.current.cancel(current.record.pendingId);
+    let confirmed = false;
+    try { confirmed = await callbacks.current.cancel(current.record.pendingId); } catch { /* Allow another Stop after reconnection. */ }
     if (operation.current !== current || current.controller.signal.aborted || current.settled) return;
+    if (!confirmed) current.stopping = false;
     // Stop acknowledgement is not the terminal/persistence result. Leave the
     // pointer and polling intact until the status and saved exchange settle.
     setState(previous => ({ ...previous, notice: confirmed

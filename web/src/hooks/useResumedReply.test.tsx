@@ -76,6 +76,22 @@ describe('resuming tutor replies after reload or route return', () => {
     expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
   });
 
+  it('allows Stop again after a transient failure without discarding the pending pointer', async () => {
+    rememberPendingReply('owner-a', pointer());
+    const handlers = options();
+    handlers.check.mockImplementation(() => new Promise(() => {}));
+    handlers.cancel.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const { result } = renderHook(() => useResumedReply(handlers));
+    await act(async () => result.current.stop());
+    expect(result.current.notice).toMatch(/Couldn’t confirm Stop/);
+    expect(result.current.pending).toBe(true);
+    await act(async () => result.current.stop());
+    expect(handlers.cancel).toHaveBeenCalledTimes(2);
+    expect(result.current.notice).toMatch(/Stop requested/);
+    expect(result.current.pending).toBe(true);
+    expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+  });
+
   it('lets a live new-conversation send keep ownership when its route becomes stable', () => {
     rememberPendingReply('owner-a', pointer());
     const handlers = options();

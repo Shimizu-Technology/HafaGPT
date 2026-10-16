@@ -570,6 +570,25 @@ describe('Chat stable conversation route', () => {
     },
   );
 
+  it('retries Stop after an unacknowledged recovery attempt and keeps checking its saved outcome', async () => {
+    state.realMessages = true;
+    state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_retry_stop'));
+    state.checkReplyStatus.mockResolvedValue('running');
+    state.cancelPendingReply.mockResolvedValue(true).mockResolvedValueOnce(false);
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText('Still working on your reply. It will appear here.')).toBeInTheDocument();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Stop reply' })); });
+    expect(state.cancelPendingReply).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Stop requested. Checking the saved outcome…')).not.toBeInTheDocument();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Stop reply' })); });
+    expect(state.cancelPendingReply).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Stop requested. Checking the saved outcome…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(readPendingReply('user-1', 'conv-a')?.pendingId).toBe('pending_retry_stop');
+    expect(state.composerReceipt).toBeUndefined();
+  });
+
   it('keeps the exchange and explains when a saved reply cannot be loaded yet', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
