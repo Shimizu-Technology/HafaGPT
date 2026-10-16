@@ -12,11 +12,13 @@ const outcomes = new Map<string, 'running' | 'complete' | 'cancelled'>();
 window.fetch = async (input, options) => {
   const url = String(input);
   if (url.includes('/api/chat/cancel/')) {
-    outcomes.set(url.split('/').pop()!, 'cancelled');
+    outcomes.set(url.split('?')[0].split('/').pop()!, 'cancelled');
     return Response.json({ success: true });
   }
   if (url.includes('/api/chat/requests/')) {
-    return Response.json({ status: outcomes.get(url.split('/').pop()!) });
+    const pendingId = url.split('?')[0].split('/').pop()!;
+    const status = outcomes.get(pendingId);
+    return status ? Response.json({ status }) : Response.json({}, { status: 404 });
   }
   if (!String(input).endsWith('/api/chat/stream')) return new Response('{}', { status: 200 });
   const pendingId = options?.body instanceof FormData
@@ -80,8 +82,13 @@ export function StreamingFixture() {
     } catch (error) {
       // Stop's HTTP acknowledgement alone is not a terminal outcome. Model
       // the same status reconciliation required by the real Chat component.
-      if (error instanceof ConnectionLostError && await checkReplyStatus(error.pendingId) === 'cancelled') {
-        update({ isStreaming: false, content: 'Message cancelled' });
+      if (error instanceof ConnectionLostError) {
+        let cancelled = false;
+        try { cancelled = await checkReplyStatus(error.pendingId) === 'cancelled'; }
+        catch { /* An unavailable status must remain an unknown outcome. */ }
+        update({ isStreaming: false, content: cancelled ? 'Message cancelled' : 'Connection lost; reply outcome unknown' });
+      } else {
+        update({ isStreaming: false, content: 'Streaming fixture failed' });
       }
     }
   };
