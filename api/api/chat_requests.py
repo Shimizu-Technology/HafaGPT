@@ -17,16 +17,16 @@ from contextlib import closing
 from typing import Any
 
 from .database_connections import get_db_connection_with_retry
+from src.rag.retrieval_runtime import CONNECT_TIMEOUT_SECONDS, database_connect_options
 
 logger = logging.getLogger(__name__)
 
 HEARTBEAT_SECONDS = 2.0
 # Status bookkeeping must never hold a reply hostage to a slow database.
-CONNECT_TIMEOUT_SECONDS = 5
 
 
 def _connect_quickly() -> Any:
-    return get_db_connection_with_retry(max_retries=2, connect_timeout=CONNECT_TIMEOUT_SECONDS)
+    return get_db_connection_with_retry(max_retries=2, **database_connect_options())
 # A running request whose owner stopped refreshing it (worker restart, deploy,
 # crash) is reported as interrupted instead of leaving the client waiting.
 STALE_AFTER_SECONDS = 30
@@ -197,7 +197,7 @@ def terminal_status(event_types: list[str]) -> str:
     return "failed"
 
 
-def request_cancel(pending_id: str, user_id: str, connect: Callable[[], Any] = get_db_connection_with_retry) -> bool:
+def request_cancel(pending_id: str, user_id: str, connect: Callable[[], Any] = _connect_quickly) -> bool:
     """Record an owner's cancel so whichever worker runs the stream can see it."""
     with closing(connect()) as conn, closing(conn.cursor()) as cursor:
         cursor.execute(
@@ -217,7 +217,7 @@ def request_cancel(pending_id: str, user_id: str, connect: Callable[[], Any] = g
 
 
 def get_request_status(
-    pending_id: str, user_id: str, connect: Callable[[], Any] = get_db_connection_with_retry,
+    pending_id: str, user_id: str, connect: Callable[[], Any] = _connect_quickly,
 ) -> dict[str, Any] | None:
     """Return an owner's request outcome, reporting silent running rows as interrupted."""
     with closing(connect()) as conn, closing(conn.cursor()) as cursor:
