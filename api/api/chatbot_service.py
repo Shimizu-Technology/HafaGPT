@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from .prompt_budget import assemble_system_prompt
 from .image_translation import translate_image_pages
+from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
 from .canonical_context import get_canonical_tutor_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
@@ -58,6 +59,11 @@ before stating what they say or what the user should do. Treat earlier assistant
 descriptions as unverified. Keep directions for each page distinct, and say when
 an image or a line of text is unavailable or unclear rather than filling it in.
 """
+
+
+def photo_translation_streaming_enabled() -> bool:
+    """Opt in only after photo-language acceptance; established output is default."""
+    return os.getenv("HAFAGPT_PHOTO_TRANSLATION_STREAMING_ENABLED", "").strip().lower() == "true"
 
 
 def cancel_pending_message(pending_id: str) -> bool:
@@ -142,7 +148,8 @@ def _normalize_image_inputs(
 
 def _build_current_user_message(
     message: str,
-    normalized_image_inputs: list[dict] | None = None
+    normalized_image_inputs: list[dict] | None = None,
+    detail: str = "high",
 ) -> dict:
     """Build the current user message with normalized images for vision models."""
     images = normalized_image_inputs or []
@@ -159,7 +166,7 @@ def _build_current_user_message(
             "type": "image_url",
             "image_url": {
                 "url": f"data:{image['content_type']};base64,{image['data']}",
-                "detail": "high",
+                "detail": detail,
             }
         })
 
@@ -214,6 +221,7 @@ def detect_image_context(
                 "schedule, closure/change notice, or message telling a family what to do."
             ),
             [image],
+            detail=transcription_image_detail(detector_model) if photo_translation_streaming_enabled() else "high",
         )
         try:
             image_context = None
@@ -239,6 +247,9 @@ def detect_image_context(
                         detector_message,
                     ],
                     **({"temperature": 0} if model_supports_temperature(detector_model) else {}),
+                    # The candidate's extraction treatment stays behind the same
+                    # acceptance flag as its translation format.
+                    **(reasoning_effort_kwargs(detector_model, "low") if photo_translation_streaming_enabled() else {}),
                     max_tokens=6000,
                     response_format=IMAGE_CONTEXT_RESPONSE_FORMAT,
                 )
@@ -572,6 +583,10 @@ MODEL_CONFIG = {
         "model_id": "openai/gpt-5.6-luna",
         "supports_vision": True,
         "supports_temperature": False,
+        # Full-resolution reading keeps small printed words legible; "high"
+        # downsamples a phone photo to about 768px on its short side.
+        "image_detail": "original",
+        "supports_reasoning_effort": True,
     },
     "gemini-2.5-flash": {"provider": "openrouter", "model_id": OPENROUTER_GEMINI_FLASH_MODEL_ID, "supports_vision": True},
     "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
@@ -600,6 +615,25 @@ def model_supports_temperature(model_id: str) -> bool:
         if config["model_id"] == model_id:
             return config.get("supports_temperature", True)
     return True
+
+
+def _model_option(model_id: str, option: str, default: Any = None) -> Any:
+    for config in MODEL_CONFIG.values():
+        if config["model_id"] == model_id:
+            return config.get(option, default)
+    return default
+
+
+def transcription_image_detail(model_id: str) -> str:
+    """Image detail for reading text; models without an override use "high"."""
+    return _model_option(model_id, "image_detail", "high")
+
+
+def reasoning_effort_kwargs(model_id: str, effort: str) -> dict:
+    """Request a reasoning effort only from models that accept the option."""
+    if _model_option(model_id, "supports_reasoning_effort", False):
+        return {"extra_body": {"reasoning": {"effort": effort}}}
+    return {}
 
 
 def optional_chat_completion_kwargs(model_id: str) -> dict:
@@ -1318,17 +1352,30 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     """Persist the same validated page response for streaming and ordinary requests."""
     client, model = get_client_for_request(has_image=True)
     effective_message, image_translation = build_image_translation_query(message, image_context)
-    guidance, _, _ = resolve_school_message_context(
+    streaming_translation = photo_translation_streaming_enabled()
+    guidance, school_announcement, _ = resolve_school_message_context(
         message, has_images=True, image_school_signal=image_context.school_announcement,
         image_card_ids=image_context.card_ids, image_translation=image_translation,
     )
-    guidance = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])["prompt"] + guidance
-    if mode != "chamorro" and skill_level in SKILL_LEVEL_MODIFIERS:
-        guidance += SKILL_LEVEL_MODIFIERS[skill_level]
-    guidance += tutor_task_guidance(intent)
-    guidance += build_translation_structure_hints(effective_message)
-    if mode == "chamorro":
-        guidance += "\nWrite every translation and notes value in Chamorro only."
+    content_guidance = build_translation_structure_hints(effective_message)
+    if streaming_translation:
+        # The page format replaces tutor prose style; retain only content hints.
+        guidance = content_guidance
+    else:
+        # Preserve the established pipeline's prompt and mode behavior until the
+        # new format, extraction settings, and translations pass acceptance.
+        guidance = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])["prompt"] + guidance
+        if mode != "chamorro" and skill_level in SKILL_LEVEL_MODIFIERS:
+            guidance += SKILL_LEVEL_MODIFIERS[skill_level]
+        guidance += tutor_task_guidance(intent)
+        guidance += content_guidance
+        if mode == "chamorro":
+            guidance += "\nWrite every translation and notes value in Chamorro only."
+    target = (
+        "Write every translation and note in Chamorro only; the reader is using Chamorro-only mode."
+        if mode == "chamorro" else
+        "Translate into English unless the person asks for another language."
+    )
     text_parts = []
     sources = []
     incomplete = False
@@ -1340,11 +1387,35 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             model=model, **kwargs, **optional_chat_completion_kwargs(model),
         )
 
-    for event in translate_image_pages(
+    def stream_text(**kwargs: Any) -> Iterator[tuple[str, str | None]]:
+        stream = client.chat.completions.create(
+            model=model, stream=True, **kwargs, **optional_chat_completion_kwargs(model),
+        )
+        try:
+            for chunk in stream:
+                choices = getattr(chunk, "choices", None) or []
+                finish = getattr(choices[0], "finish_reason", None) if choices else None
+                content, _ = _extract_stream_chunk_content_and_empty_choice(chunk)
+                if content or finish:
+                    yield content, finish
+        finally:
+            close = getattr(stream, "close", None)
+            if callable(close):
+                close()
+
+    translation_kwargs = dict(
         context=image_context, images=images, message=message,
         complete=complete, retrieve=get_rag_context, guidance=guidance, history=past_messages,
         cancelled=lambda: is_message_cancelled(pending_id),
-    ):
+    )
+    if streaming_translation:
+        translation_events = translate_image_pages(
+            **translation_kwargs, stream_text=stream_text, target=target,
+            school_announcement=school_announcement, image_detail=transcription_image_detail(model),
+        )
+    else:
+        translation_events = translate_image_pages_legacy(**translation_kwargs)
+    for event in translation_events:
         if event["type"] == "chunk":
             text_parts.append(event["content"])
         elif event["type"] == "metadata":

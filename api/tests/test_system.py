@@ -39,6 +39,8 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     assert "MODE_PROMPTS =" in chatbot_source
     assert "def get_rag_context(" in chatbot_source
     assert "from src.rag.web_search_tool import web_search" in chatbot_source
+    # Typed replies and the established photo route retain skill guidance; the
+    # opt-in photo stream uses its own reader-facing format.
     assert chatbot_source.count('if mode != "chamorro" and skill_level') == 3
     assert chatbot_source.count(
         "if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:"

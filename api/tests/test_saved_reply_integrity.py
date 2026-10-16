@@ -133,6 +133,8 @@ def test_photo_terminal_waits_for_persistence_and_preserves_chunks(saved, cancel
     namespace = deferred_stream_namespace('success')
     namespace.update({
         'ImageTranslationContext': object, 'Any': object,
+        'photo_translation_streaming_enabled': lambda: True,
+        'transcription_image_detail': lambda model: 'original',
         'translate_image_pages': lambda **kwargs: iter([
             {'type': 'metadata', 'sources': [], 'translation_incomplete': False, 'generation_complete': True},
             {'type': 'chunk', 'content': 'Photo reply'},
