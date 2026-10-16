@@ -179,6 +179,17 @@ def endpoint_client(status=None, cancel_error=None, owned=True, local_owner=Fals
 AUTH = {'Authorization': 'Bearer token-a'}
 
 
+def test_status_cancel_and_heartbeat_share_bounded_dedicated_database_connections(monkeypatch):
+    connection = Mock()
+    connect = Mock(return_value=connection)
+    monkeypatch.setattr(chat_requests, 'get_db_connection_with_retry', connect)
+    assert chat_requests._connect_quickly() is connection
+    connect.assert_called_once_with(max_retries=2, connect_timeout=5,
+        options='-c statement_timeout=5000 -c lock_timeout=5000')
+    assert request_cancel.__defaults__ == (chat_requests._connect_quickly,)
+    assert get_request_status.__defaults__ == (chat_requests._connect_quickly,)
+
+
 def test_cancel_requires_sign_in_and_records_owned_cancel_for_every_worker():
     client, store, local_cancel = endpoint_client(local_owner=True)
     assert client.post('/api/chat/cancel/pending_abcdefgh').status_code == 401

@@ -527,13 +527,14 @@ def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5
         Exception: If all retries fail
     """
     import psycopg
+    from src.rag.retrieval_runtime import database_connect_options
     
     database_url = os.getenv("DATABASE_URL", "postgresql://localhost/chamorro_rag")
     last_error = None
     
     for attempt in range(max_retries):
         try:
-            conn = psycopg.connect(database_url)
+            conn = psycopg.connect(database_url, **database_connect_options())
             return conn
         except Exception as e:
             last_error = e
@@ -969,35 +970,32 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
     
     try:
         # Use retry wrapper for serverless database connections
-        conn = _get_db_connection_with_retry()
-        cursor = conn.cursor()
-        
-        if max_messages is None:
-            cursor.execute("""
-                SELECT user_message, bot_response, image_url, file_urls, timestamp
-                FROM conversation_logs
-                WHERE conversation_id = %s
-                  AND COALESCE(role, 'user') != 'system'
-                ORDER BY timestamp ASC, id ASC
-            """, (conversation_id,))
-        else:
-            # Limit from the end, then restore chronological order.
-            cursor.execute("""
-                SELECT user_message, bot_response, image_url, file_urls, timestamp
-                FROM (
-                    SELECT id, user_message, bot_response, image_url, file_urls, timestamp
+        with closing(_get_db_connection_with_retry()) as conn, closing(conn.cursor()) as cursor:
+
+            if max_messages is None:
+                cursor.execute("""
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp
                     FROM conversation_logs
                     WHERE conversation_id = %s
                       AND COALESCE(role, 'user') != 'system'
-                    ORDER BY timestamp DESC, id DESC
-                    LIMIT %s
-                ) AS recent_messages
-                ORDER BY timestamp ASC, id ASC
-            """, (conversation_id, max_messages))
-        
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
+                    ORDER BY timestamp ASC, id ASC
+                """, (conversation_id,))
+            else:
+                # Limit from the end, then restore chronological order.
+                cursor.execute("""
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp
+                    FROM (
+                        SELECT id, user_message, bot_response, image_url, file_urls, timestamp
+                        FROM conversation_logs
+                        WHERE conversation_id = %s
+                          AND COALESCE(role, 'user') != 'system'
+                        ORDER BY timestamp DESC, id DESC
+                        LIMIT %s
+                    ) AS recent_messages
+                    ORDER BY timestamp ASC, id ASC
+                """, (conversation_id, max_messages))
+
+            rows = cursor.fetchall()
         
         return conversation_rows_to_history(rows)
 
@@ -1221,6 +1219,7 @@ def get_rag_context(
     passage_match_limit: int = 24,
     intent: str | None = None,
     learning_topic_id: str | None = None,
+    cancelled: "Callable[[], bool] | None" = None,
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1236,6 +1235,7 @@ def get_rag_context(
     """
     from src.rag.translation_policy import is_passage_translation
     from api.tutor_intent import curriculum_tutor_context
+    from src.rag.retrieval_runtime import retrieval_scope
 
     retrieval_query = retrieval_input or user_input
     use_rag, rag_mode = should_use_rag(retrieval_query, conversation_length)
@@ -1302,7 +1302,8 @@ def get_rag_context(
                 k = 6
             else:
                 k = 1 if rag_mode == "light" else 3
-            vector_context, vector_sources = rag.create_context(retrieval_query, k=k)
+            with retrieval_scope(cancelled):
+                vector_context, vector_sources = rag.create_context(retrieval_query, k=k)
             if vector_context:
                 contexts.append(vector_context)
                 sources.extend(vector_sources)
@@ -1403,9 +1404,12 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             if callable(close):
                 close()
 
+    def retrieve(*args: Any, **kwargs: Any) -> tuple[str, list]:
+        return get_rag_context(*args, **kwargs, cancelled=lambda: is_message_cancelled(pending_id))
+
     translation_kwargs = dict(
         context=image_context, images=images, message=message,
-        complete=complete, retrieve=get_rag_context, guidance=guidance, history=past_messages,
+        complete=complete, retrieve=retrieve, guidance=guidance, history=past_messages,
         cancelled=lambda: is_message_cancelled(pending_id),
     )
     if streaming_translation:
@@ -1636,7 +1640,10 @@ def get_chatbot_response(
         include_vector=not use_web,
         intent=intent,
         learning_topic_id=learning_topic_id,
+        cancelled=lambda: is_message_cancelled(pending_id),
     )
+    if is_message_cancelled(pending_id):
+        return early_cancelled_response()
     used_rag = bool(rag_context)
     
     # Build system prompt
@@ -2011,7 +2018,11 @@ def get_chatbot_response_stream(
         include_vector=not use_web,
         intent=intent,
         learning_topic_id=learning_topic_id,
+        cancelled=lambda: is_message_cancelled(pending_id),
     )
+    if is_message_cancelled(pending_id):
+        yield cancelled_event()
+        return
     used_rag = bool(rag_context)
     
     # Build system prompt
