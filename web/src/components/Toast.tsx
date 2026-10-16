@@ -19,7 +19,7 @@ export function Toast({ message, icon, description, onClose, duration = 2500 }: 
 
   return (
     <div className="fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
-      <div className="bg-cream-50 dark:bg-gray-800 border border-cream-300 dark:border-gray-700 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] sm:min-w-[320px] backdrop-blur-xl">
+      <div className="bg-cream-50 dark:bg-slate-800 border border-cream-300 dark:border-slate-700 rounded-xl shadow-2xl px-4 py-3 min-w-[280px] sm:min-w-[320px] backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{icon}</span>
           <div className="flex-1">

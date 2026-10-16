@@ -67,7 +67,7 @@ function StatCard({ title, value, icon, color, description, comparison }: StatCa
       ? 'bg-green-100 dark:bg-green-900/30' 
       : isNegative 
         ? 'bg-red-100 dark:bg-red-900/30' 
-        : 'bg-gray-100 dark:bg-gray-700';
+        : 'bg-gray-100 dark:bg-slate-700';
     
     return { displayValue, colorClasses, bgClasses, isPositive, isNegative };
   };
@@ -534,7 +534,7 @@ export function AdminDashboard() {
                   {/* Rank */}
                   <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                     index === 0 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' :
-                    index === 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' :
+                    index === 1 ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300' :
                     index === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' :
                     'bg-cream-100 dark:bg-slate-700 text-brown-500 dark:text-gray-400'
                   }`}>

@@ -9,7 +9,7 @@ export function LoadingIndicator() {
           <span className="text-xs font-semibold text-brown-700 dark:text-gray-300">Assistant</span>
           <span className="text-[10px] text-brown-600 dark:text-gray-400 animate-pulse">typing...</span>
         </div>
-        <div className="bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-2xl rounded-tl-md px-4 py-4 border border-cream-300 dark:border-gray-700 shadow-sm">
+        <div className="bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 rounded-2xl rounded-tl-md px-4 py-4 border border-cream-300 dark:border-slate-700 shadow-sm">
           <div className="flex gap-1.5">
             <span className="w-2.5 h-2.5 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1s' }}></span>
             <span className="w-2.5 h-2.5 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '200ms', animationDuration: '1s' }}></span>

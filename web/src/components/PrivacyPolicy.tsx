@@ -182,7 +182,7 @@ export default function PrivacyPolicy() {
           </section>
 
           {/* Changes */}
-          <section className="pt-6 border-t border-cream-200 dark:border-gray-700">
+          <section className="pt-6 border-t border-cream-200 dark:border-slate-700">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3">
               Changes to This Policy
             </h2>

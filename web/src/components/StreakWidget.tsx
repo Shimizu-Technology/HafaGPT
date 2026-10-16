@@ -6,8 +6,8 @@ export function StreakWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-cream-200/50 dark:border-gray-700/50 animate-pulse">
-        <div className="h-20 bg-cream-100 dark:bg-gray-700 rounded-lg" />
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50 animate-pulse">
+        <div className="h-20 bg-cream-100 dark:bg-slate-700 rounded-lg" />
       </div>
     );
   }
@@ -28,14 +28,14 @@ export function StreakWidget() {
     : 'text-gray-400 dark:text-gray-500';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-cream-200/50 dark:border-gray-700/50 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50 shadow-sm">
       {/* Header with streak count */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`relative ${is_today_active ? 'motion-safe:animate-pulse' : ''}`}>
             <Flame className={`w-7 h-7 ${streakColor}`} />
             {is_today_active && (
-              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-gray-800" />
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" />
             )}
           </div>
           <div>
@@ -79,7 +79,7 @@ export function StreakWidget() {
           <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
             today_activities.chat > 0 
               ? 'bg-teal-50 dark:bg-teal-900/20' 
-              : 'bg-cream-50 dark:bg-gray-700/50'
+              : 'bg-cream-50 dark:bg-slate-700/50'
           }`}>
             {today_activities.chat > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-teal-500" />
@@ -104,7 +104,7 @@ export function StreakWidget() {
           <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
             today_activities.games > 0 
               ? 'bg-pink-50 dark:bg-pink-900/20' 
-              : 'bg-cream-50 dark:bg-gray-700/50'
+              : 'bg-cream-50 dark:bg-slate-700/50'
           }`}>
             {today_activities.games > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-pink-500" />
@@ -129,7 +129,7 @@ export function StreakWidget() {
           <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
             today_activities.quizzes > 0 
               ? 'bg-indigo-50 dark:bg-indigo-900/20' 
-              : 'bg-cream-50 dark:bg-gray-700/50'
+              : 'bg-cream-50 dark:bg-slate-700/50'
           }`}>
             {today_activities.quizzes > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-indigo-500" />

@@ -37,14 +37,19 @@ export function useTheme() {
     }
   }, [isLoaded, isSignedIn, user?.unsafeMetadata, hasSyncedWithClerk]);
 
-  // Apply theme to document
+  // Apply theme to document, fading colors only when the theme actually changes.
   useEffect(() => {
     browserStorage.set('theme', theme);
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    const root = document.documentElement;
+    const isDark = root.classList.contains('dark');
+    if (isDark === (theme === 'dark')) return;
+    root.classList.add('theme-transition');
+    root.classList.toggle('dark', theme === 'dark');
+    const timer = window.setTimeout(() => root.classList.remove('theme-transition'), 250);
+    return () => {
+      window.clearTimeout(timer);
+      root.classList.remove('theme-transition');
+    };
   }, [theme]);
 
   // Set theme and optionally save to Clerk

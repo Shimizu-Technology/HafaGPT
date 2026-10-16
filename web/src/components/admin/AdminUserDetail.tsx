@@ -203,7 +203,7 @@ export function AdminUserDetail() {
                     <Crown className="w-4 h-4" /> Premium
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
                     Free Tier
                   </span>
                 )}

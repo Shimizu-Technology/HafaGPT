@@ -585,7 +585,7 @@ export function MemoryMatch() {
                       className={`
                         p-2 rounded-xl text-center transition-all duration-200
                         ${isDisabled 
-                          ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
+                          ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.difficulty === key
                             ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'

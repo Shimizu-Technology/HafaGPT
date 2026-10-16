@@ -121,7 +121,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Show loading state while Clerk is initializing
   if (!isLoaded && !authLoadTimedOut) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 dark:border-ocean-500"></div>
           <p className="mt-4 text-brown-800 dark:text-gray-200">Loading...</p>

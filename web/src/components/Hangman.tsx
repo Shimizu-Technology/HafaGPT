@@ -659,7 +659,7 @@ export function Hangman() {
                       : isWrong
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed
-                      ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 cursor-not-allowed'
+                      ? 'bg-gray-300 dark:bg-slate-600 text-gray-500 cursor-not-allowed'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-coral-100 dark:hover:bg-teal-950/30 hover:text-coral-600 dark:hover:text-teal-400'
                   }`}
                 >

@@ -141,7 +141,7 @@ const markdownComponents: Components = {
   ),
   // Headers - styled prominently
   h1: ({ children }) => (
-    <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-gray-600">
+    <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-slate-600">
       {children}
     </h1>
   ),
@@ -178,7 +178,7 @@ const markdownComponents: Components = {
   ),
   // Code blocks (multi-line)
   pre: ({ children }) => (
-    <pre className="bg-cream-200 dark:bg-gray-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
+    <pre className="bg-cream-200 dark:bg-slate-800 rounded-lg p-3 sm:p-4 my-3 max-w-full overflow-x-hidden">
       {children}
     </pre>
   ),
@@ -190,7 +190,7 @@ const markdownComponents: Components = {
     if (isInline) {
       // Inline code (single backticks)
       return (
-        <code className="bg-cream-200 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
+        <code className="bg-cream-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-xs sm:text-sm font-mono break-words">
           {children}
         </code>
       );
@@ -211,28 +211,28 @@ const markdownComponents: Components = {
   ),
   // Horizontal rule
   hr: () => (
-    <hr className="my-4 border-cream-300 dark:border-gray-600" />
+    <hr className="my-4 border-cream-300 dark:border-slate-600" />
   ),
   // Tables - responsive and styled
   table: ({ children }) => (
-    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-gray-700">
+    <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-slate-700">
       <table className="min-w-full text-sm">
         {children}
       </table>
     </div>
   ),
   thead: ({ children }) => (
-    <thead className="bg-cream-100 dark:bg-gray-800 border-b border-cream-200 dark:border-gray-700">
+    <thead className="bg-cream-100 dark:bg-slate-800 border-b border-cream-200 dark:border-slate-700">
       {children}
     </thead>
   ),
   tbody: ({ children }) => (
-    <tbody className="divide-y divide-cream-200 dark:divide-gray-700">
+    <tbody className="divide-y divide-cream-200 dark:divide-slate-700">
       {children}
     </tbody>
   ),
   tr: ({ children }) => (
-    <tr className="hover:bg-cream-50 dark:hover:bg-gray-800/50 transition-colors">
+    <tr className="hover:bg-cream-50 dark:hover:bg-slate-800/50 transition-colors">
       {children}
     </tr>
   ),
@@ -438,7 +438,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
     const modeDetails = getModeDetails(mode);
     return (
       <div className="flex justify-center mb-4 sm:mb-6 animate-fade-in">
-        <div className="bg-cream-200/80 dark:bg-gray-800/80 backdrop-blur-sm border border-cream-300 dark:border-gray-700 rounded-xl px-4 py-2 shadow-sm max-w-md">
+        <div className="bg-cream-200/80 dark:bg-slate-800/80 backdrop-blur-sm border border-cream-300 dark:border-slate-700 rounded-xl px-4 py-2 shadow-sm max-w-md">
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-lg">{modeDetails.icon}</span>
             <span className="font-semibold text-brown-800 dark:text-white">
@@ -456,7 +456,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   if (systemType === 'notice') {
     return (
       <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
-        <div role="status" className="flex max-w-[85%] items-start gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-700 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300 sm:max-w-[75%]">
+        <div role="status" className="flex max-w-[85%] items-start gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-gray-300 sm:max-w-[75%]">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
           <span>{content}</span>
         </div>
@@ -472,7 +472,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
             {timestamp && <span>{getRelativeTime(timestamp)}</span>}
           </div>
-          <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+          <div className="flex items-center gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-gray-300">
             <AlertCircle className="h-4 w-4 flex-none" aria-hidden="true" />
             <span>HåfaGPT couldn’t finish this reply.</span>
           </div>
@@ -490,7 +490,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
             {timestamp && <span>{getRelativeTime(timestamp)}</span>}
           </div>
-          <div className="bg-cream-100 dark:bg-gray-800/50 border border-cream-300 dark:border-gray-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+          <div className="bg-cream-100 dark:bg-slate-800/50 border border-cream-300 dark:border-slate-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
             <div className="flex items-center gap-2 text-brown-500 dark:text-gray-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -518,7 +518,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
             isUser
               ? 'bg-coral-700 dark:bg-ocean-700 text-white rounded-tr-md'
-              : 'bg-cream-50 dark:bg-gray-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-gray-700'
+              : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-slate-700'
           }`}
         >
           {isUser ? (
@@ -694,7 +694,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 </div>
               )}
               {recovery && (
-                <div role="status" className={`flex items-center gap-2 text-sm text-brown-600 dark:text-gray-300 ${content ? 'mt-3 border-t border-cream-200 pt-3 dark:border-gray-700' : 'py-1'}`}>
+                <div role="status" className={`flex items-center gap-2 text-sm text-brown-600 dark:text-gray-300 ${content ? 'mt-3 border-t border-cream-200 pt-3 dark:border-slate-700' : 'py-1'}`}>
                   {recovery === 'offline'
                     ? <WifiOff className="h-4 w-4 flex-none" aria-hidden="true" />
                     : <Loader2 className="h-4 w-4 flex-none animate-spin" aria-hidden="true" />}
@@ -712,7 +712,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
               aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
@@ -744,7 +744,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   isSpeaking 
                     ? 'text-coral-600 dark:text-coral-400 bg-coral-100 dark:bg-coral-900/30' 
-                    : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
                 }`}
                 aria-label={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
                 title={isSpeaking ? "Stop pronunciation" : "Listen to pronunciation"}
@@ -764,7 +764,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             )}
 
             {/* Feedback Buttons */}
-            <span className="mx-1 h-5 w-px shrink-0 bg-cream-300 dark:bg-gray-600" aria-hidden="true" />
+            <span className="mx-1 h-5 w-px shrink-0 bg-cream-300 dark:bg-slate-600" aria-hidden="true" />
             <div className="flex items-center gap-1">
               {/* Thumbs Up */}
               <button
@@ -773,7 +773,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'up'
                     ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
-                    : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
                 } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
                 aria-label="This was helpful"
                 aria-pressed={feedback === 'up'}
@@ -789,7 +789,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'down'
                     ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
-                    : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700'
+                    : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
                 } ${feedbackSubmitting ? 'opacity-50 cursor-wait' : ''}`}
                 aria-label="This wasn't helpful"
                 aria-pressed={feedback === 'down'}
@@ -800,7 +800,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             </div>
             {/* Sources live in the same row as the actions to keep each reply compact. */}
             <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={sourcesPanelId}
-              className="ml-auto flex min-h-11 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-gray-800">
+              className="ml-auto flex min-h-11 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-800">
               {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
                 : evidenceStatus.level === 'web_informed' ? <Search className="h-4 w-4 flex-none" aria-hidden="true" />
                   : <Sparkles className="h-4 w-4 flex-none" aria-hidden="true" />}
@@ -810,7 +810,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           </div>
         )}
         {!isUser && !isSystem && !isStreaming && !recovery && showSources && (
-            <div id={sourcesPanelId} className="mt-1 space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 text-xs text-brown-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <div id={sourcesPanelId} className="mt-1 space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 text-xs text-brown-600 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300">
               <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="text-xs leading-relaxed">
                 <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
               </p>
@@ -847,7 +847,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
               aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
@@ -871,7 +871,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   setEditError(null);
                   setIsEditing(true);
                 }}
-                className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-gray-700/50 active:bg-cream-300 dark:active:bg-gray-700 active:scale-95 touch-manipulation"
+                className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
                 aria-label="Edit message"
                 title="Edit message"
               >

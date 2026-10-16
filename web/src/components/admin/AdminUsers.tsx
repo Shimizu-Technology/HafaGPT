@@ -123,7 +123,7 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails,
               <Crown className="w-3 h-3" /> Premium
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-medium">Free</span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-medium">Free</span>
           )}
           {user.is_whitelisted && (
             <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">
@@ -225,7 +225,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewD
             <Crown className="w-3 h-3" /> Premium
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-medium">Free</span>
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-full text-xs font-medium">Free</span>
         )}
         {user.is_whitelisted && (
           <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-medium">

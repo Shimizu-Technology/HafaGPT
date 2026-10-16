@@ -469,7 +469,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
             aria-description={disabled && onDisabledClick ? 'Press Enter or Space to sign in and start chatting.' : undefined}
             aria-label="Message input" title={disabled && onDisabledClick ? 'Sign in to start chatting' : 'Message HåfaGPT'}
             onClick={() => disabled && onDisabledClick && onDisabledClick()}
-            className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent px-2 py-2 text-base leading-6 text-brown-900 placeholder-brown-600 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder-gray-400"
+            className="block w-full min-w-0 resize-none overflow-y-auto bg-transparent px-2 py-2 text-base leading-6 text-brown-900 placeholder-brown-600 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 dark:text-gray-100 dark:placeholder-slate-400"
             style={{ height: compact ? '40px' : input.trim() ? undefined : '44px', minHeight: compact ? '40px' : '44px', maxHeight: 'min(160px, calc(var(--chat-viewport-height, 100dvh) * .25))' }}
           />
           </div>
