@@ -9,6 +9,7 @@ timestamps only, never message text.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import threading
 from collections.abc import Callable
@@ -108,6 +109,7 @@ class RequestTracker:
         with self._lock:
             self._tracking = True
             late_status = self._final_status
+        logger.info("CHAT_REQUEST registered pending=%s worker=%s", self.pending_id, os.getpid())
         if late_status is not None:
             # The reply finished while registration was still connecting.
             self._record(late_status)

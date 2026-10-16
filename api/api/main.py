@@ -1233,6 +1233,7 @@ async def cancel_chat_message(pending_id: str, authorization: Optional[str] = He
     The worker that receives this call may not be the one streaming the reply,
     so the request is also recorded durably for the owning worker to observe.
     """
+    import os
     user_id = await verify_user(authorization)
     if not chat_requests.valid_pending_id(pending_id):
         raise HTTPException(status_code=400, detail="Invalid pending message ID")
@@ -1245,7 +1246,9 @@ async def cancel_chat_message(pending_id: str, authorization: Optional[str] = He
     # Set the in-process flag only for this worker's own stream; other workers
     # pick up the durable record. This never stops another account's reply and
     # leaves no stray flags behind on workers that do not run the stream.
-    if chat_requests.owns_local_stream(pending_id, user_id):
+    local_owner = chat_requests.owns_local_stream(pending_id, user_id)
+    logger.info("CHAT_REQUEST stop pending=%s worker=%s local=%s recorded=%s", pending_id, os.getpid(), local_owner, recorded)
+    if local_owner:
         cancel_pending_message(pending_id)
     elif not recorded:
         # Neither this worker nor the shared record can stop the reply: say so,
