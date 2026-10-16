@@ -164,14 +164,7 @@ export function WordScramble() {
     }
   }, [gameState, words, currentWordIndex, scrambleWord]);
 
-  // Calculate final score and stars
-  const getFinalScore = useCallback(() => {
-    const baseScore = correctAnswers * 100;
-    const streakBonus = streak * 25;
-    const speedBonus = Math.max(0, 300 - elapsedTime) * 2;
-    return baseScore + streakBonus + speedBonus;
-  }, [correctAnswers, streak, elapsedTime]);
-
+  // The final score is the same correct-answer points earned during play.
   const getFinalStars = useCallback(() => {
     const percentage = (correctAnswers / settings.wordsPerRound) * 100;
     if (percentage >= 80) return 3;
@@ -213,7 +206,7 @@ export function WordScramble() {
           category_id: settings.category,
           category_title: categoryTitle || settings.category,
           difficulty: 'medium',
-          score: getFinalScore(),
+          score,
           moves: currentWordIndex,
           pairs: correctAnswers,
           time_seconds: elapsedTime,
@@ -223,7 +216,7 @@ export function WordScramble() {
         });
       }
     }
-  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, getFinalScore, getFinalStars, persistGameResult, categoriesData, words]);
+  }, [currentWordIndex, settings, gameState, isSignedIn, correctAnswers, elapsedTime, score, getFinalStars, persistGameResult, categoriesData, words]);
 
   // Generate words for the game
   const generateWords = useCallback((): WordData[] => {
@@ -658,6 +651,11 @@ export function WordScramble() {
                   <Shuffle className="w-4 h-4 text-brown-500 dark:text-gray-400" />
                 </button>
               </div>
+              {scrambledLetters.includes(' ') && (
+                <p className="mb-3 text-center text-xs text-brown-600 dark:text-gray-300">
+                  Use the ␣ tile for a space between words.
+                </p>
+              )}
               
               {/* Letter tiles */}
               <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
@@ -670,6 +668,8 @@ export function WordScramble() {
                       key={index}
                       onClick={() => handleLetterClick(index)}
                       disabled={!!feedback}
+                      aria-label={letter === ' ' ? 'Space' : letter}
+                      aria-pressed={isSelected}
                       className={`
                         relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-xl sm:text-2xl
                         transition-all duration-200 transform
@@ -682,7 +682,7 @@ export function WordScramble() {
                         disabled:cursor-not-allowed
                       `}
                     >
-                      {letter}
+                      <span aria-hidden="true">{letter === ' ' ? '␣' : letter}</span>
                       {isSelected && (
                         <span className="absolute -top-1 -right-1 w-5 h-5 bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 rounded-full text-xs font-bold flex items-center justify-center shadow-sm">
                           {selectionOrder + 1}
@@ -706,7 +706,7 @@ export function WordScramble() {
               </p>
               <div className="min-h-[48px] flex items-center justify-center">
                 {currentAnswer ? (
-                  <p className={`text-2xl sm:text-3xl font-bold tracking-wider ${
+                  <p className={`whitespace-pre-wrap text-2xl sm:text-3xl font-bold tracking-wider ${
                     feedback === 'correct' ? 'text-green-600 dark:text-green-400' :
                     feedback === 'incorrect' ? 'text-red-600 dark:text-red-400' :
                     'text-brown-800 dark:text-white'
@@ -827,7 +827,7 @@ export function WordScramble() {
                 </div>
                 <div>
                   <p className="text-lg sm:text-2xl font-bold text-purple-500 dark:text-purple-400">
-                    {getFinalScore()}
+                    {score}
                   </p>
                   <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
