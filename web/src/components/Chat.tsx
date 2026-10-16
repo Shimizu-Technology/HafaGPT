@@ -4,6 +4,8 @@ import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Ch
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
 import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
+import { forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
+import { useResumedReply } from '../hooks/useResumedReply';
 import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
 import { useTheme } from '../hooks/useTheme';
@@ -73,7 +75,8 @@ const FAILED_REPLY = /^\[(?:Error:|Token limit exceeded)/;
  * `priorQuestions` questions, followed by a reply. Counting earlier questions
  * keeps a repeated phrase from matching an older identical exchange.
  */
-function transcriptHasExchange(saved: ConversationMessage[], message: string, priorQuestions: number): boolean {
+function transcriptHasExchange(saved: ConversationMessage[], message: string, priorQuestions: number, pendingId?: string): boolean {
+  if (pendingId && saved.some(row => 'pending_id' in row)) return hasSavedPendingReply(saved, { pendingId, priorQuestions, conversationId: '', createdAt: 0 });
   let questions = 0;
   for (let index = 0; index < saved.length; index += 1) {
     if (saved[index].role !== 'user') continue;
@@ -258,7 +261,7 @@ function ChatSession() {
   const recoveryRef = useRef<ReplyRecovery | null>(null);
   // An exchange whose saved copy has not loaded yet stays on screen until the
   // server transcript contains it, so a stale refresh cannot make it vanish.
-  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; priorQuestions: number; messages: ChatMessage[] } | null>(null);
+  const pinnedExchangeRef = useRef<{ conversationId: string; message: string; priorQuestions: number; pendingId?: string; messages: ChatMessage[] } | null>(null);
   const [recoveringReply, setRecoveringReply] = useState(false);
   const [unavailableAttachments, setUnavailableAttachments] = useState<{
     conversationId: string; messageIndex: number; persistedId: number; renderKey?: string;
@@ -267,6 +270,7 @@ function ChatSession() {
   const [completedEdit, setCompletedEdit] = useState<{ renderKey: string; message: string }>();
   const [completedSend, setCompletedSend] = useState<{ message: string; files?: File[] }>();
   const [preparingSend, setPreparingSend] = useState(false);
+  const [unsavedReply, setUnsavedReply] = useState(false);
   const mountedRef = useRef(true);
   const navigationGeneration = useRef(0);
   const sendGeneration = useRef(0);
@@ -275,6 +279,37 @@ function ChatSession() {
   const pendingAttemptRef = useRef<SendAttempt | null>(null);
   const scopeConversation = useRef(activeConversationId);
   scopeConversation.current = activeConversationId;
+  const resumedReply = useResumedReply({
+    ownerId: isSignedIn ? user?.id || null : null,
+    conversationId: activeConversationId,
+    check: checkReplyStatus,
+    cancel: cancelPendingReply,
+    isLive: () => Boolean(pendingAttemptRef.current),
+    load: async (record: PendingReply, signal: AbortSignal) => {
+      for (let load = 0; load < 5; load += 1) {
+        if (load) await waitOrWake(1500 * load, signal);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            queryClient.refetchQueries({ queryKey: ['messages', record.conversationId, user?.id], type: 'active' }, { throwOnError: true }),
+            new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('Load timed out')), 10000); }),
+          ]);
+        } catch {
+          continue;
+        } finally {
+          clearTimeout(timer);
+        }
+        if (signal.aborted || scopeConversation.current !== record.conversationId) return false;
+        const saved = queryClient.getQueryData<ConversationMessage[]>(['messages', record.conversationId, user?.id]);
+        if (saved && hasSavedPendingReply(saved, record)) {
+          setMessages(toChatMessages(saved));
+          return true;
+        }
+      }
+      return false;
+    },
+  });
+  const replyPending = recoveringReply || resumedReply.pending || unsavedReply;
   useEffect(() => {
     mountedRef.current = true;
     const urls = previewUrls.current;
@@ -287,11 +322,14 @@ function ChatSession() {
       recoveryRef.current?.controller.abort();
       pendingAttemptRef.current = null;
       isSendingMessageRef.current = false;
-      void cancelMessage();
+      void cancelMessage(false);
       editAbort.current?.abort();
       setPreparingSend(false);
     }
-    if (pinnedExchangeRef.current && pinnedExchangeRef.current.conversationId !== activeConversationId) pinnedExchangeRef.current = null;
+    if (pinnedExchangeRef.current && pinnedExchangeRef.current.conversationId !== activeConversationId) {
+      pinnedExchangeRef.current = null;
+      setUnsavedReply(false);
+    }
     setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
     setUnavailableAttachments(previous => previous?.conversationId === activeConversationId ? previous : null);
   // cancelMessage is invoked only when the conversation scope changes.
@@ -389,7 +427,7 @@ function ChatSession() {
         });
         const pinned = pinnedExchangeRef.current;
         if (!pinned || pinned.conversationId !== activeConversationId) return loaded;
-        if (transcriptHasExchange(conversationMessages, pinned.message, pinned.priorQuestions)) {
+        if (transcriptHasExchange(conversationMessages, pinned.message, pinned.priorQuestions, pinned.pendingId)) {
           pinnedExchangeRef.current = null;
           return loaded;
         }
@@ -501,7 +539,7 @@ function ChatSession() {
   };
 
   const handleSend = async (message: string, files?: File[], learningTopicOverride?: string, retry?: SendAttempt, usageApproved = false): Promise<boolean> => {
-    if (!mountedRef.current || activeConversationId !== scopeConversation.current || !isSignedIn || isSendingMessageRef.current || (retry && retry.conversationId !== scopeConversation.current)) return false;
+    if (!mountedRef.current || activeConversationId !== scopeConversation.current || !isSignedIn || isSendingMessageRef.current || replyPending || (retry && retry.conversationId !== scopeConversation.current)) return false;
     const sendTopic = getTopic(learningTopicOverride || '') || linkedTopic;
     const attempt: SendAttempt = retry || {
       message, files, conversationId: activeConversationId, mode, intent: chatIntent,
@@ -510,6 +548,9 @@ function ChatSession() {
     };
     const approvedUsage = usageApproved || Boolean(attempt.edit);
     let editCommitted = false;
+    let saveFailed = false;
+    let resumeAfterSend = false;
+    let dispatchedPendingId: string | undefined;
     const generation = ++sendGeneration.current;
     pendingAttemptRef.current = attempt;
     const isCurrent = () => mountedRef.current && generation === sendGeneration.current
@@ -674,6 +715,9 @@ function ChatSession() {
       const recoverDroppedReply = async (pendingId: string): Promise<boolean> => {
         const controller = new AbortController();
         const recovery: ReplyRecovery = { pendingId, controller };
+        if (user?.id && currentConversationId) rememberPendingReply(user.id, {
+          pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now(),
+        });
         recoveryRef.current = recovery;
         setRecoveringReply(true);
         const updatePlaceholder = (update: Partial<ChatMessage>) => {
@@ -686,7 +730,7 @@ function ChatSession() {
           const note: ChatMessage = {
             renderKey: assistantMessageId, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
           };
-          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, priorQuestions, messages: [question, note] };
+          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, priorQuestions, pendingId, messages: [question, note] };
           setMessages(prev => [
             ...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId),
             question, note,
@@ -716,7 +760,7 @@ function ChatSession() {
             if (!isCurrent()) return null;
             const saved = queryClient.getQueriesData<ConversationMessage[]>({ queryKey: ['messages', currentConversationId] })
               .find(([, data]) => Array.isArray(data))?.[1];
-            if (saved && transcriptHasExchange(saved, attempt.message, priorQuestions)) return toChatMessages(saved);
+            if (saved && transcriptHasExchange(saved, attempt.message, priorQuestions, pendingId)) return toChatMessages(saved);
           }
           return null;
         };
@@ -743,6 +787,8 @@ function ChatSession() {
           ]);
           finishRecovery();
           if (!isCurrent()) return false;
+          if (confirmed && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
+          resumeAfterSend = !confirmed;
           setMessages(prev => prev.map(msg => {
             if (msg.id === assistantMessageId) {
               return { ...msg, id: undefined, recovery: undefined, role: 'system' as const, systemType: confirmed ? 'cancelled' : 'notice', cancelled: confirmed,
@@ -764,6 +810,7 @@ function ChatSession() {
             return false;
           }
           if (found) {
+            if (user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
             finishRecovery();
             const [question, reply] = found.slice(-2);
             if (question?.role === 'user' && reply?.role === 'assistant') {
@@ -784,6 +831,7 @@ function ChatSession() {
           finishRecovery();
           if (!isCurrent()) return false;
           if (recovered) {
+            if (user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
             // Keep the on-screen exchange mounted while it becomes the saved copy.
             const [question, reply] = recovered.slice(-2);
             if (question?.role === 'user' && reply?.role === 'assistant') {
@@ -793,6 +841,7 @@ function ChatSession() {
             setMessages(recovered);
           } else {
             showPinnedNotice('Your reply was saved but couldn’t be shown right now. Reopen this chat to see it.');
+            resumeAfterSend = true;
           }
           isSendingMessageRef.current = false;
           if (outcome === 'failed') fail('HåfaGPT couldn’t finish this reply. Please try again.', 'Reply didn’t finish');
@@ -805,6 +854,7 @@ function ChatSession() {
           showPinnedNotice('HåfaGPT couldn’t confirm this reply. Reopen this chat in a moment to check for it.');
           isSendingMessageRef.current = false;
           setCompletedSend({ message: attempt.message, files: attempt.files });
+          resumeAfterSend = true;
           return true;
         }
         removeOptimisticMessages();
@@ -820,6 +870,11 @@ function ChatSession() {
           attempt.mode,
           currentConversationId,
           {
+            onRequestStarted: pendingId => {
+              if (!isCurrent() || !user?.id || !currentConversationId) return;
+              dispatchedPendingId = pendingId;
+              rememberPendingReply(user.id, { pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now() });
+            },
             onStatus: (label) => {
               if (!isCurrent()) return;
               setMessages(prev => prev.map(msg => msg.id === assistantMessageId ? { ...msg, statusText: label } : msg));
@@ -844,12 +899,18 @@ function ChatSession() {
                 )
               );
             },
-            onDone: (response_time) => {
+            onDone: (response_time, saved, saveWarning) => {
               if (!isCurrent()) return;
+              saveFailed = saved === false;
+              if (!saveFailed && dispatchedPendingId && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, dispatchedPendingId);
+              if (saveFailed) {
+                setUnsavedReply(true);
+                setError(saveWarning || 'This reply could not be saved. Keep this page open and copy it before leaving.');
+              }
               editCommitted = Boolean(attempt.edit);
               if (attempt.edit) setCompletedEdit({ renderKey: userMessage.renderKey!, message: attempt.message });
-              setMessages((prev) =>
-                prev.map((msg) => {
+              setMessages((prev) => {
+                const completed = prev.map((msg) => {
                   if (msg.id === assistantMessageId) {
                     return { ...msg, response_time, id: undefined, isStreaming: false };
                   }
@@ -858,13 +919,20 @@ function ChatSession() {
                     return { ...msg, id: undefined };
                   }
                   return msg;
-                })
-              );
+                });
+                if (saveFailed && currentConversationId) pinnedExchangeRef.current = {
+                  conversationId: currentConversationId, message: attempt.message, priorQuestions,
+                  pendingId: dispatchedPendingId,
+                  messages: completed.slice(-2),
+                };
+                return completed;
+              });
               isSendingMessageRef.current = false;
             },
             onError: (errorMsg) => {
               if (!isCurrent()) return;
               if (editCommitted) { setError(null); return; }
+              if (dispatchedPendingId && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, dispatchedPendingId);
               fail(errorMsg);
               console.error('Streaming error:', errorMsg);
               removeOptimisticMessages();
@@ -872,6 +940,7 @@ function ChatSession() {
             },
             onCancelled: () => {
               if (!isCurrent()) return;
+              if (dispatchedPendingId && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, dispatchedPendingId);
               if (attempt.edit) {
                 if (!editCommitted) {
                   removeOptimisticMessages();
@@ -912,6 +981,7 @@ function ChatSession() {
         return await recoverDroppedReply(streamError.pendingId);
       }
       if (!isCurrent()) return false;
+      if (saveFailed) return false;
       if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
       return true;
       
@@ -936,6 +1006,7 @@ function ChatSession() {
         isSendingMessageRef.current = false;
         pendingAttemptRef.current = null;
         setPreparingSend(false);
+        if (resumeAfterSend) resumedReply.retry();
       }
 
     }
@@ -961,7 +1032,7 @@ function ChatSession() {
     setError(null);
     try {
       // Cancel any in-progress streaming to prevent callbacks from affecting new chat
-      await cancelMessage();
+      await cancelMessage(false);
       if (!mountedRef.current || navigation !== navigationGeneration.current) return;
       
       // Clear the sending flag so message loading works correctly
@@ -1000,7 +1071,7 @@ function ChatSession() {
     setPreparingSend(false);
     setError(null);
     // Cancel any in-progress streaming to prevent callbacks from affecting new conversation
-    await cancelMessage();
+    await cancelMessage(false);
     if (!mountedRef.current || navigation !== navigationGeneration.current) return;
     
     // Clear the sending flag so message loading works correctly
@@ -1292,6 +1363,7 @@ End of Export
   };
 
   const handleStop = () => {
+    if (resumedReply.pending) { void resumedReply.stop(); return; }
     const recovery = recoveryRef.current;
     if (recovery) {
       if (recovery.settled) return;
@@ -1388,7 +1460,7 @@ End of Export
             </button>
           </div>
           {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
-          {!viewport.keyboardOpen && messages.length === 0 && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
+          {!viewport.keyboardOpen && messages.length === 0 && !resumedReply.pending && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
@@ -1442,7 +1514,7 @@ End of Export
                 Loading conversation...
               </p>
             </div>
-          ) : messages.length === 0 && !loading ? (
+          ) : messages.length === 0 && !loading && !resumedReply.pending ? (
             <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : handleSignInClick()} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => isSignedIn ? void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings") : handleSignInClick()} />
           ) : (
             <>
@@ -1450,7 +1522,7 @@ End of Export
                 // Determine if this user message can be edited
                 // Can edit if: it's a user message, not currently streaming, and not a cancelled message
                 const isUserMessage = message.role === 'user';
-                const isNotStreaming = !loading && !isCurrentlyStreaming && !recoveringReply;
+                const isNotStreaming = !loading && !isCurrentlyStreaming && !replyPending;
                 const canEditMessage = isUserMessage && isNotStreaming && !message.cancelled;
 
                 return (
@@ -1499,6 +1571,10 @@ End of Export
 
       {/* The composer owns its actual height; the scroller uses the remaining space. */}
       <div data-testid="chat-composer" className="relative z-20 shrink-0 border-t border-cream-200 bg-cream-100 dark:border-gray-800 dark:bg-gray-950">
+        {resumedReply.notice && <div role="status" className="mx-auto flex max-w-4xl items-center gap-3 px-4 pt-3 text-sm text-brown-700 dark:text-gray-200">
+          <p className="min-w-0 flex-1">{resumedReply.notice}</p>
+          {resumedReply.canRetry && <button type="button" onClick={resumedReply.retry} className="min-h-11 shrink-0 rounded-lg px-3 font-semibold text-teal-700 hover:bg-cream-200 dark:text-ocean-300 dark:hover:bg-gray-800">Check again</button>}
+        </div>}
         {/* Scroll to Bottom Button */}
         {messages.length > 0 && showScrollButton && (
           // Aligned to the conversation column so it sits beside the replies on wide screens.
@@ -1529,24 +1605,24 @@ End of Export
               <p className="truncate text-xs text-red-900 dark:text-red-200" title={failedAttempt.message}>{failedAttempt.message}{failedAttempt.files?.length ? ` · ${failedAttempt.files.length} file${failedAttempt.files.length === 1 ? '' : 's'}` : ''}</p>
               <p className="mt-0.5 text-xs text-red-800 dark:text-red-300">{error}</p>
             </div>
-            <button type="button" onClick={handleRetry} disabled={preparingSend || loading || recoveringReply} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
+            <button type="button" onClick={handleRetry} disabled={preparingSend || loading || replyPending} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
               <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
             </button>
             <button type="button" onClick={dismissFailure} aria-label="Dismiss" className="-mr-1 inline-flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 dark:text-red-200 dark:hover:bg-red-900/40">
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
-          ) : undefined}
+          ) : error && unsavedReply ? <div role="alert" className="mb-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">{error}</div> : undefined}
           completedSend={completedSend}
-          disabled={!isSignedIn || loading || recoveringReply || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
+          disabled={!isSignedIn || loading || replyPending || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           taskControl={messages.length > 0
-            ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || recoveringReply} />
+            ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || replyPending} />
             : undefined}
           showDisclaimer={messages.length === 0}
           onDisabledClick={!isSignedIn ? handleSignInClick : undefined}
-          loading={loading || recoveringReply}
+          loading={loading || recoveringReply || resumedReply.pending}
           onCancel={handleStop}
         />
       </div>

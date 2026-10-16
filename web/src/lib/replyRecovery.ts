@@ -42,7 +42,9 @@ function checkWithTimeout(
   check: (signal: AbortSignal) => Promise<ReplyStatus>, ms: number, outer: AbortSignal,
 ): Promise<ReplyStatus> {
   const controller = new AbortController();
-  const stop = () => controller.abort();
+  let rejectAbort!: (reason: DOMException) => void;
+  const aborted = new Promise<never>((_, reject) => { rejectAbort = reject; });
+  const stop = () => { controller.abort(); rejectAbort(abortError()); };
   outer.addEventListener('abort', stop, { once: true });
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
@@ -51,7 +53,7 @@ function checkWithTimeout(
       reject(new StatusCheckTimeout());
     }, ms);
   });
-  return Promise.race([check(controller.signal), timeout]).finally(() => {
+  return Promise.race([check(controller.signal), timeout, aborted]).finally(() => {
     clearTimeout(timer);
     outer.removeEventListener('abort', stop);
   });

@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CancelledError, useChatbot } from './useChatbot';
+import { ConnectionLostError } from '../lib/sendErrors';
 
 const auth = vi.hoisted(() => ({
   userId: 'learner-a' as string | null,
@@ -120,6 +121,81 @@ describe('tutor request ownership', () => {
     expect(stream.onChunk).not.toHaveBeenCalled();
     expect(stream.onDone).not.toHaveBeenCalled();
     expect(stream.onCancelled).not.toHaveBeenCalled();
+  });
+
+  it.each([503, 'offline'] as const)('recovers an ordinary live Stop when acknowledgement fails with %s', async failure => {
+    const body = new ReadableStream<Uint8Array>();
+    const transport = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(body));
+    if (failure === 'offline') transport.mockRejectedValueOnce(new TypeError('Load failed'));
+    else transport.mockResolvedValueOnce(new Response('{}', { status: failure }));
+    const { result } = renderHook(() => useChatbot());
+    const stream = callbacks();
+    let sending!: Promise<unknown>;
+    act(() => { sending = result.current.sendMessageStream('A', 'english', 'conv-a', stream).catch(error => error); });
+    await waitFor(() => expect(transport).toHaveBeenCalledOnce());
+    await act(async () => { await result.current.cancelMessage(); expect(await sending).toBeInstanceOf(ConnectionLostError); });
+    expect(stream.onCancelled).not.toHaveBeenCalled();
+    expect(stream.onError).not.toHaveBeenCalled();
+  });
+
+  it('detaches on navigation without sending a server Stop or cancellation receipt', async () => {
+    const transport = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new ReadableStream<Uint8Array>()));
+    const { result } = renderHook(() => useChatbot());
+    const stream = callbacks();
+    let sending!: Promise<unknown>;
+    act(() => { sending = result.current.sendMessageStream('A', 'english', 'conv-a', stream).catch(error => error); });
+    await waitFor(() => expect(transport).toHaveBeenCalledOnce());
+    await act(async () => { await result.current.cancelMessage(false); expect(await sending).toBeInstanceOf(CancelledError); });
+    expect(transport).toHaveBeenCalledOnce();
+    expect(stream.onCancelled).not.toHaveBeenCalled();
+  });
+
+  it('publishes a content-free request identifier before the fetch can be interrupted', async () => {
+    const started = vi.fn();
+    const transport = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      expect(started).toHaveBeenCalledWith(expect.stringMatching(/^pending_/));
+      return completedStream();
+    });
+    const { result } = renderHook(() => useChatbot());
+    await act(async () => result.current.sendMessageStream('A', 'english', 'conv-a', { ...callbacks(), onRequestStarted: started }));
+    expect(transport).toHaveBeenCalledOnce();
+  });
+
+  it('passes an unsaved completion warning without discarding the generated answer', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('data: {"type":"chunk","content":"Useful answer"}\n\ndata: {"type":"done","response_time":0.1,"saved":false,"save_warning":"Keep this page open"}\n\ndata: [DONE]\n\n'));
+    const { result } = renderHook(() => useChatbot());
+    const stream = callbacks();
+    await act(async () => result.current.sendMessageStream('A', 'english', 'conv-a', stream));
+    expect(stream.onChunk).toHaveBeenCalledWith('Useful answer', 'Useful answer');
+    expect(stream.onDone).toHaveBeenCalledWith(0.1, false, 'Keep this page open');
+    expect(stream.onError).not.toHaveBeenCalled();
+  });
+
+  it('does not dispatch recovery or Stop with a token refreshed after the learner changes', async () => {
+    const token = deferred<string>();
+    auth.getToken.mockReturnValue(token.promise);
+    const transport = vi.spyOn(globalThis, 'fetch');
+    const { result, rerender } = renderHook(() => useChatbot());
+    const check = result.current.checkReplyStatus('pending_owner_a').catch(error => error);
+    const stop = result.current.cancelPendingReply('pending_owner_a');
+    auth.userId = 'learner-b'; auth.sessionId = 'session-b'; rerender();
+    await act(async () => token.resolve('token-b'));
+    expect(await check).toBeInstanceOf(CancelledError);
+    expect(await stop).toBe(false);
+    expect(transport).not.toHaveBeenCalled();
+  });
+
+  it('bounds a Stop whose sign-in token never refreshes', async () => {
+    vi.useFakeTimers();
+    try {
+      auth.getToken.mockReturnValue(new Promise(() => {}));
+      const transport = vi.spyOn(globalThis, 'fetch');
+      const { result } = renderHook(() => useChatbot());
+      const stop = result.current.cancelPendingReply('pending_owner_a');
+      await act(async () => vi.advanceTimersByTimeAsync(4001));
+      expect(await stop).toBe(false);
+      expect(transport).not.toHaveBeenCalled();
+    } finally { vi.useRealTimers(); }
   });
 
   it('flushes all text before Done and retains the current owner token', async () => {

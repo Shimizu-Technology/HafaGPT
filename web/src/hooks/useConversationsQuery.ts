@@ -28,6 +28,7 @@ export interface FileInfo {
 
 export interface ConversationMessage {
   id: number;
+  pending_id?: string | null;
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;

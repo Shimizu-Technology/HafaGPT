@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
 import { CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, HttpStatusError } from '../lib/sendErrors';
+import { readPendingReply, rememberPendingReply } from '../lib/pendingReply';
 
 const state = vi.hoisted(() => ({
   userId: 'user-1',
@@ -339,6 +340,72 @@ describe('Chat stable conversation route', () => {
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
   });
 
+  it('resumes a refreshed in-flight chat, locks a duplicate send, and loads its exact saved request', async () => {
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_reload_fixture');
+      return new Promise(() => {});
+    });
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(readPendingReply('user-1', 'conv-a')?.pendingId).toBe('pending_reload_fixture'));
+    let finish!: (status: string) => void;
+    state.checkReplyStatus.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    cleanupAndRender('/chat/conv-a');
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(screen.getByText('Checking your earlier reply…')).toBeInTheDocument();
+    state.queryClient!.setQueryData(['messages', 'conv-a', 'user-1'], [
+      { id: 7, pending_id: 'pending_reload_fixture', role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+      { id: 7, pending_id: 'pending_reload_fixture', role: 'assistant', content: 'Recovered after refresh', timestamp: '2026-10-16T00:00:05Z' },
+    ]);
+    await act(async () => finish('complete'));
+    expect(await screen.findByText('Recovered after refresh')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+    expect(state.sendMessageStream).toHaveBeenCalledOnce();
+    expect(state.tryUse).toHaveBeenCalledOnce();
+    expect(readPendingReply('user-1', 'conv-a')).toBeNull();
+  });
+
+  it('keeps generated text and its draft when the server says the reply was not saved', async () => {
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_unsaved_fixture');
+      callbacks.onChunk('Useful answer', 'Useful answer');
+      callbacks.onDone(0.2, false, 'This reply could not be saved. Copy it before leaving.');
+    });
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(await screen.findByText('Useful answer')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('This reply could not be saved. Copy it before leaving.');
+    expect(state.composerReceipt).toBeUndefined();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(readPendingReply('user-1', 'conv-a')).not.toBeNull();
+  });
+
+  it('does not recover another learner’s pending request from a shared browser', () => {
+    rememberPendingReply('other-user', { pendingId: 'pending_other_fixture', conversationId: 'conv-a', priorQuestions: 0, createdAt: Date.now() });
+    renderChat('/chat/conv-a');
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+    expect(state.checkReplyStatus).not.toHaveBeenCalled();
+  });
+
+  it('lets a reply finish when leaving its conversation and checks it on return', async () => {
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_return_fixture');
+      return new Promise(() => {});
+    });
+    state.checkReplyStatus.mockImplementation(() => new Promise(() => {}));
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(readPendingReply('user-1', 'conv-a')).not.toBeNull());
+    fireEvent.click(screen.getByRole('button', { name: 'Select B' }));
+    await waitFor(() => expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat/conv-b'));
+    expect(state.cancelMessage).toHaveBeenCalledWith(false);
+    expect(state.cancelPendingReply).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Select A' }));
+    await waitFor(() => expect(state.checkReplyStatus).toHaveBeenCalledWith('pending_return_fixture', expect.any(AbortSignal)));
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(state.sendMessageStream).toHaveBeenCalledOnce();
+  });
+
   it('offers a plain-language resend only when the server never received the message', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -373,7 +440,8 @@ describe('Chat stable conversation route', () => {
       expect(await screen.findByText(new RegExp(shown))).toBeInTheDocument();
       expect(state.cancelPendingReply).toHaveBeenCalledWith('pending_dropped_3');
       expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      if (confirmed) expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      else expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
     },
   );
 
@@ -469,7 +537,7 @@ describe('Chat stable conversation route', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
       expect(await screen.findByText(/couldn’t confirm this reply/)).toBeInTheDocument();
       expect(screen.getByText('Test message')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
     } finally {
       vi.useRealTimers();
     }
