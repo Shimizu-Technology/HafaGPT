@@ -36,8 +36,8 @@ class FakeLogger:
     def __init__(self):
         self.errors = []
 
-    def error(self, message):
-        self.errors.append(message)
+    def error(self, message, *args):
+        self.errors.append(message % args if args else message)
 
 
 def _load_log_conversation():
@@ -61,7 +61,7 @@ def test_persisted_message_advances_owned_conversation_recency():
     log_conversation.__globals__["_get_db_connection_with_retry"] = lambda: connection
     log_conversation.__globals__["logger"] = logger
 
-    log_conversation(
+    saved = log_conversation(
         user_message="hello",
         bot_response="response",
         mode="learn",
@@ -73,6 +73,7 @@ def test_persisted_message_advances_owned_conversation_recency():
         conversation_id="conv-1",
     )
 
+    assert saved is True
     assert len(connection.cursor_instance.executions) == 2
     update_query, update_params = connection.cursor_instance.executions[1]
     assert "UPDATE conversations" in update_query
