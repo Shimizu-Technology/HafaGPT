@@ -97,9 +97,9 @@ describe('tutor request ownership', () => {
     expect(transport.mock.calls[2][1]?.signal?.aborted).toBe(false);
     expect(oldCallbacks.onDone).not.toHaveBeenCalled();
     expect(oldCallbacks.onCancelled).not.toHaveBeenCalled();
-    await act(async () => { await result.current.cancelMessage(); second.resolve(completedStream()); expect(await pendingB).toBeInstanceOf(CancelledError); });
+    await act(async () => { await result.current.cancelMessage(); second.resolve(completedStream()); expect(await pendingB).toBeInstanceOf(ConnectionLostError); });
     expect(transport.mock.calls[2][1]?.signal?.aborted).toBe(true);
-    expect(nextCallbacks.onCancelled).toHaveBeenCalledOnce();
+    expect(nextCallbacks.onCancelled).not.toHaveBeenCalled();
     expect(result.current.loading).toBe(false);
     expect(transport.mock.calls[3][1]?.headers).toEqual({ Authorization: 'Bearer token-a' });
   });
@@ -123,7 +123,7 @@ describe('tutor request ownership', () => {
     expect(stream.onCancelled).not.toHaveBeenCalled();
   });
 
-  it.each([503, 'offline'] as const)('recovers an ordinary live Stop when acknowledgement fails with %s', async failure => {
+  it.each([200, 503, 'offline'] as const)('reconciles an ordinary live Stop after acknowledgement %s', async failure => {
     const body = new ReadableStream<Uint8Array>();
     const transport = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(body));
     if (failure === 'offline') transport.mockRejectedValueOnce(new TypeError('Load failed'));
@@ -133,7 +133,12 @@ describe('tutor request ownership', () => {
     let sending!: Promise<unknown>;
     act(() => { sending = result.current.sendMessageStream('A', 'english', 'conv-a', stream).catch(error => error); });
     await waitFor(() => expect(transport).toHaveBeenCalledOnce());
-    await act(async () => { await result.current.cancelMessage(); expect(await sending).toBeInstanceOf(ConnectionLostError); });
+    await act(async () => {
+      await result.current.cancelMessage();
+      const outcome = await sending;
+      expect(outcome).toBeInstanceOf(ConnectionLostError);
+      expect((outcome as ConnectionLostError).stopRequested).toBe(failure === 200);
+    });
     expect(stream.onCancelled).not.toHaveBeenCalled();
     expect(stream.onError).not.toHaveBeenCalled();
   });

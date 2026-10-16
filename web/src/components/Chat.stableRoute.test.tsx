@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   userId: 'user-1',
   realMessages: false,
   realTaskMenu: false,
+  realTransport: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
   sendResult: undefined as boolean | undefined,
   preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
@@ -55,9 +56,11 @@ vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ userId: state.isSignedIn ? state.userId : null, getToken: vi.fn(async () => 'token') }),
 }));
 
-vi.mock('../hooks/useChatbot', () => ({
-  CancelledError: class CancelledError extends Error {},
-  useChatbot: () => ({
+vi.mock('../hooks/useChatbot', async importOriginal => {
+  const actual = await importOriginal<typeof import('../hooks/useChatbot')>();
+  return {
+  CancelledError: actual.CancelledError,
+  useChatbot: () => state.realTransport ? actual.useChatbot() : ({
     sendMessageStream: state.sendMessageStream,
     cancelMessage: state.cancelMessage,
     checkReplyStatus: state.checkReplyStatus,
@@ -66,7 +69,8 @@ vi.mock('../hooks/useChatbot', () => ({
     error: state.error,
     setError: state.setError,
   }),
-}));
+};
+});
 vi.mock('../hooks/useChatViewport', () => ({ useChatViewport: () => state.viewport }));
 vi.mock('../hooks/useAccountRequest', () => ({ useAccountRequest: () => ({ request: state.editRequest, isCurrent: () => true }) }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
@@ -193,6 +197,7 @@ describe('Chat stable conversation route', () => {
     state.userId = 'user-1';
     state.realMessages = false;
     state.realTaskMenu = false;
+    state.realTransport = false;
     state.composerReceipt = undefined;
     state.sendResult = undefined;
     state.preferredMode = undefined;
@@ -411,7 +416,7 @@ describe('Chat stable conversation route', () => {
     ];
     fireEvent.click(screen.getByRole('button', { name: 'Tutor options' }));
     expect(screen.getByRole('alert')).toHaveTextContent('This stopped reply could not be saved.');
-    expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
     expect(screen.getByText(/Partial useful answer/)).toBeInTheDocument();
     state.messages = [
       { id: 9, pending_id: 'pending_unsaved_stop', role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
@@ -421,6 +426,82 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
     expect(readPendingReply('user-1', 'conv-a')).toBeNull();
+  });
+
+  it('keeps partial text and the composer draft when dropped recovery ends failed without an exact saved exchange', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+        callbacks.onChunk('Partial answer before disconnect', 'Partial answer before disconnect');
+        throw new ConnectionLostError('pending_failed_recovery');
+      });
+      state.checkReplyStatus.mockResolvedValue('failed');
+      renderChat('/chat/conv-a');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => vi.advanceTimersByTimeAsync(20000));
+      expect(screen.getByText('Partial answer before disconnect')).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveTextContent('This reply ended without a confirmed saved copy. Your draft is still here.');
+      expect(screen.queryByText(/Your reply was saved/)).not.toBeInTheDocument();
+      expect(state.sendResult).toBe(false);
+      expect(state.composerReceipt).toBeUndefined();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(readPendingReply('user-1', 'conv-a')).toBeNull();
+    } finally { cleanup(); vi.useRealTimers(); }
+  });
+
+  it.each(['failed', 'complete'] as const)('reconciles an actual Stop click and HTTP 200 acknowledgement with terminal %s', async outcome => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    state.realTransport = true;
+    state.realMessages = true;
+    let releaseStatus!: () => void;
+    const transport = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
+      const url = String(input);
+      if (url.endsWith('/api/chat/stream')) return new Response(new ReadableStream<Uint8Array>({
+        start(controller) { controller.enqueue(new TextEncoder().encode('data: {"type":"chunk","content":"Partial before Stop"}\n\n')); },
+      }));
+      if (url.includes('/api/chat/cancel/')) return new Response('{"success":true}');
+      if (url.includes('/api/chat/requests/')) return new Promise<Response>(resolve => {
+        releaseStatus = () => resolve(new Response(JSON.stringify({ status: outcome, conversation_id: 'conv-a' })));
+      });
+      throw new Error(`Unexpected transport: ${url}`);
+    });
+    try {
+      renderChat('/chat/conv-a');
+      fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+      await act(async () => vi.advanceTimersByTimeAsync(100));
+      expect(await screen.findByText('Partial before Stop')).toBeInTheDocument();
+      const pendingId = readPendingReply('user-1', 'conv-a')!.pendingId;
+      if (outcome === 'complete') state.queryClient!.setQueryData(['messages', 'conv-a', 'user-1'], [
+        { id: 10, pending_id: pendingId, role: 'user', content: 'Test message', timestamp: '2026-10-16T00:00:00Z' },
+        { id: 10, pending_id: pendingId, role: 'assistant', content: 'Answer saved before Stop arrived', timestamp: '2026-10-16T00:00:05Z' },
+      ]);
+      fireEvent.click(screen.getByRole('button', { name: 'Stop reply' }));
+      await act(async () => vi.advanceTimersByTimeAsync(100));
+      expect(screen.getByText('Stop requested. Checking the saved outcome…')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+      expect(readPendingReply('user-1', 'conv-a')?.pendingId).toBe(pendingId);
+      expect(state.sendResult).toBeUndefined();
+      expect(state.composerReceipt).toBeUndefined();
+      releaseStatus();
+      await act(async () => vi.advanceTimersByTimeAsync(20000));
+      expect(transport.mock.calls.some(([url]) => String(url).includes('/api/chat/cancel/'))).toBe(true);
+      expect(transport.mock.calls.some(([url]) => String(url).includes('/api/chat/requests/'))).toBe(true);
+      expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
+      if (outcome === 'failed') {
+        expect(screen.getByText('Partial before Stop')).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toHaveTextContent('ended without a confirmed saved copy');
+        expect(state.sendResult).toBe(false);
+        expect(state.composerReceipt).toBeUndefined();
+      } else {
+        expect(screen.getByText('Answer saved before Stop arrived')).toBeInTheDocument();
+        expect(state.sendResult).toBe(true);
+        expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });
+      }
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
+      expect(readPendingReply('user-1', 'conv-a')).toBeNull();
+      expect(state.tryUse).toHaveBeenCalledOnce();
+    } finally { cleanup(); transport.mockRestore(); vi.useRealTimers(); }
   });
 
   it('does not recover another learner’s pending request from a shared browser', () => {
@@ -469,8 +550,8 @@ describe('Chat stable conversation route', () => {
     }
   });
 
-  it.each([[true, 'Message cancelled'], [false, 'Stopped checking.']] as const)(
-    'stops a reply still running after a dropped connection (server confirmed: %s)', async (confirmed, shown) => {
+  it.each([true, false] as const)(
+    'continues checking after Stop is requested during recovery (acknowledged: %s)', async confirmed => {
       state.realMessages = true;
       state.createConversation.mockResolvedValue({ id: 'conv-created' });
       state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_3'));
@@ -480,11 +561,12 @@ describe('Chat stable conversation route', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
       expect(await screen.findByText('Still working on your reply. It will appear here.')).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Stop reply' }));
-      expect(await screen.findByText(new RegExp(shown))).toBeInTheDocument();
+      if (confirmed) expect(await screen.findByText('Stop requested. Checking the saved outcome…')).toBeInTheDocument();
       expect(state.cancelPendingReply).toHaveBeenCalledWith('pending_dropped_3');
       expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
-      if (confirmed) expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
-      else expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
+      expect(readPendingReply('user-1', 'conv-created')).not.toBeNull();
+      expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
     },
   );
 
@@ -498,11 +580,12 @@ describe('Chat stable conversation route', () => {
       renderChat('/chat');
       fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
       await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
-      expect(await screen.findByText(/Your reply was saved but couldn’t be shown right now/)).toBeInTheDocument();
+      expect(await screen.findByText(/reported this reply finished, but its saved copy could not be loaded/)).toBeInTheDocument();
       expect(screen.getByText('Test message')).toBeInTheDocument();
       expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
-      expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });
+      expect(state.composerReceipt).toBeUndefined();
+      expect(state.sendResult).toBe(false);
     } finally {
       vi.useRealTimers();
     }
@@ -523,7 +606,7 @@ describe('Chat stable conversation route', () => {
       state.queryClient!.setQueryData(['messages', 'conv-a', 'user-1'], earlier);
       fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
       await act(async () => { await vi.advanceTimersByTimeAsync(20000); });
-      expect(await screen.findByText(/Your reply was saved but couldn’t be shown right now/)).toBeInTheDocument();
+      expect(await screen.findByText(/reported this reply finished, but its saved copy could not be loaded/)).toBeInTheDocument();
       expect(screen.getAllByText('Test message')).toHaveLength(2);
       expect(screen.getAllByText('Earlier reply')).toHaveLength(1);
     } finally {
@@ -571,7 +654,10 @@ describe('Chat stable conversation route', () => {
   it('keeps the exchange when the reply status cannot be confirmed', async () => {
     state.realMessages = true;
     state.createConversation.mockResolvedValue({ id: 'conv-created' });
-    state.sendMessageStream.mockRejectedValueOnce(new ConnectionLostError('pending_dropped_5'));
+    state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onChunk('Useful partial while offline', 'Useful partial while offline');
+      throw new ConnectionLostError('pending_dropped_5');
+    });
     state.checkReplyStatus.mockRejectedValue(new HttpStatusError(500));
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
@@ -580,6 +666,9 @@ describe('Chat stable conversation route', () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(60000); });
       expect(await screen.findByText(/couldn’t confirm this reply/)).toBeInTheDocument();
       expect(screen.getByText('Test message')).toBeInTheDocument();
+      expect(screen.getByText('Useful partial while offline')).toBeInTheDocument();
+      expect(state.sendResult).toBe(false);
+      expect(state.composerReceipt).toBeUndefined();
       expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
     } finally {
       vi.useRealTimers();

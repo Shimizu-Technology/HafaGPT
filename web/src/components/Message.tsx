@@ -9,6 +9,7 @@ import { getChatEvidenceStatus } from '../lib/chatEvidence';
 import type { RecoveryPhase } from '../lib/replyRecovery';
 
 const RECOVERY_LABELS: Record<RecoveryPhase, string> = {
+  stopping: 'Stop requested. Checking the saved outcome…',
   checking: 'Connection lost. Checking for your reply…',
   waiting: 'Still working on your reply. It will appear here.',
   offline: 'Waiting for your connection to come back…',

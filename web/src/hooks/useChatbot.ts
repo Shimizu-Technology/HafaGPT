@@ -508,7 +508,12 @@ export function useChatbot() {
         if (receivedTerminalEvent && isCurrent(request)) return;
         const confirmed = request.stopConfirmation ? await request.stopConfirmation : true;
         if (isCurrent(request) && !request.detached && (!(err instanceof CancelledError) || signal.aborted)) {
-          if (!confirmed && !edit) throw new ConnectionLostError(pendingId);
+          // HTTP 200 confirms only that Stop was recorded. Reconcile the
+          // terminal status and saved exchange before acknowledging the send.
+          if (request.stopConfirmation && request.sent && !edit) {
+            textBatcher.flush();
+            throw new ConnectionLostError(pendingId, confirmed);
+          }
           callbacks.onCancelled();
         }
         throw new CancelledError();

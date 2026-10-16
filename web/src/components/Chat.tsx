@@ -49,6 +49,7 @@ interface ReplyRecovery {
   cancelled?: Promise<boolean>;
   /** The server outcome is known; only the saved copy is still loading. */
   settled?: boolean;
+  stopRequested?: boolean;
 }
 
 interface SendAttempt {
@@ -309,7 +310,7 @@ function ChatSession() {
       return false;
     },
   });
-  const replyPending = recoveringReply || resumedReply.pending || unsavedReply;
+  const replyPending = recoveringReply || resumedReply.pending;
   useEffect(() => {
     mountedRef.current = true;
     const urls = previewUrls.current;
@@ -575,6 +576,7 @@ function ChatSession() {
       setError(reason);
     };
     setError(null);
+    setUnsavedReply(false);
     setFailedAttempt(null);
     setPreparingSend(true);
     // A new send supersedes any pinned, unconfirmed exchange; later refreshes show the server's truth.
@@ -719,9 +721,9 @@ function ChatSession() {
       }
       setPreparingSend(false);
 
-      const recoverDroppedReply = async (pendingId: string): Promise<boolean> => {
+      const recoverDroppedReply = async (pendingId: string, stopRequested = false): Promise<boolean> => {
         const controller = new AbortController();
-        const recovery: ReplyRecovery = { pendingId, controller };
+        const recovery: ReplyRecovery = { pendingId, controller, stopRequested };
         if (user?.id && currentConversationId) rememberPendingReply(user.id, {
           pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now(),
         });
@@ -735,13 +737,15 @@ function ChatSession() {
           if (!isCurrent() || !currentConversationId) return;
           const question: ChatMessage = { ...userMessage, id: undefined };
           const note: ChatMessage = {
-            renderKey: assistantMessageId, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
+            renderKey: `${assistantMessageId}_notice`, role: 'system', systemType: 'notice', content: notice, timestamp: Date.now(),
           };
-          pinnedExchangeRef.current = { conversationId: currentConversationId, message: attempt.message, priorQuestions, pendingId, messages: [question, note] };
-          setMessages(prev => [
-            ...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId),
-            question, note,
-          ]);
+          setMessages(prev => {
+            const partial = prev.find(msg => msg.id === assistantMessageId);
+            const kept: ChatMessage[] = [question, ...(partial?.content
+              ? [{ ...partial, id: undefined, isStreaming: false, recovery: undefined, statusText: undefined }] : []), note];
+            pinnedExchangeRef.current = { conversationId: currentConversationId!, message: attempt.message, priorQuestions, pendingId, messages: kept };
+            return [...prev.filter(msg => msg.id !== userMessageId && msg.id !== assistantMessageId), ...kept];
+          });
         };
         const finishRecovery = () => {
           if (recoveryRef.current === recovery) {
@@ -776,7 +780,7 @@ function ChatSession() {
         try {
           outcome = await waitForReplyOutcome({
             check: checkSignal => checkReplyStatus(pendingId, checkSignal), signal: controller.signal,
-            onPhase: phase => updatePlaceholder({ isStreaming: false, recovery: phase }),
+            onPhase: phase => updatePlaceholder({ isStreaming: false, recovery: recovery.stopRequested && phase !== 'offline' ? 'stopping' : phase }),
           });
         } catch {
           outcome = 'stopped';
@@ -786,25 +790,12 @@ function ChatSession() {
           return false;
         }
         if (outcome === 'stopped') {
-          // Say "cancelled" only if the server actually received the Stop. Keep the
-          // composer locked while waiting so a new send cannot start underneath.
-          const confirmed = await Promise.race([
-            recovery.cancelled ?? Promise.resolve(false),
-            new Promise<boolean>(resolve => setTimeout(() => resolve(false), 4000)),
-          ]);
           finishRecovery();
           if (!isCurrent()) return false;
-          if (confirmed && user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
-          resumeAfterSend = !confirmed;
-          setMessages(prev => prev.map(msg => {
-            if (msg.id === assistantMessageId) {
-              return { ...msg, id: undefined, recovery: undefined, role: 'system' as const, systemType: confirmed ? 'cancelled' : 'notice', cancelled: confirmed,
-                content: confirmed ? 'Message cancelled' : 'Stopped checking. If HåfaGPT finished this reply, it will appear when you reopen this chat.' };
-            }
-            return msg.id === userMessageId ? { ...msg, id: undefined } : msg;
-          }));
+          resumeAfterSend = true;
+          showPinnedNotice('Checking stopped before the reply outcome was confirmed. Reopen this chat to check it.');
           isSendingMessageRef.current = false;
-          return true;
+          return false;
         }
         if (outcome === 'not_found') {
           // Usually the message never reached the server. In case only status
@@ -846,9 +837,29 @@ function ChatSession() {
               reply.renderKey = assistantMessageId;
             }
             setMessages(recovered);
+          } else if (outcome === 'failed') {
+            // A failed terminal status may mean generation finished but the
+            // database save failed. Preserve any received text and the draft;
+            // there is no active request to wait for or automatically resend.
+            if (user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
+            setUnsavedReply(true);
+            setError('This reply ended without a confirmed saved copy. Your draft is still here. Copy any text you need before leaving.');
+            setMessages(prev => {
+              const kept = prev.map((msg): ChatMessage => msg.id === assistantMessageId
+                ? { ...msg, id: undefined, isStreaming: false, recovery: undefined, statusText: undefined,
+                  content: msg.content || 'Reply ended before any text was received.' }
+                : msg.id === userMessageId ? { ...msg, id: undefined } : msg);
+              if (currentConversationId) pinnedExchangeRef.current = { conversationId: currentConversationId,
+                message: attempt.message, priorQuestions, pendingId, messages: kept.slice(-2) };
+              return kept;
+            });
+            isSendingMessageRef.current = false;
+            return false;
           } else {
-            showPinnedNotice('Your reply was saved but couldn’t be shown right now. Reopen this chat to see it.');
+            showPinnedNotice('HåfaGPT reported this reply finished, but its saved copy could not be loaded. Check again in a moment.');
             resumeAfterSend = true;
+            isSendingMessageRef.current = false;
+            return false;
           }
           isSendingMessageRef.current = false;
           if (outcome === 'failed') fail('HåfaGPT couldn’t finish this reply. Please try again.', 'Reply didn’t finish');
@@ -860,14 +871,17 @@ function ChatSession() {
           // The outcome is unknown: keep the message on screen rather than hide a reply that may exist.
           showPinnedNotice('HåfaGPT couldn’t confirm this reply. Reopen this chat in a moment to check for it.');
           isSendingMessageRef.current = false;
-          setCompletedSend({ message: attempt.message, files: attempt.files });
           resumeAfterSend = true;
-          return true;
+          return false;
+        }
+        if (outcome !== 'not_found') {
+          showPinnedNotice('The reply outcome is still unknown. Check this chat again before sending another message.');
+          isSendingMessageRef.current = false;
+          resumeAfterSend = true;
+          return false;
         }
         removeOptimisticMessages();
-        if (outcome === 'not_found') fail('Couldn’t reach HåfaGPT. Check your connection, then try again.');
-        else if (outcome === 'timed_out') fail('HåfaGPT is taking too long to reply. Please try again.', 'Reply didn’t finish');
-        else fail('The connection was interrupted before your reply finished. Please try again.', 'Reply didn’t finish');
+        fail('Couldn’t reach HåfaGPT. Check your connection, then try again.');
         return false;
       };
 
@@ -1001,7 +1015,7 @@ function ChatSession() {
         );
       } catch (streamError) {
         if (!(streamError instanceof ConnectionLostError) || !isCurrent()) throw streamError;
-        return await recoverDroppedReply(streamError.pendingId);
+        return await recoverDroppedReply(streamError.pendingId, streamError.stopRequested);
       }
       if (!isCurrent()) return false;
       if (saveFailed) return false;
@@ -1390,9 +1404,13 @@ End of Export
     if (resumedReply.pending) { void resumedReply.stop(); return; }
     const recovery = recoveryRef.current;
     if (recovery) {
-      if (recovery.settled) return;
+      if (recovery.settled || recovery.cancelled) return;
       recovery.cancelled = cancelPendingReply(recovery.pendingId);
-      recovery.controller.abort();
+      void recovery.cancelled.then(confirmed => {
+        if (!confirmed || recoveryRef.current !== recovery || recovery.settled) return;
+        recovery.stopRequested = true;
+        setMessages(prev => prev.map(msg => msg.recovery ? { ...msg, recovery: 'stopping' as const } : msg));
+      });
       return;
     }
     void cancelMessage();

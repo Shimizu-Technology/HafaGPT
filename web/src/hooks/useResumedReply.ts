@@ -28,13 +28,13 @@ export function useResumedReply(options: Options) {
   const [attempt, setAttempt] = useState(0);
   const snapshot = (): State => ({ scope, record: ownerId && conversationId && !options.isLive?.() ? readPendingReply(ownerId, conversationId) : null });
   const [state, setState] = useState<State>(snapshot);
-  const operation = useRef<{ controller: AbortController; record: PendingReply; stopping: boolean } | null>(null);
+  const operation = useRef<{ controller: AbortController; record: PendingReply; stopping: boolean; settled: boolean } | null>(null);
 
   useEffect(() => {
     const record = ownerId && conversationId && !callbacks.current.isLive?.() ? readPendingReply(ownerId, conversationId) : null;
     setState({ scope, record, phase: 'checking' });
     if (!record || !ownerId || !conversationId) return;
-    const current = { controller: new AbortController(), record, stopping: false };
+    const current = { controller: new AbortController(), record, stopping: false, settled: false };
     operation.current = current;
     const { signal } = current.controller;
     const update = (update: Partial<State>) => {
@@ -46,13 +46,15 @@ export function useResumedReply(options: Options) {
           check: checkSignal => callbacks.current.check(record.pendingId, checkSignal), signal,
           onPhase: phase => update({ phase }),
         });
-        if (signal.aborted || current.stopping) return;
+        if (signal.aborted) return;
         // Even a missing status may have a saved reply when tracking was unavailable.
         const loaded = await callbacks.current.load(record, signal);
-        if (signal.aborted || current.stopping) return;
-        if (loaded || outcome === 'cancelled') {
+        if (signal.aborted) return;
+        if (loaded || outcome === 'failed') {
+          current.settled = true;
           forgetPendingReply(ownerId, conversationId, record.pendingId);
-          update({ record: null, notice: loaded ? undefined : 'Message cancelled' });
+          update({ record: null, retry: false, notice: loaded ? undefined
+            : 'Your earlier reply ended without a confirmed saved copy. You can send another message.' });
         } else {
           // Unknown does not mean unsent. Keep the next send locked until we can
           // confirm an outcome; never invite a duplicate resend after a reload.
@@ -73,17 +75,15 @@ export function useResumedReply(options: Options) {
 
   const stop = async () => {
     const current = operation.current;
-    if (!current || current.controller.signal.aborted || current.stopping) return;
+    if (!current || current.controller.signal.aborted || current.stopping || current.settled) return;
     current.stopping = true;
     const confirmed = await callbacks.current.cancel(current.record.pendingId);
-    if (operation.current !== current || current.controller.signal.aborted) return;
-    current.controller.abort();
-    if (confirmed && ownerId && conversationId) {
-      forgetPendingReply(ownerId, conversationId, current.record.pendingId);
-      setState({ scope, record: null, notice: 'Stop requested. Any reply that already finished will appear when this chat refreshes.' });
-    } else {
-      setState({ scope, record: current.record, retry: true, notice: 'Couldn’t stop this reply. Check your connection, then check again.' });
-    }
+    if (operation.current !== current || current.controller.signal.aborted || current.settled) return;
+    // Stop acknowledgement is not the terminal/persistence result. Leave the
+    // pointer and polling intact until the status and saved exchange settle.
+    setState(previous => ({ ...previous, notice: confirmed
+      ? 'Stop requested. Checking your earlier reply…'
+      : 'Couldn’t confirm Stop. Still checking your earlier reply…' }));
   };
   const active = state.scope === scope ? state : snapshot();
   return {

@@ -8,7 +8,7 @@ import { isConnectionFailure } from './sendErrors';
 export type ReplyStatus = 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted' | 'not_found';
 /** `unavailable`: the status service kept failing, so the outcome is unknown. */
 export type RecoveryOutcome = Exclude<ReplyStatus, 'running'> | 'timed_out' | 'unavailable';
-export type RecoveryPhase = 'checking' | 'waiting' | 'offline';
+export type RecoveryPhase = 'checking' | 'waiting' | 'offline' | 'stopping';
 
 interface RecoveryOptions {
   /** Resolve the server status; throw only for transient problems worth retrying. */

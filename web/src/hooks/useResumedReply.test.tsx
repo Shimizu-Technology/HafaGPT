@@ -54,16 +54,26 @@ describe('resuming tutor replies after reload or route return', () => {
     expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
   });
 
-  it.each([true, false])('only releases a resumed reply after acknowledged Stop=%s', async confirmed => {
+  it.each([true, false])('keeps reconciling a resumed reply after Stop acknowledgement=%s', async confirmed => {
     rememberPendingReply('owner-a', pointer());
     const handlers = options();
     handlers.check.mockImplementation(() => new Promise(() => {}));
     handlers.cancel.mockResolvedValue(confirmed);
     const { result } = renderHook(() => useResumedReply(handlers));
     await act(async () => result.current.stop());
-    expect(result.current.pending).toBe(!confirmed);
-    expect(result.current.notice).toMatch(confirmed ? /Stop requested/ : /Couldn’t stop/);
-    expect(readPendingReply('owner-a', 'conv-a') === null).toBe(confirmed);
+    expect(result.current.pending).toBe(true);
+    expect(result.current.notice).toMatch(confirmed ? /Stop requested/ : /Couldn’t confirm Stop/);
+    expect(readPendingReply('owner-a', 'conv-a')).not.toBeNull();
+  });
+
+  it('releases a known failed terminal request without claiming it was saved or retrying forever', async () => {
+    rememberPendingReply('owner-a', pointer());
+    const handlers = options(); handlers.check.mockResolvedValue('failed'); handlers.load.mockResolvedValue(false);
+    const { result } = renderHook(() => useResumedReply(handlers));
+    await waitFor(() => expect(result.current.pending).toBe(false));
+    expect(result.current.notice).toMatch(/ended without a confirmed saved copy/);
+    expect(result.current.canRetry).toBe(false);
+    expect(readPendingReply('owner-a', 'conv-a')).toBeNull();
   });
 
   it('lets a live new-conversation send keep ownership when its route becomes stable', () => {
