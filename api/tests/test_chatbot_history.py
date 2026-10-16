@@ -1,4 +1,5 @@
 import ast
+from contextlib import closing
 import json
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -15,6 +16,7 @@ def _load_get_conversation_history():
     formatter = next(node for node in module.body if isinstance(node, ast.FunctionDef) and node.name == "conversation_rows_to_history")
     isolated_module = ast.Module(body=[formatter, function_node], type_ignores=[])
     namespace = {
+        "closing": closing,
         "VALID_IMAGE_EXTENSIONS": (".jpg", ".jpeg", ".png", ".gif", ".webp"),
         "resolve_private_upload_reference": lambda value: value,
         "urlsplit": urlsplit,
