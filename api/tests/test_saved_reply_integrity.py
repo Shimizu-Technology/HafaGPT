@@ -3,13 +3,17 @@ import ast
 import logging
 import queue
 import threading
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from fastapi import FastAPI, HTTPException
+from fastapi.testclient import TestClient
 
 from api import chat_requests, conversations
+from api.models import SharedConversationResponse
 from test_atomic_regeneration import TransactionConnection, deferred_stream_namespace, snapshot
 from test_conversation_recency import FakeConnection, _load_log_conversation
 
@@ -34,6 +38,37 @@ def test_exact_request_identifier_is_available_on_both_owner_scoped_message_rows
     query, params = next((query, params) for query, params in connection.executions if 'FROM conversation_logs' in query)
     assert 'pending_id' in query and 'AND user_id = %s' in query
     assert params == ('conv-a', 'learner-a')
+
+
+def test_public_transcript_does_not_expose_owner_recovery_identifiers(monkeypatch):
+    connection = TransactionConnection(snapshot().rows)
+    monkeypatch.setattr(conversations, 'get_db_connection_with_retry', lambda: connection)
+    response = conversations.get_conversation_messages('conv-a')
+    assert len(response.messages) == 6
+    assert all(message.pending_id is None for message in response.messages)
+    assert 'old-' not in response.model_dump_json()
+
+
+def test_public_share_response_keeps_transcript_without_owner_recovery_identifiers(monkeypatch):
+    original = snapshot()
+    share_connection = Mock()
+    share_connection.cursor.return_value.fetchone.return_value = (
+        'public-share', 'conv-a', None, 2, 'Shared learning chat', original.rows[0][4],
+    )
+    connections = iter([share_connection, TransactionConnection(original.rows)])
+    monkeypatch.setattr(conversations, 'get_db_connection_with_retry', lambda: next(connections))
+    path = ROOT / 'main.py'
+    node = next(node for node in ast.parse(path.read_text()).body if isinstance(node, ast.AsyncFunctionDef) and node.name == 'get_shared_conversation')
+    app = FastAPI()
+    namespace = {'app': app, 'conversations': conversations, 'HTTPException': HTTPException,
+        'datetime': datetime, 'SharedConversationResponse': SharedConversationResponse, 'logger': logging.getLogger(__name__)}
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(path), 'exec'), namespace)
+    response = TestClient(app).get('/api/share/public-share')
+    assert response.status_code == 200
+    assert response.json()['title'] == 'Shared learning chat'
+    assert len(response.json()['messages']) == 6
+    assert all(message['pending_id'] is None for message in response.json()['messages'])
+    assert 'old-' not in response.text
 
 
 @pytest.mark.parametrize('failure_at', ['connect', 'insert', 'commit'])
