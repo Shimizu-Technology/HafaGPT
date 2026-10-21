@@ -9,7 +9,7 @@ const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600";
 const primary = `${button} border-transparent bg-coral-700 text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800`;
 const field =
-  "mt-1 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white";
+  "mt-1 min-h-11 w-full text-base rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white";
 interface Word {
   chamorro: string;
   english: string;

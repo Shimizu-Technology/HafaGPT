@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, Crown, Star, Shield, Ban, Loader2, AlertCircle,
   MessageSquare, Gamepad2, GraduationCap, Calendar, Clock,
@@ -11,7 +11,6 @@ import { appRoutes, safeInternalReturnPath } from '../../lib/routes';
 
 export function AdminUserDetail() {
   const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const backTo = safeInternalReturnPath(searchParams.get('return_to'), appRoutes.adminUsers);
   const { data: user, isLoading, error } = useAdminUser(userId || '');
@@ -113,9 +112,9 @@ export function AdminUserDetail() {
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">User Not Found</h2>
             <p className="text-brown-600 dark:text-gray-400 mb-4">{error?.message || 'Unable to load user'}</p>
-            <button onClick={() => navigate(backTo)} className="text-coral-500 dark:text-ocean-400 hover:underline">
+            <Link to={backTo} className="text-coral-500 dark:text-ocean-400 hover:underline">
               ← Back to Users
-            </button>
+            </Link>
           </div>
         </div>
       </AdminLayout>
@@ -158,10 +157,10 @@ export function AdminUserDetail() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Back button */}
-        <button onClick={() => navigate(backTo)} className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
+        <Link to={backTo} className="flex items-center gap-2 text-brown-600 dark:text-gray-400 hover:text-coral-500 dark:hover:text-ocean-400 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Users
-        </button>
+        </Link>
         
         {/* User Header */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
@@ -175,9 +174,9 @@ export function AdminUserDetail() {
                 </span>
               </div>
             )}
-            <div className="flex-1">
+            <div className="min-w-0 w-full flex-1 break-words">
               <h1 className="text-2xl font-bold text-brown-800 dark:text-white">
-                {user.first_name} {user.last_name}
+                {[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}
               </h1>
               <p className="text-brown-600 dark:text-gray-400">{user.email || 'No email'}</p>
               <p className="text-sm text-brown-500 dark:text-gray-500 font-mono">{user.user_id}</p>
@@ -331,10 +330,11 @@ export function AdminUserDetail() {
           {editingPreferences ? (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                <label htmlFor="admin-skill-level" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
                   Skill Level
                 </label>
                 <select
+                  id="admin-skill-level"
                   value={selectedSkillLevel}
                   onChange={(e) => setSelectedSkillLevel(e.target.value)}
                   className="w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"
@@ -345,10 +345,11 @@ export function AdminUserDetail() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                <label htmlFor="admin-learning-goal" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
                   Learning Goal
                 </label>
                 <select
+                  id="admin-learning-goal"
                   value={selectedLearningGoal}
                   onChange={(e) => setSelectedLearningGoal(e.target.value)}
                   className="w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"

@@ -122,7 +122,7 @@ describe('restorable admin user navigation', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Users' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to Users' }));
     expect(screen.getByText('Restored user list')).toBeInTheDocument();
   });
 
@@ -138,7 +138,7 @@ describe('restorable admin user navigation', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Users' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to Users' }));
     expect(screen.getByText('Safe user list')).toBeInTheDocument();
   });
 
@@ -160,7 +160,7 @@ describe('restorable admin user navigation', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '← Back to Users' }));
+    fireEvent.click(screen.getByRole('link', { name: '← Back to Users' }));
     expect(screen.getByText('Restored after detail error')).toBeInTheDocument();
   });
 });

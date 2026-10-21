@@ -168,7 +168,7 @@ export function AdminSettings() {
             {/* Promo Enabled Toggle */}
             <div className="flex items-center justify-between p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
               <div>
-                <label className="font-medium text-brown-800 dark:text-white">
+                <label htmlFor="promo-enabled" className="font-medium text-brown-800 dark:text-white">
                   Enable Promotional Period
                 </label>
                 <p className="text-sm text-brown-500 dark:text-gray-400 mt-0.5">
@@ -176,15 +176,17 @@ export function AdminSettings() {
                 </p>
               </div>
               <button
+                id="promo-enabled"
+                type="button"
                 onClick={() => setPromoEnabled(!promoEnabled)}
-                className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
                   promoEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'
                 }`}
                 role="switch"
                 aria-checked={promoEnabled}
               >
                 <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out ${
+                  className={`inline-block h-9 w-9 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out ${
                     promoEnabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -193,13 +195,14 @@ export function AdminSettings() {
             
             {/* Promo End Date */}
             <div>
-              <label className="block font-medium text-brown-800 dark:text-white mb-2">
-                <div className="flex items-center gap-2">
+              <label htmlFor="promo-end-date" className="block font-medium text-brown-800 dark:text-white mb-2">
+                <span className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Promo End Date
-                </div>
+                </span>
               </label>
               <input
+                id="promo-end-date"
                 type="date"
                 value={promoEndDate}
                 onChange={(e) => setPromoEndDate(e.target.value)}
@@ -212,10 +215,11 @@ export function AdminSettings() {
             
             {/* Promo Title */}
             <div>
-              <label className="block font-medium text-brown-800 dark:text-white mb-2">
+              <label htmlFor="promo-title" className="block font-medium text-brown-800 dark:text-white mb-2">
                 Banner Title
               </label>
               <input
+                id="promo-title"
                 type="text"
                 value={promoTitle}
                 onChange={(e) => setPromoTitle(e.target.value)}
@@ -227,9 +231,9 @@ export function AdminSettings() {
             {/* Preview - Theme-aware */}
             {promoEnabled && (
               <div className="mt-4">
-                <label className="block text-sm font-medium text-brown-600 dark:text-gray-400 mb-2">
+                <h3 className="block text-sm font-medium text-brown-600 dark:text-gray-400 mb-2">
                   Banner Preview ({theme === 'default' ? 'Default' : theme === 'christmas' ? 'Christmas' : theme === 'newyear' ? 'New Year' : 'Chamorro'} Theme)
-                </label>
+                </h3>
                 <div className={`relative overflow-hidden rounded-xl p-4 text-white text-center ${
                   theme === 'christmas' 
                     ? 'bg-gradient-to-r from-red-600 to-green-600' 
