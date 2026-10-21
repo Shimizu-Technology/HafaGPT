@@ -98,6 +98,7 @@ from .chatbot_service import (
 )
 from .atomic_regeneration import atomic_regeneration_events
 from . import chat_requests
+from . import tutor_reservations
 from . import conversations
 from .spaced_repetition import (
     calculate_sm2 as _calculate_sm2,
@@ -1276,6 +1277,26 @@ async def get_chat_request_status(pending_id: str, authorization: Optional[str] 
     return status
 
 
+@app.post("/api/chat/reconcile/{logical_send_id}", tags=["Chat"])
+async def reconcile_chat_send(
+    logical_send_id: str, abandon: bool = Query(False),
+    authorization: Optional[str] = Header(None),
+):
+    """Fence a never-started send before offering an honest, safe resend."""
+    user_id = await verify_user(authorization)
+    if not tutor_reservations.valid_logical_id(logical_send_id):
+        raise HTTPException(status_code=400, detail="Invalid logical send ID")
+    # Never fence a legacy running request; only the new protocol has a durable
+    # dispatch gate. Missing legacy tracking cannot be made safe retroactively.
+    existing = await run_in_threadpool(tutor_reservations.get_send_status, user_id, logical_send_id)
+    if existing is None:
+        legacy = await run_in_threadpool(chat_requests.get_request_status, logical_send_id, user_id)
+        if legacy is not None:
+            return legacy
+    return await run_in_threadpool(tutor_reservations.reconcile_send,
+        user_id, logical_send_id, today=get_guam_date(), abandon=abandon)
+
+
 # --- Streaming Chat Endpoint ---
 
 @app.post("/api/chat/stream", tags=["Chat"])
@@ -1288,6 +1309,8 @@ async def chat_stream(
     session_id: Optional[str] = Form(None),
     conversation_id: Optional[str] = Form(None),
     pending_id: Optional[str] = Form(None),
+    logical_send_id: Optional[str] = Form(None),
+    dispatch_token: Optional[str] = Form(None),
     skill_level: Optional[str] = Form(None),  # User's skill level for personalized responses
     intent: Optional[str] = Form(None),
     learning_topic_id: Optional[str] = Form(None),
@@ -1320,6 +1343,7 @@ async def chat_stream(
     data: {"type": "done", "response_time": 2.5}
     ```
     """
+    user_id = None
     try:
         # Check if this is a JSON request or FormData request
         content_type = request.headers.get('content-type', '')
@@ -1331,6 +1355,8 @@ async def chat_stream(
             session_id = body.get('session_id')
             conversation_id = body.get('conversation_id')
             pending_id = body.get('pending_id')
+            logical_send_id = body.get('logical_send_id')
+            dispatch_token = body.get('dispatch_token')
             skill_level = body.get('skill_level')  # User's skill level
             intent = body.get('intent')
             learning_topic_id = body.get('learning_topic_id')
@@ -1341,6 +1367,11 @@ async def chat_stream(
             # Combine legacy single file with new multiple files support
             if file and file.filename:
                 files = [file] + list(files)
+
+        # Keyed sends can already have a reserved use. Authenticate before input
+        # validation so an authoritative pre-generation rejection can release it.
+        if logical_send_id is not None:
+            user_id = await verify_user(authorization)
         
         # Validate required fields
         if not message:
@@ -1377,9 +1408,14 @@ async def chat_stream(
             )
         
         # Verify user authentication
-        user_id = await verify_user(authorization)
+        user_id = user_id or await verify_user(authorization)
         if conversation_id and not conversations.conversation_belongs_to_user(conversation_id, user_id):
             raise HTTPException(status_code=404, detail="Conversation not found")
+        if logical_send_id is not None:
+            if (not tutor_reservations.valid_logical_id(logical_send_id)
+                or pending_id != logical_send_id
+                or not isinstance(dispatch_token, str) or not dispatch_token or len(dispatch_token) > 200):
+                raise HTTPException(status_code=400, detail="A valid send reservation is required")
         
         # Set Sentry context for this request
         set_user_context(user_id=user_id)
@@ -1480,26 +1516,37 @@ async def chat_stream(
         file_url = None  # S3 upload happens in background
         
         logger.info(f"Stream request: mode={mode}, user_id={user_id or 'anonymous'}, pending_id={pending_id}")
-        
-        # Create SSE generator using queue to bridge sync/async
+
+        # Dispatch is claimed inside the worker, immediately before generation.
+        # A dropped HTTP response that never starts consuming SSE remains safely
+        # fenceable by reconciliation, even if its old iterator starts later.
         async def generate_sse():
-            # Use a thread-safe queue to pass events from sync thread to async generator
             event_queue: queue.Queue = queue.Queue()
             stream_done = threading.Event()
-            
-            def run_sync_generator():
-                """Run the sync generator in a thread and put events in queue"""
+
+            def run_sync_generator(logical_send_id=None, dispatch_token=None):
+                """Only one dispatch token may invoke the chatbot for this ID."""
                 tracker = None
-                if chat_requests.valid_pending_id(pending_id):
-                    tracker = chat_requests.RequestTracker(
-                        pending_id, user_id, conversation_id,
-                        on_cancel=lambda: cancel_pending_message(pending_id),
-                    )
-                    tracker.start_in_background()
                 event_types: list[str] = []
+                started = False
                 try:
+                    if logical_send_id is not None:
+                        claim = tutor_reservations.claim_send(
+                            user_id, logical_send_id, dispatch_token, conversation_id)
+                        if not claim['claimed']:
+                            event_queue.put({'type': 'error', 'code': 'send_already_started',
+                                'status': claim['status'], 'conversation_id': claim['conversation_id'],
+                                'content': 'Checking your earlier send. Please wait a moment.'})
+                            return
+                        started = True
+                    if chat_requests.valid_pending_id(pending_id):
+                        tracker = chat_requests.RequestTracker(
+                            pending_id, user_id, conversation_id,
+                            on_cancel=lambda: cancel_pending_message(pending_id),
+                        )
+                        tracker.start_in_background()
                     for event in get_chatbot_response_stream(
-                        message=final_message,  # Full message with doc content for LLM
+                        message=final_message,
                         mode=mode,
                         conversation_length=0,
                         session_id=session_id,
@@ -1509,36 +1556,39 @@ async def chat_stream(
                         image_inputs=all_image_inputs,
                         image_url=file_url,
                         pending_id=pending_id,
-                        original_message=message,  # Original user message for logging/display
-                        skill_level=skill_level,  # User's skill level for personalization
+                        original_message=message,
+                        skill_level=skill_level,
                         intent=intent,
                         learning_topic_id=learning_topic_id
                     ):
                         if event.get("type") in ("done", "cancelled", "error"):
-                            # Generation completion is not durable completion when the
-                            # transcript transaction failed. Preserve the live event/text.
+                            # A generated reply is not a saved reply until committed.
                             event_types.append("error" if event.get("saved") is False else event["type"])
                         event_queue.put(event)
-                except Exception as e:
-                    logger.error("Stream generation failed: %s", type(e).__name__, exc_info=True)
+                except Exception as error:
+                    logger.error("Stream generation failed: %s", type(error).__name__, exc_info=True)
                     event_types.append("error")
                     event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
                 finally:
-                    # End the stream, then record the actual persistence-aware outcome.
-                    # A generated reply can remain visible even when saving failed.
-                    stream_done.set()
-                    if tracker is not None:
+                    if started:
                         try:
-                            tracker.finish(chat_requests.terminal_status(event_types))
-                        finally:
-                            cleanup_cancelled_message(pending_id)
-            
-            # Start the sync generator in a background thread
-            thread = threading.Thread(target=run_sync_generator, daemon=True)
+                            tutor_reservations.finish_send(user_id, logical_send_id,
+                                chat_requests.terminal_status(event_types))
+                        except Exception as error:
+                            # An unknown terminal write never authorizes a retry.
+                            logger.warning("TUTOR_SEND finish_failed=%s", type(error).__name__)
+                    try:
+                        if tracker is not None:
+                            try:
+                                tracker.finish(chat_requests.terminal_status(event_types))
+                            finally:
+                                cleanup_cancelled_message(pending_id)
+                    finally:
+                        stream_done.set()
+
+            thread = threading.Thread(target=run_sync_generator,
+                kwargs={'logical_send_id': logical_send_id, 'dispatch_token': dispatch_token}, daemon=True)
             thread.start()
-            
-            # Keep the connection active during transcription and review calls,
-            # while preserving model event order and background persistence.
             async for frame in queue_sse_events(event_queue, stream_done):
                 yield frame
 
@@ -1553,8 +1603,22 @@ async def chat_stream(
         )
         
     except HTTPException:
+        if (user_id and logical_send_id is not None and tutor_reservations.valid_logical_id(logical_send_id)
+            and isinstance(dispatch_token, str) and dispatch_token):
+            try:
+                await run_in_threadpool(tutor_reservations.reconcile_send,
+                    user_id, logical_send_id, today=get_guam_date(), expected_token=dispatch_token)
+            except Exception:
+                logger.warning("TUTOR_SEND pre_generation_release_failed")
         raise
     except Exception as e:
+        if (user_id and logical_send_id is not None and tutor_reservations.valid_logical_id(logical_send_id)
+            and isinstance(dispatch_token, str) and dispatch_token):
+            try:
+                await run_in_threadpool(tutor_reservations.reconcile_send,
+                    user_id, logical_send_id, today=get_guam_date(), expected_token=dispatch_token)
+            except Exception:
+                logger.warning("TUTOR_SEND pre_generation_release_failed")
         logger.error(f"Error in stream endpoint: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
@@ -4352,6 +4416,7 @@ async def get_today_usage(
 @app.post("/api/usage/increment/{usage_type}", response_model=UsageIncrementResponse, tags=["Usage"])
 async def increment_usage(
     usage_type: str,
+    logical_send_id: Optional[str] = Query(None),
     authorization: Optional[str] = Header(None)
 ):
     """
@@ -4379,6 +4444,16 @@ async def increment_usage(
         
         # Check if user is premium OR if promo period is active (from DB or env)
         is_premium = is_promo_active_from_db() if get_site_setting("promo_enabled") else is_promo_active()
+
+        if logical_send_id is not None:
+            if not tutor_reservations.valid_logical_id(logical_send_id):
+                raise HTTPException(status_code=400, detail="Invalid logical send ID")
+            result = await run_in_threadpool(tutor_reservations.reserve_usage,
+                user_id, usage_type, logical_send_id, today=get_guam_date(),
+                limit=FREE_TIER_LIMITS[usage_type], is_premium=is_premium)
+            # Explicit response preserves additive fields; legacy response_model
+            # intentionally describes the unchanged unkeyed contract.
+            return JSONResponse(result)
         
         # Get database connection
         conn = conversations.get_db_connection_with_retry()
@@ -5988,6 +6063,7 @@ async def clerk_webhook(request: Request):
                 deleted_counts["game_results"] = cursor.rowcount
                 
                 # Delete daily usage
+                delete_optional_user_rows("tutor_usage_reservations", "usage_reservations")
                 cursor.execute("""
                     DELETE FROM user_daily_usage
                     WHERE user_id = %s
