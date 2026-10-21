@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Search, Crown, Shield, Loader2, AlertCircle, Ban, Eye,
   ChevronLeft, ChevronRight, X, MoreVertical, UserMinus, Star
@@ -12,21 +12,21 @@ interface UserActionsMenuProps {
   user: AdminUser;
   onClose: () => void;
   onUpdate: (userId: string, data: { is_premium?: boolean; is_whitelisted?: boolean }) => void;
-  onViewDetails: (userId: string) => void;
+  detailHref: string;
   isUpdating: boolean;
 }
 
-function UserActionsMenu({ user, onClose, onUpdate, onViewDetails, isUpdating }: UserActionsMenuProps) {
+function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: UserActionsMenuProps) {
   return (
     <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-cream-200 dark:border-slate-700 py-2 z-50">
       {/* View Details */}
-      <button
-        onClick={() => onViewDetails(user.user_id)}
+      <Link
+        to={detailHref}
         className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-coral-50 dark:hover:bg-ocean-900/20 text-coral-600 dark:text-ocean-400 transition-colors"
       >
         <Eye className="w-4 h-4" />
         <span>View Details</span>
-      </button>
+      </Link>
       
       <div className="border-t border-cream-200 dark:border-slate-700 my-2" />
       
@@ -79,16 +79,16 @@ function UserActionsMenu({ user, onClose, onUpdate, onViewDetails, isUpdating }:
   );
 }
 
-function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails, isUpdating }: {
+function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, isUpdating }: {
   user: AdminUser;
   activeMenu: string | null;
   setActiveMenu: (id: string | null) => void;
   handleUpdate: (userId: string, data: { is_premium?: boolean; is_whitelisted?: boolean }) => void;
-  onViewDetails: (userId: string) => void;
+  detailHref: string;
   isUpdating: boolean;
 }) {
   return (
-    <tr className="hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer" onClick={() => onViewDetails(user.user_id)}>
+    <tr className="hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors">
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           {user.image_url ? (
@@ -101,7 +101,7 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails,
             </div>
           )}
           <div>
-            <p className="font-medium text-brown-800 dark:text-white">{user.first_name} {user.last_name}</p>
+            <Link to={detailHref} className="font-medium text-brown-800 dark:text-white hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
             <p className="text-sm text-brown-500 dark:text-gray-400">{user.email || 'No email'}</p>
           </div>
         </div>
@@ -157,13 +157,15 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails,
       <td className="px-4 py-4 text-right">
         <div className="relative inline-block">
           <button
+            aria-label={`Actions for ${[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "user"}`}
+            aria-expanded={activeMenu === user.user_id}
             onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === user.user_id ? null : user.user_id); }}
-            className="p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="min-h-11 min-w-11 p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <MoreVertical className="w-5 h-5 text-brown-600 dark:text-gray-400" />
           </button>
           {activeMenu === user.user_id && (
-            <UserActionsMenu user={user} onClose={() => setActiveMenu(null)} onUpdate={handleUpdate} onViewDetails={onViewDetails} isUpdating={isUpdating} />
+            <UserActionsMenu user={user} onClose={() => setActiveMenu(null)} onUpdate={handleUpdate} detailHref={detailHref} isUpdating={isUpdating} />
           )}
         </div>
       </td>
@@ -171,16 +173,16 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails,
   );
 }
 
-function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewDetails, isUpdating }: {
+function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, isUpdating }: {
   user: AdminUser;
   activeMenu: string | null;
   setActiveMenu: (id: string | null) => void;
   handleUpdate: (userId: string, data: { is_premium?: boolean; is_whitelisted?: boolean }) => void;
-  onViewDetails: (userId: string) => void;
+  detailHref: string;
   isUpdating: boolean;
 }) {
   return (
-    <div className="p-4 cursor-pointer hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors" onClick={() => onViewDetails(user.user_id)}>
+    <div className="p-4 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {user.image_url ? (
@@ -193,19 +195,21 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, onViewD
             </div>
           )}
           <div className="min-w-0">
-            <p className="font-medium text-brown-800 dark:text-white truncate">{user.first_name} {user.last_name}</p>
+            <Link to={detailHref} className="block font-medium text-brown-800 dark:text-white hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
             <p className="text-sm text-brown-500 dark:text-gray-400 truncate">{user.email || 'No email'}</p>
           </div>
         </div>
         <div className="relative">
           <button
+            aria-label={`Actions for ${[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "user"}`}
+            aria-expanded={activeMenu === user.user_id}
             onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === user.user_id ? null : user.user_id); }}
-            className="p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="min-h-11 min-w-11 p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <MoreVertical className="w-5 h-5 text-brown-600 dark:text-gray-400" />
           </button>
           {activeMenu === user.user_id && (
-            <UserActionsMenu user={user} onClose={() => setActiveMenu(null)} onUpdate={handleUpdate} onViewDetails={onViewDetails} isUpdating={isUpdating} />
+            <UserActionsMenu user={user} onClose={() => setActiveMenu(null)} onUpdate={handleUpdate} detailHref={detailHref} isUpdating={isUpdating} />
           )}
         </div>
       </div>
@@ -310,10 +314,6 @@ export function AdminUsers() {
     catch (error) { console.error('Failed to update user:', error); }
   };
   
-  const handleViewDetails = (userId: string) => {
-    navigate(appRoutes.adminUser(userId, { returnTo }));
-  };
-  
   useEffect(() => {
     const handleClickOutside = () => setActiveMenu(null);
     if (activeMenu) { document.addEventListener('click', handleClickOutside); return () => document.removeEventListener('click', handleClickOutside); }
@@ -369,14 +369,14 @@ export function AdminUsers() {
                   </thead>
                   <tbody className="divide-y divide-cream-200 dark:divide-slate-700">
                     {data?.users.map((user) => (
-                      <UserRow key={user.user_id} user={user} activeMenu={activeMenu} setActiveMenu={setActiveMenu} handleUpdate={handleUpdate} onViewDetails={handleViewDetails} isUpdating={updateUser.isPending} />
+                      <UserRow key={user.user_id} user={user} activeMenu={activeMenu} setActiveMenu={setActiveMenu} handleUpdate={handleUpdate} detailHref={appRoutes.adminUser(user.user_id, { returnTo })} isUpdating={updateUser.isPending} />
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="md:hidden divide-y divide-cream-200 dark:divide-slate-700">
                 {data?.users.map((user) => (
-                  <MobileUserCard key={user.user_id} user={user} activeMenu={activeMenu} setActiveMenu={setActiveMenu} handleUpdate={handleUpdate} onViewDetails={handleViewDetails} isUpdating={updateUser.isPending} />
+                  <MobileUserCard key={user.user_id} user={user} activeMenu={activeMenu} setActiveMenu={setActiveMenu} handleUpdate={handleUpdate} detailHref={appRoutes.adminUser(user.user_id, { returnTo })} isUpdating={updateUser.isPending} />
                 ))}
               </div>
               {data?.users.length === 0 && <div className="py-12 text-center"><p className="text-brown-600 dark:text-gray-400">No users found</p></div>}
