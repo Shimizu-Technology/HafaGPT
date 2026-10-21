@@ -171,12 +171,15 @@ def test_generic_game_reservation_contract_is_idempotent(db):
 @pytest.fixture
 def endpoint(db):
     app = FastAPI()
+    app.state.uploads = Mock()
     generator = Mock(return_value=iter([{'type': 'chunk', 'content': 'Local fixture'}, {'type': 'done', 'saved': True}]))
     tracker = Mock()
     async def verify(authorization):
         if authorization != 'Bearer development-test':
             raise HTTPException(status_code=401)
         return 'learner-a'
+    async def read_upload(uploaded_file):
+        return await uploaded_file.read()
     namespace = dict(app=app, Request=Request, BackgroundTasks=BackgroundTasks,
         Optional=Optional, List=List, Header=Header, Form=Form, File=File, Query=Query,
         UploadFile=UploadFile, HTTPException=HTTPException, JSONResponse=JSONResponse,
@@ -193,6 +196,9 @@ def endpoint(db):
         is_promo_active=lambda: False, is_promo_active_from_db=lambda: False,
         FREE_TIER_LIMITS={'chat': 10, 'game': 10, 'quiz': 10},
         set_user_context=Mock(), set_request_context=Mock(), os=os,
+        read_upload_with_limit=read_upload, validate_uploaded_file_size=Mock(),
+        process_uploaded_file=lambda **kwargs: {'text_content': kwargs['file_data'].decode()},
+        upload_file_to_s3_background=app.state.uploads,
         queue=queue, threading=threading, queue_sse_events=queue_sse_events,
         MAX_UPLOAD_FILES=10, MAX_UPLOAD_TOTAL_SIZE_MB=50, MAX_UPLOAD_TOTAL_BYTES=50*1024*1024,
         logger=logging.getLogger(__name__))
@@ -269,3 +275,28 @@ def test_api_reconcile_requires_auth_and_does_not_touch_another_account(endpoint
     assert client.post(f'/api/chat/reconcile/{ID}').status_code == 401
     assert client.post(f'/api/chat/reconcile/{ID}', headers=AUTH).json()['status'] == 'retryable'
     assert count(db, owner='learner-b') == 1
+
+
+@pytest.mark.parametrize('rejection', ['duplicate', 'fenced'])
+def test_api_only_successfully_claimed_multipart_dispatch_can_persist_attachments(endpoint, db, rejection):
+    client, generator = endpoint
+    original = api_reserve(client)
+    accepted = original
+    if rejection == 'fenced':
+        assert client.post(f'/api/chat/reconcile/{ID}', headers=AUTH).json()['status'] == 'retryable'
+        accepted = api_reserve(client)
+        late = client.post('/api/chat/stream', headers=AUTH, data=payload(original),
+            files={'files': ('old-note.txt', b'rejected old attachment', 'text/plain')})
+        assert 'send_already_started' in late.text
+        assert client.app.state.uploads.call_count == 0
+    result = client.post('/api/chat/stream', headers=AUTH, data=payload(accepted),
+        files={'files': ('accepted-note.txt', b'accepted attachment', 'text/plain')})
+    assert 'Local fixture' in result.text
+    if rejection == 'duplicate':
+        duplicate = client.post('/api/chat/stream', headers=AUTH, data=payload(original),
+            files={'files': ('duplicate-note.txt', b'rejected duplicate attachment', 'text/plain')})
+        assert 'send_already_started' in duplicate.text
+    client.app.state.uploads.assert_called_once()
+    assert client.app.state.uploads.call_args.kwargs['files_to_upload'][0]['data'] == b'accepted attachment'
+    assert generator.call_count == 1
+    assert count(db) == 1

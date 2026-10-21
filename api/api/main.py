@@ -1490,9 +1490,18 @@ async def chat_stream(
                     detail=f"Failed to process {uploaded_file.filename}: {str(e)}"
                 )
         
+        # The scheduled upload belongs to this HTTP dispatch, not merely its
+        # logical ID. A rejected retry must never append files to the winning
+        # dispatch's transcript or create orphaned storage objects.
+        upload_dispatch = {'claimed': False}
+
+        def upload_claimed_files(**kwargs):
+            if logical_send_id is None or upload_dispatch['claimed']:
+                upload_file_to_s3_background(**kwargs)
+
         if files_to_upload:
             background_tasks.add_task(
-                upload_file_to_s3_background,
+                upload_claimed_files,
                 files_to_upload=files_to_upload,
                 user_id=user_id,
                 conversation_id=conversation_id,
@@ -1539,6 +1548,7 @@ async def chat_stream(
                                 'content': 'Checking your earlier send. Please wait a moment.'})
                             return
                         started = True
+                        upload_dispatch['claimed'] = True
                     if chat_requests.valid_pending_id(pending_id):
                         tracker = chat_requests.RequestTracker(
                             pending_id, user_id, conversation_id,
