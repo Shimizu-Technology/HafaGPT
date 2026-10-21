@@ -21,7 +21,7 @@ const faqs = [
   },
 ];
 
-const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cream-200 px-4 py-3 font-semibold text-brown-700 hover:border-coral-300 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:text-gray-200 dark:hover:border-teal-700 dark:hover:bg-slate-700/50';
+const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cream-200 px-4 py-3 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700/50';
 
 export default function SupportPage() {
   return (
@@ -32,7 +32,7 @@ export default function SupportPage() {
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
           Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
-        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800">
+        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
           <Mail className="h-5 w-5" aria-hidden="true" />
           Email support
         </a>
@@ -54,9 +54,9 @@ export default function SupportPage() {
             <details key={faq.question} className="group py-1">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-brown-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white [&::-webkit-details-marker]:hidden">
                 {faq.question}
-                <span className="text-xl font-normal text-coral-600 transition-transform group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
+                <span className="text-xl font-normal text-coral-600 group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
               </summary>
-              <p className="pb-4 pr-8 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{faq.answer}</p>
+              <p className="pb-4 pr-8 text-base leading-relaxed text-brown-600 dark:text-gray-300">{faq.answer}</p>
             </details>
           ))}
         </div>
