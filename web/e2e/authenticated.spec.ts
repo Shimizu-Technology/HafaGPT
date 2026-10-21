@@ -32,7 +32,7 @@ test('authenticated learner can reach learning settings', async ({ page }) => {
 
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
-  await expect(page.getByText('Choose how HåfaGPT should support you')).toBeVisible();
+  await expect(page.getByText('Choose how HåfaGPT supports your learning.')).toBeVisible();
   await expect(page.getByRole('button', { name: /Save/i })).toHaveCount(0);
   await page.getByRole('button', { name: /Helping family/i }).click();
   await expect(page.getByRole('button', { name: /Save/i })).toBeVisible();
@@ -79,7 +79,7 @@ test('authenticated learner can choose a focused practice activity', async ({ pa
   await expect(page.getByText('Random practice from 10,350 dictionary words.')).toBeVisible();
 
   await page.goto('/quiz');
-  await expect(page.getByRole('heading', { name: 'Quizzes' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quizzes', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Beginner' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Advanced' }).click();
   await expect(page.getByRole('heading', { name: 'Choose advanced quizzes' })).toBeVisible();
