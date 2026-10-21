@@ -24,7 +24,9 @@
     <meta name="description" content="Learn Chamorro language with AI-powered assistance. Practice Chamorro words, phrases, grammar, and culture. Free flashcards, quizzes, stories, and conversation practice." />
     <meta name="keywords" content="Chamorro, Chamoru, Guam, language learning, AI tutor, HafaGPT, Hafa Adai, learn Chamorro, Chamorro dictionary, Chamorro translator" />
     <meta name="author" content="Shimizu Technology" />
-    <meta name="theme-color" content="#E85D4B" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#FEFDFB" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -48,13 +50,16 @@
     <script>
       (function() {
         try {
-          const savedTheme = localStorage.getItem('theme');
+          let savedTheme;
+          try { savedTheme = localStorage.getItem('theme'); } catch (_) { /* Storage is optional. */ }
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+          const theme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : (prefersDark ? 'dark' : 'light');
           
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-          }
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+          document.documentElement.style.colorScheme = theme;
+          document.querySelectorAll('meta[name="theme-color"]').forEach(meta => meta.content = theme === 'dark' ? '#0f172a' : '#FEFDFB');
+          // Use an opaque status bar; black-translucent would overlay page content.
+          document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = theme === 'dark' ? 'black' : 'default';
         } catch (e) {
           console.warn('Failed to initialize theme:', e);
         }

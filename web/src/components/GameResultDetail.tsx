@@ -55,7 +55,7 @@ export function GameResultDetail() {
         subtitle="See what this round recorded and what to practice next."
         icon={Gamepad2}
         backTo={backTo}
-        backLabel={backTo.startsWith(appRoutes.topic('')) ? 'Back to topic' : 'Back to game history'}
+        backLabel={backTo.startsWith(appRoutes.topic('')) ? 'Back to topic' : backTo.split(/[?#]/)[0] === appRoutes.gameHistory ? 'Back to game history' : 'Back to where you were'}
         maxWidthClassName="max-w-2xl"
       />
 
@@ -131,7 +131,7 @@ export function GameResultDetail() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Play another game</Link>
-              <Link to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
+              <Link replace to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
             </div>
           </div>
         )}

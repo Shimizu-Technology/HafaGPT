@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link} from 'react-router-dom';
 import { ArrowRight, Book, BookMarked, Brain, Gamepad2, Layers, Library, MessagesSquare, Volume2 } from 'lucide-react';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
@@ -13,13 +13,12 @@ const tools = [
 ];
 
 export function LibraryPage() {
-  const navigate = useNavigate();
   const { preferences } = useUserPreferences();
   const together = preferences.learner_mode === 'with_child';
   const audioFirst = preferences.reading_support === 'audio_pictures';
   return (
     <LearnerPageShell>
-      <LearnerPageHeader title="Library" subtitle="All your learning tools" icon={Library} backLabel="Back to Today" onBack={() => navigate('/')} />
+      <LearnerPageHeader title="Library" subtitle="All your learning tools" icon={Library} backLabel="Back to Today" backTo="/" />
       <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <p className="mb-6 max-w-xl text-brown-600 dark:text-gray-300">Choose a tool for what you need now. Your guided learning session is on Today.</p>
         {(together || audioFirst) && (

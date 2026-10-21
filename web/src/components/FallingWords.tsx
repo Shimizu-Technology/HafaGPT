@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDown, Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw } from 'lucide-react';
@@ -69,6 +70,7 @@ const ANSWER_OPTIONS = 4;
 const WIN_WORDS = 30; // Complete 30 words to win!
 
 export function FallingWords() {
+  const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -420,7 +422,7 @@ export function FallingWords() {
       return;
     }
     clearTransitionTimers();
-    navigate('/games');
+    navigate(gameReturn.to, { replace: true });
   };
 
   const isLoading = settings.mode === 'challenge' ? flashcardsLoading : false;
@@ -766,10 +768,10 @@ export function FallingWords() {
             </div>
 
             <Link
-              to="/games"
+              to={gameReturn.to} replace
               className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
             >
-              ← Back to Games
+              {gameReturn.label}
             </Link>
           </div>
         )}

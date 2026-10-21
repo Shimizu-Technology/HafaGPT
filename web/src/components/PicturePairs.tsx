@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Image as ImageIcon, RotateCcw, Trophy, Star, Play, Timer } from 'lucide-react';
@@ -109,6 +110,7 @@ const DIFFICULTY_CONFIG = {
 };
 
 export function PicturePairs() {
+  const gameReturn = useGameReturn();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
@@ -517,10 +519,10 @@ export function PicturePairs() {
             </div>
             
             <Link
-              to="/games"
+              to={gameReturn.to} replace
               className="inline-block mt-4 text-teal-500 dark:text-teal-400 hover:underline font-medium"
             >
-              ← Back to Games
+              {gameReturn.label}
             </Link>
           </div>
         )}

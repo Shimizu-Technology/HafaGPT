@@ -64,7 +64,7 @@ export function VocabularyCategory() {
           <p className="text-brown-600 dark:text-gray-400 mb-4">{error ? "Dictionary words could not load. Please try again." : "Category not found"}</p>
           {error && <button type="button" onClick={() => void refetch()} className="min-h-11 px-4 text-coral-700 dark:text-ocean-300">Try again</button>}
           <button
-            onClick={() => navigate('/vocabulary')}
+            onClick={() => navigate('/vocabulary', { replace: true })}
             className="min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
           >
             Back to Vocabulary
@@ -269,7 +269,7 @@ export function VocabularyCategory() {
 
         {/* Back to Categories */}
         <div className="mt-8 text-center">
-          <Link
+          <Link replace
             to="/vocabulary"
             className="inline-flex items-center gap-2 px-4 py-2 text-coral-600 dark:text-ocean-400 hover:bg-coral-50 dark:hover:bg-ocean-900/30 rounded-lg transition-colors"
           >

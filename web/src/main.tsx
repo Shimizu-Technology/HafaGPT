@@ -6,7 +6,6 @@ import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
 import { StartupErrorBoundary } from './components/StartupErrorBoundary';
 import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
-import { browserStorage } from './lib/browserStorage';
 import './index.css';
 import { registerServiceWorker } from './lib/registerServiceWorker';
 
@@ -71,11 +70,7 @@ if (!CLERK_PUBLISHABLE_KEY) {
 // Wrapper component to dynamically update Clerk appearance based on theme
 function ClerkWrapper() {
   const [isDark, setIsDark] = useState(() => {
-    // Check both class and localStorage on initial load
-    const savedTheme = browserStorage.get('theme');
-    return savedTheme === 'dark' || 
-           (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches) ||
-           document.documentElement.classList.contains('dark');
+    return document.documentElement.classList.contains('dark');
   });
 
   useEffect(() => {

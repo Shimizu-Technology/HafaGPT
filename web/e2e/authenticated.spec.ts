@@ -33,6 +33,8 @@ test('authenticated learner can reach learning settings', async ({ page }) => {
   await page.goto('/settings');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
   await expect(page.getByText('Choose how HåfaGPT should support you')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Save/i })).toHaveCount(0);
+  await page.getByRole('button', { name: /Helping family/i }).click();
   await expect(page.getByRole('button', { name: /Save/i })).toBeVisible();
 });
 

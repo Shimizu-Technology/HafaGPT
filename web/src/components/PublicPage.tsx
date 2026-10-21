@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 interface PublicPageProps {
@@ -39,7 +39,6 @@ export function PublicPage({
   stickyHeader = true,
   showFooter = true,
 }: PublicPageProps) {
-  const navigate = useNavigate();
 
   return (
     <LearnerPageShell>
@@ -49,7 +48,6 @@ export function PublicPage({
         icon={icon}
         backTo="/"
         backLabel="Back home"
-        onBack={() => navigate('/')}
         maxWidthClassName={maxWidthClassName}
         trailing={trailing}
         sticky={stickyHeader}

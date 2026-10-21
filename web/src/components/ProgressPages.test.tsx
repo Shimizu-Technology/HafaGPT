@@ -82,6 +82,11 @@ vi.mock('./StreakWidget', () => ({
   StreakWidget: () => <section aria-label="Learning streak">Four-day streak</section>,
 }));
 
+function ReturnLocation() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}{location.search}{location.hash}</output>;
+}
+
 describe('progress pages', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -205,15 +210,10 @@ describe('progress pages', () => {
       refetch: mocks.refetchHistory,
     });
 
-    function LocationProbe() {
-      const location = useLocation();
-      return <output data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</output>;
-    }
-
     render(
       <MemoryRouter initialEntries={['/dashboard/quiz-history?page=2#results']}>
         <QuizHistory />
-        <LocationProbe />
+        <ReturnLocation />
       </MemoryRouter>,
     );
 
@@ -271,6 +271,15 @@ describe('progress pages', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(mocks.refetchHistory).toHaveBeenCalledOnce();
+  });
+
+  it('does not mislabel another safe quiz-review return as quiz history', () => {
+    mocks.quizReview.mockReturnValue({ data: undefined, isLoading: false, error: new Error('offline'), refetch: mocks.refetchReview });
+    render(<MemoryRouter initialEntries={['/quiz/review/quiz-1?return_to=%2Fvocabulary%3Fq%3Dhafa%23words']}><QuizReview /><ReturnLocation /></MemoryRouter>);
+    expect(screen.queryByRole('button', { name: 'Back to quiz history' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Return to where you were' })).toHaveAttribute('href', '/vocabulary?q=hafa#words');
+    fireEvent.click(screen.getByRole('button', { name: 'Back to where you were' }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/vocabulary?q=hafa#words');
   });
 
   it('preserves a validated topic return when a quiz review is unavailable', () => {

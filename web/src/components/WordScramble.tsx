@@ -379,7 +379,7 @@ export function WordScramble() {
     if (isGameInProgress && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
       return;
     }
-    navigate(gameReturn.to);
+    navigate(gameReturn.to, { replace: true });
   };
 
   // Format time as mm:ss
@@ -899,6 +899,7 @@ export function WordScramble() {
             ) : (
               <Link
                 to={gameReturn.to}
+                replace
                 className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}

@@ -302,7 +302,7 @@ export function LengguahitaStoryViewer() {
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-red-500 mb-4">Failed to load story</p>
-          <Link
+          <Link replace
             to="/stories"
             className="text-teal-600 dark:text-teal-400 hover:underline"
           >

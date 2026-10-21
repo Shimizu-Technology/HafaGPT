@@ -5,6 +5,11 @@ import { ADVANCED_PATH, BEGINNER_PATH } from '../data/learningPath';
 import { LessonComplete } from './LessonComplete';
 
 describe('LessonComplete level copy', () => {
+  it('names the topic destination on a topic-launched completion', () => {
+    render(<MemoryRouter initialEntries={['/learn/greetings?topic=greetings&category=greetings&source=topic&return_to=%2Flearning%2Fgreetings']}><LessonComplete topic={BEGINNER_PATH[0]} topicIndex={1} totalTopics={7} quizScore={90} onNextTopic={vi.fn()} /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Back to Greetings & Basics' })).toHaveAttribute('href', '/learning/greetings');
+    expect(screen.queryByRole('link', { name: 'Back to learning path' })).not.toBeInTheDocument();
+  });
   it('does not infer all topics complete from the last topic ordinal', () => {
     const topic = ADVANCED_PATH[ADVANCED_PATH.length - 1];
     render(<MemoryRouter><LessonComplete topic={topic} topicIndex={7} totalTopics={7} completedTopics={1} quizScore={80} completionSaved onNextTopic={vi.fn()} /></MemoryRouter>);

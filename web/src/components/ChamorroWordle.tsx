@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, RotateCcw, Calendar, Shuffle, Share2, Sparkles, BookOpen, Grid3X3, Trophy, Star } from 'lucide-react';
@@ -104,6 +105,7 @@ const getDailyWord = (day?: string): WordEntry => {
 const MAX_ATTEMPTS = 6;
 
 export function ChamorroWordle() {
+  const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn, isLoaded, user } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -488,7 +490,7 @@ export function ChamorroWordle() {
       return;
     }
     clearTransitionTimers();
-    navigate('/games');
+    navigate(gameReturn.to, { replace: true });
   };
 
   const headerSubtitle = gameState === 'setup'
@@ -835,8 +837,8 @@ export function ChamorroWordle() {
               )}
             </div>
 
-            <button type="button" onClick={() => navigate('/games')} className="text-sm font-medium text-coral-600 hover:underline dark:text-teal-300">
-              Back to games
+            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-600 hover:underline dark:text-teal-300">
+              {gameReturn.label}
             </button>
           </div>
         )}

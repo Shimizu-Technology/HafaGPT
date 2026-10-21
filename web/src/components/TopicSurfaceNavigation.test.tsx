@@ -196,6 +196,12 @@ function completeCuratedGreetingQuiz() {
 }
 
 describe('topic surface navigation', () => {
+  it('replaces the failed flashcard route when returning to decks', async () => {
+    const { router } = renderSurface(<FlashcardViewer />, '/flashcards/:topic', '/flashcards/pr1-missing', true);
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to Decks' }));
+    expect(router.state.location.pathname).toBe('/flashcards');
+    expect(router.state.historyAction).toBe('REPLACE');
+  });
   beforeEach(() => {
     mocks.tryUse.mockReset();
     mocks.tryUse.mockResolvedValue(true);

@@ -110,6 +110,13 @@ describe('activity result pages', () => {
     expect(mocks.useGameHistory).toHaveBeenLastCalledWith(2, 20, 'memory_match');
   });
 
+  it('does not mislabel a custom game-result return as game history', () => {
+    render(<MemoryRouter initialEntries={[`/games/results/${RESULT_ID}?return_to=%2Fvocabulary%3Fq%3Dhafa%23words`]}><GameResultDetail /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: 'Back to where you were' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to game history' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Return' })).toHaveAttribute('href', '/vocabulary?q=hafa#words');
+  });
+
   it('connects an exact game result to its topic and cards', () => {
     render(
       <MemoryRouter initialEntries={[`/games/results/${RESULT_ID}?return_to=%2Flearning%2Fgreetings`]}>

@@ -37,7 +37,7 @@ export function VocabularyWordPage() {
           subtitle="This record is unavailable"
           icon={BookOpen}
           backTo={returnTo}
-          backLabel="Back to dictionary"
+          backLabel={backLabel}
         />
         <main className="mx-auto max-w-3xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">

@@ -36,7 +36,7 @@ export function LearnerPageHeader({
   subtitle,
   icon: Icon,
   backTo = '/',
-  backLabel = 'Go back',
+  backLabel = 'Back to Today',
   onBack,
   trailing,
   below,
@@ -53,12 +53,9 @@ export function LearnerPageHeader({
       onBack();
       return;
     }
-    const historyIndex = window.history.state?.idx;
-    if (typeof historyIndex === 'number' && historyIndex > 0) {
-      navigate(-1);
-      return;
-    }
-    navigate(backTo);
+    // A destination-labelled control always honors its destination. Replacing
+    // the child entry keeps native browser history free of return circles.
+    navigate(backTo, { replace: true });
   };
 
   return (

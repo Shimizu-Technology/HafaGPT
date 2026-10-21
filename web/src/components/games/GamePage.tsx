@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { RotateCcw, Star, Trophy, type LucideIcon } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from '../LearnerPage';
 import { TTSDisclaimer } from '../TTSDisclaimer';
@@ -23,7 +23,6 @@ interface GamePageHeaderProps {
 }
 
 export function GamePageHeader({ title, subtitle, icon, hasSpeech = false, trailing, onBack }: GamePageHeaderProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const gameReturn = getLearningGameReturn(readLearningGameContext(location.search));
   const trailingContent = hasSpeech || trailing ? (
@@ -40,7 +39,7 @@ export function GamePageHeader({ title, subtitle, icon, hasSpeech = false, trail
       icon={icon}
       backTo={gameReturn.to}
       backLabel={gameReturn.label}
-      onBack={onBack ?? (() => navigate(gameReturn.to))}
+      onBack={onBack}
       maxWidthClassName="max-w-2xl"
       trailing={trailingContent}
     />
@@ -126,6 +125,7 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
         </button>
         <Link
           to={gameReturn.to}
+          replace
           className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}

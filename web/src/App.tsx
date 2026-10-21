@@ -1,3 +1,4 @@
+import { useTheme } from './hooks/useTheme';
 import {
   Component,
   lazy,
@@ -271,6 +272,7 @@ function AppRoutes() {
 }
 
 function App() {
+  useTheme();
   const [router, setRouter] = useState<ReturnType<typeof createBrowserRouter> | null>(null);
 
   useEffect(() => {

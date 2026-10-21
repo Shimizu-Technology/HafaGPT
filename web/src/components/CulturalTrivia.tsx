@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RotateCcw, Play, Timer, CheckCircle, XCircle, Loader2, Sparkles, Zap, Flame, Target, Drama, ScrollText, Map, Languages, UtensilsCrossed, Flower2, Landmark, Building2, Trophy, Star, Lightbulb, type LucideIcon } from 'lucide-react';
@@ -274,6 +275,7 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: LucideIcon }> = {
 };
 
 export function CulturalTrivia() {
+  const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -443,7 +445,7 @@ export function CulturalTrivia() {
       setShowQuitConfirm(true);
       return;
     }
-    navigate('/games');
+    navigate(gameReturn.to, { replace: true });
   };
 
   const keepPlaying = () => {
@@ -671,8 +673,8 @@ export function CulturalTrivia() {
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 Play again
               </button>
-              <button type="button" onClick={() => navigate('/games')} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
-                More games
+              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+                {gameReturn.label}
               </button>
             </div>
           </section>
@@ -708,7 +710,7 @@ export function CulturalTrivia() {
                 onClick={() => {
                   setShowQuitConfirm(false);
                   setTimerActive(false);
-                  navigate('/games');
+                  navigate(gameReturn.to, { replace: true });
                 }}
                 className="flex-1 py-2 px-4 bg-red-700 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
               >

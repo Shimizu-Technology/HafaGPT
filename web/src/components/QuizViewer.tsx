@@ -270,7 +270,7 @@ function QuizViewerSession() {
           feature="quiz"
           onClose={() => {
             setShowUpgradePrompt(false);
-            navigate(quizReturnTo);
+            navigate(quizReturnTo, { replace: true });
           }}
           usageCount={getCount('quiz')}
           usageLimit={getLimit('quiz')}
@@ -309,7 +309,7 @@ function QuizViewerSession() {
             >
               {isDictFetching ? 'Retrying...' : 'Try Again'}
             </button>
-            <Link
+            <Link replace
               to="/quiz"
               className="flex-1 px-4 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600"
             >
@@ -327,7 +327,7 @@ function QuizViewerSession() {
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <p className="text-brown-600 dark:text-gray-400 mb-4">Quiz not found</p>
-          <Link to="/quiz" className="text-coral-600 dark:text-ocean-400 hover:underline">
+          <Link replace to="/quiz" className="text-coral-600 dark:text-ocean-400 hover:underline">
             Back to Quiz List
           </Link>
         </div>
@@ -376,7 +376,7 @@ function QuizViewerSession() {
           <p className="text-brown-600 dark:text-gray-400 mb-4">
             Please try a different quiz or come back in a moment.
           </p>
-          <Link
+          <Link replace
             to="/quiz"
             className="inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
           >
@@ -551,12 +551,12 @@ function QuizViewerSession() {
 
   // Handle back navigation with confirmation if quiz is in progress
   const handleBack = () => {
-    if (confirmQuizExit()) navigate(quizReturnTo);
+    if (confirmQuizExit()) navigate(quizReturnTo, { replace: true });
   };
 
   const handleResultsBack = () => {
     if (isResultNavigationBlocked) return;
-    navigate(quizReturnTo);
+    navigate(quizReturnTo, { replace: true });
   };
 
   const correctCount = results.filter(r => r.isCorrect).length;
@@ -681,7 +681,7 @@ function QuizViewerSession() {
                 Other Quizzes
               </button>
             ) : (
-              <Link
+              <Link replace
                 to="/quiz"
                 className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-all"
               >
