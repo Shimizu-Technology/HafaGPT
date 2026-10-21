@@ -113,3 +113,25 @@ for (const kind of ['newer typing', 'background completion']) test(`Tutor preser
   expect(await input.evaluate(element => element.getBoundingClientRect().width > 100)).toBe(true);
   await page.screenshot({ path: `${output}/${kind.replaceAll(' ', '-')}-390-large-text.png` });
 });
+
+test('Tutor bounds offline checking and recovers after reconnecting', async ({ page }) => {
+  test.setTimeout(120000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/chat');
+  await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
+  const input = page.getByRole('textbox', { name: 'Message input' });
+  await expect(input).toBeVisible();
+  let disconnected = false;
+  await page.route('**/api/chat/reconcile/*', route => disconnected ? route.abort('failed') : route.continue());
+  await page.route('**/api/chat/stream', route => { disconnected = true; return route.abort('failed'); });
+  await input.fill('Keep my note while the connection is down');
+  await page.getByRole('button', { name: 'Send message', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Check again', exact: true })).toBeVisible({ timeout: 65000 });
+  await expect(page.getByRole('button', { name: 'Start over', exact: true })).toBeVisible();
+  await expect(input).toHaveValue('Keep my note while the connection is down');
+  await page.screenshot({ path: `${output}/offline-bounded-390.png` });
+  disconnected = false;
+  await page.getByRole('button', { name: 'Check again', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Send message', exact: true })).toBeEnabled({ timeout: 15000 });
+  await expect(input).toHaveValue('Keep my note while the connection is down');
+});

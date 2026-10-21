@@ -898,7 +898,13 @@ function ChatSession() {
           // The outcome is unknown: keep the message on screen rather than hide a reply that may exist.
           showPinnedNotice('HåfaGPT couldn’t confirm this reply. Reopen this chat in a moment to check for it.');
           isSendingMessageRef.current = false;
-          resumeAfterSend = true;
+          if (currentConversationId) resumedReply.defer({ pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now() });
+          return false;
+        }
+        if (outcome === 'timed_out' && currentConversationId) {
+          showPinnedNotice('Your connection dropped before this reply could be confirmed. Your draft is still here.');
+          isSendingMessageRef.current = false;
+          resumedReply.defer({ pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now() });
           return false;
         }
         showPinnedNotice(outcome === 'not_found'
