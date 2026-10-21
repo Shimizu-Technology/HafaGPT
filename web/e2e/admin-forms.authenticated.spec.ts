@@ -33,3 +33,31 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
     });
   }
 }
+
+test('detail identity stays inside a phone viewport with enlarged text', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  const userId = process.env.E2E_ADMIN_USER_ID!;
+  const longName = 'Alexandria'.repeat(12);
+  await page.route(`**/api/admin/users/${userId}`, route => route.fulfill({ json: {
+    user_id: userId, first_name: longName, last_name: 'Long family name',
+    email: null, total_messages: 0, total_games: 0, total_quizzes: 0, total_conversations: 0,
+  } }));
+  await page.goto(`/admin/users/${userId}`);
+  const heading = page.getByRole('heading', { level: 1, name: `${longName} Long family name` });
+  await expect(heading).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '32px';
+    document.documentElement.classList.add('dark');
+  });
+  const bounds = await heading.evaluate(element => ({
+    left: element.getBoundingClientRect().left,
+    right: element.getBoundingClientRect().right,
+    viewport: innerWidth,
+    textWidth: element.scrollWidth,
+    width: element.clientWidth,
+  }));
+  expect(bounds.left).toBeGreaterThanOrEqual(0);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.viewport);
+  expect(bounds.textWidth).toBeLessThanOrEqual(bounds.width);
+});

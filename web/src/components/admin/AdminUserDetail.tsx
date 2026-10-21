@@ -174,7 +174,7 @@ export function AdminUserDetail() {
                 </span>
               </div>
             )}
-            <div className="min-w-0 flex-1 break-words">
+            <div className="min-w-0 w-full flex-1 break-words">
               <h1 className="text-2xl font-bold text-brown-800 dark:text-white">
                 {[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}
               </h1>
