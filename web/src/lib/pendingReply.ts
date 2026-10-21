@@ -11,12 +11,16 @@ export function readTutorDraft(scope?: string): TutorDraft {
 }
 export function keepTutorDraft(scope: string | undefined, draft: TutorDraft): void {
   if (!scope) return;
+  const previous = drafts.get(scope);
+  // A remount keeps the revision; only actual content changes replace it.
+  if (previous && previous.text === draft.text && previous.files.length === draft.files.length
+    && previous.files.every((file, index) => file === draft.files[index])) return;
   if (draft.text || draft.files.length) drafts.set(scope, draft);
   else drafts.delete(scope);
 }
 export function clearTutorDrafts(): void { drafts.clear(); dispatchedDrafts.clear(); }
-export function captureDispatchedDraft(id: string, scope: string): void {
-  dispatchedDrafts.set(id, { scope, draft: readTutorDraft(scope) });
+export function captureDispatchedDraft(id: string, scope: string, draft: TutorDraft): void {
+  dispatchedDrafts.set(id, { scope, draft });
 }
 export function confirmDispatchedDraft(id: string): TutorDraft | undefined {
   const record = dispatchedDrafts.get(id);

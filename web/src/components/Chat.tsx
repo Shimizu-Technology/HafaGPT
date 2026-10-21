@@ -55,6 +55,9 @@ interface ReplyRecovery {
 interface SendAttempt {
   logicalSendId: string;
   dispatchToken?: string;
+  draftScope?: string;
+  draftDestination?: string;
+  draftMoved?: boolean;
   message: string;
   files?: File[];
   /** Upload-ready copies (large photos shrunk); `files` stays the composer's identity. */
@@ -68,6 +71,13 @@ interface SendAttempt {
   todayDay?: string;
   skillLevel: 'beginner' | 'intermediate' | 'advanced';
   edit?: { messageId: number; revision: string; messageIndex: number; originalMessages: ChatMessage[]; scrollTop: number };
+}
+
+function moveAttemptDraft(attempt: SendAttempt | null): void {
+  if (!attempt || attempt.draftMoved || !attempt.draftScope || !attempt.draftDestination
+    || attempt.draftScope === attempt.draftDestination) return;
+  moveTutorDraft(attempt.draftScope, attempt.draftDestination);
+  attempt.draftMoved = true;
 }
 
 // The API saves failed replies with a bracketed marker instead of reply text.
@@ -331,13 +341,14 @@ function ChatSession() {
   useEffect(() => {
     mountedRef.current = true;
     const urls = previewUrls.current;
-    return () => { mountedRef.current = false; sendGeneration.current += 1; editAbort.current?.abort(); recoveryRef.current?.controller.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
+    return () => { moveAttemptDraft(pendingAttemptRef.current); mountedRef.current = false; sendGeneration.current += 1; editAbort.current?.abort(); recoveryRef.current?.controller.abort(); urls.forEach(url => URL.revokeObjectURL(url)); };
   }, []);
   useEffect(() => {
     if (pendingAttemptRef.current && activeConversationId !== pendingAttemptRef.current.conversationId) {
       sendGeneration.current += 1;
       // Leaving stops checking; the server still saves the reply in its conversation.
       recoveryRef.current?.controller.abort();
+      moveAttemptDraft(pendingAttemptRef.current);
       pendingAttemptRef.current = null;
       isSendingMessageRef.current = false;
       void cancelMessage(false);
@@ -348,6 +359,7 @@ function ChatSession() {
       pinnedExchangeRef.current = null;
       setUnsavedReply(false);
     }
+    setCompletedSend(undefined);
     setFailedAttempt(previous => previous?.conversationId === activeConversationId ? previous : null);
     setUnavailableAttachments(previous => previous?.conversationId === activeConversationId ? previous : null);
   // cancelMessage is invoked only when the conversation scope changes.
@@ -558,6 +570,8 @@ function ChatSession() {
     let dispatchedPendingId: string | undefined;
     const initialDraftScope = user?.id ? tutorDraftKey(user.id, activeConversationId) : undefined;
     const initialDraft = readTutorDraft(initialDraftScope);
+    attempt.draftScope = initialDraftScope;
+    attempt.draftDestination = user?.id ? tutorDraftKey(user.id, attempt.conversationId) : undefined;
     let acceptedSend = false;
     let reserved = false;
     const generation = ++sendGeneration.current;
@@ -688,6 +702,7 @@ function ChatSession() {
           .then((newConv) => {
             if (!isCurrent()) throw new CancelledError();
             attempt.conversationId = newConv.id;
+            attempt.draftDestination = user?.id ? tutorDraftKey(user.id, newConv.id) : undefined;
             setActiveConversationId(newConv.id);
             if (activeStorageKey) browserStorage.set(activeStorageKey, newConv.id);
             const conversationUrl = new URL(appRoutes.conversation(newConv.id, {
@@ -903,7 +918,7 @@ function ChatSession() {
             onRequestStarted: pendingId => {
               if (!isCurrent() || !user?.id || !currentConversationId) return;
               dispatchedPendingId = pendingId;
-              if (initialDraftScope) captureDispatchedDraft(pendingId, initialDraftScope);
+              if (initialDraftScope) captureDispatchedDraft(pendingId, initialDraftScope, initialDraft);
               rememberPendingReply(user.id, { pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now() });
               forgetPreparingSend(user.id, pendingId);
             },
@@ -1061,13 +1076,15 @@ function ChatSession() {
           if (user?.id) forgetPreparingSend(user.id, attempt.logicalSendId);
         } catch { /* Keep the same key available for retry; no blind refund. */ }
       }
+      if (!isCurrent()) moveAttemptDraft(attempt);
       if (isCurrent()) {
         if (!attempt.edit && user?.id && initialDraftScope) {
           const destination = tutorDraftKey(user.id, attempt.conversationId);
           if (acceptedSend && readTutorDraft(initialDraftScope) === initialDraft) {
             keepTutorDraft(initialDraftScope, { text: '', files: [] });
             keepTutorDraft(destination, { text: '', files: [] });
-          } else if (destination !== initialDraftScope) moveTutorDraft(initialDraftScope, destination);
+          } else moveAttemptDraft(attempt);
+          if (acceptedSend) confirmDispatchedDraft(attempt.logicalSendId);
         }
         isSendingMessageRef.current = false;
         pendingAttemptRef.current = null;
@@ -1090,6 +1107,7 @@ function ChatSession() {
 
   const handleNewConversation = async () => {
     const navigation = ++navigationGeneration.current;
+    moveAttemptDraft(pendingAttemptRef.current);
     sendGeneration.current += 1;
     recoveryRef.current?.controller.abort();
     pendingAttemptRef.current = null;

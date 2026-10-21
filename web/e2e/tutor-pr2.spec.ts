@@ -71,3 +71,45 @@ for (const width of [1440, 390, 360]) for (const theme of ['light', 'dark']) tes
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 });
+
+for (const kind of ['newer typing', 'background completion']) test(`Tutor preserves ${kind} across send navigation`, async ({ page }) => {
+  test.setTimeout(90000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/chat');
+  await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
+  const input = page.getByRole('textbox', { name: 'Message input' });
+  await expect(input).toBeVisible();
+  if (await page.getByRole('button', { name: 'New chat', exact: true }).isVisible()) await page.getByRole('button', { name: 'New chat', exact: true }).click();
+  let deliver!: () => void;
+  let ready!: () => void;
+  const serverSaved = new Promise<void>(resolve => { ready = resolve; });
+  const gate = new Promise<void>(resolve => { deliver = resolve; });
+  await page.route('**/api/chat/stream', async route => {
+    const response = await route.fetch();
+    ready();
+    await gate;
+    await route.fulfill({ response }).catch(() => {});
+  });
+  await input.fill('A note sent before leaving.');
+  await page.getByRole('button', { name: 'Send message', exact: true }).click();
+  await serverSaved;
+  if (kind === 'newer typing') {
+    await input.fill('Keep this second unsent note');
+    deliver();
+    await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false })).toBeVisible();
+    await expect(input).toHaveValue('Keep this second unsent note');
+    await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await page.getByRole('link', { name: 'Tutor', exact: true }).click();
+    await expect(input).toHaveValue('Keep this second unsent note');
+  } else {
+    await page.getByRole('link', { name: 'Library', exact: true }).click();
+    deliver();
+    await page.getByRole('link', { name: 'Tutor', exact: true }).click();
+    await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false })).toBeVisible();
+    await expect(input).toHaveValue('');
+  }
+  await page.evaluate(() => { document.documentElement.style.fontSize = '32px'; });
+  await input.focus();
+  expect(await input.evaluate(element => element.getBoundingClientRect().width > 100)).toBe(true);
+  await page.screenshot({ path: `${output}/${kind.replaceAll(' ', '-')}-390-large-text.png` });
+});

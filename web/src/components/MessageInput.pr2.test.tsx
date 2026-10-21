@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
-import { clearTutorDrafts, readTutorDraft, tutorDraftKey } from '../lib/pendingReply';
+import { captureDispatchedDraft, confirmDispatchedDraft, clearTutorDrafts, readTutorDraft, tutorDraftKey } from '../lib/pendingReply';
 
 beforeEach(() => { clearTutorDrafts(); URL.createObjectURL = vi.fn(() => 'blob:preview'); URL.revokeObjectURL = vi.fn(); });
 describe('Tutor navigation drafts', () => {
@@ -57,5 +57,18 @@ it('clears a confirmed background send when its restored composer has no submiss
   const reopened = render(<MessageInput draftScope={scope} onSend={() => false} />);
   expect(screen.getByRole('textbox')).toHaveValue('Background school note');
   reopened.rerender(<MessageInput draftScope={scope} onSend={() => false} completedSend={{ message: 'Background school note' }} />);
+  expect(screen.getByRole('textbox')).toHaveValue('');
+});
+
+it('confirms the submitted revision after a real composer unmount and remount', () => {
+  const scope = tutorDraftKey('account-a', 'chat-a');
+  const first = render(<MessageInput draftScope={scope} onSend={() => false} />);
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Sent while away' } });
+  captureDispatchedDraft('send-away', scope, readTutorDraft(scope));
+  first.unmount();
+  const returned = render(<MessageInput draftScope={scope} onSend={() => false} />);
+  const confirmed = confirmDispatchedDraft('send-away');
+  expect(confirmed?.text).toBe('Sent while away');
+  returned.rerender(<MessageInput draftScope={scope} onSend={() => false} completedSend={{ message: confirmed!.text }} />);
   expect(screen.getByRole('textbox')).toHaveValue('');
 });

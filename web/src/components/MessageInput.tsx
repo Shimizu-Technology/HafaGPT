@@ -467,7 +467,7 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
                 {item.preview ? <img src={item.preview} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <span className="flex h-10 w-8 shrink-0 items-center justify-center text-brown-600 dark:text-gray-300">{getFileTypeInfo(item.file).icon}</span>}
                 <div className="min-w-0">
                   <span className="block max-w-32 truncate text-xs font-medium text-brown-900 dark:text-gray-100" title={item.file.name}>{item.file.name}</span>
-                  <span className="block text-[11px] text-brown-600 dark:text-gray-400">{getFileTypeInfo(item.file).label}</span>
+                  <span className="block text-xs text-brown-600 dark:text-gray-400">{getFileTypeInfo(item.file).label}</span>
                 </div>
                 <button type="button" onClick={() => removeFile(item.id)} aria-label={`Remove ${item.file.name}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-700"><X className="h-4 w-4" /></button>
               </div>)}
@@ -503,7 +503,7 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
                 className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Send className="h-5 w-5" /><span className="hidden sm:inline">Send</span></button>}
           </div>
         </div>
-        {!compact && showDisclaimer && <p className="mt-1.5 text-center text-[11px] leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
+        {!compact && showDisclaimer && <p className="mt-1.5 text-center text-xs leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
       </div>
     </div>
   );
