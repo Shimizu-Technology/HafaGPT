@@ -47,8 +47,15 @@ export function useResumedReply(options: Options) {
           onPhase: phase => update({ phase }),
         });
         if (signal.aborted) return;
+        if (outcome === 'retryable' || outcome === 'abandoned') {
+          current.settled = true;
+          forgetPendingReply(ownerId, conversationId, record.pendingId);
+          update({ record: null, retry: false, notice: 'Your message did not start. You can send it again. Any draft kept on this page is still here.' });
+          return;
+        }
         // Even a missing status may have a saved reply when tracking was unavailable.
-        const loaded = await callbacks.current.load(record, signal);
+        const loaded = outcome !== 'unavailable' && outcome !== 'timed_out'
+          && await callbacks.current.load(record, signal);
         if (signal.aborted) return;
         if (loaded || outcome === 'failed') {
           current.settled = true;

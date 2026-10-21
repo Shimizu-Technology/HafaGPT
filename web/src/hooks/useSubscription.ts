@@ -2,6 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession, useUser } from '@clerk/clerk-react';
 import { useAccountRequest, useAccountMutation } from './useAccountRequest';
 import { FREE_TIER_LIMITS } from '../lib/planConfig';
+import { useEffect } from 'react';
+import { forgetPreparingSend, preparingSends, rememberPreparingSend } from '../lib/pendingReply';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -28,6 +30,8 @@ export interface UsageData {
 }
 
 export interface UsageIncrementResult {
+  dispatch_token?: string | null;
+  status?: string;
   success: boolean;
   new_count: number;
   limit: number;
@@ -158,12 +162,26 @@ export function useIncrementUsage() {
  * Provides convenient methods to check if a feature can be used.
  */
 export function useSubscription() {
+  const queryClient = useQueryClient();
   const { isSignedIn } = useAuth();
   const owner = useAccountRequest();
   const { data: usage, isLoading: usageLoading } = useUsage(isSignedIn);
   const { data: status, isLoading: statusLoading } = useSubscriptionStatus(isSignedIn);
   const { data: promo } = usePromoStatus();
   const incrementMutation = useIncrementUsage();
+  const ownerId = owner.ownerId;
+  useEffect(() => {
+    if (!ownerId) return;
+    // Content-free pointers settle reservations lost before stream dispatch,
+    // including navigation, reload and a lost approval response.
+    for (const id of preparingSends(ownerId)) void owner.request<{ status: string }>(
+      `${API_URL}/api/chat/reconcile/${encodeURIComponent(id)}`, { method: 'POST' },
+    ).then(result => {
+      if (owner.isCurrent() && ['retryable', 'abandoned', 'complete', 'failed', 'cancelled'].includes(result.status)) forgetPreparingSend(ownerId, id);
+    }).catch(() => { /* Reconcile on the next signed-in entry; never infer a refund offline. */ });
+  // Reconciliation belongs to account entry, never a rerender of an active send.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerId]);
 
   const isLoading = usageLoading || statusLoading;
   
@@ -236,6 +254,23 @@ export function useSubscription() {
     return isPremium || result.success;
   };
 
+  /** A retry reuses this identity, including after a lost reservation response. */
+  const reserveUse = async (type: UsageType, logicalSendId: string): Promise<UsageIncrementResult> => {
+    // A rolling web-first deployment must not charge through a legacy API that
+    // silently ignores the key. This endpoint also fences a lost reservation.
+    if (type === 'chat' && ownerId) rememberPreparingSend(ownerId, logicalSendId);
+    if (type === 'chat') await owner.request(
+      `${API_URL}/api/chat/reconcile/${encodeURIComponent(logicalSendId)}`, { method: 'POST' },
+    );
+    const result = await owner.request<UsageIncrementResult>(
+      `${API_URL}/api/usage/increment/${type}?logical_send_id=${encodeURIComponent(logicalSendId)}`, { method: 'POST' },
+    );
+    if (!owner.isCurrent()) throw new Error('The signed-in account changed.');
+    if (result.success && !result.dispatch_token) throw new Error('Message recovery is being updated. Please try again in a moment.');
+    void queryClient.invalidateQueries({ queryKey: ['usage-today', owner.ownerId] });
+    return result;
+  };
+
   return {
     // Status
     isLoading,
@@ -260,6 +295,7 @@ export function useSubscription() {
     getLimit,
     getCount,
     tryUse,
+    reserveUse,
     
     // Raw mutation for manual control
     incrementUsage: incrementMutation,

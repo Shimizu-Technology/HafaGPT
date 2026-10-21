@@ -1,0 +1,73 @@
+import { test, expect } from '@playwright/test';
+import { clerk, clerkSetup } from '@clerk/testing/playwright';
+
+// Opt-in real local API + dedicated database; never run against production.
+test.skip(!process.env.PR2_QA, 'Requires dedicated PR2 local API and Clerk development fixture');
+test.describe.configure({ mode: 'serial' });
+const api = 'http://127.0.0.1:8731';
+const output = process.env.PR2_OUTPUT || 'test-results';
+test.beforeAll(async () => { await clerkSetup(); });
+for (const width of [1440, 390, 360]) for (const theme of ['light', 'dark']) test.describe(`${width} ${theme}`, () => {
+  test.use({ viewport: { width, height: width === 1440 ? 900 : width === 390 ? 844 : 740 }, isMobile: width !== 1440, hasTouch: width !== 1440 });
+  test(`Tutor recovery and navigation ${width} ${theme}`, async ({ page }) => {
+    test.setTimeout(90000);
+    page.on('pageerror', error => console.log('PAGE_ERROR', error.message));
+    await page.setViewportSize({ width, height: width === 1440 ? 900 : width === 390 ? 844 : 740 });
+    await page.emulateMedia({ colorScheme: theme as 'light' | 'dark', reducedMotion: 'reduce' });
+    await page.goto('/chat');
+    await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
+    await page.evaluate(async () => {
+      await (window as unknown as { Clerk: { user: { update: (data: unknown) => Promise<void> } } }).Clerk.user.update({ unsafeMetadata: { onboarding_completed: true } });
+    });
+    await page.reload();
+    await page.evaluate(t => { localStorage.setItem('theme', t); document.documentElement.classList.toggle('dark', t === 'dark'); }, theme);
+    if (await page.getByRole('button', { name: 'New chat', exact: true }).isVisible()) await page.getByRole('button', { name: 'New chat', exact: true }).click();
+    const input = page.getByRole('textbox', { name: 'Message input' });
+    await input.fill('Please explain this school note.');
+    await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await page.getByRole('link', { name: 'Tutor', exact: true }).click();
+    await expect(input).toHaveValue('Please explain this school note.');
+    await page.screenshot({ path: `${output}/draft-${width}-${theme}.png` });
+    // Actual API reservation; prevent only stream delivery before registration.
+    let logicalId = '';
+    page.on('request', request => {
+      if (request.url().includes('/api/usage/increment/chat?')) logicalId = new URL(request.url()).searchParams.get('logical_send_id') || '';
+    });
+    await page.route('**/api/chat/stream', route => route.abort('failed'));
+    await page.getByRole('button', { name: 'Send message', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Send again', exact: true })).toBeVisible({ timeout: 30000 });
+    await expect(input).toBeEnabled();
+    await expect(input).toHaveValue('Please explain this school note.');
+    await page.screenshot({ path: `${output}/recovered-${width}-${theme}.png` });
+    const token = await page.evaluate(async () => (window as unknown as { Clerk: { session: { getToken: () => Promise<string> } } }).Clerk.session.getToken());
+    const headers = { Authorization: `Bearer ${token}` };
+    const status = await page.request.post(`${api}/api/chat/reconcile/${logicalId}`, { headers });
+    expect((await status.json()).status).toBe('retryable');
+    const usageBefore = await (await page.request.get(`${api}/api/usage/today`, { headers })).json();
+    await page.unroute('**/api/chat/stream');
+    await page.getByRole('button', { name: 'Send again', exact: true }).click();
+    await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false }).first()).toBeVisible();
+    await expect(input).toBeEnabled();
+    await expect(input).toHaveValue('');
+    const usageAfter = await (await page.request.get(`${api}/api/usage/today`, { headers })).json();
+    expect(usageAfter.chat_count).toBe(usageBefore.chat_count + 1);
+    const finalStatus = await page.request.post(`${api}/api/chat/reconcile/${logicalId}`, { headers });
+    expect((await finalStatus.json()).status).toBe('complete');
+    await page.getByRole('button', { name: /Sources \(/ }).last().click();
+    await expect(page.getByText('Reviewed vocabulary', { exact: false })).toBeVisible();
+    await expect(page.getByText('Sources from Guam and the Northern Mariana Islands', { exact: false })).toBeVisible();
+    await page.keyboard.press('Tab');
+    await page.screenshot({ path: `${output}/saved-${width}-${theme}.png` });
+    // A full reload loads exactly one persisted exchange and no sensitive draft.
+    await page.reload();
+    await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false })).toHaveCount(1);
+    await expect(input).toHaveValue('');
+    await input.fill('Private note to clear at sign out');
+    await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await clerk.signOut({ page });
+    await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
+    await page.getByRole('link', { name: 'Tutor', exact: true }).click();
+    await expect(input).toHaveValue('');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+});

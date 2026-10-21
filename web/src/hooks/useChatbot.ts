@@ -116,7 +116,7 @@ interface StreamStatus {
 }
 
 type StreamEvent = StreamMetadata | StreamChunk | StreamDone | StreamCancelled | StreamError | StreamStatus;
-const REPLY_STATUSES: ReplyStatus[] = ['running', 'complete', 'failed', 'cancelled', 'interrupted'];
+const REPLY_STATUSES: ReplyStatus[] = ['running', 'complete', 'failed', 'cancelled', 'interrupted', 'retryable', 'abandoned'];
 
 // Callback for streaming updates
 export interface StreamCallbacks {
@@ -223,7 +223,7 @@ export function useChatbot() {
     // result rather than announcing cancellation while Stop may still fail.
     request.stopConfirmation = !notifyServer || !request.sent
       ? Promise.resolve(true)
-      : postCancellation(request.pendingId, request.token);
+      : request.pendingId.startsWith('tutor_') ? cancelPendingReply(request.pendingId) : postCancellation(request.pendingId, request.token);
     request.controller.abort();
     await request.stopConfirmation;
   };
@@ -338,8 +338,10 @@ export function useChatbot() {
     intent?: ChatIntent,
     learningTopicId?: string,
     edit?: { messageId: number; revision: string },
+    logicalSend?: { id: string; dispatchToken: string },
   ): Promise<void> => {
     const request = startRequest();
+    if (logicalSend) request.pendingId = logicalSend.id;
     const signal = request.controller.signal;
     const pendingId = request.pendingId;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
@@ -367,6 +369,10 @@ export function useChatbot() {
         if (learningTopicId) formData.append('learning_topic_id', learningTopicId);
         formData.append('session_id', sessionId || '');
         formData.append('pending_id', pendingId);
+        if (logicalSend) {
+          formData.append('logical_send_id', logicalSend.id);
+          formData.append('dispatch_token', logicalSend.dispatchToken);
+        }
         if (edit) formData.append('edit_revision', edit.revision);
         if (conversationId) {
           formData.append('conversation_id', conversationId);
@@ -390,6 +396,7 @@ export function useChatbot() {
           user_id: request.owner.ownerId,
           conversation_id: conversationId,
           pending_id: pendingId,
+          ...(logicalSend && { logical_send_id: logicalSend.id, dispatch_token: logicalSend.dispatchToken }),
           skill_level: skillLevel,
           ...(edit && { edit_revision: edit.revision }),
         });
@@ -411,6 +418,7 @@ export function useChatbot() {
       });
 
       assertCurrent(request);
+      if (logicalSend && response.status === 409) throw new ConnectionLostError(pendingId);
       if (!response.ok) {
         if (edit && response.status === 409) throw new Error('This conversation changed. Reopen it before editing.');
         if (edit && (response.status === 404 || response.status === 405)) throw new Error('Editing is temporarily unavailable. Your original conversation is unchanged.');
@@ -521,6 +529,10 @@ export function useChatbot() {
       // The reply already completed; a connection that drops while the server
       // sends its closing frame is not a failure.
       if (receivedTerminalEvent && isConnectionFailure(err)) return;
+      if (logicalSend && request.sent) {
+        textBatcher.flush();
+        throw new ConnectionLostError(pendingId);
+      }
       // Once a new message reaches the server it keeps replying and saves the
       // result even if the phone drops the connection. Let the caller check
       // for that reply instead of reporting the message as unsent. Edits are
@@ -547,6 +559,7 @@ export function useChatbot() {
 
   /** Ask the API what happened to a reply whose connection dropped. */
   const checkReplyStatus = async (pendingId: string, signal?: AbortSignal): Promise<ReplyStatus> => {
+    if (pendingId.startsWith('tutor_')) return reconcilePendingReply(pendingId, false, signal);
     if (!mounted.current || ownerRef.current !== owner || signal?.aborted) throw new CancelledError();
     const token = await getToken();
     if (!mounted.current || ownerRef.current !== owner || signal?.aborted) throw new CancelledError();
@@ -560,11 +573,27 @@ export function useChatbot() {
       cache: 'no-store',
       signal,
     });
-    if (response.status === 404) return 'not_found';
+    if (response.status === 404) return pendingId.startsWith('tutor_')
+      ? reconcilePendingReply(pendingId, false, signal) : 'not_found';
     if (!response.ok) throw new HttpStatusError(response.status, await readErrorDetail(response));
     const body = await response.json() as { status?: string };
+    if (body.status === 'reserved') return reconcilePendingReply(pendingId, false, signal);
     if (!REPLY_STATUSES.includes(body.status as ReplyStatus)) throw new Error('Unknown reply status');
     return body.status as ReplyStatus;
+  };
+
+  /** Atomically fence a dispatch which has not started; never infer that from 404. */
+  const reconcilePendingReply = async (pendingId: string, abandon = false, signal?: AbortSignal): Promise<ReplyStatus> => {
+    if (!mounted.current || ownerRef.current !== owner || signal?.aborted) throw new CancelledError();
+    const token = await getToken();
+    if (!mounted.current || ownerRef.current !== owner || !token || signal?.aborted) throw new CancelledError();
+    const response = await fetch(`${API_URL}/api/chat/reconcile/${encodeURIComponent(pendingId)}${abandon ? '?abandon=true' : ''}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal,
+    });
+    if (!response.ok) throw new HttpStatusError(response.status, await readErrorDetail(response));
+    const body = await response.json() as { status: ReplyStatus };
+    if (!REPLY_STATUSES.includes(body.status)) throw new Error('Unknown reply status');
+    return body.status;
   };
 
   /** Stop a reply still running on the server; resolves whether the server got the request. */
@@ -575,6 +604,10 @@ export function useChatbot() {
       if (!mounted.current || ownerRef.current !== owner) return false;
       return await Promise.race([
         (async () => {
+          if (pendingId.startsWith('tutor_')) {
+            const status = await reconcilePendingReply(pendingId, false, controller.signal);
+            if (status === 'retryable' || status === 'abandoned') return true;
+          }
           const token = await getToken();
           if (!mounted.current || ownerRef.current !== owner || !token || controller.signal.aborted) return false;
           return postCancellation(pendingId, token, controller.signal);
@@ -588,7 +621,7 @@ export function useChatbot() {
     }
   };
 
-  return { sendMessage, sendMessageStream, cancelMessage, checkReplyStatus, cancelPendingReply, resetSession, loading, error, setError, sessionId };
+  return { sendMessage, sendMessageStream, cancelMessage, checkReplyStatus, reconcilePendingReply, cancelPendingReply, resetSession, loading, error, setError, sessionId };
 }
 
 /** Bound Stop even when the connection stalls after the phone goes offline. */

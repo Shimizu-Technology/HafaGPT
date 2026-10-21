@@ -4,7 +4,7 @@ import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Ch
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
 import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
-import { forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
+import { captureDispatchedDraft, confirmDispatchedDraft, forgetPreparingSend, clearTutorDrafts, keepTutorDraft, readTutorDraft, moveTutorDraft, tutorDraftKey, forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
 import { useResumedReply } from '../hooks/useResumedReply';
 import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
@@ -53,6 +53,8 @@ interface ReplyRecovery {
 }
 
 interface SendAttempt {
+  logicalSendId: string;
+  dispatchToken?: string;
   message: string;
   files?: File[];
   /** Upload-ready copies (large photos shrunk); `files` stays the composer's identity. */
@@ -114,8 +116,21 @@ function toChatMessages(conversationMessages: ConversationMessage[]): ChatMessag
   });
 }
 
+const watchedClerks = new WeakSet<object>();
+
 export function Chat() {
   const { user } = useUser();
+  const clerk = useClerk();
+  useEffect(() => {
+    if (!watchedClerks.has(clerk) && clerk.addListener) {
+      watchedClerks.add(clerk);
+      let ownerId = user?.id;
+      clerk.addListener(({ user: next }) => {
+        if (next?.id !== ownerId) clearTutorDrafts();
+        ownerId = next?.id;
+      });
+    }
+  }, [clerk, user?.id]);
   return <ChatSession key={user?.id || 'guest'} />;
 }
 
@@ -162,12 +177,12 @@ function ChatSession() {
     return null;
   });
   
-  const { sendMessageStream, cancelMessage, checkReplyStatus, cancelPendingReply, loading, error, setError } = useChatbot();
+  const { sendMessageStream, cancelMessage, checkReplyStatus, reconcilePendingReply, cancelPendingReply, loading, error, setError } = useChatbot();
   const { theme, toggleTheme } = useTheme();
   const clerk = useClerk();
   const editOwner = useAccountRequest();
   const queryClient = useQueryClient();
-  const { canUse, tryUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
+  const { canUse, tryUse, reserveUse, getCount, getLimit, isChristmasTheme, isNewYearTheme } = useSubscription();
   const { preferences } = useUserPreferences();
   const { createShare, revokeShare } = useShareConversation();
   const requestedTopic = getTopic(searchParams.get('topic') || '');
@@ -303,6 +318,8 @@ function ChatSession() {
         if (signal.aborted || scopeConversation.current !== record.conversationId) return false;
         const saved = queryClient.getQueryData<ConversationMessage[]>(['messages', record.conversationId, user?.id]);
         if (saved && hasSavedPendingReply(saved, record)) {
+          const confirmedDraft = confirmDispatchedDraft(record.pendingId);
+          if (confirmedDraft) setCompletedSend({ message: confirmedDraft.text.trim(), files: confirmedDraft.files });
           setMessages(toChatMessages(saved));
           return true;
         }
@@ -530,7 +547,7 @@ function ChatSession() {
     if (!mountedRef.current || activeConversationId !== scopeConversation.current || !isSignedIn || isSendingMessageRef.current || replyPending || (retry && retry.conversationId !== scopeConversation.current)) return false;
     const sendTopic = getTopic(learningTopicOverride || '') || linkedTopic;
     const attempt: SendAttempt = retry || {
-      message, files, conversationId: activeConversationId, mode, intent: chatIntent,
+      logicalSendId: `tutor_${crypto.randomUUID()}`, message, files, conversationId: activeConversationId, mode, intent: chatIntent,
       topicId: sendTopic?.id || requestedTopic?.id, skillLevel: preferences.skill_level,
       returnTo: requestedReturnPath, todayStep: searchParams.get('today_step') || undefined, todayDay: searchParams.get('today_day') || undefined,
     };
@@ -539,6 +556,10 @@ function ChatSession() {
     let saveFailed = false;
     let resumeAfterSend = false;
     let dispatchedPendingId: string | undefined;
+    const initialDraftScope = user?.id ? tutorDraftKey(user.id, activeConversationId) : undefined;
+    const initialDraft = readTutorDraft(initialDraftScope);
+    let acceptedSend = false;
+    let reserved = false;
     const generation = ++sendGeneration.current;
     pendingAttemptRef.current = attempt;
     const isCurrent = () => mountedRef.current && generation === sendGeneration.current
@@ -569,7 +590,7 @@ function ChatSession() {
     // ========================================================================
     
     // Quick sync check - if we already know they're over limit, block immediately
-    if (!approvedUsage && isSignedIn && !canUse('chat')) {
+    if (!retry && !approvedUsage && isSignedIn && !canUse('chat')) {
       setShowUpgradePrompt(true);
       setPreparingSend(false);
       return false;
@@ -640,7 +661,10 @@ function ChatSession() {
       if (!approvedUsage && isSignedIn) {
         let allowed: boolean;
         try {
-          allowed = await tryUse('chat');
+          const reservation = await reserveUse('chat', attempt.logicalSendId);
+          allowed = reservation.success;
+          reserved = allowed;
+          attempt.dispatchToken = reservation.dispatch_token || undefined;
         } catch (usageError) {
           console.error('Failed to verify chat usage:', usageError);
           removeOptimisticMessages();
@@ -777,6 +801,13 @@ function ChatSession() {
           isSendingMessageRef.current = false;
           return false;
         }
+        if (outcome === 'retryable' || outcome === 'abandoned') {
+          if (user?.id && currentConversationId) forgetPendingReply(user.id, currentConversationId, pendingId);
+          finishRecovery();
+          removeOptimisticMessages();
+          fail('Your message did not start. Your draft is still here. Send it again when you’re ready.');
+          return false;
+        }
         if (outcome === 'not_found') {
           // Registration is best effort. A missing row can mean a worker is
           // still generating without tracking, so never offer a duplicate resend.
@@ -796,7 +827,8 @@ function ChatSession() {
             }
             setMessages(found);
             isSendingMessageRef.current = false;
-            setCompletedSend({ message: attempt.message, files: attempt.files });
+            acceptedSend = true;
+            if (readTutorDraft(initialDraftScope) === initialDraft) setCompletedSend({ message: attempt.message, files: attempt.files });
             return true;
           }
         }
@@ -842,7 +874,8 @@ function ChatSession() {
           }
           isSendingMessageRef.current = false;
           if (outcome === 'failed') fail('HåfaGPT couldn’t finish this reply. Please try again.', 'Reply didn’t finish');
-          setCompletedSend({ message: attempt.message, files: attempt.files });
+          acceptedSend = true;
+            if (readTutorDraft(initialDraftScope) === initialDraft) setCompletedSend({ message: attempt.message, files: attempt.files });
           return true;
         }
         finishRecovery();
@@ -870,7 +903,9 @@ function ChatSession() {
             onRequestStarted: pendingId => {
               if (!isCurrent() || !user?.id || !currentConversationId) return;
               dispatchedPendingId = pendingId;
+              if (initialDraftScope) captureDispatchedDraft(pendingId, initialDraftScope);
               rememberPendingReply(user.id, { pendingId, conversationId: currentConversationId, priorQuestions, createdAt: Date.now() });
+              forgetPreparingSend(user.id, pendingId);
             },
             onStatus: (label) => {
               if (!isCurrent()) return;
@@ -987,7 +1022,8 @@ function ChatSession() {
           attempt.skillLevel,
           attempt.intent,
           attempt.topicId,
-          attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined
+          attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined,
+          attempt.edit ? undefined : { id: attempt.logicalSendId, dispatchToken: attempt.dispatchToken! },
         );
       } catch (streamError) {
         if (!(streamError instanceof ConnectionLostError) || !isCurrent()) throw streamError;
@@ -995,7 +1031,10 @@ function ChatSession() {
       }
       if (!isCurrent()) return false;
       if (saveFailed) return false;
-      if (!attempt.edit) setCompletedSend({ message: attempt.message, files: attempt.files });
+      if (!attempt.edit) {
+        acceptedSend = true;
+            if (readTutorDraft(initialDraftScope) === initialDraft) setCompletedSend({ message: attempt.message, files: attempt.files });
+      }
       return true;
       
     } catch (err) {
@@ -1016,7 +1055,20 @@ function ChatSession() {
       fail(describeSendFailure(err));
       return false;
     } finally {
+      if (reserved && !dispatchedPendingId && !attempt.edit) {
+        try {
+          await reconcilePendingReply(attempt.logicalSendId);
+          if (user?.id) forgetPreparingSend(user.id, attempt.logicalSendId);
+        } catch { /* Keep the same key available for retry; no blind refund. */ }
+      }
       if (isCurrent()) {
+        if (!attempt.edit && user?.id && initialDraftScope) {
+          const destination = tutorDraftKey(user.id, attempt.conversationId);
+          if (acceptedSend && readTutorDraft(initialDraftScope) === initialDraft) {
+            keepTutorDraft(initialDraftScope, { text: '', files: [] });
+            keepTutorDraft(destination, { text: '', files: [] });
+          } else if (destination !== initialDraftScope) moveTutorDraft(initialDraftScope, destination);
+        }
         isSendingMessageRef.current = false;
         pendingAttemptRef.current = null;
         setPreparingSend(false);
@@ -1197,7 +1249,7 @@ function ChatSession() {
     const conversationId = activeConversationId;
     const generation = ++sendGeneration.current;
     const attempt: SendAttempt = {
-      message: newContent, conversationId, mode, intent: chatIntent,
+      logicalSendId: `tutor_${crypto.randomUUID()}`, message: newContent, conversationId, mode, intent: chatIntent,
       topicId: linkedTopic?.id, skillLevel: preferences.skill_level,
     };
     pendingAttemptRef.current = attempt;
@@ -1405,6 +1457,11 @@ End of Export
     }
   };
 
+  const draftScopeRef = useRef<string | undefined>(undefined);
+  const composerScope = isSendingMessageRef.current ? draftScopeRef.current
+    : user?.id ? tutorDraftKey(user.id, activeConversationId) : undefined;
+  draftScopeRef.current = composerScope;
+
   const conversationTitle = resolvedConversationRecord?.title
     || conversations.find(item => item.id === activeConversationId)?.title
     || 'New conversation';
@@ -1454,7 +1511,7 @@ End of Export
         <header
           data-testid="chat-header"
           hidden={compactKeyboard}
-          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/95`}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-[color,background-color,border-color,opacity,transform] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
             {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
@@ -1526,9 +1583,9 @@ End of Export
             // Quick loading indicator when switching conversations
             <div className="flex flex-col items-center justify-center py-8 animate-fade-in">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
               </div>
               <p className="mt-3 text-sm text-brown-500 dark:text-gray-500">
                 Loading conversation...
@@ -1594,6 +1651,7 @@ End of Export
         {resumedReply.notice && <div role="status" className="mx-auto flex max-w-4xl items-center gap-3 px-4 pt-3 text-sm text-brown-700 dark:text-gray-200">
           <p className="min-w-0 flex-1">{resumedReply.notice}</p>
           {resumedReply.canRetry && <button type="button" onClick={resumedReply.retry} className="min-h-11 shrink-0 rounded-lg px-3 font-semibold text-teal-700 hover:bg-cream-200 dark:text-ocean-300 dark:hover:bg-slate-800">Check again</button>}
+          {resumedReply.canRetry && <button type="button" onClick={() => void handleNewConversation()} className="min-h-11 shrink-0 rounded-lg px-3 font-semibold text-teal-700 hover:bg-cream-200 dark:text-ocean-300 dark:hover:bg-slate-800">Start over</button>}
         </div>}
         {/* Scroll to Bottom Button */}
         {messages.length > 0 && showScrollButton && (
@@ -1614,6 +1672,8 @@ End of Export
           </div>
         )}
         <MessageInput
+          key={composerScope}
+          draftScope={composerScope}
           onSend={handleSend}
           compact={viewport.height < 420}
           inline={inlineComposer}
@@ -1626,7 +1686,7 @@ End of Export
               <p className="mt-0.5 text-xs text-red-800 dark:text-red-300">{error}</p>
             </div>
             <button type="button" onClick={handleRetry} disabled={preparingSend || loading || replyPending} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-50">
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />Retry
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />{failedAttempt.edit ? 'Retry' : 'Send again'}
             </button>
             <button type="button" onClick={dismissFailure} aria-label="Dismiss" className="-mr-1 inline-flex h-11 w-9 shrink-0 items-center justify-center rounded-lg text-red-800 hover:bg-red-100 dark:text-red-200 dark:hover:bg-red-900/40">
               <X className="h-4 w-4" aria-hidden="true" />
@@ -1781,7 +1841,7 @@ End of Export
                   </div>
                   <button
                     onClick={handleCopyShareLink}
-                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-all flex-shrink-0 ${
+                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-[color,background-color,border-color,opacity,transform] flex-shrink-0 ${
                       shareCopied
                         ? 'bg-green-500 text-white'
                         : 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800'
