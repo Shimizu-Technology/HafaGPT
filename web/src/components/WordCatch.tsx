@@ -113,6 +113,7 @@ export function WordCatch() {
   const [maxCombo, setMaxCombo] = useState(0);
   const [caught, setCaught] = useState(0);
   const [, setMissed] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [currentSpeed, setCurrentSpeed] = useState(PAIR_SPEED_START);
   const [spawnInterval, setSpawnInterval] = useState(SPAWN_INTERVAL_START);
@@ -348,9 +349,11 @@ export function WordCatch() {
 
   // Game timer
   useEffect(() => {
-    if (!pace.challenge || gameState !== 'playing' || guard.blocked) return;
+    if (gameState !== 'playing' || guard.blocked) return;
 
     const timer = setInterval(() => {
+      setElapsedSeconds(seconds => seconds + 1);
+      if (!pace.challenge) return;
       setTimeLeft(prev => {
         if (prev <= 1) {
           setGameState('complete');
@@ -380,11 +383,11 @@ export function WordCatch() {
         score,
         moves: caught,
         pairs: maxCombo,
-        time_seconds: GAME_DURATION - timeLeft,
+        time_seconds: elapsedSeconds,
         stars,
       });
     }
-  }, [gameState, isSignedIn, caught, score, maxCombo, timeLeft, settings, saveGameResultMutation, resultUnresolved]);
+  }, [gameState, isSignedIn, caught, score, maxCombo, elapsedSeconds, settings, saveGameResultMutation, resultUnresolved]);
 
   // Start game
   const startGame = useCallback(async () => {
@@ -425,6 +428,7 @@ export function WordCatch() {
       setCaught(0);
       setMissed(0);
       setTimeLeft(GAME_DURATION);
+      setElapsedSeconds(0);
       setCurrentSpeed(PAIR_SPEED_START);
       setSpawnInterval(SPAWN_INTERVAL_START);
       caughtIdsRef.current.clear();

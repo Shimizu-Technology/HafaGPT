@@ -482,7 +482,7 @@ export function Hangman() {
           </p>
       </main>
 
-        {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
+        {showUpgradePrompt && !startStatus.error && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
   }

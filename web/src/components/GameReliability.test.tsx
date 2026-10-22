@@ -181,6 +181,16 @@ describe('game result and round reliability', () => {
     expect(mocks.save.mock.calls[0][0]).toMatchObject({ client_attempt_id: id, stars: 0 });
   });
 
+  it('keeps Hangman network failures on the Start recovery path', async () => {
+    mocks.reserve.mockRejectedValueOnce(new Error('offline'));
+    render(<GameTestRouter><Hangman /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('couldn’t start');
+    expect(screen.queryByText('Allowance reached')).not.toBeInTheDocument();
+    await start();
+    expect(screen.queryByText('Allowance reached')).not.toBeInTheDocument();
+  });
+
   it('holds Sound Match feedback for the learner, with no prompt autoplay', async () => {
     render(<GameTestRouter><SoundMatch /></GameTestRouter>);
     await start();
@@ -275,7 +285,7 @@ describe('game result and round reliability', () => {
     const media = Object.assign(new EventTarget(), { matches: false });
     vi.stubGlobal('matchMedia', () => media);
     render(<GameTestRouter><WordCatch /></GameTestRouter>);
-    fireEvent.click(screen.getByRole('button', { name: 'Challenge', exact: true }));
+    fireEvent.click(screen.getByRole('button', { name: /^Challenge$/ }));
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); });
     await act(async () => { vi.advanceTimersByTime(5000); });
     const pairs = () => screen.getAllByRole('button').filter(button => button.textContent?.includes('= '));
@@ -284,6 +294,23 @@ describe('game result and round reliability', () => {
     expect(pairs()).toHaveLength(1);
     expect(pairs()[0].style.transform).toBe('translate(-50%, -50%)');
     expect(screen.getByText('No timer')).toBeInTheDocument();
+  });
+
+  it('saves Relaxed Word Catch active time without counting pauses or departure dialogs', async () => {
+    vi.useFakeTimers();
+    render(<GameTestRouter><WordCatch /></GameTestRouter>);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); });
+    act(() => vi.advanceTimersByTime(3000));
+    fireEvent.click(screen.getByRole('button', { name: 'Pause game' }));
+    act(() => vi.advanceTimersByTime(5000));
+    fireEvent.click(screen.getByRole('button', { name: 'Resume game' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
+    act(() => vi.advanceTimersByTime(5000));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
+    act(() => vi.advanceTimersByTime(2000));
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Finish round' })); });
+    expect(mocks.save).toHaveBeenCalledOnce();
+    expect(mocks.save.mock.calls[0][0]).toMatchObject({ score: 0, time_seconds: 5 });
   });
 
   it('records a timed Word Catch round with no catches', async () => {
