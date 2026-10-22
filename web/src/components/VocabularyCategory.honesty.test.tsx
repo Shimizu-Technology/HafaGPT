@@ -44,3 +44,12 @@ it('retries the failed next page separately without claiming all words loaded', 
   expect(mocks.next).toHaveBeenCalledOnce();
   expect(mocks.retry).not.toHaveBeenCalled();
 });
+
+it('places fallback word headings below the Dictionary entries section heading', () => {
+  mocks.query.data = { pages: [{ category: { title: 'Greetings' }, words: [{ chamorro: 'Fallback entry', definition: 'Fallback meaning', examples: [] }], total: 1 }] };
+  render(<Page />);
+  const headings = screen.getAllByRole('heading');
+  expect(headings.map(heading => heading.tagName)).toEqual(['H1', 'H2', 'H3']);
+  expect(headings[1]).toHaveTextContent('Dictionary entries');
+  expect(headings[2]).toHaveTextContent('Fallback entry');
+});
