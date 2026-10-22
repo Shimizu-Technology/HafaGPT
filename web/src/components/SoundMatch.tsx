@@ -1,10 +1,12 @@
+import { useGameTimers } from '../hooks/useGameTimers';
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Headphones, Volume2, Play, Sparkles } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
@@ -111,14 +113,19 @@ export function SoundMatch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const startingRef = useRef(false);
+  const { schedule, clear: clearTimers } = useGameTimers();
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const { speak, preload, isSpeaking } = useSpeech(); // Use shared TTS hook with preloading
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<GameState>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'feedback') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [selectedCategory, setSelectedCategory] = useState<Category>(GAME_CATEGORIES[0]);
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
@@ -168,7 +175,9 @@ export function SoundMatch() {
 
   // Start the game
   const startGame = async () => {
-    if (resultUnresolved) return;
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    try {
     // Check subscription limits
     if (!canUse('game')) {
       setShowUpgradePrompt(true);
@@ -182,6 +191,7 @@ export function SoundMatch() {
       return;
     }
     
+    clearTimers();
     saveGameResultMutation.reset();
     gameAttemptIdRef.current = createClientAttemptId();
     setGameState('playing');
@@ -191,6 +201,7 @@ export function SoundMatch() {
     setUsedWords(new Set());
     hasSavedRef.current = false;
     generateRound();
+    } finally { startingRef.current = false; }
   };
 
   // Handle answer selection
@@ -213,13 +224,13 @@ export function SoundMatch() {
     } else {
       setStreak(0);
       // Speak the correct answer
-      setTimeout(() => {
+      schedule(() => {
         speak(currentWord?.chamorro || '');
       }, 500);
     }
     
     // Move to next round after delay
-    setTimeout(() => {
+    schedule(() => {
       if (currentRound >= ROUNDS_PER_GAME) {
         setGameState('complete');
       } else {
@@ -262,7 +273,7 @@ export function SoundMatch() {
   };
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader title="Sound Match" subtitle="Listen and choose the matching picture" icon={Headphones} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -434,7 +445,7 @@ export function SoundMatch() {
       </main>
 
       {/* Upgrade Prompt */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

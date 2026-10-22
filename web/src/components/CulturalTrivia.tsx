@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { formatUsageSummary } from '../lib/usageDisplay';
 import { GamePage, GamePageHeader, GameProgress } from './games/GamePage';
@@ -283,7 +284,7 @@ export function CulturalTrivia() {
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Settings state
@@ -292,10 +293,12 @@ export function CulturalTrivia() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isStarting, setIsStarting] = useState(false);
-  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -411,20 +414,20 @@ export function CulturalTrivia() {
   }, [showResult, questions, currentQuestionIndex, timeLeft, streak, timedChallenge]);
 
   useEffect(() => {
-    if (!timerActive || timeLeft <= 0) return;
+    if (guard.blocked || !timerActive || timeLeft <= 0) return;
 
     const timer = setTimeout(() => {
       setTimeLeft(prev => prev - 1);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timerActive, timeLeft]);
+  }, [timerActive, timeLeft, guard.blocked]);
 
   useEffect(() => {
-    if (timerActive && timeLeft === 0 && !showResult) {
+    if (timerActive && !guard.blocked && timeLeft === 0 && !showResult) {
       handleAnswer(-1);
     }
-  }, [timeLeft, timerActive, showResult, handleAnswer]);
+  }, [timeLeft, timerActive, showResult, handleAnswer, guard.blocked]);
 
   // Move to next question
   const nextQuestion = useCallback(() => {
@@ -439,21 +442,7 @@ export function CulturalTrivia() {
     }
   }, [currentQuestionIndex, questions.length, difficulty, timedChallenge]);
 
-  const handleBack = () => {
-    if (gameState === 'playing') {
-      setTimerActive(false);
-      setShowQuitConfirm(true);
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
-
-  const keepPlaying = () => {
-    setShowQuitConfirm(false);
-    if (!showResult) {
-      setTimerActive(timedChallenge);
-    }
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   // Save game result
   useEffect(() => {
@@ -489,7 +478,7 @@ export function CulturalTrivia() {
   // Setup screen
   if (gameState === 'setup') {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader
           title="Cultural Trivia"
           subtitle="Test what you know about Guam and Chamorro culture."
@@ -628,7 +617,7 @@ export function CulturalTrivia() {
     const stars = getStars();
     
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Cultural Trivia" subtitle="Your results" icon={Landmark} onBack={handleBack} />
         <main className="mx-auto max-w-md px-3 py-6 sm:px-4">
           <section className="text-center" aria-labelledby="trivia-result-title">
@@ -688,38 +677,9 @@ export function CulturalTrivia() {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       {/* Quit Confirmation Modal */}
-      {showQuitConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" role="dialog" aria-modal="true" aria-labelledby="quit-trivia-title">
-            <h2 id="quit-trivia-title" className="mb-2 text-lg font-bold text-brown-800 dark:text-white">Leave this game?</h2>
-            <p className="text-brown-600 dark:text-gray-400 mb-6">
-              Your progress will be lost and this game won't count towards your stats.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={keepPlaying}
-                className="flex-1 py-2 px-4 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
-              >
-                Keep Playing
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowQuitConfirm(false);
-                  setTimerActive(false);
-                  navigate(gameReturn.to, { replace: true });
-                }}
-                className="flex-1 py-2 px-4 bg-red-700 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
-              >
-                Leave game
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
       
       <GamePageHeader
         title="Cultural Trivia"

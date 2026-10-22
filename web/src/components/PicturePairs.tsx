@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -7,7 +8,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
@@ -118,12 +119,15 @@ export function PicturePairs() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const { speak, preload } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<GameState>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [selectedCategory, setSelectedCategory] = useState<Category>(GAME_CATEGORIES[0]);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [cards, setCards] = useState<Card[]>([]);
@@ -311,7 +315,7 @@ export function PicturePairs() {
   const finalStars = getStars(moves, pairsCount);
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader title="Picture Pairs" subtitle="Match pictures and hear each Chamorro word" icon={ImageIcon} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -446,7 +450,7 @@ export function PicturePairs() {
             {/* Restart Button */}
             <div className="flex justify-center mt-4">
               <button
-                onClick={() => setGameState('setup')}
+                onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -511,7 +515,7 @@ export function PicturePairs() {
               </button>
               <button
                 disabled={resultUnresolved}
-                onClick={() => setGameState('setup')}
+                onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
                 className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Settings
@@ -530,7 +534,7 @@ export function PicturePairs() {
       </main>
 
       {/* Upgrade Prompt */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

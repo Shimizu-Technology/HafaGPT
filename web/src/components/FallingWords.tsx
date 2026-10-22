@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,7 +11,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { GamePage, GamePageHeader } from './games/GamePage';
 
@@ -79,11 +80,14 @@ export function FallingWords() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'paused' | 'complete'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'paused') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [settings, setSettings] = useState<GameSettings>({
     category: 'greetings',
     mode: 'beginner',
@@ -417,13 +421,7 @@ export function FallingWords() {
     }
   };
 
-  const handleBack = () => {
-    if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
-      return;
-    }
-    clearTransitionTimers();
-    navigate(gameReturn.to, { replace: true });
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   const isLoading = settings.mode === 'challenge' ? flashcardsLoading : false;
   const hasEnoughWords = wordPool.length >= ANSWER_OPTIONS;
@@ -433,7 +431,7 @@ export function FallingWords() {
 
   if (categoriesLoading) {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Falling Words" subtitle="Choose the translation before the word reaches the bottom." icon={ArrowDown} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
@@ -444,7 +442,7 @@ export function FallingWords() {
   }
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Falling Words"
         subtitle={gameState === 'setup' ? 'Choose the translation before the word reaches the bottom.' : `Level ${level} · ${score} points`}
@@ -455,7 +453,7 @@ export function FallingWords() {
             <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { if (window.confirm('Change settings? Your progress will be lost.')) resetGame(); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -773,7 +771,7 @@ export function FallingWords() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

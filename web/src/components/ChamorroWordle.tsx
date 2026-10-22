@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { WordleKeyboard } from './games/WordleKeyboard';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
@@ -114,7 +115,7 @@ export function ChamorroWordle() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Settings state
@@ -124,9 +125,12 @@ export function ChamorroWordle() {
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'won' | 'lost'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && (gameState === 'won' || gameState === 'lost') && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [gameMode, setGameMode] = useState<GameMode>('practice');
   const [activeDailyKey, setActiveDailyKey] = useState('');
-  const [resumeStorageAvailable, setResumeStorageAvailable] = useState(true);
+  const [, setResumeStorageAvailable] = useState(true);
   const [targetWord, setTargetWord] = useState<WordEntry | null>(null);
   const [guesses, setGuesses] = useState<GuessResult[][]>([]);
   const [currentGuess, setCurrentGuess] = useState('');
@@ -485,13 +489,7 @@ export function ChamorroWordle() {
     }
   };
 
-  const handleBack = () => {
-    if (gameState === 'playing' && !window.confirm(resumeStorageAvailable ? 'Leave this game? Your unfinished game is saved on this device so you can resume it later.' : 'Leave this game? This browser could not save your unfinished game, so progress will be lost.')) {
-      return;
-    }
-    clearTransitionTimers();
-    navigate(gameReturn.to, { replace: true });
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   const headerSubtitle = gameState === 'setup'
     ? 'Guess a Chamorro word in six tries.'
@@ -541,7 +539,7 @@ export function ChamorroWordle() {
   };
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Chamorro Wordle"
         subtitle={headerSubtitle}
@@ -858,7 +856,7 @@ export function ChamorroWordle() {
       `}</style>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

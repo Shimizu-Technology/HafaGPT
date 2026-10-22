@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { formatUsageSummary } from '../lib/usageDisplay';
 import { GamePage, GamePageHeader } from './games/GamePage';
@@ -88,11 +89,14 @@ export function Hangman() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'won' | 'lost'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && (gameState === 'won' || gameState === 'lost') && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [isStarting, setIsStarting] = useState(false);
   const [settings, setSettings] = useState<GameSettings>({
     // Default to 'numbers' which has 10 single-word entries
@@ -313,12 +317,7 @@ export function Hangman() {
     return 1;
   };
 
-  const handleBackToGames = () => {
-    if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
+  const handleBackToGames = () => navigate(gameReturn.to, { replace: true });
 
   // Render hangman figure
   const renderHangman = () => {
@@ -362,7 +361,7 @@ export function Hangman() {
     const isLoading = settings.mode === 'challenge' && categoriesLoading;
     
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Guess" subtitle="Guess the Chamorro word one letter at a time." icon={Target} />
 
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8">
@@ -493,7 +492,7 @@ export function Hangman() {
     const stars = getStars();
     
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
         <main className="max-w-md mx-auto px-4 py-8">
@@ -561,7 +560,7 @@ export function Hangman() {
 
   // Playing state
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Word Guess"
         subtitle={`${totalScore} points · ${wordsCompleted} words`}
@@ -571,7 +570,7 @@ export function Hangman() {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Change settings? Your current progress will be lost.')) { setGameState('setup'); }
+              guard.requestLeave(() => setGameState('setup'));
             }}
             className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
             aria-label="Change game settings"

@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameTimers } from '../hooks/useGameTimers';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -9,12 +10,11 @@ import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useSaveGameResult, type GameResultCreate } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 import { createClientAttemptId } from '../lib/clientAttemptId';
-import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 interface Card {
   id: number;
@@ -85,7 +85,7 @@ export function MemoryMatch() {
   const playedConceptIdsRef = useRef<string[]>([]);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
   const gameReturn = getLearningGameReturn(learningContext);
@@ -220,36 +220,12 @@ export function MemoryMatch() {
     }
   }, [matchedPairs.length, settings, gameState, isSignedIn, moves, elapsedTime, getFinalScore, getFinalStars, persistGameResult, categoriesData]);
 
-  // Browser warning when leaving mid-game (like quizzes)
-  const isGameInProgress = gameState === 'playing' && moves > 0;
+  const isGameInProgress = gameState === 'playing';
   const isResultNavigationBlocked = pendingGameResult !== null;
-  const blockedNavigationCount = usePendingNavigationBlocker(isResultNavigationBlocked);
-  
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isGameInProgress || isResultNavigationBlocked) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isGameInProgress, isResultNavigationBlocked]);
-
-  // Handle back navigation with confirmation
-  const handleBackClick = () => {
-    if (isResultNavigationBlocked) return;
-    if (isGameInProgress) {
-      const confirmed = window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.');
-      if (confirmed) {
-        navigate(gameReturn.to, { replace: true });
-      }
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
+  const guard = useGameRoundGuard((isGameInProgress) || startStatus.pending, isResultNavigationBlocked,
+    resultSaveFailed && pendingGameResult ? () => { void persistGameResult(pendingGameResult); } : undefined);
+  const blockedNavigationCount = guard.blocked ? 1 : 0;
+  const handleBackClick = () => navigate(gameReturn.to, { replace: true });
 
   // Generate cards from flashcards
   const generateCards = useCallback(() => {
@@ -436,7 +412,7 @@ export function MemoryMatch() {
   // Loading state
   if (categoriesLoading) {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Memory Match" subtitle="Pair Chamorro words with their meanings." icon={Puzzle} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
@@ -447,7 +423,7 @@ export function MemoryMatch() {
   }
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Memory Match"
         subtitle="Pair Chamorro words with their meanings."
@@ -457,8 +433,7 @@ export function MemoryMatch() {
           <button
             type="button"
             onClick={() => {
-              const confirmed = !isGameInProgress || window.confirm('Are you sure you want to change settings? Your progress will be lost.');
-              if (confirmed) resetGame();
+              guard.requestLeave(resetGame);
             }}
             className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
             aria-label="Change game settings"
@@ -678,7 +653,7 @@ export function MemoryMatch() {
             {/* Quick Actions - Compact */}
             <div className="flex justify-center pt-1">
               <button
-                onClick={playAgain}
+                onClick={() => guard.requestLeave(playAgain)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors text-xs"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -775,7 +750,7 @@ export function MemoryMatch() {
             )}
             <div className="flex gap-2 justify-center">
               <button
-                onClick={playAgain}
+                onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
                 className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
@@ -815,7 +790,7 @@ export function MemoryMatch() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ListOrdered, Volume2, Play, Sparkles } from 'lucide-react';
 import { numberOptions } from '../lib/gameRound';
@@ -6,7 +7,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { useSpeech } from '../hooks/useSpeech';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
@@ -57,12 +58,15 @@ export function NumberTap() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const { speak, preload, isSpeaking } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<GameState>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'feedback') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -225,7 +229,7 @@ export function NumberTap() {
   };
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader title="Number Tap" subtitle="Listen, count, and choose the number" icon={ListOrdered} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -393,7 +397,7 @@ export function NumberTap() {
         {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

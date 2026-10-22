@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { scrambleLetters } from '../lib/gameRound';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -8,12 +9,11 @@ import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { getCuratedConceptId } from '../data/conceptEvidence';
 import { useSaveGameResult, type GameResultCreate } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
 import { GamePage, GamePageHeader } from './games/GamePage';
 import { createClientAttemptId } from '../lib/clientAttemptId';
-import { usePendingNavigationBlocker } from '../hooks/usePendingNavigationBlocker';
 
 interface GameSettings {
   category: string;
@@ -74,7 +74,7 @@ export function WordScramble() {
   const submissionStartedRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
   const gameReturn = getLearningGameReturn(learningContext);
@@ -359,28 +359,10 @@ export function WordScramble() {
 
   const isGameInProgress = gameState === 'playing';
   const isResultNavigationBlocked = pendingGameResult !== null;
-  const blockedNavigationCount = usePendingNavigationBlocker(isResultNavigationBlocked);
-
-  useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (isGameInProgress || isResultNavigationBlocked) {
-        event.preventDefault();
-        event.returnValue = '';
-        return '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isGameInProgress, isResultNavigationBlocked]);
-
-  const handleBack = () => {
-    if (isResultNavigationBlocked) return;
-    if (isGameInProgress && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
+  const guard = useGameRoundGuard((isGameInProgress) || startStatus.pending, isResultNavigationBlocked,
+    resultSaveFailed && pendingGameResult ? () => { void persistGameResult(pendingGameResult); } : undefined);
+  const blockedNavigationCount = guard.blocked ? 1 : 0;
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   // Format time as mm:ss
   const formatTime = (seconds: number) => {
@@ -396,7 +378,7 @@ export function WordScramble() {
   // Loading state
   if (categoriesLoading) {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Scramble" subtitle="Put the letters in order to spell a Chamorro word." icon={Shuffle} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-600 border-t-transparent" />
@@ -409,7 +391,7 @@ export function WordScramble() {
   const currentWord = words[currentWordIndex];
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Word Scramble"
         subtitle="Put the letters in order to spell a Chamorro word."
@@ -419,7 +401,7 @@ export function WordScramble() {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm('Change settings? Your current progress will be lost.')) resetGame();
+              guard.requestLeave(resetGame);
             }}
             className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
             aria-label="Change game settings"
@@ -915,7 +897,7 @@ export function WordScramble() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}
