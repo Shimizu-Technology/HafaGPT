@@ -60,7 +60,9 @@ test('a lost Start acknowledgement retries one keyed round and consumes one use'
   expect(approvals[1]).toEqual(approvals[0]);
   const saved = page.waitForResponse(response => response.url().endsWith('/api/games/results') && response.request().method() === 'POST');
   await page.getByRole('button', { name: 'Finish round' }).click();
-  expect(await (await saved).json()).toMatchObject({ client_attempt_id: approvals[0].key, score: 0 });
+  const response = await saved;
+  expect(response.request().postDataJSON()).toMatchObject({ client_attempt_id: approvals[0].key, score: 0 });
+  expect(await response.json()).toMatchObject({ score: 0 });
 });
 
 for (const game of ['falling', 'catch']) {
