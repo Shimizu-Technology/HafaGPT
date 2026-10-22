@@ -105,4 +105,23 @@ describe('settings draft lifetime', () => {
     expect(next.result.current.draft).toBeUndefined();
   });
 
+  it('does not let a save from an old login clear or overwrite a new same-account draft', () => {
+    const { result, rerender } = renderHook(() => {
+      const preferences = useUserPreferences();
+      return useSettingsDraft(preferences.accountKey);
+    }, { wrapper: wrapper() });
+    const old = result.current;
+    act(() => old.updateDraft({ learner_mode: 'with_child', savePending: true }));
+    const original = auth.user;
+    auth.user = null;
+    rerender();
+    auth.user = original;
+    rerender();
+    act(() => result.current.updateDraft({ learner_mode: 'helping_family' }));
+    act(() => old.clearDraft());
+    act(() => old.updateDraft({ learner_mode: 'self', saveError: 'late old error' }));
+    expect(result.current.draft?.learner_mode).toBe('helping_family');
+    expect(result.current.draft?.saveError).toBeUndefined();
+  });
+
 });

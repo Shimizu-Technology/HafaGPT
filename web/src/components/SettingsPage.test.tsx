@@ -196,4 +196,24 @@ describe('learning preference settings', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(/restored/i);
   });
 
+  it('keeps a daily-session draft unsaved until the saved goal is available again', async () => {
+    const { rerender } = render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /helping family/i }));
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    settingsMocks.xpData = null;
+    settingsMocks.xpError = true;
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+    expect(screen.getByText(/unsaved daily session is kept/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    expect(settingsMocks.updateDailyGoal).not.toHaveBeenCalled();
+    expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /15 minutes/i })).toHaveAttribute('aria-pressed', 'true');
+    settingsMocks.xpData = { total_xp: 0, level: 1, xp_progress: 0, daily_goal_minutes: 10 };
+    settingsMocks.xpError = false;
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /helping family/i })).toHaveAttribute('aria-pressed', 'true');
+  });
+
 });

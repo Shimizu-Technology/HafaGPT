@@ -16,11 +16,14 @@ export interface SettingsDraft {
 const drafts = new Map<string, SettingsDraft>();
 const listeners = new Set<() => void>();
 let currentAccount: string | undefined;
+let generation = 0;
+let snapshot = { generation, draft: undefined as SettingsDraft | undefined };
 const warnBeforeUnload = (event: BeforeUnloadEvent) => {
   event.preventDefault();
   event.returnValue = '';
 };
 const notify = () => {
+  snapshot = { generation, draft: currentAccount ? drafts.get(currentAccount) : undefined };
   // Keep the warning active even when Settings has unmounted.
   window.removeEventListener('beforeunload', warnBeforeUnload);
   if (drafts.size) window.addEventListener('beforeunload', warnBeforeUnload);
@@ -37,21 +40,25 @@ const subscribe = (listener: () => void) => {
 export function scopeSettingsDrafts(accountKey: string | undefined) {
   if (accountKey === currentAccount) return;
   currentAccount = accountKey;
+  generation += 1;
   drafts.clear();
   notify();
 }
 
 export function useSettingsDraft(accountKey: string | undefined) {
-  const draft = useSyncExternalStore(subscribe, () => accountKey ? drafts.get(accountKey) : undefined);
+  const state = useSyncExternalStore(subscribe, () => snapshot);
+  const isCurrent = () => Boolean(accountKey && accountKey === currentAccount && state.generation === generation);
   return {
-    draft,
+    draft: accountKey === currentAccount ? state.draft : undefined,
+    isCurrent,
     updateDraft: (patch: SettingsDraft) => {
-      if (!accountKey || accountKey !== currentAccount) return;
+      if (!isCurrent() || !accountKey) return;
       drafts.set(accountKey, { ...drafts.get(accountKey), ...patch });
       notify();
     },
     clearDraft: () => {
-      if (accountKey) drafts.delete(accountKey);
+      if (!isCurrent() || !accountKey) return;
+      drafts.delete(accountKey);
       notify();
     },
   };

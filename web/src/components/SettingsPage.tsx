@@ -142,7 +142,7 @@ function SettingsSection({
 export function SettingsPage() {
   const { preference, setTheme } = useTheme();
   const { preferences, accountKey, updatePreferencesAsync, isUpdating, showOnboardingReminder, dismissOnboardingReminder } = useUserPreferences();
-  const { draft, updateDraft, clearDraft } = useSettingsDraft(accountKey);
+  const { draft, updateDraft, clearDraft, isCurrent } = useSettingsDraft(accountKey);
   const { data: xpData, isLoading: isLoadingXP, isError: isXPError } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
   const savedSessionMinutes = xpData
@@ -172,10 +172,11 @@ export function SettingsPage() {
     || readingSupport !== preferences.reading_support;
   const dailyGoalIsAvailable = Boolean(xpData);
   const goalHasChanges = dailyGoalIsAvailable && sessionMinutes !== savedSessionMinutes;
+  const hasUnloadedGoalDraft = draft?.sessionMinutes !== undefined && !dailyGoalIsAvailable;
   const hasChanges = metadataHasChanges || goalHasChanges;
 
   const handleSave = async () => {
-    if (isSaving || isSettingsSavePending(accountKey)) return;
+    if (isSaving || isSettingsSavePending(accountKey) || hasUnloadedGoalDraft) return;
 
     let goalWasUpdated = false;
     let succeeded = false;
@@ -186,6 +187,7 @@ export function SettingsPage() {
       if (goalHasChanges) {
         await updateDailyGoal.mutateAsync(sessionMinutes);
         goalWasUpdated = true;
+        if (!isCurrent()) return;
       }
       if (metadataHasChanges || !preferences.onboarding_completed) {
         await updatePreferencesAsync({
@@ -199,6 +201,7 @@ export function SettingsPage() {
       succeeded = true;
       setSaved(true);
     } catch {
+      if (!isCurrent()) return;
       if (goalWasUpdated && (metadataHasChanges || !preferences.onboarding_completed)) {
         try {
           await updateDailyGoal.mutateAsync(savedSessionMinutes);
@@ -236,7 +239,7 @@ export function SettingsPage() {
             <h2 id="setup-reminder-title" className="font-bold text-brown-950 dark:text-white">Make learning fit you</h2>
             <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Setup is optional. Choose your learning settings below, or save the current choices when you are ready.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={() => void handleSave()} disabled={isSaving || isLoadingXP} className="min-h-11 rounded-xl px-4 font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300">Save these settings</button>
+              <button type="button" onClick={() => void handleSave()} disabled={isSaving || isLoadingXP || hasUnloadedGoalDraft} className="min-h-11 rounded-xl px-4 font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300">Save these settings</button>
               <button type="button" onClick={dismissOnboardingReminder} className="min-h-11 rounded-xl px-4 font-semibold text-brown-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-200">Dismiss setup reminder</button>
             </div>
           </section>
@@ -330,6 +333,7 @@ export function SettingsPage() {
                 />
               ))}
             </div>
+            {hasUnloadedGoalDraft && <p role="status" className="mt-3 text-base text-amber-800 dark:text-amber-200">Your unsaved daily session is kept. Save changes once your saved daily session can load.</p>}
             {isXPError && !xpData && (
               <p role="alert" className="mt-3 text-sm font-medium text-amber-800 dark:text-amber-200">
                 Your saved daily session could not load, so it will not be changed. Reload this page to try again.
@@ -418,7 +422,7 @@ export function SettingsPage() {
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={isSaving || isLoadingXP}
+                disabled={isSaving || isLoadingXP || hasUnloadedGoalDraft}
                 className="inline-flex min-h-12 min-w-0 flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
