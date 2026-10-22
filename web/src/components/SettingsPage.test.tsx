@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
+import { scopeSettingsDrafts } from '../hooks/useSettingsDraft';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
@@ -18,6 +19,7 @@ const settingsMocks = vi.hoisted(() => ({
 
 vi.mock('../hooks/useUserPreferences', () => ({
   useUserPreferences: () => ({
+    accountKey: 'settings-test',
     preferences: {
       skill_level: 'beginner',
       learning_goal: 'all',
@@ -54,6 +56,8 @@ describe('learning preference settings', () => {
     expect(settingsMocks.setTheme).toHaveBeenCalledWith('dark');
   });
   beforeEach(() => {
+    scopeSettingsDrafts(undefined);
+    scopeSettingsDrafts('settings-test');
     settingsMocks.updatePreferencesAsync.mockReset();
     settingsMocks.updatePreferencesAsync.mockResolvedValue(undefined);
     settingsMocks.updateDailyGoal.mockReset();
@@ -162,4 +166,54 @@ describe('learning preference settings', () => {
     expect(screen.getByRole('button', { name: /no time goal/i })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('button', { name: /save changes/i })).not.toBeInTheDocument();
   });
+  it('keeps edited choices across in-app departure and remount, then discards only the draft', () => {
+    render(<MemoryRouter initialEntries={['/settings']}><Routes>
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/support" element={<Link to="/settings">Return to settings</Link>} />
+    </Routes></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /helping family/i }));
+    fireEvent.click(screen.getByRole('link', { name: /help & support/i }));
+    fireEvent.click(screen.getByRole('link', { name: /return to settings/i }));
+    expect(screen.getByRole('button', { name: /helping family/i })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: /discard changes/i }));
+    expect(screen.getByRole('button', { name: /learning for myself/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
+  });
+
+  it('keeps a failed combined-save draft when XP refetches after compensation', async () => {
+    settingsMocks.updatePreferencesAsync.mockRejectedValueOnce(new Error('offline'));
+    const { rerender } = render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /helping family/i }));
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    await screen.findByRole('alert');
+    settingsMocks.xpData = { ...settingsMocks.xpData!, daily_goal_minutes: 15 };
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    settingsMocks.xpData = { ...settingsMocks.xpData!, daily_goal_minutes: 10 };
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /helping family/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /15 minutes/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent(/restored/i);
+  });
+
+  it('keeps a daily-session draft unsaved until the saved goal is available again', async () => {
+    const { rerender } = render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    fireEvent.click(screen.getByRole('button', { name: /helping family/i }));
+    fireEvent.click(screen.getByRole('button', { name: /15 minutes/i }));
+    settingsMocks.xpData = null;
+    settingsMocks.xpError = true;
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeDisabled();
+    expect(screen.getByText(/unsaved daily session is kept/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+    expect(settingsMocks.updateDailyGoal).not.toHaveBeenCalled();
+    expect(settingsMocks.updatePreferencesAsync).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /15 minutes/i })).toHaveAttribute('aria-pressed', 'true');
+    settingsMocks.xpData = { total_xp: 0, level: 1, xp_progress: 0, daily_goal_minutes: 10 };
+    settingsMocks.xpError = false;
+    rerender(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /helping family/i })).toHaveAttribute('aria-pressed', 'true');
+  });
+
 });

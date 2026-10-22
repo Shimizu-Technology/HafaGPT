@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWordPages } from '../hooks/useVocabularyQuery';
@@ -7,6 +7,7 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
+import { RecordsError } from './RecordsError';
 import { appRoutes, currentAppPath } from '../lib/routes';
 
 const PAGE_SIZE = 50;
@@ -20,11 +21,17 @@ export function VocabularyCategory() {
   const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const searchQuery = searchParams.get('q') ?? '';
   
-  const { data: pages, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isPlaceholderData } = useCategoryWordPages(categoryId, searchQuery, PAGE_SIZE);
-  const data = pages?.pages[0];
+  const { data: pages, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isPlaceholderData, isFetchNextPageError } = useCategoryWordPages(categoryId, searchQuery, PAGE_SIZE);
+  const lastLoaded = useRef<{ categoryId: string | undefined; query: string; pages: typeof pages }>();
+  useEffect(() => {
+    if (pages && !isPlaceholderData) lastLoaded.current = { categoryId, query: searchQuery, pages };
+  }, [pages, categoryId, searchQuery, isPlaceholderData]);
+  const fallback = error && lastLoaded.current?.categoryId === categoryId ? lastLoaded.current : undefined;
+  const displayedPages = pages ?? fallback?.pages;
+  const data = displayedPages?.pages[0];
   const category = data?.category;
   const totalWords = data?.total ?? 0;
-  const words = pages?.pages.flatMap(page => page.words) ?? [];
+  const words = displayedPages?.pages.flatMap(page => page.words) ?? [];
 
   useEffect(() => { setExpandedWord(null); }, [categoryId, searchQuery]);
 
@@ -61,8 +68,13 @@ export function VocabularyCategory() {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <p className="text-brown-600 dark:text-gray-400 mb-4">{error ? "Dictionary words could not load. Please try again." : "Category not found"}</p>
-          {error && <button type="button" onClick={() => void refetch()} className="min-h-11 px-4 text-coral-700 dark:text-ocean-300">Try again</button>}
+          <h1 className="mb-4 text-xl font-bold text-brown-950 dark:text-white">{error ? 'Dictionary category is unavailable' : 'Category not found'}</h1>
+          {error && <>
+            <label className="mb-3 block text-left text-base text-brown-700 dark:text-gray-200">Search in this category
+              <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+            </label>
+            <RecordsError title="Dictionary words are unavailable" retrying={isFetching} onRetry={() => void refetch()} />
+          </>}
           <button
             onClick={() => navigate('/vocabulary', { replace: true })}
             className="min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
@@ -88,7 +100,7 @@ export function VocabularyCategory() {
         backLabel="Back to dictionary"
         trailing={(
           <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline-flex">
-            {totalWords} {searchQuery ? "matches" : "words"}
+            {error || isPlaceholderData ? 'Last loaded words' : `${totalWords} ${searchQuery ? 'matches' : 'words'}`}
           </span>
         )}
       />
@@ -123,8 +135,11 @@ export function VocabularyCategory() {
           </div>
         </div>
 
+        {error && <RecordsError title={isFetchNextPageError ? 'More dictionary words are unavailable' : 'Dictionary words are unavailable'} hasData={Boolean(displayedPages)} retrying={isFetching} onRetry={() => { if (isFetchNextPageError) void fetchNextPage(); else void refetch(); }} />}
+        {fallback && !pages && <p className="mb-3 text-base text-brown-700 dark:text-gray-200">Last loaded results{fallback.query ? ` for “${fallback.query}”` : ''}.</p>}
+        <h2 className="sr-only">Dictionary entries</h2>
         {isFetching && <p role="status" className="mb-3 text-sm text-brown-600 dark:text-gray-300">Searching…</p>}
-        <p className="mb-3 text-sm text-brown-600 dark:text-gray-300" aria-live="polite">{!isPlaceholderData && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
+        <p className="mb-3 text-sm text-brown-600 dark:text-gray-300" aria-live="polite">{!isPlaceholderData && !error && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
         {/* Word List */}
         <div className="space-y-3">
           {filteredWords.map((word, index) => {
@@ -225,7 +240,7 @@ export function VocabularyCategory() {
         </div>
 
         {/* No Results */}
-        {filteredWords.length === 0 && searchQuery && !isFetching && (
+        {filteredWords.length === 0 && searchQuery && !isFetching && !error && (
           <div className="text-center py-12 text-brown-500 dark:text-gray-400">
             <p>No words found matching "{searchQuery}"</p>
             <button
@@ -259,9 +274,8 @@ export function VocabularyCategory() {
           </div>
         )}
 
-        {error && words.length > 0 && <p role="alert" className="mt-3 text-center text-red-700 dark:text-red-300">More words could not load. Try Load more again.</p>}
         {/* All Loaded Indicator */}
-        {!hasMore && words.length > PAGE_SIZE && !searchQuery && (
+        {!hasMore && !error && words.length > PAGE_SIZE && !searchQuery && (
           <div className="mt-6 text-center text-brown-500 dark:text-gray-400 text-sm">
             All {totalWords} words loaded
           </div>

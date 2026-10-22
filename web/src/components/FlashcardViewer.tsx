@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, HelpCircle, CheckCircle2, Layers3 } from 'lucide-react';
+import { BookOpen, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, CheckCircle2, Layers3 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
+import { useSaveDeck, useDictionaryFlashcards, type SaveDeckRequest } from '../hooks/useFlashcardsQuery';
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 import { createCardIdentity, resolveReviewSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
@@ -53,6 +53,14 @@ const topicTitles: Record<string, string> = {
 
 /** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
+  const { user } = useUser();
+  const { topic } = useParams();
+  const [searchParams] = useSearchParams();
+  // ProtectedRoute preserves children across account/route changes; scope all pending work.
+  return <FlashcardSession key={`${user?.id ?? 'signed-out'}:${topic}:${searchParams.get('type') ?? 'curated'}`} />;
+}
+
+function FlashcardSession() {
   const { topic } = useParams<{ topic: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -91,7 +99,33 @@ export function FlashcardViewer() {
   const hasGeneratedMoreRef = useRef(false); // Prevent duplicate background generation
   const batchCountRef = useRef(0); // Track how many batches generated
   const [isCardFlipped, setIsCardFlipped] = useState(false); // Track if current card is flipped
-  const [isDeckSaved, setIsDeckSaved] = useState(false); // Track if custom deck has been saved
+  const [isDeckSaved, setIsDeckSaved] = useState(false);
+  const [savedDeckId, setSavedDeckId] = useState<string | null>(null);
+  const [deckSaveError, setDeckSaveError] = useState<string | null>(null);
+  const saveInFlightRef = useRef(false);
+  const activeCardsRef = useRef(flashcards);
+  const activeUserRef = useRef(user?.id);
+  const sessionActiveRef = useRef(false);
+  const generationTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const saveAttemptRef = useRef<{ cards: FlashcardData[]; request: SaveDeckRequest } | null>(null);
+  useLayoutEffect(() => {
+    if (activeCardsRef.current !== flashcards) saveAttemptRef.current = null;
+    activeCardsRef.current = flashcards;
+    activeUserRef.current = user?.id;
+  }, [flashcards, user?.id]);
+  useLayoutEffect(() => {
+    sessionActiveRef.current = true;
+    const generationTimers = generationTimersRef.current;
+    return () => {
+      sessionActiveRef.current = false;
+      generationTimers.forEach(clearTimeout);
+    };
+  }, []);
+  useEffect(() => {
+    setIsDeckSaved(false);
+    setSavedDeckId(null);
+    setDeckSaveError(null);
+  }, [flashcards]);
   const [cardsStudied, setCardsStudied] = useState(0); // Track total cards studied this session
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewSaved, setReviewSaved] = useState(false);
@@ -134,7 +168,7 @@ export function FlashcardViewer() {
 
   // Load cards based on cardType from URL
   useEffect(() => {
-    if (!topic) return;
+    if (!topic || saveAttemptRef.current) return;
     
     if (cardType === 'curated') {
       // Load hardcoded curated cards immediately
@@ -207,6 +241,7 @@ export function FlashcardViewer() {
   // Load dictionary cards from API (instant loading from 10,350+ words)
   // This effect runs when dictionary data is fetched
   useEffect(() => {
+    if (saveAttemptRef.current) return; // Keep an uncertain save's exact set through background refetches.
     if (cardType === 'dictionary' && dictionaryData?.cards && dictionaryData.cards.length > 0) {
       // Map dictionary cards to FlashcardData format
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
@@ -232,15 +267,18 @@ export function FlashcardViewer() {
 
   // Load more dictionary cards (for "Load More" button)
   const loadMoreDictionaryCards = () => {
-    if (cardType === 'dictionary') {
+    if (cardType === 'dictionary' && !saveInFlightRef.current && !isGeneratingMore && !deckSaveError) {
+      saveAttemptRef.current = null;
       setCardsStudied(prev => prev + flashcards.length);
+      setCurrentIndex(0);
+      setIsCardFlipped(false);
       refetchDictionary();
     }
   };
 
   // Background generation of additional cards (legacy - kept for backwards compatibility with ?type=custom)
   const generateMoreCards = async (variety: 'conversational' | 'advanced', previousCardsList?: FlashcardData[]) => {
-    if (!topic || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
+    if (!topic || !sessionActiveRef.current || saveInFlightRef.current || saveAttemptRef.current || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
     
     hasGeneratedMoreRef.current = true;
     setIsGeneratingMore(true);
@@ -265,6 +303,7 @@ export function FlashcardViewer() {
       console.log(`🎴 [FRONTEND] Batch ${batchCountRef.current + 1}: Checking against ${cardsToCheck.length} previous cards`);
       
       const token = await getToken();
+      if (!sessionActiveRef.current) return;
       const response = await fetch(`${API_URL}/api/generate-flashcards`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -276,6 +315,7 @@ export function FlashcardViewer() {
       }
 
       const data: FlashcardsResponse = await response.json();
+      if (!sessionActiveRef.current) return;
       
       // Frontend safety net: Remove any duplicates that slipped through
       const existingFronts = new Set(cardsToCheck.map(c => c.front.toLowerCase().trim()));
@@ -296,32 +336,29 @@ export function FlashcardViewer() {
       }
       
       setNewCards(uniqueNewCards);
-      setIsGeneratingMore(false);
-      
-      // Auto-add new cards to deck after 1 second
-      setTimeout(() => {
-        setFlashcards(prev => {
-          const updatedCards = [...prev, ...uniqueNewCards];
-          saveToLocalStorage(updatedCards); // Save to localStorage
-          
-          // Generate another batch if we haven't hit 9 cards yet (batch 3)
-          // Pass updatedCards to the next batch to avoid race conditions
-          if (batchCountRef.current === 1) {
-            hasGeneratedMoreRef.current = false;
-            batchCountRef.current = 2;
-            setTimeout(() => generateMoreCards('advanced', updatedCards), 1000);
-          } else {
-            batchCountRef.current += 1;
-            hasGeneratedMoreRef.current = false;
-          }
-          
-          return updatedCards;
-        });
+      // Save remains disabled until the cards and generating flag commit together.
+      generationTimersRef.current.push(setTimeout(() => {
+        if (!sessionActiveRef.current) return;
+        const updatedCards = [...cardsToCheck, ...uniqueNewCards];
+        setFlashcards(updatedCards);
+        saveToLocalStorage(updatedCards);
+        setIsGeneratingMore(false);
         setShowNewCardsNotification(false);
-      }, 1000);
-      
+        if (batchCountRef.current === 1) {
+          hasGeneratedMoreRef.current = false;
+          batchCountRef.current = 2;
+          generationTimersRef.current.push(setTimeout(() => {
+            void generateMoreCards('advanced', updatedCards);
+          }, 1000));
+        } else {
+          batchCountRef.current += 1;
+          hasGeneratedMoreRef.current = false;
+        }
+      }, 1000));
+
       setShowNewCardsNotification(true);
     } catch (err) {
+      if (!sessionActiveRef.current) return;
       console.error('❌ [FLASHCARDS] Error generating more flashcards:', err);
       setIsGeneratingMore(false);
       hasGeneratedMoreRef.current = false; // Allow retry
@@ -329,6 +366,7 @@ export function FlashcardViewer() {
   };
 
   const handlePrevious = () => {
+    if (saveInFlightRef.current) return;
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
       setIsCardFlipped(false); // Reset flip state
@@ -336,6 +374,7 @@ export function FlashcardViewer() {
   };
 
   const handleNext = () => {
+    if (saveInFlightRef.current) return;
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setIsCardFlipped(false); // Reset flip state
@@ -392,39 +431,49 @@ export function FlashcardViewer() {
     }
   };
 
-  // Handle saving custom deck
-  const handleSaveDeck = async () => {
-    if (!user) {
-      alert('Please sign in to save custom flashcard decks!');
+  // The legacy custom URL can save its current set. Ordinary ready-made
+  // practice records ratings directly and has no deck-creation action.
+  const handleSaveDeck = () => {
+    if (cardTypeParam !== 'custom' || saveInFlightRef.current || isGeneratingMore || isDeckSaved) return;
+    if (!user || !topic || flashcards.length === 0) {
+      setDeckSaveError('Sign in and load a set of cards before saving it.');
       return;
     }
-
-    if (flashcards.length === 0) {
-      alert('No cards to save!');
-      return;
+    const cardsToSave = flashcards;
+    const savingUser = user.id;
+    const stillCurrent = () => sessionActiveRef.current && activeCardsRef.current === cardsToSave && activeUserRef.current === savingUser;
+    if (saveAttemptRef.current?.cards !== cardsToSave) {
+      saveAttemptRef.current = {
+        cards: cardsToSave,
+        request: {
+          request_id: crypto.randomUUID(),
+          user_id: savingUser,
+          topic,
+          title: `My ${topicTitles[topic] || dictionaryData?.category?.title || topic} Cards`,
+          card_type: 'custom',
+          cards: cardsToSave.map(card => ({
+            front: card.front,
+            back: card.back,
+            pronunciation: card.pronunciation || null,
+            example: card.example || null,
+          })),
+        },
+      };
     }
-
-    // Use React Query mutation
-    saveDeckMutation.mutate({
-      user_id: user.id,
-      topic: topic!,
-      title: `My ${topicTitles[topic || ''] || topic} Cards`,
-      card_type: 'custom',
-      cards: flashcards.map(card => ({
-        front: card.front,
-        back: card.back,
-        pronunciation: card.pronunciation || null,
-        example: card.example || null
-      }))
-    }, {
+    saveInFlightRef.current = true;
+    setDeckSaveError(null);
+    saveDeckMutation.mutate(saveAttemptRef.current.request, {
       onSuccess: (data) => {
-        alert(`✅ ${data.message}`);
-        clearLocalStorage(); // Clear temp cards after successful save
-        setIsDeckSaved(true); // Mark deck as saved
+        saveInFlightRef.current = false;
+        if (!stillCurrent()) return;
+        clearLocalStorage();
+        setIsDeckSaved(true);
+        setSavedDeckId(data.deck_id);
       },
       onError: () => {
-        alert('Failed to save deck. Please try again.');
-      }
+        saveInFlightRef.current = false;
+        if (stillCurrent()) setDeckSaveError('We couldn’t confirm the save. Your cards are still here. Try saving again to check safely.');
+      },
     });
   };
 
@@ -475,7 +524,7 @@ export function FlashcardViewer() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 mb-4 font-medium">{error}</p>
           <button
-            onClick={() => navigate('/flashcards', { replace: true })}
+            onClick={() => navigate(`/flashcards?source=${cardType}`, { replace: true })}
             className="min-h-11 rounded-xl bg-coral-700 px-6 py-2.5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
           >
             Back to Decks
@@ -529,18 +578,13 @@ export function FlashcardViewer() {
         title={deckTitle}
         subtitle={`${deckSourceLabel} · Card ${currentIndex + 1} of ${flashcards.length}`}
         icon={Layers3}
-        backTo={returnContext?.to ?? '/flashcards'}
+        backTo={returnContext?.to ?? `/flashcards?source=${cardType}`}
         backLabel={returnContext?.label ?? 'Back to flashcard decks'}
         trailing={(
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />
-            {cardTypeParam === 'custom' && flashcards.length > 0 && (
-              <button type="button" onClick={handleSaveDeck} disabled={saveDeckMutation.isPending || isGeneratingMore || isDeckSaved} aria-label={isDeckSaved ? 'Deck saved' : 'Save this deck'} className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
-                {saveDeckMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-              </button>
-            )}
             {cardType === 'dictionary' && (
-              <button type="button" onClick={() => { setCardsStudied(prev => prev + flashcards.length); setCurrentIndex(0); setIsCardFlipped(false); void refetchDictionary(); }} disabled={isDictionaryLoading} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
+              <button type="button" onClick={loadMoreDictionaryCards} disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
                 <RefreshCw className={`h-5 w-5 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
@@ -564,6 +608,24 @@ export function FlashcardViewer() {
         onTouchEnd={onTouchEnd}
       >
         <div className="w-full max-w-md">
+          <h2 className="mb-3 break-words [overflow-wrap:anywhere] text-xl font-bold text-brown-950 dark:text-white">{deckTitle}</h2>
+          {cardTypeParam === 'custom' ? (
+            <section aria-label="Save this set" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+              <p className="text-base text-brown-600 dark:text-gray-300">Keep this set in Saved decks to review these cards again.</p>
+              {deckSaveError && <p role="alert" className="mt-2 text-base text-red-700 dark:text-red-300">{deckSaveError}</p>}
+              {isDeckSaved ? (
+                <div role="status" className="mt-2">
+                  <p className="font-semibold">Deck saved.</p>
+                  <Link to={`/flashcards/my-deck/${savedDeckId}`} className="inline-flex min-h-11 items-center font-semibold text-coral-700 underline dark:text-ocean-300">Review saved deck</Link>
+                </div>
+              ) : (
+                <button type="button" onClick={handleSaveDeck} disabled={saveDeckMutation.isPending || isGeneratingMore} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl bg-coral-700 px-4 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:bg-ocean-700">
+                  {saveDeckMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Save className="h-5 w-5" aria-hidden="true" />}
+                  {saveDeckMutation.isPending ? 'Saving...' : deckSaveError ? 'Try saving again' : 'Save this set'}
+                </button>
+              )}
+            </section>
+          ) : <p className="mb-4 text-base text-brown-600 dark:text-gray-300">Rate cards as you practice to keep your review progress.</p>}
           <ContentTrustNote trust={contentTrust} className="mb-4" compact />
           <Flashcard
             front={currentCard.front}
@@ -605,14 +667,6 @@ export function FlashcardViewer() {
           </p>
         )}
         
-        {/* Help text for unsaved custom cards (legacy) */}
-        {cardTypeParam === 'custom' && !isDeckSaved && isCardFlipped && (
-          <div className="mt-6 flex items-center justify-center gap-2 text-center text-sm text-brown-600 dark:text-gray-400">
-            <HelpCircle className="h-4 w-4" aria-hidden="true" />
-            <span>Save this deck to track your progress with ratings</span>
-          </div>
-        )}
-
         {/* Navigation */}
         <div className="flex items-center justify-center gap-4 mt-4 sm:mt-6">
           <button
@@ -664,7 +718,7 @@ export function FlashcardViewer() {
               {cardType === 'dictionary' && (
                 <button
                   onClick={loadMoreDictionaryCards}
-                  disabled={isDictionaryLoading}
+                  disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError}
                   className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                 >
                   {isDictionaryLoading ? (

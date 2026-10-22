@@ -22,13 +22,18 @@ import { usePromoStatus } from '../hooks/useSubscription';
 import { QUIZ_CATEGORIES } from '../data/quizData';
 import { StreakWidget } from './StreakWidget';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { RecordsError } from './RecordsError';
 import { appRoutes } from '../lib/routes';
 
 export function Dashboard() {
   const { user, isLoaded } = useUser();
-  const { data: initData, isLoading: conversationsLoading } = useInitUserData(null, isLoaded && !!user?.id);
-  const { data: quizStatsData, isLoading: quizLoading } = useQuizStats();
-  const { data: gameStatsData, isLoading: gamesLoading } = useGameStats();
+  const chatsQuery = useInitUserData(null, isLoaded && !!user?.id);
+  const quizQuery = useQuizStats();
+  const gamesQuery = useGameStats();
+  const { data: initData, isLoading: conversationsLoading } = chatsQuery;
+  const { data: quizStatsData, isLoading: quizLoading } = quizQuery;
+  const { data: gameStatsData, isLoading: gamesLoading } = gamesQuery;
+  const allSectionsSucceeded = chatsQuery.isSuccess && quizQuery.isSuccess && gamesQuery.isSuccess;
   const { data: promo } = usePromoStatus();
   const isChristmasTheme = promo?.theme === 'christmas';
   const isNewYearTheme = promo?.theme === 'newyear';
@@ -36,7 +41,7 @@ export function Dashboard() {
   const conversations = initData?.conversations || [];
   const totalConversations = conversations.length;
 
-  // Use API quiz stats (or 0 if not loaded yet)
+  // Values are shown only when their section has loaded data.
   const totalQuizzes = quizStatsData?.total_quizzes || 0;
   const averageScore = Math.round(quizStatsData?.average_score || 0);
 
@@ -69,31 +74,31 @@ export function Dashboard() {
   const stats = [
     {
       label: 'Chats',
-      value: conversationsLoading ? '…' : totalConversations,
+      value: initData ? totalConversations : conversationsLoading ? '…' : 'Unavailable',
       icon: MessageSquare,
       tone: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50',
     },
     {
       label: 'Quizzes',
-      value: quizLoading ? '…' : totalQuizzes,
+      value: quizStatsData ? totalQuizzes : quizLoading ? '…' : 'Unavailable',
       icon: Brain,
       tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
     },
     {
       label: 'Average quiz',
-      value: quizLoading ? '…' : totalQuizzes > 0 ? `${averageScore}%` : '—',
+      value: !quizStatsData ? (quizLoading ? '…' : 'Unavailable') : totalQuizzes > 0 ? `${averageScore}%` : '—',
       icon: Trophy,
       tone: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/50',
     },
     {
       label: 'Games',
-      value: gamesLoading ? '…' : totalGames,
+      value: gameStatsData ? totalGames : gamesLoading ? '…' : 'Unavailable',
       icon: Gamepad2,
       tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
     },
     {
       label: 'Average stars',
-      value: gamesLoading ? '…' : totalGames > 0 ? averageStars.toFixed(1) : '—',
+      value: !gameStatsData ? (gamesLoading ? '…' : 'Unavailable') : totalGames > 0 ? averageStars.toFixed(1) : '—',
       icon: Star,
       tone: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950/50',
     },
@@ -184,6 +189,13 @@ export function Dashboard() {
               </Link>
             </div>
           </div>
+          {([
+            ['Chat history is unavailable', chatsQuery],
+            ['Quiz progress is unavailable', quizQuery],
+            ['Game progress is unavailable', gamesQuery],
+          ] as const).map(([title, query]) => query.isError && (
+            <RecordsError key={title} title={title} hasData={Boolean(query.data)} retrying={query.isFetching} onRetry={() => void query.refetch()} />
+          ))}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {stats.map(({ label, value, icon: Icon, tone }) => (
               <div
@@ -193,7 +205,7 @@ export function Dashboard() {
                 <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
-                <p className="text-2xl font-bold text-brown-950 dark:text-white">{value}</p>
+                <p className={`${value === 'Unavailable' ? 'text-base break-words' : 'text-2xl'} font-bold text-brown-950 dark:text-white`}>{value}</p>
                 <p className="mt-1 text-xs text-brown-500 dark:text-gray-400">{label}</p>
               </div>
             ))}
@@ -367,7 +379,7 @@ export function Dashboard() {
           </section>
         )}
 
-        {totalConversations === 0 && totalQuizzes === 0 && totalGames === 0 && (
+        {allSectionsSucceeded && totalConversations === 0 && totalQuizzes === 0 && totalGames === 0 && (
           <section className="rounded-3xl border border-coral-200 bg-white p-6 text-center dark:border-ocean-800 dark:bg-slate-800">
             <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
               <Flame className="h-7 w-7" aria-hidden="true" />

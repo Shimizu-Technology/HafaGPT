@@ -1,8 +1,9 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
 import { useVocabularyCategories, useVocabularySearch, VocabularyWord } from '../hooks/useVocabularyQuery';
 import { appRoutes, currentAppPath } from '../lib/routes';
+import { RecordsError } from './RecordsError';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
 export function VocabularyList() {
@@ -12,13 +13,16 @@ export function VocabularyList() {
   const searchQuery = searchParams.get('q') ?? '';
   
   // Fetch categories from API
-  const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
+  const { data: categoriesData, isLoading: categoriesLoading, isError: categoriesError, isFetching: categoriesFetching, refetch: retryCategories } = useVocabularyCategories();
   
   // Search when query is 2+ characters
-  const { data: searchData, isLoading: searchLoading, isPlaceholderData: searchUpdating } = useVocabularySearch(searchQuery);
+  const { data: searchData, isLoading: searchLoading, isPlaceholderData: searchUpdating, isError: searchError, isFetching: searchFetching, refetch: retrySearch } = useVocabularySearch(searchQuery);
   
+  const lastSearch = useRef<typeof searchData>();
+  useEffect(() => { if (searchData) lastSearch.current = searchData; }, [searchData]);
+  const displayedSearch = searchData ?? (searchError ? lastSearch.current : undefined);
   const isSearching = searchQuery.length >= 2;
-  const searchResults = searchData?.results || [];
+  const searchResults = displayedSearch?.results || [];
 
   const setSearchQuery = (query: string) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -122,7 +126,7 @@ export function VocabularyList() {
         icon={Library}
         trailing={(
           <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline-flex">
-            {categoriesLoading ? '...' : `${categoriesData?.total_words?.toLocaleString() || 0} words`}
+            {categoriesLoading ? 'Loading…' : categoriesData ? `${categoriesData.total_words.toLocaleString()} words${categoriesError ? ' (last loaded)' : ''}` : 'Word count unavailable'}
           </span>
         )}
       />
@@ -156,16 +160,18 @@ export function VocabularyList() {
         {/* Search Results */}
         {isSearching && (
           <div className="mb-6">
+            {searchError && <RecordsError title="Dictionary search is unavailable" hasData={Boolean(displayedSearch)} retrying={searchFetching} onRetry={() => void retrySearch()} />}
             {searchLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-coral-500 dark:text-ocean-400" />
-                <span className="ml-2 text-brown-600 dark:text-gray-400">Searching...</span>
+                <span aria-live="polite" className="ml-2 text-brown-600 dark:text-gray-400">Searching...</span>
               </div>
-            ) : (
+            ) : displayedSearch ? (
               <>
                 <h2 aria-live="polite" className="text-sm font-medium text-brown-600 dark:text-gray-400 mb-3">
-                  {searchUpdating ? 'Searching...' : <>{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</>}
+                  {searchUpdating ? 'Searching...' : <>{displayedSearch.query !== searchQuery ? `Last loaded results for “${displayedSearch.query}”: ` : ''}{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</>}
                 </h2>
+                {searchUpdating && displayedSearch.query !== searchQuery && <p className="mb-3 text-base text-brown-600 dark:text-gray-400">Showing the last loaded results while this search finishes.</p>}
                 {searchResults.length > 0 ? (
                   <div className="space-y-2">
                     {searchResults.map((word, index) => (
@@ -176,16 +182,16 @@ export function VocabularyList() {
                       />
                     ))}
                   </div>
-                ) : (
+                ) : !searchError ? (
                   <div className="min-h-28 text-center py-8 text-brown-500 dark:text-gray-400">
                     {!searchUpdating && <>
                       <p>No words found matching "{searchQuery}"</p>
                       <p className="text-sm mt-1">Try a different spelling or search term</p>
                     </>}
                   </div>
-                )}
+                ) : null}
               </>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -199,12 +205,13 @@ export function VocabularyList() {
               <p className="mt-1 text-sm text-brown-600 dark:text-gray-400">Open a category for definitions, pronunciation, and examples.</p>
             </div>
 
+            {categoriesError && <RecordsError title="Dictionary categories are unavailable" hasData={Boolean(categoriesData)} retrying={categoriesFetching} onRetry={() => void retryCategories()} />}
             {/* Loading State */}
             {categoriesLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" />
               </div>
-            ) : (
+            ) : categoriesData ? (
               <>
                 {/* Category Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -249,7 +256,7 @@ export function VocabularyList() {
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
           </>
         )}
       </main>
