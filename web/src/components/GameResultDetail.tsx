@@ -107,7 +107,7 @@ export function GameResultDetail() {
                     <span><span className="block font-bold text-brown-950 dark:text-white">{topic.title}</span><span className="text-sm text-brown-600 dark:text-gray-300">Return to the source topic</span></span>
                   </Link>
                 ) : (
-                  <p className="rounded-2xl border border-cream-200 bg-white p-4 text-sm text-brown-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300">This older result has no saved topic relationship. Its score remains available without being reclassified.</p>
+                  <p className="rounded-2xl border border-cream-200 bg-white p-4 text-sm text-brown-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300">No topic relationship was saved for this round. Its score remains available without being reclassified.</p>
                 )}
 
                 {result.concept_ids.length > 0 && topic && (

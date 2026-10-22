@@ -1,3 +1,5 @@
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Headphones, Volume2, Play, Sparkles } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
@@ -109,6 +111,8 @@ export function SoundMatch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const { canUse, tryUse, getCount, getLimit } = useSubscription();
   const { speak, preload, isSpeaking } = useSpeech(); // Use shared TTS hook with preloading
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -119,6 +123,7 @@ export function SoundMatch() {
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [awardedPoints, setAwardedPoints] = useState(0);
   const [currentWord, setCurrentWord] = useState<WordItem | null>(null);
   const [options, setOptions] = useState<WordItem[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -163,6 +168,7 @@ export function SoundMatch() {
 
   // Start the game
   const startGame = async () => {
+    if (resultUnresolved) return;
     // Check subscription limits
     if (!canUse('game')) {
       setShowUpgradePrompt(true);
@@ -176,6 +182,8 @@ export function SoundMatch() {
       return;
     }
     
+    saveGameResultMutation.reset();
+    gameAttemptIdRef.current = createClientAttemptId();
     setGameState('playing');
     setCurrentRound(1);
     setScore(0);
@@ -196,7 +204,9 @@ export function SoundMatch() {
     
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
-      setScore(prev => prev + 100 + streakBonus);
+      const points = 100 + streakBonus;
+      setAwardedPoints(points);
+      setScore(prev => prev + points);
       setStreak(prev => prev + 1);
       // Play celebration sound/speak
       speak('Bunitu!'); // "Beautiful!" in Chamorro
@@ -226,6 +236,7 @@ export function SoundMatch() {
       hasSavedRef.current = true;
       const stars = score >= 800 ? 3 : score >= 600 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'sound_match',
         score,
         stars,
@@ -389,7 +400,7 @@ export function SoundMatch() {
                 {isCorrect ? (
                   <div className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-bold">Bunitu! (+{100 + (streak >= 3 ? 50 : streak >= 2 ? 25 : 0)})</span>
+                    <span className="font-bold">Bunitu! (+{awardedPoints})</span>
                   </div>
                 ) : (
                   <div>
@@ -405,15 +416,20 @@ export function SoundMatch() {
 
         {/* Complete Screen */}
         {gameState === 'complete' && (
+          <>
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"
             onReplay={() => {
+              if (resultUnresolved) return;
               setGameState('setup');
               hasSavedRef.current = false;
             }}
           />
+          <GameSaveStatus mutation={saveGameResultMutation} />
+          </>
         )}
       </main>
 

@@ -326,7 +326,7 @@ export function FallingWords() {
 
   // Save game result when complete
   useEffect(() => {
-    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current && wordsCompleted > 0) {
+    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current) {
       hasSavedRef.current = true;
       const stars = wordsCompleted >= 10 ? 3 : wordsCompleted >= 5 ? 2 : 1;
       saveGameResultMutation.mutate({
@@ -428,14 +428,8 @@ export function FallingWords() {
   const isLoading = settings.mode === 'challenge' ? flashcardsLoading : false;
   const hasEnoughWords = wordPool.length >= ANSWER_OPTIONS;
 
-  // Calculate stars for display
-  // Star rating based on words caught (more reasonable thresholds)
-  const getStars = () => {
-    if (wordsCompleted >= WIN_WORDS) return 3; // Won the game!
-    if (wordsCompleted >= 15) return 3; // Great performance
-    if (wordsCompleted >= 8) return 2;  // Good performance
-    return 1; // Keep trying!
-  };
+  // Use the same star thresholds as the saved result.
+  const getStars = () => wordsCompleted >= 10 ? 3 : wordsCompleted >= 5 ? 2 : 1;
 
   if (categoriesLoading) {
     return (
@@ -712,7 +706,7 @@ export function FallingWords() {
               <p className="text-brown-600 dark:text-gray-400">
                 {wordsCompleted >= WIN_WORDS 
                   ? `Perfect! You caught all ${WIN_WORDS} words!` 
-                  : `You caught ${wordsCompleted} words!`}
+                  : `You caught ${wordsCompleted} ${wordsCompleted === 1 ? 'word' : 'words'}!`}
               </p>
             </div>
 

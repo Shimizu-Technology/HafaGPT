@@ -358,7 +358,7 @@ export function WordCatch() {
 
   // Save game result when complete
   useEffect(() => {
-    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current && caught > 0) {
+    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current) {
       hasSavedRef.current = true;
       const stars = caught >= 20 ? 3 : caught >= 10 ? 2 : 1;
       saveGameResultMutation.mutate({

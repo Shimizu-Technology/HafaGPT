@@ -66,6 +66,7 @@ export function NumberTap() {
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [awardedPoints, setAwardedPoints] = useState(0);
   const [currentNumber, setCurrentNumber] = useState<NumberItem | null>(null);
   const [currentItem, setCurrentItem] = useState<typeof COUNTABLE_ITEMS[0] | null>(null);
   const [options, setOptions] = useState<number[]>([]);
@@ -148,7 +149,9 @@ export function NumberTap() {
     
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
-      setScore(prev => prev + 100 + streakBonus);
+      const points = 100 + streakBonus;
+      setAwardedPoints(points);
+      setScore(prev => prev + points);
       setStreak(prev => prev + 1);
       speak('Bunitu!');
     } else {
@@ -355,7 +358,7 @@ export function NumberTap() {
                 {isCorrect ? (
                   <div className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-bold">Bunitu! (+{100 + (streak >= 3 ? 50 : streak >= 2 ? 25 : 0)})</span>
+                    <span className="font-bold">Bunitu! (+{awardedPoints})</span>
                   </div>
                 ) : (
                   <div>
