@@ -117,15 +117,10 @@ export function MyDecks() {
                       aria-label={`Study ${deck.title}, ${deck.cards_due} cards due`}
                       className="group rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 sm:p-5"
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
-                          <BookOpen className="h-5 w-5" aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="break-words [overflow-wrap:anywhere] font-bold text-brown-950 dark:text-white">{deck.title}</h3>
-                          <p className="mt-0.5 capitalize text-sm text-brown-500 dark:text-gray-400">{formatTopic(deck.topic)}</p>
-                        </div>
-                        <ArrowRight className="mt-2 h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                      <h3 className="break-words [overflow-wrap:anywhere] font-bold text-brown-950 dark:text-white">{deck.title}</h3>
+                      <div className="mt-1 flex items-start justify-between gap-3">
+                        <p className="min-w-0 break-words capitalize text-sm text-brown-500 dark:text-gray-400">{formatTopic(deck.topic)}</p>
+                        <ArrowRight className="h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300" aria-hidden="true" />
                       </div>
 
                       <div className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" aria-hidden="true">
