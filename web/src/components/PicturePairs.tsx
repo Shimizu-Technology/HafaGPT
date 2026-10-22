@@ -407,8 +407,8 @@ export function PicturePairs() {
         {gameState === 'playing' && (
           <div className="animate-fade-in">
             {/* Stats Bar */}
-            <div className="flex items-center justify-between mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
                   <span className="text-sm font-bold">Moves: {moves}</span>
                 </div>
@@ -435,7 +435,7 @@ export function PicturePairs() {
                     onClick={() => handleCardClick(card.id)}
                     disabled={isChecking && !isFlipped}
                     aria-label={isFlipped ? `${card.word.chamorro}, ${card.word.english} picture. Read or hear card${isMatched ? ', matched' : ''}` : 'Hidden picture'}
-                    className={`aspect-square rounded-xl transition-colors duration-300 transform ${
+                    className={`min-w-0 min-h-40 aspect-square rounded-xl transition-colors duration-300 transform ${
                       isFlipped
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
@@ -447,7 +447,7 @@ export function PicturePairs() {
                     }}
                   >
                     {isFlipped ? (
-                      <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="break-words text-base font-semibold text-brown-900 dark:text-white">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-gray-200">Read / hear</span></span>
+                      <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="w-full break-words text-base font-semibold text-brown-900 dark:text-white">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-gray-200">Read / hear</span></span>
                     ) : (
                       <span className="text-2xl sm:text-3xl">❓</span>
                     )}
