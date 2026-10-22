@@ -1,4 +1,7 @@
-import { useUser } from '@clerk/clerk-react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { browserStorage } from '../lib/browserStorage';
+import { scopeSettingsDrafts } from './useSettingsDraft';
+import { useClerk, useUser } from '@clerk/clerk-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   DailySessionMinutes,
@@ -72,6 +75,23 @@ export function normalizeUserPreferences(metadata: Record<string, unknown> = {})
   };
 }
 
+
+const onboardingListeners = new Set<() => void>();
+const localDismissals = new Set<string>();
+const observedClerks = new WeakSet<object>();
+const dismissalKey = (accountKey: string, reminder = false) => `hafagpt:onboarding:${accountKey}:${reminder ? 'reminder-dismissed' : 'skipped'}`;
+const subscribeOnboarding = (listener: () => void) => {
+  onboardingListeners.add(listener);
+  window.addEventListener('storage', listener);
+  return () => { onboardingListeners.delete(listener); window.removeEventListener('storage', listener); };
+};
+function isDismissed(key: string) { return localDismissals.has(key) || browserStorage.get(key) === 'true'; }
+function dismissLocally(key: string) {
+  localDismissals.add(key); // Still dismiss immediately if storage is unavailable.
+  browserStorage.set(key, 'true');
+  onboardingListeners.forEach(listener => listener());
+}
+
 /**
  * Hook to manage user preferences stored in Clerk's unsafeMetadata.
  * 
@@ -83,7 +103,21 @@ export function normalizeUserPreferences(metadata: Record<string, unknown> = {})
  */
 export function useUserPreferences() {
   const { user, isLoaded, isSignedIn } = useUser();
+  const clerk = useClerk();
+  useEffect(() => {
+    // One observer for the page lifetime. Drafts must also clear when sign-out
+    // happens on a route that doesn't mount this preferences hook.
+    if (observedClerks.has(clerk)) return;
+    observedClerks.add(clerk);
+    clerk.addListener(({ user }) => scopeSettingsDrafts(user?.id));
+  }, [clerk]);
   const queryClient = useQueryClient();
+  const accountKey = user?.id;
+  useEffect(() => {
+    if (isLoaded) scopeSettingsDrafts(accountKey);
+  }, [accountKey, isLoaded]);
+  const skipped = useSyncExternalStore(subscribeOnboarding, () => accountKey ? isDismissed(dismissalKey(accountKey)) : false);
+  const reminderDismissed = useSyncExternalStore(subscribeOnboarding, () => accountKey ? isDismissed(dismissalKey(accountKey, true)) : false);
 
   // Read preferences from Clerk's unsafeMetadata
   const getPreferences = (): UserPreferences => {
@@ -133,10 +167,18 @@ export function useUserPreferences() {
   };
 
   // Check if user needs onboarding
-  const needsOnboarding = isLoaded && isSignedIn && !preferences?.onboarding_completed;
+  // Clerk metadata is available before the local query's first effect. Never
+  // flash a forced modal for an account that has already completed setup.
+  const currentPreferences = preferences || getPreferences();
+  const incomplete = isLoaded && isSignedIn && !currentPreferences.onboarding_completed;
+  const needsOnboarding = incomplete && !skipped;
 
   return {
-    preferences: preferences || DEFAULT_PREFERENCES,
+    preferences: currentPreferences,
+    accountKey,
+    showOnboardingReminder: incomplete && skipped && !reminderDismissed,
+    dismissOnboarding: () => { if (accountKey) dismissLocally(dismissalKey(accountKey)); },
+    dismissOnboardingReminder: () => { if (accountKey) dismissLocally(dismissalKey(accountKey, true)); },
     isLoading: !isLoaded,
     isSignedIn,
     needsOnboarding,

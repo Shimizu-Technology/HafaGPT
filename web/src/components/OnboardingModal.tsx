@@ -19,6 +19,7 @@ import {
   TreePine,
   UserRound,
   UsersRound,
+  X,
 } from 'lucide-react';
 import {
   CONFIDENCE_OPTIONS,
@@ -151,6 +152,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   const [saveError, setSaveError] = useState('');
   const dialogRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const saveInFlight = useRef(false);
   const activeSessionRef = useRef({ accountKey, isOpen, generation: 0 });
   if (
     activeSessionRef.current.accountKey !== accountKey
@@ -162,7 +164,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
       generation: activeSessionRef.current.generation + 1,
     };
   }
-  const { completeOnboarding, isUpdating } = useUserPreferences();
+  const { completeOnboarding, dismissOnboarding, isUpdating } = useUserPreferences();
   const updateDailyGoal = useUpdateDailyGoal();
   const isSaving = isUpdating || updateDailyGoal.isPending;
 
@@ -176,6 +178,23 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
     setSessionMinutes(DEFAULT_DAILY_SESSION_MINUTES);
     setSaveError('');
   }, [accountKey, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    return () => {
+      const target = previousFocus && previousFocus !== document.body && previousFocus.isConnected
+        ? previousFocus : document.querySelector<HTMLElement>('main h1, main h2, h1, main');
+      if (!target) return;
+      const hadTabIndex = target.hasAttribute('tabindex');
+      if (!hadTabIndex) target.setAttribute('tabindex', '-1');
+      window.requestAnimationFrame(() => {
+        if (!target.isConnected) return;
+        target.focus({ preventScroll: true });
+        if (!hadTabIndex) target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true });
+      });
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -193,6 +212,8 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   };
 
   const saveAndClose = async (preferences: OnboardingPreferences) => {
+    if (saveInFlight.current) return;
+    saveInFlight.current = true;
     const savingForGeneration = activeSessionRef.current.generation;
     setSaveError('');
     try {
@@ -200,6 +221,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
       // that request fails, the learner can retry without a partially-complete
       // onboarding record silently closing this dialog.
       await updateDailyGoal.mutateAsync(preferences.daily_session_minutes);
+      if (activeSessionRef.current.generation !== savingForGeneration) return;
       await completeOnboarding(preferences);
       if (activeSessionRef.current.generation === savingForGeneration) {
         onClose();
@@ -208,6 +230,8 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
       if (activeSessionRef.current.generation === savingForGeneration) {
         setSaveError('We could not save your choices. Please try again.');
       }
+    } finally {
+      saveInFlight.current = false;
     }
   };
 
@@ -221,18 +245,15 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
   };
 
   const handleSkip = () => {
-    void saveAndClose({
-      learner_mode: DEFAULT_PREFERENCES.learner_mode,
-      reading_support: DEFAULT_PREFERENCES.reading_support,
-      skill_level: DEFAULT_PREFERENCES.skill_level,
-      learning_goal: DEFAULT_PREFERENCES.learning_goal,
-      daily_session_minutes: DEFAULT_DAILY_SESSION_MINUTES,
-    });
+    activeSessionRef.current.generation += 1;
+    dismissOnboarding();
+    onClose();
   };
 
   const copy = STEP_COPY[step];
 
   const keepFocusInDialog = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Escape') { event.preventDefault(); handleSkip(); return; }
     if (event.key !== 'Tab') return;
     const focusable = Array.from(
       dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') || [],
@@ -262,7 +283,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
         className="flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-cream-200 bg-cream-50 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
       >
         <header className="border-b border-cream-200 bg-white px-5 py-5 dark:border-slate-700 dark:bg-slate-800 sm:px-7">
-          <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-900 dark:text-ocean-200">
                 <Sparkles className="h-5 w-5" aria-hidden="true" />
@@ -272,9 +293,10 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
                 <p className="text-xs text-brown-500 dark:text-gray-400">No name, age, or school information needed</p>
               </div>
             </div>
-            <span className="text-sm font-medium text-brown-500 dark:text-gray-400">
-              {step + 1} of {STEP_COPY.length}
-            </span>
+            <div className="flex flex-none items-center gap-2">
+              <span className="text-sm font-medium text-brown-500 dark:text-gray-400">{step + 1} of {STEP_COPY.length}</span>
+              <button type="button" onClick={handleSkip} aria-label="Close setup" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300"><X className="h-5 w-5" aria-hidden="true" /></button>
+            </div>
           </div>
           <div className="flex gap-1.5" aria-hidden="true">
             {STEP_COPY.map((_, index) => (
@@ -317,7 +339,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           )}
         </div>
 
-        <footer className="flex min-h-18 items-center gap-2 border-t border-cream-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800 sm:px-6">
+        <footer className="flex min-h-18 flex-wrap items-center gap-2 border-t border-cream-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800 sm:px-6">
           {step > 0 ? (
             <button
               type="button"
@@ -332,7 +354,6 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           <button
             type="button"
             onClick={handleSkip}
-            disabled={isSaving}
             className="min-h-11 px-2 text-sm font-medium text-brown-600 hover:text-brown-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:text-white"
           >
             Skip for now

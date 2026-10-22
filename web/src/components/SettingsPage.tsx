@@ -35,7 +35,6 @@ import {
   LEARNER_MODE_OPTIONS,
   LEARNING_GOAL_OPTIONS,
   READING_SUPPORT_OPTIONS,
-  type DailyGoalMinutes,
   type LearnerMode,
   type LearningGoal,
   type ReadingSupport,
@@ -43,6 +42,7 @@ import {
   normalizeDailyGoalMinutes,
 } from '../data/learningPreferences';
 import { useTheme } from '../hooks/useTheme';
+import { isSettingsSavePending, useSettingsDraft } from '../hooks/useSettingsDraft';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { getLevelInfo, useUpdateDailyGoal, useXP } from '../hooks/useXP';
 import { AuthButton } from './AuthButton';
@@ -141,36 +141,24 @@ function SettingsSection({
 
 export function SettingsPage() {
   const { preference, setTheme } = useTheme();
-  const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
+  const { preferences, accountKey, updatePreferencesAsync, isUpdating, showOnboardingReminder, dismissOnboardingReminder } = useUserPreferences();
+  const { draft, updateDraft, clearDraft } = useSettingsDraft(accountKey);
   const { data: xpData, isLoading: isLoadingXP, isError: isXPError } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
   const savedSessionMinutes = xpData
     ? normalizeDailyGoalMinutes(xpData.daily_goal_minutes)
     : DEFAULT_DAILY_SESSION_MINUTES;
 
-  const [skillLevel, setSkillLevel] = useState<SkillLevel>(preferences.skill_level);
-  const [learningGoal, setLearningGoal] = useState<LearningGoal>(preferences.learning_goal);
-  const [learnerMode, setLearnerMode] = useState<LearnerMode>(preferences.learner_mode);
-  const [readingSupport, setReadingSupport] = useState<ReadingSupport>(preferences.reading_support);
-  const [sessionMinutes, setSessionMinutes] = useState<DailyGoalMinutes>(savedSessionMinutes);
+  // Only edited fields override newly loaded server values. A goal refetch must
+  // never reset unrelated choices during a save/rollback transaction.
+  const skillLevel = draft?.skill_level ?? preferences.skill_level;
+  const learningGoal = draft?.learning_goal ?? preferences.learning_goal;
+  const learnerMode = draft?.learner_mode ?? preferences.learner_mode;
+  const readingSupport = draft?.reading_support ?? preferences.reading_support;
+  const sessionMinutes = draft?.sessionMinutes ?? savedSessionMinutes;
   const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const [isSaveTransactionPending, setIsSaveTransactionPending] = useState(false);
-  const isSaving = isUpdating || updateDailyGoal.isPending || isSaveTransactionPending;
-
-  useEffect(() => {
-    setSkillLevel(preferences.skill_level);
-    setLearningGoal(preferences.learning_goal);
-    setLearnerMode(preferences.learner_mode);
-    setReadingSupport(preferences.reading_support);
-    setSessionMinutes(savedSessionMinutes);
-  }, [
-    preferences.learner_mode,
-    preferences.learning_goal,
-    preferences.reading_support,
-    preferences.skill_level,
-    savedSessionMinutes,
-  ]);
+  const saveError = draft?.saveError ?? '';
+  const isSaving = isUpdating || updateDailyGoal.isPending || Boolean(draft?.savePending);
 
   useEffect(() => {
     if (!saved) return undefined;
@@ -187,53 +175,50 @@ export function SettingsPage() {
   const hasChanges = metadataHasChanges || goalHasChanges;
 
   const handleSave = async () => {
-    if (isSaveTransactionPending) return;
+    if (isSaving || isSettingsSavePending(accountKey)) return;
 
     let goalWasUpdated = false;
-    setIsSaveTransactionPending(true);
+    let succeeded = false;
+    updateDraft({ savePending: true, saveError: '' });
     try {
-      setSaveError('');
+      updateDraft({ saveError: '' });
       setSaved(false);
       if (goalHasChanges) {
         await updateDailyGoal.mutateAsync(sessionMinutes);
         goalWasUpdated = true;
       }
-      if (metadataHasChanges) {
+      if (metadataHasChanges || !preferences.onboarding_completed) {
         await updatePreferencesAsync({
           skill_level: skillLevel,
           learning_goal: learningGoal,
           learner_mode: learnerMode,
           reading_support: readingSupport,
+          ...(!preferences.onboarding_completed ? { onboarding_completed: true } : {}),
         });
       }
+      succeeded = true;
       setSaved(true);
     } catch {
-      if (goalWasUpdated && metadataHasChanges) {
+      if (goalWasUpdated && (metadataHasChanges || !preferences.onboarding_completed)) {
         try {
           await updateDailyGoal.mutateAsync(savedSessionMinutes);
-          setSaveError('We could not save all your preferences, so we restored your previous daily session. Reload to confirm your other choices before trying again.');
+          updateDraft({ saveError: 'We could not save all your preferences, so we restored your previous daily session. Reload to confirm your other choices before trying again.' });
         } catch {
-          setSaveError('We could not finish or undo every change. Your daily session may have changed. Reload this page to check your saved settings before trying again.');
+          updateDraft({ saveError: 'We could not finish or undo every change. Your daily session may have changed. Reload this page to check your saved settings before trying again.' });
         }
       } else {
-        setSaveError('We could not save or confirm your changes. Reload this page to check your saved settings before trying again.');
+        updateDraft({ saveError: 'We could not save or confirm your changes. Reload this page to check your saved settings before trying again.' });
       }
     } finally {
-      setIsSaveTransactionPending(false);
+      if (succeeded) clearDraft();
+      else updateDraft({ savePending: false });
     }
   };
 
-  const handleReset = () => {
-    setSkillLevel(preferences.skill_level);
-    setLearningGoal(preferences.learning_goal);
-    setLearnerMode(preferences.learner_mode);
-    setReadingSupport(preferences.reading_support);
-    setSessionMinutes(savedSessionMinutes);
-    setSaveError('');
-  };
+  const handleReset = () => { clearDraft(); setSaved(false); };
 
   return (
-    <LearnerPageShell className={hasChanges ? 'pb-40 sm:pb-28' : ''}>
+    <LearnerPageShell className={hasChanges || draft ? 'pb-40 sm:pb-28' : ''}>
       <LearnerPageHeader
         title="Settings"
         subtitle="Choose how HåfaGPT supports your learning."
@@ -246,6 +231,16 @@ export function SettingsPage() {
       />
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8">
+        {showOnboardingReminder && (
+          <section aria-labelledby="setup-reminder-title" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h2 id="setup-reminder-title" className="font-bold text-brown-950 dark:text-white">Make learning fit you</h2>
+            <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Setup is optional. Choose your learning settings below, or save the current choices when you are ready.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" onClick={() => void handleSave()} disabled={isSaving || isLoadingXP} className="min-h-11 rounded-xl px-4 font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300">Save these settings</button>
+              <button type="button" onClick={dismissOnboardingReminder} className="min-h-11 rounded-xl px-4 font-semibold text-brown-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-200">Dismiss setup reminder</button>
+            </div>
+          </section>
+        )}
         <SettingsSection
           eyebrow="Learning style"
           title="Make practice feel right"
@@ -260,7 +255,7 @@ export function SettingsPage() {
                   {...option}
                   icon={MODE_ICONS[option.id]}
                   selected={learnerMode === option.id}
-                  onSelect={setLearnerMode}
+                  onSelect={(learner_mode) => updateDraft({ learner_mode })}
                   disabled={isSaving}
                 />
               ))}
@@ -276,7 +271,7 @@ export function SettingsPage() {
                   {...option}
                   icon={READING_ICONS[option.id]}
                   selected={readingSupport === option.id}
-                  onSelect={setReadingSupport}
+                  onSelect={(reading_support) => updateDraft({ reading_support })}
                   disabled={isSaving}
                 />
               ))}
@@ -298,7 +293,7 @@ export function SettingsPage() {
                   {...option}
                   icon={CONFIDENCE_ICONS[option.id]}
                   selected={skillLevel === option.id}
-                  onSelect={setSkillLevel}
+                  onSelect={(skill_level) => updateDraft({ skill_level })}
                   disabled={isSaving}
                 />
               ))}
@@ -314,7 +309,7 @@ export function SettingsPage() {
                   {...option}
                   icon={GOAL_ICONS[option.id]}
                   selected={learningGoal === option.id}
-                  onSelect={setLearningGoal}
+                  onSelect={(learning_goal) => updateDraft({ learning_goal })}
                   disabled={isSaving}
                 />
               ))}
@@ -330,7 +325,7 @@ export function SettingsPage() {
                   {...option}
                   icon={Clock3}
                   selected={sessionMinutes === option.id}
-                  onSelect={setSessionMinutes}
+                  onSelect={(sessionMinutes) => updateDraft({ sessionMinutes })}
                   disabled={isSaving || !dailyGoalIsAvailable}
                 />
               ))}
@@ -405,11 +400,12 @@ export function SettingsPage() {
         </section>
       </main>
 
-      {hasChanges && (
+      {(hasChanges || draft) && (
         <div className="fixed above-bottom-nav left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
           <div className="mx-auto max-w-3xl">
+            <p role="status" className="mb-2 text-sm text-brown-700 dark:text-gray-200">Unsaved choices stay here as you move around the app. Save before closing or reloading.</p>
             {saveError && <p role="alert" className="mb-2 text-sm font-semibold text-red-700 dark:text-red-300">{saveError}</p>}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={handleReset}
@@ -417,13 +413,13 @@ export function SettingsPage() {
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-brown-600 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-800"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Reset
+                Discard changes
               </button>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoadingXP}
-                className="inline-flex min-h-12 min-w-40 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="inline-flex min-h-12 min-w-0 flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {isSaving ? 'Saving…' : 'Save changes'}

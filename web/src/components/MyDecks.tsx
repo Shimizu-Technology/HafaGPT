@@ -39,7 +39,7 @@ export function MyDecks() {
             <BookOpen className="mx-auto h-9 w-9 text-coral-600 dark:text-teal-300" aria-hidden="true" />
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">Sign in to use saved decks</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
-              Your custom decks and review progress are connected to your account.
+              Sign in to review decks already saved to your account.
             </p>
             <Link
               to="/flashcards"
@@ -79,13 +79,13 @@ export function MyDecks() {
             </span>
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No saved decks yet</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
-              Open flashcards, choose a topic, and save a deck to practice it again later.
+              Browse flashcards to practice any topic. Creating, renaming, and deleting personal decks is not available here yet.
             </p>
             <Link
               to="/flashcards"
               className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
-              Choose flashcards
+              Browse flashcards
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </section>
@@ -122,7 +122,7 @@ export function MyDecks() {
                           <BookOpen className="h-5 w-5" aria-hidden="true" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <h3 className="truncate font-bold text-brown-950 dark:text-white">{deck.title}</h3>
+                          <h3 className="break-words [overflow-wrap:anywhere] font-bold text-brown-950 dark:text-white">{deck.title}</h3>
                           <p className="mt-0.5 capitalize text-sm text-brown-500 dark:text-gray-400">{formatTopic(deck.topic)}</p>
                         </div>
                         <ArrowRight className="mt-2 h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300" aria-hidden="true" />

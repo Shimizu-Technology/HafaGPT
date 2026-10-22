@@ -5,6 +5,7 @@ import { OnboardingModal } from './OnboardingModal';
 const onboardingMocks = vi.hoisted(() => ({
   completeOnboarding: vi.fn(),
   updateDailyGoal: vi.fn(),
+  dismissOnboarding: vi.fn(),
 }));
 
 vi.mock('../hooks/useUserPreferences', async () => {
@@ -13,6 +14,7 @@ vi.mock('../hooks/useUserPreferences', async () => {
     ...actual,
     useUserPreferences: () => ({
       completeOnboarding: onboardingMocks.completeOnboarding,
+      dismissOnboarding: onboardingMocks.dismissOnboarding,
       isUpdating: false,
     }),
   };
@@ -25,8 +27,14 @@ vi.mock('../hooks/useXP', () => ({
   }),
 }));
 
+function finishSteps() {
+  for (let i = 0; i < 4; i++) fireEvent.click(screen.getByRole('button', { name: /continue/i }));
+  fireEvent.click(screen.getByRole('button', { name: /start learning/i }));
+}
+
 describe('capability onboarding', () => {
   beforeEach(() => {
+    onboardingMocks.dismissOnboarding.mockReset();
     onboardingMocks.completeOnboarding.mockReset();
     onboardingMocks.completeOnboarding.mockResolvedValue(undefined);
     onboardingMocks.updateDailyGoal.mockReset();
@@ -59,45 +67,42 @@ describe('capability onboarding', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('supports Skip for now with safe defaults', async () => {
+  it.each(['Skip for now', 'Close setup', 'Escape'])('dismisses with %s offline, locally and without any writes', (action) => {
+    onboardingMocks.updateDailyGoal.mockRejectedValue(new Error('offline'));
+    onboardingMocks.completeOnboarding.mockRejectedValue(new Error('offline'));
     const onClose = vi.fn();
     render(<OnboardingModal isOpen onClose={onClose} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
-
-    await waitFor(() => expect(onboardingMocks.completeOnboarding).toHaveBeenCalledWith({
-      learner_mode: 'self',
-      reading_support: 'short_text_audio',
-      skill_level: 'beginner',
-      learning_goal: 'all',
-      daily_session_minutes: 10,
-    }));
-    expect(onboardingMocks.updateDailyGoal).toHaveBeenCalledWith(10);
+    fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
+    if (action === 'Escape') fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    else fireEvent.click(screen.getByRole('button', { name: action }));
     expect(onClose).toHaveBeenCalledOnce();
+    expect(onboardingMocks.dismissOnboarding).toHaveBeenCalledOnce();
+    expect(onboardingMocks.updateDailyGoal).not.toHaveBeenCalled();
+    expect(onboardingMocks.completeOnboarding).not.toHaveBeenCalled();
   });
 
-  it('keeps the modal open and reports a save failure', async () => {
-    onboardingMocks.completeOnboarding.mockRejectedValueOnce(new Error('offline'));
-    const onClose = vi.fn();
-    render(<OnboardingModal isOpen onClose={onClose} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-  });
-
-  it('does not mark onboarding complete when the tracked daily goal cannot sync', async () => {
+  it('keeps choices after an explicit save fails, then permits local Skip', async () => {
     onboardingMocks.updateDailyGoal.mockRejectedValueOnce(new Error('offline'));
     const onClose = vi.fn();
     render(<OnboardingModal isOpen onClose={onClose} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
-
+    finishSteps();
     expect(await screen.findByRole('alert')).toHaveTextContent(/could not save/i);
     expect(onboardingMocks.completeOnboarding).not.toHaveBeenCalled();
-    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onboardingMocks.updateDailyGoal).toHaveBeenCalledOnce();
+  });
+
+  it('allows Skip while an explicit save is pending and starts no subsequent metadata write', async () => {
+    let finishGoal!: () => void;
+    onboardingMocks.updateDailyGoal.mockImplementationOnce(() => new Promise<void>(resolve => { finishGoal = resolve; }));
+    const onClose = vi.fn();
+    render(<OnboardingModal isOpen onClose={onClose} />);
+    finishSteps();
+    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    expect(onClose).toHaveBeenCalledOnce();
+    await act(async () => finishGoal());
+    expect(onboardingMocks.completeOnboarding).not.toHaveBeenCalled();
   });
 
   it('keeps keyboard focus inside the modal', async () => {
@@ -106,6 +111,9 @@ describe('capability onboarding', () => {
     await waitFor(() => expect(firstChoice).toHaveFocus());
 
     fireEvent.keyDown(firstChoice, { key: 'Tab', shiftKey: true });
+    expect(screen.getByRole('button', { name: /close setup/i })).not.toBeDisabled();
+    screen.getByRole('button', { name: /close setup/i }).focus();
+    fireEvent.keyDown(screen.getByRole('button', { name: /close setup/i }), { key: 'Tab', shiftKey: true });
     expect(screen.getByRole('button', { name: /continue/i })).toHaveFocus();
   });
 
@@ -133,7 +141,8 @@ describe('capability onboarding', () => {
       <OnboardingModal isOpen onClose={onClose} accountKey="account-one" />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    finishSteps();
+    await waitFor(() => expect(onboardingMocks.completeOnboarding).toHaveBeenCalledOnce());
     rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-two" />);
     await act(async () => finishSave?.());
 
@@ -153,7 +162,8 @@ describe('capability onboarding', () => {
       <OnboardingModal isOpen onClose={onClose} accountKey="account-a" />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /skip for now/i }));
+    finishSteps();
+    await waitFor(() => expect(onboardingMocks.completeOnboarding).toHaveBeenCalledOnce());
     rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-b" />);
     rerender(<OnboardingModal isOpen onClose={onClose} accountKey="account-a" />);
     fireEvent.click(screen.getByRole('button', { name: /learning with a child/i }));
