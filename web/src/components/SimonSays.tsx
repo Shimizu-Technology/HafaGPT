@@ -307,7 +307,7 @@ export function SimonSays() {
                 return (
                   <button
                     key={index}
-                    aria-label={part.chamorro}
+                    aria-label={showResult ? `${part.chamorro} (${part.english})` : part.chamorro}
                     onClick={() => handleAnswer(part)}
                     disabled={gameState === 'feedback' || !audio.canAnswer}
                     className={`p-6 rounded-2xl transition-colors ${buttonClass}`}

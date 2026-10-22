@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumberTap } from './NumberTap';
 import { SimonSays } from './SimonSays';
 import { WordCatch } from './WordCatch';
+import { FallingWords } from './FallingWords';
 import { GameSaveStatus } from './games/GameSaveStatus';
 const mocks = vi.hoisted(() => ({ speak: vi.fn(), mutate: vi.fn(), reset: vi.fn() }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: false }) }));
@@ -114,6 +115,25 @@ describe('calm listening games', () => {
     fireEvent.click(options[0]);
     act(() => vi.advanceTimersByTime(1000));
     expect(screen.getByRole('button', { name: 'Next round' })).toBeInTheDocument();
+    // Feedback reveals the English meaning; the accessible name must carry it too.
+    expect(screen.getAllByRole('button', { name: /^Ulu \(.+\)$/ }).length).toBeGreaterThan(0);
+  });
+
+  it('Falling Words keeps keyboard focus on the new answer choices after Next word', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    render(<MemoryRouter><FallingWords /></MemoryRouter>);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+      await Promise.resolve();
+    });
+    await screen.findByRole('button', { name: 'Pause game' });
+    const isAnswerChoice = (el: Element | null) => Boolean(el?.parentElement?.className.includes('grid-cols-2'));
+    const choice = screen.getAllByRole('button').find(button => isAnswerChoice(button) && !button.hasAttribute('disabled'))!;
+    fireEvent.click(choice);
+    const next = await screen.findByRole('button', { name: 'Next word' });
+    next.focus();
+    fireEvent.click(next);
+    await waitFor(() => expect(isAnswerChoice(document.activeElement)).toBe(true));
   });
 });
 it('shows a failed save and retries the exact attempt payload', () => {

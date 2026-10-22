@@ -115,16 +115,9 @@ export function FallingWords() {
   const wordElementRef = useRef<HTMLDivElement>(null);
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef({ id: 0, y: 0 });
-  const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const answerOptionsRef = useRef<HTMLDivElement>(null);
   const wordIdRef = useRef(0);
   const resolvedWordRef = useRef<number | null>(null);
-
-  const clearTransitionTimers = useCallback(() => {
-    transitionTimersRef.current.forEach(timer => clearTimeout(timer));
-    transitionTimersRef.current.clear();
-  }, []);
-
-  useEffect(() => clearTransitionTimers, [clearTransitionTimers]);
 
   // Fetch flashcards data
   const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
@@ -265,7 +258,12 @@ export function FallingWords() {
     }
   }, [currentWord, feedback, gameState, streak, wordsCompleted]);
 
-  const nextWord = () => { clearTransitionTimers(); generateNewWord(); };
+  const nextWord = () => {
+    generateNewWord();
+    // The focused "Next word" button unmounts with the feedback; keep keyboard
+    // and screen-reader users on the new answer choices.
+    requestAnimationFrame(() => answerOptionsRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus());
+  };
 
   // Simulation lives in refs. React only sees a word boundary or a missed word.
   const currentWordId = currentWord?.id;
@@ -357,7 +355,6 @@ export function FallingWords() {
         }
       }
 
-      clearTransitionTimers();
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
       gameAttemptIdRef.current = getRoundAttemptId();
@@ -377,12 +374,11 @@ export function FallingWords() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, getRoundAttemptId, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, getRoundAttemptId, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
     if (resultUnresolved) return;
-    clearTransitionTimers();
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -650,7 +646,7 @@ export function FallingWords() {
             </div>
 
             {/* Answer Buttons */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-3 sm:mt-4">
+            <div ref={answerOptionsRef} className="grid grid-cols-2 gap-2 sm:gap-3 mt-3 sm:mt-4">
               {answerOptions.map((option, index) => (
                 <button
                   key={index}
