@@ -1,3 +1,4 @@
+import { Profiler } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -178,6 +179,29 @@ describe('game result and round reliability', () => {
     await screen.findByText('Result saved');
   });
 
+  it.each([['Falling Words', FallingWords], ['Word Catch', WordCatch]] as const)('%s moves Challenge pieces without rendering React per frame', async (_, Component) => {
+    let frame: FrameRequestCallback = () => undefined;
+    let frameId = 0;
+    vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { frame = callback; return ++frameId; }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320);
+    const renderFrame = vi.fn();
+    render(<GameTestRouter><Profiler id="arcade" onRender={renderFrame}><Component /></Profiler></GameTestRouter>);
+    const challenge = screen.queryByRole('button', { name: 'Challenge' });
+    if (challenge) fireEvent.click(challenge);
+    vi.useFakeTimers();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
+    act(() => vi.advanceTimersByTime(500));
+    const before = renderFrame.mock.calls.length;
+    for (let index = 0; index <= 60; index++) act(() => frame(index * 1000 / 60));
+    expect(renderFrame).toHaveBeenCalledTimes(before);
+    const moved = Array.from(document.querySelectorAll<HTMLElement>('main [style]')).filter(element => element.style.transform.includes('translate('));
+    expect(moved.length).toBeGreaterThan(0);
+    expect(moved.some(element => element.style.top === '0px')).toBe(true);
+  });
+
   it('records a timed Word Catch round with no catches', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
@@ -188,6 +212,24 @@ describe('game result and round reliability', () => {
     for (let seconds = 0; seconds < 60; seconds++) await act(async () => { vi.advanceTimersByTime(1000); });
     expect(mocks.save).toHaveBeenCalledOnce();
     expect(mocks.save.mock.calls[0][0]).toMatchObject({ score: 0, moves: 0 });
+  });
+
+  it('announces one submitted Wordle row and does not over-credit repeated letters', async () => {
+    localStorage.setItem('hafagpt-wordle-resume-v1-games-test', JSON.stringify({
+      targetWord: { word: 'HÅNOM', meaning: 'water' }, guesses: [], currentGuess: '',
+      gameMode: 'practice', difficulty: 'medium', wordMode: 'beginner', category: 'greetings',
+    }));
+    render(<GameTestRouter><ChamorroWordle /></GameTestRouter>);
+    const input = await screen.findByRole('textbox', { name: 'Type your guess' });
+    fireEvent.change(input, { target: { value: 'MOMMM' } });
+    fireEvent.submit(input.closest('form')!);
+    expect(screen.getByRole('img', { name: 'Row 1, position 1: M, not in the word' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Row 1, position 2: O, right letter, different spot' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Row 1, position 5: M, right letter, right spot' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'M, right letter, right spot' })).toHaveTextContent('✓');
+    expect(screen.getByRole('button', { name: 'O, right letter, different spot' })).toHaveTextContent('↔');
+    const announcements = screen.getAllByRole('status').filter(status => status.textContent?.startsWith('Row 1:'));
+    expect(announcements).toHaveLength(1);
   });
 
   it('saves a zero-star Wordle loss and exposes non-color feedback plus keyboard input', async () => {
