@@ -111,7 +111,11 @@ def reserve_usage(user_id: str, usage_type: str, logical_id: str, *, today: date
 
 def claim_send(user_id: str, logical_id: str, dispatch_token: str,
                conversation_id: str | None, *, connect: Callable = _connect) -> dict:
-    """The sole permission to invoke generation. Never best effort or reusable."""
+    """The sole permission to invoke generation. Never best effort or reusable.
+
+    generation_started conservatively fences a live claimed worker. Only its
+    finished owner can prove no chat/vision request occurred and clear the fence.
+    """
     with _transaction(user_id, 'chat', logical_id, connect) as cursor:
         row = _row(cursor, user_id, 'chat', logical_id)
         if not row or row[0] != 'reserved' or not secrets.compare_digest(row[1] or '', dispatch_token):
@@ -139,7 +143,8 @@ def reconcile_send(user_id: str, logical_id: str, *, today: date, abandon: bool 
 
     A missing ID gets a tombstone too. A delayed original request then cannot
     claim until an explicit new reservation issues a different dispatch token.
-    Once claimed, even stale/failed generation cannot be retried under this ID.
+    A claimed dispatch cannot be released here, even when stale or failed.
+    Only its finished owner may prove no provider call and make it retryable.
     """
     with _transaction(user_id, 'chat', logical_id, connect) as cursor:
         row = _row(cursor, user_id, 'chat', logical_id)

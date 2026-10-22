@@ -25,6 +25,7 @@ for (const width of [1440, 390, 360]) for (const theme of ['light', 'dark']) tes
     const input = page.getByRole('textbox', { name: 'Message input' });
     await input.fill('Please explain this school note.');
     await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Tutor', exact: true }).click();
     await expect(input).toHaveValue('Please explain this school note.');
     await page.screenshot({ path: `${output}/draft-${width}-${theme}.png` });
@@ -64,6 +65,7 @@ for (const width of [1440, 390, 360]) for (const theme of ['light', 'dark']) tes
     await expect(input).toHaveValue('');
     await input.fill('Private note to clear at sign out');
     await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible();
     await clerk.signOut({ page });
     await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
     await page.getByRole('link', { name: 'Tutor', exact: true }).click();
@@ -86,6 +88,8 @@ for (const kind of ['newer typing', 'background completion']) test(`Tutor preser
   const gate = new Promise<void>(resolve => { deliver = resolve; });
   await page.route('**/api/chat/stream', async route => {
     const response = await route.fetch();
+    // This gate represents a saved reply, rather than just response headers.
+    expect(await response.text()).toContain('"saved": true');
     ready();
     await gate;
     await route.fulfill({ response }).catch(() => {});
@@ -99,10 +103,12 @@ for (const kind of ['newer typing', 'background completion']) test(`Tutor preser
     await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false })).toBeVisible();
     await expect(input).toHaveValue('Keep this second unsent note');
     await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'Tutor', exact: true }).click();
     await expect(input).toHaveValue('Keep this second unsent note');
   } else {
     await page.getByRole('link', { name: 'Library', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Library', exact: true })).toBeVisible();
     deliver();
     await page.getByRole('link', { name: 'Tutor', exact: true }).click();
     await expect(page.getByText('Synthetic saved reply for the school note.', { exact: false })).toBeVisible();
