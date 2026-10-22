@@ -28,7 +28,7 @@ it.each([false, true])('distinguishes pending, failed and successful empty searc
   if (priorResults) expect(screen.getByText('Retained meaning')).toBeInTheDocument();
   expect(screen.getByRole('textbox')).toHaveValue('next');
   pending = false;
-  fireEvent.click(screen.getByRole('button', { name: 'Retry', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
   expect(await screen.findByText('No words found matching "next"')).toBeInTheDocument();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
