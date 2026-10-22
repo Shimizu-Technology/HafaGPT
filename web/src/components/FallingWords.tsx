@@ -267,45 +267,35 @@ export function FallingWords() {
 
   const nextWord = () => { clearTransitionTimers(); generateNewWord(); };
 
-  // Animation loop
+  // Simulation lives in refs. React only sees a word boundary or a missed word.
   const currentWordId = currentWord?.id;
   useEffect(() => {
     if (gameState !== 'playing' || !currentWordId || feedback || !pace.challenge || guard.blocked) return;
-
     let previousTime: number | null = null;
+    let height = gameAreaRef.current?.clientHeight || 0;
+    const observer = new ResizeObserver(entries => { height = entries[0].contentRect.height; });
+    if (gameAreaRef.current) observer.observe(gameAreaRef.current);
     const animate = (timestamp: number) => {
       const elapsed = previousTime === null ? 0 : timestamp - previousTime;
       previousTime = timestamp;
-      setCurrentWord(prev => {
-        if (!prev) return null;
-
-        const newY = prev.y + frameDistance(prev.speed, elapsed);
-
-        return { ...prev, y: Math.min(newY, 85) };
-      });
-
+      const position = positionRef.current;
+      position.y = Math.min(85, position.y + frameDistance(currentWord.speed, elapsed));
+      if (wordElementRef.current) wordElementRef.current.style.transform = `translate(-50%, ${position.y * height / 100}px)`;
+      if (position.y >= 85) {
+        if (resolvedWordRef.current !== currentWordId) {
+          resolvedWordRef.current = currentWordId;
+          setFeedback('wrong');
+          setStreak(0);
+          setLives(value => value - 1);
+          if (lives <= 1) setGameState('complete');
+        }
+        return;
+      }
       animationRef.current = requestAnimationFrame(animate);
     };
-
     animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [gameState, currentWordId, feedback, pace.challenge, guard.blocked]);
-
-  useEffect(() => {
-    if (gameState !== 'playing' || !currentWord || currentWord.y < 85 || feedback || resolvedWordRef.current === currentWord.id) return;
-    resolvedWordRef.current = currentWord.id;
-    setFeedback('wrong');
-    setStreak(0);
-    setLives(lives - 1);
-    if (lives <= 1) {
-      setGameState('complete');
-    }
-  }, [currentWord, feedback, gameState, lives, pace.challenge]);
+    return () => { observer.disconnect(); if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, [gameState, currentWordId, currentWord, feedback, pace.challenge, guard.blocked, lives]);
 
   useEffect(() => {
     const pause = () => { if (document.hidden) setGameState(state => state === 'playing' ? 'paused' : state); };
@@ -630,8 +620,8 @@ export function FallingWords() {
                     ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
                   `}
                   style={{
-                    top: pace.challenge ? `${currentWord.y}%` : '35%',
-                    transform: 'translateX(-50%)',
+                    top: pace.challenge ? 0 : '35%',
+                    transform: pace.challenge ? `translate(-50%, ${positionRef.current.y * (gameAreaRef.current?.clientHeight || 0) / 100}px)` : 'translateX(-50%)',
                     transition: 'background-color 0.2s',
                   }}
                 >

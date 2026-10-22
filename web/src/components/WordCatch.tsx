@@ -123,7 +123,6 @@ export function WordCatch() {
   const pairElementsRef = useRef(new Map<number, HTMLButtonElement>());
   const [roundFeedback, setRoundFeedback] = useState<string | null>(null);
   const caughtIdsRef = useRef(new Set<number>());
-  const missedIdsRef = useRef(new Set<number>());
   const comboRef = useRef(0);
   const livesRef = useRef(MAX_LIVES);
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -271,58 +270,42 @@ export function WordCatch() {
     }
   }, [flyingPairs, gameState, pace.challenge, wordPool]);
 
-  // Animation loop
+  // Mutable simulation and element transforms avoid React and positional layout per frame.
   useEffect(() => {
     if (gameState !== 'playing' || !pace.challenge || guard.blocked) return;
-
     let previousTime: number | null = null;
+    let width = gameAreaRef.current?.clientWidth || 0;
+    let height = gameAreaRef.current?.clientHeight || 0;
+    const observer = new ResizeObserver(entries => { width = entries[0].contentRect.width; height = entries[0].contentRect.height; });
+    if (gameAreaRef.current) observer.observe(gameAreaRef.current);
     const animate = (timestamp: number) => {
       const elapsed = previousTime === null ? 0 : timestamp - previousTime;
       previousTime = timestamp;
-      setFlyingPairs(prev => {
-        const updated = prev.map(pair => {
-          if (pair.caught || pair.missed) return pair;
-
-          const newProgress = pair.progress + frameDistance(pair.speed, elapsed);
-          const newX = pair.startX + (pair.endX - pair.startX) * newProgress;
-          const newY = pair.startY + (pair.endY - pair.startY) * newProgress;
-
-          // Check if went off screen
-          if (newProgress >= 1) {
-            return { ...pair, x: newX, y: newY, progress: newProgress, missed: true };
-          }
-
-          return { ...pair, x: newX, y: newY, progress: newProgress };
-        });
-
-        // Remove pairs that are off screen and processed
-        return updated.filter(pair => !pair.caught);
-      });
-
+      const expired: FlyingPair[] = [];
+      for (const pair of simulationRef.current.values()) {
+        pair.progress += frameDistance(pair.speed, elapsed);
+        pair.x = pair.startX + (pair.endX - pair.startX) * pair.progress;
+        pair.y = pair.startY + (pair.endY - pair.startY) * pair.progress;
+        const element = pairElementsRef.current.get(pair.id);
+        if (element) element.style.transform = `translate(${pair.x * width / 100}px, ${pair.y * height / 100}px) translate(-50%, -50%)`;
+        if (pair.progress >= 1) expired.push(pair);
+      }
+      if (expired.length) {
+        const ids = new Set(expired.map(pair => pair.id));
+        ids.forEach(id => simulationRef.current.delete(id));
+        const missedMatches = expired.filter(pair => pair.isCorrect).length;
+        if (missedMatches) {
+          comboRef.current = 0;
+          setCombo(0);
+          setMissed(count => count + missedMatches);
+        }
+        setFlyingPairs(pairs => pairs.filter(pair => !ids.has(pair.id)));
+      }
       animationRef.current = requestAnimationFrame(animate);
     };
-
     animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
+    return () => { observer.disconnect(); if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, [gameState, pace.challenge, guard.blocked]);
-
-  useEffect(() => {
-    const expired = flyingPairs.filter(pair => pair.missed && !missedIdsRef.current.has(pair.id));
-    if (!expired.length) return;
-    expired.forEach(pair => missedIdsRef.current.add(pair.id));
-    const missedMatches = expired.filter(pair => pair.isCorrect).length;
-    if (missedMatches) {
-      comboRef.current = 0;
-      setCombo(0);
-      setMissed(count => count + missedMatches);
-    }
-    setFlyingPairs(pairs => pairs.filter(pair => !pair.missed));
-  }, [flyingPairs]);
 
   useEffect(() => {
     const pause = () => { if (document.hidden) setGameState(state => state === 'playing' ? 'paused' : state); };
@@ -708,10 +691,10 @@ export function WordCatch() {
                     }
                   `}
                   style={{
-                    left: pace.challenge ? `${pair.x}%` : '50%',
-                    top: pace.challenge ? `${pair.y}%` : '40%',
+                    left: pace.challenge ? 0 : '50%',
+                    top: pace.challenge ? 0 : '40%',
                     maxWidth: '90%',
-                    transform: 'translate(-50%, -50%)',
+                    transform: pace.challenge ? `translate(${pair.x * (gameAreaRef.current?.clientWidth || 0) / 100}px, ${pair.y * (gameAreaRef.current?.clientHeight || 0) / 100}px) translate(-50%, -50%)` : 'translate(-50%, -50%)',
                     transition: 'background-color 150ms',
                   }}
                 >
