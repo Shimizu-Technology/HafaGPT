@@ -28,6 +28,7 @@ for (const scheme of ['light', 'dark'] as const) {
 }
 
 test('story quiz exposes selected answers and deliberate listening without autoplay', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
   let speechRequests = 0;
   await page.route('**/api/tts', route => { speechRequests += 1; return route.fulfill({ status: 503, json: {} }); });
   await page.goto('/stories/hafa-adai-maria');
@@ -36,7 +37,10 @@ test('story quiz exposes selected answers and deliberate listening without autop
   while (await page.getByRole('button', { name: 'Continue', exact: true }).count()) {
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
   }
-  await page.getByRole('button', { name: 'Take Quiz', exact: true }).click();
+  const takeQuiz = page.getByRole('button', { name: 'Take Quiz', exact: true });
+  // Check emitted CSS, not only class strings: dynamic variant names can be purged.
+  expect(await takeQuiz.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(184, 55, 48)');
+  await takeQuiz.click();
   const question = page.locator('#story-question');
   const group = page.getByRole('group', { name: await question.innerText(), exact: true });
   const answer = group.getByRole('button', { pressed: false }).first();
