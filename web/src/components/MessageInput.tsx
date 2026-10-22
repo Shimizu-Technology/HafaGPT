@@ -1,6 +1,7 @@
 import { useCallback, useState, KeyboardEvent, ClipboardEvent, RefObject, ReactNode, useEffect, useRef } from 'react';
 import { Send, Mic, Camera, X, FileText, File as FileIcon, Square, Paperclip, Sparkles } from 'lucide-react';
 import { triggerHaptic } from '../hooks/useHaptic';
+import { keepTutorDraft, readTutorDraft } from '../lib/pendingReply';
 
 // Supported file types
 const SUPPORTED_FILE_TYPES = [
@@ -26,6 +27,7 @@ const MAX_TOTAL_FILE_SIZE_MB = 50;
 const MAX_TOTAL_FILE_SIZE_BYTES = MAX_TOTAL_FILE_SIZE_MB * 1024 * 1024;
 
 interface MessageInputProps {
+  draftScope?: string;
   onSend: (message: string, files?: File[]) => Promise<boolean> | boolean | void;
   completedSend?: { message: string; files?: File[] };
   disabled?: boolean;
@@ -51,15 +53,21 @@ interface FileWithPreview {
   id: string; // Unique ID for React keys
 }
 
-export function MessageInput({ onSend, completedSend, disabled, inputRef, placeholder, contextLabel, taskControl, showDisclaimer = true, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, loading, onCancel }: MessageInputProps) {
-  const [input, setInput] = useState('');
+export function MessageInput({ draftScope, onSend, completedSend, disabled, inputRef, placeholder, contextLabel, taskControl, showDisclaimer = true, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, loading, onCancel }: MessageInputProps) {
+  const [input, setInput] = useState(() => readTutorDraft(draftScope).text);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const draftRevision = useRef(0);
   const pendingPreviews = useRef<FileWithPreview[]>([]);
   const lastSubmission = useRef<{ input: string; message: string; files?: File[]; revision: number } | null>(null);
   const [isListening, setIsListening] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<FileWithPreview[]>(() => readTutorDraft(draftScope).files.map((file, index) => ({
+    file, id: `restored-${index}`, preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+  })));
+  useEffect(() => {
+    if (submitting && !input && !selectedFiles.length) return;
+    keepTutorDraft(draftScope, { text: input, files: selectedFiles.map(item => item.file) });
+  }, [draftScope, input, selectedFiles, submitting]);
   const draftRef = useRef({ input, selectedFiles });
   draftRef.current = { input, selectedFiles };
   const [fileError, setFileError] = useState<string | null>(null);
@@ -379,6 +387,8 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
       // accepted, so rejection can restore it without overwriting newer typing.
       const clearedRevision = ++draftRevision.current;
       pendingPreviews.current = previews;
+      // Retain an in-flight draft privately if navigation unmounts the composer.
+      keepTutorDraft(draftScope, { text: submitted.input, files: files || [] });
       setInput('');
       setSelectedFiles([]);
       setFileError(null);
@@ -389,6 +399,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
       } catch {
         setFileError('Your message was not sent. Please try again.');
       } finally {
+        if (accepted && draftRevision.current === clearedRevision) keepTutorDraft(draftScope, { text: '', files: [] });
         if (!accepted && draftRevision.current === clearedRevision) {
           submitted.revision = ++draftRevision.current;
           setInput(submitted.input);
@@ -431,7 +442,9 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
   };
 
   useEffect(() => {
-    const submitted = lastSubmission.current;
+    const current = draftRef.current;
+    const submitted = lastSubmission.current || (completedSend && current.input.trim() === completedSend.message
+      ? { input: current.input, message: completedSend.message, files: current.selectedFiles.map(item => item.file), revision: draftRevision.current } : null);
     if (!completedSend || !submitted || completedSend.message !== submitted.message) return;
     const sameFiles = (completedSend.files || []).length === (submitted.files || []).length
       && (completedSend.files || []).every((file, index) => file === submitted.files?.[index]);
@@ -454,7 +467,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
                 {item.preview ? <img src={item.preview} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" /> : <span className="flex h-10 w-8 shrink-0 items-center justify-center text-brown-600 dark:text-gray-300">{getFileTypeInfo(item.file).icon}</span>}
                 <div className="min-w-0">
                   <span className="block max-w-32 truncate text-xs font-medium text-brown-900 dark:text-gray-100" title={item.file.name}>{item.file.name}</span>
-                  <span className="block text-[11px] text-brown-600 dark:text-gray-400">{getFileTypeInfo(item.file).label}</span>
+                  <span className="block text-xs text-brown-600 dark:text-gray-400">{getFileTypeInfo(item.file).label}</span>
                 </div>
                 <button type="button" onClick={() => removeFile(item.id)} aria-label={`Remove ${item.file.name}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-700"><X className="h-4 w-4" /></button>
               </div>)}
@@ -490,7 +503,7 @@ export function MessageInput({ onSend, completedSend, disabled, inputRef, placeh
                 className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Send className="h-5 w-5" /><span className="hidden sm:inline">Send</span></button>}
           </div>
         </div>
-        {!compact && showDisclaimer && <p className="mt-1.5 text-center text-[11px] leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
+        {!compact && showDisclaimer && <p className="mt-1.5 text-center text-xs leading-4 text-brown-600 dark:text-gray-400">HåfaGPT can make mistakes. Check important info.</p>}
       </div>
     </div>
   );

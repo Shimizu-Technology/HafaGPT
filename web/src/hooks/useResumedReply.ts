@@ -47,8 +47,15 @@ export function useResumedReply(options: Options) {
           onPhase: phase => update({ phase }),
         });
         if (signal.aborted) return;
+        if (outcome === 'retryable' || outcome === 'abandoned') {
+          current.settled = true;
+          forgetPendingReply(ownerId, conversationId, record.pendingId);
+          update({ record: null, retry: false, notice: 'Your message did not start. You can send it again. Any draft kept on this page is still here.' });
+          return;
+        }
         // Even a missing status may have a saved reply when tracking was unavailable.
-        const loaded = await callbacks.current.load(record, signal);
+        const loaded = outcome !== 'unavailable' && outcome !== 'timed_out'
+          && await callbacks.current.load(record, signal);
         if (signal.aborted) return;
         if (loaded || outcome === 'failed') {
           current.settled = true;
@@ -81,6 +88,13 @@ export function useResumedReply(options: Options) {
 
   const stop = async () => {
     const current = operation.current;
+    if (!current && ownerId && conversationId) {
+      const record = readPendingReply(ownerId, conversationId);
+      if (!record) return;
+      try { await callbacks.current.cancel(record.pendingId); } catch { /* Recheck after reconnecting. */ }
+      setAttempt(value => value + 1);
+      return;
+    }
     if (!current || current.controller.signal.aborted || current.stopping || current.settled) return;
     current.stopping = true;
     let confirmed = false;
@@ -100,6 +114,12 @@ export function useResumedReply(options: Options) {
       ? 'HåfaGPT is still working on your earlier reply. It will appear here.'
       : active.phase === 'offline' ? 'Waiting for a connection to check your earlier reply…' : 'Checking your earlier reply…' : undefined),
     canRetry: Boolean(active.retry),
+    defer: (record: PendingReply) => {
+      operation.current?.controller.abort();
+      operation.current = null;
+      setState({ scope: JSON.stringify([ownerId, record.conversationId]), record, retry: true,
+        notice: 'Your connection dropped. Check again for your reply, or start over in a new chat. Your draft is still here.' });
+    },
     retry: () => setAttempt(value => value + 1),
     stop,
   };

@@ -184,6 +184,7 @@ def _history_has_images(messages: list[dict]) -> bool:
 def detect_image_context(
     normalized_image_inputs: list[dict] | None,
     cancelled: "Callable[[], bool] | None" = None,
+    on_provider_start: "Callable[[], None] | None" = None,
 ) -> ImageTranslationContext:
     """Extract privacy-safe language text and trusted image routing signals.
 
@@ -228,7 +229,7 @@ def detect_image_context(
             for detector_attempt in range(2):
                 if cancelled and cancelled():
                     break
-                response = detector_client.chat.completions.create(
+                request_kwargs = dict(
                     model=detector_model,
                     messages=[
                         {
@@ -253,6 +254,9 @@ def detect_image_context(
                     max_tokens=6000,
                     response_format=IMAGE_CONTEXT_RESPONSE_FORMAT,
                 )
+                if on_provider_start is not None:
+                    on_provider_start()
+                response = detector_client.chat.completions.create(**request_kwargs)
                 image_context = try_parse_image_context_response(
                     str(response.choices[0].message.content or ""),
                     card_ids_by_signal=IMAGE_CONTEXT_CARD_IDS,
@@ -1349,7 +1353,8 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
                               file_urls: list[dict] | None, pending_id: str | None,
                               start_time: float, past_messages: list[dict],
                               skill_level: str | None, intent: str | None = None,
-                              persist: bool = True) -> Iterator[dict]:
+                              persist: bool = True,
+                              on_provider_start: "Callable[[], None] | None" = None) -> Iterator[dict]:
     """Persist the same validated page response for streaming and ordinary requests."""
     client, model = get_client_for_request(has_image=True)
     effective_message, image_translation = build_image_translation_query(message, image_context)
@@ -1384,14 +1389,16 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     was_cancelled = False
 
     def complete(**kwargs: Any) -> Any:
-        return client.chat.completions.create(
-            model=model, **kwargs, **optional_chat_completion_kwargs(model),
-        )
+        request_kwargs = dict(model=model, **kwargs, **optional_chat_completion_kwargs(model))
+        if on_provider_start is not None:
+            on_provider_start()
+        return client.chat.completions.create(**request_kwargs)
 
     def stream_text(**kwargs: Any) -> Iterator[tuple[str, str | None]]:
-        stream = client.chat.completions.create(
-            model=model, stream=True, **kwargs, **optional_chat_completion_kwargs(model),
-        )
+        request_kwargs = dict(model=model, stream=True, **kwargs, **optional_chat_completion_kwargs(model))
+        if on_provider_start is not None:
+            on_provider_start()
+        stream = client.chat.completions.create(**request_kwargs)
         try:
             for chunk in stream:
                 choices = getattr(chunk, "choices", None) or []
@@ -1886,6 +1893,7 @@ def get_chatbot_response_stream(
     learning_topic_id: str | None = None,
     history_override: list[dict] | None = None,
     persist: bool = True,
+    on_provider_start: "Callable[[], None] | None" = None,
 ) -> Iterator[dict]:
     """
     Streaming version of get_chatbot_response.
@@ -1898,6 +1906,11 @@ def get_chatbot_response_stream(
         skill_level: User's skill level ("beginner", "intermediate", "advanced") for personalized responses
         history_override: Already validated prefix for an atomic edit; None loads normal history.
         persist: False defers all logging and cancellation cleanup to the atomic edit owner.
+        on_provider_start: Fires once before the first chat/vision generation request,
+            including vision detection. Reference/embedding lookup does not start the
+            free-use charge: a failure before generation (including budget rejection)
+            refunds the learner's use. Once a request starts, even an immediate
+            provider exception keeps the charge. Legacy callers need no callback.
     
     Yields:
         dict: Either a chunk {"type": "chunk", "content": "..."} 
@@ -1906,6 +1919,16 @@ def get_chatbot_response_stream(
     # Use original_message for logging if provided, otherwise use message
     message_for_logging = original_message if original_message else message
     start_time = time.time()
+    provider_started = False
+
+    def mark_provider_started() -> None:
+        nonlocal provider_started
+        if not provider_started:
+            provider_started = True
+            if on_provider_start is not None:
+                on_provider_start()
+
+    provider_kwargs = {'on_provider_start': mark_provider_started} if on_provider_start is not None else {}
     normalized_image_inputs = _normalize_image_inputs(
         image_base64=image_base64,
         image_inputs=image_inputs,
@@ -1916,7 +1939,7 @@ def get_chatbot_response_stream(
     
     def cancelled_event() -> dict:
         event = {"type": "cancelled", "content": "[Message was cancelled by user]"}
-        if persist:
+        if persist and (on_provider_start is None or provider_started):
             event["saved"] = log_conversation(
                 user_message=message_for_logging, bot_response=event["content"],
                 mode=mode, sources=[], used_rag=False, used_web_search=False,
@@ -1926,6 +1949,7 @@ def get_chatbot_response_stream(
             )
             if not event["saved"]:
                 event["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
+        if persist:
             cleanup_cancelled_message(pending_id)
         return event
 
@@ -1943,7 +1967,8 @@ def get_chatbot_response_stream(
         # Status events are progress for an empty reply, never saved reply text.
         yield {"type": "status", "content": "Reading your photo…" if len(normalized_image_inputs) == 1
                else f"Reading your {len(normalized_image_inputs)} photos…"}
-    image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    image_context = detect_image_context(normalized_image_inputs,
+        cancelled=lambda: is_message_cancelled(pending_id), **provider_kwargs)
     if is_message_cancelled(pending_id):
         yield cancelled_event()
         return
@@ -1957,6 +1982,7 @@ def get_chatbot_response_stream(
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id, start_time=start_time,
             past_messages=past_messages, skill_level=skill_level, intent=intent, persist=persist,
+            **provider_kwargs,
         )
         yield from image_events
         return
@@ -2121,9 +2147,9 @@ def get_chatbot_response_stream(
         logger.error(f"⚠️ Total tokens ({total_input_tokens}) exceeds budget ({token_manager.budget.total})!")
         error_message = "I apologize, but this conversation has become too long. Please start a new conversation to continue."
         
-        # IMPORTANT: Save the user message even when we hit token limit
-        # This ensures the message is never lost
-        if persist:
+        # Refunded sends retain their draft, not a failed transcript row that
+        # could be mistaken for a completed reply on the same logical-ID retry.
+        if persist and (on_provider_start is None or provider_started):
             log_conversation(
                 user_message=message_for_logging,
                 bot_response=f"[Token limit exceeded: {total_input_tokens} tokens]",
@@ -2153,12 +2179,15 @@ def get_chatbot_response_stream(
             empty_choice_chunk_count = 0
             logged_empty_choice_chunks = False
             try:
-                stream = request_client.chat.completions.create(
+                request_kwargs = dict(
                     model=request_model,
                     messages=history,
-                    max_tokens=token_manager.budget.response_buffer,
                     stream=True,
                     **optional_chat_completion_kwargs(request_model),
+                )
+                mark_provider_started()
+                stream = request_client.chat.completions.create(
+                    max_tokens=token_manager.budget.response_buffer, **request_kwargs,
                 )
 
                 for chunk in stream:
@@ -2235,9 +2264,9 @@ def get_chatbot_response_stream(
             else:
                 error_message = "Error: I encountered an issue processing your message. Please try again."
         
-        # IMPORTANT: Save the user message even when LLM fails
-        # This ensures the message is never lost
-        if persist:
+        # A failed request is chargeable only after the chat/vision boundary.
+        # Do not save a pre-request failure under a refundable logical send ID.
+        if persist and (on_provider_start is None or provider_started):
             log_conversation(
                 user_message=message_for_logging,
                 bot_response=f"[Error: {str(e)[:200]}]",  # Truncate error for DB

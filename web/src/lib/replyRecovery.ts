@@ -5,7 +5,7 @@ import { isConnectionFailure } from './sendErrors';
  * assuming it was lost. The server keeps writing and saving replies after a
  * phone disconnects, so most "failures" are complete replies waiting to load.
  */
-export type ReplyStatus = 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted' | 'not_found';
+export type ReplyStatus = 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted' | 'not_found' | 'retryable' | 'abandoned';
 /** `unavailable`: the status service kept failing, so the outcome is unknown. */
 export type RecoveryOutcome = Exclude<ReplyStatus, 'running'> | 'timed_out' | 'unavailable';
 export type RecoveryPhase = 'checking' | 'waiting' | 'offline' | 'stopping';
@@ -85,8 +85,8 @@ export function waitOrWake(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 export async function waitForReplyOutcome({
-  check, signal, onPhase, pollMs = 3000, checkTimeoutMs = 15000, notFoundGraceMs = 20000, maxStatusErrors = 4,
-  maxBackoffMs = 15000, timeoutMs = 10 * 60 * 1000, wait = waitOrWake, now = Date.now,
+  check, signal, onPhase, pollMs = 3000, checkTimeoutMs = 8000, notFoundGraceMs = 20000, maxStatusErrors = 4,
+  maxBackoffMs = 10000, timeoutMs = 45000, wait = waitOrWake, now = Date.now,
 }: RecoveryOptions): Promise<RecoveryOutcome> {
   const startedAt = now();
   let delay = 0;

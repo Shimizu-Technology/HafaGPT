@@ -1,3 +1,4 @@
+import { formatSourceLabel } from '../lib/sourceLabels';
 import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown, AlertCircle, Loader2, WifiOff } from 'lucide-react';
 import { useState, useEffect, useRef, memo, useMemo, useId } from 'react';
 import { useAuth } from '@clerk/clerk-react';
@@ -662,7 +663,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               )}
             </div>
           ) : (
-            <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-all duration-300 ${
+            <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-[color,background-color,border-color,opacity,transform] duration-200 ${
               isStreaming && content && content.length > 0 ? 'animate-fade-in-fast' : ''
             }`}>
               <ReactMarkdown
@@ -712,7 +713,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 active:text-teal-600 dark:active:text-ocean-400 transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
               aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
@@ -741,7 +742,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                     speak(textToSpeak);
                   }
                 }}
-                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   isSpeaking 
                     ? 'text-coral-600 dark:text-coral-400 bg-coral-100 dark:bg-coral-900/30' 
                     : 'text-brown-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-ocean-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
@@ -770,7 +771,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               <button
                 onClick={() => handleFeedback('up')}
                 disabled={feedbackSubmitting || feedback === 'up'}
-                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'up'
                     ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30'
                     : 'text-brown-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
@@ -786,7 +787,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
               <button
                 onClick={() => handleFeedback('down')}
                 disabled={feedbackSubmitting || feedback === 'down'}
-                className={`min-w-[44px] min-h-[44px] text-xs transition-all duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
+                className={`min-w-[44px] min-h-[44px] text-xs transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center px-2 py-1 rounded-lg active:scale-95 touch-manipulation ${
                   feedback === 'down'
                     ? 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30'
                     : 'text-brown-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700'
@@ -815,14 +816,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
               </p>
               {sources && sources.length > 0 && <ul className="space-y-1">{sources.map((source, index) => {
-                const names: Record<string, string> = {
-                  hafagpt_canonical_evaluation: 'HåfaGPT vocabulary ledger',
-                  local_revised_dictionary_snapshot: 'Revised Chamorro dictionary',
-                  chamoru_info_dictionary: 'Chamoru.info dictionary',
-                  topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
-                };
-                const label = `${names[source.source_id || ''] || source.name}${typeof source.page === 'number' ? ` (p. ${source.page})` : ''}`;
-                const detail = [source.locator, source.content_role, source.region, source.temporal_scope].filter(Boolean).join(' • ');
+                const { label, detail } = formatSourceLabel(source);
                 return <li key={`${source.source_id || source.name}-${source.page || source.locator || index}`}>
                   {source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer" title={detail}
                     className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
@@ -847,7 +841,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             {/* Copy Button */}
             <button
               onClick={handleCopy}
-              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
+              className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
               aria-label={copied ? "Message copied" : "Copy message"}
               title="Copy message"
             >
@@ -871,7 +865,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   setEditError(null);
                   setIsEditing(true);
                 }}
-                className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-all duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
+                className="min-w-[44px] min-h-[44px] text-xs text-brown-600 dark:text-gray-400 hover:text-coral-600 dark:hover:text-ocean-400 active:text-coral-600 dark:active:text-ocean-400 transition-[color,background-color,border-color,opacity,transform] duration-200 flex items-center justify-center gap-1 px-2 py-1 rounded-lg hover:bg-cream-200/50 dark:hover:bg-slate-700/50 active:bg-cream-300 dark:active:bg-slate-700 active:scale-95 touch-manipulation"
                 aria-label="Edit message"
                 title="Edit message"
               >

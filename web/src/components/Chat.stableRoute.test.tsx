@@ -12,6 +12,8 @@ const state = vi.hoisted(() => ({
   realMessages: false,
   realTaskMenu: false,
   realTransport: false,
+  dispatchToken: 'test-dispatch-token' as string | undefined,
+  reservationPending: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
   sendResult: undefined as boolean | undefined,
   preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
@@ -34,7 +36,7 @@ const state = vi.hoisted(() => ({
   initData: { conversations: [] as never[] },
   refetchMessages: vi.fn(),
   refetchConversation: vi.fn(),
-  tryUse: vi.fn(async () => true),
+  tryUse: vi.fn(async (type?: string) => { void type; return true; }),
   createConversation: vi.fn(),
   deleteConversation: vi.fn(),
   cancelMessage: vi.fn(async () => undefined),
@@ -78,6 +80,9 @@ vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
     tryUse: state.tryUse,
+    reserveUse: async (type: string) => state.reservationPending
+      ? { success: false, status: 'reservation_pending' }
+      : { success: await state.tryUse(type), dispatch_token: state.dispatchToken },
     getCount: () => 0,
     getLimit: () => 8,
     isChristmasTheme: false,
@@ -198,6 +203,8 @@ describe('Chat stable conversation route', () => {
     state.realMessages = false;
     state.realTaskMenu = false;
     state.realTransport = false;
+    state.dispatchToken = 'test-dispatch-token';
+    state.reservationPending = false;
     state.composerReceipt = undefined;
     state.sendResult = undefined;
     state.preferredMode = undefined;
@@ -228,6 +235,36 @@ describe('Chat stable conversation route', () => {
       configurable: true,
       value: vi.fn(),
     });
+  });
+
+  it('offers a neutral check for a lost approval during API rollback without charging or sending again', async () => {
+    state.reservationPending = true;
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await screen.findByRole('status');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    state.reservationPending = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
+    expect(state.tryUse).toHaveBeenCalledOnce();
+  });
+
+  it('sends an approved legacy rollout attempt without keyed stream fields', async () => {
+    state.dispatchToken = undefined;
+    state.sendMessageStream.mockImplementation(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_legacy_rollout');
+      callbacks.onChunk('Legacy saved reply', 'Legacy saved reply');
+      callbacks.onDone(0.1, true);
+    });
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendResult).toBe(true));
+    expect(state.tryUse).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream.mock.calls[0][9]).toBeUndefined();
+    expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
   });
 
   it('requires owner authentication without hiding the public tutor shell', () => {
@@ -319,9 +356,9 @@ describe('Chat stable conversation route', () => {
     state.createConversation.mockResolvedValue({ id: 'conv-created' });
     renderChat('/chat?intent=practice&topic=greetings');
     fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
-    await screen.findByRole('button', { name: 'Retry' });
+    await screen.findByRole('button', { name: /^(Retry|Send again)$/ });
     expect(state.sendMessageStream).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: /^(Retry|Send again)$/ }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(1));
     expect(state.sendMessageStream.mock.calls[0][0]).toBe('Test message');
     expect(state.sendMessageStream.mock.calls[0].slice(5, 8)).toEqual(['beginner', 'practice', 'greetings']);
@@ -349,7 +386,7 @@ describe('Chat stable conversation route', () => {
     expect(await screen.findByText('Saved translation')).toBeInTheDocument();
     expect(state.checkReplyStatus).toHaveBeenCalledWith('pending_dropped_1', expect.any(AbortSignal));
     expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
     expect(state.composerReceipt).toEqual({ message: 'Test message', files: undefined });
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
   });
@@ -390,7 +427,7 @@ describe('Chat stable conversation route', () => {
     expect(await screen.findByText('Useful answer')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('This reply could not be saved. Copy it before leaving.');
     expect(state.composerReceipt).toBeUndefined();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
     expect(readPendingReply('user-1', 'conv-a')).not.toBeNull();
   });
 
@@ -408,7 +445,7 @@ describe('Chat stable conversation route', () => {
     expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
     await waitFor(() => expect(state.sendResult).toBe(false));
     expect(state.composerReceipt).toBeUndefined();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
     expect(readPendingReply('user-1', 'conv-a')?.pendingId).toBe('pending_unsaved_stop');
     state.messages = [
       { id: 8, pending_id: 'pending_other', role: 'user', content: 'Other question', timestamp: '2026-10-16T00:00:00Z' },
@@ -445,7 +482,7 @@ describe('Chat stable conversation route', () => {
       expect(state.sendResult).toBe(false);
       expect(state.composerReceipt).toBeUndefined();
       expect(screen.getByRole('button', { name: 'Chat input' })).toBeEnabled();
-      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
       expect(readPendingReply('user-1', 'conv-a')).toBeNull();
     } finally { cleanup(); vi.useRealTimers(); }
   });
@@ -454,14 +491,16 @@ describe('Chat stable conversation route', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     state.realTransport = true;
     state.realMessages = true;
+    let stopped = false;
     let releaseStatus!: () => void;
     const transport = vi.spyOn(globalThis, 'fetch').mockImplementation(async input => {
       const url = String(input);
       if (url.endsWith('/api/chat/stream')) return new Response(new ReadableStream<Uint8Array>({
         start(controller) { controller.enqueue(new TextEncoder().encode('data: {"type":"chunk","content":"Partial before Stop"}\n\n')); },
       }));
-      if (url.includes('/api/chat/cancel/')) return new Response('{"success":true}');
-      if (url.includes('/api/chat/requests/')) return new Promise<Response>(resolve => {
+      if (url.includes('/api/chat/cancel/')) { stopped = true; return new Response('{"success":true}'); }
+      if (url.includes('/api/chat/reconcile/') && !stopped) return Response.json({ status: 'running' });
+      if ((url.includes('/api/chat/requests/') || url.includes('/api/chat/reconcile/'))) return new Promise<Response>(resolve => {
         releaseStatus = () => resolve(new Response(JSON.stringify({ status: outcome, conversation_id: 'conv-a' })));
       });
       throw new Error(`Unexpected transport: ${url}`);
@@ -486,7 +525,7 @@ describe('Chat stable conversation route', () => {
       releaseStatus();
       await act(async () => vi.advanceTimersByTimeAsync(20000));
       expect(transport.mock.calls.some(([url]) => String(url).includes('/api/chat/cancel/'))).toBe(true);
-      expect(transport.mock.calls.some(([url]) => String(url).includes('/api/chat/requests/'))).toBe(true);
+      expect(transport.mock.calls.some(([url]) => (String(url).includes('/api/chat/requests/') || String(url).includes('/api/chat/reconcile/')))).toBe(true);
       expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
       if (outcome === 'failed') {
         expect(screen.getByText('Partial before Stop')).toBeInTheDocument();
@@ -551,7 +590,7 @@ describe('Chat stable conversation route', () => {
       expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
       expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
       expect(screen.getByText(/couldn’t track your earlier reply/)).toHaveTextContent('start a new chat');
-      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
       expect(readPendingReply('user-1', 'conv-created')?.pendingId).toBe('pending_dropped_2');
       expect(state.composerReceipt).toBeUndefined();
       state.queryClient!.setQueryData(['messages', 'conv-created', 'user-1'], [
@@ -583,7 +622,7 @@ describe('Chat stable conversation route', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Stop reply' }));
       if (confirmed) expect(await screen.findByText('Stop requested. Checking the saved outcome…')).toBeInTheDocument();
       expect(state.cancelPendingReply).toHaveBeenCalledWith('pending_dropped_3');
-      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
       expect(readPendingReply('user-1', 'conv-created')).not.toBeNull();
       expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
@@ -622,7 +661,7 @@ describe('Chat stable conversation route', () => {
       expect(await screen.findByText(/reported this reply finished, but its saved copy could not be loaded/)).toBeInTheDocument();
       expect(screen.getByText('Test message')).toBeInTheDocument();
       expect(screen.queryByText(/Checking for your reply/)).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
       expect(state.composerReceipt).toBeUndefined();
       expect(state.sendResult).toBe(false);
     } finally {
@@ -932,10 +971,10 @@ describe('Chat stable conversation route', () => {
     state.sendMessageStream.mockRejectedValueOnce(new Error('Provider unavailable')).mockResolvedValueOnce(undefined);
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
-    await screen.findByRole('button', { name: 'Retry' });
+    await screen.findByRole('button', { name: /^(Retry|Send again)$/ });
     expect(screen.getByText('Original message')).toBeInTheDocument();
     expect(screen.getByText('Original answer')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: /^(Retry|Send again)$/ }));
     await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledTimes(2));
     expect(state.tryUse).toHaveBeenCalledOnce();
     expect(state.sendMessageStream.mock.calls.map(call => call[8])).toEqual([
@@ -971,10 +1010,10 @@ describe('Chat stable conversation route', () => {
       callbacks.onChunk('Successful replacement', 'Successful replacement');
       callbacks.onDone(0.1);
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    fireEvent.click(screen.getByRole('button', { name: /^(Retry|Send again)$/ }));
     await screen.findByText('Successful replacement');
     expect(screen.queryByText('Could not update this message. Your edit is still here.')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
     if (newerDraft) expect(screen.getByRole('textbox')).toHaveValue('A newer edited question');
     else expect(screen.queryByRole('button', { name: 'Save & Regenerate' })).not.toBeInTheDocument();
   });
@@ -991,7 +1030,7 @@ describe('Chat stable conversation route', () => {
     renderChat('/chat/conv-old');
     await screen.findByRole('button', { name: 'Edit message' });
     fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
-    await screen.findByRole('button', { name: 'Retry' });
+    await screen.findByRole('button', { name: /^(Retry|Send again)$/ });
     fireEvent.click(screen.getByRole('button', { name: 'Edit message' }));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Test message' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save & Regenerate' }));
@@ -1006,7 +1045,7 @@ describe('Chat stable conversation route', () => {
     state.sendMessageStream.mockImplementationOnce(async (_message, _mode, _id, callbacks) => { callbacks.onCancelled(); throw new CancelledError(); });
     renderChat('/chat/conv-old');
     fireEvent.click(await screen.findByRole('button', { name: 'Edit original' }));
-    await screen.findByRole('button', { name: 'Retry' });
+    await screen.findByRole('button', { name: /^(Retry|Send again)$/ });
     expect(screen.getByText('Original message')).toBeInTheDocument();
     expect(screen.getByText('Original answer')).toBeInTheDocument();
     expect(screen.queryByText('Message cancelled')).not.toBeInTheDocument();
@@ -1022,7 +1061,7 @@ describe('Chat stable conversation route', () => {
     await waitFor(() => expect(screen.getByText('Updated message')).toBeInTheDocument());
     expect(screen.getByText('New answer')).toBeInTheDocument();
     expect(screen.queryByText('Original answer')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Retry|Send again)$/ })).not.toBeInTheDocument();
   });
 
 });
