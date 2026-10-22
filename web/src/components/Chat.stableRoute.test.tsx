@@ -12,6 +12,8 @@ const state = vi.hoisted(() => ({
   realMessages: false,
   realTaskMenu: false,
   realTransport: false,
+  dispatchToken: 'test-dispatch-token' as string | undefined,
+  reservationPending: false,
   composerReceipt: undefined as { message: string; files?: File[] } | undefined,
   sendResult: undefined as boolean | undefined,
   preferredMode: undefined as 'english' | 'chamorro' | 'learn' | undefined,
@@ -78,7 +80,9 @@ vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
     tryUse: state.tryUse,
-    reserveUse: async (type: string) => ({ success: await state.tryUse(type), dispatch_token: 'test-dispatch-token' }),
+    reserveUse: async (type: string) => state.reservationPending
+      ? { success: false, status: 'reservation_pending' }
+      : { success: await state.tryUse(type), dispatch_token: state.dispatchToken },
     getCount: () => 0,
     getLimit: () => 8,
     isChristmasTheme: false,
@@ -199,6 +203,8 @@ describe('Chat stable conversation route', () => {
     state.realMessages = false;
     state.realTaskMenu = false;
     state.realTransport = false;
+    state.dispatchToken = 'test-dispatch-token';
+    state.reservationPending = false;
     state.composerReceipt = undefined;
     state.sendResult = undefined;
     state.preferredMode = undefined;
@@ -229,6 +235,36 @@ describe('Chat stable conversation route', () => {
       configurable: true,
       value: vi.fn(),
     });
+  });
+
+  it('offers a neutral check for a lost approval during API rollback without charging or sending again', async () => {
+    state.reservationPending = true;
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await screen.findByRole('status');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(state.tryUse).not.toHaveBeenCalled();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+    state.reservationPending = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }));
+    await waitFor(() => expect(state.sendMessageStream).toHaveBeenCalledOnce());
+    expect(state.tryUse).toHaveBeenCalledOnce();
+  });
+
+  it('sends an approved legacy rollout attempt without keyed stream fields', async () => {
+    state.dispatchToken = undefined;
+    state.sendMessageStream.mockImplementation(async (_message, _mode, _conversation, callbacks) => {
+      callbacks.onRequestStarted('pending_legacy_rollout');
+      callbacks.onChunk('Legacy saved reply', 'Legacy saved reply');
+      callbacks.onDone(0.1, true);
+    });
+    renderChat('/chat/conv-a');
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    await waitFor(() => expect(state.sendResult).toBe(true));
+    expect(state.tryUse).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream.mock.calls[0][9]).toBeUndefined();
+    expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
   });
 
   it('requires owner authentication without hiding the public tutor shell', () => {

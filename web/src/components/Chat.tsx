@@ -55,6 +55,7 @@ interface ReplyRecovery {
 interface SendAttempt {
   logicalSendId: string;
   dispatchToken?: string;
+  reservationPending?: boolean;
   draftScope?: string;
   draftDestination?: string;
   draftMoved?: boolean;
@@ -556,6 +557,7 @@ function ChatSession() {
   };
 
   const handleSend = async (message: string, files?: File[], learningTopicOverride?: string, retry?: SendAttempt, usageApproved = false): Promise<boolean> => {
+    if (failedAttempt?.reservationPending && !retry) return false;
     if (!mountedRef.current || activeConversationId !== scopeConversation.current || !isSignedIn || isSendingMessageRef.current || replyPending || (retry && retry.conversationId !== scopeConversation.current)) return false;
     const sendTopic = getTopic(learningTopicOverride || '') || linkedTopic;
     const attempt: SendAttempt = retry || {
@@ -675,9 +677,16 @@ function ChatSession() {
       if (!approvedUsage && isSignedIn) {
         let allowed: boolean;
         try {
-          const reservation = await reserveUse('chat', attempt.logicalSendId);
+          const reservation = await reserveUse('chat', attempt.logicalSendId, Boolean(attempt.dispatchToken));
+          if (reservation.status === 'reservation_pending') {
+            removeOptimisticMessages();
+            attempt.reservationPending = true;
+            setFailedAttempt({ ...attempt });
+            return false;
+          }
+          attempt.reservationPending = false;
           allowed = reservation.success;
-          reserved = allowed;
+          reserved = allowed && Boolean(reservation.dispatch_token);
           attempt.dispatchToken = reservation.dispatch_token || undefined;
         } catch (usageError) {
           console.error('Failed to verify chat usage:', usageError);
@@ -1044,7 +1053,7 @@ function ChatSession() {
           attempt.intent,
           attempt.topicId,
           attempt.edit ? { messageId: attempt.edit.messageId, revision: attempt.edit.revision } : undefined,
-          attempt.edit ? undefined : { id: attempt.logicalSendId, dispatchToken: attempt.dispatchToken! },
+          attempt.edit || !attempt.dispatchToken ? undefined : { id: attempt.logicalSendId, dispatchToken: attempt.dispatchToken },
         );
       } catch (streamError) {
         if (!(streamError instanceof ConnectionLostError) || !isCurrent()) throw streamError;
@@ -1090,7 +1099,7 @@ function ChatSession() {
             keepTutorDraft(initialDraftScope, { text: '', files: [] });
             keepTutorDraft(destination, { text: '', files: [] });
           } else moveAttemptDraft(attempt);
-          if (acceptedSend) confirmDispatchedDraft(attempt.logicalSendId);
+          if (acceptedSend) confirmDispatchedDraft(dispatchedPendingId || attempt.logicalSendId);
         }
         isSendingMessageRef.current = false;
         pendingAttemptRef.current = null;
@@ -1702,7 +1711,14 @@ End of Export
           compact={viewport.height < 420}
           inline={inlineComposer}
           bodyMaxHeight={composerBodyHeight}
-          sendError={error && failedAttempt ? (
+          sendError={failedAttempt?.reservationPending ? (
+            <div role="status" className="mb-2 flex items-center gap-3 rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-base text-brown-800 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100">
+              <p className="min-w-0 flex-1">Your earlier send is still being checked. Your draft is still here.</p>
+              <button type="button" onClick={handleRetry} disabled={preparingSend || loading || replyPending} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-coral-600 px-3 text-base font-semibold text-white disabled:opacity-50">
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />Check again
+              </button>
+            </div>
+          ) : error && failedAttempt ? (
           <div role="alert" className="mb-2 flex max-h-24 items-center gap-3 overflow-y-auto rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-800 dark:bg-red-950/30">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-red-900 dark:text-red-200">{failureTitle}</p>
@@ -1718,7 +1734,7 @@ End of Export
           </div>
           ) : error && unsavedReply ? <div role="alert" className="mb-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">{error}</div> : undefined}
           completedSend={completedSend}
-          disabled={!isSignedIn || loading || replyPending || preparingSend || savedConversationRequiresSignIn || conversationUnavailable}
+          disabled={!isSignedIn || loading || replyPending || preparingSend || failedAttempt?.reservationPending || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
           placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
           taskControl={activeConversationId || routeConversationId || messages.length > 0

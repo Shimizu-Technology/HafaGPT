@@ -1,11 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth, useSession, useUser } from '@clerk/clerk-react';
-import { useAccountRequest, useAccountMutation } from './useAccountRequest';
+import { HttpError, useAccountRequest, useAccountMutation } from './useAccountRequest';
 import { FREE_TIER_LIMITS } from '../lib/planConfig';
 import { useEffect } from 'react';
 import { forgetPreparingSend, preparingSends, rememberPreparingSend } from '../lib/pendingReply';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Web and API deploy independently. Remember compatibility in page memory for
+// this signed-in session, then try the keyed protocol again after 30 seconds.
+const tutorCapabilities = new Map<string, { keyed: boolean; expiresAt: number }>();
+const CAPABILITY_TTL_MS = 30_000;
 
 // Types
 export type SiteTheme = 'default' | 'christmas' | 'newyear' | 'chamorro';
@@ -38,6 +42,12 @@ export interface UsageIncrementResult {
   remaining: number;
   is_premium: boolean;
 }
+
+type UsageReservationResult = UsageIncrementResult | {
+  success: false;
+  status: 'reservation_pending';
+  dispatch_token?: never;
+};
 
 export interface SubscriptionStatus {
   is_premium: boolean;
@@ -163,7 +173,7 @@ export function useIncrementUsage() {
  */
 export function useSubscription() {
   const queryClient = useQueryClient();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, sessionId } = useAuth();
   const owner = useAccountRequest();
   const { data: usage, isLoading: usageLoading } = useUsage(isSignedIn);
   const { data: status, isLoading: statusLoading } = useSubscriptionStatus(isSignedIn);
@@ -255,20 +265,46 @@ export function useSubscription() {
   };
 
   /** A retry reuses this identity, including after a lost reservation response. */
-  const reserveUse = async (type: UsageType, logicalSendId: string): Promise<UsageIncrementResult> => {
-    // A rolling web-first deployment must not charge through a legacy API that
-    // silently ignores the key. This endpoint also fences a lost reservation.
-    if (type === 'chat' && ownerId) rememberPreparingSend(ownerId, logicalSendId);
-    if (type === 'chat') await owner.request(
-      `${API_URL}/api/chat/reconcile/${encodeURIComponent(logicalSendId)}`, { method: 'POST' },
-    );
+  const reserveUse = async (type: UsageType, logicalSendId: string, requireKeyed = false): Promise<UsageReservationResult> => {
+    const scope = JSON.stringify([API_URL, ownerId, sessionId]);
+    const capability = tutorCapabilities.get(scope);
+    // A known approval must also stay keyed after its preparing pointer was
+    // cleared on dispatch; rolling back the API cannot charge that retry again.
+    const unresolved = type === 'chat' && (requireKeyed || (!!ownerId && preparingSends(ownerId).includes(logicalSendId)));
+    let keyed = unresolved || type !== 'chat' || !capability || capability.keyed || capability.expiresAt <= Date.now();
+    if (type === 'chat' && keyed) {
+      try {
+        // Even with known support, reconciliation must fence an earlier lost
+        // approval for this logical send before a retry can reserve again.
+        await owner.request(`${API_URL}/api/chat/reconcile/${encodeURIComponent(logicalSendId)}`, { method: 'POST' });
+        tutorCapabilities.set(scope, { keyed: true, expiresAt: Date.now() + CAPABILITY_TTL_MS });
+      } catch (error) {
+        if (!(error instanceof HttpError) || ![404, 405].includes(error.status)) throw error;
+        // A prior keyed approval may have committed before its response was
+        // lost. Never turn that uncertainty into a second, unkeyed charge.
+        if (unresolved) return { success: false, status: 'reservation_pending' };
+        keyed = false;
+        tutorCapabilities.set(scope, { keyed: false, expiresAt: Date.now() + CAPABILITY_TTL_MS });
+      }
+    }
+    if (type === 'chat' && keyed && ownerId) rememberPreparingSend(ownerId, logicalSendId);
     const result = await owner.request<UsageIncrementResult>(
-      `${API_URL}/api/usage/increment/${type}?logical_send_id=${encodeURIComponent(logicalSendId)}`, { method: 'POST' },
+      `${API_URL}/api/usage/increment/${type}${keyed ? `?logical_send_id=${encodeURIComponent(logicalSendId)}` : ''}`, { method: 'POST' },
     );
     if (!owner.isCurrent()) throw new Error('The signed-in account changed.');
-    if (result.success && !result.dispatch_token) throw new Error('Message recovery is being updated. Please try again in a moment.');
+    if (type === 'chat') {
+      if (keyed && result.success && !result.dispatch_token) {
+        // An API that ignores the key already incremented its legacy counter.
+        // Reuse that approval; a second unkeyed increment would charge twice.
+        keyed = false;
+        tutorCapabilities.set(scope, { keyed: false, expiresAt: Date.now() + CAPABILITY_TTL_MS });
+      }
+      if ((!keyed || !result.success) && ownerId) forgetPreparingSend(ownerId, logicalSendId);
+    } else if (result.success && !result.dispatch_token) {
+      throw new Error('Message recovery is being updated. Please try again in a moment.');
+    }
     void queryClient.invalidateQueries({ queryKey: ['usage-today', owner.ownerId] });
-    return result;
+    return keyed ? result : { ...result, dispatch_token: undefined };
   };
 
   return {
