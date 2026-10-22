@@ -37,7 +37,7 @@ test('Sound Match retains a committed result after a lost acknowledgement and re
   expect(attempts).toHaveLength(2);
   expect(attempts[1]).toEqual(attempts[0]);
   await page.goto('/games/results/' + resultId);
-  await expect(page.getByText(String(attempts[0].score), { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: `${attempts[0].score} points`, exact: true })).toBeVisible();
 });
 
 test('a lost Start acknowledgement retries one keyed round and consumes one use', async ({ page }) => {
