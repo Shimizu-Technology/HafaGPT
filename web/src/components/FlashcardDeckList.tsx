@@ -117,16 +117,7 @@ export function FlashcardDeckList() {
         title="Flashcards"
         subtitle="Build recall with short, focused decks"
         icon={Layers3}
-        trailing={(
-          <Link
-            to="/flashcards/my-decks"
-            aria-label="Open my decks"
-            className="flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 dark:text-ocean-300 dark:hover:bg-ocean-950"
-          >
-            <Library className="h-5 w-5" aria-hidden="true" />
-            <span className="hidden sm:inline">My decks</span>
-          </Link>
-        )}
+
       />
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
@@ -134,6 +125,11 @@ export function FlashcardDeckList() {
           <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice</p>
           <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Build recall one card at a time</h2>
           <p className="mt-2 text-brown-600 dark:text-gray-300">Choose a ready-made beginner deck or practice words from the full dictionary.</p>
+          <Link to="/flashcards/my-decks" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950">
+            <Library className="h-5 w-5 flex-none" aria-hidden="true" />
+            Saved decks
+          </Link>
+          <p className="text-base text-brown-600 dark:text-gray-300">Open decks already saved to your account.</p>
         </div>
 
         <div className="mb-7">

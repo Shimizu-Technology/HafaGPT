@@ -1,0 +1,34 @@
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, expect, it, vi } from 'vitest';
+import { VocabularyList } from './VocabularyList';
+vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
+afterEach(() => vi.unstubAllGlobals());
+it.each([false, true])('distinguishes pending, failed and successful empty searches (prior results: %s)', async priorResults => {
+  let release: (value: unknown) => void = () => {};
+  let pending = true;
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (!url.includes('/search?')) return Promise.resolve({ ok: true, json: async () => ({ categories: [], total_words: 100 }) });
+    if (url.includes('q=first')) return Promise.resolve({ ok: true, json: async () => ({ query: 'first', total: priorResults ? 1 : 0, results: priorResults ? [{ word_id: 'fixture', chamorro: 'Fixture word', definition: 'Retained meaning', examples: [] }] : [] }) });
+    if (pending) return new Promise(resolve => { release = resolve; });
+    return Promise.resolve({ ok: true, json: async () => ({ query: 'next', results: [], total: 0 }) });
+  }));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/vocabulary?q=first']}><VocabularyList /></MemoryRouter></QueryClientProvider>);
+  await screen.findByRole('heading', { name: /results? found/ });
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'next' } });
+  expect(await screen.findByRole('heading', { name: 'Searching...' })).toHaveAttribute('aria-live', 'polite');
+  expect(screen.queryByText(/No words found/)).not.toBeInTheDocument();
+  if (priorResults) expect(screen.getByText('Retained meaning')).toBeInTheDocument();
+  await act(async () => { release({ ok: false }); });
+  expect(await screen.findByRole('alert')).toHaveTextContent('Dictionary search is unavailable');
+  expect(screen.queryByText(/No words found/)).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Searching...' })).not.toBeInTheDocument();
+  if (priorResults) expect(screen.getByText('Retained meaning')).toBeInTheDocument();
+  expect(screen.getByRole('textbox')).toHaveValue('next');
+  pending = false;
+  fireEvent.click(screen.getByRole('button', { name: 'Retry', exact: true }));
+  expect(await screen.findByText('No words found matching "next"')).toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});

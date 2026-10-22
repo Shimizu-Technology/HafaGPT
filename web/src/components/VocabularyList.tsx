@@ -171,6 +171,7 @@ export function VocabularyList() {
                 <h2 aria-live="polite" className="text-sm font-medium text-brown-600 dark:text-gray-400 mb-3">
                   {searchUpdating ? 'Searching...' : <>{displayedSearch.query !== searchQuery ? `Last loaded results for “${displayedSearch.query}”: ` : ''}{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</>}
                 </h2>
+                {searchUpdating && displayedSearch.query !== searchQuery && <p className="mb-3 text-base text-brown-600 dark:text-gray-400">Showing the last loaded results while this search finishes.</p>}
                 {searchResults.length > 0 ? (
                   <div className="space-y-2">
                     {searchResults.map((word, index) => (
