@@ -164,10 +164,34 @@ def reconcile_send(user_id: str, logical_id: str, *, today: date, abandon: bool 
         return dict(status=state, conversation_id=row[5] if row else None, generation_started=False)
 
 
-def finish_send(user_id: str, logical_id: str, status: str, *, connect: Callable = _connect) -> None:
+def finish_send(user_id: str, logical_id: str, status: str, *,
+                provider_started: bool = True, expected_token: str | None = None,
+                connect: Callable = _connect) -> None:
+    """Only the finished owning worker can release a claimed, ungenerated send.
+
+    Public reconciliation cannot know whether a live worker will call a model.
+    The service's authoritative chat/vision callback excludes reference embeddings.
+    Stop request tracking before calling this: a retry must not inherit its flags.
+    """
     if status not in ('complete', 'failed', 'cancelled'):
         raise ValueError('Invalid terminal send status')
     with _transaction(user_id, 'chat', logical_id, connect) as cursor:
+        row = _row(cursor, user_id, 'chat', logical_id)
+        if not row or row[0] != 'running':
+            return
+        if expected_token is not None and not secrets.compare_digest(row[1] or '', expected_token):
+            return
+        if not provider_started and status != 'complete' and expected_token is not None:
+            if row[3]:
+                _counter(cursor, user_id, 'chat', row[2])
+                cursor.execute('''UPDATE user_daily_usage SET chat_count=GREATEST(0,chat_count-1),
+                    updated_at=now() WHERE user_id=%s AND usage_date=%s''', (user_id, row[2]))
+            cursor.execute('''UPDATE tutor_usage_reservations SET state='retryable',
+                charged=false, generation_started=false, dispatch_token=NULL, updated_at=now()
+                WHERE user_id=%s AND usage_type='chat' AND logical_id=%s''', (user_id, logical_id))
+            cursor.execute('DELETE FROM chat_requests WHERE pending_id=%s AND user_id=%s',
+                (logical_id, user_id))
+            return
         cursor.execute('''UPDATE tutor_usage_reservations SET state=%s, updated_at=now()
             WHERE user_id=%s AND usage_type='chat' AND logical_id=%s AND state='running' ''',
             (status, user_id, logical_id))

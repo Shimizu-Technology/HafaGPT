@@ -1538,6 +1538,12 @@ async def chat_stream(
                 tracker = None
                 event_types: list[str] = []
                 started = False
+                provider_started = False
+
+                def on_provider_start():
+                    nonlocal provider_started
+                    provider_started = True
+
                 try:
                     if logical_send_id is not None:
                         claim = tutor_reservations.claim_send(
@@ -1554,7 +1560,12 @@ async def chat_stream(
                             pending_id, user_id, conversation_id,
                             on_cancel=lambda: cancel_pending_message(pending_id),
                         )
-                        tracker.start_in_background()
+                        if logical_send_id is not None:
+                            # Finish registration before a refundable attempt can
+                            # end, so a late starter cannot overwrite its retry.
+                            tracker.start()
+                        else:
+                            tracker.start_in_background()
                     for event in get_chatbot_response_stream(
                         message=final_message,
                         mode=mode,
@@ -1569,7 +1580,8 @@ async def chat_stream(
                         original_message=message,
                         skill_level=skill_level,
                         intent=intent,
-                        learning_topic_id=learning_topic_id
+                        learning_topic_id=learning_topic_id,
+                        **({'on_provider_start': on_provider_start} if logical_send_id is not None else {}),
                     ):
                         if event.get("type") in ("done", "cancelled", "error"):
                             # A generated reply is not a saved reply until committed.
@@ -1580,19 +1592,20 @@ async def chat_stream(
                     event_types.append("error")
                     event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
                 finally:
-                    if started:
-                        try:
-                            tutor_reservations.finish_send(user_id, logical_send_id,
-                                chat_requests.terminal_status(event_types))
-                        except Exception as error:
-                            # An unknown terminal write never authorizes a retry.
-                            logger.warning("TUTOR_SEND finish_failed=%s", type(error).__name__)
                     try:
                         if tracker is not None:
                             try:
                                 tracker.finish(chat_requests.terminal_status(event_types))
                             finally:
                                 cleanup_cancelled_message(pending_id)
+                        if started:
+                            try:
+                                tutor_reservations.finish_send(user_id, logical_send_id,
+                                    chat_requests.terminal_status(event_types),
+                                    provider_started=provider_started, expected_token=dispatch_token)
+                            except Exception as error:
+                                # An unknown terminal write never authorizes a retry.
+                                logger.warning("TUTOR_SEND finish_failed=%s", type(error).__name__)
                     finally:
                         stream_done.set()
 
