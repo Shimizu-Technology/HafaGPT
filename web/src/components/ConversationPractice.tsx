@@ -495,7 +495,7 @@ export function ConversationPractice() {
               onKeyDown={handleKeyPress}
               aria-label="Conversation response"
               placeholder="Write in Chamorro..."
-              className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+              className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-slate-700 dark:text-white dark:placeholder-slate-300"
               disabled={isLoading || conversation.isComplete}
               maxLength={600}
             />
