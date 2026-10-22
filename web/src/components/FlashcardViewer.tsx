@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { BookOpen, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, RefreshCw, Plus, CheckCircle2, Layers3 } from 'lucide-react';
 import { Flashcard } from './Flashcard';
@@ -53,6 +53,12 @@ const topicTitles: Record<string, string> = {
 
 /** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
+  const { user } = useUser();
+  // ProtectedRoute does not remount its children when the active account changes.
+  return <FlashcardSession key={user?.id ?? 'signed-out'} />;
+}
+
+function FlashcardSession() {
   const { topic } = useParams<{ topic: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -97,8 +103,22 @@ export function FlashcardViewer() {
   const saveInFlightRef = useRef(false);
   const activeCardsRef = useRef(flashcards);
   const activeUserRef = useRef(user?.id);
-  activeCardsRef.current = flashcards;
-  activeUserRef.current = user?.id;
+  const sessionActiveRef = useRef(false);
+  const generationTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const saveAttemptRef = useRef<{ cards: FlashcardData[]; requestId: string } | null>(null);
+  useLayoutEffect(() => {
+    if (activeCardsRef.current !== flashcards) saveAttemptRef.current = null;
+    activeCardsRef.current = flashcards;
+    activeUserRef.current = user?.id;
+  }, [flashcards, user?.id]);
+  useLayoutEffect(() => {
+    sessionActiveRef.current = true;
+    const generationTimers = generationTimersRef.current;
+    return () => {
+      sessionActiveRef.current = false;
+      generationTimers.forEach(clearTimeout);
+    };
+  }, []);
   useEffect(() => {
     setIsDeckSaved(false);
     setSavedDeckId(null);
@@ -219,6 +239,7 @@ export function FlashcardViewer() {
   // Load dictionary cards from API (instant loading from 10,350+ words)
   // This effect runs when dictionary data is fetched
   useEffect(() => {
+    if (saveAttemptRef.current) return; // Keep an uncertain save's exact set through background refetches.
     if (cardType === 'dictionary' && dictionaryData?.cards && dictionaryData.cards.length > 0) {
       // Map dictionary cards to FlashcardData format
       const mappedCards: FlashcardData[] = dictionaryData.cards.map(card => ({
@@ -244,15 +265,18 @@ export function FlashcardViewer() {
 
   // Load more dictionary cards (for "Load More" button)
   const loadMoreDictionaryCards = () => {
-    if (cardType === 'dictionary') {
+    if (cardType === 'dictionary' && !saveInFlightRef.current && !isGeneratingMore && !deckSaveError) {
+      saveAttemptRef.current = null;
       setCardsStudied(prev => prev + flashcards.length);
+      setCurrentIndex(0);
+      setIsCardFlipped(false);
       refetchDictionary();
     }
   };
 
   // Background generation of additional cards (legacy - kept for backwards compatibility with ?type=custom)
   const generateMoreCards = async (variety: 'conversational' | 'advanced', previousCardsList?: FlashcardData[]) => {
-    if (!topic || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
+    if (!topic || !sessionActiveRef.current || saveInFlightRef.current || saveAttemptRef.current || hasGeneratedMoreRef.current || batchCountRef.current >= 3) return;
     
     hasGeneratedMoreRef.current = true;
     setIsGeneratingMore(true);
@@ -277,6 +301,7 @@ export function FlashcardViewer() {
       console.log(`🎴 [FRONTEND] Batch ${batchCountRef.current + 1}: Checking against ${cardsToCheck.length} previous cards`);
       
       const token = await getToken();
+      if (!sessionActiveRef.current) return;
       const response = await fetch(`${API_URL}/api/generate-flashcards`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -288,6 +313,7 @@ export function FlashcardViewer() {
       }
 
       const data: FlashcardsResponse = await response.json();
+      if (!sessionActiveRef.current) return;
       
       // Frontend safety net: Remove any duplicates that slipped through
       const existingFronts = new Set(cardsToCheck.map(c => c.front.toLowerCase().trim()));
@@ -308,32 +334,29 @@ export function FlashcardViewer() {
       }
       
       setNewCards(uniqueNewCards);
-      setIsGeneratingMore(false);
-      
-      // Auto-add new cards to deck after 1 second
-      setTimeout(() => {
-        setFlashcards(prev => {
-          const updatedCards = [...prev, ...uniqueNewCards];
-          saveToLocalStorage(updatedCards); // Save to localStorage
-          
-          // Generate another batch if we haven't hit 9 cards yet (batch 3)
-          // Pass updatedCards to the next batch to avoid race conditions
-          if (batchCountRef.current === 1) {
-            hasGeneratedMoreRef.current = false;
-            batchCountRef.current = 2;
-            setTimeout(() => generateMoreCards('advanced', updatedCards), 1000);
-          } else {
-            batchCountRef.current += 1;
-            hasGeneratedMoreRef.current = false;
-          }
-          
-          return updatedCards;
-        });
+      // Save remains disabled until the cards and generating flag commit together.
+      generationTimersRef.current.push(setTimeout(() => {
+        if (!sessionActiveRef.current) return;
+        const updatedCards = [...cardsToCheck, ...uniqueNewCards];
+        setFlashcards(updatedCards);
+        saveToLocalStorage(updatedCards);
+        setIsGeneratingMore(false);
         setShowNewCardsNotification(false);
-      }, 1000);
-      
+        if (batchCountRef.current === 1) {
+          hasGeneratedMoreRef.current = false;
+          batchCountRef.current = 2;
+          generationTimersRef.current.push(setTimeout(() => {
+            void generateMoreCards('advanced', updatedCards);
+          }, 1000));
+        } else {
+          batchCountRef.current += 1;
+          hasGeneratedMoreRef.current = false;
+        }
+      }, 1000));
+
       setShowNewCardsNotification(true);
     } catch (err) {
+      if (!sessionActiveRef.current) return;
       console.error('❌ [FLASHCARDS] Error generating more flashcards:', err);
       setIsGeneratingMore(false);
       hasGeneratedMoreRef.current = false; // Allow retry
@@ -416,11 +439,15 @@ export function FlashcardViewer() {
     }
     const cardsToSave = flashcards;
     const savingUser = user.id;
-    const stillCurrent = () => activeCardsRef.current === cardsToSave && activeUserRef.current === savingUser;
+    const stillCurrent = () => sessionActiveRef.current && activeCardsRef.current === cardsToSave && activeUserRef.current === savingUser;
+    if (saveAttemptRef.current?.cards !== cardsToSave) {
+      saveAttemptRef.current = { cards: cardsToSave, requestId: crypto.randomUUID() };
+    }
     saveInFlightRef.current = true;
     setDeckSaveError(null);
     saveDeckMutation.mutate({
       user_id: savingUser,
+      request_id: saveAttemptRef.current.requestId,
       topic,
       title: `My ${topicTitles[topic] || dictionaryData?.category?.title || topic} Cards`,
       card_type: 'custom',
@@ -440,7 +467,7 @@ export function FlashcardViewer() {
       },
       onError: () => {
         saveInFlightRef.current = false;
-        if (stillCurrent()) setDeckSaveError('This set was not saved. Your cards are still here. Try saving again.');
+        if (stillCurrent()) setDeckSaveError('We couldn’t confirm the save. Your cards are still here. Try saving again to check safely.');
       },
     });
   };
@@ -552,7 +579,7 @@ export function FlashcardViewer() {
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />
             {cardType === 'dictionary' && (
-              <button type="button" onClick={() => { setCardsStudied(prev => prev + flashcards.length); setCurrentIndex(0); setIsCardFlipped(false); void refetchDictionary(); }} disabled={isDictionaryLoading || saveDeckMutation.isPending} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
+              <button type="button" onClick={loadMoreDictionaryCards} disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
                 <RefreshCw className={`h-5 w-5 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
@@ -686,7 +713,7 @@ export function FlashcardViewer() {
               {cardType === 'dictionary' && (
                 <button
                   onClick={loadMoreDictionaryCards}
-                  disabled={isDictionaryLoading || saveDeckMutation.isPending}
+                  disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError}
                   className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
                 >
                   {isDictionaryLoading ? (

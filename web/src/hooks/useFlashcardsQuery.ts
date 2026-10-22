@@ -80,6 +80,7 @@ interface UserDeck {
 }
 
 interface SaveDeckRequest {
+  request_id?: string;
   user_id: string;
   topic: string;
   title: string;
@@ -154,12 +155,13 @@ async function fetchDeckCards(deckId: string, userId: string, token: string | nu
   return response.json();
 }
 
-async function saveDeck(request: SaveDeckRequest, token: string | null): Promise<SaveDeckResponse> {
+async function saveDeck({ request_id, ...request }: SaveDeckRequest, token: string | null): Promise<SaveDeckResponse> {
   const response = await fetch(`${API_URL}/api/flashcards/decks`, {
     method: 'POST',
     headers: {
       ...authHeaders(token),
       'Content-Type': 'application/json',
+      ...(request_id ? { 'Idempotency-Key': request_id } : {}),
     },
     body: JSON.stringify(request),
   });

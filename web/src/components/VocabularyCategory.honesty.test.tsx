@@ -31,7 +31,9 @@ it('keeps the query and explicit error even without category data', () => {
 it('retains previous loaded words if a changed-query request fails', () => {
   const { rerender } = render(<Page />);
   mocks.query.data = undefined; mocks.query.error = new Error('offline');
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'different' } });
   rerender(<Page />);
+  expect(screen.getByRole('textbox')).toHaveValue('different');
   expect(screen.getByText('Loaded meaning')).toBeInTheDocument();
   expect(screen.getByText(/Last loaded results for/)).toHaveTextContent('kept');
 });

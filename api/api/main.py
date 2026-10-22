@@ -3131,71 +3131,77 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
 async def save_flashcard_deck(
     request: SaveDeckRequest,
     authorization: Optional[str] = Header(None),
+    idempotency_key: Optional[str] = Header(None),
 ):
-    """
-    Save a deck of flashcards to the user's collection.
-    
-    This allows users to save custom AI-generated cards or create their own decks.
-    
-    Args:
-        request: SaveDeckRequest with user_id, topic, title, card_type, and cards
-    
-    Returns:
-        SaveDeckResponse with the created deck_id
+    """Save one set; repeated user-scoped UUID keys return the committed deck.
+
+    Older clients without a key retain the original create behavior. The existing
+    primary key serializes concurrent retries, so no schema migration is needed.
     """
     import psycopg
+    from collections import Counter
     from datetime import datetime
     import uuid
-    
+
     try:
         user_id = await verify_user(authorization)
         if request.user_id and request.user_id != user_id:
             raise HTTPException(status_code=403, detail="Cannot save a deck for another user")
+        if idempotency_key:
+            try:
+                request_id = uuid.UUID(idempotency_key)
+            except ValueError:
+                raise HTTPException(status_code=422, detail="Idempotency-Key must be a UUID")
+            deck_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"hafagpt:flashcard-deck:{user_id}:{request_id}"))
+        else:
+            deck_id = str(uuid.uuid4())
 
-        logger.info(f"💾 [SAVE DECK] User {user_id} saving deck: {request.title} ({len(request.cards)} cards)")
-        conn = psycopg.connect(os.getenv("DATABASE_URL"))
-        cursor = conn.cursor()
-        
-        # Create the deck
-        deck_id = str(uuid.uuid4())
-        cursor.execute(
-            """
-            INSERT INTO flashcard_decks (id, user_id, topic, title, card_type, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-            """,
-            (deck_id, user_id, request.topic, request.title, request.card_type, datetime.now())
-        )
-        
-        # Insert all cards
-        for card in request.cards:
-            cursor.execute(
-                """
-                INSERT INTO flashcards (deck_id, front, back, pronunciation, example, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                """,
-                (deck_id, card.front, card.back, card.pronunciation, card.example, datetime.now())
-            )
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        logger.info(f"✅ [SAVE DECK] Successfully saved deck {deck_id} with {len(request.cards)} cards")
-        
+        with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO flashcard_decks (id, user_id, topic, title, card_type, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING
+                    RETURNING id
+                    """,
+                    (deck_id, user_id, request.topic, request.title, request.card_type, datetime.now())
+                )
+                if cursor.fetchone() is None:
+                    cursor.execute(
+                        "SELECT user_id, topic, title, card_type FROM flashcard_decks WHERE id = %s",
+                        (deck_id,),
+                    )
+                    existing_deck = cursor.fetchone()
+                    cursor.execute(
+                        "SELECT front, back, pronunciation, example FROM flashcards WHERE deck_id = %s",
+                        (deck_id,),
+                    )
+                    existing_cards = Counter(cursor.fetchall())
+                    requested_cards = Counter(
+                        (card.front, card.back, card.pronunciation, card.example) for card in request.cards
+                    )
+                    if existing_deck != (user_id, request.topic, request.title, request.card_type) or existing_cards != requested_cards:
+                        raise HTTPException(status_code=409, detail="This save key was already used for a different set")
+                else:
+                    for card in request.cards:
+                        cursor.execute(
+                            """
+                            INSERT INTO flashcards (deck_id, front, back, pronunciation, example, created_at)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            (deck_id, card.front, card.back, card.pronunciation, card.example, datetime.now())
+                        )
+
         return SaveDeckResponse(
             deck_id=deck_id,
             message=f"Successfully saved {len(request.cards)} cards to '{request.title}'"
         )
-        
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ [SAVE DECK] Failed to save deck: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to save deck: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail="Failed to save deck")
 
 
 @app.get("/api/flashcards/decks", response_model=UserDecksResponse, tags=["Flashcard Progress"])
