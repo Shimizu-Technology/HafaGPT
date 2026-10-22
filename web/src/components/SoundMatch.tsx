@@ -303,7 +303,7 @@ export function SoundMatch() {
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                        : 'border-cream-200 dark:border-slate-700 hover:border-purple-300'
+                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
@@ -319,7 +319,7 @@ export function SoundMatch() {
             {/* Start Button */}
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
@@ -344,7 +344,7 @@ export function SoundMatch() {
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-purple-500 text-white '
-                  : 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-900/70 dark:hover:to-pink-900/70 border-2 border-purple-300 dark:border-purple-700'
+                  : 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-900/70 border-2 border-purple-300 dark:border-purple-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -377,7 +377,7 @@ export function SoundMatch() {
                 const isCorrectAnswer = option.chamorro === currentWord.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-purple-400 ';
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {

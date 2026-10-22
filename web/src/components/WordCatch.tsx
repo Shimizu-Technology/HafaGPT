@@ -511,10 +511,10 @@ export function WordCatch() {
         onBack={handleBack}
         trailing={(gameState === 'playing' || gameState === 'paused') ? (
           <>
-            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -540,7 +540,7 @@ export function WordCatch() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -555,7 +555,7 @@ export function WordCatch() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -579,7 +579,7 @@ export function WordCatch() {
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
                         ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
                   >
@@ -616,7 +616,7 @@ export function WordCatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -717,7 +717,7 @@ export function WordCatch() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 transition-colors"
                     >
                       Resume
                     </button>
@@ -808,7 +808,7 @@ export function WordCatch() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
@@ -816,7 +816,7 @@ export function WordCatch() {
               <button
                 onClick={resetGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 Settings
@@ -825,7 +825,7 @@ export function WordCatch() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
+              className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>

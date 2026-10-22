@@ -69,7 +69,7 @@ export function GameResultDetail() {
           <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-slate-800">
             <h2 className="text-xl font-bold text-brown-950 dark:text-white">Game result unavailable</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">The record may not exist or may belong to another account.</p>
-            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+            <button type="button" onClick={() => void refetch()} className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
           </section>
         ) : (
           <div className="space-y-6">
@@ -102,7 +102,7 @@ export function GameResultDetail() {
               <h2 id="game-evidence-title" className="text-xl font-bold text-brown-950 dark:text-white">What this round supports</h2>
               <div className="mt-3 space-y-3">
                 {topic ? (
-                  <Link to={appRoutes.topic(topic.id)} className="flex min-h-20 items-center gap-3 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700">
+                  <Link to={appRoutes.topic(topic.id)} className="flex min-h-20 items-center gap-3 rounded-2xl border border-cream-200 bg-white p-4 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-700">
                     <Map className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />
                     <span><span className="block font-bold text-brown-950 dark:text-white">{topic.title}</span><span className="text-sm text-brown-600 dark:text-gray-300">Return to the source topic</span></span>
                   </Link>
@@ -118,7 +118,7 @@ export function GameResultDetail() {
                         const cardIndex = findCuratedConceptIndex(result.category_id, conceptId);
                         if (cardIndex === null) return null;
                         return (
-                          <Link key={conceptId} to={withGameConceptReview(result.category_id, conceptId, result.id)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-coral-200 bg-coral-50 px-3 text-sm font-semibold text-coral-800 hover:bg-coral-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200">
+                          <Link key={conceptId} to={withGameConceptReview(result.category_id, conceptId, result.id)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-coral-200 bg-coral-50 px-3 text-sm font-semibold text-coral-800 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200">
                             <Layers3 className="h-4 w-4" aria-hidden="true" />Review card {cardIndex + 1}
                           </Link>
                         );
@@ -130,8 +130,8 @@ export function GameResultDetail() {
             </section>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Play another game</Link>
-              <Link replace to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
+              <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">Play another game</Link>
+              <Link replace to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
             </div>
           </div>
         )}

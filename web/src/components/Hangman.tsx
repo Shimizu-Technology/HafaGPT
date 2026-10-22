@@ -387,7 +387,7 @@ export function Hangman() {
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'beginner'
                     ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
@@ -402,7 +402,7 @@ export function Hangman() {
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'challenge'
                     ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
@@ -441,7 +441,7 @@ export function Hangman() {
                           ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
                             ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }`}
                     >
                       <div className="flex items-center justify-center">
@@ -462,7 +462,7 @@ export function Hangman() {
           <button
             onClick={startGame}
             disabled={availableWords.length < MIN_WORDS_TO_PLAY || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
           >
             {isStarting ? (
               <>
@@ -533,7 +533,7 @@ export function Hangman() {
               <button
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -541,13 +541,13 @@ export function Hangman() {
               <button
                 disabled={resultUnresolved || startStatus.pending}
                 onClick={() => setGameState('setup')}
-                className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
               >
                 Change Settings
               </button>
               <Link
                 to={gameReturn.to} replace
-                className="block w-full py-3 bg-cream-50 dark:bg-slate-800 text-brown-600 dark:text-gray-400 rounded-xl font-medium hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+                className="block w-full py-3 bg-cream-50 dark:bg-slate-800 text-brown-600 dark:text-gray-400 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700 transition-colors"
               >
                 {gameReturn.label}
               </Link>
@@ -573,7 +573,7 @@ export function Hangman() {
             onClick={() => {
               guard.requestLeave(() => setGameState('setup'));
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
             aria-label="Change game settings"
           >
             <Settings2 className="h-5 w-5" aria-hidden="true" />
@@ -635,7 +635,7 @@ export function Hangman() {
           <button
             onClick={useHint}
             disabled={isWordComplete}
-            className="px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-xl font-medium flex items-center gap-2 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-xl font-medium flex items-center gap-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-900/50 transition-colors disabled:opacity-50"
           >
             <Lightbulb className="w-4 h-4" />
             Hint ({hintsUsed} used)
@@ -662,7 +662,7 @@ export function Hangman() {
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed
                       ? 'bg-gray-300 dark:bg-slate-600 text-gray-500 cursor-not-allowed'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-coral-100 dark:hover:bg-teal-950/30 hover:text-coral-600 dark:hover:text-teal-400'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-950/30 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-400'
                   }`}
                 >
                   {letter}
@@ -671,7 +671,7 @@ export function Hangman() {
             })}
           </div>
         </div>
-        {isWordComplete && <button type="button" onClick={() => { pickNewWord(); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Next word</button>}
+        {isWordComplete && <button type="button" onClick={() => { pickNewWord(); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">Next word</button>}
       </main>
     </GamePage>
   );

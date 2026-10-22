@@ -498,7 +498,7 @@ export function CulturalTrivia() {
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'easy'
                     ? 'bg-emerald-700 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Sparkles className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-600'}`} aria-hidden="true" />
@@ -512,7 +512,7 @@ export function CulturalTrivia() {
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'medium'
                     ? 'bg-amber-700 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Zap className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-600'}`} aria-hidden="true" />
@@ -526,7 +526,7 @@ export function CulturalTrivia() {
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'hard'
                     ? 'bg-red-600 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Flame className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-600'}`} aria-hidden="true" />
@@ -559,7 +559,7 @@ export function CulturalTrivia() {
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
                           ? 'bg-coral-700 text-white shadow-lg dark:bg-teal-700'
-                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
                     <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
@@ -580,7 +580,7 @@ export function CulturalTrivia() {
             type="button"
             onClick={startGame}
             disabled={availableQuestionCount === 0 || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
           >
             {isStarting ? (
               <>
@@ -650,12 +650,12 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 Play again
               </button>
-              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
                 {gameReturn.label}
               </button>
             </div>
@@ -723,7 +723,7 @@ export function CulturalTrivia() {
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-800 dark:text-red-300'
                       : isSelected
                       ? 'bg-coral-100 dark:bg-teal-950/30 border-2 border-coral-500 dark:border-teal-400 text-brown-800 dark:text-white'
-                      : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-cream-300 dark:hover:border-slate-600 text-brown-700 dark:text-gray-300'
+                      : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:border-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-slate-600 text-brown-700 dark:text-gray-300'
                   }`}
                 >
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -761,7 +761,7 @@ export function CulturalTrivia() {
           <button
             type="button"
             onClick={nextQuestion}
-            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
           </button>

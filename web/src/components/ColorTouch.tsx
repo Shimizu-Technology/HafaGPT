@@ -234,7 +234,7 @@ export function ColorTouch() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
@@ -258,7 +258,7 @@ export function ColorTouch() {
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-pink-700 text-white '
-                  : 'bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 hover:from-pink-200 hover:to-orange-200 dark:hover:from-pink-900/70 dark:hover:to-orange-900/70 border-2 border-pink-300 dark:border-pink-700'
+                  : 'bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-pink-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-orange-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-pink-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-orange-900/70 border-2 border-pink-300 dark:border-pink-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -382,7 +382,7 @@ export function ColorTouch() {
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}

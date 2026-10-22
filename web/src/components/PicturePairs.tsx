@@ -348,7 +348,7 @@ export function PicturePairs() {
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
-                        : 'border-cream-200 dark:border-slate-700 hover:border-teal-300'
+                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
@@ -370,7 +370,7 @@ export function PicturePairs() {
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       difficulty === key
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
-                        : 'border-cream-200 dark:border-slate-700 hover:border-teal-300'
+                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-xl block mb-1">
@@ -390,7 +390,7 @@ export function PicturePairs() {
             <GamePaceControl {...pace} />
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
@@ -466,7 +466,7 @@ export function PicturePairs() {
             <div className="flex justify-center mt-4">
               <button
                 onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 Change Settings
@@ -523,7 +523,7 @@ export function PicturePairs() {
               <button
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -531,7 +531,7 @@ export function PicturePairs() {
               <button
                 disabled={resultUnresolved || startStatus.pending}
                 onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
-                className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
               >
                 Settings
               </button>
@@ -539,7 +539,7 @@ export function PicturePairs() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block mt-4 text-teal-500 dark:text-teal-400 hover:underline font-medium"
+              className="inline-block mt-4 text-teal-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium"
             >
               {gameReturn.label}
             </Link>

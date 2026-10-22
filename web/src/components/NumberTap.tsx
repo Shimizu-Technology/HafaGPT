@@ -267,7 +267,7 @@ export function NumberTap() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
@@ -291,7 +291,7 @@ export function NumberTap() {
               className={`w-full py-4 rounded-2xl mb-4 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-teal-700 text-white '
-                  : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 hover:from-teal-200 hover:to-cyan-200 dark:hover:from-teal-900/70 dark:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
+                  : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -329,7 +329,7 @@ export function NumberTap() {
                 const isCorrectAnswer = value === currentNumber.value;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-teal-400 ';
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {
@@ -397,7 +397,7 @@ export function NumberTap() {
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}

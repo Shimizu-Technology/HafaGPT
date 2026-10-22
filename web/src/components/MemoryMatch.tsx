@@ -443,7 +443,7 @@ export function MemoryMatch() {
             onClick={() => {
               guard.requestLeave(resetGame);
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
             aria-label="Change game settings"
           >
             <Settings2 className="h-5 w-5" aria-hidden="true" />
@@ -481,7 +481,7 @@ export function MemoryMatch() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -500,7 +500,7 @@ export function MemoryMatch() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -530,7 +530,7 @@ export function MemoryMatch() {
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
                         ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
                   >
@@ -571,7 +571,7 @@ export function MemoryMatch() {
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.difficulty === key
                             ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }
                       `}
                     >
@@ -603,7 +603,7 @@ export function MemoryMatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -670,7 +670,7 @@ export function MemoryMatch() {
             <div className="flex justify-center pt-1">
               <button
                 onClick={() => guard.requestLeave(playAgain)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors text-xs"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors text-xs"
               >
                 <RotateCcw className="w-3 h-3" />
                 Restart
@@ -759,7 +759,7 @@ export function MemoryMatch() {
                     type="button"
                     onClick={() => void persistGameResult(pendingGameResult)}
                     disabled={isSavingResult}
-                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSavingResult ? 'Saving…' : 'Retry saving game result'}
                   </button>
@@ -770,7 +770,7 @@ export function MemoryMatch() {
               <button
                 onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -778,7 +778,7 @@ export function MemoryMatch() {
               <button
                 onClick={resetGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Settings
@@ -798,7 +798,7 @@ export function MemoryMatch() {
               <Link
                 to={gameReturn.to}
                 replace
-                className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
+                className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}
               </Link>

@@ -235,7 +235,7 @@ export function SimonSays() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
@@ -259,7 +259,7 @@ export function SimonSays() {
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-indigo-700 text-white '
-                  : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 hover:from-indigo-200 hover:to-purple-200 dark:hover:from-indigo-900/70 dark:hover:to-purple-900/70 border-2 border-indigo-300 dark:border-indigo-700'
+                  : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-indigo-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-purple-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-indigo-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-purple-900/70 border-2 border-indigo-300 dark:border-indigo-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -292,7 +292,7 @@ export function SimonSays() {
                 const isCorrectAnswer = part.chamorro === currentBodyPart.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-indigo-400 ';
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-indigo-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {
@@ -369,7 +369,7 @@ export function SimonSays() {
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}

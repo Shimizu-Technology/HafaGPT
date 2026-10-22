@@ -562,7 +562,7 @@ export function ChamorroWordle() {
                 w-full p-4 rounded-2xl text-left transition-colors
                 ${dailyPlayed
                   ? 'bg-cream-100 dark:bg-slate-800 opacity-60 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 hover:shadow-lg  shadow-md border border-cream-200 dark:border-slate-700'
+                  : 'bg-white dark:bg-slate-800 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg  shadow-md border border-cream-200 dark:border-slate-700'
                 }
               `}
             >
@@ -603,7 +603,7 @@ export function ChamorroWordle() {
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'beginner'
                         ? 'bg-amber-700 text-white shadow-lg'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
                     <Sparkles className="w-5 h-5 mx-auto mb-1" />
@@ -617,7 +617,7 @@ export function ChamorroWordle() {
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'challenge'
                         ? 'bg-amber-700 text-white shadow-lg'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
                     <BookOpen className="w-5 h-5 mx-auto mb-1" />
@@ -640,7 +640,7 @@ export function ChamorroWordle() {
                       className={`p-2 rounded-xl text-center transition-colors ${
                         difficulty === d
                           ? 'bg-teal-700 text-white shadow-lg'
-                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }`}
                     >
                       <span className="text-sm font-medium">{DIFFICULTY_CONFIG[d].label}</span>
@@ -664,7 +664,7 @@ export function ChamorroWordle() {
                         className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                           category === cat.id
                             ? 'bg-coral-700 text-white dark:bg-teal-700'
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600'
+                            : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }`}
                       >
                         {cat.title}
@@ -679,7 +679,7 @@ export function ChamorroWordle() {
                 type="button"
                 onClick={() => startGame('practice')}
               disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
               >
                 <Play className="w-5 h-5" />
                 Start Practice
@@ -826,7 +826,7 @@ export function ChamorroWordle() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
               >
                 <Share2 className="w-5 h-5" />
                 Share Result
@@ -836,7 +836,7 @@ export function ChamorroWordle() {
                   type="button"
                   onClick={() => startGame('practice')}
               disabled={resultUnresolved || startStatus.pending}
-                  className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                  className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-5 h-5" />
                   Play Again
@@ -844,7 +844,7 @@ export function ChamorroWordle() {
               )}
             </div>
 
-            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-600 hover:underline dark:text-teal-300">
+            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-600 [@media(hover:hover)_and_(pointer:fine)]:hover:underline dark:text-teal-300">
               {gameReturn.label}
             </button>
           </div>

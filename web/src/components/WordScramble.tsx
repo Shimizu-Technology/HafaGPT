@@ -404,7 +404,7 @@ export function WordScramble() {
             onClick={() => {
               guard.requestLeave(resetGame);
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
             aria-label="Change game settings"
           >
             <Settings2 className="h-5 w-5" aria-hidden="true" />
@@ -442,7 +442,7 @@ export function WordScramble() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -461,7 +461,7 @@ export function WordScramble() {
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
@@ -491,7 +491,7 @@ export function WordScramble() {
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
                         ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg '
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
                   >
@@ -528,7 +528,7 @@ export function WordScramble() {
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.wordsPerRound === count
                             ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg '
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }
                       `}
                     >
@@ -548,7 +548,7 @@ export function WordScramble() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 font-bold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -628,7 +628,7 @@ export function WordScramble() {
                 <button
                   onClick={reshuffleLetters}
                   disabled={!!feedback}
-                  className="p-1.5 rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                  className="p-1.5 rounded-lg [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700 transition-colors disabled:opacity-50"
                   aria-label="Reshuffle letters"
                 >
                   <Shuffle className="w-4 h-4 text-brown-500 dark:text-gray-400" />
@@ -730,7 +730,7 @@ export function WordScramble() {
               {!showHint && !feedback && (
                 <button
                   onClick={() => setShowHint(true)}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold text-sm flex items-center justify-center gap-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-900/50 transition-colors"
                 >
                   <Lightbulb className="w-4 h-4" />
                   Hint
@@ -740,7 +740,7 @@ export function WordScramble() {
               {!feedback && currentAnswer.length === scrambledLetters.length && (
                 <button
                   onClick={checkAnswer}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 hover:shadow-lg transition-colors"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Check
@@ -750,7 +750,7 @@ export function WordScramble() {
               {!feedback && (
                 <button
                   onClick={skipWord}
-                  className="py-2.5 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 font-semibold text-sm flex items-center justify-center gap-2 hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+                  className="py-2.5 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 font-semibold text-sm flex items-center justify-center gap-2 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
                 >
                   <ArrowRight className="w-4 h-4" />
                   Skip
@@ -846,7 +846,7 @@ export function WordScramble() {
                     type="button"
                     onClick={() => void persistGameResult(pendingGameResult)}
                     disabled={isSavingResult}
-                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-2 inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-700 px-3 py-2 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSavingResult ? 'Saving…' : 'Retry saving game result'}
                   </button>
@@ -857,7 +857,7 @@ export function WordScramble() {
               <button
                 onClick={startGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -865,7 +865,7 @@ export function WordScramble() {
               <button
                 onClick={resetGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Settings
@@ -885,7 +885,7 @@ export function WordScramble() {
               <Link
                 to={gameReturn.to}
                 replace
-                className="inline-block text-purple-500 dark:text-purple-400 hover:underline font-medium text-xs sm:text-sm"
+                className="inline-block text-purple-500 dark:text-purple-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}
               </Link>
@@ -893,7 +893,7 @@ export function WordScramble() {
           </div>
         )}
         {gameState === 'playing' && feedback && (
-          <button type="button" onClick={() => { setFeedback(null); setCurrentWordIndex(index => index + 1); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <button type="button" onClick={() => { setFeedback(null); setCurrentWordIndex(index => index + 1); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
             {currentWordIndex + 1 >= settings.wordsPerRound ? 'See results' : 'Next word'}
           </button>
         )}

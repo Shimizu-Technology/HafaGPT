@@ -137,14 +137,14 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
           type="button"
           onClick={onReplay}
           disabled={replayDisabled}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again
         </button>
         <Link
           to={gameReturn.to}
           replace
-          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>

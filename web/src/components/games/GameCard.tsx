@@ -49,7 +49,7 @@ export function GameCard({ to, title, description, icon, difficulty, comingSoon 
   return (
     <Link
       to={to}
-      className="group flex min-h-56 flex-col rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 hover:bg-coral-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-600 dark:hover:bg-slate-700 sm:p-6"
+      className="group flex min-h-56 flex-col rounded-2xl border border-cream-200 bg-white p-5 transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700 sm:p-6"
     >
       {/* Icon */}
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-900/50 dark:text-teal-300">
@@ -57,7 +57,7 @@ export function GameCard({ to, title, description, icon, difficulty, comingSoon 
       </div>
       
       {/* Content */}
-      <h3 className="mb-2 text-lg font-bold text-brown-800 transition-colors group-hover:text-coral-600 dark:text-white dark:group-hover:text-teal-300 sm:text-xl">
+      <h3 className="mb-2 text-lg font-bold text-brown-800 transition-colors [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-coral-600 dark:text-white dark:[@media(hover:hover)_and_(pointer:fine)]:group-hover:text-teal-300 sm:text-xl">
         {title}
       </h3>
       <p className="mb-4 flex-1 text-sm leading-relaxed text-brown-600 dark:text-gray-400">{description}</p>
