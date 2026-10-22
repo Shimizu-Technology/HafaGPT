@@ -54,7 +54,7 @@ export function ReviewRatingButtons({ onRate, disabled = false, error }: ReviewR
             className={`min-h-14 rounded-xl border-2 px-3 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 ${rating.className}`}
           >
             <span className="block font-bold">{rating.label}</span>
-            <span className="mt-0.5 block text-[11px] leading-tight opacity-80">{rating.hint}</span>
+            <span className="mt-0.5 block text-xs leading-snug">{rating.hint}</span>
           </button>
         ))}
       </div>

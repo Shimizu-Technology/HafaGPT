@@ -253,7 +253,7 @@ export function ConversationPractice() {
   if (!scenario) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral-500"></div>
+        <h1 className="text-xl font-bold text-brown-950 dark:text-white">Loading practice…</h1>
       </div>
     );
   }
@@ -265,7 +265,7 @@ export function ConversationPractice() {
         <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
 
         {/* Content */}
-        <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
+        <main className="learner-reading mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
           <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} />
           {/* Scenario Card */}
           <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
@@ -282,7 +282,7 @@ export function ConversationPractice() {
                 <p className="font-medium text-slate-900 dark:text-white">
                   {scenario.characterName}
                 </p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p className="text-sm text-slate-600 dark:text-slate-300">
                   {scenario.characterRole}
                 </p>
               </div>
@@ -314,7 +314,7 @@ export function ConversationPractice() {
                 <PhraseCard key={i} phrase={phrase} />
               ))}
             </div>
-            <TTSDisclaimer variant="inline" className="mt-4" />
+            <TTSDisclaimer variant="inline" className="mt-4 !text-amber-800 dark:!text-amber-200" />
           </div>
 
           {savedDraft && (
@@ -342,12 +342,12 @@ export function ConversationPractice() {
     return (
       <LearnerPageShell>
         <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
-        <main className="mx-auto max-w-2xl px-4 py-8">
+        <main className="learner-reading mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
 
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Practice recap
-            </h1>
+            </h2>
             <p className="text-slate-600 dark:text-slate-300 mb-6">
               {scenario.title}
             </p>
@@ -364,9 +364,9 @@ export function ConversationPractice() {
                   const evidence = conversation.objectiveEvidence.find(item => item.objective === obj);
                   const completed = Boolean(evidence);
                   return (
-                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'}`}>
+                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-700 dark:text-green-300' : 'text-slate-600 dark:text-slate-300'}`}>
                       {completed ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />}
-                      <span>{obj}<span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{evidence ? `“${evidence.quote}”${evidence.assisted ? ' · With a phrase hint' : ' · AI-observed response'}` : 'Try this goal next time'}</span>{!evidence && <button type="button" onClick={() => startConversation(obj)} aria-label={`Practice this goal: ${obj}`} className="mt-1 min-h-9 font-semibold text-coral-700 dark:text-ocean-300">Practice this goal<span className="sr-only">: {obj}</span></button>}</span>
+                      <span>{obj}<span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">{evidence ? `“${evidence.quote}”${evidence.assisted ? ' · With a phrase hint' : ' · AI-observed response'}` : 'Try this goal next time'}</span>{!evidence && <button type="button" onClick={() => startConversation(obj)} aria-label={`Practice this goal: ${obj}`} className="mt-1 min-h-11 font-semibold text-coral-700 dark:text-ocean-300">Practice this goal<span className="sr-only">: {obj}</span></button>}</span>
                     </li>
                   );
                 })}
@@ -397,7 +397,7 @@ export function ConversationPractice() {
 
   // Main Conversation UI
   return (
-    <LearnerPageShell className="flex min-h-[100dvh] flex-col !pb-0">
+    <LearnerPageShell className="learner-reading flex min-h-[100dvh] flex-col !pb-0">
       <LearnerPageHeader
         title={scenario.characterName}
         subtitle={`${scenario.title} · ${Math.ceil((conversation.turnCount - 1) / 2)} responses`}
@@ -434,11 +434,12 @@ export function ConversationPractice() {
           <div className="mx-auto max-w-2xl px-4 pb-3 text-xs text-brown-600 dark:text-gray-300">
             <p>{storageAvailable ? 'Saved on this device. You can return later.' : 'Saving is unavailable. Keep this page open to retain your conversation.'}</p>
             {!conversation.isComplete && <p className="mt-1">Next goal: {conversation.focusObjective || scenario.objectives.find(goal => !conversation.objectivesCompleted.includes(goal)) || 'Finish your exchange'}</p>}
-            {conversation.messages.some(message => message.role === 'user') && <button type="button" disabled={isLoading} onClick={() => { setConversation(prev => ({ ...prev, isComplete: true })); setReviewTranscript(false); }} className="mt-2 min-h-9 font-semibold text-coral-700 dark:text-ocean-300">{conversation.isComplete ? 'Back to recap' : 'Finish and review'}</button>}
+            {conversation.messages.some(message => message.role === 'user') && <button type="button" disabled={isLoading} onClick={() => { setConversation(prev => ({ ...prev, isComplete: true })); setReviewTranscript(false); }} className="mt-2 min-h-11 font-semibold text-coral-700 dark:text-ocean-300">{conversation.isComplete ? 'Back to recap' : 'Finish and review'}</button>}
           </div>
         )}
       />
 
+      <main className="flex flex-1 flex-col">
       {/* Phrases Panel (collapsible) */}
       {showPhrases && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
@@ -472,7 +473,7 @@ export function ConversationPractice() {
           ))}
           
           {isLoading && (
-            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
               <MessageCircle className="h-4 w-4 animate-pulse" aria-hidden="true" />
               <span className="text-sm">{scenario.characterName} is typing...</span>
             </div>
@@ -510,6 +511,7 @@ export function ConversationPractice() {
           </div>
         </div>
       </div>
+      </main>
     </LearnerPageShell>
   );
 }
@@ -517,21 +519,21 @@ export function ConversationPractice() {
 /** Display an authored useful phrase with translation and pronunciation support. */
 function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   return (
-    <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+    <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
       <div>
         <p className="font-medium text-slate-900 dark:text-white">
           {phrase.chamorro}
         </p>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           {phrase.english}
         </p>
         {phrase.pronunciation && (
-          <p className="text-xs text-slate-400 dark:text-slate-500 italic">
+          <p className="text-xs text-slate-600 dark:text-slate-300 italic">
             /{phrase.pronunciation}/
           </p>
         )}
       </div>
-      <PronunciationButton text={phrase.chamorro} />
+      <PronunciationButton text={phrase.chamorro} label="Hear it" showLabel />
     </div>
   );
 }
@@ -552,7 +554,7 @@ function MessageBubble({
   if (isSystem) {
     return (
       <div className="text-center py-2">
-        <p className="text-sm text-slate-500 dark:text-slate-400 italic">
+        <p className="text-sm text-slate-600 dark:text-slate-300 italic">
           {message.chamorro}
         </p>
       </div>
@@ -568,7 +570,7 @@ function MessageBubble({
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] ${isUser ? 'order-1' : ''}`}>
         {/* Name */}
-        <p className={`text-xs text-slate-500 dark:text-slate-400 mb-1 ${isUser ? 'text-right' : ''}`}>
+        <p className={`text-xs text-slate-600 dark:text-slate-300 mb-1 ${isUser ? 'text-right' : ''}`}>
           {isUser ? 'You' : characterName}
         </p>
         
@@ -586,7 +588,7 @@ function MessageBubble({
             <p className={`text-sm mt-2 pt-2 border-t ${
               isUser 
                 ? 'border-coral-400 text-coral-100' 
-                : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400'
+                : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
             }`}>
               {message.english}
             </p>
@@ -594,7 +596,7 @@ function MessageBubble({
         </div>
 
         {!isUser && message.groundingStatus && (
-          <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
             {message.groundingStatus === 'canonical_support' ? (
               <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Source-backed vocabulary matches included</>
             ) : message.groundingStatus === 'source_support' ? (
@@ -628,7 +630,7 @@ function MessageBubble({
 
         {/* Listen button for character messages */}
         {!isUser && (
-          <PronunciationButton text={message.chamorro} showLabel className="mt-1 px-2 text-slate-500 hover:text-coral-600" />
+          <PronunciationButton text={message.chamorro} label="Hear it" showLabel className="mt-1 px-2 text-teal-700 dark:text-teal-300" />
         )}
       </div>
     </div>

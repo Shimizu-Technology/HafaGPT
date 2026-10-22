@@ -246,7 +246,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           <div className="mt-6 text-center">
                 <p className="text-sm text-brown-500 dark:text-gray-500">
                   Just browsing?{' '}
-                  <Link to="/vocabulary" className="text-coral-600 dark:text-ocean-400 hover:underline font-medium">
+                  <Link to="/vocabulary" className="inline-flex min-h-11 items-center rounded-lg px-2 text-coral-700 dark:text-ocean-300 hover:underline font-medium">
                     Explore free content →
                   </Link>
                 </p>

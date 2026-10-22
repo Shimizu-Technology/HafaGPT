@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info, X } from 'lucide-react';
 import { getStoryById, StoryWord } from '../data/storyData';
+import { Button } from './Button';
+import { LearnerProgress } from './LearnerProgress';
 import { PronunciationButton } from './PronunciationButton';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
@@ -38,11 +40,18 @@ export function StoryViewer() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [answers, setAnswers] = useState<{ questionId: string; correct: boolean }[]>([]);
 
+  const contentRef = useRef<HTMLElement>(null);
+  const firstView = useRef(true);
+  useEffect(() => {
+    if (firstView.current) { firstView.current = false; return; }
+    contentRef.current?.querySelector<HTMLElement>('h2, h3')?.focus();
+  }, [viewMode, currentQuestion, currentParagraph]);
+
   if (!story) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <p className="text-brown-600 dark:text-gray-400 mb-4">Story not found</p>
+          <h1 className="text-xl text-brown-600 dark:text-gray-400 mb-4">Story not found</h1>
           <Link replace to="/stories" className="text-coral-600 dark:text-ocean-400 hover:underline">
             Back to Stories
           </Link>
@@ -129,7 +138,7 @@ export function StoryViewer() {
         <div className="flex items-start gap-4">
           <div className="text-4xl">{story.icon}</div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white">
+            <h2 tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white">
               {story.title}
             </h2>
             <p className="text-sm text-brown-600 dark:text-gray-300 italic">
@@ -152,7 +161,7 @@ export function StoryViewer() {
       </div>
 
       <ContentTrustNote trust={STORY_CONTENT_TRUST} className="mb-4" />
-      <TTSDisclaimer variant="inline" className="mb-4" />
+      <TTSDisclaimer variant="inline" className="mb-4 !text-amber-800 dark:!text-amber-200" />
 
       {/* Cultural Note Toggle */}
       {story.culturalNote && (
@@ -201,7 +210,7 @@ export function StoryViewer() {
         <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-700 dark:bg-amber-950/40">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
                   {selectedWord.chamorro}
                 </span>
@@ -234,12 +243,7 @@ export function StoryViewer() {
           <span>Progress</span>
           <span>{currentParagraph + 1} / {story.paragraphs.length}</span>
         </div>
-        <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <LearnerProgress label="Story progress" value={progress} />
       </div>
 
       {/* Navigation Buttons */}
@@ -254,9 +258,9 @@ export function StoryViewer() {
           <span className="hidden sm:inline">Previous</span>
         </button>
 
-        <button
+        <Button size="large"
           onClick={goToNextParagraph}
-          className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-800"
+          className="w-full"
         >
           {currentParagraph < story.paragraphs.length - 1 ? (
             <>
@@ -269,7 +273,7 @@ export function StoryViewer() {
               <span>Take Quiz</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
     </>
   );
@@ -278,13 +282,13 @@ export function StoryViewer() {
   const renderQuiz = () => (
     <>
       {/* Quiz Header */}
-      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-2xl p-5 border border-purple-200/50 dark:border-purple-700/30 mb-6">
+      <div className="bg-surface-subtle rounded-2xl p-5 border border-cream-200 dark:border-slate-700 mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-action flex items-center justify-center">
             <HelpCircle className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white">
+            <h2 tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white">
               Comprehension Check
             </h2>
             <p className="text-sm text-brown-600 dark:text-gray-300">
@@ -296,41 +300,47 @@ export function StoryViewer() {
 
       {/* Question Card */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700 mb-4">
-        <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">
+        <h3 id="story-question" tabIndex={-1} className="text-lg font-semibold text-brown-800 dark:text-white mb-4">
           {question.question}
         </h3>
 
+        <PronunciationButton key={question.id} text={question.question} label="Hear it" showLabel />
+        <p id="story-quiz-instructions" className="my-3 text-base text-muted">Choose one answer to check it immediately. Ask a grown-up to read this with you if audio is unavailable.</p>
+        <TTSDisclaimer variant="inline" className="mb-3 !text-amber-800 dark:!text-amber-200" />
+        <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{selectedAnswer === null ? '' : selectedAnswer === question.correctAnswer ? 'Correct.' : `Incorrect. Correct answer: ${question.options[question.correctAnswer]}`}</p>
         {/* Options */}
-        <div className="space-y-3">
+        <div role="group" aria-labelledby="story-question" aria-describedby="story-quiz-instructions" className="space-y-3">
           {question.options.map((option, idx) => {
             const isSelected = selectedAnswer === idx;
             const isCorrect = idx === question.correctAnswer;
             const showResult = selectedAnswer !== null;
 
             return (
+              <div key={idx} className="flex flex-col gap-1">
               <button
-                key={idx}
+                type="button"
+                aria-pressed={isSelected}
                 onClick={() => handleAnswerSelect(idx)}
                 disabled={selectedAnswer !== null}
-                className={`w-full p-4 rounded-xl text-left transition-all ${
+                className={`w-full p-4 rounded-xl text-left transition-colors ${
                   showResult
                     ? isCorrect
                       ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 dark:border-green-600'
                       : isSelected
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 dark:border-red-600'
-                      : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 opacity-50'
-                    : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 hover:border-purple-300 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                      : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 '
+                    : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 hover:border-coral-700 dark:hover:border-teal-300 hover:bg-cream-100 dark:hover:bg-slate-600'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  <span className={`w-8 h-8 flex-none rounded-full flex items-center justify-center text-sm font-semibold ${
                     showResult
                       ? isCorrect
-                        ? 'bg-green-500 text-white'
+                        ? 'bg-green-700 text-white'
                         : isSelected
-                        ? 'bg-red-500 text-white'
-                        : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-400'
-                      : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-400'
+                        ? 'bg-red-700 text-white'
+                        : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-200'
+                      : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-200'
                   }`}>
                     {showResult && isCorrect ? (
                       <CheckCircle className="w-5 h-5" />
@@ -351,6 +361,8 @@ export function StoryViewer() {
                   </span>
                 </div>
               </button>
+              <PronunciationButton key={`${question.id}:${idx}`} text={option} label="Hear it" showLabel />
+              </div>
             );
           })}
         </div>
@@ -361,25 +373,21 @@ export function StoryViewer() {
             <p className="text-sm text-blue-800 dark:text-blue-200">
               <span className="font-semibold">Explanation:</span> {question.explanation}
             </p>
+            <PronunciationButton text={question.explanation} label="Hear it" showLabel />
           </div>
         )}
       </div>
 
       {/* Progress Bar */}
       <div className="mb-4">
-        <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-gradient-to-r from-purple-400 to-indigo-500 transition-all duration-300"
-            style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-          />
-        </div>
+        <LearnerProgress label="Story progress" value={((currentQuestion + 1) / questions.length) * 100} />
       </div>
 
       {/* Next Button */}
       {selectedAnswer !== null && (
-        <button
+        <Button size="large"
           onClick={handleNextQuestion}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-purple-700"
+          className="w-full"
         >
           {currentQuestion < questions.length - 1 ? (
             <>
@@ -392,7 +400,7 @@ export function StoryViewer() {
               <ChevronRight className="w-5 h-5" />
             </>
           )}
-        </button>
+        </Button>
       )}
     </>
   );
@@ -412,7 +420,7 @@ export function StoryViewer() {
           <div className="text-3xl mb-2">
             {scorePercentage >= 80 ? '🎉' : scorePercentage >= 60 ? '👍' : '📚'}
           </div>
-          <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
+          <h2 tabIndex={-1} className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
             {scorePercentage >= 80 
               ? 'Excellent!' 
               : scorePercentage >= 60 
@@ -429,20 +437,20 @@ export function StoryViewer() {
 
       {answers.some(answer => !answer.correct) && (
         <section aria-labelledby="story-mistakes" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-          <h3 id="story-mistakes" className="font-bold">Review missed questions</h3>
+          <h3 tabIndex={-1} id="story-mistakes" className="font-bold">Review missed questions</h3>
           {questions.filter(question => answers.some(answer => answer.questionId === question.id && !answer.correct)).map(question => <div key={question.id} className="mt-3 text-sm"><p className="font-semibold">{question.question}</p><p className="mt-1 text-brown-600 dark:text-gray-300">{question.explanation}</p></div>)}
           <button type="button" onClick={() => { setReviewIds(answers.filter(answer => !answer.correct).map(answer => answer.questionId)); setCurrentQuestion(0); setSelectedAnswer(null); setShowExplanation(false); setAnswers([]); setViewMode('quiz'); }} className="mt-4 min-h-11 rounded-xl bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">Try missed questions again</button>
         </section>
       )}
       {/* Action Buttons */}
       <div className="space-y-3">
-        <button
+        <Button size="large"
           onClick={restartStory}
-          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-3 font-semibold text-white transition-colors hover:bg-amber-800"
+          className="w-full"
         >
           <RotateCcw className="w-5 h-5" />
           <span>Read Again</span>
-        </button>
+        </Button>
 
         <button
           onClick={() => navigate('/stories', { replace: true })}
@@ -466,11 +474,11 @@ export function StoryViewer() {
         maxWidthClassName="max-w-2xl"
         iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
         trailing={viewMode === 'reading' ? (
-          <PronunciationButton text={paragraph.chamorro} className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
+          <PronunciationButton text={paragraph.chamorro} label="Hear it" showLabel className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
         ) : undefined}
       />
 
-      <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
+      <main ref={contentRef} className="learner-reading mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {viewMode === 'reading' && renderReading()}
         {viewMode === 'quiz' && renderQuiz()}
         {viewMode === 'results' && renderResults()}

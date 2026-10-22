@@ -12,6 +12,8 @@ import { useRecordLessonExposure } from '../hooks/useConceptEvidence';
 import { LessonComplete } from './LessonComplete';
 import { XPToast } from './XPDisplay';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
+import { PronunciationButton } from './PronunciationButton';
+import { TTSDisclaimer } from './TTSDisclaimer';
 import { ContentTrustNote } from './ContentTrustNote';
 import { getLessonTrust } from '../data/contentTrust';
 import { getLearningGameReturn, readLearningGameContext } from '../lib/lessonPractice';
@@ -100,6 +102,13 @@ function LessonPageSession() {
   const [lessonExposureSaveFailed, setLessonExposureSaveFailed] = useState(false);
   const lessonExposureRequestRef = useRef(0);
   const lessonExposureScopeRef = useRef<string | null>(null);
+
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const previousStepRef = useRef(currentStep);
+  useEffect(() => {
+    if (previousStepRef.current !== currentStep) stepHeadingRef.current?.focus();
+    previousStepRef.current = currentStep;
+  }, [currentStep]);
 
   const topic = topicId ? getTopic(topicId) : undefined;
 
@@ -265,7 +274,7 @@ function LessonPageSession() {
               aria-valuemax={100}
               aria-valuenow={progress}
             >
-              <div className="h-full rounded-full bg-coral-500 transition-all duration-500 dark:bg-ocean-400" style={{ width: `${progress}%` }} />
+              <div className="h-full origin-left rounded-full bg-action" style={{ transform: `scaleX(${progress / 100})` }} />
             </div>
             <ol className="mt-2 grid grid-cols-4 gap-2">
               {STEPS.map((step, index) => {
@@ -278,10 +287,10 @@ function LessonPageSession() {
                     aria-current={isCurrent ? 'step' : undefined}
                     className={`flex min-w-0 items-center justify-center gap-1.5 text-xs font-semibold ${
                       isCompleted
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-emerald-700 dark:text-emerald-300'
                         : isCurrent
                           ? 'text-coral-700 dark:text-ocean-300'
-                          : 'text-brown-400 dark:text-gray-500'
+                          : 'text-brown-600 dark:text-gray-300'
                     }`}
                   >
                     <span className={`flex h-7 w-7 flex-none items-center justify-center rounded-lg ${
@@ -303,8 +312,14 @@ function LessonPageSession() {
       />
 
       {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 py-6 pb-24">
-        <ContentTrustNote trust={contentTrust} className="mb-6" />
+      <main className="learner-reading max-w-3xl mx-auto px-4 py-6 pb-24">
+        <h2 ref={stepHeadingRef} tabIndex={-1} className="mb-4 text-xl font-bold">{currentStep === 'intro' ? 'About this lesson' : currentStep === 'flashcards' ? 'Practice cards' : currentStep === 'quiz' ? 'Lesson quiz' : 'Lesson results'}</h2>
+        {currentStep === 'intro' && <div className="mb-5 space-y-3">
+          <TTSDisclaimer variant="inline" className="!text-amber-800 dark:!text-amber-200" />
+          <p className="text-muted">Ask a grown-up to read this with you if audio is unavailable.</p>
+          <PronunciationButton text={`${topic.title}. ${topic.description}. ${topic.intro.culturalContext}. ${topic.intro.keyPhrases.join('. ')}`} label="Hear it" showLabel />
+        </div>}
+        <ContentTrustNote trust={contentTrust} className="mb-6" compact />
         {lessonExposureSaveFailed && pendingLessonExposure && (
           <div
             role="alert"

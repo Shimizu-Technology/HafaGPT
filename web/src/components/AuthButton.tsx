@@ -48,7 +48,8 @@ export function AuthButton() {
           appearance={{
             baseTheme: isDark ? dark : undefined,
             elements: {
-              avatarBox: "w-8 h-8 sm:w-9 sm:h-9",
+              avatarBox: "w-9 h-9",
+              userButtonTrigger: "!min-h-[44px] !min-w-[44px] !p-1",
               userButtonPopoverCard: "rounded-xl shadow-xl",
               userButtonPopoverActionButton: isDark ? "hover:bg-gray-800" : "hover:bg-teal-50",
             }

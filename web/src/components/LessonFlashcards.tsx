@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ArrowRight, SkipForward, Volume2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, SkipForward, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LearningTopic } from '../data/learningPath';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
-import { useSpeech } from '../hooks/useSpeech';
+import { PronunciationButton } from './PronunciationButton';
+import { LearnerProgress } from './LearnerProgress';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { getCuratedDeckConceptIds } from '../data/conceptEvidence';
 
@@ -24,7 +25,6 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
   const [isFlipped, setIsFlipped] = useState(false);
   const [viewedCards, setViewedCards] = useState<Set<number>>(new Set(initialViewed));
 
-  const { speak, isSpeaking } = useSpeech();
 
   useEffect(() => {
     onProgress?.(currentIndex, [...viewedCards]);
@@ -53,11 +53,6 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
     }
   }, [currentIndex]);
 
-  const handleSpeak = () => {
-    if (currentCard) {
-      speak(currentCard.front);
-    }
-  };
 
   if (!deck || cards.length === 0) {
     return (
@@ -76,8 +71,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <TTSDisclaimer variant="inline" />
+    <div className="space-y-6">
+      <TTSDisclaimer variant="inline" className="!text-amber-800 dark:!text-amber-200" />
       {/* Progress indicator */}
       <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-400">
         <span>{viewedCards.size} of {cards.length} cards viewed</span>
@@ -85,12 +80,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-coral-400 to-coral-500 dark:from-ocean-400 dark:to-ocean-500 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <LearnerProgress value={progress} label="Cards viewed" />
 
       {/* Flashcard */}
       <div className="relative">
@@ -102,7 +92,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           className="w-full cursor-pointer perspective-1000 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4"
         >
           <div
-            className={`relative w-full aspect-[4/3] sm:aspect-[3/2] transition-transform duration-500 transform-style-3d ${
+            className={`grid w-full min-h-64 transition-transform duration-200 motion-reduce:transition-none transform-style-3d ${
               isFlipped ? 'rotate-y-180' : ''
             }`}
             style={{
@@ -112,7 +102,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           >
             {/* Front */}
             <div
-              className="absolute inset-0 bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-cream-200/50 dark:border-slate-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-cream-200/50 dark:border-slate-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
+              aria-hidden={isFlipped}
               style={{ backfaceVisibility: 'hidden' }}
             >
 
@@ -127,14 +118,15 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
                 </p>
               )}
 
-              <p className="mt-6 text-sm text-brown-400 dark:text-gray-500">
+              <p className="mt-6 text-sm text-brown-600 dark:text-gray-300">
                 Tap to flip
               </p>
             </div>
 
             {/* Back */}
             <div
-              className="absolute inset-0 bg-coral-700 dark:bg-teal-700 rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-coral-700 dark:bg-teal-700 rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 backface-hidden"
+              aria-hidden={!isFlipped}
               style={{
                 backfaceVisibility: 'hidden',
                 transform: 'rotateY(180deg)',
@@ -145,34 +137,24 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
               </p>
 
               {currentCard.pronunciation && (
-                <p className="mt-3 text-lg text-white/70 italic">
+                <p className="mt-3 text-lg text-white italic">
                   ({currentCard.pronunciation})
                 </p>
               )}
 
-              <p className="mt-6 text-sm text-white/60">
+              <p className="mt-6 text-sm text-white">
                 Tap to flip back
               </p>
             </div>
           </div>
         </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSpeak();
-                }}
-                aria-label="Play pronunciation"
-                disabled={isSpeaking}
-                className="absolute top-4 right-4 p-3 rounded-full bg-coral-100 dark:bg-ocean-900/40
-                         text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800/40
-                         transition-colors disabled:opacity-50"
-              >
-                <Volume2 className="w-5 h-5" />
-              </button>
+        <div className="mt-3 flex justify-end">
+          <PronunciationButton key={currentCard.front} text={currentCard.front} label="Hear it" showLabel />
+        </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           aria-label="Previous card"
           onClick={handlePrev}
@@ -192,7 +174,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
         </div>
 
         {/* Desktop: Card dots */}
-        <div className="hidden sm:flex gap-1.5 py-2">
+        <div className="hidden">
           {cards.map((_, idx) => (
             <button
               key={idx}
@@ -202,7 +184,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
                 setIsFlipped(false);
                 setViewedCards(prev => new Set([...prev, idx]));
               }}
-              className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all ${
+              className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-colors ${
                 idx === currentIndex
                   ? 'bg-coral-500 dark:bg-ocean-400 w-6'
                   : viewedCards.has(idx)
@@ -243,7 +225,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
             getCuratedDeckConceptIds(topic.flashcardCategory),
           )}
           disabled={!allViewed}
-          className={`flex-1 py-3 px-4 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 py-3 px-4 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 ${
             allViewed
               ? 'bg-coral-700 dark:bg-teal-700 text-white hover:bg-coral-800 dark:hover:bg-teal-800'
               : 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
@@ -264,7 +246,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
       </div>
 
       {/* Hint */}
-      <p className="text-center text-sm text-brown-500 dark:text-gray-500">
+      <p className="text-center text-sm text-brown-600 dark:text-gray-300">
         Use the arrow buttons to navigate. Tap the card or press Enter to reveal its meaning.
       </p>
     </div>

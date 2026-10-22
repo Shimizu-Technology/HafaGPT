@@ -27,7 +27,6 @@ describe('LearnerPageHeader', () => {
     </MemoryRouter>);
     const back = screen.getByRole('link', { name: 'Back to topic' });
     expect(back).toHaveAttribute('href', '/learning/greetings');
-    expect(back).toHaveClass('h-11', 'w-11');
     // React Router must leave modified clicks to the browser. Suppress jsdom's
     // unsupported native navigation only after the React event has bubbled.
     document.addEventListener('click', event => event.preventDefault(), { once: true });

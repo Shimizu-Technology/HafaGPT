@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen, Volume2 } from 'lucide-react';
+import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen } from 'lucide-react';
 import { getQuizCategory, shuffleQuestions, checkAnswer, QuizQuestion } from '../data/quizData';
 import { saveQuizAttempt } from '../lib/quizLocalStats';
 import { useSaveQuizResult, type SaveQuizResultParams } from '../hooks/useQuizQuery';
@@ -8,7 +8,8 @@ import { useDictionaryQuiz, DictionaryQuizQuestion } from '../hooks/useVocabular
 import { useUser } from '@clerk/clerk-react';
 import { useSubscription } from '../hooks/useSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
-import { useSpeech } from '../hooks/useSpeech';
+import { PronunciationButton } from './PronunciationButton';
+import { LearnerProgress } from './LearnerProgress';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
@@ -77,7 +78,7 @@ function QuizViewerSession() {
   const startTimeRef = useRef<number>(Date.now());
   const clientAttemptIdRef = useRef(createClientAttemptId());
   const { canUse, tryUse, getCount, getLimit, isLoading: subscriptionLoading } = useSubscription();
-  const { speak, isSpeaking, stop } = useSpeech();
+  const questionRef = useRef<HTMLHeadingElement>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [usageChecked, setUsageChecked] = useState(false);
   const [quizError, setQuizError] = useState<string | null>(null);
@@ -158,34 +159,6 @@ function QuizViewerSession() {
     ? dictQuizData?.trust ?? DICTIONARY_CONTENT_TRUST
     : getLessonTrust(curatedTrustCategory);
 
-  // Format question for TTS based on question type
-  const formatQuestionForSpeech = (question: QuizQuestion): string => {
-    const questionType = question.type;
-    const questionText = question.question;
-    const hint = question.hint;
-    
-    if (questionType === 'fill_blank') {
-      // For fill-in-the-blank, make it more natural
-      // Replace underscores/blanks with "blank"
-      const spokenQuestion = questionText.replace(/_{2,}|_+/g, '... blank ...');
-      let speech = spokenQuestion;
-      if (hint) {
-        speech += `. Hint: ${hint}`;
-      }
-      return speech;
-    } else if (questionType === 'type_answer') {
-      // For type-answer, include the hint if available
-      let speech = questionText;
-      if (hint) {
-        speech += `. Hint: ${hint}`;
-      }
-      return speech;
-    } else {
-      // Multiple choice - just read the question
-      return questionText;
-    }
-  };
-
   // Browser warning when leaving mid-quiz
   const isQuizInProgress = questions.length > 0 && results.length > 0 && !showResults;
   const isResultNavigationBlocked = pendingQuizResult !== null;
@@ -255,12 +228,10 @@ function QuizViewerSession() {
     }
   }, [isDictionaryQuiz, dictQuizData, usageChecked, showUpgradePrompt, savedQuiz]);
 
-  // Focus input for type_answer questions
+  // Orient keyboard readers to each new question; input follows in tab order.
   useEffect(() => {
-    if (answerState === 'unanswered' && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [currentIndex, answerState]);
+    questionRef.current?.focus();
+  }, [currentIndex, questions.length, showResults]);
 
   // Show upgrade prompt FIRST (before any early returns)
   if (showUpgradePrompt) {
@@ -285,7 +256,7 @@ function QuizViewerSession() {
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-          <p className="text-brown-600 dark:text-gray-400">Generating quiz questions...</p>
+          <h1 className="text-brown-600 dark:text-gray-400">Generating quiz questions...</h1>
         </div>
       </div>
     );
@@ -295,9 +266,9 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
         <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
-          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             We couldn't load this quiz
-          </p>
+          </h1>
           <p className="text-brown-600 dark:text-gray-400 mb-4">
             {dictQuizError instanceof Error ? dictQuizError.message : 'Please try again in a moment.'}
           </p>
@@ -326,8 +297,8 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-brown-600 dark:text-gray-400 mb-4">Quiz not found</p>
-          <Link replace to="/quiz" className="text-coral-600 dark:text-ocean-400 hover:underline">
+          <h1 className="text-brown-600 dark:text-gray-400 mb-4">Quiz not found</h1>
+          <Link replace to="/quiz" className="text-coral-700 dark:text-ocean-300 hover:underline">
             Back to Quiz List
           </Link>
         </div>
@@ -341,7 +312,7 @@ function QuizViewerSession() {
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-          <p className="text-brown-600 dark:text-gray-400">Loading questions...</p>
+          <h1 className="text-brown-600 dark:text-gray-400">Loading questions...</h1>
         </div>
       </div>
     );
@@ -351,9 +322,9 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
         <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
-          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             Quiz temporarily unavailable
-          </p>
+          </h1>
           <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
           <Link
             to={quizReturnTo}
@@ -370,9 +341,9 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
         <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
-          <p className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             No quiz questions available
-          </p>
+          </h1>
           <p className="text-brown-600 dark:text-gray-400 mb-4">
             Please try a different quiz or come back in a moment.
           </p>
@@ -568,7 +539,7 @@ function QuizViewerSession() {
       <LearnerPageShell>
         <LearnerPageHeader title="Quiz complete" subtitle={categoryTitle || 'Your results'} icon={Trophy} backTo={quizReturnTo} backLabel={quizReturnLabel} onBack={isResultNavigationBlocked || learningReturn || topicReturn ? handleResultsBack : undefined} maxWidthClassName="max-w-2xl" />
 
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <main className="learner-reading max-w-2xl mx-auto px-4 py-6">
           {/* Score Card */}
           <div className={`mb-6 rounded-2xl border p-6 text-center ${
             scorePercent >= 80 
@@ -676,14 +647,14 @@ function QuizViewerSession() {
               <button
                 type="button"
                 disabled
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 transition-all cursor-not-allowed opacity-60"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 transition-colors cursor-not-allowed opacity-60"
               >
                 Other Quizzes
               </button>
             ) : (
               <Link replace
                 to="/quiz"
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-all"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-colors"
               >
                 Other Quizzes
               </Link>
@@ -726,7 +697,7 @@ function QuizViewerSession() {
               </p>
             </div>
           )}
-        </div>
+        </main>
       </LearnerPageShell>
     );
   }
@@ -744,16 +715,14 @@ function QuizViewerSession() {
         maxWidthClassName="max-w-2xl"
         below={(
           <div className="flex items-center gap-3">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Quiz progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-              <div className="h-full bg-coral-600 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
-            </div>
+            <LearnerProgress value={progress} label="Quiz progress" className="flex-1" />
             <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {questions.length}</span>
           </div>
         )}
       />
 
       {/* Question Content - scrollable area */}
-      <div className="flex-1 overflow-y-auto">
+      <main className="learner-reading flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
         <p role="status" className="mb-3 text-xs text-brown-600 dark:text-gray-400">{storageAvailable ? savedQuiz ? 'Resumed your quiz on this browser.' : 'Your quiz resumes on this browser if you leave.' : 'Browser storage is unavailable. Keep this quiz open to retain your progress.'}</p>
         <ContentTrustNote trust={contentTrust} className="mb-4" compact />
@@ -768,29 +737,17 @@ function QuizViewerSession() {
                    currentQuestion.type === 'type_answer' ? 'Type Your Answer' : 'Fill in the Blank'}
                 </span>
               </div>
-              <div className="flex items-start gap-3">
-                <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
+              <div className="flex flex-col items-start gap-3">
+                <h2 id="quiz-question" ref={questionRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
                 {currentQuestion.question}
               </h2>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <TTSDisclaimer variant="tooltip" />
-                  <button
-                    type="button"
-                    onClick={() => isSpeaking ? stop() : speak(formatQuestionForSpeech(currentQuestion))}
-                    aria-label={isSpeaking ? 'Stop reading question' : 'Read question aloud'}
-                    className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
-                      isSpeaking 
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white animate-pulse'
-                        : 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400 hover:bg-coral-200 dark:hover:bg-ocean-800'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center">
-                      <Volume2 className="w-5 h-5" />
-                    </div>
-                  </button>
-                </div>
+                <PronunciationButton key={currentQuestion.id} text={currentQuestion.question} label="Hear it" showLabel />
               </div>
               
+              <p id="quiz-instructions" className="mt-3 text-base text-muted">{currentQuestion.type === 'multiple_choice' ? 'Choose one answer to check it immediately.' : 'Type your answer and submit it, or choose “I don’t know”.'}</p>
+              <TTSDisclaimer variant="inline" className="mt-3 !text-amber-800 dark:!text-amber-200" />
+              <p className="mt-3 text-base text-muted">Ask a grown-up to read this with you if audio is unavailable.</p>
+              <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{answerState === 'unanswered' ? '' : answerState === 'correct' ? 'Correct.' : `Incorrect. Correct answer: ${currentQuestion.correctAnswer}`}</p>
               {/* Hint - Show automatically for type_answer and fill_blank, toggle for multiple_choice */}
               {currentQuestion.hint && answerState === 'unanswered' && (
                 currentQuestion.type === 'multiple_choice' ? (
@@ -798,15 +755,18 @@ function QuizViewerSession() {
                   <>
                     <button
                       onClick={() => setShowHint(!showHint)}
-                      className="mt-4 flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 hover:underline"
+                      aria-expanded={showHint}
+                      aria-controls="quiz-hint"
+                      className="mt-4 min-h-11 flex items-center gap-2 text-base text-amber-700 dark:text-amber-300 hover:underline"
                     >
                       <Lightbulb className="w-4 h-4" />
                       {showHint ? 'Hide hint' : 'Need a hint?'}
                     </button>
                     {showHint && (
-                      <p className="mt-2 text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
+                      <div id="quiz-hint" className="mt-2 text-base text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
                         {currentQuestion.hint}
-                      </p>
+                        <PronunciationButton text={currentQuestion.hint} label="Hear it" showLabel />
+                      </div>
                     )}
                   </>
                 ) : (
@@ -815,6 +775,7 @@ function QuizViewerSession() {
                     <Lightbulb className="w-5 h-5 flex-shrink-0 mt-0.5" />
                     <div>
                       <span className="font-medium">Hint:</span> {currentQuestion.hint}
+                      <PronunciationButton text={currentQuestion.hint} label="Hear it" showLabel />
                     </div>
                   </div>
                 )
@@ -824,7 +785,7 @@ function QuizViewerSession() {
             {/* Answer Options */}
             <div>
               {currentQuestion.type === 'multiple_choice' && currentQuestion.options && (
-                <div className="grid grid-cols-1 gap-2 sm:gap-3">
+                <div role="group" aria-labelledby="quiz-question" aria-describedby="quiz-instructions" className="grid grid-cols-1 gap-2 sm:gap-3">
                   {currentQuestion.options.map((option, idx) => {
                     const isSelected = userAnswer === option;
                     const isCorrectOption = option === currentQuestion.correctAnswer;
@@ -842,18 +803,19 @@ function QuizViewerSession() {
                     }
                     
                     return (
-                      <div key={idx} className="flex items-stretch gap-2">
+                      <div key={idx} className="flex flex-col gap-1">
                         <button
                           type="button"
                           onClick={() => handleAnswer(option)}
+                          aria-pressed={isSelected}
                           disabled={answerState !== 'unanswered'}
                           className={`min-h-12 flex-1 rounded-xl p-3 text-left transition-colors sm:p-4 ${buttonClass}`}
                         >
                           <div className="flex items-center gap-2 sm:gap-3">
-                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-600 dark:text-ocean-400 flex-shrink-0">
+                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-700 dark:text-ocean-300 flex-shrink-0">
                             {String.fromCharCode(65 + idx)}
                           </span>
-                          <span className="flex-1 text-sm font-medium text-brown-800 dark:text-white sm:text-base">
+                          <span className="min-w-0 flex-1 text-base font-medium text-brown-800 dark:text-white sm:text-base">
                             {option}
                           </span>
                           {answerState !== 'unanswered' && isCorrectOption && (
@@ -864,16 +826,7 @@ function QuizViewerSession() {
                           )}
                           </div>
                         </button>
-                        {answerState === 'unanswered' && (
-                          <button
-                            type="button"
-                            onClick={() => void speak(option)}
-                            aria-label={`Read answer ${String.fromCharCode(65 + idx)} aloud`}
-                            className="flex min-h-12 w-12 flex-none items-center justify-center rounded-xl border-2 border-cream-200 bg-white text-brown-500 transition-colors hover:border-coral-300 hover:text-coral-700 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300 dark:hover:border-ocean-600"
-                          >
-                            <Volume2 className="h-5 w-5" aria-hidden="true" />
-                          </button>
-                        )}
+                        <PronunciationButton key={`${currentQuestion.id}:${idx}`} text={option} label="Hear it" showLabel />
                       </div>
                     );
                   })}
@@ -885,6 +838,8 @@ function QuizViewerSession() {
                   <div className="relative">
                     <input
                       ref={inputRef}
+                      aria-labelledby="quiz-question"
+                      aria-describedby="quiz-instructions"
                       type="text"
                       value={userAnswer}
                       onChange={(e) => setUserAnswer(e.target.value)}
@@ -895,13 +850,13 @@ function QuizViewerSession() {
                       }}
                       disabled={answerState !== 'unanswered'}
                       placeholder="Type your answer..."
-                      className={`w-full px-4 py-4 text-lg rounded-xl border-2 transition-all ${
+                      className={`w-full px-4 py-4 text-lg rounded-xl border-2 transition-colors ${
                         answerState === 'unanswered'
                           ? 'border-cream-200 dark:border-slate-700 focus:border-coral-400 dark:focus:border-ocean-500 bg-white dark:bg-slate-800'
                           : answerState === 'correct'
                           ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                           : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      } text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-slate-500 outline-none`}
+                      } text-brown-800 dark:text-white placeholder-brown-600 dark:placeholder-slate-300 outline-none`}
                     />
                     {answerState !== 'unanswered' && (
                       <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${
@@ -923,7 +878,7 @@ function QuizViewerSession() {
                       </button>
                       <button
                         onClick={handleDontKnow}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-all active:scale-98"
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors active:scale-98"
                       >
                         <HelpCircle className="w-5 h-5" />
                         I don't know
@@ -932,7 +887,7 @@ function QuizViewerSession() {
                   )}
 
                   {answerState === 'incorrect' && (
-                    <p className="text-sm text-center text-green-600 dark:text-green-400">
+                    <p className="text-base text-center text-green-700 dark:text-green-400">
                       Correct answer: <strong>{currentQuestion.correctAnswer}</strong>
                     </p>
                   )}
@@ -952,6 +907,7 @@ function QuizViewerSession() {
                     <p className="text-sm text-brown-700 dark:text-gray-300">
                       {currentQuestion.explanation}
                     </p>
+                    <PronunciationButton text={currentQuestion.explanation} label="Hear it" showLabel />
                   </div>
                 )}
                 {currentQuestion.wordId && (
@@ -994,7 +950,7 @@ function QuizViewerSession() {
           </>
         )}
         </div>
-      </div>
+      </main>
     </LearnerPageShell>
   );
 }
