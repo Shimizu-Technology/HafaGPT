@@ -337,6 +337,7 @@ export function FallingWords() {
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (wordPool.length < ANSWER_OPTIONS) {
@@ -765,7 +766,7 @@ export function FallingWords() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

@@ -334,6 +334,7 @@ export function CulturalTrivia() {
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       const newQuestions = pickQuestions();
@@ -599,7 +600,7 @@ export function CulturalTrivia() {
           </p>
         </main>
 
-        {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
+        {showUpgradePrompt && !startStatus.error && !startStatus.pending && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
   }

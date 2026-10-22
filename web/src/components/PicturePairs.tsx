@@ -220,6 +220,7 @@ export function PicturePairs() {
   const startGame = async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (!canUse('game')) {
@@ -548,7 +549,7 @@ export function PicturePairs() {
       </main>
 
       {/* Upgrade Prompt */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

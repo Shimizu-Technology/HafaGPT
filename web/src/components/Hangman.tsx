@@ -226,6 +226,7 @@ export function Hangman() {
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (availableWords.length < MIN_WORDS_TO_PLAY) return;
@@ -482,7 +483,7 @@ export function Hangman() {
           </p>
       </main>
 
-        {showUpgradePrompt && !startStatus.error && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
+        {showUpgradePrompt && !startStatus.error && !startStatus.pending && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
   }

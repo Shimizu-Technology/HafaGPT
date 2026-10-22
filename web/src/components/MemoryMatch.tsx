@@ -287,6 +287,7 @@ export function MemoryMatch() {
   const startGame = useCallback(async () => {
     if (startingRef.current) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       const newCards = generateCards();
@@ -807,7 +808,7 @@ export function MemoryMatch() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

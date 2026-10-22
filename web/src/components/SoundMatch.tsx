@@ -180,6 +180,7 @@ export function SoundMatch() {
   const startGame = async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
     // Check subscription limits
     if (!canUse('game')) {
@@ -453,7 +454,7 @@ export function SoundMatch() {
       </main>
 
       {/* Upgrade Prompt */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

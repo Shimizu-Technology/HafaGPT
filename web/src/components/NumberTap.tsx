@@ -116,6 +116,7 @@ export function NumberTap() {
   const startGame = async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (!canUse('game')) {
@@ -403,7 +404,7 @@ export function NumberTap() {
         {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

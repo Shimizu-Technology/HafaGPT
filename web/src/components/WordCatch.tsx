@@ -393,6 +393,7 @@ export function WordCatch() {
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (wordPool.length < 4) {
@@ -834,7 +835,7 @@ export function WordCatch() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

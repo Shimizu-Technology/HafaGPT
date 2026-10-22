@@ -192,6 +192,7 @@ export function ChamorroWordle() {
   const startGame = useCallback(async (selectedGameMode: GameMode) => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       const startDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Pacific/Guam', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -864,7 +865,7 @@ export function ChamorroWordle() {
       `}</style>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

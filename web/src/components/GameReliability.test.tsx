@@ -181,14 +181,24 @@ describe('game result and round reliability', () => {
     expect(mocks.save.mock.calls[0][0]).toMatchObject({ client_attempt_id: id, stars: 0 });
   });
 
-  it('keeps Hangman network failures on the Start recovery path', async () => {
+  it.each([
+    [SoundMatch, 'Start Game'], [ColorTouch, 'Start Game'], [NumberTap, 'Start Game'],
+    [SimonSays, 'Start Game'], [PicturePairs, 'Start Game'], [MemoryMatch, 'Start Game'],
+    [WordScramble, 'Start Game'], [FallingWords, 'Start Game'], [WordCatch, 'Start Game'],
+    [ChamorroWordle, 'Start Practice'], [Hangman, 'Start Game'], [CulturalTrivia, 'Start Trivia'],
+  ] as const)('keeps a failed Start and its delayed retry out of payment UI (%s)', async (Component, label) => {
     mocks.reserve.mockRejectedValueOnce(new Error('offline'));
-    render(<GameTestRouter><Hangman /></GameTestRouter>);
-    fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+    let approve!: (allowed: boolean) => void;
+    mocks.reserve.mockImplementationOnce(() => new Promise<boolean>(resolve => { approve = resolve; }));
+    render(<GameTestRouter><Component /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: label }));
     expect(await screen.findByRole('alert')).toHaveTextContent('couldn’t start');
     expect(screen.queryByText('Allowance reached')).not.toBeInTheDocument();
-    await start();
+    fireEvent.click(screen.getByRole('button', { name: label }));
     expect(screen.queryByText('Allowance reached')).not.toBeInTheDocument();
+    await act(async () => approve(true));
+    expect(screen.queryByText('Allowance reached')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: label })).not.toBeInTheDocument();
   });
 
   it('holds Sound Match feedback for the learner, with no prompt autoplay', async () => {

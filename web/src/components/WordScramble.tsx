@@ -246,6 +246,7 @@ export function WordScramble() {
   const startGame = useCallback(async () => {
     if (startingRef.current) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       const newWords = generateWords();
@@ -899,7 +900,7 @@ export function WordScramble() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && !startStatus.error && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}
