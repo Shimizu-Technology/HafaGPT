@@ -18,11 +18,14 @@ export function useGameSubscription() {
     setError(null);
     try {
       const result = await reserve(type, attemptRef.current);
-      if (result.success) {
+      // Preserve the existing game entitlement path for paid accounts. Older
+      // usage APIs only evaluate the promotion/free counter, not Clerk metadata.
+      const allowed = subscription.isPremium || result.success;
+      if (allowed) {
         approvedAttemptRef.current = attemptRef.current;
         attemptRef.current = createClientAttemptId();
       }
-      return result.success;
+      return allowed;
     } catch {
       setError('We couldn’t start this round. Check your connection and try Start again.');
       return false;
@@ -30,7 +33,7 @@ export function useGameSubscription() {
       pendingRef.current = false;
       setPending(false);
     }
-  }, [reserve]);
+  }, [reserve, subscription.isPremium]);
   const getRoundAttemptId = useCallback(() => approvedAttemptRef.current, []);
   return { ...subscription, tryUse, getRoundAttemptId,
     // A lost approval may already consume the last allowance. Let the server
