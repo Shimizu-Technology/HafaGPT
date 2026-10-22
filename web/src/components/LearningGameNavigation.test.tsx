@@ -29,7 +29,7 @@ vi.mock('../hooks/useGamesQuery', () => ({
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
-    tryUse: async () => true,
+    tryUse: async () => true, reserveUse: async () => ({ success: true }),
     getCount: () => 0,
     getLimit: () => 10,
   }),
@@ -205,18 +205,17 @@ describe('contextual learning game navigation', () => {
   it.each(launchCases)(
     '$game guards its $source exit and returns to $destination when confirmed',
     async (testCase) => {
-      const confirm = vi.spyOn(window, 'confirm')
-        .mockReturnValueOnce(false)
-        .mockReturnValueOnce(true);
       renderGame(testCase);
       await makeGameInProgress(testCase.game);
 
       fireEvent.click(screen.getByRole('button', { name: testCase.label }));
+      expect(screen.getByRole('dialog')).toHaveTextContent('Leave this round?');
+      fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
       expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
 
       fireEvent.click(screen.getByRole('button', { name: testCase.label }));
+      fireEvent.click(screen.getByRole('button', { name: 'Leave' }));
       expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.destination);
-      expect(confirm).toHaveBeenCalledTimes(2);
     },
   );
 
@@ -291,6 +290,8 @@ describe('contextual learning game navigation', () => {
     expect(disabledCompletionBack).toBeDisabled();
 
     fireEvent.click(headerBack!);
+    expect(screen.getByRole('dialog')).toHaveTextContent('Keep your result');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep result' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent(testCase.path);
 
     const beforeUnload = new Event('beforeunload', { cancelable: true });
@@ -307,6 +308,7 @@ describe('contextual learning game navigation', () => {
     expect(screen.getByRole('button', { name: 'Retry saving game result' }))
       .toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Keep result' }));
     fireEvent.click(screen.getByRole('button', { name: 'Retry saving game result' }));
     await act(async () => {
       await Promise.resolve();

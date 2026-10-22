@@ -22,7 +22,7 @@ vi.mock('../hooks/useVocabularyQuery', () => ({
 vi.mock('../hooks/useFlashcardsQuery', () => ({ useDictionaryFlashcards: () => ({ data: null, isLoading: false }) }));
 vi.mock('../hooks/useGamesQuery', () => ({ useSaveGameResult: () => ({ mutateAsync: mocks.save }) }));
 vi.mock('../hooks/useSubscription', () => ({
-  useSubscription: () => ({ canUse: () => true, tryUse: async () => true, getCount: () => 0, getLimit: () => 10 }),
+  useSubscription: () => ({ canUse: () => true, tryUse: async () => true, reserveUse: async () => ({ success: true }), getCount: () => 0, getLimit: () => 10 }),
 }));
 vi.mock('./UpgradePrompt', () => ({ UpgradePrompt: () => null }));
 

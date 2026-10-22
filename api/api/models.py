@@ -452,7 +452,7 @@ class GameResultCreate(BaseModel):
     moves: Optional[int] = Field(None, description="Number of moves (for memory match)")
     pairs: Optional[int] = Field(None, description="Number of pairs matched")
     time_seconds: Optional[int] = Field(None, description="Time to complete in seconds")
-    stars: Optional[int] = Field(None, ge=1, le=3, description="Star rating (1-3)")
+    stars: Optional[int] = Field(None, ge=0, le=3, description="Star rating (0-3)")
     client_attempt_id: Optional[UUID] = Field(
         None,
         description="Client-generated idempotency key for a contextual game round",

@@ -157,7 +157,7 @@ describe('activity result pages', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/older result has no saved topic relationship/i)).toBeInTheDocument();
+    expect(screen.getByText(/no topic relationship was saved for this round/i)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Return to the source topic/ })).not.toBeInTheDocument();
   });
 });

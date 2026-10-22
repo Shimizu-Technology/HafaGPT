@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ListOrdered, Volume2, Play, Sparkles } from 'lucide-react';
 import { numberOptions } from '../lib/gameRound';
@@ -6,8 +7,9 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
-import { useSpeech } from '../hooks/useSpeech';
+import { useGameSubscription } from '../hooks/useGameSubscription';
+import { useGameAudioPrompt } from '../hooks/useGameAudioPrompt';
+import { GameAudioStatus } from './games/GameAudioStatus';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
@@ -57,15 +59,20 @@ export function NumberTap() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
-  const { speak, preload, isSpeaking } = useSpeech();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
+  const audio = useGameAudioPrompt();
+  const { speak, preload, isSpeaking, listen, resetPrompt } = audio;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<GameState>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'feedback') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [awardedPoints, setAwardedPoints] = useState(0);
   const [currentNumber, setCurrentNumber] = useState<NumberItem | null>(null);
   const [currentItem, setCurrentItem] = useState<typeof COUNTABLE_ITEMS[0] | null>(null);
   const [options, setOptions] = useState<number[]>([]);
@@ -75,39 +82,41 @@ export function NumberTap() {
 
   // Generate a new round
   const generateRound = useCallback(() => {
+    resetPrompt();
     // Filter out numbers we've already used (if possible)
     let availableNumbers = NUMBERS.filter(n => !usedNumbers.has(n.value));
     if (availableNumbers.length < 4) {
       setUsedNumbers(new Set());
       availableNumbers = NUMBERS;
     }
-    
+
     // Pick a random number as the correct answer (limit to 1-6 for easier gameplay)
     const easyNumbers = availableNumbers.filter(n => n.value <= 6);
     const targetNumbers = easyNumbers.length >= 1 ? easyNumbers : availableNumbers;
     const correctNumber = targetNumbers[Math.floor(Math.random() * targetNumbers.length)];
-    
+
     // Pick a random item to count
     const item = COUNTABLE_ITEMS[Math.floor(Math.random() * COUNTABLE_ITEMS.length)];
-    
+
     const allOptions = numberOptions(correctNumber.value);
-    
+
     setCurrentNumber(correctNumber);
     setCurrentItem(item);
     setOptions(allOptions);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setUsedNumbers(prev => new Set([...prev, correctNumber.value]));
-    
+
     // Preload audio
     preload(correctNumber.chamorro);
     preload('Bunitu!');
-  }, [usedNumbers, preload]);
+  }, [usedNumbers, preload, resetPrompt]);
 
   // Start the game
   const startGame = async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (!canUse('game')) {
@@ -129,7 +138,7 @@ export function NumberTap() {
       setStreak(0);
       setUsedNumbers(new Set());
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       generateRound();
 
     } finally {
@@ -139,16 +148,18 @@ export function NumberTap() {
 
   // Handle answer selection
   const handleAnswer = (value: number) => {
-    if (selectedAnswer !== null) return;
-    
+    if (selectedAnswer !== null || !audio.canAnswer) return;
+
     setSelectedAnswer(value);
     const correct = value === currentNumber?.value;
     setIsCorrect(correct);
     setGameState('feedback');
-    
+
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
-      setScore(prev => prev + 100 + streakBonus);
+      const points = 100 + streakBonus;
+      setAwardedPoints(points);
+      setScore(prev => prev + points);
       setStreak(prev => prev + 1);
       speak('Bunitu!');
     } else {
@@ -157,11 +168,12 @@ export function NumberTap() {
         speak(currentNumber?.chamorro || '');
       }, 500);
     }
-    
+
 
   };
 
   const continueRound = () => {
+    audio.stop();
     clearTimers();
     if (currentRound >= ROUNDS_PER_GAME) {
       setGameState('complete');
@@ -197,23 +209,23 @@ export function NumberTap() {
 
   const playWord = () => {
     if (currentNumber) {
-      speak(currentNumber.chamorro);
+      void listen(currentNumber.chamorro);
     }
   };
 
   // Generate emoji grid for counting
   const renderCountingGrid = () => {
     if (!currentNumber || !currentItem) return null;
-    
+
     const items = [];
     for (let i = 0; i < currentNumber.value; i++) {
       items.push(
-        <span key={i} className="text-3xl sm:text-4xl animate-bounce-in" style={{ animationDelay: `${i * 50}ms` }}>
+        <span key={i} className="text-3xl sm:text-4xl ">
           {currentItem.emoji}
         </span>
       );
     }
-    
+
     return (
       <div className="flex flex-wrap justify-center gap-2 p-4">
         {items}
@@ -222,7 +234,7 @@ export function NumberTap() {
   };
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader title="Number Tap" subtitle="Listen, count, and choose the number" icon={ListOrdered} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -245,7 +257,7 @@ export function NumberTap() {
                     className="text-center p-2 bg-teal-50 dark:bg-teal-900/20 rounded-lg"
                   >
                     <span className="text-xl font-bold text-teal-600 dark:text-teal-400">{num.value}</span>
-                    <span className="block text-[10px] text-brown-500 dark:text-gray-400">{num.chamorro}</span>
+                    <span className="block text-xs text-brown-500 dark:text-gray-400">{num.chamorro}</span>
                   </div>
                 ))}
               </div>
@@ -255,12 +267,12 @@ export function NumberTap() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
-            >
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+             disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
-            
+
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
@@ -276,26 +288,26 @@ export function NumberTap() {
             <button
               onClick={playWord}
               disabled={isSpeaking}
-              className={`w-full py-4 rounded-2xl mb-4 transition-all flex flex-col items-center justify-center gap-2 ${
+              className={`w-full py-4 rounded-2xl mb-4 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-teal-700 text-white scale-105'
-                  : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 hover:from-teal-200 hover:to-cyan-200 dark:hover:from-teal-900/70 dark:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
+                  ? 'bg-teal-700 text-white '
+                  : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                isSpeaking 
-                  ? 'bg-white/20' 
+                isSpeaking
+                  ? 'bg-white/20'
                   : 'bg-teal-500 shadow-lg shadow-teal-500/30'
               }`}>
                 <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
-              
+
               <div className="text-center">
                 <span className={`text-xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                   {currentNumber.chamorro}
                 </span>
                 <span className={`text-xs ${isSpeaking ? 'text-white/80' : 'text-teal-500 dark:text-teal-400'}`}>
-                  {isSpeaking ? '🔊 Playing...' : '👆 Tap to hear'}
+                  {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
             </button>
@@ -308,31 +320,33 @@ export function NumberTap() {
               </div>
             </div>
 
+            <GameAudioStatus audio={audio} onRetry={playWord} />
+
             {/* Number Options */}
             <div className="grid grid-cols-2 gap-4">
               {options.map((value, index) => {
                 const isSelected = selectedAnswer === value;
                 const isCorrectAnswer = value === currentNumber.value;
                 const showResult = gameState === 'feedback';
-                
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-teal-400 hover:scale-105';
-                
+
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
+
                 if (showResult) {
                   if (isCorrectAnswer) {
-                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-105';
+                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 ';
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 opacity-60';
                   } else {
                     buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-40';
                   }
                 }
-                
+
                 return (
                   <button
                     key={index}
                     onClick={() => handleAnswer(value)}
-                    disabled={gameState === 'feedback'}
-                    className={`p-6 rounded-2xl transition-all ${buttonClass}`}
+                    disabled={gameState === 'feedback' || !audio.canAnswer}
+                    className={`p-6 rounded-2xl transition-colors ${buttonClass}`}
                   >
                     <span className="text-4xl font-bold text-teal-600 dark:text-teal-400 block">{value}</span>
                     {showResult && isCorrectAnswer && (
@@ -348,14 +362,14 @@ export function NumberTap() {
             {/* Feedback Message */}
             {gameState === 'feedback' && (
               <div className={`mt-6 p-4 rounded-xl text-center ${
-                isCorrect 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                isCorrect
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}>
                 {isCorrect ? (
                   <div className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-bold">Bunitu! (+{100 + (streak >= 3 ? 50 : streak >= 2 ? 25 : 0)})</span>
+                    <span className="font-bold">Bunitu! (+{awardedPoints})</span>
                   </div>
                 ) : (
                   <div>
@@ -378,19 +392,19 @@ export function NumberTap() {
             onReplay={() => {
               setGameState('setup');
               hasSavedRef.current = false;
-              gameAttemptIdRef.current = createClientAttemptId();
+              gameAttemptIdRef.current = getRoundAttemptId();
             }}
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}
         {gameState === 'complete' && <GameSaveStatus mutation={saveGameResultMutation} />}
       </main>
 
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

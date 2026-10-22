@@ -1,0 +1,8 @@
+.game-page button,
+.game-page a {
+  touch-action: manipulation;
+}
+.game-page button { user-select: none; }
+@media (prefers-reduced-motion: reduce) {
+  .game-memory-flip { transition: none !important; }
+}

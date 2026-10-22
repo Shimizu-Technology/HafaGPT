@@ -1,3 +1,4 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { formatUsageSummary } from '../lib/usageDisplay';
 import { GamePage, GamePageHeader, GameProgress } from './games/GamePage';
@@ -57,7 +58,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "Kåddo is a traditional Chamorro soup or stew, often made with meat and vegetables.",
     category: "culture"
   },
-  
+
   // History
   {
     question: "When did Ferdinand Magellan arrive in Guam?",
@@ -108,7 +109,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "U.S. forces liberated Guam on July 21, 1944, now celebrated as Liberation Day.",
     category: "history"
   },
-  
+
   // Geography
   {
     question: "What ocean surrounds Guam?",
@@ -145,7 +146,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "Two Lovers Point (Puntan Dos Amantes) is a famous cliff with a legendary love story.",
     category: "geography"
   },
-  
+
   // Language
   {
     question: "What does 'Si Yu'os Ma'åse'' mean?",
@@ -189,7 +190,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "'Nåna' means 'mother' in Chamorro. 'Tåta' means 'father'.",
     category: "language"
   },
-  
+
   // Food & Nature
   {
     question: "What is 'kelaguen'?",
@@ -226,7 +227,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "The Brown Tree Snake, accidentally introduced after WWII, has devastated Guam's native bird populations.",
     category: "nature"
   },
-  
+
   // Modern Guam
   {
     question: "What is Guam's timezone?",
@@ -283,19 +284,21 @@ export function CulturalTrivia() {
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  
+
   // Settings state
   const [timedChallenge, setTimedChallenge] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isStarting, setIsStarting] = useState(false);
-  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
-  
+
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [questions, setQuestions] = useState<TriviaQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -306,39 +309,32 @@ export function CulturalTrivia() {
   const [timeLeft, setTimeLeft] = useState(DIFFICULTY_CONFIG.medium.time);
   const [timerActive, setTimerActive] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [gameState]);
+
 
   // Shuffle and pick questions based on category
   const pickQuestions = useCallback(() => {
     let filtered = [...TRIVIA_QUESTIONS];
-    
+
     // Filter by category if not 'all'
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(q => q.category === selectedCategory);
     }
-    
+
     // Shuffle and pick
     const shuffled = filtered.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(QUESTIONS_PER_GAME, shuffled.length));
   }, [selectedCategory]);
-  
+
   // Get available question count for current category
-  const availableQuestionCount = selectedCategory === 'all' 
-    ? TRIVIA_QUESTIONS.length 
+  const availableQuestionCount = selectedCategory === 'all'
+    ? TRIVIA_QUESTIONS.length
     : TRIVIA_QUESTIONS.filter(q => q.category === selectedCategory).length;
 
   // Start game
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       const newQuestions = pickQuestions();
@@ -347,7 +343,7 @@ export function CulturalTrivia() {
         setShowUpgradePrompt(true);
         return;
       }
-      
+
       setIsStarting(true);
 
       try {
@@ -369,7 +365,7 @@ export function CulturalTrivia() {
         setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
         setTimerActive(timedChallenge);
         hasSavedRef.current = false;
-        gameAttemptIdRef.current = createClientAttemptId();
+        gameAttemptIdRef.current = getRoundAttemptId();
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
@@ -381,19 +377,19 @@ export function CulturalTrivia() {
     } finally {
       startingRef.current = false;
     }
-  }, [canUse, tryUse, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
+  }, [canUse, tryUse, getRoundAttemptId, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
 
   // Handle answer selection
   const handleAnswer = useCallback((answerIndex: number) => {
     if (showResult) return;
-    
+
     setTimerActive(false);
     setSelectedAnswer(answerIndex);
     setShowResult(true);
-    
+
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = answerIndex === currentQuestion.correctIndex;
-    
+
     if (isCorrect) {
       // Bonus points for time remaining
       setCorrectAnswers(count => count + 1);
@@ -411,20 +407,20 @@ export function CulturalTrivia() {
   }, [showResult, questions, currentQuestionIndex, timeLeft, streak, timedChallenge]);
 
   useEffect(() => {
-    if (!timerActive || timeLeft <= 0) return;
+    if (guard.blocked || !timerActive || timeLeft <= 0) return;
 
     const timer = setTimeout(() => {
       setTimeLeft(prev => prev - 1);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [timerActive, timeLeft]);
+  }, [timerActive, timeLeft, guard.blocked]);
 
   useEffect(() => {
-    if (timerActive && timeLeft === 0 && !showResult) {
+    if (timerActive && !guard.blocked && timeLeft === 0 && !showResult) {
       handleAnswer(-1);
     }
-  }, [timeLeft, timerActive, showResult, handleAnswer]);
+  }, [timeLeft, timerActive, showResult, handleAnswer, guard.blocked]);
 
   // Move to next question
   const nextQuestion = useCallback(() => {
@@ -439,31 +435,17 @@ export function CulturalTrivia() {
     }
   }, [currentQuestionIndex, questions.length, difficulty, timedChallenge]);
 
-  const handleBack = () => {
-    if (gameState === 'playing') {
-      setTimerActive(false);
-      setShowQuitConfirm(true);
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
-
-  const keepPlaying = () => {
-    setShowQuitConfirm(false);
-    if (!showResult) {
-      setTimerActive(timedChallenge);
-    }
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   // Save game result
   useEffect(() => {
     if (gameState === 'complete' && !hasSavedRef.current && isSignedIn) {
       hasSavedRef.current = true;
-      
+
       let stars = 1;
       if (correctAnswers / questions.length >= 0.8) stars = 3;
       else if (correctAnswers / questions.length >= 0.5) stars = 2;
-      
+
       saveGameResultMutation.mutate({
         client_attempt_id: gameAttemptIdRef.current,
         game_type: 'cultural_trivia',
@@ -489,7 +471,7 @@ export function CulturalTrivia() {
   // Setup screen
   if (gameState === 'setup') {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader
           title="Cultural Trivia"
           subtitle="Test what you know about Guam and Chamorro culture."
@@ -513,10 +495,10 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('easy')}
                 aria-pressed={difficulty === 'easy'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'easy'
                     ? 'bg-emerald-700 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Sparkles className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-600'}`} aria-hidden="true" />
@@ -527,10 +509,10 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('medium')}
                 aria-pressed={difficulty === 'medium'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'medium'
                     ? 'bg-amber-700 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Zap className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-600'}`} aria-hidden="true" />
@@ -541,10 +523,10 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('hard')}
                 aria-pressed={difficulty === 'hard'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'hard'
                     ? 'bg-red-600 text-white shadow-lg'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <Flame className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-600'}`} aria-hidden="true" />
@@ -559,12 +541,12 @@ export function CulturalTrivia() {
             <h2 className="mb-3 font-semibold text-brown-800 dark:text-white">Choose a topic</h2>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a trivia topic">
               {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon }]) => {
-                const count = key === 'all' 
-                  ? TRIVIA_QUESTIONS.length 
+                const count = key === 'all'
+                  ? TRIVIA_QUESTIONS.length
                   : TRIVIA_QUESTIONS.filter(q => q.category === key).length;
                 const isDisabled = count === 0;
                 const CategoryIcon = icon;
-                
+
                 return (
                   <button
                     type="button"
@@ -572,17 +554,17 @@ export function CulturalTrivia() {
                     onClick={() => !isDisabled && setSelectedCategory(key)}
                     disabled={isDisabled}
                     aria-pressed={selectedCategory === key}
-                    className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-all duration-200 ${
+                    className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-colors duration-200 ${
                       isDisabled
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
                           ? 'bg-coral-700 text-white shadow-lg dark:bg-teal-700'
-                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
                     <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
                     <p className="truncate text-xs font-medium">{label}</p>
-                    <p className={`text-[10px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count} questions</p>
+                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count} questions</p>
                   </button>
                 );
               })}
@@ -598,7 +580,7 @@ export function CulturalTrivia() {
             type="button"
             onClick={startGame}
             disabled={availableQuestionCount === 0 || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
           >
             {isStarting ? (
               <>
@@ -612,13 +594,13 @@ export function CulturalTrivia() {
               </>
             )}
           </button>
-          
+
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
-        
-        {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
+
+        {showUpgradePrompt && !startStatus.error && !startStatus.pending && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
   }
@@ -626,9 +608,9 @@ export function CulturalTrivia() {
   // Game complete
   if (gameState === 'complete') {
     const stars = getStars();
-    
+
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Cultural Trivia" subtitle="Your results" icon={Landmark} onBack={handleBack} />
         <main className="mx-auto max-w-md px-3 py-6 sm:px-4">
           <section className="text-center" aria-labelledby="trivia-result-title">
@@ -667,13 +649,13 @@ export function CulturalTrivia() {
               <button
                 type="button"
                 onClick={startGame}
-                disabled={resultUnresolved}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+                disabled={resultUnresolved || startStatus.pending}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 Play again
               </button>
-              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">
+              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
                 {gameReturn.label}
               </button>
             </div>
@@ -688,39 +670,10 @@ export function CulturalTrivia() {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       {/* Quit Confirmation Modal */}
-      {showQuitConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" role="dialog" aria-modal="true" aria-labelledby="quit-trivia-title">
-            <h2 id="quit-trivia-title" className="mb-2 text-lg font-bold text-brown-800 dark:text-white">Leave this game?</h2>
-            <p className="text-brown-600 dark:text-gray-400 mb-6">
-              Your progress will be lost and this game won't count towards your stats.
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={keepPlaying}
-                className="flex-1 py-2 px-4 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
-              >
-                Keep Playing
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowQuitConfirm(false);
-                  setTimerActive(false);
-                  navigate(gameReturn.to, { replace: true });
-                }}
-                className="flex-1 py-2 px-4 bg-red-700 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
-              >
-                Leave game
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
+
+
       <GamePageHeader
         title="Cultural Trivia"
         subtitle={`Question ${currentQuestionIndex + 1} of ${questions.length}`}
@@ -747,7 +700,7 @@ export function CulturalTrivia() {
           <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-6">
             {currentQuestion.question}
           </h2>
-          
+
           {/* Answer Options */}
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => {
@@ -755,7 +708,7 @@ export function CulturalTrivia() {
               const isCorrect = index === currentQuestion.correctIndex;
               const showCorrect = showResult && isCorrect;
               const showWrong = showResult && isSelected && !isCorrect;
-              
+
               return (
                 <button
                   type="button"
@@ -763,14 +716,14 @@ export function CulturalTrivia() {
                   onClick={() => handleAnswer(index)}
                   disabled={showResult}
                   aria-pressed={isSelected}
-                  className={`w-full p-4 rounded-xl text-left font-medium transition-all flex items-center gap-3 ${
+                  className={`w-full p-4 rounded-xl text-left font-medium transition-colors flex items-center gap-3 ${
                     showCorrect
                       ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 text-green-800 dark:text-green-300'
                       : showWrong
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-800 dark:text-red-300'
                       : isSelected
                       ? 'bg-coral-100 dark:bg-teal-950/30 border-2 border-coral-500 dark:border-teal-400 text-brown-800 dark:text-white'
-                      : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent hover:border-cream-300 dark:hover:border-slate-600 text-brown-700 dark:text-gray-300'
+                      : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:border-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-slate-600 text-brown-700 dark:text-gray-300'
                   }`}
                 >
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -808,7 +761,7 @@ export function CulturalTrivia() {
           <button
             type="button"
             onClick={nextQuestion}
-            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
           </button>

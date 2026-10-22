@@ -1,9 +1,14 @@
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
+import { GameSaveStatus } from './games/GameSaveStatus';
+import { createClientAttemptId } from '../lib/clientAttemptId';
+import { useGameTimers } from '../hooks/useGameTimers';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Headphones, Volume2, Play, Sparkles } from 'lucide-react';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
-import { useSpeech } from '../hooks/useSpeech';
+import { useGameSubscription } from '../hooks/useGameSubscription';
+import { useGameAudioPrompt } from '../hooks/useGameAudioPrompt';
+import { GameAudioStatus } from './games/GameAudioStatus';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
@@ -109,16 +114,25 @@ export function SoundMatch() {
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
   const hasSavedRef = useRef(false);
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
-  const { speak, preload, isSpeaking } = useSpeech(); // Use shared TTS hook with preloading
+  const startingRef = useRef(false);
+  const gameAttemptIdRef = useRef(createClientAttemptId());
+  const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
+  const { schedule, clear: clearTimers } = useGameTimers();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
+  const audio = useGameAudioPrompt();
+  const { speak, preload, isSpeaking, listen, resetPrompt } = audio; // Use shared TTS hook with preloading
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<GameState>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'feedback') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [selectedCategory, setSelectedCategory] = useState<Category>(GAME_CATEGORIES[0]);
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [awardedPoints, setAwardedPoints] = useState(0);
   const [currentWord, setCurrentWord] = useState<WordItem | null>(null);
   const [options, setOptions] = useState<WordItem[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -127,8 +141,9 @@ export function SoundMatch() {
 
   // Generate a new round
   const generateRound = useCallback(() => {
+    resetPrompt();
     const categoryWords = selectedCategory.words;
-    
+
     // Filter out words we've already used (if possible)
     let availableWords = categoryWords.filter(w => !usedWords.has(w.chamorro));
     if (availableWords.length < 4) {
@@ -136,46 +151,53 @@ export function SoundMatch() {
       setUsedWords(new Set());
       availableWords = categoryWords;
     }
-    
+
     // Pick a random word as the correct answer
     const correctWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-    
+
     // Pick 3 wrong answers
     const wrongOptions = categoryWords
       .filter(w => w.chamorro !== correctWord.chamorro)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
-    
+
     // Combine and shuffle
     const allOptions = [correctWord, ...wrongOptions].sort(() => Math.random() - 0.5);
-    
+
     setCurrentWord(correctWord);
     setOptions(allOptions);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setUsedWords(prev => new Set([...prev, correctWord.chamorro]));
-    
+
     // 🚀 Preload audio in background so it's ready when user taps
     preload(correctWord.chamorro);
     // Also preload "Bunitu!" for correct answer feedback
     preload('Bunitu!');
-  }, [selectedCategory, usedWords, preload]);
+  }, [selectedCategory, usedWords, preload, resetPrompt]);
 
   // Start the game
   const startGame = async () => {
+    if (startingRef.current || resultUnresolved) return;
+    startingRef.current = true;
+    setShowUpgradePrompt(false);
+    try {
     // Check subscription limits
     if (!canUse('game')) {
       setShowUpgradePrompt(true);
       return;
     }
-    
+
     // Try to use a game
     const success = await tryUse('game');
     if (!success) {
       setShowUpgradePrompt(true);
       return;
     }
-    
+
+    clearTimers();
+    saveGameResultMutation.reset();
+    gameAttemptIdRef.current = getRoundAttemptId();
     setGameState('playing');
     setCurrentRound(1);
     setScore(0);
@@ -183,41 +205,45 @@ export function SoundMatch() {
     setUsedWords(new Set());
     hasSavedRef.current = false;
     generateRound();
+    } finally { startingRef.current = false; }
   };
 
   // Handle answer selection
   const handleAnswer = (word: WordItem) => {
-    if (selectedAnswer !== null) return; // Already answered
-    
+    if (selectedAnswer !== null || !audio.canAnswer) return; // Already answered
+
     setSelectedAnswer(word.emoji);
     const correct = word.chamorro === currentWord?.chamorro;
     setIsCorrect(correct);
     setGameState('feedback');
-    
+
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
-      setScore(prev => prev + 100 + streakBonus);
+      const points = 100 + streakBonus;
+      setAwardedPoints(points);
+      setScore(prev => prev + points);
       setStreak(prev => prev + 1);
       // Play celebration sound/speak
       speak('Bunitu!'); // "Beautiful!" in Chamorro
     } else {
       setStreak(0);
       // Speak the correct answer
-      setTimeout(() => {
+      schedule(() => {
         speak(currentWord?.chamorro || '');
       }, 500);
     }
-    
-    // Move to next round after delay
-    setTimeout(() => {
-      if (currentRound >= ROUNDS_PER_GAME) {
-        setGameState('complete');
-      } else {
-        setCurrentRound(prev => prev + 1);
-        setGameState('playing');
-        generateRound();
-      }
-    }, correct ? 1500 : 2500); // Longer delay for wrong answers to hear correct pronunciation
+
+  };
+
+  const continueRound = () => {
+    audio.stop();
+    clearTimers();
+    if (currentRound >= ROUNDS_PER_GAME) setGameState('complete');
+    else {
+      setCurrentRound(round => round + 1);
+      setGameState('playing');
+      generateRound();
+    }
   };
 
   // Save game result when complete
@@ -226,6 +252,7 @@ export function SoundMatch() {
       hasSavedRef.current = true;
       const stars = score >= 800 ? 3 : score >= 600 ? 2 : 1;
       saveGameResultMutation.mutate({
+        client_attempt_id: gameAttemptIdRef.current,
         game_type: 'sound_match',
         score,
         stars,
@@ -246,12 +273,12 @@ export function SoundMatch() {
   // Play the current word
   const playWord = () => {
     if (currentWord) {
-      speak(currentWord.chamorro);
+      void listen(currentWord.chamorro);
     }
   };
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader title="Sound Match" subtitle="Listen and choose the matching picture" icon={Headphones} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -261,7 +288,7 @@ export function SoundMatch() {
             <div className="mb-6">
               <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
               <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Choose what to practice</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">You’ll hear each Chamorro word before choosing a picture.</p>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">Tap the speaker to hear each Chamorro word, then choose a picture. You can take your time.</p>
             </div>
 
             {/* Category Selection */}
@@ -273,10 +300,10 @@ export function SoundMatch() {
                     key={category.id}
                     onClick={() => setSelectedCategory(category)}
                     aria-pressed={selectedCategory.id === category.id}
-                    className={`p-3 rounded-xl border-2 transition-all ${
+                    className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
                         ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                        : 'border-cream-200 dark:border-slate-700 hover:border-purple-300'
+                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
@@ -292,12 +319,12 @@ export function SoundMatch() {
             {/* Start Button */}
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
-            >
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+             disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
-            
+
             {/* Games remaining */}
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
@@ -314,20 +341,20 @@ export function SoundMatch() {
             <button
               onClick={playWord}
               disabled={isSpeaking}
-              className={`w-full py-5 rounded-2xl mb-6 transition-all flex flex-col items-center justify-center gap-2 ${
+              className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-purple-500 text-white scale-105'
-                  : 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 hover:from-purple-200 hover:to-pink-200 dark:hover:from-purple-900/70 dark:hover:to-pink-900/70 border-2 border-purple-300 dark:border-purple-700'
+                  ? 'bg-purple-500 text-white '
+                  : 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-900/70 border-2 border-purple-300 dark:border-purple-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isSpeaking 
-                  ? 'bg-white/20' 
+                isSpeaking
+                  ? 'bg-white/20'
                   : 'bg-purple-500 shadow-lg shadow-purple-500/30'
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
-              
+
               {/* Always show the Chamorro word */}
               {currentWord && (
                 <div className="text-center">
@@ -335,11 +362,13 @@ export function SoundMatch() {
                     {currentWord.chamorro}
                   </span>
                   <span className={`text-sm ${isSpeaking ? 'text-white/80' : 'text-purple-500 dark:text-purple-400'}`}>
-                    {isSpeaking ? '🔊 Playing...' : '👆 Tap to hear'}
+                    {isSpeaking ? 'Playing…' : 'Tap to hear'}
                   </span>
                 </div>
               )}
             </button>
+
+            <GameAudioStatus audio={audio} onRetry={playWord} />
 
             {/* Answer Options - Big Emoji Buttons */}
             <div className="grid grid-cols-2 gap-4">
@@ -347,26 +376,26 @@ export function SoundMatch() {
                 const isSelected = selectedAnswer === option.emoji;
                 const isCorrectAnswer = option.chamorro === currentWord.chamorro;
                 const showResult = gameState === 'feedback';
-                
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-purple-400 hover:scale-105';
-                
+
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-400 ';
+
                 if (showResult) {
                   if (isCorrectAnswer) {
-                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-105';
+                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 ';
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 opacity-60';
                   } else {
                     buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-40';
                   }
                 }
-                
+
                 return (
                   <button
                     key={index}
                     onClick={() => handleAnswer(option)}
-                    disabled={gameState === 'feedback'}
+                    disabled={gameState === 'feedback' || !audio.canAnswer}
                     aria-label={option.english}
-                    className={`p-6 sm:p-8 rounded-2xl transition-all ${buttonClass}`}
+                    className={`p-6 sm:p-8 rounded-2xl transition-colors ${buttonClass}`}
                   >
                     <span className="text-5xl sm:text-6xl block mb-2">{option.emoji}</span>
                     {showResult && (
@@ -382,14 +411,14 @@ export function SoundMatch() {
             {/* Feedback Message */}
             {gameState === 'feedback' && (
               <div className={`mt-6 p-4 rounded-xl text-center ${
-                isCorrect 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                isCorrect
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}>
                 {isCorrect ? (
                   <div className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    <span className="font-bold">Bunitu! (+{100 + (streak >= 3 ? 50 : streak >= 2 ? 25 : 0)})</span>
+                    <span className="font-bold">Bunitu! (+{awardedPoints})</span>
                   </div>
                 ) : (
                   <div>
@@ -400,25 +429,32 @@ export function SoundMatch() {
                 )}
               </div>
             )}
+            {gameState === 'feedback' && <button type="button" onClick={continueRound} className="mt-4 min-h-14 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">{currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}</button>}
           </div>
         )}
 
         {/* Complete Screen */}
         {gameState === 'complete' && (
+          <>
           <GameResult
+            replayDisabled={resultUnresolved}
             score={score}
             stars={getStars(score)}
             heading="Håfa adai! Great job!"
             onReplay={() => {
+              if (resultUnresolved) return;
+              clearTimers();
               setGameState('setup');
               hasSavedRef.current = false;
             }}
           />
+          <GameSaveStatus mutation={saveGameResultMutation} />
+          </>
         )}
       </main>
 
       {/* Upgrade Prompt */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

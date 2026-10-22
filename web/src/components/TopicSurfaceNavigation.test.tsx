@@ -113,7 +113,7 @@ vi.mock('../hooks/useVocabularyQuery', () => ({
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
-    tryUse: mocks.tryUse,
+    tryUse: mocks.tryUse, reserveUse: async () => ({ success: await mocks.tryUse() }),
     getCount: () => 0,
     getLimit: () => 10,
     isLoading: false,

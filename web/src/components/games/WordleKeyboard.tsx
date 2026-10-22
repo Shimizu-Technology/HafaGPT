@@ -1,3 +1,4 @@
+import { WORDLE_FEEDBACK } from './wordleFeedback';
 import { memo } from 'react';
 import { Delete, CornerDownLeft } from 'lucide-react';
 
@@ -25,12 +26,12 @@ export const WordleKeyboard = memo(function WordleKeyboard({
 }: WordleKeyboardProps) {
   const getKeyStyle = (key: string) => {
     const state = letterStates[key.toUpperCase()];
-    
+
     const baseStyle = `
-      font-bold text-[11px] sm:text-base rounded
-      transition-all duration-150 active:scale-95
-      flex items-center justify-center
-      min-w-0
+      font-bold text-base rounded
+
+      flex flex-col items-center justify-center
+      min-w-0 shrink
     `;
 
     switch (state) {
@@ -41,18 +42,18 @@ export const WordleKeyboard = memo(function WordleKeyboard({
       case 'absent':
         return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-slate-600 text-white`;
       default:
-        return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white hover:bg-cream-300 dark:hover:bg-slate-500`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-500`;
     }
   };
 
   const getActionKeyStyle = () => {
     return `
-      font-bold text-[11px] sm:text-sm rounded
-      transition-all duration-150 active:scale-95
-      flex items-center justify-center
+      font-bold text-sm rounded
+
+      flex flex-col items-center justify-center
       w-10 sm:w-14 h-11 sm:h-14
       bg-cream-300 dark:bg-slate-700 text-brown-700 dark:text-gray-200
-      hover:bg-cream-400 dark:hover:bg-slate-600
+      [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-400 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600
     `;
   };
 
@@ -62,7 +63,7 @@ export const WordleKeyboard = memo(function WordleKeyboard({
   };
 
   return (
-    <div className="flex flex-col gap-1 sm:gap-1.5 w-full max-w-md mx-auto px-1">
+    <div className="flex flex-col gap-1 sm:gap-1.5 w-full max-w-xl mx-auto">
       {/* First row - QWERTYUIOP */}
       <div className="flex gap-[2px] sm:gap-1.5">
         {KEYBOARD_ROWS[0].map((key) => (
@@ -70,27 +71,29 @@ export const WordleKeyboard = memo(function WordleKeyboard({
             key={key}
             onClick={() => handleKeyClick(key)}
             disabled={disabled}
+            aria-label={`${key}, ${WORDLE_FEEDBACK[letterStates[key] || 'unused'].label}`}
             className={getKeyStyle(key)}
           >
-            {key}
+            <span aria-hidden="true">{key}</span><span aria-hidden="true" className="text-xs leading-none">{WORDLE_FEEDBACK[letterStates[key] || 'unused'].mark}</span>
           </button>
         ))}
       </div>
-      
+
       {/* Second row - AÅSDFGHJKL (slightly indented) */}
-      <div className="flex gap-[2px] sm:gap-1.5 px-2 sm:px-4">
+      <div className="flex gap-[2px] sm:gap-1.5 ">
         {KEYBOARD_ROWS[1].map((key) => (
           <button
             key={key}
             onClick={() => handleKeyClick(key)}
             disabled={disabled}
+            aria-label={`${key}, ${WORDLE_FEEDBACK[letterStates[key] || 'unused'].label}`}
             className={getKeyStyle(key)}
           >
-            {key}
+            <span aria-hidden="true">{key}</span><span aria-hidden="true" className="text-xs leading-none">{WORDLE_FEEDBACK[letterStates[key] || 'unused'].mark}</span>
           </button>
         ))}
       </div>
-      
+
       {/* Third row - ENTER + letters + BACKSPACE */}
       <div className="flex gap-[2px] sm:gap-1.5">
         <button
@@ -107,9 +110,10 @@ export const WordleKeyboard = memo(function WordleKeyboard({
               key={key}
               onClick={() => handleKeyClick(key)}
               disabled={disabled}
-              className={getKeyStyle(key)}
+              aria-label={`${key}, ${WORDLE_FEEDBACK[letterStates[key] || 'unused'].label}`}
+            className={getKeyStyle(key)}
             >
-              {key}
+              <span aria-hidden="true">{key}</span><span aria-hidden="true" className="text-xs leading-none">{WORDLE_FEEDBACK[letterStates[key] || 'unused'].mark}</span>
             </button>
           ))}
         </div>

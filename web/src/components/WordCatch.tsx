@@ -1,3 +1,6 @@
+import { useGamePace } from '../hooks/useGamePace';
+import { GamePaceControl } from './games/GamePaceControl';
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,7 +13,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { GamePage, GamePageHeader } from './games/GamePage';
 
@@ -79,6 +82,7 @@ const CORRECT_PAIR_RATIO = 0.65; // 65% of pairs are correct (slightly easier)
 const MAX_LIVES = 3;
 
 export function WordCatch() {
+  const pace = useGamePace();
   const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
@@ -88,11 +92,14 @@ export function WordCatch() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'paused' | 'complete'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'paused') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [settings, setSettings] = useState<GameSettings>({
     category: 'greetings',
     mode: 'beginner',
@@ -106,16 +113,19 @@ export function WordCatch() {
   const [maxCombo, setMaxCombo] = useState(0);
   const [caught, setCaught] = useState(0);
   const [, setMissed] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
   const [currentSpeed, setCurrentSpeed] = useState(PAIR_SPEED_START);
   const [spawnInterval, setSpawnInterval] = useState(SPAWN_INTERVAL_START);
 
   // Refs
   const animationRef = useRef<number | null>(null);
+  const simulationRef = useRef(new Map<number, FlyingPair>());
+  const pairElementsRef = useRef(new Map<number, HTMLButtonElement>());
+  const [roundFeedback, setRoundFeedback] = useState<string | null>(null);
   const caughtIdsRef = useRef(new Set<number>());
   const comboRef = useRef(0);
   const livesRef = useRef(MAX_LIVES);
-  const missedIdsRef = useRef(new Set<number>());
   const spawnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pairIdRef = useRef(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -228,6 +238,7 @@ export function WordCatch() {
       missed: false,
     };
 
+    simulationRef.current.set(newPair.id, newPair);
     setFlyingPairs(prev => [...prev, newPair]);
   }, [wordPool, gameState, currentSpeed]);
 
@@ -237,7 +248,12 @@ export function WordCatch() {
     const pair = flyingPairs.find(item => item.id === pairId);
     if (!pair || pair.caught || pair.missed) return;
     caughtIdsRef.current.add(pairId);
-    setFlyingPairs(prev => prev.map(item => item.id === pairId ? { ...item, caught: true } : item));
+    simulationRef.current.delete(pairId);
+    if (pace.challenge) setFlyingPairs(prev => prev.filter(item => item.id !== pairId));
+    else {
+      setRoundFeedback(pair.isCorrect ? 'That’s a match!' : `These meanings don’t match. ${pair.chamorro} means ${wordPool.find(word => word.chamorro === pair.chamorro)?.english}.`);
+      setFlyingPairs(prev => prev.map(item => item.id === pairId ? { ...item, caught: true } : item));
+    }
     if (pair.isCorrect) {
       const nextCombo = comboRef.current + 1;
       const comboBonus = comboRef.current * 10;
@@ -253,60 +269,50 @@ export function WordCatch() {
       setLives(livesRef.current);
       if (livesRef.current <= 0) setGameState('complete');
     }
-  }, [flyingPairs, gameState]);
+  }, [flyingPairs, gameState, pace.challenge, wordPool]);
 
-  // Animation loop
+  // Mutable simulation and element transforms avoid React and positional layout per frame.
   useEffect(() => {
-    if (gameState !== 'playing') return;
-
+    if (gameState !== 'playing' || !pace.challenge || guard.blocked) return;
     let previousTime: number | null = null;
+    let width = gameAreaRef.current?.clientWidth || 0;
+    let height = gameAreaRef.current?.clientHeight || 0;
+    const observer = new ResizeObserver(entries => { width = entries[0].contentRect.width; height = entries[0].contentRect.height; });
+    if (gameAreaRef.current) observer.observe(gameAreaRef.current);
     const animate = (timestamp: number) => {
       const elapsed = previousTime === null ? 0 : timestamp - previousTime;
       previousTime = timestamp;
-      setFlyingPairs(prev => {
-        const updated = prev.map(pair => {
-          if (pair.caught || pair.missed) return pair;
-
-          const newProgress = pair.progress + frameDistance(pair.speed, elapsed);
-          const newX = pair.startX + (pair.endX - pair.startX) * newProgress;
-          const newY = pair.startY + (pair.endY - pair.startY) * newProgress;
-
-          // Check if went off screen
-          if (newProgress >= 1) {
-            return { ...pair, x: newX, y: newY, progress: newProgress, missed: true };
-          }
-
-          return { ...pair, x: newX, y: newY, progress: newProgress };
-        });
-
-        // Remove pairs that are off screen and processed
-        return updated.filter(pair => !pair.caught);
-      });
-
+      const expired: FlyingPair[] = [];
+      for (const pair of simulationRef.current.values()) {
+        pair.progress += frameDistance(pair.speed, elapsed);
+        pair.x = pair.startX + (pair.endX - pair.startX) * pair.progress;
+        pair.y = pair.startY + (pair.endY - pair.startY) * pair.progress;
+        const element = pairElementsRef.current.get(pair.id);
+        if (element) element.style.transform = `translate(${pair.x * width / 100}px, ${pair.y * height / 100}px) translate(-50%, -50%)`;
+        if (pair.progress >= 1) expired.push(pair);
+      }
+      if (expired.length) {
+        const ids = new Set(expired.map(pair => pair.id));
+        ids.forEach(id => simulationRef.current.delete(id));
+        const missedMatches = expired.filter(pair => pair.isCorrect).length;
+        if (missedMatches) {
+          comboRef.current = 0;
+          setCombo(0);
+          setMissed(count => count + missedMatches);
+        }
+        setFlyingPairs(pairs => pairs.filter(pair => !ids.has(pair.id)));
+      }
       animationRef.current = requestAnimationFrame(animate);
     };
-
     animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [gameState]);
+    return () => { observer.disconnect(); if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, [gameState, pace.challenge, guard.blocked]);
 
   useEffect(() => {
-    const expired = flyingPairs.filter(pair => pair.missed && !missedIdsRef.current.has(pair.id));
-    if (!expired.length) return;
-    expired.forEach(pair => missedIdsRef.current.add(pair.id));
-    const missedMatches = expired.filter(pair => pair.isCorrect).length;
-    if (missedMatches) {
-      comboRef.current = 0;
-      setCombo(0);
-      setMissed(count => count + missedMatches);
-    }
-    setFlyingPairs(pairs => pairs.filter(pair => !pair.missed));
-  }, [flyingPairs]);
+    const pause = () => { if (document.hidden) setGameState(state => state === 'playing' ? 'paused' : state); };
+    document.addEventListener('visibilitychange', pause);
+    return () => document.removeEventListener('visibilitychange', pause);
+  }, []);
 
   const spawnPairRef = useRef(spawnPair);
   const spawnIntervalRef = useRef(spawnInterval);
@@ -315,10 +321,16 @@ export function WordCatch() {
     spawnIntervalRef.current = spawnInterval;
   }, [spawnPair, spawnInterval]);
 
+  const relaxedPairCount = pace.challenge ? 0 : flyingPairs.length;
+
   // Spawn timer
   useEffect(() => {
-    if (gameState !== 'playing') return;
+    if (gameState !== 'playing' || guard.blocked) return;
 
+    if (!pace.challenge) {
+      if (relaxedPairCount === 0) spawnPairRef.current();
+      return;
+    }
     const spawn = () => {
       spawnPairRef.current();
       // Schedule next spawn
@@ -333,13 +345,15 @@ export function WordCatch() {
         clearTimeout(spawnTimerRef.current);
       }
     };
-  }, [gameState]);
+  }, [gameState, pace.challenge, guard.blocked, relaxedPairCount]);
 
   // Game timer
   useEffect(() => {
-    if (gameState !== 'playing') return;
+    if (gameState !== 'playing' || guard.blocked) return;
 
     const timer = setInterval(() => {
+      setElapsedSeconds(seconds => seconds + 1);
+      if (!pace.challenge) return;
       setTimeLeft(prev => {
         if (prev <= 1) {
           setGameState('complete');
@@ -354,11 +368,11 @@ export function WordCatch() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState]);
+  }, [gameState, pace.challenge, guard.blocked]);
 
   // Save game result when complete
   useEffect(() => {
-    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current && caught > 0) {
+    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current) {
       hasSavedRef.current = true;
       const stars = caught >= 20 ? 3 : caught >= 10 ? 2 : 1;
       saveGameResultMutation.mutate({
@@ -369,16 +383,17 @@ export function WordCatch() {
         score,
         moves: caught,
         pairs: maxCombo,
-        time_seconds: GAME_DURATION - timeLeft,
+        time_seconds: elapsedSeconds,
         stars,
       });
     }
-  }, [gameState, isSignedIn, caught, score, maxCombo, timeLeft, settings, saveGameResultMutation, resultUnresolved]);
+  }, [gameState, isSignedIn, caught, score, maxCombo, elapsedSeconds, settings, saveGameResultMutation, resultUnresolved]);
 
   // Start game
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (wordPool.length < 4) {
@@ -404,7 +419,7 @@ export function WordCatch() {
       }
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       livesRef.current = MAX_LIVES;
       comboRef.current = 0;
       setLives(MAX_LIVES);
@@ -414,17 +429,19 @@ export function WordCatch() {
       setCaught(0);
       setMissed(0);
       setTimeLeft(GAME_DURATION);
+      setElapsedSeconds(0);
       setCurrentSpeed(PAIR_SPEED_START);
       setSpawnInterval(SPAWN_INTERVAL_START);
       caughtIdsRef.current.clear();
-      missedIdsRef.current.clear();
+      simulationRef.current.clear();
+      setRoundFeedback(null);
       setFlyingPairs([]);
       setGameState('playing');
 
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, isSignedIn, canUse, tryUse, saveGameResultMutation, resultUnresolved]);
+  }, [wordPool, isSignedIn, canUse, tryUse, getRoundAttemptId, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
@@ -436,6 +453,8 @@ export function WordCatch() {
       clearTimeout(spawnTimerRef.current);
     }
     setGameState('setup');
+    simulationRef.current.clear();
+    setRoundFeedback(null);
     setFlyingPairs([]);
   };
 
@@ -459,12 +478,7 @@ export function WordCatch() {
     }
   };
 
-  const handleBack = () => {
-    if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
-      return;
-    }
-    navigate(gameReturn.to, { replace: true });
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   // Calculate stars
   const getStars = () => {
@@ -478,7 +492,7 @@ export function WordCatch() {
 
   if (categoriesLoading) {
     return (
-      <GamePage>
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Catch" subtitle="Catch matching Chamorro and English word pairs." icon={MousePointerClick} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
@@ -489,7 +503,7 @@ export function WordCatch() {
   }
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Word Catch"
         subtitle={gameState === 'setup' ? 'Catch matching Chamorro and English word pairs.' : `${timeLeft} seconds · ${score} points`}
@@ -497,10 +511,10 @@ export function WordCatch() {
         onBack={handleBack}
         trailing={(gameState === 'playing' || gameState === 'paused') ? (
           <>
-            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { if (window.confirm('Change settings? Your progress will be lost.')) resetGame(); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -523,31 +537,31 @@ export function WordCatch() {
                   }))}
                   aria-pressed={settings.mode === 'beginner'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
                   aria-pressed={settings.mode === 'challenge'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
@@ -562,15 +576,15 @@ export function WordCatch() {
                     onClick={() => setSettings((s) => ({ ...s, category: catId }))}
                     aria-pressed={settings.category === catId}
                     className={`
-                      min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
+                      min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
                   >
                     <span className="text-base sm:text-lg block">{categoryIcons[catId] || '📚'}</span>
-                    <span className="text-[8px] sm:text-[10px] font-medium capitalize leading-tight block mt-0.5">
+                    <span className="text-xs sm:text-xs font-medium capitalize leading-tight block mt-0.5">
                       {categoryDisplayNames[catId] || catId}
                     </span>
                   </button>
@@ -598,10 +612,11 @@ export function WordCatch() {
             </details>
 
             {/* Start Button */}
+            <GamePaceControl {...pace} />
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -641,53 +656,56 @@ export function WordCatch() {
               <div className="flex items-center gap-3">
                 <div className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{combo}🔥</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Combo</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Combo</p>
                 </div>
                 <div className="text-center">
                   <p className={`text-lg sm:text-xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-brown-800 dark:text-white'}`}>
-                    {timeLeft}s
+                    {pace.challenge ? `${timeLeft}s` : 'No timer'}
                   </p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Time</p>
                 </div>
               </div>
             </div>
 
             {/* Game Area */}
-            <div 
+            <div
               ref={gameAreaRef}
               className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[55vh] sm:h-[60vh] overflow-hidden shadow-inner"
             >
               {/* Flying Pairs */}
-              {flyingPairs.map(pair => (
+              {(pace.challenge ? flyingPairs : flyingPairs.slice(0, 1)).map(pair => (
                 <button
                   key={pair.id}
+                  ref={element => { if (element) pairElementsRef.current.set(pair.id, element); else pairElementsRef.current.delete(pair.id); }}
                   onClick={() => handleCatch(pair.id)}
                   disabled={pair.caught || pair.missed}
                   className={`
-                    absolute transform -translate-x-1/2 -translate-y-1/2
+                    absolute top-0 left-0
                     px-3 sm:px-4 py-2 sm:py-3 rounded-xl
                     font-bold text-xs sm:text-sm text-center
-                    shadow-lg transition-all duration-150
+                    shadow-lg transition-colors duration-150
                     ${pair.caught
                       ? pair.isCorrect
-                        ? 'bg-green-700 text-white scale-125 opacity-0'
-                        : 'bg-red-700 text-white scale-125 opacity-0'
-                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600 hover:scale-105 active:scale-95'
+                        ? 'bg-green-700 text-white'
+                        : 'bg-red-700 text-white'
+                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600  active:scale-95'
                     }
                   `}
                   style={{
-                    left: `${pair.x}%`,
-                    top: `${pair.y}%`,
-                    transition: pair.caught ? 'all 0.3s ease-out' : 'transform 0.1s',
+                    left: pace.challenge ? 0 : '50%',
+                    top: pace.challenge ? 0 : '40%',
+                    maxWidth: '90%',
+                    transform: pace.challenge ? `translate(${pair.x * (gameAreaRef.current?.clientWidth || 0) / 100}px, ${pair.y * (gameAreaRef.current?.clientHeight || 0) / 100}px) translate(-50%, -50%)` : 'translate(-50%, -50%)',
+                    transition: 'background-color 150ms',
                   }}
                 >
-                  <div className="whitespace-nowrap">
+                  <div className="break-words">
                     <span className="block font-bold">{pair.chamorro}</span>
-                    <span className="block text-[10px] sm:text-xs opacity-80">= {pair.english}</span>
+                    <span className="block text-xs sm:text-xs opacity-80">= {pair.english}</span>
                   </div>
                 </button>
               ))}
@@ -699,7 +717,7 @@ export function WordCatch() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 transition-colors"
                     >
                       Resume
                     </button>
@@ -708,7 +726,7 @@ export function WordCatch() {
               )}
 
               {/* Instructions overlay (first few seconds) */}
-              {timeLeft >= GAME_DURATION - 3 && gameState === 'playing' && (
+              {pace.challenge && timeLeft >= GAME_DURATION - 3 && gameState === 'playing' && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="bg-black/50 text-white px-6 py-4 rounded-2xl text-center animate-pulse">
                     <p className="text-lg font-bold">Tap matching word pairs</p>
@@ -717,6 +735,19 @@ export function WordCatch() {
                 </div>
               )}
             </div>
+            {!pace.challenge && <div className="mt-4 space-y-3 text-brown-900 dark:text-white">
+              <p>Tap the pair if the meaning matches, or choose Not a match.</p>
+              {roundFeedback ? <div role="status"><p>{roundFeedback}</p><button type="button" onClick={() => { setRoundFeedback(null); simulationRef.current.clear(); setFlyingPairs([]); }} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next pair</button></div> : <button type="button" disabled={gameState === 'paused' || !flyingPairs.length} onClick={() => {
+                const pair = flyingPairs[0];
+                if (!pair) return;
+                caughtIdsRef.current.add(pair.id);
+                simulationRef.current.delete(pair.id);
+                setRoundFeedback(pair.isCorrect ? `These do match: ${pair.chamorro} means ${pair.english}.` : 'Good choice. These meanings don’t match.');
+                if (pair.isCorrect) { comboRef.current = 0; setCombo(0); setMissed(count => count + 1); }
+                setFlyingPairs(pairs => pairs.map(item => ({ ...item, caught: true })));
+              }} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Not a match</button>}
+              <button type="button" onClick={() => setGameState('complete')} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Finish round</button>
+            </div>}
           </div>
         )}
 
@@ -746,7 +777,7 @@ export function WordCatch() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <span
                   key={i}
-                  className={`text-3xl sm:text-4xl ${i < getStars() ? 'animate-bounce' : 'opacity-30'}`}
+                  className={`text-3xl sm:text-4xl ${i < getStars() ? '' : 'opacity-30'}`}
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
                   ⭐
@@ -759,15 +790,15 @@ export function WordCatch() {
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{caught}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Caught</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Caught</p>
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{maxCombo}🔥</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Max Combo</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Max Combo</p>
                 </div>
               </div>
             </div>
@@ -776,16 +807,16 @@ export function WordCatch() {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={playAgain}
-                disabled={resultUnresolved}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                disabled={resultUnresolved || startStatus.pending}
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
               </button>
               <button
                 onClick={resetGame}
-                disabled={resultUnresolved}
-                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                disabled={resultUnresolved || startStatus.pending}
+                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 Settings
@@ -794,7 +825,7 @@ export function WordCatch() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
+              className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>
@@ -804,7 +835,7 @@ export function WordCatch() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

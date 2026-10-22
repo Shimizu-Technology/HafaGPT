@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import './games.css';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { RotateCcw, Star, Trophy, type LucideIcon } from 'lucide-react';
 import { LearnerPageHeader, LearnerPageShell } from '../LearnerPage';
@@ -7,10 +8,27 @@ import { getLearningGameReturn, readLearningGameContext } from '../../lib/lesson
 
 interface GamePageProps {
   children: ReactNode;
+  guard?: { dialog: ReactNode };
+  startStatus?: { pending: boolean; error: string | null };
+  stage?: string;
 }
 
-export function GamePage({ children }: GamePageProps) {
-  return <LearnerPageShell>{children}</LearnerPageShell>;
+export function GamePage({ children, guard, startStatus, stage }: GamePageProps) {
+  const pageRef = useRef<HTMLDivElement>(null);
+  const previousStage = useRef(stage);
+  useLayoutEffect(() => {
+    const previous = previousStage.current;
+    previousStage.current = stage;
+    if (stage === previous || !['playing', 'complete', 'won', 'lost'].includes(stage || '')) return;
+    const heading = pageRef.current?.querySelector('h1');
+    heading?.setAttribute('tabindex', '-1');
+    heading?.focus({ preventScroll: true });
+    document.getElementById('root')?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [stage]);
+  return <div ref={pageRef} className="game-page"><LearnerPageShell>
+    {startStatus?.pending && <p role="status" className="mx-auto max-w-2xl px-4 py-2 text-brown-700 dark:text-gray-200">Starting your round…</p>}
+    {startStatus?.error && <p role="alert" className="mx-auto max-w-2xl rounded-xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{startStatus.error}</p>}
+    {children}{guard?.dialog}</LearnerPageShell></div>;
 }
 
 interface GamePageHeaderProps {
@@ -72,7 +90,7 @@ export function GameProgress({ current, total, score, streak = 0 }: GameProgress
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-coral-700 transition-[width] dark:bg-teal-500" style={{ width: `${progress}%` }} />
+        <div className="h-full rounded-full bg-coral-700 transition-transform dark:bg-teal-500" style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${(progress) / 100})` }} />
       </div>
     </section>
   );
@@ -119,14 +137,14 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
           type="button"
           onClick={onReplay}
           disabled={replayDisabled}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again
         </button>
         <Link
           to={gameReturn.to}
           replace
-          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>

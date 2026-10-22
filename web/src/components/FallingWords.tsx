@@ -1,3 +1,6 @@
+import { useGamePace } from '../hooks/useGamePace';
+import { GamePaceControl } from './games/GamePaceControl';
+import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -10,7 +13,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
-import { useSubscription } from '../hooks/useSubscription';
+import { useGameSubscription } from '../hooks/useGameSubscription';
 import { UpgradePrompt } from './UpgradePrompt';
 import { GamePage, GamePageHeader } from './games/GamePage';
 
@@ -70,6 +73,7 @@ const ANSWER_OPTIONS = 4;
 const WIN_WORDS = 30; // Complete 30 words to win!
 
 export function FallingWords() {
+  const pace = useGamePace();
   const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
@@ -79,11 +83,14 @@ export function FallingWords() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit } = useSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'paused' | 'complete'>('setup');
+  const guard = useGameRoundGuard((gameState === 'playing' || gameState === 'paused') || startStatus.pending,
+    resultUnresolved || (!!isSignedIn && gameState === 'complete' && !saveGameResultMutation.isSuccess),
+    saveGameResultMutation.isError && saveGameResultMutation.variables ? () => saveGameResultMutation.mutate(saveGameResultMutation.variables!) : undefined);
   const [settings, setSettings] = useState<GameSettings>({
     category: 'greetings',
     mode: 'beginner',
@@ -105,24 +112,12 @@ export function FallingWords() {
 
   // Animation refs
   const animationRef = useRef<number | null>(null);
-  const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const wordElementRef = useRef<HTMLDivElement>(null);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  const positionRef = useRef({ id: 0, y: 0 });
+  const answerOptionsRef = useRef<HTMLDivElement>(null);
   const wordIdRef = useRef(0);
   const resolvedWordRef = useRef<number | null>(null);
-
-  const clearTransitionTimers = useCallback(() => {
-    transitionTimersRef.current.forEach(timer => clearTimeout(timer));
-    transitionTimersRef.current.clear();
-  }, []);
-
-  const scheduleTransition = useCallback((callback: () => void, delay: number) => {
-    const timer = setTimeout(() => {
-      transitionTimersRef.current.delete(timer);
-      callback();
-    }, delay);
-    transitionTimersRef.current.add(timer);
-  }, []);
-
-  useEffect(() => clearTransitionTimers, [clearTransitionTimers]);
 
   // Fetch flashcards data
   const { data: flashcardsData, isLoading: flashcardsLoading } = useDictionaryFlashcards(
@@ -183,13 +178,14 @@ export function FallingWords() {
       const randomIndex = Math.floor(Math.random() * wordPool.length);
       const word = wordPool[randomIndex];
       setUsedWordIndices(new Set([randomIndex]));
-      
+
       // Generate wrong answers
       const wrongAnswers = wordPool.filter((_, index) => index !== randomIndex)
         .sort(() => Math.random() - 0.5).slice(0, ANSWER_OPTIONS - 1).map(entry => entry.english);
-      
+
       const options = [word.english, ...wrongAnswers].sort(() => Math.random() - 0.5);
       wordIdRef.current += 1;
+    positionRef.current = { id: wordIdRef.current, y: 0 };
       setCurrentWord({
         id: wordIdRef.current,
         chamorro: word.chamorro,
@@ -216,6 +212,7 @@ export function FallingWords() {
     const options = [word.english, ...wrongAnswers].sort(() => Math.random() - 0.5);
 
     wordIdRef.current += 1;
+    positionRef.current = { id: wordIdRef.current, y: 0 };
     setCurrentWord({
       id: wordIdRef.current,
       chamorro: word.chamorro,
@@ -246,11 +243,7 @@ export function FallingWords() {
         setCurrentSpeed(speed => speed + SPEED_INCREMENT);
       }
 
-      // Quick transition to next word (only if not won)
-      scheduleTransition(() => {
-        if (newCount >= WIN_WORDS) setGameState('complete');
-        else generateNewWord();
-      }, 300);
+      if (newCount >= WIN_WORDS) setGameState('complete');
     } else {
       setFeedback('wrong');
       setStreak(0);
@@ -262,71 +255,66 @@ export function FallingWords() {
         return newLives;
       });
 
-      // Longer delay for wrong answer
-      scheduleTransition(() => {
-        if (lives > 1) {
-          generateNewWord();
-        }
-      }, 500);
     }
-  }, [currentWord, feedback, gameState, streak, lives, wordsCompleted, generateNewWord, scheduleTransition]);
+  }, [currentWord, feedback, gameState, streak, wordsCompleted]);
 
-  // Animation loop
+  const nextWord = () => {
+    generateNewWord();
+    // The focused "Next word" button unmounts with the feedback; keep keyboard
+    // and screen-reader users on the new answer choices.
+    requestAnimationFrame(() => answerOptionsRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus());
+  };
+
+  // Simulation lives in refs. React only sees a word boundary or a missed word.
   const currentWordId = currentWord?.id;
   useEffect(() => {
-    if (gameState !== 'playing' || !currentWordId || feedback) return;
-
+    if (gameState !== 'playing' || !currentWordId || feedback || !pace.challenge || guard.blocked) return;
     let previousTime: number | null = null;
+    let height = gameAreaRef.current?.clientHeight || 0;
+    const observer = new ResizeObserver(entries => { height = entries[0].contentRect.height; });
+    if (gameAreaRef.current) observer.observe(gameAreaRef.current);
     const animate = (timestamp: number) => {
       const elapsed = previousTime === null ? 0 : timestamp - previousTime;
       previousTime = timestamp;
-      setCurrentWord(prev => {
-        if (!prev) return null;
-
-        const newY = prev.y + frameDistance(prev.speed, elapsed);
-
-        return { ...prev, y: Math.min(newY, 85) };
-      });
-
+      const position = positionRef.current;
+      position.y = Math.min(85, position.y + frameDistance(currentWord.speed, elapsed));
+      if (wordElementRef.current) wordElementRef.current.style.transform = `translate(-50%, ${position.y * height / 100}px)`;
+      if (position.y >= 85) {
+        if (resolvedWordRef.current !== currentWordId) {
+          resolvedWordRef.current = currentWordId;
+          setFeedback('wrong');
+          setStreak(0);
+          setLives(value => value - 1);
+          if (lives <= 1) setGameState('complete');
+        }
+        return;
+      }
       animationRef.current = requestAnimationFrame(animate);
     };
-
     animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [gameState, currentWordId, feedback]);
+    return () => { observer.disconnect(); if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, [gameState, currentWordId, currentWord, feedback, pace.challenge, guard.blocked, lives]);
 
   useEffect(() => {
-    if (gameState !== 'playing' || !currentWord || currentWord.y < 85 || feedback || resolvedWordRef.current === currentWord.id) return;
-    resolvedWordRef.current = currentWord.id;
-    setFeedback('wrong');
-    setStreak(0);
-    setLives(lives - 1);
-    if (lives <= 1) {
-      setGameState('complete');
-    } else {
-      scheduleTransition(generateNewWord, 500);
-    }
-  }, [currentWord, feedback, gameState, lives, generateNewWord, scheduleTransition]);
+    const pause = () => { if (document.hidden) setGameState(state => state === 'playing' ? 'paused' : state); };
+    document.addEventListener('visibilitychange', pause);
+    return () => document.removeEventListener('visibilitychange', pause);
+  }, []);
 
   // Timer
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (gameState === 'playing' && startTime) {
+    if (gameState === 'playing' && startTime && !guard.blocked) {
       interval = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+        setElapsedTime(time => time + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [gameState, startTime]);
+  }, [gameState, startTime, guard.blocked]);
 
   // Save game result when complete
   useEffect(() => {
-    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current && wordsCompleted > 0) {
+    if (gameState === 'complete' && isSignedIn && !hasSavedRef.current) {
       hasSavedRef.current = true;
       const stars = wordsCompleted >= 10 ? 3 : wordsCompleted >= 5 ? 2 : 1;
       saveGameResultMutation.mutate({
@@ -347,6 +335,7 @@ export function FallingWords() {
   const startGame = useCallback(async () => {
     if (startingRef.current || resultUnresolved) return;
     startingRef.current = true;
+    setShowUpgradePrompt(false);
     try {
 
       if (wordPool.length < ANSWER_OPTIONS) {
@@ -366,10 +355,9 @@ export function FallingWords() {
         }
       }
 
-      clearTransitionTimers();
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       setLives(MAX_LIVES);
       setScore(0);
       setStreak(0);
@@ -386,12 +374,11 @@ export function FallingWords() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, getRoundAttemptId, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
     if (resultUnresolved) return;
-    clearTransitionTimers();
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -417,30 +404,18 @@ export function FallingWords() {
     }
   };
 
-  const handleBack = () => {
-    if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
-      return;
-    }
-    clearTransitionTimers();
-    navigate(gameReturn.to, { replace: true });
-  };
+  const handleBack = () => navigate(gameReturn.to, { replace: true });
 
   const isLoading = settings.mode === 'challenge' ? flashcardsLoading : false;
   const hasEnoughWords = wordPool.length >= ANSWER_OPTIONS;
 
-  // Calculate stars for display
-  // Star rating based on words caught (more reasonable thresholds)
-  const getStars = () => {
-    if (wordsCompleted >= WIN_WORDS) return 3; // Won the game!
-    if (wordsCompleted >= 15) return 3; // Great performance
-    if (wordsCompleted >= 8) return 2;  // Good performance
-    return 1; // Keep trying!
-  };
+  // Use the same star thresholds as the saved result.
+  const getStars = () => wordsCompleted >= 10 ? 3 : wordsCompleted >= 5 ? 2 : 1;
 
   if (categoriesLoading) {
     return (
-      <GamePage>
-        <GamePageHeader title="Falling Words" subtitle="Choose the translation before the word reaches the bottom." icon={ArrowDown} />
+      <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
+        <GamePageHeader title="Falling Words" subtitle={pace.challenge ? "Choose the translation before the word reaches the bottom." : "Choose a meaning at your own pace."} icon={ArrowDown} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
           <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
@@ -450,7 +425,7 @@ export function FallingWords() {
   }
 
   return (
-    <GamePage>
+    <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       <GamePageHeader
         title="Falling Words"
         subtitle={gameState === 'setup' ? 'Choose the translation before the word reaches the bottom.' : `Level ${level} · ${score} points`}
@@ -458,10 +433,10 @@ export function FallingWords() {
         onBack={handleBack}
         trailing={(gameState === 'playing' || gameState === 'paused') ? (
           <>
-            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { if (window.confirm('Change settings? Your progress will be lost.')) resetGame(); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -484,31 +459,31 @@ export function FallingWords() {
                   }))}
                   aria-pressed={settings.mode === 'beginner'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
                   aria-pressed={settings.mode === 'challenge'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
@@ -523,15 +498,15 @@ export function FallingWords() {
                     onClick={() => setSettings((s) => ({ ...s, category: catId }))}
                     aria-pressed={settings.category === catId}
                     className={`
-                      min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
+                      min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
                   >
                     <span className="text-base sm:text-lg block">{categoryIcons[catId] || '📚'}</span>
-                    <span className="text-[8px] sm:text-[10px] font-medium capitalize leading-tight block mt-0.5">
+                    <span className="text-xs sm:text-xs font-medium capitalize leading-tight block mt-0.5">
                       {categoryDisplayNames[catId] || catId}
                     </span>
                   </button>
@@ -559,10 +534,11 @@ export function FallingWords() {
             </details>
 
             {/* Start Button */}
+            <GamePaceControl {...pace} />
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
             >
               {isLoading ? (
                 <>
@@ -602,45 +578,47 @@ export function FallingWords() {
               <div className="flex items-center gap-3">
                 <div className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{streak}🔥</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Streak</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Streak</p>
                 </div>
                 <div className="text-center">
                   <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{wordsCompleted}/{WIN_WORDS}</p>
-                  <p className="text-[10px] text-brown-500 dark:text-gray-400">Words</p>
+                  <p className="text-xs text-brown-500 dark:text-gray-400">Words</p>
                 </div>
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="mb-3 sm:mb-4">
               <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-coral-400 to-coral-500 dark:from-teal-400 dark:to-teal-500 transition-all duration-300"
-                  style={{ width: `${(wordsCompleted / WIN_WORDS) * 100}%` }}
+                <div
+                  className="h-full bg-gradient-to-r from-coral-400 to-coral-500 dark:from-teal-400 dark:to-teal-500 transition-colors duration-300"
+                  style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${((wordsCompleted / WIN_WORDS) * 100) / 100})` }}
                 />
               </div>
-              <p className="text-center text-[10px] text-brown-500 dark:text-gray-400 mt-1">
+              <p className="text-center text-xs text-brown-500 dark:text-gray-400 mt-1">
                 Catch {WIN_WORDS} words to win!
               </p>
             </div>
 
             {/* Game Area */}
-            <div className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[50vh] sm:h-[55vh] overflow-hidden shadow-inner">
+            <div ref={gameAreaRef} className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[50vh] sm:h-[55vh] overflow-hidden shadow-inner">
               {/* Falling Word */}
               {currentWord && (
                 <div
+                  ref={wordElementRef}
                   className={`
-                    absolute left-1/2 -translate-x-1/2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
+                    absolute left-1/2 top-0 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
                     text-lg sm:text-2xl font-bold text-white shadow-xl
                     transition-colors duration-200
                     ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
                   `}
                   style={{
-                    top: `${currentWord.y}%`,
+                    top: pace.challenge ? 0 : '35%',
+                    transform: pace.challenge ? `translate(-50%, ${positionRef.current.y * (gameAreaRef.current?.clientHeight || 0) / 100}px)` : 'translateX(-50%)',
                     transition: 'background-color 0.2s',
                   }}
                 >
@@ -649,7 +627,7 @@ export function FallingWords() {
               )}
 
               {/* Danger Zone */}
-              <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-red-500/30 to-transparent border-t-2 border-red-500/50 border-dashed" />
+              {pace.challenge && <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-red-500/30 to-transparent border-t-2 border-red-500/50 border-dashed" />}
 
               {/* Paused Overlay */}
               {gameState === 'paused' && (
@@ -658,7 +636,7 @@ export function FallingWords() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 transition-colors"
                     >
                       Resume
                     </button>
@@ -668,7 +646,7 @@ export function FallingWords() {
             </div>
 
             {/* Answer Buttons */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-3 sm:mt-4">
+            <div ref={answerOptionsRef} className="grid grid-cols-2 gap-2 sm:gap-3 mt-3 sm:mt-4">
               {answerOptions.map((option, index) => (
                 <button
                   key={index}
@@ -676,12 +654,12 @@ export function FallingWords() {
                   disabled={!!feedback || gameState === 'paused'}
                   className={`
                     py-3 sm:py-4 px-3 rounded-xl font-bold text-sm sm:text-base
-                    transition-all duration-200 active:scale-95 shadow-md
+                    transition-colors duration-200 active:scale-95 shadow-md
                     ${feedback && option === currentWord?.english
                       ? 'bg-green-700 text-white'
                       : feedback === 'wrong' && option !== currentWord?.english
                         ? 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500'
-                        : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white hover:bg-cream-100 dark:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
+                        : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
                     }
                     disabled:cursor-not-allowed
                   `}
@@ -690,6 +668,11 @@ export function FallingWords() {
                 </button>
               ))}
             </div>
+            {feedback && <div role="status" className="mt-4 rounded-xl bg-white p-4 text-brown-900 dark:bg-slate-800 dark:text-white">
+              <p>{feedback === 'correct' ? 'That’s right!' : `The meaning is: ${currentWord?.english}`}</p>
+              <button type="button" onClick={nextWord} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next word</button>
+            </div>}
+            {!pace.challenge && <button type="button" onClick={() => setGameState('complete')} className="mt-4 min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold text-brown-800 dark:border-slate-500 dark:text-white">Finish round</button>}
           </div>
         )}
 
@@ -710,9 +693,9 @@ export function FallingWords() {
                 {wordsCompleted >= WIN_WORDS ? 'You Won! 🎊' : wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
               </h2>
               <p className="text-brown-600 dark:text-gray-400">
-                {wordsCompleted >= WIN_WORDS 
-                  ? `Perfect! You caught all ${WIN_WORDS} words!` 
-                  : `You caught ${wordsCompleted} words!`}
+                {wordsCompleted >= WIN_WORDS
+                  ? `Perfect! You caught all ${WIN_WORDS} words!`
+                  : `You caught ${wordsCompleted} ${wordsCompleted === 1 ? 'word' : 'words'}!`}
               </p>
             </div>
 
@@ -721,7 +704,7 @@ export function FallingWords() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <span
                   key={i}
-                  className={`text-3xl sm:text-4xl ${i < getStars() ? 'animate-bounce' : 'opacity-30'}`}
+                  className={`text-3xl sm:text-4xl ${i < getStars() ? '' : 'opacity-30'}`}
                   style={{ animationDelay: `${i * 0.1}s` }}
                 >
                   ⭐
@@ -734,15 +717,15 @@ export function FallingWords() {
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{wordsCompleted}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Words</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Words</p>
                 </div>
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">Lv.{level}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Level</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Level</p>
                 </div>
               </div>
             </div>
@@ -751,16 +734,16 @@ export function FallingWords() {
             <div className="flex gap-2 justify-center">
               <button
                 onClick={playAgain}
-                disabled={resultUnresolved}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2"
+                disabled={resultUnresolved || startStatus.pending}
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
               </button>
               <button
                 onClick={resetGame}
-                disabled={resultUnresolved}
-                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                disabled={resultUnresolved || startStatus.pending}
+                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 Settings
@@ -769,7 +752,7 @@ export function FallingWords() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
+              className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>
@@ -779,7 +762,7 @@ export function FallingWords() {
       </main>
 
       {/* Upgrade Prompt Modal */}
-      {showUpgradePrompt && (
+      {showUpgradePrompt && !startStatus.error && !startStatus.pending && (
         <UpgradePrompt
           feature="game"
           onClose={() => setShowUpgradePrompt(false)}

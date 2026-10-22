@@ -300,7 +300,9 @@ export function useSubscription() {
         tutorCapabilities.set(scope, { keyed: false, expiresAt: Date.now() + CAPABILITY_TTL_MS });
       }
       if ((!keyed || !result.success) && ownerId) forgetPreparingSend(ownerId, logicalSendId);
-    } else if (result.success && !result.dispatch_token) {
+    // A legacy game API may ignore the key but already charge this approval.
+    // Accept it once; never send a second unkeyed increment as a fallback.
+    } else if (type !== 'game' && result.success && !result.dispatch_token) {
       throw new Error('Message recovery is being updated. Please try again in a moment.');
     }
     void queryClient.invalidateQueries({ queryKey: ['usage-today', owner.ownerId] });
