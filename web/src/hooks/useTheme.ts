@@ -1,83 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { browserStorage } from '../lib/browserStorage';
+import {
+  chooseTheme, subscribeTheme, syncAccountTheme, themeSnapshot,
+  type Theme, type ThemePreference,
+} from '../lib/themeStore';
 
-export type Theme = 'light' | 'dark';
+export type { Theme, ThemePreference } from '../lib/themeStore';
 
-/**
- * Theme hook that syncs with Clerk user preferences for cross-device consistency.
- * 
- * Priority:
- * 1. When logged in: User's Clerk preference (synced across devices)
- * 2. When logged out: localStorage (device-specific)
- * 3. Default: light mode
- */
+/** Explicit account/device choice wins; otherwise follow the OS live. */
 export function useTheme() {
   const { user, isLoaded, isSignedIn } = useUser();
-  
-  // Initialize from localStorage for fast initial render
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = browserStorage.get('theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    return 'light';
-  });
-  
-  // Track if we've synced with Clerk yet
-  const [hasSyncedWithClerk, setHasSyncedWithClerk] = useState(false);
+  const snapshot = useSyncExternalStore(subscribeTheme, themeSnapshot);
+  const [preference, theme] = snapshot.split(':') as [ThemePreference, Theme];
 
-  // Sync theme from Clerk when user loads
   useEffect(() => {
-    if (isLoaded && isSignedIn && user?.unsafeMetadata && !hasSyncedWithClerk) {
-      const clerkTheme = user.unsafeMetadata.preferred_theme as Theme | undefined;
-      if (clerkTheme && (clerkTheme === 'light' || clerkTheme === 'dark')) {
-        setThemeState(clerkTheme);
-        browserStorage.set('theme', clerkTheme);
-      }
-      setHasSyncedWithClerk(true);
-    }
-  }, [isLoaded, isSignedIn, user?.unsafeMetadata, hasSyncedWithClerk]);
+    if (isLoaded) syncAccountTheme(isSignedIn ? user?.id : undefined, user?.unsafeMetadata?.preferred_theme);
+  }, [isLoaded, isSignedIn, user?.id, user?.unsafeMetadata?.preferred_theme]);
 
-  // Apply theme to document, fading colors only when the theme actually changes.
-  useEffect(() => {
-    browserStorage.set('theme', theme);
-    const root = document.documentElement;
-    const isDark = root.classList.contains('dark');
-    if (isDark === (theme === 'dark')) return;
-    root.classList.add('theme-transition');
-    root.classList.toggle('dark', theme === 'dark');
-    const timer = window.setTimeout(() => root.classList.remove('theme-transition'), 250);
-    return () => {
-      window.clearTimeout(timer);
-      root.classList.remove('theme-transition');
-    };
-  }, [theme]);
-
-  // Set theme and optionally save to Clerk
-  const setTheme = useCallback(async (newTheme: Theme, saveToClerk = true) => {
-    setThemeState(newTheme);
-    browserStorage.set('theme', newTheme);
-    
-    // Save to Clerk if user is signed in
+  const setTheme = useCallback(async (next: ThemePreference, saveToClerk = true) => {
+    chooseTheme(next);
     if (saveToClerk && isSignedIn && user) {
       try {
-        const currentMetadata = (user.unsafeMetadata || {}) as Record<string, unknown>;
-        await user.update({
-          unsafeMetadata: {
-            ...currentMetadata,
-            preferred_theme: newTheme,
-          }
-        });
+        await user.update({ unsafeMetadata: { ...user.unsafeMetadata, preferred_theme: next } });
       } catch (error) {
         console.error('Failed to save theme preference to Clerk:', error);
-        // Theme is still applied locally, just won't sync across devices
       }
     }
   }, [isSignedIn, user]);
 
   const toggleTheme = useCallback(() => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
+    void setTheme(theme === 'light' ? 'dark' : 'light');
   }, [theme, setTheme]);
 
-  return { theme, setTheme, toggleTheme };
+  return { theme, preference, setTheme, toggleTheme };
 }

@@ -49,7 +49,7 @@ function DeckState({
         </button>
       ) : (
         <Link
-          to="/flashcards/my-decks"
+          to="/flashcards/my-decks" replace
           className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {action}
@@ -250,7 +250,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
                 <p className="mt-2 font-bold text-green-900 dark:text-green-100">{completionMessage}</p>
                 <button
                   type="button"
-                  onClick={() => navigate('/flashcards/my-decks')}
+                  onClick={() => navigate('/flashcards/my-decks', { replace: true })}
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-green-700 px-5 font-semibold text-white hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
                 >
                   Back to saved decks

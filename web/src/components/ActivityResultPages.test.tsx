@@ -110,6 +110,13 @@ describe('activity result pages', () => {
     expect(mocks.useGameHistory).toHaveBeenLastCalledWith(2, 20, 'memory_match');
   });
 
+  it('does not mislabel a custom game-result return as game history', () => {
+    render(<MemoryRouter initialEntries={[`/games/results/${RESULT_ID}?return_to=%2Fvocabulary%3Fq%3Dhafa%23words`]}><GameResultDetail /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Back to where you were' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to game history' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Return' })).toHaveAttribute('href', '/vocabulary?q=hafa#words');
+  });
+
   it('connects an exact game result to its topic and cards', () => {
     render(
       <MemoryRouter initialEntries={[`/games/results/${RESULT_ID}?return_to=%2Flearning%2Fgreetings`]}>
@@ -119,7 +126,7 @@ describe('activity result pages', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('button', { name: 'Back to topic' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to topic' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Greetings & Basics/ })).toHaveAttribute('href', '/learning/greetings');
     expect(screen.getByRole('link', { name: 'Review card 2' })).toHaveAttribute(
       'href',

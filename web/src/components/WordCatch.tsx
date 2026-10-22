@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick } from 'lucide-react';
@@ -78,6 +79,7 @@ const CORRECT_PAIR_RATIO = 0.65; // 65% of pairs are correct (slightly easier)
 const MAX_LIVES = 3;
 
 export function WordCatch() {
+  const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -461,7 +463,7 @@ export function WordCatch() {
     if ((gameState === 'playing' || gameState === 'paused') && !window.confirm('Leave game? Your progress will be lost.')) {
       return;
     }
-    navigate('/games');
+    navigate(gameReturn.to, { replace: true });
   };
 
   // Calculate stars
@@ -791,10 +793,10 @@ export function WordCatch() {
             </div>
 
             <Link
-              to="/games"
+              to={gameReturn.to} replace
               className="inline-block text-coral-500 dark:text-teal-400 hover:text-coral-600 dark:hover:text-teal-300 hover:underline font-medium text-sm"
             >
-              ← Back to Games
+              {gameReturn.label}
             </Link>
           </div>
         )}

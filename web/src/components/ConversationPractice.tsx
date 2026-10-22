@@ -262,7 +262,7 @@ export function ConversationPractice() {
   if (showIntro) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title={scenario.title} subtitle={scenario.titleChamorro} icon={MessageCircle} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
 
         {/* Content */}
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
@@ -341,7 +341,7 @@ export function ConversationPractice() {
   if (conversation.isComplete && !reviewTranscript) {
     return (
       <LearnerPageShell>
-        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} onBack={topicReturn ? () => navigate(conversationReturnTo) : undefined} maxWidthClassName="max-w-2xl" />
+        <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
 
@@ -382,7 +382,7 @@ export function ConversationPractice() {
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" /> Try again
               </button>
-              <Link
+              <Link replace
                 to="/practice"
                 className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-700 px-4 py-3 text-center font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
               >
@@ -405,7 +405,7 @@ export function ConversationPractice() {
         backTo={conversationReturnTo}
         backLabel={topicReturn ? `Leave conversation and ${conversationReturnLabel.toLowerCase()}` : 'Leave conversation'}
         onBack={() => {
-          navigate(conversationReturnTo);
+          navigate(conversationReturnTo, { replace: true });
         }}
         maxWidthClassName="max-w-2xl"
         trailing={(

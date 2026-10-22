@@ -1457,7 +1457,7 @@ End of Export
           className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-all duration-300 dark:border-slate-800 dark:bg-slate-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
-            {linkedTopic && <Link to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
+            {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
             {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
               aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
               className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">

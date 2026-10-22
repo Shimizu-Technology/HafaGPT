@@ -80,7 +80,7 @@ export function TopicWorkspacePage() {
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <h1 className="text-xl font-bold text-brown-950 dark:text-white">Topic not found</h1>
-          <Link className="mt-4 inline-flex min-h-11 items-center text-coral-700 dark:text-ocean-300" to={appRoutes.learning}>Back to learning path</Link>
+          <Link replace className="mt-4 inline-flex min-h-11 items-center text-coral-700 dark:text-ocean-300" to={appRoutes.learning}>Back to learning path</Link>
         </div>
       </LearnerPageShell>
     );

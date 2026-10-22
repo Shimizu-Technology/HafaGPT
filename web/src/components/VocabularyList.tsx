@@ -15,7 +15,7 @@ export function VocabularyList() {
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   
   // Search when query is 2+ characters
-  const { data: searchData, isLoading: searchLoading } = useVocabularySearch(searchQuery);
+  const { data: searchData, isLoading: searchLoading, isPlaceholderData: searchUpdating } = useVocabularySearch(searchQuery);
   
   const isSearching = searchQuery.length >= 2;
   const searchResults = searchData?.results || [];
@@ -163,8 +163,8 @@ export function VocabularyList() {
               </div>
             ) : (
               <>
-                <h2 className="text-sm font-medium text-brown-600 dark:text-gray-400 mb-3">
-                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found
+                <h2 aria-live="polite" className="text-sm font-medium text-brown-600 dark:text-gray-400 mb-3">
+                  {searchUpdating ? 'Searching...' : <>{searchResults.length} result{searchResults.length !== 1 ? 's' : ''} found</>}
                 </h2>
                 {searchResults.length > 0 ? (
                   <div className="space-y-2">
@@ -177,9 +177,11 @@ export function VocabularyList() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-brown-500 dark:text-gray-400">
-                    <p>No words found matching "{searchQuery}"</p>
-                    <p className="text-sm mt-1">Try a different spelling or search term</p>
+                  <div className="min-h-28 text-center py-8 text-brown-500 dark:text-gray-400">
+                    {!searchUpdating && <>
+                      <p>No words found matching "{searchQuery}"</p>
+                      <p className="text-sm mt-1">Try a different spelling or search term</p>
+                    </>}
                   </div>
                 )}
               </>

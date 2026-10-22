@@ -254,7 +254,6 @@ function LessonPageSession() {
         icon={BookOpen}
         backTo={launchContext ? lessonReturn.to : '/learning'}
         backLabel={launchContext ? lessonReturn.label : 'Back to learning path'}
-        onBack={launchContext ? () => navigate(lessonReturn.to) : undefined}
         maxWidthClassName="max-w-3xl"
         below={(
           <div>

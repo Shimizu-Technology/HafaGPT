@@ -1,3 +1,4 @@
+import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { RotateCcw, Trophy, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2, Settings2, Target } from 'lucide-react';
@@ -78,6 +79,7 @@ const CHAMORRO_ALPHABET = 'ABCDEFGHIJKLMNÑOPRSTUVWY\'Å'.split('');
 const MAX_WRONG_GUESSES = 6;
 
 export function Hangman() {
+  const gameReturn = useGameReturn();
   const navigate = useNavigate();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -315,7 +317,7 @@ export function Hangman() {
     if (gameState === 'playing' && !window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.')) {
       return;
     }
-    navigate('/games');
+    navigate(gameReturn.to, { replace: true });
   };
 
   // Render hangman figure
@@ -544,10 +546,10 @@ export function Hangman() {
                 Change Settings
               </button>
               <Link
-                to="/games"
+                to={gameReturn.to} replace
                 className="block w-full py-3 bg-cream-50 dark:bg-slate-800 text-brown-600 dark:text-gray-400 rounded-xl font-medium hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
               >
-                Back to Games
+                {gameReturn.label}
               </Link>
             </div>
           </div>

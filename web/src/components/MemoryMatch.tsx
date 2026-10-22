@@ -244,11 +244,11 @@ export function MemoryMatch() {
     if (isGameInProgress) {
       const confirmed = window.confirm('You have a game in progress. Are you sure you want to leave? Your progress will be lost.');
       if (confirmed) {
-        navigate(gameReturn.to);
+        navigate(gameReturn.to, { replace: true });
       }
       return;
     }
-    navigate(gameReturn.to);
+    navigate(gameReturn.to, { replace: true });
   };
 
   // Generate cards from flashcards
@@ -804,6 +804,7 @@ export function MemoryMatch() {
             ) : (
               <Link
                 to={gameReturn.to}
+                replace
                 className="inline-block text-coral-500 dark:text-teal-400 hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}

@@ -475,7 +475,7 @@ export function FlashcardViewer() {
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-red-600 dark:text-red-400 mb-4 font-medium">{error}</p>
           <button
-            onClick={() => navigate('/flashcards')}
+            onClick={() => navigate('/flashcards', { replace: true })}
             className="min-h-11 rounded-xl bg-coral-700 px-6 py-2.5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
           >
             Back to Decks
@@ -531,7 +531,6 @@ export function FlashcardViewer() {
         icon={Layers3}
         backTo={returnContext?.to ?? '/flashcards'}
         backLabel={returnContext?.label ?? 'Back to flashcard decks'}
-        onBack={returnContext ? () => navigate(returnContext.to) : undefined}
         trailing={(
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />

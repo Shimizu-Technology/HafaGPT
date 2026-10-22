@@ -90,7 +90,7 @@ describe('public information pages', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back home' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back home' }));
 
     expect(screen.getByText('Home destination')).toBeInTheDocument();
     expect(screen.queryByText('Previous destination')).not.toBeInTheDocument();

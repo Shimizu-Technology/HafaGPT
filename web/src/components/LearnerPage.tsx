@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft, Moon, Sun, type LucideIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
 
 interface LearnerPageShellProps {
@@ -36,7 +36,7 @@ export function LearnerPageHeader({
   subtitle,
   icon: Icon,
   backTo = '/',
-  backLabel = 'Go back',
+  backLabel = 'Back to Today',
   onBack,
   trailing,
   below,
@@ -46,33 +46,20 @@ export function LearnerPageHeader({
   sticky = true,
 }: LearnerPageHeaderProps) {
   const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-      return;
-    }
-    const historyIndex = window.history.state?.idx;
-    if (typeof historyIndex === 'number' && historyIndex > 0) {
-      navigate(-1);
-      return;
-    }
-    navigate(backTo);
-  };
 
   return (
     <header className={`${sticky ? 'sticky top-0 z-30' : 'relative z-20'} border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95`}>
       <div className={`safe-area-top mx-auto px-4 py-3 ${maxWidthClassName}`}>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleBack}
-            aria-label={backLabel}
-            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
+          {onBack ? (
+            <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : (
+            <Link to={backTo} replace aria-label={backLabel} className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+            </Link>
+          )}
 
           <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
             <Icon className="h-5 w-5" aria-hidden="true" />

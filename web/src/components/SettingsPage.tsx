@@ -14,6 +14,7 @@ import {
   MapPin,
   MessageCircle,
   Moon,
+  Monitor,
   RotateCcw,
   Save,
   Shield,
@@ -139,7 +140,7 @@ function SettingsSection({
 }
 
 export function SettingsPage() {
-  const { theme, toggleTheme } = useTheme();
+  const { preference, setTheme } = useTheme();
   const { preferences, updatePreferencesAsync, isUpdating } = useUserPreferences();
   const { data: xpData, isLoading: isLoadingXP, isError: isXPError } = useXP();
   const updateDailyGoal = useUpdateDailyGoal();
@@ -367,28 +368,19 @@ export function SettingsPage() {
         <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
           <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Display</p>
           <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-white">Appearance</h2>
-          <div className="mt-4 flex items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-teal-300">
-                {theme === 'dark' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
-              </span>
-              <div>
-                <p className="font-bold text-brown-950 dark:text-white">Dark mode</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">{theme === 'dark' ? 'On' : 'Off'}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label="Dark mode"
-              role="switch"
-              aria-checked={theme === 'dark'}
-              className={`flex h-11 w-16 flex-none items-center rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 ${
-                theme === 'dark' ? 'justify-end bg-teal-600' : 'justify-start bg-cream-300'
-              }`}
-            >
-              <span className="h-9 w-9 rounded-full bg-white shadow-sm" aria-hidden="true" />
-            </button>
+          <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Follow your device or choose an appearance. Changes save automatically.</p>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3" role="group" aria-label="Appearance">
+            {([
+              { value: 'system', title: 'System', icon: Monitor },
+              { value: 'light', title: 'Light', icon: Sun },
+              { value: 'dark', title: 'Dark', icon: Moon },
+            ] as const).map(({ value, title, icon: Icon }) => (
+              <button key={value} type="button" aria-pressed={preference === value}
+                onClick={() => { void setTheme(value); }}
+                className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4 text-base font-semibold ${preference === value ? 'border-coral-600 bg-coral-50 text-coral-800 dark:border-teal-400 dark:bg-teal-950/30 dark:text-teal-200' : 'border-cream-200 text-brown-800 dark:border-slate-600 dark:text-gray-200'}`}>
+                <Icon className="h-5 w-5" aria-hidden="true" />{title}
+              </button>
+            ))}
           </div>
         </section>
 

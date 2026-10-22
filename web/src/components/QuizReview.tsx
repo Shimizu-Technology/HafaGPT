@@ -51,8 +51,9 @@ export function QuizReview() {
     '/dashboard/quiz-history',
   );
   const returnsToTopic = backTo.startsWith(appRoutes.topic(''));
-  const backLabel = returnsToTopic ? 'Back to topic' : 'Back to quiz history';
-  const unavailableReturnLabel = returnsToTopic ? 'Return to topic' : 'Quiz history';
+  const returnsToHistory = backTo.split(/[?#]/)[0] === '/dashboard/quiz-history';
+  const backLabel = returnsToTopic ? 'Back to topic' : returnsToHistory ? 'Back to quiz history' : 'Back to where you were';
+  const unavailableReturnLabel = returnsToTopic ? 'Return to topic' : returnsToHistory ? 'Quiz history' : 'Return to where you were';
   const isDictionaryQuiz = result?.category_id?.startsWith('dict-');
   const resultTopic = result
     ? ALL_TOPICS.find((topic) => topic.id === result.learning_topic_id)
@@ -109,7 +110,7 @@ export function QuizReview() {
                 </button>
               )}
               <Link
-                to={backTo}
+                replace to={backTo}
                 className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
               >
                 {unavailableReturnLabel}
@@ -246,7 +247,7 @@ export function QuizReview() {
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" /> Try again
               </Link>
-              <Link
+              <Link replace
                 to="/quiz"
                 className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
               >

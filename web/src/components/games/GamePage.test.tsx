@@ -21,7 +21,7 @@ describe('shared game page UI', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Sound Match' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to games' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to games' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Audio note' })).toBeInTheDocument();
   });
 
@@ -63,7 +63,7 @@ describe('shared game page UI', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to games' }));
     expect(screen.getByText('/games')).toBeInTheDocument();
   });
 
@@ -82,9 +82,9 @@ describe('shared game page UI', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('button', { name: 'Back to Today' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/');
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Today' }));
+    expect(screen.getAllByRole('link', { name: 'Back to Today' })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Back to Today' })[0]).toHaveAttribute('href', '/');
+    fireEvent.click(screen.getAllByRole('link', { name: 'Back to Today' })[0]);
     expect(screen.getByText('/')).toBeInTheDocument();
   });
 
@@ -103,11 +103,11 @@ describe('shared game page UI', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: 'Back to topic' })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Back to topic' })[0]).toHaveAttribute(
       'href',
       '/learning/greetings',
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Back to topic' }));
+    fireEvent.click(screen.getAllByRole('link', { name: 'Back to topic' })[0]);
     expect(screen.getByText('/learning/greetings')).toBeInTheDocument();
   });
 
@@ -118,7 +118,7 @@ describe('shared game page UI', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('link', { name: 'Back to Today' })).toHaveAttribute('href', '/');
+    expect(screen.getAllByRole('link', { name: 'Back to Today' })[0]).toHaveAttribute('href', '/');
   });
 
   it('supports guarded navigation and a focused in-game action', () => {

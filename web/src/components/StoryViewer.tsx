@@ -43,7 +43,7 @@ export function StoryViewer() {
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <p className="text-brown-600 dark:text-gray-400 mb-4">Story not found</p>
-          <Link to="/stories" className="text-coral-600 dark:text-ocean-400 hover:underline">
+          <Link replace to="/stories" className="text-coral-600 dark:text-ocean-400 hover:underline">
             Back to Stories
           </Link>
         </div>
@@ -445,7 +445,7 @@ export function StoryViewer() {
         </button>
 
         <button
-          onClick={() => navigate('/stories')}
+          onClick={() => navigate('/stories', { replace: true })}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
         >
           <BookOpen className="w-5 h-5" />
@@ -463,7 +463,6 @@ export function StoryViewer() {
         icon={BookOpen}
         backTo={topicReturn?.to ?? '/stories'}
         backLabel={topicReturn?.label ?? 'Back to stories'}
-        onBack={topicReturn ? () => navigate(topicReturn.to) : undefined}
         maxWidthClassName="max-w-2xl"
         iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
         trailing={viewMode === 'reading' ? (

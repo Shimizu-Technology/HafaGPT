@@ -13,6 +13,7 @@ const settingsMocks = vi.hoisted(() => ({
     daily_goal_minutes: number;
   },
   xpError: false,
+  setTheme: vi.fn(),
 }));
 
 vi.mock('../hooks/useUserPreferences', () => ({
@@ -30,7 +31,7 @@ vi.mock('../hooks/useUserPreferences', () => ({
 }));
 
 vi.mock('../hooks/useTheme', () => ({
-  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+  useTheme: () => ({ theme: 'light', preference: 'system', setTheme: settingsMocks.setTheme }),
 }));
 
 vi.mock('../hooks/useSubscription', () => ({
@@ -46,6 +47,12 @@ vi.mock('../hooks/useXP', () => ({
 vi.mock('./AuthButton', () => ({ AuthButton: () => null }));
 
 describe('learning preference settings', () => {
+  it('offers System, Light and Dark as immediate appearance choices', () => {
+    render(<MemoryRouter><SettingsPage /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: 'System' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Dark' }));
+    expect(settingsMocks.setTheme).toHaveBeenCalledWith('dark');
+  });
   beforeEach(() => {
     settingsMocks.updatePreferencesAsync.mockReset();
     settingsMocks.updatePreferencesAsync.mockResolvedValue(undefined);
