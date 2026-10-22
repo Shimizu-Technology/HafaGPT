@@ -74,7 +74,7 @@ export function WordScramble() {
   const submissionStartedRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
   const gameReturn = getLearningGameReturn(learningContext);
@@ -268,7 +268,7 @@ export function WordScramble() {
 
       hasSavedRef.current = false;
       submissionStartedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       setPendingGameResult(null);
       setResultSaveFailed(false);
       setIsSavingResult(false);
@@ -284,7 +284,7 @@ export function WordScramble() {
     } finally {
       startingRef.current = false;
     }
-  }, [generateWords, settings.wordsPerRound, isSignedIn, canUse, tryUse]);
+  }, [generateWords, settings.wordsPerRound, isSignedIn, canUse, tryUse, getRoundAttemptId]);
 
   const contextualStartedRef = useRef(false);
   useEffect(() => {

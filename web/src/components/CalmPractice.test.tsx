@@ -9,7 +9,7 @@ import { GameSaveStatus } from './games/GameSaveStatus';
 const mocks = vi.hoisted(() => ({ speak: vi.fn(), mutate: vi.fn(), reset: vi.fn() }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: false }) }));
 vi.mock('../hooks/useGamesQuery', () => ({ useSaveGameResult: () => ({ mutate: mocks.mutate, reset: mocks.reset }) }));
-vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: async () => true, getCount: () => 0, getLimit: () => 10 }) }));
+vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: async () => true, reserveUse: async () => ({ success: true }), getCount: () => 0, getLimit: () => 10 }) }));
 vi.mock('../hooks/useVocabularyQuery', () => ({ useVocabularyCategories: () => ({ data: { categories: [] }, isLoading: false }) }));
 vi.mock('../hooks/useFlashcardsQuery', () => ({ useDictionaryFlashcards: () => ({ data: null, isLoading: false }) }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: mocks.speak, preload: vi.fn(), stop: vi.fn(), isSpeaking: false }) }));

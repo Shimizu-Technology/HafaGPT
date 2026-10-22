@@ -284,7 +284,7 @@ export function CulturalTrivia() {
   const hasSavedRef = useRef(false);
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Settings state
@@ -364,7 +364,7 @@ export function CulturalTrivia() {
         setTimeLeft(DIFFICULTY_CONFIG[difficulty].time);
         setTimerActive(timedChallenge);
         hasSavedRef.current = false;
-        gameAttemptIdRef.current = createClientAttemptId();
+        gameAttemptIdRef.current = getRoundAttemptId();
         if (document.activeElement instanceof HTMLElement) {
           document.activeElement.blur();
         }
@@ -376,7 +376,7 @@ export function CulturalTrivia() {
     } finally {
       startingRef.current = false;
     }
-  }, [canUse, tryUse, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
+  }, [canUse, tryUse, getRoundAttemptId, pickQuestions, difficulty, timedChallenge, saveGameResultMutation, resultUnresolved]);
 
   // Handle answer selection
   const handleAnswer = useCallback((answerIndex: number) => {

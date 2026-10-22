@@ -118,7 +118,7 @@ export function SoundMatch() {
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const resultUnresolved = !!(saveGameResultMutation.isPending || saveGameResultMutation.isError);
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const audio = useGameAudioPrompt();
   const { speak, preload, isSpeaking, listen, resetPrompt } = audio; // Use shared TTS hook with preloading
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -196,7 +196,7 @@ export function SoundMatch() {
 
     clearTimers();
     saveGameResultMutation.reset();
-    gameAttemptIdRef.current = createClientAttemptId();
+    gameAttemptIdRef.current = getRoundAttemptId();
     setGameState('playing');
     setCurrentRound(1);
     setScore(0);

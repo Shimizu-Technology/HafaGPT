@@ -83,7 +83,7 @@ export function FallingWords() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -359,7 +359,7 @@ export function FallingWords() {
       clearTransitionTimers();
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       setLives(MAX_LIVES);
       setScore(0);
       setStreak(0);
@@ -376,7 +376,7 @@ export function FallingWords() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
+  }, [wordPool, generateNewWord, isSignedIn, canUse, tryUse, getRoundAttemptId, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {

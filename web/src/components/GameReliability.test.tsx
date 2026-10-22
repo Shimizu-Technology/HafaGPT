@@ -1,5 +1,5 @@
 import { Profiler } from 'react';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GameTestRouter } from '../test/GameTestRouter';
@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(), reserve: vi.fn(), speak: vi.fn(), speechError: null as string | null,
 }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: true, user: { id: 'games-test' } }) }));
-vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: mocks.reserve, getCount: () => 0, getLimit: () => 10 }) }));
+vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: mocks.reserve, reserveUse: async (type: string, id: string) => ({ success: await mocks.reserve(type, id) }), getCount: () => 0, getLimit: () => 10 }) }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: mocks.speak, stop: vi.fn(), preload: vi.fn(), isSpeaking: false, speechError: mocks.speechError }) }));
 vi.mock('../hooks/useVocabularyQuery', () => ({ useVocabularyCategories: () => ({ data: { categories: [] }, isLoading: false }) }));
 vi.mock('../hooks/useFlashcardsQuery', () => ({ useDictionaryFlashcards: () => ({ data: null, isLoading: false }) }));
@@ -52,7 +52,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.spyOn(Math, 'random').mockReturnValue(0);
 });
-afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 async function start() {
   fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
@@ -133,6 +133,54 @@ describe('game result and round reliability', () => {
     expect(screen.getByText('Round 1 of 10')).toBeInTheDocument();
   });
 
+  it('retries a lost Start approval with the same key and saves that approved round identity', async () => {
+    mocks.reserve.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    render(<GameTestRouter><SoundMatch /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Start Game' }));
+    await screen.findByRole('alert');
+    const firstKey = mocks.reserve.mock.calls[0][1];
+    await completeSound();
+    expect(mocks.reserve.mock.calls[1][1]).toBe(firstKey);
+    expect(mocks.save.mock.calls[0][0].client_attempt_id).toBe(firstKey);
+    fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
+    await start();
+    expect(mocks.reserve.mock.calls[2][1]).not.toBe(firstKey);
+  });
+
+  it('leaves focused Wordle controls to native keyboard activation', async () => {
+    render(<GameTestRouter><ChamorroWordle /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Start Practice' }));
+    await screen.findByRole('textbox', { name: 'Type your guess' });
+    const back = screen.getByRole('button', { name: 'Back to games' });
+    back.focus();
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    back.dispatchEvent(enter);
+    expect(enter.defaultPrevented).toBe(false);
+    // JSDOM has no native keyboard click default; exercise its resulting click.
+    fireEvent.click(back);
+    expect(screen.getByRole('dialog')).toHaveTextContent('Leave this round?');
+  });
+
+  it('keeps the approved Wordle attempt when resuming an unfinished round', async () => {
+    const view = render(<GameTestRouter><ChamorroWordle /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Start Practice' }));
+    const input = await screen.findByRole('textbox', { name: 'Type your guess' });
+    fireEvent.change(input, { target: { value: 'ZZZZZ' } });
+    fireEvent.submit(input.closest('form')!);
+    const id = mocks.reserve.mock.calls[0][1];
+    view.unmount();
+    render(<GameTestRouter><ChamorroWordle /></GameTestRouter>);
+    expect(screen.getByText('Resumed your unfinished game')).toBeInTheDocument();
+    const resumed = screen.getByRole('textbox', { name: 'Type your guess' });
+    for (let row = 1; row < 6; row++) {
+      fireEvent.change(resumed, { target: { value: 'ZZZZZ' } });
+      fireEvent.submit(resumed.closest('form')!);
+    }
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
+    expect(mocks.reserve).toHaveBeenCalledOnce();
+    expect(mocks.save.mock.calls[0][0]).toMatchObject({ client_attempt_id: id, stars: 0 });
+  });
+
   it('holds Sound Match feedback for the learner, with no prompt autoplay', async () => {
     render(<GameTestRouter><SoundMatch /></GameTestRouter>);
     await start();
@@ -179,11 +227,13 @@ describe('game result and round reliability', () => {
     await screen.findByText('Result saved');
   });
 
-  it.each([['Falling Words', FallingWords], ['Word Catch', WordCatch]] as const)('%s moves Challenge pieces without rendering React per frame', async (_, Component) => {
-    let frame: FrameRequestCallback = () => undefined;
+  it.each([['Falling Words', FallingWords], ['Word Catch', WordCatch]].flatMap(([name, Component]) => [30, 60, 120].map(hz => ({ name, Component: Component as typeof FallingWords, hz }))))('$name moves Challenge pieces without React frame renders at $hz Hz', async ({ name, Component, hz }) => {
+    vi.useFakeTimers();
+    const frames = new Map<number, FrameRequestCallback>();
     let frameId = 0;
-    vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { frame = callback; return ++frameId; }));
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { frames.set(++frameId, callback); return frameId; }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn(id => frames.delete(id)));
+    const frame = (timestamp: number) => { const ready = [...frames.values()]; frames.clear(); ready.forEach(callback => callback(timestamp)); };
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320);
@@ -191,15 +241,49 @@ describe('game result and round reliability', () => {
     render(<GameTestRouter><Profiler id="arcade" onRender={renderFrame}><Component /></Profiler></GameTestRouter>);
     const challenge = screen.queryByRole('button', { name: 'Challenge' });
     if (challenge) fireEvent.click(challenge);
-    vi.useFakeTimers();
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); await Promise.resolve(); });
     act(() => vi.advanceTimersByTime(500));
     const before = renderFrame.mock.calls.length;
-    for (let index = 0; index <= 60; index++) act(() => frame(index * 1000 / 60));
+    for (let index = 0; index <= hz; index++) act(() => frame(index * 1000 / hz));
     expect(renderFrame).toHaveBeenCalledTimes(before);
     const moved = Array.from(document.querySelectorAll<HTMLElement>('main [style]')).filter(element => element.style.transform.includes('translate('));
     expect(moved.length).toBeGreaterThan(0);
     expect(moved.some(element => element.style.top === '0px')).toBe(true);
+    const position = moved[0].style.transform;
+    fireEvent.click(screen.getByRole('button', { name: 'Pause game' }));
+    act(() => frame(5000));
+    expect(moved[0].style.transform).toBe(position);
+    fireEvent.click(screen.getByRole('button', { name: 'Resume game' }));
+    for (let index = 0; index <= hz; index++) act(() => frame(6000 + index * 1000 / hz));
+    const coordinates = moved[0].style.transform.match(/-?\d+(?:\.\d+)?(?=px)/g)?.map(Number) || [];
+    if (name === 'Falling Words') expect(coordinates[0]).toBeCloseTo(72, 5);
+    else expect(coordinates[0]).toBeCloseTo(101.76, 5);
+    // Continue through expiration. One falling word costs exactly one life;
+    // an ignored matching pair expires without awarding points or costing lives.
+    for (let index = 1; index <= hz * 10; index++) act(() => frame(7000 + index * 1000 / hz));
+    if (name === 'Falling Words') {
+      expect(document.querySelectorAll('main .lucide-heart.fill-red-500')).toHaveLength(2);
+      expect(screen.getByRole('button', { name: 'Next word' })).toBeInTheDocument();
+    } else expect(screen.getByRole('img', { name: '3 lives remaining' })).toBeInTheDocument();
+    expect(mocks.save).not.toHaveBeenCalled();
+
+  });
+
+  it('switches an in-progress Challenge to one stationary pair when reduced motion changes', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    const media = Object.assign(new EventTarget(), { matches: false });
+    vi.stubGlobal('matchMedia', () => media);
+    render(<GameTestRouter><WordCatch /></GameTestRouter>);
+    fireEvent.click(screen.getByRole('button', { name: 'Challenge', exact: true }));
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Start Game' })); });
+    await act(async () => { vi.advanceTimersByTime(5000); });
+    const pairs = () => screen.getAllByRole('button').filter(button => button.textContent?.includes('= '));
+    expect(pairs().length).toBeGreaterThan(1);
+    act(() => { media.matches = true; media.dispatchEvent(new Event('change')); });
+    expect(pairs()).toHaveLength(1);
+    expect(pairs()[0].style.transform).toBe('translate(-50%, -50%)');
+    expect(screen.getByText('No timer')).toBeInTheDocument();
   });
 
   it('records a timed Word Catch round with no catches', async () => {

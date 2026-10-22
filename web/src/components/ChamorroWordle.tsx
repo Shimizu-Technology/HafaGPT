@@ -116,7 +116,7 @@ export function ChamorroWordle() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const transitionTimersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Settings state
@@ -233,7 +233,7 @@ export function ChamorroWordle() {
       setMessage('');
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
@@ -242,7 +242,7 @@ export function ChamorroWordle() {
     } finally {
       startingRef.current = false;
     }
-  }, [getAvailableWords, isSignedIn, canUse, tryUse, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
+  }, [getAvailableWords, isSignedIn, canUse, tryUse, getRoundAttemptId, clearTransitionTimers, saveGameResultMutation, resultUnresolved]);
 
   // Handle key press
   const handleKeyPress = useCallback((key: string) => {
@@ -353,6 +353,7 @@ export function ChamorroWordle() {
       if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
       const target = e.target;
       if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+      if (e.key === 'Enter' && target instanceof HTMLElement && target.closest('button, a, [role="button"]')) return;
       if (e.key === 'Enter') {
         e.preventDefault();
         handleEnter();
@@ -423,6 +424,7 @@ export function ChamorroWordle() {
         || typeof saved.currentGuess !== 'string' || saved.currentGuess.length > saved.targetWord.word.length
         || !['practice', 'daily'].includes(saved.gameMode)
         || (saved.gameMode === 'daily' && saved.dailyKey !== dailyKey)) return;
+      if (typeof saved.clientAttemptId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(saved.clientAttemptId)) gameAttemptIdRef.current = saved.clientAttemptId;
       const keyboard: Record<string, 'correct' | 'present' | 'absent'> = {};
       saved.guesses.forEach((row: GuessResult[]) => row.forEach(cell => {
         if (cell.state === 'correct' || !keyboard[cell.letter] || (cell.state === 'present' && keyboard[cell.letter] === 'absent')) keyboard[cell.letter] = cell.state as 'correct' | 'present' | 'absent';
@@ -446,7 +448,7 @@ export function ChamorroWordle() {
     if (isLoaded === false || restoredKeyRef.current !== resumeKey) return;
     if (skipNextStorageWriteRef.current) { skipNextStorageWriteRef.current = false; return; }
     if (gameState === 'playing' && targetWord) {
-      setResumeStorageAvailable(browserStorage.set(resumeKey, JSON.stringify({ targetWord, guesses, currentGuess, gameMode, difficulty, wordMode, category, dailyKey: activeDailyKey })));
+      setResumeStorageAvailable(browserStorage.set(resumeKey, JSON.stringify({ targetWord, guesses, currentGuess, gameMode, difficulty, wordMode, category, dailyKey: activeDailyKey, clientAttemptId: gameAttemptIdRef.current })));
     } else if (gameState === 'won' || gameState === 'lost') {
       browserStorage.remove(resumeKey);
     }

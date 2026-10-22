@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(), reserve: vi.fn(), speak: vi.fn(), speechError: null as string | null,
 }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: true, user: { id: 'games-test' } }) }));
-vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: mocks.reserve, getCount: () => 0, getLimit: () => 10 }) }));
+vi.mock('../hooks/useSubscription', () => ({ useSubscription: () => ({ canUse: () => true, tryUse: mocks.reserve, reserveUse: async (type: string, id: string) => ({ success: await mocks.reserve(type, id) }), getCount: () => 0, getLimit: () => 10 }) }));
 vi.mock('../hooks/useSpeech', () => ({ useSpeech: () => ({ speak: mocks.speak, stop: vi.fn(), preload: vi.fn(), isSpeaking: false, speechError: mocks.speechError }) }));
 vi.mock('../hooks/useVocabularyQuery', () => ({ useVocabularyCategories: () => ({ data: { categories: [] }, isLoading: false }) }));
 vi.mock('../hooks/useFlashcardsQuery', () => ({ useDictionaryFlashcards: () => ({ data: null, isLoading: false }) }));

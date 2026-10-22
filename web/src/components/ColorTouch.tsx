@@ -47,7 +47,7 @@ export function ColorTouch() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const audio = useGameAudioPrompt();
   const { speak, preload, isSpeaking, listen, resetPrompt } = audio;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
@@ -125,7 +125,7 @@ export function ColorTouch() {
       setStreak(0);
       setUsedColors(new Set());
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       generateRound();
 
     } finally {
@@ -376,7 +376,7 @@ export function ColorTouch() {
             onReplay={() => {
               setGameState('setup');
               hasSavedRef.current = false;
-              gameAttemptIdRef.current = createClientAttemptId();
+              gameAttemptIdRef.current = getRoundAttemptId();
             }}
           />
         )}

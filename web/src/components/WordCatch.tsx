@@ -92,7 +92,7 @@ export function WordCatch() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -415,7 +415,7 @@ export function WordCatch() {
       }
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       livesRef.current = MAX_LIVES;
       comboRef.current = 0;
       setLives(MAX_LIVES);
@@ -436,7 +436,7 @@ export function WordCatch() {
     } finally {
       startingRef.current = false;
     }
-  }, [wordPool, isSignedIn, canUse, tryUse, saveGameResultMutation, resultUnresolved]);
+  }, [wordPool, isSignedIn, canUse, tryUse, getRoundAttemptId, saveGameResultMutation, resultUnresolved]);
 
   // Reset to setup
   const resetGame = () => {
@@ -672,7 +672,7 @@ export function WordCatch() {
               className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[55vh] sm:h-[60vh] overflow-hidden shadow-inner"
             >
               {/* Flying Pairs */}
-              {flyingPairs.map(pair => (
+              {(pace.challenge ? flyingPairs : flyingPairs.slice(0, 1)).map(pair => (
                 <button
                   key={pair.id}
                   ref={element => { if (element) pairElementsRef.current.set(pair.id, element); else pairElementsRef.current.delete(pair.id); }}

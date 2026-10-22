@@ -31,12 +31,36 @@ test('Sound Match retains a committed result after a lost acknowledgement and re
   await page.getByRole('link', { name: 'More games' }).click();
   await expect(page.getByRole('dialog', { name: 'Keep your result' })).toBeVisible();
   await page.getByRole('button', { name: 'Keep result' }).click();
-  await page.getByRole('button', { name: 'Retry save' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('alert').getByRole('button', { name: 'Retry save' }).click();
   await expect(page.getByText('Result saved', { exact: true })).toBeVisible();
   expect(attempts).toHaveLength(2);
   expect(attempts[1]).toEqual(attempts[0]);
   await page.goto('/games/results/' + resultId);
   await expect(page.getByText(String(attempts[0].score), { exact: true })).toBeVisible();
+});
+
+test('a lost Start acknowledgement retries one keyed round and consumes one use', async ({ page }) => {
+  const approvals: { key: string | null; count: number; token: string }[] = [];
+  await page.route('**/api/usage/increment/game?*', async route => {
+    const response = await route.fetch();
+    expect(response.status()).toBe(200);
+    const result = await response.json();
+    approvals.push({ key: new URL(route.request().url()).searchParams.get('logical_send_id'), count: result.new_count, token: result.dispatch_token });
+    if (approvals.length === 1) await route.fulfill({ status: 503, json: { detail: 'Test: lost Start acknowledgement after commit' } });
+    else await route.fulfill({ response });
+  });
+  await page.goto('/games/falling');
+  await page.getByRole('button', { name: 'Start Game', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('couldn’t start');
+  await page.getByRole('button', { name: 'Start Game', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Finish round' })).toBeVisible();
+  expect(approvals).toHaveLength(2);
+  expect(approvals[0].key).toMatch(/^[\da-f-]{36}$/);
+  expect(approvals[1]).toEqual(approvals[0]);
+  const saved = page.waitForResponse(response => response.url().endsWith('/api/games/results') && response.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Finish round' }).click();
+  expect(await (await saved).json()).toMatchObject({ client_attempt_id: approvals[0].key, score: 0 });
 });
 
 for (const game of ['falling', 'catch']) {
@@ -55,7 +79,7 @@ for (const game of ['falling', 'catch']) {
 
 test('Wordle submits a truthful zero-star loss with visible and announced letter states', async ({ page }) => {
   await page.goto('/games');
-  await page.evaluate(() => { for (const key of Object.keys(localStorage)) if (key.startsWith('wordle-')) localStorage.removeItem(key); });
+  await page.evaluate(() => { for (const key of Object.keys(localStorage)) if ((key.startsWith('wordle-') || key.startsWith('hafagpt-wordle-resume-'))) localStorage.removeItem(key); });
   await page.goto('/games/wordle');
   await page.getByRole('button', { name: 'Start Practice' }).click();
   const input = page.getByRole('textbox', { name: 'Type your guess' });

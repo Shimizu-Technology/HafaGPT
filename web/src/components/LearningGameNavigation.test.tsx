@@ -29,7 +29,7 @@ vi.mock('../hooks/useGamesQuery', () => ({
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({
     canUse: () => true,
-    tryUse: async () => true,
+    tryUse: async () => true, reserveUse: async () => ({ success: true }),
     getCount: () => 0,
     getLimit: () => 10,
   }),

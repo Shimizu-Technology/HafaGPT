@@ -89,7 +89,7 @@ export function Hangman() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -256,7 +256,7 @@ export function Hangman() {
         setWrongGuesses(0);
         saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
 
         // Pick first word
         const unusedWords = availableWords;
@@ -275,7 +275,7 @@ export function Hangman() {
     } finally {
       startingRef.current = false;
     }
-  }, [availableWords, canUse, tryUse, saveGameResultMutation, resultUnresolved]);
+  }, [availableWords, canUse, tryUse, getRoundAttemptId, saveGameResultMutation, resultUnresolved]);
 
   // Save game result
   useEffect(() => {

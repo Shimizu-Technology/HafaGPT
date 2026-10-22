@@ -124,7 +124,7 @@ export function PicturePairs() {
   const startingRef = useRef(false);
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
-  const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
+  const { canUse, tryUse, getCount, getLimit, startStatus, getRoundAttemptId } = useGameSubscription();
   const { preload } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
@@ -236,7 +236,7 @@ export function PicturePairs() {
       clearTimers();
       saveGameResultMutation.reset();
       hasSavedRef.current = false;
-      gameAttemptIdRef.current = createClientAttemptId();
+      gameAttemptIdRef.current = getRoundAttemptId();
       const newCards = generateCards();
       setIsChecking(false);
       setCards(newCards);
