@@ -435,7 +435,7 @@ export function PicturePairs() {
                     onClick={() => handleCardClick(card.id)}
                     disabled={isChecking && !isFlipped}
                     aria-label={isFlipped ? `${card.word.chamorro}, ${card.word.english} picture. Read or hear card${isMatched ? ', matched' : ''}` : 'Hidden picture'}
-                    className={`min-w-0 min-h-40 aspect-square rounded-xl transition-colors duration-300 transform ${
+                    className={`w-full min-w-0 min-h-40 aspect-square rounded-xl transition-colors duration-300 transform ${
                       isFlipped
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
