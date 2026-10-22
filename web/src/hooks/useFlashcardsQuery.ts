@@ -79,7 +79,7 @@ interface UserDeck {
   created_at: string;
 }
 
-interface SaveDeckRequest {
+export interface SaveDeckRequest {
   request_id?: string;
   user_id: string;
   topic: string;

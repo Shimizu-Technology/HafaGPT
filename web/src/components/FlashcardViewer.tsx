@@ -5,7 +5,7 @@ import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
 import { useAuth, useUser } from '@clerk/clerk-react';
-import { useSaveDeck, useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
+import { useSaveDeck, useDictionaryFlashcards, type SaveDeckRequest } from '../hooks/useFlashcardsQuery';
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
 import { createCardIdentity, resolveReviewSourceKind } from '../lib/cardIdentity';
 import { ReviewRatingButtons } from './ReviewRatingButtons';
@@ -54,8 +54,10 @@ const topicTitles: Record<string, string> = {
 /** Coordinate curated and dictionary-backed flashcard study with trust context. */
 export function FlashcardViewer() {
   const { user } = useUser();
-  // ProtectedRoute does not remount its children when the active account changes.
-  return <FlashcardSession key={user?.id ?? 'signed-out'} />;
+  const { topic } = useParams();
+  const [searchParams] = useSearchParams();
+  // ProtectedRoute preserves children across account/route changes; scope all pending work.
+  return <FlashcardSession key={`${user?.id ?? 'signed-out'}:${topic}:${searchParams.get('type') ?? 'curated'}`} />;
 }
 
 function FlashcardSession() {
@@ -105,7 +107,7 @@ function FlashcardSession() {
   const activeUserRef = useRef(user?.id);
   const sessionActiveRef = useRef(false);
   const generationTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const saveAttemptRef = useRef<{ cards: FlashcardData[]; requestId: string } | null>(null);
+  const saveAttemptRef = useRef<{ cards: FlashcardData[]; request: SaveDeckRequest } | null>(null);
   useLayoutEffect(() => {
     if (activeCardsRef.current !== flashcards) saveAttemptRef.current = null;
     activeCardsRef.current = flashcards;
@@ -166,7 +168,7 @@ function FlashcardSession() {
 
   // Load cards based on cardType from URL
   useEffect(() => {
-    if (!topic) return;
+    if (!topic || saveAttemptRef.current) return;
     
     if (cardType === 'curated') {
       // Load hardcoded curated cards immediately
@@ -441,23 +443,26 @@ function FlashcardSession() {
     const savingUser = user.id;
     const stillCurrent = () => sessionActiveRef.current && activeCardsRef.current === cardsToSave && activeUserRef.current === savingUser;
     if (saveAttemptRef.current?.cards !== cardsToSave) {
-      saveAttemptRef.current = { cards: cardsToSave, requestId: crypto.randomUUID() };
+      saveAttemptRef.current = {
+        cards: cardsToSave,
+        request: {
+          request_id: crypto.randomUUID(),
+          user_id: savingUser,
+          topic,
+          title: `My ${topicTitles[topic] || dictionaryData?.category?.title || topic} Cards`,
+          card_type: 'custom',
+          cards: cardsToSave.map(card => ({
+            front: card.front,
+            back: card.back,
+            pronunciation: card.pronunciation || null,
+            example: card.example || null,
+          })),
+        },
+      };
     }
     saveInFlightRef.current = true;
     setDeckSaveError(null);
-    saveDeckMutation.mutate({
-      user_id: savingUser,
-      request_id: saveAttemptRef.current.requestId,
-      topic,
-      title: `My ${topicTitles[topic] || dictionaryData?.category?.title || topic} Cards`,
-      card_type: 'custom',
-      cards: cardsToSave.map(card => ({
-        front: card.front,
-        back: card.back,
-        pronunciation: card.pronunciation || null,
-        example: card.example || null,
-      })),
-    }, {
+    saveDeckMutation.mutate(saveAttemptRef.current.request, {
       onSuccess: (data) => {
         saveInFlightRef.current = false;
         if (!stillCurrent()) return;

@@ -1,17 +1,17 @@
 import { Suspense, startTransition } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { FlashcardDeckList } from './FlashcardDeckList';
 import { FlashcardViewer } from './FlashcardViewer';
 
-const mocks = vi.hoisted(() => ({ userId: 'pr4-fixture-user', save: vi.fn(), review: vi.fn(), refetch: vi.fn(), dictionary: {
+const mocks = vi.hoisted(() => ({ dictionaryError: null as Error | null, userId: 'pr4-fixture-user', save: vi.fn(), review: vi.fn(), refetch: vi.fn(), dictionary: {
   cards: [{ source_id: 'pr4-fixture', front: 'Fixture prompt', back: 'Fixture meaning', example: null }],
   category: { id: 'pr4-long-title', title: 'A very long family practice title that remains available to read in full on a phone' },
 } }));
 vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ user: { id: mocks.userId } }), useAuth: () => ({ getToken: async () => 'token' }) }));
 vi.mock('../hooks/useTheme', () => ({ useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }) }));
-vi.mock('../hooks/useFlashcardsQuery', () => ({ useSaveDeck: () => ({ mutate: mocks.save, isPending: false }), useDictionaryFlashcards: () => ({ data: mocks.dictionary, isLoading: false, refetch: mocks.refetch }) }));
+vi.mock('../hooks/useFlashcardsQuery', () => ({ useSaveDeck: () => ({ mutate: mocks.save, isPending: false }), useDictionaryFlashcards: () => ({ data: mocks.dictionary, error: mocks.dictionaryError, isLoading: false, refetch: mocks.refetch }) }));
 vi.mock('../hooks/useVocabularyQuery', () => ({ useVocabularyCategories: () => ({ data: { categories: [], total_words: 100 } }) }));
 vi.mock('../hooks/useSpacedRepetition', () => ({ useRecordReview: () => ({ mutateAsync: mocks.review, isPending: false }) }));
 vi.mock('./TTSDisclaimer', () => ({ TTSDisclaimer: () => null }));
@@ -22,7 +22,7 @@ function show(path: string) {
 }
 const initialDictionary = mocks.dictionary;
 const initialCards = initialDictionary.cards;
-beforeEach(() => { vi.clearAllMocks(); mocks.userId = 'pr4-fixture-user'; mocks.dictionary = initialDictionary; mocks.dictionary.cards = initialCards; mocks.review.mockResolvedValue({}); });
+beforeEach(() => { vi.clearAllMocks(); mocks.dictionaryError = null; mocks.userId = 'pr4-fixture-user'; mocks.dictionary = initialDictionary; mocks.dictionary.cards = initialCards; mocks.review.mockResolvedValue({}); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 it('offers a visibly named Saved decks destination outside the cramped header', () => {
   show('/flashcards');
@@ -163,4 +163,43 @@ it('keeps the same save set and key if dictionary data refreshes after an uncert
   expect(screen.getByRole('button', { name: 'Get new flashcards' })).toBeDisabled();
   fireEvent.click(screen.getByRole('button', { name: 'Try saving again' }));
   expect(mocks.save.mock.calls[1][0]).toEqual(first);
+});
+
+it.each(['greetings', 'pr4-long-title'])('preserves the uncertain save on a dictionary refresh error for %s', async topic => {
+  mocks.save.mockImplementationOnce((_payload, callbacks) => callbacks.onError(new TypeError('Failed to fetch')));
+  const path = `/flashcards/${topic}?type=custom`;
+  const view = show(path);
+  fireEvent.click(await screen.findByRole('button', { name: 'Save this set' }));
+  const first = mocks.save.mock.calls[0][0];
+  mocks.dictionaryError = new Error('Background dictionary outage');
+  view.rerender(<MemoryRouter initialEntries={[path]}><Routes><Route path="/flashcards" element={<FlashcardDeckList />} /><Route path="/flashcards/:topic" element={<FlashcardViewer />} /></Routes></MemoryRouter>);
+  expect(screen.getByRole('alert')).toHaveTextContent('couldn’t confirm the save');
+  expect(screen.getByRole('button', { name: 'Fixture prompt' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Try saving again' }));
+  expect(mocks.save.mock.calls[1][0]).toEqual(first);
+});
+
+it('retries the entire original payload even when refreshed category metadata changes the title', async () => {
+  mocks.save.mockImplementationOnce((_payload, callbacks) => callbacks.onError(new TypeError('Failed to fetch')));
+  const view = show('/flashcards/pr4-long-title?type=custom');
+  fireEvent.click(await screen.findByRole('button', { name: 'Save this set' }));
+  const first = mocks.save.mock.calls[0][0];
+  mocks.dictionary = { ...mocks.dictionary, category: { ...mocks.dictionary.category, title: 'Updated title after the first save committed' } };
+  view.rerender(<MemoryRouter initialEntries={['/flashcards/pr4-long-title?type=custom']}><Routes><Route path="/flashcards" element={<FlashcardDeckList />} /><Route path="/flashcards/:topic" element={<FlashcardViewer />} /></Routes></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: 'Try saving again' }));
+  expect(mocks.save.mock.calls[1][0]).toEqual(first);
+});
+
+it('cancels queued appends when the topic changes within the viewer route', async () => {
+  mocks.dictionary.cards = [0, 1, 2].map(i => ({ source_id: `fixture-${i}`, front: `Prompt ${i}`, back: `Meaning ${i}`, example: null }));
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ flashcards: [{ front: 'Old topic generated', back: 'Old meaning', category: 'Test' }] }) }));
+  render(<MemoryRouter initialEntries={['/flashcards/pr4-long-title?type=custom']}><Link to="/flashcards/family?type=custom">Other topic</Link><Routes><Route path="/flashcards/:topic" element={<FlashcardViewer />} /></Routes></MemoryRouter>);
+  await screen.findByRole('button', { name: 'Save this set' });
+  vi.useFakeTimers();
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Next flashcard' })); });
+  fireEvent.click(screen.getByRole('link', { name: 'Other topic' }));
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+  fireEvent.click(screen.getByRole('button', { name: 'Save this set' }));
+  expect(mocks.save.mock.calls[0][0].topic).toBe('family');
+  expect(mocks.save.mock.calls[0][0].cards).toHaveLength(3);
 });
