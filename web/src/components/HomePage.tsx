@@ -248,14 +248,19 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
             <button
               type="button"
               onClick={onStart}
-              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 py-3 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+              aria-describedby="public-account-note"
+              className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 py-3 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-ocean-800"
             >
               Start learning free <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </button>
+            <p id="public-account-note" className="mt-3 text-base text-brown-600 dark:text-gray-300">Free account needed — takes a minute.</p>
+            <Link to="/chat?intent=translate" aria-describedby="public-account-note" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl font-semibold text-coral-700 underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300">
+              <Languages className="h-5 w-5" aria-hidden="true" /> Ask or translate
+            </Link>
           </div>
           <div className="rounded-3xl bg-cream-50 p-5 dark:bg-slate-900/60 sm:p-6">
             <p className="text-sm font-semibold text-brown-700 dark:text-gray-200">One welcoming place for</p>
-            <ul className="mt-4 space-y-3 text-sm text-brown-700 dark:text-gray-300">
+            <ul className="mt-4 space-y-3 text-base text-brown-700 dark:text-gray-300">
               <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-600" aria-hidden="true" /> Quick questions and translations</li>
               <li className="flex items-center gap-3"><GraduationCap className="h-5 w-5 text-blue-600" aria-hidden="true" /> 21 guided lesson topics</li>
               <li className="flex items-center gap-3"><Book className="h-5 w-5 text-indigo-600" aria-hidden="true" /> A 10,000+ word dictionary</li>
@@ -269,23 +274,24 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
         <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Try it now</p>
         <h2 id="public-tools-heading" className="mt-0.5 text-2xl font-bold text-brown-950 dark:text-white">Public learning tools</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Link to="/vocabulary" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
+          <Link to="/vocabulary" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"><Search className="h-6 w-6" aria-hidden="true" /></span>
-            <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Search the dictionary</span><span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">Find a Chamorro word or browse a category.</span></span>
-            <ArrowRight className="h-5 w-5 text-indigo-600 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Search the dictionary</span><span className="mt-1 block text-base text-brown-600 dark:text-gray-300">Find a Chamorro word or browse a category.</span></span>
+            <ArrowRight className="h-5 w-5 text-indigo-600" aria-hidden="true" />
           </Link>
-          <Link to="/stories" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
+          <Link to="/stories" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"><BookMarked className="h-6 w-6" aria-hidden="true" /></span>
-            <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Read a Chamorro story</span><span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">Learn language through stories and culture.</span></span>
-            <ArrowRight className="h-5 w-5 text-amber-600 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Read a Chamorro story</span><span className="mt-1 block text-base text-brown-600 dark:text-gray-300">Learn language through stories and culture.</span></span>
+            <ArrowRight className="h-5 w-5 text-amber-600" aria-hidden="true" />
           </Link>
         </div>
       </section>
 
       <footer className="flex flex-wrap items-center justify-center gap-3 border-t border-cream-200 py-6 text-center text-sm text-brown-500 dark:border-slate-700 dark:text-gray-400">
-        <Link to="/about" className="inline-flex min-h-11 items-center justify-center font-semibold text-coral-700 hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
-        <span aria-hidden="true">·</span>
-        <Link to="/privacy" className="inline-flex min-h-11 items-center justify-center hover:underline">Privacy</Link>
+        <Link to="/about" className="inline-flex min-h-11 items-center justify-center font-semibold text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline dark:text-ocean-300">Why HåfaGPT was built</Link>
+        <Link to="/support" className="inline-flex min-h-11 items-center justify-center [@media(hover:hover)_and_(pointer:fine)]:hover:underline">Support</Link>
+        <Link to="/pricing" className="inline-flex min-h-11 items-center justify-center [@media(hover:hover)_and_(pointer:fine)]:hover:underline">Plans</Link>
+        <Link to="/privacy" className="inline-flex min-h-11 items-center justify-center [@media(hover:hover)_and_(pointer:fine)]:hover:underline">Privacy</Link>
       </footer>
     </main>
   );

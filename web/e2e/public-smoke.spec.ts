@@ -613,7 +613,8 @@ test('public information and shared-link recovery stay clear without authenticat
 
   await page.goto('/share/not-found');
   await expect(page.getByRole('alert')).toContainText(/not found/i);
-  await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Go to HåfaGPT', exact: true })).toBeVisible();
 
   expect(errors.filter((error) => !error.includes('/api/share/not-found'))).toEqual([]);
 });
