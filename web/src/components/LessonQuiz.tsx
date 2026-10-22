@@ -7,6 +7,10 @@ import { getQuestionConceptId } from '../data/conceptEvidence';
 import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
 import { browserStorage } from '../lib/browserStorage';
 import { createClientAttemptId } from '../lib/clientAttemptId';
+import { Button } from './Button';
+import { LearnerProgress } from './LearnerProgress';
+import { PronunciationButton } from './PronunciationButton';
+import { TTSDisclaimer } from './TTSDisclaimer';
 import { useSaveQuizResult } from '../hooks/useQuizQuery';
 
 interface LessonQuizProps {
@@ -159,6 +163,7 @@ function LessonQuizSession({
   ownerId,
 }: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
+  const questionRef = useRef<HTMLHeadingElement>(null);
   const active = useRef(true);
   useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   // Try to restore saved state first
@@ -238,6 +243,13 @@ function LessonQuizSession({
   );
   const [isSavingResult, setIsSavingResult] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const previousQuestion = useRef({ index: currentIndex, prompt: showResumePrompt });
+  useEffect(() => {
+    const changed = previousQuestion.current.index !== currentIndex || previousQuestion.current.prompt !== showResumePrompt;
+    previousQuestion.current = { index: currentIndex, prompt: showResumePrompt };
+    if (changed && !showResumePrompt) questionRef.current?.focus();
+  }, [currentIndex, showResumePrompt]);
 
   // Save state whenever it changes
   const persistState = useCallback(() => {
@@ -319,7 +331,7 @@ function LessonQuizSession({
   if (allQuestions.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-brown-600 dark:text-gray-400">
+        <p className="text-brown-600 dark:text-gray-300">
           No quiz questions available for this topic.
         </p>
         <button
@@ -335,46 +347,41 @@ function LessonQuizSession({
   // Show resume prompt if there's saved progress
   if (showResumePrompt && savedState) {
     return (
-      <div className="animate-fade-in space-y-6">
+      <div className="space-y-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 text-center">
-          <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ArrowRight className="w-8 h-8 text-purple-500 dark:text-purple-400" />
+          <div className="w-16 h-16 bg-coral-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ArrowRight className="w-8 h-8 text-coral-700 dark:text-teal-300" />
           </div>
           
-          <h3 className="text-xl font-bold text-brown-800 dark:text-white mb-2">
+          <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white mb-2">
             Continue Quiz?
           </h3>
           
-          <p className="text-brown-600 dark:text-gray-400 mb-6">
+          <p className="text-brown-600 dark:text-gray-300 mb-6">
             You were on question {savedState.currentIndex + 1} of {allQuestions.length} with {savedState.correctCount} correct answer{savedState.correctCount !== 1 ? 's' : ''}.
           </p>
           
           <div className="space-y-3">
-            <button
+            <Button size="large"
               onClick={() => setShowResumePrompt(false)}
-              className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700
-                       text-white font-semibold rounded-2xl shadow-lg
-                       hover:from-purple-600 hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800
-                       transition-all"
+              className="w-full"
             >
               Continue Where I Left Off
-            </button>
+            </Button>
             
-            <button
+            <Button size="large" variant="secondary"
               onClick={handleStartFresh}
-              className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400
-                       font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600 
-                       transition-colors"
+              className="w-full"
             >
               Start Fresh
-            </button>
+            </Button>
           </div>
         </div>
       </div>
     );
   }
 
-  const checkAnswer = () => {
+  const checkAnswer = (skip = false) => {
     if (!currentQuestion) return;
     setRestoredIsCorrect(null);
 
@@ -386,7 +393,7 @@ function LessonQuizSession({
       correct = selectedAnswer === currentQuestion.correctAnswer;
     } else {
       // For fill_blank and type_answer - use fuzzy matching
-      userAnswer = typedAnswer.trim();
+      userAnswer = skip ? '' : typedAnswer.trim();
       const result = checkFuzzyAnswer(
         userAnswer,
         currentQuestion.correctAnswer,
@@ -406,6 +413,7 @@ function LessonQuizSession({
       [currentQuestion.id]: { userAnswer, isCorrect: correct }
     }));
     
+    setRestoredIsCorrect(correct);
     setIsAnswered(true);
   };
 
@@ -480,24 +488,22 @@ function LessonQuizSession({
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       {/* Progress */}
-      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-400">
+      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-300">
         <span>Question {currentIndex + 1} of {allQuestions.length}</span>
         <span>{correctCount} correct</span>
       </div>
       
-      <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-purple-400 to-purple-500 dark:from-purple-500 dark:to-purple-600 rounded-full transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <LearnerProgress value={progress} label="Quiz progress" />
+      <TTSDisclaimer variant="inline" className="!text-amber-800 dark:!text-amber-200" />
+      <p className="text-base text-muted">Tap “Hear it” to listen. Ask a grown-up to read this with you if audio is unavailable.</p>
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{isAnswered ? isCorrect ? 'Correct.' : `Incorrect. Correct answer: ${currentQuestion.correctAnswer}` : ''}</p>
 
       {/* Question card */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50">
         {/* Question type badge */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
             currentQuestion.type === 'multiple_choice'
               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
@@ -512,28 +518,36 @@ function LessonQuizSession({
           {currentQuestion.hint && !isAnswered && (
             <button
               onClick={() => setShowHint(!showHint)}
-              className="p-2 rounded-lg text-brown-500 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+              type="button"
+              aria-label={showHint ? 'Hide hint' : 'Show hint'}
+              aria-expanded={showHint}
+              aria-controls="lesson-quiz-hint"
+              className="min-h-11 min-w-11 p-2 rounded-lg text-brown-600 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
             >
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-5 h-5" aria-hidden="true" />
             </button>
           )}
         </div>
 
         {/* Question */}
-        <h3 className="text-xl font-semibold text-brown-800 dark:text-white mb-6">
+        <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-semibold text-brown-800 dark:text-white mb-6">
           {currentQuestion.question}
         </h3>
 
+        <PronunciationButton key={currentQuestion.id} text={currentQuestion.question} label="Hear it" showLabel />
+        <p id="lesson-quiz-instructions" className="my-3 text-base text-muted">{currentQuestion.type === 'multiple_choice' ? 'Choose one answer, then check your answer.' : 'Type your answer, then check it. You can also choose “I don’t know”.'}</p>
+
         {/* Hint */}
         {showHint && currentQuestion.hint && !isAnswered && (
-          <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-700 dark:text-amber-300 text-sm">
-            💡 Hint: {currentQuestion.hint}
+          <div id="lesson-quiz-hint" className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-700 dark:text-amber-300 text-sm">
+            <p>Hint: {currentQuestion.hint}</p>
+            <PronunciationButton text={currentQuestion.hint} label="Hear it" showLabel />
           </div>
         )}
 
         {/* Answer options */}
         {currentQuestion.type === 'multiple_choice' ? (
-          <div className="space-y-3">
+          <div role="group" aria-labelledby="lesson-quiz-question" aria-describedby="lesson-quiz-instructions" className="space-y-3">
             {currentQuestion.options?.map((option, idx) => {
               const isSelected = selectedAnswer === option;
               const isCorrectAnswer = option === currentQuestion.correctAnswer;
@@ -559,11 +573,13 @@ function LessonQuizSession({
               }
               
               return (
+                <div key={idx} className="flex flex-col gap-1">
                 <button
-                  key={idx}
+                  type="button"
+                  aria-pressed={isSelected}
                   onClick={() => !isAnswered && setSelectedAnswer(option)}
                   disabled={isAnswered}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${bgClass} ${borderClass} ${
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-colors ${bgClass} ${borderClass} ${
                     isAnswered ? 'cursor-default' : 'cursor-pointer'
                   }`}
                 >
@@ -580,6 +596,8 @@ function LessonQuizSession({
                     )}
                   </div>
                 </button>
+                <PronunciationButton key={`${currentQuestion.id}:${idx}`} text={option} label="Hear it" showLabel />
+                </div>
               );
             })}
           </div>
@@ -588,17 +606,19 @@ function LessonQuizSession({
           <div className="space-y-4">
             <input
               type="text"
+              aria-labelledby="lesson-quiz-question"
+              aria-describedby="lesson-quiz-instructions"
               value={typedAnswer}
               onChange={(e) => setTypedAnswer(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !isAnswered && typedAnswer && checkAnswer()}
               disabled={isAnswered}
               placeholder="Type your answer..."
-              className={`w-full p-4 rounded-xl border-2 text-lg font-medium transition-all ${
+              className={`w-full p-4 rounded-xl border-2 text-lg font-medium transition-colors ${
                 isAnswered
                   ? isCorrect
                     ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-700 dark:text-emerald-300'
                     : 'bg-red-50 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-300'
-                  : 'bg-cream-50 dark:bg-slate-700 border-cream-200 dark:border-slate-600 text-brown-800 dark:text-white placeholder:text-brown-400 dark:placeholder:text-gray-500'
+                  : 'bg-cream-50 dark:bg-slate-700 border-cream-200 dark:border-slate-600 text-brown-800 dark:text-white placeholder:text-brown-600 dark:placeholder:text-gray-300'
               }`}
             />
             
@@ -607,9 +627,9 @@ function LessonQuizSession({
               <button
                 onClick={() => {
                   setTypedAnswer('');
-                  checkAnswer();
+                  checkAnswer(true);
                 }}
-                className="w-full py-3 px-4 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400
+                className="w-full py-3 px-4 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300
                          font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600 
                          transition-colors text-sm"
               >
@@ -618,8 +638,8 @@ function LessonQuizSession({
             )}
             
             {isAnswered && !isCorrect && (
-              <p className="text-sm text-brown-600 dark:text-gray-400">
-                Correct answer: <span className="font-semibold text-emerald-600 dark:text-emerald-400">{currentQuestion.correctAnswer}</span>
+              <p className="text-sm text-brown-600 dark:text-gray-300">
+                Correct answer: <span className="font-semibold text-emerald-700 dark:text-emerald-400">{currentQuestion.correctAnswer}</span>
               </p>
             )}
           </div>
@@ -635,6 +655,7 @@ function LessonQuizSession({
             <p className="text-sm">
               {isCorrect ? '✓ ' : '💡 '}{currentQuestion.explanation}
             </p>
+            <PronunciationButton text={currentQuestion.explanation} label="Hear it" showLabel />
           </div>
         )}
       </div>
@@ -650,26 +671,18 @@ function LessonQuizSession({
       )}
 
       {!isAnswered ? (
-        <button
-          onClick={checkAnswer}
+        <Button size="large"
+          onClick={() => checkAnswer()}
           disabled={currentQuestion.type === 'multiple_choice' ? !selectedAnswer : !typedAnswer.trim()}
-          className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700
-                   text-white font-semibold rounded-2xl shadow-lg
-                   hover:from-purple-600 hover:to-purple-700 dark:hover:from-purple-700 dark:hover:to-purple-800
-                   transition-all disabled:opacity-50 disabled:cursor-not-allowed
-                   flex items-center justify-center gap-2"
+          className="w-full"
         >
           Check Answer
-        </button>
+        </Button>
       ) : (
-        <button
+        <Button size="large"
           onClick={handleNext}
           disabled={isSavingResult}
-          className={`w-full py-4 font-semibold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 ${
-            isCorrect
-              ? 'bg-emerald-700 text-white hover:bg-emerald-800'
-              : 'bg-coral-700 dark:bg-teal-700 text-white hover:from-coral-600 hover:to-coral-700'
-          } disabled:cursor-not-allowed disabled:opacity-60`}
+          className="w-full"
         >
           {isSavingResult
             ? 'Saving Result…'
@@ -679,7 +692,7 @@ function LessonQuizSession({
                 ? 'See Results'
                 : 'Next Question'}
           <ArrowRight className="w-5 h-5" />
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useXP, getLevelInfo } from '../hooks/useXP';
-import { Zap, ChevronRight } from 'lucide-react';
+import { Zap, ChevronRight, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { XPData } from '../hooks/useHomepageData';
 
@@ -36,12 +36,12 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </span>
         <div className="w-16 h-1.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full transition-all duration-500"
-            style={{ width: `${xpData.xp_progress}%` }}
+            className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full origin-left"
+            style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
           />
         </div>
         <Zap className="w-3.5 h-3.5 text-amber-500" />
-        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+        <span className="text-xs font-medium text-amber-800 dark:text-amber-300">
           {xpData.total_xp.toLocaleString()}
         </span>
       </div>
@@ -65,7 +65,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
                 {levelInfo.title}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-amber-600 dark:text-amber-400">
+            <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300">
               {xpData.total_xp.toLocaleString()} XP total
             </p>
           </div>
@@ -73,7 +73,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         
         <Link 
           to="/settings" 
-          className="p-2 text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 rounded-lg transition-colors"
+          className="p-2 text-amber-500 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-800/30 rounded-lg transition-colors"
           title="XP Settings"
         >
           <ChevronRight className="w-5 h-5" />
@@ -83,7 +83,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
       {/* XP Progress Bar */}
       <div className="mb-3">
         <div className="flex justify-between text-xs mb-1">
-          <span className="text-amber-600 dark:text-amber-400 font-medium">
+          <span className="text-amber-800 dark:text-amber-300 font-medium">
             Progress to Level {xpData.level + 1}
           </span>
           <span className="text-amber-700 dark:text-amber-300 font-bold">
@@ -92,12 +92,9 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </div>
         <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 rounded-full transition-all duration-700 ease-out relative overflow-hidden"
-            style={{ width: `${xpData.xp_progress}%` }}
-          >
-            {/* Shimmer effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-          </div>
+            className="h-full bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 rounded-full origin-left relative overflow-hidden"
+            style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
+          />
         </div>
       </div>
 
@@ -123,7 +120,7 @@ export function XPBadge() {
         {xpData.level}
       </span>
       <Zap className="w-3 h-3 text-amber-500" />
-      <span className="text-xs text-amber-600 dark:text-amber-400">
+      <span className="text-xs text-amber-800 dark:text-amber-300">
         {xpData.total_xp >= 1000 
           ? `${(xpData.total_xp / 1000).toFixed(1)}k` 
           : xpData.total_xp}
@@ -143,17 +140,19 @@ interface XPToastProps {
 export function XPToast({ xpEarned, levelUp, newLevel, onClose }: XPToastProps) {
   return (
     <div 
-      className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-bounce-in"
-      onClick={onClose}
+      className="learner-toast-offset fixed left-1/2 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 z-[80]"
     >
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-amber-950 rounded-full shadow-lg cursor-pointer hover:scale-105 transition-transform">
-        <Zap className="w-5 h-5 animate-pulse" />
-        <span className="font-bold">+{xpEarned} XP</span>
-        {levelUp && newLevel && (
-          <span className="px-2 py-0.5 bg-white/20 rounded-full text-sm font-medium">
-            Level Up! → {newLevel} 🎉
-          </span>
-        )}
+      <div className="flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-amber-100 px-4 py-2 text-amber-950 shadow-lg dark:bg-amber-950 dark:text-amber-100">
+        <div role="status" aria-live="polite" aria-atomic="true" className="flex flex-wrap items-center gap-2">
+          <Zap className="w-5 h-5" aria-hidden="true" />
+          <span className="font-bold">+{xpEarned} XP</span>
+          {levelUp && newLevel && (
+            <span className="px-2 py-0.5 bg-white/20 rounded-full text-sm font-medium">
+              Level Up! → {newLevel} 🎉
+            </span>
+          )}
+        </div>
+        <button type="button" onClick={onClose} aria-label="Dismiss XP notification" className="flex min-h-11 min-w-11 items-center justify-center rounded-xl"><X className="h-5 w-5" aria-hidden="true" /></button>
       </div>
     </div>
   );

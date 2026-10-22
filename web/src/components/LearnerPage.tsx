@@ -50,33 +50,33 @@ export function LearnerPageHeader({
   return (
     <header className={`${sticky ? 'sticky top-0 z-30' : 'relative z-20'} border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95`}>
       <div className={`safe-area-top mx-auto px-4 py-3 ${maxWidthClassName}`}>
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
           {onBack ? (
-            <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+            <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </button>
           ) : (
-            <Link to={backTo} replace aria-label={backLabel} className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+            <Link to={backTo} replace aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Link>
           )}
 
-          <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
+          <span aria-hidden="true" className={`hidden ${iconClassName}`}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
 
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-bold leading-tight text-brown-950 dark:text-white">{title}</h1>
-            {subtitle && <p className="hidden truncate text-xs text-brown-500 dark:text-gray-400 sm:block">{subtitle}</p>}
+          <div className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+            <h1 className="break-words text-lg font-bold leading-tight text-brown-950 dark:text-white">{title}</h1>
+            {subtitle && <p className="break-words text-xs text-brown-500 dark:text-gray-400">{subtitle}</p>}
           </div>
 
-          {trailing && <div className="flex-none">{trailing}</div>}
+          {trailing && <div className="col-span-3 row-start-3 flex min-w-0 flex-wrap justify-end gap-2">{trailing}</div>}
           {showThemeToggle && (
             <button
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
+              className="col-start-3 row-start-1 flex h-[44px] w-[44px] items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"
             >
               {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
             </button>

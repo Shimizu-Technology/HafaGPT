@@ -55,6 +55,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
     onClose,
     dialogRef,
     initialFocusRef: closeButtonRef,
+    restoreFallback: true,
   });
 
   return (
@@ -76,20 +77,20 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-lg bg-cream-200/50 dark:bg-slate-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-slate-600 transition-colors z-10"
+          className="absolute top-2 right-2 min-h-11 min-w-11 flex items-center justify-center p-2 rounded-lg bg-cream-200/50 dark:bg-slate-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-slate-600 transition-colors z-10"
           aria-label="Close upgrade offer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="bg-coral-600 px-6 py-8 text-center dark:bg-teal-700">
+        <div className="bg-coral-700 px-6 pb-8 pt-16 text-center dark:bg-teal-700">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
             <Icon className="w-8 h-8 text-white" />
           </div>
           <h2 id="upgrade-prompt-title" className="text-xl font-bold text-white mb-2">
             {info.title}
           </h2>
-          <p className="text-white/90 text-sm">
+          <p className="text-white text-sm">
             You have used all {displayedLimit} free {info.unit} for today.
           </p>
           {usageCount !== undefined && (
@@ -114,7 +115,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             {premiumBenefits.map((benefit, index) => (
               <li key={index} className="flex items-start gap-3">
                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mt-0.5">
-                  <Check className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                  <Check className="w-3 h-3 text-teal-700 dark:text-teal-300" />
                 </div>
                 <span className="text-sm text-brown-700 dark:text-gray-300">
                   {benefit}
@@ -135,7 +136,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
                 <div className="text-brown-800 dark:text-white font-semibold">
                   {PREMIUM_PRICING.annual}<span className="text-sm font-normal text-brown-600 dark:text-gray-400">/year</span>
                 </div>
-                <span className="text-xs text-teal-600 dark:text-teal-400">Save {PREMIUM_PRICING.annualSavings}</span>
+                <span className="text-xs text-teal-700 dark:text-teal-300">Save {PREMIUM_PRICING.annualSavings}</span>
               </div>
             </div>
           </div>
@@ -161,7 +162,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
 
         {/* Footer note */}
         <div className="px-6 pb-4 text-center">
-          <p className="text-xs text-brown-500 dark:text-gray-500">
+          <p className="text-xs text-brown-500 dark:text-gray-400">
             Your subscription helps keep HåfaGPT running for Chamorro learners 🌺
           </p>
         </div>

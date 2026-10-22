@@ -20,6 +20,13 @@ beforeEach(() => {
   mocks.update.mockResolvedValue({}); mocks.exposure.mockResolvedValue({}); mocks.xp.mockResolvedValue({ xp_earned: 10 });
 });
 describe('lesson continuity and save recovery', () => {
+  it('focuses the new step heading after card and quiz transitions', async () => {
+    const user = userEvent.setup(); view();
+    await user.click(screen.getByRole('button', { name: 'Start cards' }));
+    expect(screen.getByRole('heading', { name: 'Practice cards' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Finish cards' }));
+    expect(screen.getByRole('heading', { name: 'Lesson quiz' })).toHaveFocus();
+  });
   it('does not show a departed learner XP notification or continue their awards', async () => {
     const user = userEvent.setup();
     let finishXP!: (value: { xp_earned: number }) => void;

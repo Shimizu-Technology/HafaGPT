@@ -14,6 +14,7 @@ interface ModalAccessibilityOptions {
   onClose: () => void;
   dialogRef: RefObject<HTMLElement | null>;
   initialFocusRef?: RefObject<HTMLElement | null>;
+  restoreFallback?: boolean;
 }
 
 export function useModalAccessibility({
@@ -21,6 +22,7 @@ export function useModalAccessibility({
   onClose,
   dialogRef,
   initialFocusRef,
+  restoreFallback = false,
 }: ModalAccessibilityOptions) {
   const onCloseRef = useRef(onClose);
 
@@ -81,7 +83,22 @@ export function useModalAccessibility({
       window.cancelAnimationFrame(focusInitialControl);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
-      if (previouslyFocused?.isConnected) previouslyFocused.focus();
+      const restore = () => {
+        const previousUsable = previouslyFocused?.isConnected && previouslyFocused !== document.body
+          && !previouslyFocused.matches(':disabled, [aria-disabled="true"]');
+        const target = previousUsable ? previouslyFocused : document.querySelector<HTMLElement>('main textarea:not(:disabled), main input:not(:disabled), textarea:not(:disabled), input:not(:disabled), main h1, h1, main h2');
+        if (target) {
+          if (!target.matches(FOCUSABLE_SELECTOR)) target.tabIndex = -1;
+          target.focus({ preventScroll: true });
+        }
+      };
+      // Let the caller re-enable its stable composer/trigger after closing.
+      if (previouslyFocused?.isConnected && previouslyFocused !== document.body && !previouslyFocused.matches(':disabled, [aria-disabled="true"]')) restore();
+      else if (restoreFallback) window.requestAnimationFrame(() => {
+        const current = document.activeElement;
+        if (current instanceof HTMLElement && current !== document.body && current.isConnected && !current.matches(':disabled')) return;
+        restore();
+      });
     };
-  }, [dialogRef, initialFocusRef, isOpen]);
+  }, [dialogRef, initialFocusRef, restoreFallback, isOpen]);
 }

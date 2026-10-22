@@ -5,6 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Small semantic contract. Existing palette aliases remain compatible.
+        action: 'rgb(var(--action) / <alpha-value>)',
+        'action-hover': 'rgb(var(--action-hover) / <alpha-value>)',
+        'on-action': 'rgb(var(--on-action) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
+        'surface-subtle': 'rgb(var(--surface-subtle) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        'focus-role': 'rgb(var(--focus-role) / <alpha-value>)',
+        danger: 'rgb(var(--danger) / <alpha-value>)',
+        'danger-hover': 'rgb(var(--danger-hover) / <alpha-value>)',
         // New tropical color palette inspired by HafaGPT icon
         coral: {
           50: '#FEF3F1',

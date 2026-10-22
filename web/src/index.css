@@ -3,6 +3,28 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --action: 184 55 48; /* coral-700 */
+    --action-hover: 150 48 46;
+    --on-action: 255 255 255;
+    --surface: 254 253 251;
+    --surface-subtle: 255 248 240;
+    --ink: 28 21 18;
+    --muted: 90 68 48;
+    --focus-role: 61 114 115;
+    --danger: 185 28 28;
+    --danger-hover: 153 27 27;
+  }
+  .dark {
+    --action: 61 114 115; /* teal-700 */
+    --action-hover: 53 93 94;
+    --surface: 15 23 42;
+    --surface-subtle: 30 41 59;
+    --ink: 255 255 255;
+    --muted: 209 213 219;
+    --focus-role: 136 213 214;
+  }
+
   * {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-ocean-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
   }
@@ -21,6 +43,26 @@
     padding: 0;
     overflow-x: hidden;
   }
+}
+
+@layer components {
+  .action-button {
+    @apply inline-flex min-w-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-base font-semibold text-center whitespace-normal break-words transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-role focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-60;
+    touch-action: manipulation;
+  }
+  .action-button > svg { flex-shrink: 0; }
+  .action-primary { @apply bg-action text-on-action; }
+  .action-secondary { @apply border border-brown-300 bg-surface-subtle text-ink dark:border-slate-500; }
+  .action-quiet { @apply text-muted; }
+  .action-danger { @apply bg-danger text-white; }
+  @media (hover: hover) and (pointer: fine) {
+    .action-primary:enabled:hover { @apply bg-action-hover; }
+    .action-secondary:enabled:hover, .action-quiet:enabled:hover { @apply bg-cream-200 dark:bg-slate-700; }
+    .action-danger:enabled:hover { @apply bg-danger-hover; }
+  }
+  /* Scoped body floor: metadata may stay 12px; lesson/story/practice prose is 16px. */
+  .learner-reading .text-sm, .learner-reading p.text-xs { font-size: 1rem; }
+  .learner-reading { overflow-wrap: anywhere; }
 }
 
 @layer utilities {
