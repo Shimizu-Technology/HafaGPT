@@ -8,6 +8,7 @@ interface MemoryCardProps {
   isMatched: boolean;
   onClick: (id: number) => void;
   disabled: boolean;
+  onRead?: () => void;
 }
 
 export const MemoryCard = memo(function MemoryCard({
@@ -18,6 +19,7 @@ export const MemoryCard = memo(function MemoryCard({
   isMatched,
   onClick,
   disabled,
+  onRead,
 }: MemoryCardProps) {
   const handleClick = () => {
     if (!disabled && !isFlipped && !isMatched) {
@@ -25,16 +27,8 @@ export const MemoryCard = memo(function MemoryCard({
     }
   };
 
-  // Dynamic text size based on content length - responsive scaling
-  const getTextSize = () => {
-    const len = content.length;
-    if (len <= 6) return 'text-xs sm:text-lg md:text-xl';
-    if (len <= 10) return 'text-[11px] sm:text-base md:text-lg';
-    if (len <= 15) return 'text-[10px] sm:text-sm md:text-base';
-    return 'text-[9px] sm:text-xs md:text-sm';
-  };
-
   return (
+    <div>
     <button
       type="button"
       onClick={handleClick}
@@ -54,11 +48,11 @@ export const MemoryCard = memo(function MemoryCard({
     >
       <div
         aria-hidden="true"
-        className="relative w-full h-full"
+        className="game-memory-flip relative w-full h-full"
         style={{
           transformStyle: 'preserve-3d',
           transform: isFlipped || isMatched ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          transition: 'transform 0.5s',
+          transition: 'transform 200ms cubic-bezier(.23,1,.32,1)',
         }}
       >
         {/* Card Back (face-down) */}
@@ -68,7 +62,7 @@ export const MemoryCard = memo(function MemoryCard({
             bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600
             flex items-center justify-center shadow-md md:shadow-lg
             border-2 border-coral-400 dark:border-ocean-400
-            ${isFlipped || isMatched ? '' : 'hover:scale-[1.02] active:scale-95'}
+            ${isFlipped || isMatched ? '' : ''}
           `}
           style={{ backfaceVisibility: 'hidden' }}
         >
@@ -95,7 +89,7 @@ export const MemoryCard = memo(function MemoryCard({
             <>
               {/* Language Badge */}
               <span className={`
-                inline-block px-1 sm:px-1.5 py-0.5 text-[7px] sm:text-[9px] md:text-[10px] font-bold rounded-full mb-0.5 sm:mb-1
+                inline-block px-1 sm:px-1.5 py-0.5 text-xs font-bold rounded-full mb-0.5 sm:mb-1
                 ${type === 'chamorro'
                   ? 'bg-coral-100 text-coral-700 dark:bg-coral-900/40 dark:text-coral-300'
                   : 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
@@ -108,7 +102,7 @@ export const MemoryCard = memo(function MemoryCard({
               {/* Word - Full text with proper wrapping */}
               <p className={`
                 font-bold text-center leading-tight px-0.5 w-full
-                ${getTextSize()}
+                text-base sm:text-base
                 ${isMatched
                   ? 'text-white'
                   : 'text-brown-800 dark:text-white'
@@ -118,10 +112,8 @@ export const MemoryCard = memo(function MemoryCard({
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
                 hyphens: 'auto',
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
+                overflow: 'auto',
+                maxHeight: '75%',
               }}
               >
                 {content}
@@ -131,5 +123,7 @@ export const MemoryCard = memo(function MemoryCard({
         </div>
       </div>
     </button>
+    {(isFlipped || isMatched) && onRead && <button type="button" onClick={onRead} className="mt-1 min-h-11 w-full rounded-lg border border-cream-300 px-2 text-sm font-semibold text-brown-800 dark:border-slate-600 dark:text-gray-200">Read / hear card</button>}
+    </div>
   );
 });

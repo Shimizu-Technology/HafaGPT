@@ -1,3 +1,6 @@
+import { GameTermDialog } from './games/GameTermDialog';
+import { useGamePace } from '../hooks/useGamePace';
+import { GamePaceControl } from './games/GamePaceControl';
 import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -111,6 +114,8 @@ const DIFFICULTY_CONFIG = {
 };
 
 export function PicturePairs() {
+  const pace = useGamePace();
+  const [readTerm, setReadTerm] = useState<{ content: string; speak?: string } | null>(null);
   const gameReturn = useGameReturn();
   const { isSignedIn } = useUser();
   const saveGameResultMutation = useSaveGameResult();
@@ -120,7 +125,7 @@ export function PicturePairs() {
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
-  const { speak, preload } = useSpeech();
+  const { preload } = useSpeech();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -154,7 +159,7 @@ export function PicturePairs() {
     const pairsCount = DIFFICULTY_CONFIG[difficulty].pairs;
     if (gameState === 'playing' && matchedPairs.length === pairsCount) {
       setGameState('complete');
-      
+
       // Save result
       if (isSignedIn && !hasSavedRef.current) {
         hasSavedRef.current = true;
@@ -252,9 +257,12 @@ export function PicturePairs() {
 
   // Handle card click
   const handleCardClick = useCallback((cardId: number) => {
-    if (isChecking || flippedCards.length >= 2) return;
-    
     const card = cards.find(c => c.id === cardId);
+    if (card && (flippedCards.includes(cardId) || matchedPairs.includes(card.pairId))) {
+      setReadTerm({ content: `${card.word.chamorro} — ${card.word.english}`, speak: card.word.chamorro });
+      return;
+    }
+    if (isChecking || flippedCards.length >= 2) return;
     if (!card || matchedPairs.includes(card.pairId) || flippedCards.includes(cardId)) return;
 
     // Don't speak on flip - wait for match (smoother gameplay)
@@ -272,20 +280,18 @@ export function PicturePairs() {
       if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
         // Match found! Speak the word as reinforcement
         schedule(() => {
-          speak(firstCard.word.chamorro); // Say the matched word
           setMatchedPairs(prev => [...prev, firstCard.pairId]);
           setFlippedCards([]);
           setIsChecking(false);
         }, 600);
       } else {
-        // No match - flip back silently
-        schedule(() => {
+        if (pace.challenge) schedule(() => {
           setFlippedCards([]);
           setIsChecking(false);
-        }, 1000);
+        }, 1500);
       }
     }
-  }, [flippedCards, cards, isChecking, speak, schedule, matchedPairs]);
+  }, [flippedCards, cards, isChecking, schedule, matchedPairs, pace.challenge]);
 
   // Calculate score
   const calculateScore = (moves: number, time: number, pairs: number) => {
@@ -316,6 +322,7 @@ export function PicturePairs() {
 
   return (
     <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
+      <GameTermDialog term={readTerm} onClose={() => setReadTerm(null)} />
       <GamePageHeader title="Picture Pairs" subtitle="Match pictures and hear each Chamorro word" icon={ImageIcon} hasSpeech />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
@@ -337,7 +344,7 @@ export function PicturePairs() {
                     key={category.id}
                     onClick={() => setSelectedCategory(category)}
                     aria-pressed={selectedCategory.id === category.id}
-                    className={`p-3 rounded-xl border-2 transition-all ${
+                    className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                         : 'border-cream-200 dark:border-slate-700 hover:border-teal-300'
@@ -359,7 +366,7 @@ export function PicturePairs() {
                     key={key}
                     onClick={() => setDifficulty(key)}
                     aria-pressed={difficulty === key}
-                    className={`p-3 rounded-xl border-2 transition-all ${
+                    className={`p-3 rounded-xl border-2 transition-colors ${
                       difficulty === key
                         ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
                         : 'border-cream-200 dark:border-slate-700 hover:border-teal-300'
@@ -379,14 +386,15 @@ export function PicturePairs() {
             <TTSDisclaimer variant="banner" className="mb-4" />
 
             {/* Start Button */}
+            <GamePaceControl {...pace} />
             <button
               onClick={startGame}
               className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
-            >
+             disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
-            
+
             {/* Games remaining */}
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
@@ -415,30 +423,30 @@ export function PicturePairs() {
             </div>
 
             {/* Card Grid */}
-            <div className={`grid grid-cols-4 gap-2 sm:gap-3 max-w-md mx-auto`}>
+            <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 max-w-md mx-auto`}>
               {cards.map((card) => {
                 const isMatched = matchedPairs.includes(card.pairId);
                 const isFlipped = flippedCards.includes(card.id) || isMatched;
-                
+
                 return (
                   <button
                     key={card.id}
                     onClick={() => handleCardClick(card.id)}
-                    disabled={isChecking || isMatched || flippedCards.includes(card.id)}
-                    aria-label={isFlipped ? `${card.word.english} picture${isMatched ? ', matched' : ''}` : 'Hidden picture'}
-                    className={`aspect-square rounded-xl transition-all duration-300 transform ${
+                    disabled={isChecking && !isFlipped}
+                    aria-label={isFlipped ? `${card.word.chamorro}, ${card.word.english} picture. Read or hear card${isMatched ? ', matched' : ''}` : 'Hidden picture'}
+                    className={`aspect-square rounded-xl transition-colors duration-300 transform ${
                       isFlipped
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
                           : 'bg-white dark:bg-slate-700 border-2 border-teal-400 rotate-0'
-                        : 'bg-gradient-to-br from-teal-400 to-green-500 border-2 border-teal-300 hover:scale-105 cursor-pointer'
+                        : 'bg-gradient-to-br from-teal-400 to-green-500 border-2 border-teal-300  cursor-pointer'
                     }`}
                     style={{
                       perspective: '1000px',
                     }}
                   >
                     {isFlipped ? (
-                      <span className="text-3xl sm:text-4xl">{card.word.emoji}</span>
+                      <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="break-words text-base font-semibold text-brown-900 dark:text-white">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-gray-200">Read / hear</span></span>
                     ) : (
                       <span className="text-2xl sm:text-3xl">❓</span>
                     )}
@@ -446,6 +454,12 @@ export function PicturePairs() {
                 );
               })}
             </div>
+
+            {isChecking && flippedCards.length === 2 && !pace.challenge && (() => {
+              const first = cards.find(card => card.id === flippedCards[0]);
+              const second = cards.find(card => card.id === flippedCards[1]);
+              return first?.pairId !== second?.pairId;
+            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next — hide these cards</button>}
 
             {/* Restart Button */}
             <div className="flex justify-center mt-4">
@@ -466,11 +480,11 @@ export function PicturePairs() {
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-100 to-teal-200 dark:from-green-900/50 dark:to-teal-800/50 mb-6 shadow-lg">
               <Trophy className="w-12 h-12 text-teal-600" />
             </div>
-            
+
             <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
               Håfa Adai! Great Job!
             </h2>
-            
+
             {/* Stars */}
             <div className="flex justify-center gap-2 mb-4">
               {[1, 2, 3].map(star => (
@@ -484,7 +498,7 @@ export function PicturePairs() {
                 />
               ))}
             </div>
-            
+
             {/* Stats */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg mb-6">
               <div className="grid grid-cols-3 gap-4 text-center">
@@ -502,26 +516,26 @@ export function PicturePairs() {
                 </div>
               </div>
             </div>
-            
+
             {/* Action Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={startGame}
-                disabled={resultUnresolved}
+                disabled={resultUnresolved || startStatus.pending}
                 className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
               </button>
               <button
-                disabled={resultUnresolved}
+                disabled={resultUnresolved || startStatus.pending}
                 onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
                 className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Settings
               </button>
             </div>
-            
+
             <Link
               to={gameReturn.to} replace
               className="inline-block mt-4 text-teal-500 dark:text-teal-400 hover:underline font-medium"

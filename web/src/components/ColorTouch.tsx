@@ -7,7 +7,8 @@ import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useGameSubscription } from '../hooks/useGameSubscription';
-import { useSpeech } from '../hooks/useSpeech';
+import { useGameAudioPrompt } from '../hooks/useGameAudioPrompt';
+import { GameAudioStatus } from './games/GameAudioStatus';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
@@ -47,7 +48,8 @@ export function ColorTouch() {
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
-  const { speak, preload, isSpeaking } = useSpeech();
+  const audio = useGameAudioPrompt();
+  const { speak, preload, isSpeaking, listen, resetPrompt } = audio;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -67,35 +69,36 @@ export function ColorTouch() {
 
   // Generate a new round
   const generateRound = useCallback(() => {
+    resetPrompt();
     // Filter out colors we've already used (if possible)
     let availableColors = COLORS.filter(c => !usedColors.has(c.chamorro));
     if (availableColors.length < 4) {
       setUsedColors(new Set());
       availableColors = COLORS;
     }
-    
+
     // Pick a random color as the correct answer
     const correctColor = availableColors[Math.floor(Math.random() * availableColors.length)];
-    
+
     // Pick 3 wrong answers
     const wrongOptions = COLORS
       .filter(c => c.chamorro !== correctColor.chamorro)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
-    
+
     // Combine and shuffle
     const allOptions = [correctColor, ...wrongOptions].sort(() => Math.random() - 0.5);
-    
+
     setCurrentColor(correctColor);
     setOptions(allOptions);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setUsedColors(prev => new Set([...prev, correctColor.chamorro]));
-    
+
     // Preload audio
     preload(correctColor.chamorro);
     preload('Bunitu!');
-  }, [usedColors, preload]);
+  }, [usedColors, preload, resetPrompt]);
 
   // Start the game
   const startGame = async () => {
@@ -132,13 +135,13 @@ export function ColorTouch() {
 
   // Handle answer selection
   const handleAnswer = (color: ColorItem) => {
-    if (selectedAnswer !== null) return;
-    
+    if (selectedAnswer !== null || !audio.canAnswer) return;
+
     setSelectedAnswer(color.chamorro);
     const correct = color.chamorro === currentColor?.chamorro;
     setIsCorrect(correct);
     setGameState('feedback');
-    
+
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
       const points = 100 + streakBonus;
@@ -152,11 +155,12 @@ export function ColorTouch() {
         speak(currentColor?.chamorro || '');
       }, 500);
     }
-    
+
 
   };
 
   const continueRound = () => {
+    audio.stop();
     clearTimers();
     if (currentRound >= ROUNDS_PER_GAME) {
       setGameState('complete');
@@ -192,7 +196,7 @@ export function ColorTouch() {
 
   const playWord = () => {
     if (currentColor) {
-      speak(currentColor.chamorro);
+      void listen(currentColor.chamorro);
     }
   };
 
@@ -230,11 +234,11 @@ export function ColorTouch() {
             <button
               onClick={startGame}
               className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
-            >
+             disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
-            
+
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
@@ -250,29 +254,31 @@ export function ColorTouch() {
             <button
               onClick={playWord}
               disabled={isSpeaking}
-              className={`w-full py-5 rounded-2xl mb-6 transition-all flex flex-col items-center justify-center gap-2 ${
+              className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-pink-700 text-white scale-105'
+                  ? 'bg-pink-700 text-white '
                   : 'bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 hover:from-pink-200 hover:to-orange-200 dark:hover:from-pink-900/70 dark:hover:to-orange-900/70 border-2 border-pink-300 dark:border-pink-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isSpeaking 
-                  ? 'bg-white/20' 
+                isSpeaking
+                  ? 'bg-white/20'
                   : 'bg-pink-500 shadow-lg shadow-pink-500/30'
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
-              
+
               <div className="text-center">
                 <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-pink-700 dark:text-pink-300'}`}>
                   {currentColor.chamorro}
                 </span>
                 <span className={`text-sm ${isSpeaking ? 'text-white/80' : 'text-pink-500 dark:text-pink-400'}`}>
-                  {isSpeaking ? '🔊 Playing...' : '👆 Tap to hear'}
+                  {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
             </button>
+
+            <GameAudioStatus audio={audio} onRetry={playWord} />
 
             {/* Color Options - Big colored buttons */}
             <div className="grid grid-cols-2 gap-4">
@@ -280,13 +286,13 @@ export function ColorTouch() {
                 const isSelected = selectedAnswer === option.chamorro;
                 const isCorrectAnswer = option.chamorro === currentColor.chamorro;
                 const showResult = gameState === 'feedback';
-                
-                let buttonClass = 'border-4 border-white dark:border-slate-600 hover:scale-105 shadow-lg';
+
+                let buttonClass = 'border-4 border-white dark:border-slate-600  shadow-lg';
                 let overlayClass = '';
-                
+
                 if (showResult) {
                   if (isCorrectAnswer) {
-                    buttonClass = 'border-4 border-green-500 scale-105 shadow-xl';
+                    buttonClass = 'border-4 border-green-500  shadow-xl';
                     overlayClass = 'ring-4 ring-green-400 ring-opacity-50';
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'border-4 border-red-500 opacity-60';
@@ -294,17 +300,17 @@ export function ColorTouch() {
                     buttonClass = 'border-4 border-white dark:border-slate-600 opacity-40';
                   }
                 }
-                
+
                 // Handle white and black specially for visibility
                 const isWhite = option.english === 'White';
                 return (
                   <button
                     key={index}
                     onClick={() => handleAnswer(option)}
-                    disabled={gameState === 'feedback'}
+                    disabled={gameState === 'feedback' || !audio.canAnswer}
                     aria-label={option.english}
-                    className={`relative aspect-square rounded-2xl transition-all ${buttonClass} ${overlayClass}`}
-                    style={{ 
+                    className={`relative aspect-square rounded-2xl transition-colors ${buttonClass} ${overlayClass}`}
+                    style={{
                       backgroundColor: option.hex,
                       boxShadow: isWhite ? 'inset 0 0 0 2px rgba(0,0,0,0.1)' : undefined
                     }}
@@ -320,7 +326,7 @@ export function ColorTouch() {
                         )}
                       </div>
                     )}
-                    
+
                     {/* Label on hover/feedback */}
                     {showResult && (
                       <div className={`absolute bottom-2 left-0 right-0 text-center ${
@@ -339,8 +345,8 @@ export function ColorTouch() {
             {/* Feedback Message */}
             {gameState === 'feedback' && (
               <div className={`mt-6 p-4 rounded-xl text-center ${
-                isCorrect 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                isCorrect
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}>
                 {isCorrect ? (

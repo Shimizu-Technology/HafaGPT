@@ -58,7 +58,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "Kåddo is a traditional Chamorro soup or stew, often made with meat and vegetables.",
     category: "culture"
   },
-  
+
   // History
   {
     question: "When did Ferdinand Magellan arrive in Guam?",
@@ -109,7 +109,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "U.S. forces liberated Guam on July 21, 1944, now celebrated as Liberation Day.",
     category: "history"
   },
-  
+
   // Geography
   {
     question: "What ocean surrounds Guam?",
@@ -146,7 +146,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "Two Lovers Point (Puntan Dos Amantes) is a famous cliff with a legendary love story.",
     category: "geography"
   },
-  
+
   // Language
   {
     question: "What does 'Si Yu'os Ma'åse'' mean?",
@@ -190,7 +190,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "'Nåna' means 'mother' in Chamorro. 'Tåta' means 'father'.",
     category: "language"
   },
-  
+
   // Food & Nature
   {
     question: "What is 'kelaguen'?",
@@ -227,7 +227,7 @@ const TRIVIA_QUESTIONS: TriviaQuestion[] = [
     explanation: "The Brown Tree Snake, accidentally introduced after WWII, has devastated Guam's native bird populations.",
     category: "nature"
   },
-  
+
   // Modern Guam
   {
     question: "What is Guam's timezone?",
@@ -286,14 +286,14 @@ export function CulturalTrivia() {
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  
+
   // Settings state
   const [timedChallenge, setTimedChallenge] = useState(false);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isStarting, setIsStarting] = useState(false);
-  
+
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
   const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
@@ -309,33 +309,25 @@ export function CulturalTrivia() {
   const [timeLeft, setTimeLeft] = useState(DIFFICULTY_CONFIG.medium.time);
   const [timerActive, setTimerActive] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [gameState]);
+
 
   // Shuffle and pick questions based on category
   const pickQuestions = useCallback(() => {
     let filtered = [...TRIVIA_QUESTIONS];
-    
+
     // Filter by category if not 'all'
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(q => q.category === selectedCategory);
     }
-    
+
     // Shuffle and pick
     const shuffled = filtered.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(QUESTIONS_PER_GAME, shuffled.length));
   }, [selectedCategory]);
-  
+
   // Get available question count for current category
-  const availableQuestionCount = selectedCategory === 'all' 
-    ? TRIVIA_QUESTIONS.length 
+  const availableQuestionCount = selectedCategory === 'all'
+    ? TRIVIA_QUESTIONS.length
     : TRIVIA_QUESTIONS.filter(q => q.category === selectedCategory).length;
 
   // Start game
@@ -350,7 +342,7 @@ export function CulturalTrivia() {
         setShowUpgradePrompt(true);
         return;
       }
-      
+
       setIsStarting(true);
 
       try {
@@ -389,14 +381,14 @@ export function CulturalTrivia() {
   // Handle answer selection
   const handleAnswer = useCallback((answerIndex: number) => {
     if (showResult) return;
-    
+
     setTimerActive(false);
     setSelectedAnswer(answerIndex);
     setShowResult(true);
-    
+
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = answerIndex === currentQuestion.correctIndex;
-    
+
     if (isCorrect) {
       // Bonus points for time remaining
       setCorrectAnswers(count => count + 1);
@@ -448,11 +440,11 @@ export function CulturalTrivia() {
   useEffect(() => {
     if (gameState === 'complete' && !hasSavedRef.current && isSignedIn) {
       hasSavedRef.current = true;
-      
+
       let stars = 1;
       if (correctAnswers / questions.length >= 0.8) stars = 3;
       else if (correctAnswers / questions.length >= 0.5) stars = 2;
-      
+
       saveGameResultMutation.mutate({
         client_attempt_id: gameAttemptIdRef.current,
         game_type: 'cultural_trivia',
@@ -502,7 +494,7 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('easy')}
                 aria-pressed={difficulty === 'easy'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'easy'
                     ? 'bg-emerald-700 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -516,7 +508,7 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('medium')}
                 aria-pressed={difficulty === 'medium'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'medium'
                     ? 'bg-amber-700 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -530,7 +522,7 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={() => setDifficulty('hard')}
                 aria-pressed={difficulty === 'hard'}
-                className={`min-h-20 rounded-xl p-3 text-center transition-all duration-200 ${
+                className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'hard'
                     ? 'bg-red-600 text-white shadow-lg'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -548,12 +540,12 @@ export function CulturalTrivia() {
             <h2 className="mb-3 font-semibold text-brown-800 dark:text-white">Choose a topic</h2>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a trivia topic">
               {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon }]) => {
-                const count = key === 'all' 
-                  ? TRIVIA_QUESTIONS.length 
+                const count = key === 'all'
+                  ? TRIVIA_QUESTIONS.length
                   : TRIVIA_QUESTIONS.filter(q => q.category === key).length;
                 const isDisabled = count === 0;
                 const CategoryIcon = icon;
-                
+
                 return (
                   <button
                     type="button"
@@ -561,7 +553,7 @@ export function CulturalTrivia() {
                     onClick={() => !isDisabled && setSelectedCategory(key)}
                     disabled={isDisabled}
                     aria-pressed={selectedCategory === key}
-                    className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-all duration-200 ${
+                    className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-colors duration-200 ${
                       isDisabled
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
@@ -571,7 +563,7 @@ export function CulturalTrivia() {
                   >
                     <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
                     <p className="truncate text-xs font-medium">{label}</p>
-                    <p className={`text-[10px] ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count} questions</p>
+                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>{count} questions</p>
                   </button>
                 );
               })}
@@ -601,12 +593,12 @@ export function CulturalTrivia() {
               </>
             )}
           </button>
-          
+
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
-        
+
         {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
@@ -615,7 +607,7 @@ export function CulturalTrivia() {
   // Game complete
   if (gameState === 'complete') {
     const stars = getStars();
-    
+
     return (
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Cultural Trivia" subtitle="Your results" icon={Landmark} onBack={handleBack} />
@@ -656,7 +648,7 @@ export function CulturalTrivia() {
               <button
                 type="button"
                 onClick={startGame}
-                disabled={resultUnresolved}
+                disabled={resultUnresolved || startStatus.pending}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
@@ -680,7 +672,7 @@ export function CulturalTrivia() {
     <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
       {/* Quit Confirmation Modal */}
 
-      
+
       <GamePageHeader
         title="Cultural Trivia"
         subtitle={`Question ${currentQuestionIndex + 1} of ${questions.length}`}
@@ -707,7 +699,7 @@ export function CulturalTrivia() {
           <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-6">
             {currentQuestion.question}
           </h2>
-          
+
           {/* Answer Options */}
           <div className="space-y-3">
             {currentQuestion.options.map((option, index) => {
@@ -715,7 +707,7 @@ export function CulturalTrivia() {
               const isCorrect = index === currentQuestion.correctIndex;
               const showCorrect = showResult && isCorrect;
               const showWrong = showResult && isSelected && !isCorrect;
-              
+
               return (
                 <button
                   type="button"
@@ -723,7 +715,7 @@ export function CulturalTrivia() {
                   onClick={() => handleAnswer(index)}
                   disabled={showResult}
                   aria-pressed={isSelected}
-                  className={`w-full p-4 rounded-xl text-left font-medium transition-all flex items-center gap-3 ${
+                  className={`w-full p-4 rounded-xl text-left font-medium transition-colors flex items-center gap-3 ${
                     showCorrect
                       ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 text-green-800 dark:text-green-300'
                       : showWrong

@@ -1,3 +1,6 @@
+import { GameTermDialog } from './games/GameTermDialog';
+import { useGamePace } from '../hooks/useGamePace';
+import { GamePaceControl } from './games/GamePaceControl';
 import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameTimers } from '../hooks/useGameTimers';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -74,6 +77,8 @@ const categoryDisplayNames: Record<string, string> = {
 const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 
 export function MemoryMatch() {
+  const pace = useGamePace();
+  const [readTerm, setReadTerm] = useState<{ content: string; speak?: string } | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { isSignedIn } = useUser();
@@ -89,7 +94,7 @@ export function MemoryMatch() {
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const learningContext = useMemo(() => readLearningGameContext(location.search), [location.search]);
   const gameReturn = getLearningGameReturn(learningContext);
-  
+
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'complete'>('setup');
   const [settings, setSettings] = useState<GameSettings>({
@@ -98,7 +103,7 @@ export function MemoryMatch() {
     pairsCount: DIFFICULTY_CONFIG.easy.pairs,
     mode: 'beginner',
   });
-  
+
   // Playing state
   const [cards, setCards] = useState<Card[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -194,14 +199,14 @@ export function MemoryMatch() {
   useEffect(() => {
     if (gameState === 'playing' && matchedPairs.length === settings.pairsCount) {
       setGameState('complete');
-      
+
       // Save result if signed in and not already saved
       if (isSignedIn && !hasSavedRef.current && !submissionStartedRef.current) {
         submissionStartedRef.current = true;
         const categoryTitle = settings.mode === 'beginner'
           ? DEFAULT_FLASHCARD_DECKS[settings.category]?.displayName
           : categoriesData?.categories.find(c => c.id === settings.category)?.title;
-        
+
         void persistGameResult({
           game_type: 'memory_match',
           mode: settings.mode,
@@ -229,8 +234,8 @@ export function MemoryMatch() {
 
   // Generate cards from flashcards
   const generateCards = useCallback(() => {
-    const sourceCards = settings.mode === 'beginner' 
-      ? curatedFlashcards 
+    const sourceCards = settings.mode === 'beginner'
+      ? curatedFlashcards
       : flashcardsData?.cards;
 
     if (!sourceCards || sourceCards.length < settings.pairsCount) {
@@ -256,7 +261,7 @@ export function MemoryMatch() {
   // Helper to create card pairs from flashcards
   const createCardPairs = (flashcards: { front: string; back: string }[]) => {
     const cardPairs: Card[] = [];
-    
+
     flashcards.forEach((flashcard, index) => {
       // Chamorro card (front) - keep full text
       cardPairs.push({
@@ -265,7 +270,7 @@ export function MemoryMatch() {
         content: flashcard.front,
         type: 'chamorro',
       });
-      
+
       // English card (back) - keep full text
       cardPairs.push({
         id: index * 2 + 1,
@@ -325,7 +330,7 @@ export function MemoryMatch() {
       startingRef.current = false;
     }
   }, [generateCards, isSignedIn, canUse, tryUse, clearTimers]);
-    
+
   const contextualStartedRef = useRef(false);
   useEffect(() => {
     if (!learningContext || contextualStartedRef.current || gameState !== 'setup') return;
@@ -356,14 +361,14 @@ export function MemoryMatch() {
           setIsChecking(false);
         }, 600);
       } else {
-        // No match - flip back
-        schedule(() => {
+        // In Relaxed, keep both terms visible until the learner chooses Next.
+        if (pace.challenge) schedule(() => {
           setFlippedCards([]);
           setIsChecking(false);
-        }, 1000);
+        }, 1500);
       }
     }
-  }, [flippedCards, cards, isChecking, schedule]);
+  }, [flippedCards, cards, isChecking, schedule, pace.challenge]);
 
   const resetGame = () => {
     clearTimers();
@@ -413,6 +418,7 @@ export function MemoryMatch() {
   if (categoriesLoading) {
     return (
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
+      <GameTermDialog term={readTerm} onClose={() => setReadTerm(null)} />
         <GamePageHeader title="Memory Match" subtitle="Pair Chamorro words with their meanings." icon={Puzzle} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
@@ -424,6 +430,7 @@ export function MemoryMatch() {
 
   return (
     <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
+      <GameTermDialog term={readTerm} onClose={() => setReadTerm(null)} />
       <GamePageHeader
         title="Memory Match"
         subtitle="Pair Chamorro words with their meanings."
@@ -463,14 +470,14 @@ export function MemoryMatch() {
               </h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => setSettings((s) => ({ 
-                    ...s, 
+                  onClick={() => setSettings((s) => ({
+                    ...s,
                     mode: 'beginner',
                     category: CURATED_CATEGORIES.includes(s.category) ? s.category : 'greetings'
                   }))}
                   aria-pressed={settings.mode === 'beginner'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
                       ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -481,7 +488,7 @@ export function MemoryMatch() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -489,7 +496,7 @@ export function MemoryMatch() {
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
                   aria-pressed={settings.mode === 'challenge'}
                   className={`
-                    p-2 sm:p-3 rounded-xl text-center transition-all duration-200
+                    p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
                       ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -500,7 +507,7 @@ export function MemoryMatch() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-[9px] sm:text-[10px] ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -519,9 +526,9 @@ export function MemoryMatch() {
                     onClick={() => setSettings((s) => ({ ...s, category: catId }))}
                     aria-pressed={settings.category === catId}
                     className={`
-                      min-w-20 flex-none p-2 rounded-xl text-center transition-all duration-200
+                      min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }
                     `}
@@ -531,7 +538,7 @@ export function MemoryMatch() {
                         {categoryIcons[catId] || '📚'}
                       </span>
                     </div>
-                    <span className="text-[8px] sm:text-[10px] font-medium leading-tight block mt-0.5">
+                    <span className="text-xs sm:text-xs font-medium leading-tight block mt-0.5">
                       {categoryDisplayNames[catId] || catId}
                     </span>
                   </button>
@@ -550,19 +557,19 @@ export function MemoryMatch() {
                   return (
                     <button
                       key={key}
-                      onClick={() => !isDisabled && setSettings((s) => ({ 
-                        ...s, 
+                      onClick={() => !isDisabled && setSettings((s) => ({
+                        ...s,
                         difficulty: key as 'easy' | 'medium' | 'hard',
                         pairsCount: config.pairs,
                       }))}
                       disabled={isDisabled}
                       aria-pressed={settings.difficulty === key}
                       className={`
-                        p-2 rounded-xl text-center transition-all duration-200
-                        ${isDisabled 
+                        p-2 rounded-xl text-center transition-colors duration-200
+                        ${isDisabled
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.difficulty === key
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                         }
                       `}
@@ -572,8 +579,8 @@ export function MemoryMatch() {
                           {key === 'easy' ? '🌱' : key === 'medium' ? '🌿' : '🌳'}
                         </span>
                       </div>
-                      <span className="text-[10px] sm:text-xs font-medium capitalize">{key}</span>
-                      <span className={`text-[9px] sm:text-[10px] block ${
+                      <span className="text-xs sm:text-xs font-medium capitalize">{key}</span>
+                      <span className={`text-xs sm:text-xs block ${
                         settings.difficulty === key && !isDisabled ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'
                       }`}>
                         {config.pairs} pairs
@@ -584,13 +591,14 @@ export function MemoryMatch() {
               </div>
               {/* Show card count warning */}
               {availableCardCount > 0 && availableCardCount < 8 && (
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-2 text-center">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center">
                   This category has {availableCardCount} cards available
                 </p>
               )}
             </div>
 
             {/* Start Button */}
+            <GamePaceControl {...pace} />
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
@@ -635,7 +643,7 @@ export function MemoryMatch() {
             </div>
 
             {/* Game Grid - Square cards, compact for mobile, bigger on desktop */}
-            <div className="grid grid-cols-4 gap-1 sm:gap-3 w-full max-w-[320px] sm:max-w-lg md:max-w-xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-[420px] sm:max-w-lg md:max-w-2xl mx-auto">
               {cards.map((card) => (
                 <MemoryCard
                   key={card.id}
@@ -646,9 +654,16 @@ export function MemoryMatch() {
                   isMatched={matchedPairs.includes(card.pairId)}
                   onClick={handleCardClick}
                   disabled={isChecking}
+                  onRead={() => setReadTerm({ content: card.content, speak: card.type === 'chamorro' ? card.content : undefined })}
                 />
               ))}
             </div>
+
+            {isChecking && flippedCards.length === 2 && !pace.challenge && (() => {
+              const first = cards.find(card => card.id === flippedCards[0]);
+              const second = cards.find(card => card.id === flippedCards[1]);
+              return first?.pairId !== second?.pairId;
+            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next — hide these cards</button>}
 
             {/* Quick Actions - Compact */}
             <div className="flex justify-center pt-1">
@@ -668,7 +683,7 @@ export function MemoryMatch() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-coral-400 to-coral-600 dark:from-teal-400 dark:to-teal-600 flex items-center justify-center shadow-xl animate-bounce">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-coral-400 to-coral-600 dark:from-teal-400 dark:to-teal-600 flex items-center justify-center shadow-xl ">
                 <span className="text-2xl sm:text-4xl">🎉</span>
               </div>
             </div>
@@ -701,28 +716,30 @@ export function MemoryMatch() {
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{moves}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Moves</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Moves</p>
                 </div>
                 <div>
                   <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{formatTime(elapsedTime)}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
                 </div>
                 <div>
                   <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{calculateScore}</p>
-                  <p className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
               </div>
             </div>
 
             {/* Encouragement */}
             <p className="text-xs text-brown-600 dark:text-gray-400">
-              {getStars === 3 
-                ? "Perfect! You're a memory master! 🌟" 
-                : getStars === 2 
+              {getStars === 3
+                ? "Perfect! You're a memory master! 🌟"
+                : getStars === 2
                   ? "Great work! Try again for 3 stars! 💪"
                   : "Good effort! Practice makes perfect! 🌱"
               }
             </p>
+
+            {isSignedIn && hasSavedRef.current && !pendingGameResult && <p role="status" className="mt-4 text-sm text-brown-700 dark:text-gray-200">Result saved</p>}
 
             {/* Action Buttons */}
             {pendingGameResult && (
@@ -752,7 +769,7 @@ export function MemoryMatch() {
               <button
                 onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again

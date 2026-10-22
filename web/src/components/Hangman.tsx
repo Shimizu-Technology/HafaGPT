@@ -61,9 +61,9 @@ const CURATED_CATEGORIES = Object.keys(DEFAULT_FLASHCARD_DECKS);
 const BEGINNER_WORD_COUNTS: Record<string, number> = Object.fromEntries(
   CURATED_CATEGORIES.map(cat => {
     const deck = DEFAULT_FLASHCARD_DECKS[cat];
-    const count = deck?.cards.filter(card => 
-      card.front.length >= 3 && 
-      card.front.length <= 12 && 
+    const count = deck?.cards.filter(card =>
+      card.front.length >= 3 &&
+      card.front.length <= 12 &&
       !card.front.includes(' ')
     ).length || 0;
     return [cat, count];
@@ -91,7 +91,7 @@ export function Hangman() {
   const { data: categoriesData, isLoading: categoriesLoading } = useVocabularyCategories();
   const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  
+
   // Game state
   const [gameState, setGameState] = useState<'setup' | 'playing' | 'won' | 'lost'>('setup');
   const guard = useGameRoundGuard((gameState === 'playing') || startStatus.pending,
@@ -103,7 +103,7 @@ export function Hangman() {
     category: 'numbers',
     mode: 'beginner',
   });
-  
+
   // Playing state
   const [currentWord, setCurrentWord] = useState('');
   const [currentHint, setCurrentHint] = useState('');
@@ -175,13 +175,13 @@ export function Hangman() {
   // Handle letter guess
   const handleGuess = useCallback((letter: string) => {
     if (guessedLetters.includes(letter) || gameState !== 'playing') return;
-    
+
     setGuessedLetters(prev => [...prev, letter]);
-    
+
     if (!currentWord.includes(letter)) {
       const newWrongGuesses = wrongGuesses + 1;
       setWrongGuesses(newWrongGuesses);
-      
+
       if (newWrongGuesses >= MAX_WRONG_GUESSES) {
         setGameState('lost');
       }
@@ -191,7 +191,7 @@ export function Hangman() {
   // Check if word is complete
   const isWordComplete = useMemo(() => {
     if (!currentWord) return false;
-    return currentWord.split('').every(letter => 
+    return currentWord.split('').every(letter =>
       guessedLetters.includes(letter) || letter === ' ' || letter === '-'
     );
   }, [currentWord, guessedLetters]);
@@ -205,7 +205,7 @@ export function Hangman() {
       const wordScore = (remainingGuesses + 1) * 100 - (hintsUsed * 25);
       setTotalScore(prev => prev + Math.max(wordScore, 50));
       setWordsCompleted(prev => prev + 1);
-      
+
 
     }
   }, [isWordComplete, gameState, wrongGuesses, hintsUsed, currentWord]);
@@ -235,7 +235,7 @@ export function Hangman() {
         setShowUpgradePrompt(true);
         return;
       }
-      
+
       setIsStarting(true);
 
       try {
@@ -257,16 +257,16 @@ export function Hangman() {
         saveGameResultMutation.reset();
       hasSavedRef.current = false;
       gameAttemptIdRef.current = createClientAttemptId();
-      
+
         // Pick first word
         const unusedWords = availableWords;
         if (unusedWords.length === 0) return;
-      
+
         const randomWord = unusedWords[Math.floor(Math.random() * unusedWords.length)];
         setCurrentWord(randomWord.word);
         setCurrentHint(randomWord.hint);
         setUsedWords([randomWord.word]);
-      
+
         setGameState('playing');
       } finally {
         setIsStarting(false);
@@ -281,12 +281,12 @@ export function Hangman() {
   useEffect(() => {
     if ((gameState === 'won' || gameState === 'lost') && !hasSavedRef.current && isSignedIn) {
       hasSavedRef.current = true;
-      
+
       // Calculate stars
       let stars = 1;
       if (wordsCompleted >= 5) stars = 3;
       else if (wordsCompleted >= 3) stars = 2;
-      
+
       saveGameResultMutation.mutate({
         client_attempt_id: gameAttemptIdRef.current,
         game_type: 'hangman',
@@ -323,22 +323,22 @@ export function Hangman() {
   const renderHangman = () => {
     const parts = [
       // Head
-      <circle key="head" cx="150" cy="70" r="20" stroke="currentColor" strokeWidth="3" fill="none" 
+      <circle key="head" cx="150" cy="70" r="20" stroke="currentColor" strokeWidth="3" fill="none"
         className={wrongGuesses >= 1 ? 'opacity-100' : 'opacity-0'} />,
       // Body
-      <line key="body" x1="150" y1="90" x2="150" y2="150" stroke="currentColor" strokeWidth="3" 
+      <line key="body" x1="150" y1="90" x2="150" y2="150" stroke="currentColor" strokeWidth="3"
         className={wrongGuesses >= 2 ? 'opacity-100' : 'opacity-0'} />,
       // Left arm
-      <line key="leftArm" x1="150" y1="110" x2="120" y2="140" stroke="currentColor" strokeWidth="3" 
+      <line key="leftArm" x1="150" y1="110" x2="120" y2="140" stroke="currentColor" strokeWidth="3"
         className={wrongGuesses >= 3 ? 'opacity-100' : 'opacity-0'} />,
       // Right arm
-      <line key="rightArm" x1="150" y1="110" x2="180" y2="140" stroke="currentColor" strokeWidth="3" 
+      <line key="rightArm" x1="150" y1="110" x2="180" y2="140" stroke="currentColor" strokeWidth="3"
         className={wrongGuesses >= 4 ? 'opacity-100' : 'opacity-0'} />,
       // Left leg
-      <line key="leftLeg" x1="150" y1="150" x2="120" y2="190" stroke="currentColor" strokeWidth="3" 
+      <line key="leftLeg" x1="150" y1="150" x2="120" y2="190" stroke="currentColor" strokeWidth="3"
         className={wrongGuesses >= 5 ? 'opacity-100' : 'opacity-0'} />,
       // Right leg
-      <line key="rightLeg" x1="150" y1="150" x2="180" y2="190" stroke="currentColor" strokeWidth="3" 
+      <line key="rightLeg" x1="150" y1="150" x2="180" y2="190" stroke="currentColor" strokeWidth="3"
         className={wrongGuesses >= 6 ? 'opacity-100' : 'opacity-0'} />,
     ];
 
@@ -359,7 +359,7 @@ export function Hangman() {
   if (gameState === 'setup') {
     const currentCategories = settings.mode === 'beginner' ? CURATED_CATEGORIES : challengeCategories.map(c => c.id);
     const isLoading = settings.mode === 'challenge' && categoriesLoading;
-    
+
     return (
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Guess" subtitle="Guess the Chamorro word one letter at a time." icon={Target} />
@@ -368,7 +368,7 @@ export function Hangman() {
           {/* Game Description */}
           <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
             <p className="text-brown-600 dark:text-gray-400 text-sm">
-              See the English meaning, then guess the Chamorro word one letter at a time. 
+              See the English meaning, then guess the Chamorro word one letter at a time.
               Complete as many words as you can before running out of guesses!
             </p>
           </div>
@@ -383,7 +383,7 @@ export function Hangman() {
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'beginner', category: 'greetings' }))}
                 aria-pressed={settings.mode === 'beginner'}
-                className={`p-4 rounded-xl text-center transition-all duration-200 ${
+                className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'beginner'
                     ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -398,7 +398,7 @@ export function Hangman() {
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
                 aria-pressed={settings.mode === 'challenge'}
-                className={`p-4 rounded-xl text-center transition-all duration-200 ${
+                className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'challenge'
                     ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -424,22 +424,22 @@ export function Hangman() {
                   const icon = categoryIcons[catId] || '📚';
                   const name = categoryDisplayNames[catId] || catId;
                   // Get word count for this category
-                  const wordCount = settings.mode === 'beginner' 
+                  const wordCount = settings.mode === 'beginner'
                     ? BEGINNER_WORD_COUNTS[catId] || 0
                     : challengeCategories.find(c => c.id === catId)?.count || 0;
                   const isDisabled = wordCount < MIN_WORDS_TO_PLAY;
-                  
+
                   return (
                     <button
                       key={catId}
                       onClick={() => !isDisabled && setSettings(s => ({ ...s, category: catId }))}
                       disabled={isDisabled}
                       aria-pressed={settings.category === catId}
-                      className={`min-w-24 flex-none p-3 rounded-xl transition-all duration-200 text-center ${
+                      className={`min-w-24 flex-none p-3 rounded-xl transition-colors duration-200 text-center ${
                         isDisabled
                           ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-105'
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
                       }`}
                     >
@@ -447,7 +447,7 @@ export function Hangman() {
                       <span className="text-xl">{icon}</span>
                       </div>
                       <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
-                      <p className={`text-[10px] mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>
+                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>
                         {wordCount} word{wordCount !== 1 ? 's' : ''}
                       </p>
                     </button>
@@ -475,13 +475,13 @@ export function Hangman() {
               </>
             )}
           </button>
-          
+
           {/* Daily limit indicator */}
           <p className="text-center text-xs text-brown-400 dark:text-gray-500">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
       </main>
-        
+
         {showUpgradePrompt && <UpgradePrompt feature="game" onClose={() => setShowUpgradePrompt(false)} />}
       </GamePage>
     );
@@ -490,7 +490,7 @@ export function Hangman() {
   // Game complete (won or lost)
   if (gameState === 'won' || gameState === 'lost') {
     const stars = getStars();
-    
+
     return (
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
@@ -501,20 +501,20 @@ export function Hangman() {
             <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
               {gameState === 'won' ? 'Great Job!' : 'Game Over!'}
             </h2>
-            
+
             {gameState === 'lost' && (
               <p className="text-brown-600 dark:text-gray-400 mb-4">
                 The word was: <span className="font-bold text-coral-500 dark:text-teal-400">{currentWord}</span>
               </p>
             )}
-            
+
             {/* Stars */}
             <div className="flex justify-center gap-2 mb-6">
               {[1, 2, 3].map(star => (
                 <span key={star} className={`text-4xl ${star <= stars ? '' : 'opacity-20'}`}>⭐</span>
               ))}
             </div>
-            
+
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
@@ -526,19 +526,19 @@ export function Hangman() {
                 <p className="text-sm text-brown-500 dark:text-gray-400">Score</p>
               </div>
             </div>
-            
+
             {/* Actions */}
             <div className="space-y-3">
               <button
                 onClick={startGame}
-                disabled={resultUnresolved}
+                disabled={resultUnresolved || startStatus.pending}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
               </button>
               <button
-                disabled={resultUnresolved}
+                disabled={resultUnresolved || startStatus.pending}
                 onClick={() => setGameState('setup')}
                 className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
               >
@@ -602,7 +602,7 @@ export function Hangman() {
             <HelpCircle className="w-4 h-4 text-coral-500 dark:text-teal-400" />
             <p className="text-brown-600 dark:text-gray-400 text-center">{currentHint}</p>
           </div>
-          
+
           {/* Word blanks */}
           <div className="flex justify-center gap-2 flex-wrap">
             {displayWord.map((letter, index) => (
@@ -620,11 +620,11 @@ export function Hangman() {
               </div>
             ))}
           </div>
-          
+
           {/* Word complete message */}
           {isWordComplete && (
             <p className="text-center text-green-600 dark:text-green-400 font-bold mt-4 animate-pulse">
-              ✓ Correct! Next word...
+              ✓ Correct! Choose Next word when you’re ready.
             </p>
           )}
         </div>
@@ -648,13 +648,13 @@ export function Hangman() {
               const isGuessed = guessedLetters.includes(letter);
               const isCorrect = isGuessed && currentWord.includes(letter);
               const isWrong = isGuessed && !currentWord.includes(letter);
-              
+
               return (
                 <button
                   key={letter}
                   onClick={() => handleGuess(letter)}
                   disabled={isGuessed || isWordComplete}
-                  className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-bold text-sm sm:text-base transition-all ${
+                  className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-bold text-sm sm:text-base transition-colors ${
                     isCorrect
                       ? 'bg-green-700 text-white'
                       : isWrong

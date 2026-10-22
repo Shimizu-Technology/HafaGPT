@@ -7,7 +7,8 @@ import { createClientAttemptId } from '../lib/clientAttemptId';
 import { useSaveGameResult } from '../hooks/useGamesQuery';
 import { useUser } from '@clerk/clerk-react';
 import { useGameSubscription } from '../hooks/useGameSubscription';
-import { useSpeech } from '../hooks/useSpeech';
+import { useGameAudioPrompt } from '../hooks/useGameAudioPrompt';
+import { GameAudioStatus } from './games/GameAudioStatus';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
@@ -45,7 +46,8 @@ export function SimonSays() {
   const gameAttemptIdRef = useRef(createClientAttemptId());
   const { schedule, clear: clearTimers } = useGameTimers();
   const { canUse, tryUse, getCount, getLimit, startStatus } = useGameSubscription();
-  const { speak, preload, isSpeaking } = useSpeech();
+  const audio = useGameAudioPrompt();
+  const { speak, preload, isSpeaking, listen, resetPrompt } = audio;
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   // Game state
@@ -64,41 +66,38 @@ export function SimonSays() {
   const [usedParts, setUsedParts] = useState<Set<string>>(new Set());
   // Generate a new round
   const generateRound = useCallback(() => {
+    resetPrompt();
     // Filter out body parts we've already used (if possible)
     let availableParts = BODY_PARTS.filter(p => !usedParts.has(p.chamorro));
     if (availableParts.length < 4) {
       setUsedParts(new Set());
       availableParts = BODY_PARTS;
     }
-    
+
     // Pick a random body part as the correct answer
     const correctPart = availableParts[Math.floor(Math.random() * availableParts.length)];
-    
+
     // Pick 3 wrong answers
     const wrongOptions = BODY_PARTS
       .filter(p => p.chamorro !== correctPart.chamorro)
       .sort(() => Math.random() - 0.5)
       .slice(0, 3);
-    
+
     // Combine and shuffle
     const allOptions = [correctPart, ...wrongOptions].sort(() => Math.random() - 0.5);
-    
+
     setCurrentBodyPart(correctPart);
     setOptions(allOptions);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setUsedParts(prev => new Set([...prev, correctPart.chamorro]));
-    
+
     // Preload audio
     preload(correctPart.instruction);
     preload('Bunitu!');
-    
-    setGameState('listening');
-    // Auto-play the instruction after a short delay
-    schedule(() => {
-      speak(correctPart.instruction);
-    }, 500);
-  }, [usedParts, preload, speak, schedule]);
+
+    setGameState('playing');
+  }, [usedParts, preload, resetPrompt]);
 
   // Start the game
   const startGame = async () => {
@@ -135,14 +134,14 @@ export function SimonSays() {
 
   // Handle answer selection
   const handleAnswer = (part: BodyPart) => {
-    if (selectedAnswer !== null) return;
-    
+    if (selectedAnswer !== null || !audio.canAnswer) return;
+
     clearTimers();
     setSelectedAnswer(part.chamorro);
     const correct = part.chamorro === currentBodyPart?.chamorro;
     setIsCorrect(correct);
     setGameState('feedback');
-    
+
     if (correct) {
       const streakBonus = streak >= 3 ? 50 : streak >= 2 ? 25 : 0;
       const points = 100 + streakBonus;
@@ -156,11 +155,12 @@ export function SimonSays() {
         speak(currentBodyPart?.chamorro || '');
       }, 500);
     }
-    
+
 
   };
 
   const continueRound = () => {
+    audio.stop();
     clearTimers();
     if (currentRound >= ROUNDS_PER_GAME) {
       setGameState('complete');
@@ -196,7 +196,7 @@ export function SimonSays() {
 
   const playInstruction = () => {
     if (currentBodyPart) {
-      speak(currentBodyPart.instruction);
+      void listen(currentBodyPart.instruction);
     }
   };
 
@@ -224,7 +224,7 @@ export function SimonSays() {
                     className="text-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"
                   >
                     <span className="text-2xl block">{part.emoji}</span>
-                    <span className="text-[10px] text-brown-600 dark:text-gray-400 block">{part.chamorro}</span>
+                    <span className="text-xs text-brown-600 dark:text-gray-400 block">{part.chamorro}</span>
                   </div>
                 ))}
               </div>
@@ -235,11 +235,11 @@ export function SimonSays() {
             <button
               onClick={startGame}
               className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
-            >
+             disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
-            
+
             <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
@@ -255,20 +255,20 @@ export function SimonSays() {
             <button
               onClick={playInstruction}
               disabled={isSpeaking}
-              className={`w-full py-5 rounded-2xl mb-6 transition-all flex flex-col items-center justify-center gap-2 ${
+              className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-indigo-700 text-white scale-105'
+                  ? 'bg-indigo-700 text-white '
                   : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 hover:from-indigo-200 hover:to-purple-200 dark:hover:from-indigo-900/70 dark:hover:to-purple-900/70 border-2 border-indigo-300 dark:border-indigo-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isSpeaking 
-                  ? 'bg-white/20' 
+                isSpeaking
+                  ? 'bg-white/20'
                   : 'bg-indigo-500 shadow-lg shadow-indigo-500/30'
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
-              
+
               <div className="text-center">
                 <span className={`text-lg font-bold block ${isSpeaking ? 'text-white' : 'text-indigo-700 dark:text-indigo-300'}`}>
                   "{currentBodyPart.instruction}"
@@ -277,10 +277,12 @@ export function SimonSays() {
                   "Touch your {currentBodyPart.english.toLowerCase()}!"
                 </span>
                 <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'}`}>
-                  {isSpeaking ? '🔊 Playing...' : '👆 Tap to hear again'}
+                  {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
             </button>
+
+            <GameAudioStatus audio={audio} onRetry={playInstruction} />
 
             {/* Body Part Options - Big buttons with emojis */}
             <div className="grid grid-cols-2 gap-4">
@@ -288,30 +290,31 @@ export function SimonSays() {
                 const isSelected = selectedAnswer === part.chamorro;
                 const isCorrectAnswer = part.chamorro === currentBodyPart.chamorro;
                 const showResult = gameState === 'feedback';
-                
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-indigo-400 hover:scale-105';
-                
+
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-indigo-400 ';
+
                 if (showResult) {
                   if (isCorrectAnswer) {
-                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-105';
+                    buttonClass = 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 ';
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 opacity-60';
                   } else {
                     buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-40';
                   }
                 }
-                
+
                 return (
                   <button
                     key={index}
+                    aria-label={part.chamorro}
                     onClick={() => handleAnswer(part)}
-                    disabled={gameState === 'feedback'}
-                    className={`p-6 rounded-2xl transition-all ${buttonClass}`}
+                    disabled={gameState === 'feedback' || !audio.canAnswer}
+                    className={`p-6 rounded-2xl transition-colors ${buttonClass}`}
                   >
                     <span className="text-5xl block mb-2">{part.emoji}</span>
                     <span className={`text-sm font-medium block ${
-                      showResult && isCorrectAnswer 
-                        ? 'text-green-600 dark:text-green-400' 
+                      showResult && isCorrectAnswer
+                        ? 'text-green-600 dark:text-green-400'
                         : 'text-brown-600 dark:text-gray-400'
                     }`}>
                       {part.chamorro}
@@ -329,8 +332,8 @@ export function SimonSays() {
             {/* Feedback Message */}
             {gameState === 'feedback' && (
               <div className={`mt-6 p-4 rounded-xl text-center ${
-                isCorrect 
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' 
+                isCorrect
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
               }`}>
                 {isCorrect ? (
