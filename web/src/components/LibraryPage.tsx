@@ -31,7 +31,7 @@ export function LibraryPage() {
             </div>
           </section>
         )}
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {tools.map(({ to, title, description, icon: Icon }) => (
             <Link key={to} to={to} className="flex min-h-28 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
               <Icon className="h-6 w-6 flex-none text-teal-700 dark:text-ocean-300" aria-hidden="true" />
