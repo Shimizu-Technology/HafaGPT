@@ -39,7 +39,9 @@ test('story quiz exposes selected answers and deliberate listening without autop
   }
   const takeQuiz = page.getByRole('button', { name: 'Take Quiz', exact: true });
   // Check emitted CSS, not only class strings: dynamic variant names can be purged.
-  expect(await takeQuiz.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(184, 55, 48)');
+  // Continue and Take Quiz share a position; clear the previous pointer hover.
+  await page.mouse.move(0, 0);
+  await expect.poll(() => takeQuiz.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(184, 55, 48)');
   await takeQuiz.click();
   const question = page.locator('#story-question');
   const group = page.getByRole('group', { name: await question.innerText(), exact: true });
