@@ -222,7 +222,7 @@ describe('topic surface navigation', () => {
   it('returns a topic-launched lesson to its workspace', () => {
     renderSurface(<LessonPage />, '/learn/:topicId', `/learn/greetings?${learningQuery}`, true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to topic' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to topic' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
   });
 
@@ -403,14 +403,14 @@ describe('topic surface navigation', () => {
   it('returns topic flashcards to their workspace', async () => {
     renderSurface(<FlashcardViewer />, '/flashcards/:topic', `/flashcards/greetings?${topicQuery}`);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Back to Greetings & Basics' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Back to Greetings & Basics' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
   });
 
   it('returns Today listening flashcards to Today', async () => {
     renderSurface(<FlashcardViewer />, '/flashcards/:topic', `/flashcards/greetings?${todayQuery}`);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Back to Today' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Back to Today' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/');
   });
 
@@ -425,7 +425,7 @@ describe('topic surface navigation', () => {
 
     expect(await screen.findByText("Si Yu'os Ma'åse'")).toBeInTheDocument();
     expect(screen.getByText(/Card 4 of 14/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to quiz review' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to quiz review' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent(
       `/quiz/review/${resultId}`,
     );
@@ -647,7 +647,7 @@ describe('topic surface navigation', () => {
   it('returns a related story to its workspace', () => {
     renderSurface(<StoryViewer />, '/stories/:storyId', `/stories/hafa-adai-maria?${topicQuery}`, true);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to Greetings & Basics' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to Greetings & Basics' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
   });
 
@@ -659,7 +659,7 @@ describe('topic surface navigation', () => {
       true,
     );
 
-    const back = await screen.findByRole('button', { name: 'Back to Greetings & Basics' });
+    const back = await screen.findByRole('link', { name: 'Back to Greetings & Basics' });
     fireEvent.click(back);
     await waitFor(() => {
       expect(screen.getByTestId('current-location')).toHaveTextContent('/learning/greetings');
@@ -673,7 +673,7 @@ describe('topic surface navigation', () => {
       `/learn/family?${learningQuery}`,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to learning path' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to learning path' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/learning');
   });
 
@@ -684,7 +684,7 @@ describe('topic surface navigation', () => {
       `/stories/i-familia-hu?${topicQuery}`,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to stories' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to stories' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/stories');
     unmount();
 
@@ -693,7 +693,7 @@ describe('topic surface navigation', () => {
       '/practice/:scenarioId',
       `/practice/ordering-food?${topicQuery}`,
     );
-    fireEvent.click(await screen.findByRole('button', { name: 'Back to conversation scenarios' }));
+    fireEvent.click(await screen.findByRole('link', { name: 'Back to conversation scenarios' }));
     expect(screen.getByTestId('current-location')).toHaveTextContent('/practice');
   });
 
@@ -704,8 +704,8 @@ describe('topic surface navigation', () => {
       `/flashcards/unmapped?type=dictionary&${topicQuery}`,
     );
 
-    const flashcardBack = await screen.findByRole('button', { name: 'Back to flashcard decks' });
-    expect(screen.queryByRole('button', { name: 'Back to Greetings & Basics' }))
+    const flashcardBack = await screen.findByRole('link', { name: 'Back to flashcard decks' });
+    expect(screen.queryByRole('link', { name: 'Back to Greetings & Basics' }))
       .not.toBeInTheDocument();
     fireEvent.click(flashcardBack);
     expect(screen.getByTestId('current-location')).toHaveTextContent('/flashcards');

@@ -2,6 +2,9 @@ import { useLayoutEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 
 interface Position { rootX: number; rootY: number; windowX: number; windowY: number }
+// Explicit maximum supported loading window, including lazy imports and API data.
+// Animation-only game routes may never expose a heading; they must also expire.
+const ORIENTATION_WINDOW_MS = 30_000;
 const top: Position = { rootX: 0, rootY: 0, windowX: 0, windowY: 0 };
 
 /** Orient route entries without taking over nested scrollers (notably chat). */
@@ -20,10 +23,7 @@ export function ScrollToTop() {
     // Chat owns conversation URL replacements and its messages scroller.
     if (withinChat) return;
 
-    const target = action === 'POP' ? positions.current.get(location.key) ?? top : top;
-    let restoring = true;
-    let focused = samePage;
-
+    let restoring = false;
     let resize: ResizeObserver | undefined;
     let focusTarget: HTMLElement | undefined;
     let addedTabIndex = false;
@@ -38,11 +38,35 @@ export function ScrollToTop() {
         windowX: window.scrollX, windowY: window.scrollY,
       });
     };
+    const onScroll = (event: Event) => {
+      if (event.target === root || event.target === document) remember();
+    };
+    root.addEventListener('scroll', onScroll, true);
+    window.addEventListener('scroll', onScroll);
+    const stopRemembering = () => {
+      root.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('scroll', onScroll);
+    };
+    // Search/filter edits preserve orientation, while still recording the new
+    // history entry so native Back/Forward can restore its subsequent scrolls.
+    if (samePage && action !== 'POP') {
+      remember();
+      return stopRemembering;
+    }
+
+    const target = action === 'POP' ? positions.current.get(location.key) ?? top : top;
+    restoring = true;
+    let focused = samePage;
+    let stopped = false;
     const stopObserving = () => {
-      observer?.disconnect();
+      stopped = true;
+      observer.disconnect();
       resize?.disconnect();
+      window.clearTimeout(deadline);
+      root.removeEventListener('load', orient, true);
     };
     const orient = () => {
+      if (stopped) return;
       if (restoring) {
         // Direct offsets are instant even when the user's CSS scroll is smooth.
         root.scrollLeft = target.rootX;
@@ -67,9 +91,12 @@ export function ScrollToTop() {
     };
     // An async page can initially be shorter than its saved offset. Retry when
     // its content arrives, but relinquish restoration as soon as the user acts.
-    const onUserInput = () => { restoring = false; remember(); if (focused) stopObserving(); };
-    const onScroll = (event: Event) => {
-      if (event.target === root || event.target === document) remember();
+    const onUserInput = () => {
+      restoring = false;
+      // Do not steal focus when delayed route content arrives after interaction.
+      focused = true;
+      stopObserving();
+      remember();
     };
     const observer = new MutationObserver(orient);
     observer.observe(root, { childList: true, subtree: true, characterData: true });
@@ -78,8 +105,7 @@ export function ScrollToTop() {
       Array.from(root.children).forEach(child => resize!.observe(child));
     }
     root.addEventListener('load', orient, true);
-    root.addEventListener('scroll', onScroll, true);
-    window.addEventListener('scroll', onScroll);
+    const deadline = window.setTimeout(onUserInput, ORIENTATION_WINDOW_MS);
     for (const event of ['wheel', 'touchstart', 'keydown', 'pointerdown']) root.addEventListener(event, onUserInput, { passive: true });
     orient();
     return () => {
@@ -87,8 +113,7 @@ export function ScrollToTop() {
       restoreTabIndex();
       focusTarget?.removeEventListener('blur', restoreTabIndex);
       root.removeEventListener('load', orient, true);
-      root.removeEventListener('scroll', onScroll, true);
-      window.removeEventListener('scroll', onScroll);
+      stopRemembering();
       for (const event of ['wheel', 'touchstart', 'keydown', 'pointerdown']) root.removeEventListener(event, onUserInput);
     };
   }, [location.key, location.pathname, action]);

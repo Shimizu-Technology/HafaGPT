@@ -20,7 +20,8 @@ export function LessonComplete({ topic, totalTopics, completedTopics, quizScore,
   const location = useLocation();
   const isPassing = quizScore >= 70;
   const nextTopic = getNextTopic(topic.id);
-  const context = readLearningGameContext(location.search);
+  const candidateContext = readLearningGameContext(location.search);
+  const context = candidateContext?.topicId === topic.id ? candidateContext : null;
   const practice = getLessonPractice(topic, context ? { source: context.source, returnTo: context.returnTo } : undefined);
   const lessonReturn = {
     to: context?.returnTo ?? '/learning',

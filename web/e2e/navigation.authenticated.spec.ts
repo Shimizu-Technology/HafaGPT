@@ -39,16 +39,16 @@ for (const surface of [
     await expect(link).toBeVisible();
     await link.click();
     await expect(page).toHaveURL(new RegExp(surface.path));
-    const back = page.getByRole('button', { name: 'Back to topic', exact: true });
+    const back = page.getByRole(surface.path.startsWith('/games') ? 'button' : 'link', { name: 'Back to topic', exact: true });
     // Other surfaces use their topic's full title as their destination label.
     const namedBack = surface.path.startsWith('/learn') || surface.path.startsWith('/games')
-      ? back : page.getByRole('button', { name: 'Back to Greetings & Basics', exact: true });
+      ? back : page.getByRole('link', { name: 'Back to Greetings & Basics', exact: true });
     await expect(namedBack).toBeVisible();
     const activityIndex = await page.evaluate(() => history.state.idx);
     await namedBack.click();
     await expect(page).toHaveURL(/\/learning\/greetings$/);
     expect(await page.evaluate(() => history.state.idx)).toBe(activityIndex);
-    await page.getByRole('button', { name: 'Back to learning path' }).click();
+    await page.getByRole('link', { name: 'Back to learning path' }).click();
     await expect(page).toHaveURL(/\/learning$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/learning\/greetings$/);
@@ -60,7 +60,7 @@ for (const surface of [
         await page.getByRole('link', { name: 'Start lesson', exact: true }).click();
         const childIndex = await page.evaluate(() => history.state.idx);
         await namedBack.click();
-        await page.getByRole('button', { name: 'Back to learning path' }).click();
+        await page.getByRole('link', { name: 'Back to learning path' }).click();
         await expect(page).toHaveURL(/\/learning$/);
         expect(await page.evaluate(() => history.state.idx)).toBe(childIndex);
       }

@@ -141,6 +141,8 @@ export function useVocabularySearch(query: string) {
   return useQuery({
     queryKey: ['vocabulary', 'search', query],
     queryFn: () => searchVocabulary(query),
+    // Avoid collapsing the scroll container between keystrokes.
+    placeholderData: keepPreviousData,
     enabled: query.length >= 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });

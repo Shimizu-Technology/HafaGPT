@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCategoryWordPages, useVocabularyWordById } from './useVocabularyQuery';
+import { useCategoryWordPages, useVocabularyWordById, useVocabularySearch } from './useVocabularyQuery';
 
 
 describe('stable vocabulary record query', () => {
@@ -46,6 +46,23 @@ describe('stable vocabulary record query', () => {
     expect(result.current.data?.chamorro).toBe('hånum');
     expect(queryClient.getQueryData(['vocabulary', 'word-id', 'word/id']))
       .toEqual(result.current.data);
+  });
+
+  it('retains search results while the next query loads, then replaces them with that query’s results', async () => {
+    const first = { results: [{ chamorro: 'håfa adai', definition: 'hello' }], total: 1, query: 'ha' };
+    const next = { results: [], total: 0, query: 'had' };
+    let resolveNext!: (value: { ok: boolean; json: () => Promise<typeof next> }) => void;
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => first })
+      .mockReturnValueOnce(new Promise(resolve => { resolveNext = resolve; })));
+    const { result, rerender } = renderHook(({ query }) => useVocabularySearch(query), { initialProps: { query: 'ha' }, wrapper });
+    await waitFor(() => expect(result.current.data).toEqual(first));
+    rerender({ query: 'had' });
+    expect(result.current.isFetching).toBe(true);
+    expect(result.current.data).toEqual(first);
+    await act(async () => { resolveNext({ ok: true, json: async () => next }); });
+    await waitFor(() => expect(result.current.data).toEqual(next));
+    expect(result.current.isFetching).toBe(false);
   });
 
   it('surfaces a missing stable record without retrying', async () => {

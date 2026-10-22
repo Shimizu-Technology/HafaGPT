@@ -25,9 +25,17 @@ describe('LearnerPageHeader', () => {
         <Route path="/learning" element={<Link to="/learn/greetings">Start again</Link>} />
       </Routes>
     </MemoryRouter>);
-    fireEvent.click(screen.getByRole('button', { name: 'Back to topic' }));
+    const back = screen.getByRole('link', { name: 'Back to topic' });
+    expect(back).toHaveAttribute('href', '/learning/greetings');
+    expect(back).toHaveClass('h-11', 'w-11');
+    // React Router must leave modified clicks to the browser. Suppress jsdom's
+    // unsupported native navigation only after the React event has bubbled.
+    document.addEventListener('click', event => event.preventDefault(), { once: true });
+    fireEvent.click(back, { ctrlKey: true });
+    expect(screen.getByTestId('destination')).toHaveTextContent('/learn/greetings:POP');
+    fireEvent.click(back);
     expect(screen.getByTestId('destination')).toHaveTextContent('/learning/greetings:REPLACE');
-    fireEvent.click(screen.getByRole('button', { name: 'Back to learning path' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to learning path' }));
     expect(screen.getByTestId('destination')).toHaveTextContent('/learning:REPLACE');
   });
   it('uses a session-specific exit handler when one is provided', () => {

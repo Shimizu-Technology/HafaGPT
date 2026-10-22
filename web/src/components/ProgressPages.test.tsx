@@ -276,9 +276,9 @@ describe('progress pages', () => {
   it('does not mislabel another safe quiz-review return as quiz history', () => {
     mocks.quizReview.mockReturnValue({ data: undefined, isLoading: false, error: new Error('offline'), refetch: mocks.refetchReview });
     render(<MemoryRouter initialEntries={['/quiz/review/quiz-1?return_to=%2Fvocabulary%3Fq%3Dhafa%23words']}><QuizReview /><ReturnLocation /></MemoryRouter>);
-    expect(screen.queryByRole('button', { name: 'Back to quiz history' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Back to quiz history' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Return to where you were' })).toHaveAttribute('href', '/vocabulary?q=hafa#words');
-    fireEvent.click(screen.getByRole('button', { name: 'Back to where you were' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to where you were' }));
     expect(screen.getByTestId('location')).toHaveTextContent('/vocabulary?q=hafa#words');
   });
 

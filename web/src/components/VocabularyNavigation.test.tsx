@@ -9,6 +9,7 @@ import { VocabularyWordPage } from './VocabularyWordPage';
 const mocks = vi.hoisted(() => ({
   categoryWords: null as unknown,
   searchResults: null as unknown,
+  searchUpdating: false,
   wordById: null as unknown,
 }));
 
@@ -26,7 +27,7 @@ vi.mock('../hooks/useVocabularyQuery', () => ({
     },
     isLoading: false,
   }),
-  useVocabularySearch: () => ({ data: mocks.searchResults, isLoading: false }),
+  useVocabularySearch: () => ({ data: mocks.searchResults, isLoading: false, isPlaceholderData: mocks.searchUpdating }),
   useCategoryWordPages: () => ({ data: { pages: [mocks.categoryWords] }, isLoading: false, error: null }),
   useVocabularyWordById: () => mocks.wordById,
 }));
@@ -64,6 +65,7 @@ function LocationProbe() {
 
 describe('stable vocabulary records', () => {
   beforeEach(() => {
+    mocks.searchUpdating = false;
     mocks.searchResults = { results: [word], query: 'water', total: 1 };
     mocks.categoryWords = {
       words: [word],
@@ -92,6 +94,22 @@ describe('stable vocabulary records', () => {
         'href',
         '/words/revised-word-v1-stable?return_to=%2Fvocabulary%3Fq%3Dwater',
       );
+  });
+
+  it('does not announce a new query as empty while its results are still pending', () => {
+    mocks.searchResults = { results: [], query: 'zz', total: 0 };
+    const view = () => <MemoryRouter initialEntries={['/vocabulary?q=zz']}><VocabularyList /></MemoryRouter>;
+    const { rerender } = render(view());
+    expect(screen.getByText('No words found matching "zz"')).toBeInTheDocument();
+    mocks.searchUpdating = true;
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search all Chamorro words' }), { target: { value: 'water' } });
+    expect(screen.getByRole('heading', { name: 'Searching...' })).toBeInTheDocument();
+    expect(screen.queryByText(/No words found matching/)).not.toBeInTheDocument();
+    mocks.searchUpdating = false;
+    mocks.searchResults = { results: [word], query: 'water', total: 1 };
+    rerender(view());
+    expect(screen.getByRole('link', { name: 'Open dictionary entry' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '1 result found' })).toBeInTheDocument();
   });
 
   it('links category words to the same record with a category return path', () => {
@@ -132,7 +150,7 @@ describe('stable vocabulary records', () => {
     expect(screen.getByText('Gimen hånum.')).toBeInTheDocument();
     expect(screen.getByLabelText('Content source status')).toHaveTextContent('Source-backed');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to where you were' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to where you were' }));
     expect(screen.getByText('Restored dictionary search')).toBeInTheDocument();
   });
 
@@ -148,7 +166,7 @@ describe('stable vocabulary records', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to dictionary' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Back to dictionary' }));
     expect(screen.getByText('Safe dictionary destination')).toBeInTheDocument();
   });
 
