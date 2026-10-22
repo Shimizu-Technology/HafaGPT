@@ -1,5 +1,6 @@
+import { GameTestRouter as MemoryRouter } from '../test/GameTestRouter';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChamorroWordle } from './ChamorroWordle';
 import { CulturalTrivia } from './CulturalTrivia';
@@ -57,7 +58,6 @@ describe('challenge game screens', () => {
   });
 
   it('gives Wordle a compact, accessible setup and guards an active game exit', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
     render(
       <MemoryRouter initialEntries={['/games/wordle']}>
@@ -74,7 +74,8 @@ describe('challenge game screens', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Start Practice' })).not.toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
 
-    expect(confirm).toHaveBeenCalledOnce();
+    expect(screen.getByRole('dialog')).toHaveTextContent('Leave this round?');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
     expect(screen.getByText('/games/wordle')).toBeInTheDocument();
   });
 
@@ -150,14 +151,14 @@ describe('challenge game screens', () => {
     await screen.findByText('Question 1 of 10');
     fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
 
-    expect(screen.getByRole('heading', { name: 'Leave this game?' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Leave this round?' })).toBeInTheDocument();
     expect(screen.getByText('/games/trivia')).toBeInTheDocument();
 
     const pausedTime = screen.getByLabelText(/seconds remaining/).textContent;
     await new Promise(resolve => setTimeout(resolve, 1100));
     expect(screen.getByLabelText(/seconds remaining/)).toHaveTextContent(pausedTime ?? '');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Keep Playing' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep playing' }));
     await waitFor(
       () => expect(screen.getByLabelText(/seconds remaining/).textContent).not.toBe(pausedTime),
       { timeout: 1500 },

@@ -1,3 +1,4 @@
+import { WORDLE_FEEDBACK } from './games/wordleFeedback';
 import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -133,21 +134,14 @@ export function ChamorroWordle() {
   const [, setResumeStorageAvailable] = useState(true);
   const [targetWord, setTargetWord] = useState<WordEntry | null>(null);
   const [guesses, setGuesses] = useState<GuessResult[][]>([]);
+  const [rowAnnouncement, setRowAnnouncement] = useState('');
   const [currentGuess, setCurrentGuess] = useState('');
   const [currentRow, setCurrentRow] = useState(0);
   const [letterStates, setLetterStates] = useState<Record<string, 'correct' | 'present' | 'absent' | 'unused'>>({});
   const [shake, setShake] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-      document.documentElement.scrollTop = 0;
-      document.body.scrollTop = 0;
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [gameState]);
+
 
   const clearTransitionTimers = useCallback(() => {
     transitionTimersRef.current.forEach(timer => clearTimeout(timer));
@@ -180,7 +174,7 @@ export function ChamorroWordle() {
   // Get available words based on mode and difficulty
   const getAvailableWords = useCallback((): WordEntry[] => {
     const targetLength = DIFFICULTY_CONFIG[difficulty].length;
-    
+
     if (wordMode === 'beginner') {
       const curatedList = CURATED_WORDS[targetLength as keyof typeof CURATED_WORDS] || [];
       // Safety filter: ensure all words actually match the target length
@@ -254,7 +248,7 @@ export function ChamorroWordle() {
   const handleKeyPress = useCallback((key: string) => {
     if (gameState !== 'playing' || !targetWord) return;
     if (currentGuess.length >= wordLength) return;
-    
+
     setCurrentGuess(prev => prev + key.toUpperCase());
   }, [gameState, currentGuess, wordLength, targetWord]);
 
@@ -287,7 +281,7 @@ export function ChamorroWordle() {
     // Second pass: mark present/absent
     guessChars.forEach((char, i) => {
       if (result[i]) return; // Already marked as correct
-      
+
       if (targetCharCounts[char] && targetCharCounts[char] > 0) {
         result[i] = { letter: char, state: 'present' };
         targetCharCounts[char]--;
@@ -302,7 +296,7 @@ export function ChamorroWordle() {
   // Handle enter/submit
   const handleEnter = useCallback(() => {
     if (gameState !== 'playing' || !targetWord) return;
-    
+
     if (currentGuess.length !== wordLength) {
       setShake(true);
       setMessage('Not enough letters');
@@ -316,6 +310,7 @@ export function ChamorroWordle() {
     const result = checkGuess(currentGuess, targetWord.word);
     const newGuesses = [...guesses, result];
     setGuesses(newGuesses);
+    setRowAnnouncement(`Row ${newGuesses.length}: ${result.map(({ letter, state }, index) => `${index + 1}, ${letter}, ${WORDLE_FEEDBACK[state].label}`).join('; ')}.`);
 
     // Update keyboard letter states
     const newLetterStates = { ...letterStates };
@@ -352,7 +347,7 @@ export function ChamorroWordle() {
 
   // Physical keyboard support
   useEffect(() => {
-    if (gameState !== 'playing') return;
+    if (gameState !== 'playing' || guard.blocked) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
@@ -372,7 +367,7 @@ export function ChamorroWordle() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, handleEnter, handleBackspace, handleKeyPress]);
+  }, [gameState, handleEnter, handleBackspace, handleKeyPress, guard.blocked]);
 
   // Save game result
   useEffect(() => {
@@ -381,7 +376,7 @@ export function ChamorroWordle() {
       const attempts = guesses.length;
       const won = gameState === 'won';
       const stars = won ? (attempts <= 3 ? 3 : attempts <= 5 ? 2 : 1) : 0;
-      
+
       saveGameResultMutation.mutate({
         client_attempt_id: gameAttemptIdRef.current,
         game_type: 'chamorro_wordle',
@@ -460,8 +455,8 @@ export function ChamorroWordle() {
   // Generate share text
   const generateShareText = () => {
     if (!targetWord) return '';
-    
-    const emojiGrid = guesses.map(row => 
+
+    const emojiGrid = guesses.map(row =>
       row.map(({ state }) => {
         if (state === 'correct') return '🟩';
         if (state === 'present') return '🟨';
@@ -501,7 +496,7 @@ export function ChamorroWordle() {
   const renderCell = (rowIndex: number, cellIndex: number) => {
     const guess = guesses[rowIndex];
     const isCurrentRow = rowIndex === currentRow && gameState === 'playing';
-    
+
     let content = '';
     let state: LetterState = 'empty';
 
@@ -522,24 +517,27 @@ export function ChamorroWordle() {
     return (
       <div
         key={cellIndex}
+        role="img"
+        aria-label={`Row ${rowIndex + 1}, position ${cellIndex + 1}: ${content || 'blank'}, ${WORDLE_FEEDBACK[state].label}`}
         className={`
-          w-12 h-12 sm:w-14 sm:h-14 
+          min-w-0 flex-1 h-14 sm:h-16
           border-2 rounded-lg
-          flex items-center justify-center
+          flex flex-col items-center justify-center
           font-bold text-xl sm:text-2xl
-          transition-all duration-300
           ${stateStyles[state]}
-          ${content && state === 'empty' ? 'border-brown-400 dark:border-slate-400 scale-105' : ''}
+          ${content && state === 'empty' ? 'border-brown-400 dark:border-slate-400' : ''}
           ${shake && isCurrentRow ? 'animate-shake' : ''}
         `}
       >
-        {content}
+        <span aria-hidden="true">{content}</span>
+        <span aria-hidden="true" className="text-xs leading-none">{WORDLE_FEEDBACK[state].mark}</span>
       </div>
     );
   };
 
   return (
     <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{rowAnnouncement}</p>
       <GamePageHeader
         title="Chamorro Wordle"
         subtitle={headerSubtitle}
@@ -558,10 +556,10 @@ export function ChamorroWordle() {
               onClick={() => startGame('daily')}
               disabled={!!dailyPlayed}
               className={`
-                w-full p-4 rounded-2xl text-left transition-all
-                ${dailyPlayed 
+                w-full p-4 rounded-2xl text-left transition-colors
+                ${dailyPlayed
                   ? 'bg-cream-100 dark:bg-slate-800 opacity-60 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 hover:shadow-lg hover:scale-[1.02] shadow-md border border-cream-200 dark:border-slate-700'
+                  : 'bg-white dark:bg-slate-800 hover:shadow-lg  shadow-md border border-cream-200 dark:border-slate-700'
                 }
               `}
             >
@@ -599,7 +597,7 @@ export function ChamorroWordle() {
                     type="button"
                     onClick={() => setWordMode('beginner')}
                     aria-pressed={wordMode === 'beginner'}
-                    className={`p-3 rounded-xl text-center transition-all ${
+                    className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'beginner'
                         ? 'bg-amber-700 text-white shadow-lg'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -613,7 +611,7 @@ export function ChamorroWordle() {
                     type="button"
                     onClick={() => setWordMode('challenge')}
                     aria-pressed={wordMode === 'challenge'}
-                    className={`p-3 rounded-xl text-center transition-all ${
+                    className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'challenge'
                         ? 'bg-amber-700 text-white shadow-lg'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -636,7 +634,7 @@ export function ChamorroWordle() {
                       key={d}
                       onClick={() => setDifficulty(d)}
                       aria-pressed={difficulty === d}
-                      className={`p-2 rounded-xl text-center transition-all ${
+                      className={`p-2 rounded-xl text-center transition-colors ${
                         difficulty === d
                           ? 'bg-teal-700 text-white shadow-lg'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -660,7 +658,7 @@ export function ChamorroWordle() {
                         key={cat.id}
                         onClick={() => setCategory(cat.id)}
                         aria-pressed={category === cat.id}
-                        className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                        className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                           category === cat.id
                             ? 'bg-coral-700 text-white dark:bg-teal-700'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 hover:bg-cream-200 dark:hover:bg-slate-600'
@@ -677,7 +675,7 @@ export function ChamorroWordle() {
               <button
                 type="button"
                 onClick={() => startGame('practice')}
-              disabled={resultUnresolved}
+              disabled={resultUnresolved || startStatus.pending}
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <Play className="w-5 h-5" />
@@ -698,7 +696,7 @@ export function ChamorroWordle() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">3</span>
-                  <span>Colors show how close you are - use them to guess again!</span>
+                  <span>Marks and colors show how close you are — use them to guess again!</span>
                 </li>
               </ol>
 
@@ -710,11 +708,11 @@ export function ChamorroWordle() {
                 <div className="w-10 h-10 bg-gray-400 text-white rounded flex items-center justify-center font-bold">A</div>
               </div>
               <ul className="space-y-1 text-center text-xs text-brown-500 dark:text-gray-400">
-                <li><strong>Green</strong> = Right letter, right spot</li>
-                <li><strong>Yellow</strong> = Right letter, wrong spot</li>
-                <li><strong>Gray</strong> = Not in word</li>
+                <li><strong>✓ Green</strong> = Right letter, right spot</li>
+                <li><strong>↔ Yellow</strong> = Right letter, wrong spot</li>
+                <li><strong>× Gray</strong> = Not in word</li>
               </ul>
-              
+
               <p className="text-xs text-center text-brown-400 dark:text-gray-500 mt-3">
                 You have <strong>6 tries</strong> to guess the word!
               </p>
@@ -732,11 +730,19 @@ export function ChamorroWordle() {
               </div>
             )}
 
+            <p className="w-full text-center text-sm text-brown-700 dark:text-gray-200">✓ Right spot · ↔ Different spot · × Not in word</p>
+            <form className="w-full max-w-xl" onSubmit={event => { event.preventDefault(); handleEnter(); }}>
+              <label htmlFor="wordle-device-input" className="block text-base font-semibold text-brown-800 dark:text-white">Type your guess</label>
+              <div className="mt-2 flex gap-2">
+                <input id="wordle-device-input" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} value={currentGuess} onChange={event => setCurrentGuess(event.target.value.toUpperCase().replace(/[^A-ZÅÑ']/g, '').slice(0, wordLength))} className="min-h-11 min-w-0 flex-1 rounded-xl border border-brown-400 bg-white px-3 text-base text-brown-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white" />
+                <button type="submit" className="min-h-11 rounded-xl bg-coral-700 px-3 font-semibold text-white dark:bg-teal-700">Enter</button>
+              </div>
+            </form>
             {/* Grid */}
-            <div className="flex flex-col gap-1.5 sm:gap-2">
+            <div className="flex w-full max-w-md flex-col gap-1.5 sm:gap-2">
               {Array.from({ length: MAX_ATTEMPTS }).map((_, rowIndex) => (
                 <div key={rowIndex} className="flex gap-1.5 sm:gap-2">
-                  {Array.from({ length: wordLength }).map((_, cellIndex) => 
+                  {Array.from({ length: wordLength }).map((_, cellIndex) =>
                     renderCell(rowIndex, cellIndex)
                   )}
                 </div>
@@ -826,7 +832,7 @@ export function ChamorroWordle() {
                 <button
                   type="button"
                   onClick={() => startGame('practice')}
-              disabled={resultUnresolved}
+              disabled={resultUnresolved || startStatus.pending}
                   className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-5 h-5" />
