@@ -31,6 +31,7 @@ it('offers a visibly named Saved decks destination outside the cramped header', 
 it.each(['curated', 'dictionary'])('preserves %s ratings without an ordinary create/save/manage promise', async type => {
   show(`/flashcards/greetings?type=${type}`);
   expect(screen.queryByRole('button', { name: /save.*(deck|set)/i })).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Back to flashcard decks' })).toHaveAttribute('href', `/flashcards?source=${type}`);
   const prompt = type === 'curated' ? /Håfa Adai/i : 'Fixture prompt';
   fireEvent.click(await screen.findByRole('button', { name: prompt }));
   fireEvent.click(screen.getByRole('button', { name: 'Good I remembered' }));
