@@ -140,7 +140,6 @@ export function GameHistory() {
         ) : (
           <>
             <section aria-labelledby="game-results-title">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Past practice</p>
               <h2 id="game-results-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-white">Review your game results</h2>
               <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
                 {data.results.map((result) => (

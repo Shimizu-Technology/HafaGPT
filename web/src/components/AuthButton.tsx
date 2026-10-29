@@ -35,7 +35,7 @@ export function AuthButton() {
       {/* Show sign in button when logged out */}
       <SignedOut>
         <SignInButton mode="modal">
-          <button className="min-h-11 px-3 sm:px-4 py-2 bg-teal-700 hover:bg-teal-800 dark:bg-ocean-700 dark:hover:bg-ocean-800 text-white rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-medium shadow-sm hover:shadow-md">
+          <button className="min-h-11 px-3 sm:px-4 py-2 bg-teal-700 hover:bg-teal-800 dark:bg-ocean-700 dark:hover:bg-ocean-800 text-white rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-medium">
             Sign In
           </button>
         </SignInButton>
@@ -50,7 +50,7 @@ export function AuthButton() {
             elements: {
               avatarBox: "w-9 h-9",
               userButtonTrigger: "!min-h-[44px] !min-w-[44px] !p-1",
-              userButtonPopoverCard: "rounded-xl shadow-xl",
+              userButtonPopoverCard: "rounded-xl ",
               userButtonPopoverActionButton: isDark ? "hover:bg-gray-800" : "hover:bg-teal-50",
             }
           }}

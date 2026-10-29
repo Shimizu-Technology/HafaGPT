@@ -76,31 +76,31 @@ export function Dashboard() {
       label: 'Chats',
       value: initData ? totalConversations : conversationsLoading ? '…' : 'Unavailable',
       icon: MessageSquare,
-      tone: 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       label: 'Quizzes',
       value: quizStatsData ? totalQuizzes : quizLoading ? '…' : 'Unavailable',
       icon: Brain,
-      tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       label: 'Average quiz',
       value: !quizStatsData ? (quizLoading ? '…' : 'Unavailable') : totalQuizzes > 0 ? `${averageScore}%` : '—',
       icon: Trophy,
-      tone: 'text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       label: 'Games',
       value: gameStatsData ? totalGames : gamesLoading ? '…' : 'Unavailable',
       icon: Gamepad2,
-      tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       label: 'Average stars',
       value: !gameStatsData ? (gamesLoading ? '…' : 'Unavailable') : totalGames > 0 ? averageStars.toFixed(1) : '—',
       icon: Star,
-      tone: 'text-yellow-700 bg-yellow-100 dark:text-yellow-300 dark:bg-yellow-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
   ];
 
@@ -110,28 +110,28 @@ export function Dashboard() {
       title: 'Ask HåfaGPT',
       description: 'Get help with a word or phrase',
       icon: MessageSquare,
-      tone: 'text-coral-700 bg-coral-100 dark:text-teal-300 dark:bg-teal-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       to: '/quiz',
       title: 'Take a quiz',
       description: 'Check what you remember',
       icon: Brain,
-      tone: 'text-purple-700 bg-purple-100 dark:text-purple-300 dark:bg-purple-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       to: '/flashcards',
       title: 'Study flashcards',
       description: 'Review useful vocabulary',
       icon: BookOpen,
-      tone: 'text-teal-700 bg-teal-100 dark:text-teal-300 dark:bg-teal-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
     {
       to: '/games',
       title: 'Play a game',
       description: 'Practice through play',
       icon: Gamepad2,
-      tone: 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-950/50',
+      tone: 'text-brown-600 dark:text-gray-300',
     },
   ];
 
@@ -155,7 +155,6 @@ export function Dashboard() {
               <SeasonalIcon className="h-6 w-6" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Learning overview</p>
               <h2 className="text-lg font-bold leading-snug text-brown-950 dark:text-white sm:text-xl">
                 Håfa Adai, {user?.firstName || 'Learner'}!
               </h2>
@@ -169,7 +168,6 @@ export function Dashboard() {
         <section aria-labelledby="progress-summary-title">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
             <div>
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">At a glance</p>
               <h2 id="progress-summary-title" className="text-xl font-bold text-brown-950 dark:text-white">
                 Your activity
               </h2>
@@ -197,16 +195,13 @@ export function Dashboard() {
             <RecordsError key={title} title={title} hasData={Boolean(query.data)} retrying={query.isFetching} onRetry={() => void query.refetch()} />
           ))}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {stats.map(({ label, value, icon: Icon, tone }) => (
+            {stats.map(({ label, value }) => (
               <div
                 key={label}
-                className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
+                className="border-t border-cream-200 py-4 dark:border-slate-700"
               >
-                <span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-xl ${tone}`}>
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </span>
                 <p className={`${value === 'Unavailable' ? 'text-base break-words' : 'text-2xl'} font-bold text-brown-950 dark:text-white`}>{value}</p>
-                <p className="mt-1 text-xs text-brown-500 dark:text-gray-400">{label}</p>
+                <p className="mt-1 text-sm text-brown-500 dark:text-gray-400">{label}</p>
               </div>
             ))}
           </div>
@@ -214,26 +209,25 @@ export function Dashboard() {
 
         {bestCategory && bestCategoryInfo && (
           <section
-            className="flex items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
             aria-label="Best quiz category"
           >
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300">
+              <span className="flex-none text-muted">
                 <Trophy className="h-5 w-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   Strongest quiz topic
                 </p>
                 <p className="truncate font-bold text-brown-950 dark:text-white">{bestCategoryInfo.title}</p>
               </div>
             </div>
-            <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{bestCategory.percentage}%</p>
+            <p className="text-2xl font-bold text-ink">{bestCategory.percentage}%</p>
           </section>
         )}
 
         <section aria-labelledby="continue-learning-title">
-          <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Keep going</p>
           <h2 id="continue-learning-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">
             Choose your next activity
           </h2>
@@ -286,7 +280,7 @@ export function Dashboard() {
                     className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                      <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                         <Brain className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
@@ -295,7 +289,7 @@ export function Dashboard() {
                             {result.category_title || 'Quiz'}
                           </p>
                           {isDictionary && (
-                            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                               Dictionary
                             </span>
                           )}

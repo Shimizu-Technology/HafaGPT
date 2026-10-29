@@ -41,7 +41,6 @@ export function QuizList() {
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <div className="mb-6 max-w-2xl">
-          <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice</p>
           <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Find out what is sticking</h2>
           <p className="mt-2 text-brown-600 dark:text-gray-300">Choose a focused quiz. You will see gentle feedback and an explanation after each answer.</p>
         </div>
@@ -54,7 +53,7 @@ export function QuizList() {
               aria-pressed={quizMode === 'curated'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 quizMode === 'curated'
-                  ? 'bg-coral-700 text-white'
+                  ? 'bg-coral-700 dark:bg-teal-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
@@ -67,7 +66,7 @@ export function QuizList() {
               aria-pressed={quizMode === 'dictionary'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 quizMode === 'dictionary'
-                  ? 'bg-coral-700 text-white'
+                  ? 'bg-coral-700 dark:bg-teal-700 text-white'
                   : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
               }`}
             >
@@ -93,7 +92,7 @@ export function QuizList() {
                   onClick={() => setQuizLevel(level)}
                   aria-pressed={quizLevel === level}
                   className={`min-h-11 rounded-xl border px-2 text-sm font-semibold transition-colors ${quizLevel === level
-                    ? 'border-coral-600 bg-coral-50 text-coral-800 dark:border-ocean-500 dark:bg-ocean-950 dark:text-ocean-200'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'border-cream-200 bg-white text-brown-600 hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300'
                   }`}
                 >

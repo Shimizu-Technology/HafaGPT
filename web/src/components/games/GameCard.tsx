@@ -13,12 +13,12 @@ interface GameCardProps {
 
 export function GameCard({ to, title, description, icon, difficulty, comingSoon }: GameCardProps) {
   const difficultyColors: Record<string, string> = {
-    'No reading': 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
-    'Some reading': 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
-    'Fast paced': 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300',
-    'Challenge': 'bg-coral-50 text-coral-700 dark:bg-coral-900/50 dark:text-coral-200',
-    'All ages': 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300',
-    'All levels': 'bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300',
+    'No reading': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+    'Some reading': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+    'Fast paced': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+    'Challenge': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+    'All ages': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+    'All levels': 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
   };
 
   if (comingSoon) {

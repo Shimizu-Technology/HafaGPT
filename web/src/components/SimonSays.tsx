@@ -222,7 +222,7 @@ export function SimonSays() {
                 {BODY_PARTS.map(part => (
                   <div
                     key={part.chamorro}
-                    className="text-center p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg"
+                    className="text-center p-2 bg-teal-50 dark:bg-teal-900/20 rounded-lg"
                   >
                     <span className="text-2xl block">{part.emoji}</span>
                     <span className="text-xs text-brown-600 dark:text-gray-400 block">{part.chamorro}</span>
@@ -258,26 +258,26 @@ export function SimonSays() {
               disabled={isSpeaking}
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-indigo-700 text-white '
-                  : 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-indigo-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-purple-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-indigo-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-purple-900/70 border-2 border-indigo-300 dark:border-indigo-700'
+                  ? 'bg-teal-700 text-white '
+                  : 'bg-teal-100 dark:bg-teal-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                 isSpeaking
                   ? 'bg-white/20'
-                  : 'bg-indigo-500 shadow-lg shadow-indigo-500/30'
+                  : 'bg-teal-700 '
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
 
               <div className="text-center">
-                <span className={`text-lg font-bold block ${isSpeaking ? 'text-white' : 'text-indigo-700 dark:text-indigo-300'}`}>
+                <span className={`text-lg font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                   "{currentBodyPart.instruction}"
                 </span>
-                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/90' : 'text-teal-700 dark:text-teal-400'}`}>
                   "Touch your {currentBodyPart.english.toLowerCase()}!"
                 </span>
-                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/90' : 'text-teal-700 dark:text-teal-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
@@ -292,7 +292,7 @@ export function SimonSays() {
                 const isCorrectAnswer = part.chamorro === currentBodyPart.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-indigo-400 ';
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {

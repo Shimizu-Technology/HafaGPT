@@ -63,9 +63,9 @@ export function VocabularyWordPage() {
       />
 
       <main className="mx-auto max-w-3xl px-4 py-5 sm:py-8">
-        <article className="overflow-hidden rounded-3xl border border-cream-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-          <div className="border-b border-cream-200 bg-gradient-to-br from-coral-50 to-cream-50 p-6 dark:border-slate-700 dark:from-ocean-950/50 dark:to-slate-800 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-coral-700 dark:text-ocean-300">
+        <article className="overflow-hidden rounded-3xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+          <div className="border-b border-cream-200 bg-coral-50 p-6 dark:border-slate-700 dark:bg-ocean-950/50 sm:p-8">
+            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">
               Chamorro headword
             </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">

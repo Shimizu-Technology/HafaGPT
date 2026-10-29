@@ -103,7 +103,6 @@ export function MyDecks() {
             </section>
 
             <section aria-labelledby="saved-decks-title">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Pick up where you left off</p>
               <h2 id="saved-decks-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">Your decks</h2>
               <div className="grid gap-3 md:grid-cols-2">
                 {decks.map((deck) => {
@@ -124,7 +123,7 @@ export function MyDecks() {
                       </div>
 
                       <div className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" aria-hidden="true">
-                        <div className="h-full rounded-full bg-coral-500 dark:bg-teal-500" style={{ width: `${reviewedPercent}%` }} />
+                        <div className="h-full rounded-full bg-coral-700 dark:bg-teal-700" style={{ width: `${reviewedPercent}%` }} />
                       </div>
                       <div className="mt-2 flex items-center justify-between gap-3 text-xs text-brown-500 dark:text-gray-400">
                         <span>{deck.cards_reviewed} of {deck.total_cards} reviewed</span>

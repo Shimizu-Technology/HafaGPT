@@ -28,7 +28,7 @@ const RATINGS: Array<{
     quality: 5,
     label: 'Easy',
     hint: 'I knew it right away',
-    className: 'border-sky-300 bg-sky-50 text-sky-900 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100',
+    className: 'border-teal-300 bg-teal-50 text-teal-900 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/40 dark:text-teal-100',
   },
 ];
 

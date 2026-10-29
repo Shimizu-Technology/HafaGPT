@@ -37,7 +37,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
   
   if (variant === 'banner') {
     return (
-      <div className={`bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 ${className}`}>
+      <div className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 ${className}`}>
         <div className="flex items-start gap-3">
           <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
             <Volume2 className="w-5 h-5 text-amber-700 dark:text-amber-400" />

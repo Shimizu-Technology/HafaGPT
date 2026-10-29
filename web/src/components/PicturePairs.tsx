@@ -347,12 +347,12 @@ export function PicturePairs() {
                     aria-pressed={selectedCategory.id === category.id}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
-                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
-                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
+                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
+                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
-                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">{category.name}</span>
+                    <span className="text-sm font-medium">{category.name}</span>
                   </button>
                 ))}
               </div>
@@ -369,15 +369,15 @@ export function PicturePairs() {
                     aria-pressed={difficulty === key}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       difficulty === key
-                        ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/30'
-                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
+                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
+                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-xl block mb-1">
                       {key === 'easy' ? '🌱' : key === 'medium' ? '🌿' : '🌳'}
                     </span>
-                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300 capitalize">{key}</span>
-                    <span className="text-xs text-brown-500 dark:text-gray-400 block">{config.label}</span>
+                    <span className="text-sm font-medium capitalize">{key}</span>
+                    <span className="text-xs block">{config.label}</span>
                   </button>
                 ))}
               </div>
@@ -407,7 +407,7 @@ export function PicturePairs() {
         {gameState === 'playing' && (
           <div className="animate-fade-in">
             {/* Stats Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white dark:bg-slate-800 rounded-xl p-3">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
                   <span className="text-sm font-bold">Moves: {moves}</span>
@@ -440,7 +440,7 @@ export function PicturePairs() {
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
                           : 'bg-white dark:bg-slate-700 border-2 border-teal-400 rotate-0'
-                        : 'bg-gradient-to-br from-teal-400 to-green-500 border-2 border-teal-300  cursor-pointer'
+                        : 'bg-teal-400 border-2 border-teal-300  cursor-pointer'
                     }`}
                     style={{
                       perspective: '1000px',
@@ -478,7 +478,7 @@ export function PicturePairs() {
         {/* Complete Screen */}
         {gameState === 'complete' && (
           <div className="animate-fade-in text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-green-100 to-teal-200 dark:from-green-900/50 dark:to-teal-800/50 mb-6 shadow-lg">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/50 mb-6">
               <Trophy className="w-12 h-12 text-teal-600" />
             </div>
 
@@ -501,7 +501,7 @@ export function PicturePairs() {
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-6">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{moves}</p>
@@ -523,7 +523,7 @@ export function PicturePairs() {
               <button
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 bg-gradient-to-r from-green-700 to-teal-700 text-white rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again

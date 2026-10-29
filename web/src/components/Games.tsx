@@ -13,7 +13,6 @@ import {
   Palette,
   Puzzle,
   Shuffle,
-  Sparkles,
   Swords,
   Target,
   Zap,
@@ -85,9 +84,6 @@ export function Games() {
         <section className="mb-8 overflow-hidden rounded-3xl border border-coral-200 bg-coral-50 p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">
-              <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-coral-700 dark:text-teal-300">
-                <Sparkles className="h-4 w-4" aria-hidden="true" /> A gentle place to start
-              </p>
               <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Listen, choose, and learn</h2>
               <p className="mt-2 text-brown-600 dark:text-gray-300">
                 Sound Match works without reading, gives every word an audio cue, and takes only a few minutes.
@@ -104,7 +100,6 @@ export function Games() {
 
         <section aria-labelledby="game-library-title">
           <div className="mb-5">
-            <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Choose what feels right</p>
             <h2 id="game-library-title" className="mt-1 text-2xl font-bold tracking-tight text-brown-950 dark:text-white">Find a game</h2>
           </div>
 
@@ -118,8 +113,8 @@ export function Games() {
                   aria-pressed={selectedGroup === group.id}
                   className={`min-h-11 rounded-full border px-4 text-sm font-semibold transition-colors ${
                     selectedGroup === group.id
-                      ? 'border-coral-600 bg-coral-700 text-white dark:border-teal-500 dark:bg-teal-700'
-                      : 'border-cream-300 bg-white text-brown-700 hover:border-coral-300 hover:bg-coral-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:border-teal-600 dark:hover:bg-slate-700'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
+                      : 'border-cream-300 bg-white text-brown-700 hover:border-coral-300 hover:bg-cream-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:border-teal-600 dark:hover:bg-slate-700'
                   }`}
                 >
                   {group.label}

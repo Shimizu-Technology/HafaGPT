@@ -133,7 +133,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!isLoaded && authLoadTimedOut) {
     return (
       <main className="grid min-h-screen place-items-center bg-cream-50 px-4 pb-24 dark:bg-slate-900">
-        <section className="w-full max-w-md rounded-3xl border border-cream-200 bg-white p-7 text-center shadow-sm dark:border-slate-700 dark:bg-slate-800" role="alert">
+        <section className="w-full max-w-md rounded-3xl border border-cream-200 bg-white p-7 text-center dark:border-slate-700 dark:bg-slate-800" role="alert">
           <h1 className="text-2xl font-bold tracking-tight text-brown-900 dark:text-white">We could not check your sign-in</h1>
           <p className="mt-3 text-sm leading-relaxed text-brown-600 dark:text-gray-300">
             This browser is taking too long to read its saved account state. Your account and learning progress are safe.
@@ -142,7 +142,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             <button
               type="button"
               onClick={() => void window.__hafagptRecoverStaleBuild?.()}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-coral-700 dark:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Repair and reload
             </button>
@@ -161,7 +161,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Show sign-in page if not authenticated
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
         {/* Back button */}
         <div className="sticky top-0 z-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-b border-cream-200 dark:border-slate-700">
           <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
@@ -177,7 +177,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
         <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
           {/* Feature Card */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl border border-cream-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-cream-200 dark:border-slate-700">
             {/* Logo & Title */}
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 mb-3">
@@ -188,7 +188,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
             {/* Feature Info */}
             <div className="text-center mb-6">
-              <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center mb-4`}>
+              <div className={`w-16 h-16 mx-auto rounded-2xl bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center mb-4`}>
                 <FeatureIcon className="w-8 h-8 text-coral-700 dark:text-ocean-400" />
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
@@ -221,7 +221,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Primary CTA - Sign Up */}
               <SignUpButton mode="modal">
-                <button className="w-full py-3.5 bg-gradient-to-r from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3.5 bg-coral-700 dark:bg-ocean-700 hover:bg-coral-600 dark:hover:bg-ocean-600 text-white rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2">
                   <UserPlus className="w-5 h-5" />
                   Create Free Account
                 </button>
@@ -237,7 +237,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Free Account Note */}
               <p className="text-center text-xs text-brown-500 dark:text-gray-400 pt-2">
-                ✨ 100% free • No credit card required
+                100% free • No credit card required
                   </p>
                 </div>
               </div>

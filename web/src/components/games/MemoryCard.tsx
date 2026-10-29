@@ -59,9 +59,8 @@ export const MemoryCard = memo(function MemoryCard({
         <div
           className={`
             absolute top-0 left-0 right-0 bottom-0 rounded-lg sm:rounded-xl md:rounded-2xl
-            bg-gradient-to-br from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600
-            flex items-center justify-center shadow-md md:shadow-lg
-            border-2 border-coral-400 dark:border-ocean-400
+            bg-coral-700 dark:bg-teal-700
+            flex items-center justify-center border-2 border-coral-400 dark:border-ocean-400
             ${isFlipped || isMatched ? '' : ''}
           `}
           style={{ backfaceVisibility: 'hidden' }}
@@ -74,11 +73,10 @@ export const MemoryCard = memo(function MemoryCard({
           className={`
             absolute top-0 left-0 right-0 bottom-0 rounded-lg sm:rounded-xl md:rounded-2xl
             ${isMatched
-              ? 'bg-gradient-to-br from-green-400 to-green-500 dark:from-green-600 dark:to-green-700 border-green-300 dark:border-green-500'
+              ? 'bg-emerald-700 dark:bg-emerald-800 border-emerald-700 dark:border-emerald-600'
               : 'bg-white dark:bg-slate-800 border-cream-300 dark:border-slate-600'
             }
             border-2 flex flex-col items-center justify-center p-1 sm:p-2 md:p-3
-            shadow-md md:shadow-lg
           `}
           style={{
             backfaceVisibility: 'hidden',

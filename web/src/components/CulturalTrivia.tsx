@@ -497,7 +497,7 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'easy'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'easy'
-                    ? 'bg-emerald-700 text-white shadow-lg'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
@@ -511,7 +511,7 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'medium'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'medium'
-                    ? 'bg-amber-700 text-white shadow-lg'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
@@ -525,7 +525,7 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'hard'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'hard'
-                    ? 'bg-red-600 text-white shadow-lg'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
@@ -558,7 +558,7 @@ export function CulturalTrivia() {
                       isDisabled
                         ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
-                          ? 'bg-coral-700 text-white shadow-lg dark:bg-teal-700'
+                          ? 'bg-coral-700 dark:bg-teal-700 text-white'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
@@ -617,7 +617,6 @@ export function CulturalTrivia() {
             <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
               <Trophy className="h-10 w-10" aria-hidden="true" />
             </span>
-            <p className="mb-1 text-sm font-semibold text-coral-700 dark:text-teal-300">Game complete</p>
             <h2 id="trivia-result-title" className="text-2xl font-bold text-brown-950 dark:text-white">Trivia complete</h2>
 
             <div className="my-5 flex justify-center gap-1" aria-label={`${stars} out of 3 stars`}>
@@ -691,7 +690,7 @@ export function CulturalTrivia() {
         <GameProgress current={currentQuestionIndex + 1} total={questions.length} score={score} streak={streak} />
 
         {/* Question Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
           <div className="mb-4">
             <span className="text-xs px-2 py-1 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 rounded-full capitalize">
               {currentQuestion.category}
@@ -728,7 +727,7 @@ export function CulturalTrivia() {
                 >
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                     showCorrect
-                      ? 'bg-green-700 text-white'
+                      ? 'bg-emerald-700 text-white'
                       : showWrong
                       ? 'bg-red-700 text-white'
                       : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-400'

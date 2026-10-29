@@ -102,7 +102,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           >
             {/* Front */}
             <div
-              className="col-start-1 row-start-1 bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-cream-200/50 dark:border-slate-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-white dark:bg-slate-800 rounded-3xl border border-cream-200/50 dark:border-slate-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
               aria-hidden={isFlipped}
               style={{ backfaceVisibility: 'hidden' }}
             >
@@ -125,7 +125,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
 
             {/* Back */}
             <div
-              className="col-start-1 row-start-1 bg-coral-700 dark:bg-teal-700 rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-coral-700 dark:bg-teal-700 rounded-3xl flex flex-col items-center justify-center p-6 backface-hidden"
               aria-hidden={!isFlipped}
               style={{
                 backfaceVisibility: 'hidden',

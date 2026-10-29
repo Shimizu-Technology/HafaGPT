@@ -375,7 +375,7 @@ export function Hangman() {
           </div>
 
           {/* Mode Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
             <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-coral-700 dark:text-teal-400" />
               Choose Mode
@@ -386,7 +386,7 @@ export function Hangman() {
                 aria-pressed={settings.mode === 'beginner'}
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'beginner'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
@@ -401,12 +401,12 @@ export function Hangman() {
                 aria-pressed={settings.mode === 'challenge'}
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'challenge'
-                    ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
+                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
                     : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
-                  <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
+                  <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-teal-700'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Challenge</p>
                 <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</p>
@@ -415,7 +415,7 @@ export function Hangman() {
           </div>
 
           {/* Category Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
             <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Choose Topic</h3>
             {isLoading ? (
               <div className="text-center py-4 text-brown-500 dark:text-gray-300">Loading categories...</div>
@@ -440,7 +440,7 @@ export function Hangman() {
                         isDisabled
                           ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
                           : settings.category === catId
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }`}
                     >
@@ -497,7 +497,7 @@ export function Hangman() {
         <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
         <main className="max-w-md mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 shadow-lg text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 text-center">
             <div className="text-6xl mb-4">{gameState === 'won' ? '🎉' : '😢'}</div>
             <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
               {gameState === 'won' ? 'Great Job!' : 'Game Over!'}
@@ -583,7 +583,7 @@ export function Hangman() {
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Hangman Figure */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700 shadow-sm flex justify-center">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700 flex justify-center">
           {renderHangman()}
         </div>
 
@@ -597,7 +597,7 @@ export function Hangman() {
         </div>
 
         {/* Word Display */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
           {/* Hint */}
           <div className="flex items-center justify-center gap-2 mb-4">
             <HelpCircle className="w-4 h-4 text-coral-700 dark:text-teal-400" />
@@ -643,7 +643,7 @@ export function Hangman() {
         </div>
 
         {/* Keyboard */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
           <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {CHAMORRO_ALPHABET.map(letter => {
               const isGuessed = guessedLetters.includes(letter);
@@ -657,7 +657,7 @@ export function Hangman() {
                   disabled={isGuessed || isWordComplete}
                   className={`w-8 h-10 sm:w-10 sm:h-12 rounded-lg font-bold text-sm sm:text-base transition-colors ${
                     isCorrect
-                      ? 'bg-green-700 text-white'
+                      ? 'bg-emerald-700 text-white'
                       : isWrong
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed

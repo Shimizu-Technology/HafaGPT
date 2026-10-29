@@ -382,7 +382,7 @@ export function WordScramble() {
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Scramble" subtitle="Put the letters in order to spell a Chamorro word." icon={Shuffle} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-purple-600 border-t-transparent" />
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-teal-700 border-t-transparent" />
           <p className="text-brown-600 dark:text-gray-400">Loading game...</p>
         </div>
       </GamePage>
@@ -417,8 +417,8 @@ export function WordScramble() {
         {gameState === 'setup' && (
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
             {learningContext && (
-              <div className="flex items-center gap-3 rounded-xl border border-purple-200 bg-purple-50 p-3 text-left dark:border-purple-700/40 dark:bg-purple-900/20">
-                <BookOpen className="h-5 w-5 flex-none text-purple-600 dark:text-purple-300" aria-hidden="true" />
+              <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-900/20">
+                <BookOpen className="h-5 w-5 flex-none text-teal-700 dark:text-teal-300" aria-hidden="true" />
                 <p className="text-sm text-brown-700 dark:text-gray-200">
                   Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from {learningContext.source === 'today' ? 'Today' : 'your lesson'}.
                 </p>
@@ -426,7 +426,7 @@ export function WordScramble() {
             )}
 
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Choose Mode
               </h3>
@@ -441,7 +441,7 @@ export function WordScramble() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -460,13 +460,13 @@ export function WordScramble() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <div className="flex items-center justify-center mb-1">
-                    <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
+                    <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-teal-700'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
                   <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
@@ -477,7 +477,7 @@ export function WordScramble() {
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Choose Topic
               </h3>
@@ -490,7 +490,7 @@ export function WordScramble() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg '
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
@@ -509,7 +509,7 @@ export function WordScramble() {
             </div>
 
             {/* Words Per Round */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Words Per Round
               </h3>
@@ -527,7 +527,7 @@ export function WordScramble() {
                         ${isDisabled
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.wordsPerRound === count
-                            ? 'bg-purple-700 dark:bg-purple-700 text-white shadow-lg '
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }
                       `}
@@ -548,7 +548,7 @@ export function WordScramble() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 dark:bg-teal-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -571,10 +571,10 @@ export function WordScramble() {
         {gameState === 'playing' && currentWord && (
           <div className="max-w-lg mx-auto space-y-3 sm:space-y-4">
             {/* Progress & Stats Bar */}
-            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-2 sm:p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-2 sm:p-3 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-3 sm:gap-4">
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="text-lg sm:text-xl font-bold text-teal-700 dark:text-teal-400">
                     {currentWordIndex + 1}/{settings.wordsPerRound}
                   </p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Word</p>
@@ -602,10 +602,10 @@ export function WordScramble() {
             )}
 
             {/* Hint (English meaning) */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700 text-center">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide">
+                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400">
                   English Meaning
                 </span>
               </div>
@@ -613,16 +613,16 @@ export function WordScramble() {
                 {currentWord.english}
               </p>
               {showHint && (
-                <p className="text-sm text-purple-600 dark:text-purple-400 mt-2">
+                <p className="text-sm text-teal-700 dark:text-teal-400 mt-2">
                   First letter: <span className="font-bold">{currentWord.chamorro[0].toUpperCase()}</span>
                 </p>
               )}
             </div>
 
             {/* Scrambled Letters */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide">
+                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400">
                   Tap letters to spell the word
                 </span>
                 <button
@@ -657,8 +657,8 @@ export function WordScramble() {
                         relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl font-bold text-xl sm:text-2xl
                         transition-colors duration-200 transform
                         ${isSelected
-                          ? 'bg-purple-700 text-white scale-95 shadow-inner'
-                          : 'bg-gradient-to-br from-cream-100 to-cream-200 dark:from-slate-700 dark:to-slate-600 text-brown-800 dark:text-white shadow-md '
+                          ? 'bg-coral-700 dark:bg-teal-700 text-white'
+                          : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white '
                         }
                         ${feedback === 'correct' && isSelected ? 'bg-green-500' : ''}
                         ${feedback === 'incorrect' && isSelected ? 'bg-red-500' : ''}
@@ -667,7 +667,7 @@ export function WordScramble() {
                     >
                       <span aria-hidden="true">{letter === ' ' ? '␣' : letter}</span>
                       {isSelected && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 rounded-full text-xs font-bold flex items-center justify-center shadow-sm">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-400 rounded-full text-xs font-bold flex items-center justify-center">
                           {selectionOrder + 1}
                         </span>
                       )}
@@ -679,12 +679,12 @@ export function WordScramble() {
 
             {/* Current Answer Display */}
             <div className={`
-              bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border-2 transition-colors duration-300
+              bg-white dark:bg-slate-800 rounded-2xl p-4 border-2 transition-colors duration-300
               ${feedback === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' : ''}
               ${feedback === 'incorrect' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : ''}
               ${!feedback ? 'border-cream-200 dark:border-slate-700' : ''}
             `}>
-              <p className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide text-center mb-2">
+              <p className="text-sm font-semibold text-brown-500 dark:text-gray-400 text-center mb-2">
                 Your Answer
               </p>
               <div className="min-h-[48px] flex items-center justify-center">
@@ -740,7 +740,7 @@ export function WordScramble() {
               {!feedback && currentAnswer.length === scrambledLetters.length && (
                 <button
                   onClick={checkAnswer}
-                  className="flex-1 py-2.5 px-4 rounded-xl bg-purple-700 text-white font-bold text-sm flex items-center justify-center gap-2 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg transition-colors"
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors"
                 >
                   <Check className="w-4 h-4" />
                   Check
@@ -765,7 +765,7 @@ export function WordScramble() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-purple-400 to-purple-600 dark:from-purple-500 dark:to-purple-700 flex items-center justify-center shadow-xl ">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-teal-400 dark:bg-teal-500 flex items-center justify-center">
                 <span className="text-2xl sm:text-4xl">🎉</span>
               </div>
             </div>
@@ -794,22 +794,22 @@ export function WordScramble() {
             </div>
 
             {/* Stats Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-500 dark:text-purple-400">
+                  <p className="text-lg sm:text-2xl font-bold text-teal-700 dark:text-teal-400">
                     {correctAnswers}/{settings.wordsPerRound}
                   </p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Correct</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-500 dark:text-purple-400">
+                  <p className="text-lg sm:text-2xl font-bold text-teal-700 dark:text-teal-400">
                     {formatTime(elapsedTime)}
                   </p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-500 dark:text-purple-400">
+                  <p className="text-lg sm:text-2xl font-bold text-teal-700 dark:text-teal-400">
                     {score}
                   </p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
@@ -857,7 +857,7 @@ export function WordScramble() {
               <button
                 onClick={startGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -877,7 +877,7 @@ export function WordScramble() {
               <button
                 type="button"
                 disabled
-                className="inline-block cursor-not-allowed text-xs font-medium text-purple-500 opacity-60 dark:text-purple-400 sm:text-sm"
+                className="inline-block cursor-not-allowed text-xs font-medium text-teal-700 opacity-60 dark:text-teal-400 sm:text-sm"
               >
                 {gameReturn.label}
               </button>
@@ -885,7 +885,7 @@ export function WordScramble() {
               <Link
                 to={gameReturn.to}
                 replace
-                className="inline-block text-purple-500 dark:text-purple-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
+                className="inline-block text-teal-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}
               </Link>

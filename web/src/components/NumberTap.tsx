@@ -220,7 +220,7 @@ export function NumberTap() {
     const items = [];
     for (let i = 0; i < currentNumber.value; i++) {
       items.push(
-        <span key={i} className="text-3xl sm:text-4xl ">
+        <span key={i} className="text-3xl sm:text-4xl">
           {currentItem.emoji}
         </span>
       );
@@ -291,13 +291,13 @@ export function NumberTap() {
               className={`w-full py-4 rounded-2xl mb-4 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-teal-700 text-white '
-                  : 'bg-gradient-to-br from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-teal-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-cyan-900/70 border-2 border-teal-300 dark:border-teal-700'
+                  : 'bg-teal-100 dark:bg-teal-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 isSpeaking
                   ? 'bg-white/20'
-                  : 'bg-teal-500 shadow-lg shadow-teal-500/30'
+                  : 'bg-teal-500 '
               }`}>
                 <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
@@ -313,7 +313,7 @@ export function NumberTap() {
             </button>
 
             {/* Counting Grid */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-6 min-h-[120px] flex items-center justify-center shadow-lg border-2 border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-6 min-h-[120px] flex items-center justify-center border-2 border-cream-200 dark:border-slate-700">
               <div className="text-center">
                 <p className="text-sm text-brown-500 dark:text-gray-400 mb-2">Count the {currentItem.name === 'fish' ? 'fish' : `${currentItem.name}s`}!</p>
                 {renderCountingGrid()}

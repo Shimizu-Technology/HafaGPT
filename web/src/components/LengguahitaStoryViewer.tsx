@@ -73,7 +73,7 @@ function WordPopup({
         role="dialog"
         aria-modal="true"
         aria-labelledby="story-word-heading"
-        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl dark:bg-slate-800"
+        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 dark:bg-slate-800"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
       >
@@ -338,7 +338,7 @@ export function LengguahitaStoryViewer() {
         )}
         below={(
           <div className="h-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Story progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-            <div className="h-full bg-teal-500 transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-coral-700 dark:bg-teal-700 transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
           </div>
         )}
       />
@@ -389,7 +389,7 @@ export function LengguahitaStoryViewer() {
           {/* Chamorro Text */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-teal-600 dark:text-teal-400 uppercase tracking-wide">
+              <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">
                 Chamorro
               </span>
               <PronunciationButton text={paragraph.chamorro} className="bg-teal-100 dark:bg-teal-900/30" />
@@ -413,7 +413,7 @@ export function LengguahitaStoryViewer() {
             
             {showEnglish && (
               <div className="mt-4 p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
-                <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide block mb-2">
+                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400 block mb-2">
                   English
                 </span>
                 <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
@@ -434,7 +434,7 @@ export function LengguahitaStoryViewer() {
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
                 currentParagraph === 0
                   ? 'bg-cream-100 dark:bg-slate-800 text-brown-500 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 shadow-sm border border-cream-200 dark:border-slate-700'
+                  : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
               }`}
             >
               <ChevronLeft className="w-5 h-5" />

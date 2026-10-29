@@ -526,7 +526,7 @@ export function WordCatch() {
         {gameState === 'setup' && (
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -539,7 +539,7 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -554,7 +554,7 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -567,7 +567,7 @@ export function WordCatch() {
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Topic</h3>
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
@@ -578,7 +578,7 @@ export function WordCatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
@@ -639,7 +639,7 @@ export function WordCatch() {
         {(gameState === 'playing' || gameState === 'paused') && (
           <div className="relative">
             {/* Stats Bar */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 {/* Lives */}
                 <div role="img" aria-label={`${lives} lives remaining`} className="flex items-center gap-0.5">
@@ -674,7 +674,7 @@ export function WordCatch() {
             {/* Game Area */}
             <div
               ref={gameAreaRef}
-              className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[55vh] sm:h-[60vh] overflow-hidden shadow-inner"
+              className="relative bg-cream-100 dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-600 h-[55vh] sm:h-[60vh] overflow-hidden"
             >
               {/* Flying Pairs */}
               {(pace.challenge ? flyingPairs : flyingPairs.slice(0, 1)).map(pair => (
@@ -687,10 +687,10 @@ export function WordCatch() {
                     absolute top-0 left-0
                     px-3 sm:px-4 py-2 sm:py-3 rounded-xl
                     font-bold text-xs sm:text-sm text-center
-                    shadow-lg transition-colors duration-150
+                    transition-colors duration-150
                     ${pair.caught
                       ? pair.isCorrect
-                        ? 'bg-green-700 text-white'
+                        ? 'bg-emerald-700 text-white'
                         : 'bg-red-700 text-white'
                       : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600 '
                     }
@@ -756,7 +756,7 @@ export function WordCatch() {
           <div className="max-w-sm mx-auto text-center space-y-4 sm:space-y-6">
             {/* Game Over */}
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-coral-100 to-coral-200 dark:from-teal-950/50 dark:to-teal-800/50 flex items-center justify-center shadow-xl">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-coral-100 dark:bg-teal-950/50 flex items-center justify-center">
                 <span className="text-4xl sm:text-5xl">
                   {caught >= 20 ? '🏆' : caught >= 10 ? '⭐' : '👍'}
                 </span>
@@ -786,7 +786,7 @@ export function WordCatch() {
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
@@ -808,7 +808,7 @@ export function WordCatch() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again

@@ -161,26 +161,24 @@ export function TopicWorkspacePage() {
               </div>
             </div>
           </div>
-          <Link to={lessonHref} className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 shadow-sm hover:bg-cream-50 dark:text-ocean-800 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
+          <Link to={lessonHref} className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 hover:bg-cream-50 dark:text-ocean-800 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
         </section>
 
         <section aria-labelledby="progress-heading">
           <div className="mb-3 flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Your evidence</p>
               <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-white">Topic progress</h2>
             </div>
             {lastActivity && <p className="text-xs text-brown-500 dark:text-gray-400">Last activity {lastActivity}</p>}
           </div>
           <dl className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"><dt className="text-xs font-semibold uppercase tracking-wide text-brown-500 dark:text-gray-400">Lesson</dt><dd className="mt-1 font-bold text-brown-950 dark:text-white">{data.progress.completed_at ? 'Completed' : data.progress.started_at ? 'In progress' : 'Not started'}</dd></div>
-            <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"><dt className="text-xs font-semibold uppercase tracking-wide text-brown-500 dark:text-gray-400">Cards viewed</dt><dd className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">{data.progress.flashcards_viewed}</dd></div>
-            <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"><dt className="text-xs font-semibold uppercase tracking-wide text-brown-500 dark:text-gray-400">Best lesson quiz</dt><dd className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">{data.progress.best_quiz_score === null ? '—' : `${data.progress.best_quiz_score}%`}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Lesson</dt><dd className="mt-1 font-semibold text-brown-950 dark:text-white">{data.progress.completed_at ? 'Completed' : data.progress.started_at ? 'In progress' : 'Not started'}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Cards viewed</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-white">{data.progress.flashcards_viewed}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Best lesson quiz</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-white">{data.progress.best_quiz_score === null ? '—' : `${data.progress.best_quiz_score}%`}</dd></div>
           </dl>
         </section>
 
         <section aria-labelledby="practice-heading">
-          <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Keep working with this topic</p>
           <h2 id="practice-heading" className="text-xl font-bold text-brown-950 dark:text-white">Practice in another way</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <WorkspaceLink icon={Layers3} title="Flashcards" description="Study the guided topic deck." to={withTopicReturn(appRoutes.flashcards(data.flashcard_category), localTopic.id)} />
@@ -194,7 +192,6 @@ export function TopicWorkspacePage() {
 
         {recentConversations.length > 0 && (
           <section aria-labelledby="topic-conversations-heading">
-            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Continue where you left off</p>
             <h2 id="topic-conversations-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic chats</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {recentConversations.map((conversation) => (
@@ -221,7 +218,6 @@ export function TopicWorkspacePage() {
           </section>
         ) : recentResults.length > 0 && (
           <section aria-labelledby="topic-results-heading">
-            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Review recent evidence</p>
             <h2 id="topic-results-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic results</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {recentResults.map((result) => (
@@ -271,7 +267,7 @@ interface WorkspaceLinkProps {
 
 function WorkspaceLink({ icon: Icon, title, description, to }: WorkspaceLinkProps) {
   return (
-    <Link to={to} className="group flex min-h-28 items-start gap-3 rounded-2xl border border-cream-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-coral-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
+    <Link to={to} className="group flex min-h-28 items-start gap-3 rounded-2xl border border-cream-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
       <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300"><Icon className="h-5 w-5" aria-hidden="true" /></span>
       <span><span className="block font-bold text-brown-950 group-hover:text-coral-700 dark:text-white dark:group-hover:text-ocean-300">{title}</span><span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{description}</span></span>
     </Link>

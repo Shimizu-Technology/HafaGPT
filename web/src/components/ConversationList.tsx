@@ -6,15 +6,15 @@ import { ContentTrustNote } from './ContentTrustNote';
 import { CONVERSATION_CONTENT_TRUST } from '../data/contentTrust';
 
 const difficultyStyles = {
-  beginner: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300',
-  intermediate: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-  advanced: 'bg-coral-100 text-coral-800 dark:bg-coral-950 dark:text-coral-300',
+  beginner: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  intermediate: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  advanced: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
 };
 
 const difficultyLabels = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
+  beginner: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  intermediate: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  advanced: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
 };
 
 /** Present a single conversation scenario as an accessible practice link. */
@@ -78,7 +78,6 @@ export function ConversationList() {
 
       <main className="mx-auto max-w-5xl space-y-9 px-4 py-6 sm:py-8">
         <div className="max-w-2xl">
-          <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice at your own pace</p>
           <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Practice a real-life moment</h2>
           <p className="mt-2 text-brown-600 dark:text-gray-300">Pick a scene, respond in Chamorro, and use a hint whenever you need one.</p>
         </div>

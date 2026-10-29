@@ -72,7 +72,7 @@ export function QuizReview() {
         maxWidthClassName="max-w-2xl"
         trailing={
           isDictionaryQuiz ? (
-            <span className="rounded-full bg-purple-100 px-2 py-1 text-xs font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+            <span className="rounded-full bg-teal-100 px-2 py-1 text-xs font-semibold text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
               Dictionary
             </span>
           ) : undefined
@@ -154,7 +154,6 @@ export function QuizReview() {
             </section>
 
             <section className="mt-6" aria-labelledby="question-review-title">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Answer details</p>
               <h2 id="question-review-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-white">
                 Question review
               </h2>
@@ -176,7 +175,7 @@ export function QuizReview() {
                           )}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-brown-500 dark:text-gray-400">
+                          <p className="text-sm font-semibold text-brown-500 dark:text-gray-400">
                             Question {index + 1} · {answer.question_type.replace('_', ' ')}
                           </p>
                           <h3 className="mt-2 font-bold leading-relaxed text-brown-950 dark:text-white">
@@ -231,7 +230,7 @@ export function QuizReview() {
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-                  <Brain className="mx-auto h-8 w-8 text-purple-600 dark:text-purple-300" aria-hidden="true" />
+                  <Brain className="mx-auto h-8 w-8 text-teal-700 dark:text-teal-300" aria-hidden="true" />
                   <h3 className="mt-3 font-bold text-brown-950 dark:text-white">Answer details were not saved</h3>
                   <p className="mt-1 text-sm text-brown-600 dark:text-gray-400">
                     Some older quiz attempts only include the final score.

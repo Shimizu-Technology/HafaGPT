@@ -465,7 +465,7 @@ export function MemoryMatch() {
             )}
 
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Choose Mode
               </h3>
@@ -480,7 +480,7 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -499,13 +499,13 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-purple-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
                 >
                   <div className="flex items-center justify-center mb-1">
-                    <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
+                    <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-teal-700'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
                   <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
@@ -516,7 +516,7 @@ export function MemoryMatch() {
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Choose Topic
               </h3>
@@ -529,7 +529,7 @@ export function MemoryMatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
@@ -548,7 +548,7 @@ export function MemoryMatch() {
             </div>
 
             {/* Difficulty Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
                 Choose Difficulty
               </h3>
@@ -570,7 +570,7 @@ export function MemoryMatch() {
                         ${isDisabled
                           ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
                           : settings.difficulty === key
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }
                       `}
@@ -626,7 +626,7 @@ export function MemoryMatch() {
         {gameState === 'playing' && (
           <div className="space-y-2">
             {/* Stats Bar - Compact */}
-            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-2 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-2 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
                   <MousePointer2 className="w-3 h-3" />
@@ -684,7 +684,7 @@ export function MemoryMatch() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-coral-400 to-coral-600 dark:from-teal-400 dark:to-teal-600 flex items-center justify-center shadow-xl ">
+              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-coral-400 dark:bg-teal-400 flex items-center justify-center">
                 <span className="text-2xl sm:text-4xl">🎉</span>
               </div>
             </div>
@@ -713,7 +713,7 @@ export function MemoryMatch() {
             </div>
 
             {/* Stats Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
                   <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{moves}</p>
@@ -733,9 +733,9 @@ export function MemoryMatch() {
             {/* Encouragement */}
             <p className="text-xs text-brown-600 dark:text-gray-400">
               {getStars === 3
-                ? "Perfect! You're a memory master! 🌟"
+                ? "Perfect! You're a memory master!"
                 : getStars === 2
-                  ? "Great work! Try again for 3 stars! 💪"
+                  ? "Great work! Try again for 3 stars!"
                   : "Good effort! Practice makes perfect! 🌱"
               }
             </p>
@@ -770,7 +770,7 @@ export function MemoryMatch() {
               <button
                 onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
