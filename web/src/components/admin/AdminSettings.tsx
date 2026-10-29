@@ -311,7 +311,7 @@ export function AdminSettings() {
               <label htmlFor="seasonal-theme-end-date" className="mb-2 block font-medium text-brown-800 dark:text-white">
                 <span className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Seasonal theme end Date
+                  Seasonal theme end date
                 </span>
               </label>
               <input

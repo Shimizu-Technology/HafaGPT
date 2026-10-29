@@ -47,11 +47,11 @@ describe('AdminSettings seasonal theme controls', () => {
     expect(seasonalToggle).toHaveAttribute('aria-checked', 'false');
 
     await user.click(seasonalToggle);
-    await user.clear(screen.getByLabelText('Seasonal theme end Date'));
+    await user.clear(screen.getByLabelText('Seasonal theme end date'));
     expect(screen.getByRole('alert')).toHaveTextContent(/choose an end date/i);
     expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled();
 
-    await user.type(screen.getByLabelText('Seasonal theme end Date'), '2099-01-06');
+    await user.type(screen.getByLabelText('Seasonal theme end date'), '2099-01-06');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     await waitFor(() => {

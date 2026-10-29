@@ -19,8 +19,7 @@ import {
   CalendarDays,
   CalendarRange,
   HelpCircle,
-  BookOpen as BookOpenIcon
-} from 'lucide-react';
+  BookOpen as BookOpenIcon, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useAdminStats, useAdminActivity } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
 
@@ -40,16 +39,17 @@ interface StatCardProps {
 }
 
 function StatCard({ title, value, description, comparison, comparisonLabel = 'previous 7 days' }: StatCardProps) {
-  const getComparisonContent = () => {
-    if (!comparison) return null;
-    
-    const { change, previous } = comparison;
-    const displayValue = `${change > 0 ? '+' : ''}${change} vs ${comparisonLabel}`;
-    return { displayValue: previous === 0 && change === 0 ? `0 vs ${comparisonLabel}` : displayValue };
-  };
-  
-  const comparisonData = getComparisonContent();
-  
+  // Every metric on this dashboard is better when it rises, so an increase
+  // reads as good (emerald, up arrow) and a decrease as a concern (red, down
+  // arrow). The arrow and sign carry the meaning without relying on colour.
+  const change = comparison?.change ?? 0;
+  const Direction = change > 0 ? ArrowUp : change < 0 ? ArrowDown : Minus;
+  const tone = change > 0
+    ? 'text-emerald-700 dark:text-emerald-300'
+    : change < 0
+      ? 'text-red-700 dark:text-red-300'
+      : 'text-brown-600 dark:text-slate-300';
+
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
       <div className="flex items-start justify-between gap-2">
@@ -59,9 +59,10 @@ function StatCard({ title, value, description, comparison, comparisonLabel = 'pr
           {description && (
             <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">{description}</p>
           )}
-          {comparisonData && (
-            <p className="mt-1 text-xs font-medium tabular-nums text-brown-600 dark:text-slate-300">
-              <span>{comparisonData.displayValue}</span>
+          {comparison && (
+            <p className={`mt-1 inline-flex items-center gap-1 text-xs font-medium tabular-nums ${tone}`}>
+              <Direction className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+              <span>{change > 0 ? '+' : ''}{change} vs {comparisonLabel}</span>
             </p>
           )}
         </div>
@@ -165,10 +166,9 @@ export function AdminDashboard() {
             <StatCard
               title="Total users"
               value={stats?.total_users ?? "—"}
-
-
-              comparison={stats?.new_users_this_week}
-              comparisonLabel="previous 7 days (new users)"
+              description={stats?.new_users_this_week
+                ? `${stats.new_users_this_week.current} new this week · ${stats.new_users_this_week.previous} the week before`
+                : undefined}
             />
             <StatCard
               title="Premium"

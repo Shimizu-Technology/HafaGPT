@@ -29,9 +29,11 @@ export function AdminAnalytics() {
   const { data: featureData, isLoading: featureLoading } = useFeatureUsage();
   const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(period);
   // Lay activity onto every day of the period so idle days read as zero.
-  const usageSeries = useMemo(() => usageData?.data?.length
-    ? fillDailySeries(usageData.data, periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }))
+  // A successful response with no rows means an idle period, not missing data.
+  const usageSeries = useMemo(() => usageData
+    ? fillDailySeries(usageData.data ?? [], periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }))
     : [], [usageData, period]);
+  const usageIdle = usageSeries.length > 0 && usageSeries.every(day => !day.chat_count && !day.game_count && !day.quiz_count);
   const growthSeries = useMemo(() => growthData?.data?.length
     ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }))
     : [], [growthData, period]);
@@ -160,7 +162,10 @@ export function AdminAnalytics() {
                 <TrendingUp className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
                 Daily usage
               </h2>
-              {usageData?.data && usageData.data.length > 0 ? (
+              {usageIdle && (
+                <p className="mb-3 text-sm text-brown-600 dark:text-slate-300">No chats, games, or quizzes in this period.</p>
+              )}
+              {usageSeries.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={usageSeries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--muted) / 0.2)" />
@@ -169,7 +174,7 @@ export function AdminAnalytics() {
                       tick={{ fontSize: 12, fill: 'currentColor' }}
                       tickFormatter={(value) => formatDayKey(String(value))}
                     />
-                    <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
+                    <YAxis allowDecimals={false} domain={[0, 'auto']} tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
                       labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
@@ -183,7 +188,7 @@ export function AdminAnalytics() {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
-                  No usage data available for this period
+                  Usage data couldn't be loaded. Try another period or refresh.
                 </div>
               )}
             </div>
