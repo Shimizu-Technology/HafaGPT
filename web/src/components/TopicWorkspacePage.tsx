@@ -241,7 +241,6 @@ export function TopicWorkspacePage() {
 
         {(scenarios.length > 0 || stories.length > 0) && (
           <section aria-labelledby="related-heading">
-            <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Explicitly aligned resources</p>
             <h2 id="related-heading" className="text-xl font-bold text-brown-950 dark:text-white">Use the topic in context</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {scenarios.map((scenario) => scenario && (

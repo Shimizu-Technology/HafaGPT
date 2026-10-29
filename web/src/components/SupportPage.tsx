@@ -27,10 +27,9 @@ export default function SupportPage() {
   return (
     <PublicPage title="Support" subtitle="Answers, account help, and a direct way to reach us" icon={HelpCircle}>
       <section className="rounded-3xl border border-coral-200 bg-coral-50 p-6 dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
-        <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">A real person will read your message</p>
-        <h2 className="mt-2 text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h2>
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
-          Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
+          A real person reads every message. Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
         <a href="mailto:support@shimizutechnology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
           <Mail className="h-5 w-5" aria-hidden="true" />
@@ -45,7 +44,6 @@ export default function SupportPage() {
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Quick answers</p>
             <h2 className="text-xl font-bold text-brown-950 dark:text-white">Frequently asked questions</h2>
           </div>
         </div>

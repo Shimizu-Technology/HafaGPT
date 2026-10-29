@@ -442,15 +442,15 @@ export function ConversationPractice() {
       <main className="flex flex-1 flex-col">
       {/* Phrases Panel (collapsible) */}
       {showPhrases && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-4 py-3">
+        <div className="bg-teal-50 dark:bg-teal-950/30 border-b border-teal-200 dark:border-teal-800 px-4 py-3">
           <div className="max-w-2xl mx-auto">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-yellow-800 dark:text-yellow-200"><Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />Useful phrases</p>
+            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-teal-900 dark:text-teal-100"><Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />Useful phrases</p>
             <div className="flex flex-wrap gap-2">
               {scenario.usefulPhrases.slice(0, 5).map((phrase, i) => (
                 <button
                   key={i}
                   onClick={() => { setUserInput(prev => prev + (prev ? ' ' : '') + phrase.chamorro); setHintUsed(true); }}
-                  className="text-xs px-2 py-1 bg-white dark:bg-slate-800 rounded border border-yellow-300 dark:border-yellow-700 text-slate-700 dark:text-slate-300 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors"
+                  className="min-h-11 rounded-lg border border-teal-200 bg-white px-3 py-1.5 font-chamorro text-base text-brown-900 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-slate-800 dark:text-gray-100 dark:hover:bg-teal-900/40"
                 >
                   {phrase.chamorro}
                 </button>

@@ -100,7 +100,7 @@ function UtilityLinks() {
 
         <Link
           to="/vocabulary"
-          className="group flex min-h-36 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/20 sm:p-5"
+          className="group flex min-h-36 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-700 dark:hover:bg-ocean-950/20 sm:p-5"
         >
           <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-ocean-300">
             <Search className="h-6 w-6" aria-hidden="true" />

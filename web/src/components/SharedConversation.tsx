@@ -158,9 +158,9 @@ export function SharedConversation() {
     <>
     <PublicPage title="Shared conversation" subtitle={data.title} icon={MessageSquare} maxWidthClassName="max-w-4xl">
       <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-        <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Shared conversation · read only</p>
-        <h2 className="mt-1 break-words text-xl font-bold text-brown-950 dark:text-white">{data.title}</h2>
+        <h2 className="break-words text-xl font-bold text-brown-950 dark:text-white">{data.title}</h2>
         <div className="mt-2 flex flex-wrap gap-4 text-xs text-brown-500 dark:text-gray-400">
+          <span>Shared conversation · read only</span>
           <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{formatDate(data.created_at)}</span>
           <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" aria-hidden="true" />{data.view_count} {data.view_count === 1 ? 'view' : 'views'}</span>
         </div>

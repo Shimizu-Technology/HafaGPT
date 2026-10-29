@@ -2,7 +2,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { RotateCcw, Trophy, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2, Settings2, Target } from 'lucide-react';
+import { RotateCcw, Trophy, Play, Sparkles, BookOpen, HelpCircle, Lightbulb, Loader2, Settings2, Target, Star, Heart } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -496,23 +496,23 @@ export function Hangman() {
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
-        <main className="max-w-md mx-auto px-4 py-8">
+        <main className="max-w-2xl mx-auto px-4 py-8">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 text-center">
-            <div className="text-6xl mb-4">{gameState === 'won' ? '🎉' : '😢'}</div>
+            <div className={`mb-4 h-20 w-20 mx-auto flex items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-200'}`}>{gameState === 'won' ? <Trophy className="h-10 w-10" aria-hidden="true" /> : <RotateCcw className="h-10 w-10" aria-hidden="true" />}</div>
             <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
               {gameState === 'won' ? 'Great Job!' : 'Game Over!'}
             </h2>
 
             {gameState === 'lost' && (
               <p className="text-brown-600 dark:text-gray-400 mb-4">
-                The word was: <span className="font-bold text-coral-700 dark:text-teal-400">{currentWord}</span>
+                The word was: <span className="font-chamorro text-lg font-semibold text-coral-700 dark:text-teal-400">{currentWord}</span>
               </p>
             )}
 
             {/* Stars */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-6" role="img" aria-label={`${stars} out of 3 stars`}>
               {[1, 2, 3].map(star => (
-                <span key={star} className={`text-4xl ${star <= stars ? '' : 'opacity-20'}`}>⭐</span>
+                <Star key={star} aria-hidden="true" className={`h-10 w-10 ${star <= stars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
               ))}
             </div>
 
@@ -588,11 +588,9 @@ export function Hangman() {
         </div>
 
         {/* Lives remaining */}
-        <div className="flex justify-center gap-1">
+        <div className="flex justify-center gap-1" role="img" aria-label={`${MAX_WRONG_GUESSES - wrongGuesses} of ${MAX_WRONG_GUESSES} lives left`}>
           {Array.from({ length: MAX_WRONG_GUESSES }).map((_, i) => (
-            <span key={i} className={`text-2xl ${i < MAX_WRONG_GUESSES - wrongGuesses ? '' : 'opacity-20'}`}>
-              ❤️
-            </span>
+            <Heart key={i} aria-hidden="true" className={`h-6 w-6 ${i < MAX_WRONG_GUESSES - wrongGuesses ? 'fill-red-600 text-red-600 dark:fill-red-400 dark:text-red-400' : 'text-cream-300 dark:text-slate-600'}`} />
           ))}
         </div>
 

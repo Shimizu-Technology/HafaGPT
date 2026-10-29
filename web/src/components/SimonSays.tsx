@@ -210,9 +210,8 @@ export function SimonSays() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
-              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Listen and follow along</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">Hear a Chamorro command and choose the matching body part.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Listen and follow along</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: hear a Chamorro command and choose the matching body part.</p>
             </div>
 
             {/* Body Parts Preview */}

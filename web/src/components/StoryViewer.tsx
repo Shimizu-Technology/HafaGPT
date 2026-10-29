@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, HelpCircle, CheckCircle, XCircle, RotateCcw, Info, X, Trophy, ThumbsUp } from 'lucide-react';
 import { getStoryById, StoryWord } from '../data/storyData';
 import { Button } from './Button';
 import { LearnerProgress } from './LearnerProgress';
@@ -411,8 +411,8 @@ export function StoryViewer() {
           : 'bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-700/30'
       }`}>
         <div className="text-center">
-          <div className="text-3xl mb-2">
-            {scorePercentage >= 80 ? '🎉' : scorePercentage >= 60 ? '👍' : '📚'}
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+            {scorePercentage >= 80 ? <Trophy className="h-7 w-7" aria-hidden="true" /> : scorePercentage >= 60 ? <ThumbsUp className="h-7 w-7" aria-hidden="true" /> : <BookOpen className="h-7 w-7" aria-hidden="true" />}
           </div>
           <h2 tabIndex={-1} className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
             {scorePercentage >= 80 
@@ -461,7 +461,7 @@ export function StoryViewer() {
     <LearnerPageShell>
       <LearnerPageHeader
         title={viewMode === 'reading' ? 'Read story' : viewMode === 'quiz' ? 'Story quiz' : 'Your results'}
-        subtitle={story.title}
+        subtitle={viewMode === 'reading' ? undefined : story.title}
         icon={BookOpen}
         backTo={topicReturn?.to ?? '/stories'}
         backLabel={topicReturn?.label ?? 'Back to stories'}

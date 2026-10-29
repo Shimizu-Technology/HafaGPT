@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { BrandMark } from '../BrandMark';
 
 interface MemoryCardProps {
   id: number;
@@ -65,7 +66,7 @@ export const MemoryCard = memo(function MemoryCard({
           `}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className="text-xl sm:text-3xl md:text-4xl">🌺</div>
+          <BrandMark tone="inverse" className="h-12 w-12 text-coral-700 dark:text-teal-700 sm:h-14 sm:w-14 md:h-16 md:w-16" />
         </div>
 
         {/* Card Front (face-up) */}

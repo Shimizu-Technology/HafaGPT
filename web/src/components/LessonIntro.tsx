@@ -25,11 +25,8 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
             {topic.icon}
           </div>
           <div>
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white">
-              {topic.title}
-            </h2>
-            <p className="text-sm text-brown-600 dark:text-gray-400">
-              ~{topic.estimatedMinutes} min lesson
+            <p className="text-base font-semibold text-brown-800 dark:text-white">
+              About {topic.estimatedMinutes} minutes
             </p>
           </div>
         </div>

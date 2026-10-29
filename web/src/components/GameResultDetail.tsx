@@ -98,7 +98,6 @@ export function GameResultDetail() {
             </p>
 
             <section aria-labelledby="game-evidence-title">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Connected learning record</p>
               <h2 id="game-evidence-title" className="text-xl font-bold text-brown-950 dark:text-white">What this round supports</h2>
               <div className="mt-3 space-y-3">
                 {topic ? (

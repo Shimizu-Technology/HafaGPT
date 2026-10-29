@@ -4,7 +4,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick } from 'lucide-react';
+import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick, Zap, Trophy, Star, ThumbsUp, Check, X, Flame, Timer } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -524,7 +524,7 @@ export function WordCatch() {
       <main className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
         {/* Setup Screen */}
         {gameState === 'setup' && (
-          <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
@@ -597,16 +597,16 @@ export function WordCatch() {
               <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
               <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✅</span> Tap pairs with matching meanings
+                  <Check className="h-4 w-4 flex-none text-emerald-700 dark:text-emerald-400" aria-hidden="true" /> Tap pairs with matching meanings
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-red-500">❌</span> Let pairs with wrong meanings pass by
+                  <X className="h-4 w-4 flex-none text-red-600 dark:text-red-400" aria-hidden="true" /> Let pairs with wrong meanings pass by
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-yellow-500">⚡</span> Build combos for bonus points
+                  <Zap className="h-4 w-4 flex-none text-amber-600 dark:text-amber-400" aria-hidden="true" /> Build combos for bonus points
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-coral-700 dark:text-teal-400">⏱️</span> 60 seconds - catch as many as you can!
+                  <Timer className="h-4 w-4 flex-none text-coral-700 dark:text-teal-400" aria-hidden="true" /> 60 seconds - catch as many as you can!
                 </li>
               </ul>
             </details>
@@ -659,7 +659,7 @@ export function WordCatch() {
                   <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{combo}🔥</p>
+                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{combo}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
                   <p className="text-xs text-brown-500 dark:text-gray-400">Combo</p>
                 </div>
                 <div className="text-center">
@@ -756,10 +756,8 @@ export function WordCatch() {
           <div className="max-w-sm mx-auto text-center space-y-4 sm:space-y-6">
             {/* Game Over */}
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-coral-100 dark:bg-teal-950/50 flex items-center justify-center">
-                <span className="text-4xl sm:text-5xl">
-                  {caught >= 20 ? '🏆' : caught >= 10 ? '⭐' : '👍'}
-                </span>
+              <div className="h-20 w-20 sm:h-24 sm:w-24 mx-auto flex items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                {caught >= 20 ? <Trophy className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" /> : caught >= 10 ? <Star className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" /> : <ThumbsUp className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" />}
               </div>
             </div>
 
@@ -773,15 +771,9 @@ export function WordCatch() {
             </div>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2" role="img" aria-label={`${getStars()} out of 3 stars`}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-3xl sm:text-4xl ${i < getStars() ? '' : 'opacity-30'}`}
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  ⭐
-                </span>
+                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
               ))}
             </div>
 
@@ -797,7 +789,7 @@ export function WordCatch() {
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Caught</p>
                 </div>
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{maxCombo}🔥</p>
+                  <p className="inline-flex items-center gap-1 text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{maxCombo}<Flame className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Max Combo</p>
                 </div>
               </div>

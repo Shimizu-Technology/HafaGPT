@@ -612,7 +612,7 @@ export function CulturalTrivia() {
     return (
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Cultural Trivia" subtitle="Your results" icon={Landmark} onBack={handleBack} />
-        <main className="mx-auto max-w-md px-3 py-6 sm:px-4">
+        <main className="mx-auto max-w-2xl px-3 py-6 sm:px-4">
           <section className="text-center" aria-labelledby="trivia-result-title">
             <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
               <Trophy className="h-10 w-10" aria-hidden="true" />

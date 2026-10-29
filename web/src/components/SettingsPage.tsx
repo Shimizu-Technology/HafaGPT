@@ -365,8 +365,7 @@ export function SettingsPage() {
         ) : null}
 
         <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-          <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Display</p>
-          <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-white">Appearance</h2>
+          <h2 className="text-xl font-bold text-brown-950 dark:text-white">Appearance</h2>
           <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Follow your device or choose an appearance. Changes save automatically.</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-3" role="group" aria-label="Appearance">
             {([
