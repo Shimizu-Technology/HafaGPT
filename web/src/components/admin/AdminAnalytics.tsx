@@ -26,15 +26,17 @@ export function AdminAnalytics() {
   
   const { data: usageData, isLoading: usageLoading, isError: usageError } = useUsageTrends(period);
   const { data: growthData, isLoading: growthLoading, isError: growthError } = useUserGrowth(period);
-  const { data: featureData, isLoading: featureLoading } = useFeatureUsage();
-  const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(period);
+  const { data: featureData, isLoading: featureLoading, isError: featureError } = useFeatureUsage();
+  const { data: advancedData, isLoading: advancedLoading, isError: advancedError } = useAdvancedAnalytics(period);
   // Lay activity onto every day of the period so idle days read as zero.
   // A successful response with no rows means an idle period, not missing data.
   const usageSeries = useMemo(() => usageData
     ? fillDailySeries(usageData.data ?? [], periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }), usageData.window_end)
     : [], [usageData, period]);
   // React Query keeps the last good response when a refresh fails; say so.
-  const showingStaleData = (usageError && Boolean(usageData)) || (growthError && Boolean(growthData));
+  const showingStaleData = [
+    [usageError, usageData], [growthError, growthData], [featureError, featureData], [advancedError, advancedData],
+  ].some(([failed, retained]) => Boolean(failed && retained));
   const usageIdle = usageSeries.length > 0 && usageSeries.every(day => !day.chat_count && !day.game_count && !day.quiz_count);
   const growthSeries = useMemo(() => growthData?.data?.length
     ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }), growthData.window_end)
