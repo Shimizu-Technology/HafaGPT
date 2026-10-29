@@ -115,9 +115,9 @@ export function LearningProgressStats() {
       {completedTopics > 0 && completedTopics < totalTopics && (
         <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-coral-50 dark:bg-ocean-900/30 border border-coral-100 dark:border-ocean-700">
           <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
-            {completedTopics < 3 && "Great start! Keep going "}
-            {completedTopics >= 3 && completedTopics < 5 && "Halfway there! "}
-            {completedTopics >= 5 && completedTopics < totalTopics && "Almost there! "}
+            {completedTopics < 3 && "Great start! Keep going."}
+            {completedTopics >= 3 && completedTopics < 5 && "Halfway there!"}
+            {completedTopics >= 5 && completedTopics < totalTopics && "Almost there!"}
           </p>
         </div>
       )}
