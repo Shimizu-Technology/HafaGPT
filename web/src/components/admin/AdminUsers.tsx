@@ -25,7 +25,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
         className="pressable min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-coral-50 dark:[@media(hover:hover)]:hover:bg-ocean-900/20 text-coral-700 dark:text-teal-300 transition-colors"
       >
         <Eye className="w-4 h-4" />
-        <span>View Details</span>
+        <span>View details</span>
       </Link>
       
       <div className="border-t border-cream-200 dark:border-slate-700 my-2" />
@@ -37,7 +37,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
           className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-red-50 dark:[@media(hover:hover)]:hover:bg-red-900/20 text-red-700 dark:text-red-300 transition-colors"
         >
           <UserMinus className="w-4 h-4" />
-          <span>Revoke Premium</span>
+          <span>Revoke premium</span>
         </button>
       ) : (
         <button
@@ -46,7 +46,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
           className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 text-brown-700 dark:text-slate-200 transition-colors"
         >
           <Crown className="w-4 h-4" />
-          <span>Grant Premium</span>
+          <span>Grant premium</span>
         </button>
       )}
       
@@ -102,7 +102,7 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
           )}
           <div>
             <Link to={detailHref} className="font-medium text-brown-800 dark:text-white [@media(hover:hover)]:hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
-            <p className="text-sm text-brown-600 dark:text-slate-300">{user.email || 'No email'}</p>
+            {[user.first_name, user.last_name].filter(Boolean).join(' ').trim() ? <p className="text-sm text-brown-600 dark:text-slate-300">{user.email || 'No email'}</p> : <p className="text-sm text-brown-600 dark:text-slate-300">No name on account</p>}
           </div>
         </div>
       </td>
@@ -196,7 +196,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
           )}
           <div className="min-w-0">
             <Link to={detailHref} className="block font-medium text-brown-800 dark:text-white [@media(hover:hover)]:hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
-            <p className="text-sm text-brown-600 dark:text-slate-300 truncate">{user.email || 'No email'}</p>
+            {[user.first_name, user.last_name].filter(Boolean).join(' ').trim() ? <p className="text-sm text-brown-600 dark:text-slate-300 truncate">{user.email || 'No email'}</p> : <p className="text-sm text-brown-600 dark:text-slate-300 truncate">No name on account</p>}
           </div>
         </div>
         <div className="relative">
@@ -325,7 +325,7 @@ export function AdminUsers() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error Loading Users</h2>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error loading users</h2>
             <p className="text-brown-600 dark:text-gray-400">{error.message}</p>
           </div>
         </div>

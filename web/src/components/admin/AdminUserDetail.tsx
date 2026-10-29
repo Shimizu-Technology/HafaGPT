@@ -110,7 +110,7 @@ export function AdminUserDetail() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">User Not Found</h2>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">User not found</h2>
             <p className="text-brown-600 dark:text-gray-400 mb-4">{error?.message || 'Unable to load user'}</p>
             <Link to={backTo} className="text-coral-500 dark:text-ocean-400 [@media(hover:hover)]:hover:underline">
               ← Back to Users
@@ -251,7 +251,7 @@ export function AdminUserDetail() {
         
         {/* Account Details */}
         <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">Account Details</h2>
+          <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">Account details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
               <Calendar className="w-5 h-5 text-brown-600 dark:text-slate-300" />
@@ -263,14 +263,14 @@ export function AdminUserDetail() {
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-brown-600 dark:text-slate-300" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Last Sign In</p>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Last sign-in</p>
                 <p className="font-medium text-brown-800 dark:text-white">{formatDate(user.last_sign_in)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Activity className="w-5 h-5 text-green-500" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Last Activity</p>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Last activity</p>
                 <p className="font-medium text-brown-800 dark:text-white">
                   {user.last_activity ? (
                     <>
@@ -301,7 +301,7 @@ export function AdminUserDetail() {
                 <XCircle className="w-5 h-5 text-brown-600 dark:text-slate-300" />
               )}
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Subscription Status</p>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Subscription status</p>
                 <p className="font-medium text-brown-800 dark:text-white capitalize">
                   {user.subscription_status || (user.is_whitelisted ? 'Whitelisted' : 'None')}
                 </p>
@@ -331,7 +331,7 @@ export function AdminUserDetail() {
             <div className="space-y-4">
               <div>
                 <label htmlFor="admin-skill-level" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
-                  Skill Level
+                  Skill level
                 </label>
                 <select
                   id="admin-skill-level"
@@ -346,7 +346,7 @@ export function AdminUserDetail() {
               </div>
               <div>
                 <label htmlFor="admin-learning-goal" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
-                  Learning Goal
+                  Learning goal
                 </label>
                 <select
                   id="admin-learning-goal"
@@ -381,7 +381,7 @@ export function AdminUserDetail() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Skill Level</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Skill level</p>
                 <p className="font-medium text-brown-800 dark:text-white">
                   {user?.skill_level === 'beginner' && '🌱 Beginner'}
                   {user?.skill_level === 'intermediate' && '🌿 Intermediate'}
@@ -390,7 +390,7 @@ export function AdminUserDetail() {
                 </p>
               </div>
               <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Learning Goal</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Learning goal</p>
                 <p className="font-medium text-brown-800 dark:text-white">
                   {user?.learning_goal === 'conversation' && '💬 Conversation'}
                   {user?.learning_goal === 'culture' && '🌴 Culture'}
@@ -426,7 +426,7 @@ export function AdminUserDetail() {
                 className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-xl [@media(hover:hover)]:hover:bg-red-100 dark:[@media(hover:hover)]:hover:bg-red-900/30 transition-colors"
               >
                 <XCircle className="w-5 h-5" />
-                Revoke Premium
+                Revoke premium
               </button>
             ) : !user.is_premium ? (
               <button
@@ -435,7 +435,7 @@ export function AdminUserDetail() {
                 className="flex items-center justify-center gap-2 px-4 py-3 bg-coral-50 dark:bg-slate-700 text-coral-800 dark:text-teal-300 rounded-xl [@media(hover:hover)]:hover:bg-coral-100 dark:[@media(hover:hover)]:hover:bg-slate-600 transition-colors"
               >
                 <Crown className="w-5 h-5" />
-                Grant Premium
+                Grant premium
               </button>
             ) : null}
             

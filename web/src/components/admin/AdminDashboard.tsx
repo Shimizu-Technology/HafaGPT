@@ -125,7 +125,7 @@ export function AdminDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error Loading Dashboard</h2>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error loading dashboard</h2>
             <p className="text-brown-600 dark:text-gray-400">{error.message}</p>
           </div>
         </div>
@@ -151,7 +151,7 @@ export function AdminDashboard() {
             className="pressable inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl font-medium [@media(hover:hover)]:hover:opacity-90 transition-opacity"
           >
             <Users className="w-4 h-4" />
-            Manage Users
+            Manage users
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -197,7 +197,7 @@ export function AdminDashboard() {
         {/* Activity Stats */}
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white mb-3">
-            Platform Activity
+            Platform activity
           </h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3">
             <StatCard
@@ -297,7 +297,7 @@ export function AdminDashboard() {
         {/* Feature Adoption */}
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white mb-3">
-            Feature Adoption
+            Feature adoption
           </h2>
           <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700 ">
             <div className="space-y-4">
@@ -372,7 +372,7 @@ export function AdminDashboard() {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Learning Path</span>
+                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Learning path</span>
                   </div>
                   <span className="text-sm font-bold text-brown-800 dark:text-white">
                     {stats?.learning_path_adoption_pct != null ? `${stats.learning_path_adoption_pct.toFixed(0)}%` : '—'}
@@ -402,9 +402,9 @@ export function AdminDashboard() {
               <div className="absolute right-0 top-6 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-cream-200 dark:border-slate-600 text-xs text-brown-600 dark:text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-50">
                 <p className="font-semibold mb-2 text-brown-800 dark:text-white">What do these mean?</p>
                 <ul className="space-y-1.5">
-                  <li><span className="font-medium">DAU:</span> Daily Active Users</li>
-                  <li><span className="font-medium">WAU:</span> Weekly Active Users</li>
-                  <li><span className="font-medium">MAU:</span> Monthly Active Users</li>
+                  <li><span className="font-medium">DAU:</span> Daily active users</li>
+                  <li><span className="font-medium">WAU:</span> Weekly active users</li>
+                  <li><span className="font-medium">MAU:</span> Monthly active users</li>
                   <li><span className="font-medium">Stickiness:</span> DAU÷MAU (10-20% is typical, higher = more engaged)</li>
                   <li><span className="font-medium">Returning:</span> % of users who came back after day 1</li>
                 </ul>
@@ -414,7 +414,7 @@ export function AdminDashboard() {
           
           <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
             {/* DAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Daily Active Users - unique users who engaged today">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Daily active users - unique users who engaged today">
               <div className="flex items-center gap-1.5 mb-1">
                 <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">DAU</span>
@@ -424,7 +424,7 @@ export function AdminDashboard() {
             </div>
             
             {/* WAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Weekly Active Users - unique users in last 7 days">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Weekly active users - unique users in last 7 days">
               <div className="flex items-center gap-1.5 mb-1">
                 <CalendarDays className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">WAU</span>
@@ -434,7 +434,7 @@ export function AdminDashboard() {
             </div>
             
             {/* MAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Monthly Active Users - unique users in last 30 days">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Monthly active users - unique users in last 30 days">
               <div className="flex items-center gap-1.5 mb-1">
                 <CalendarRange className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">MAU</span>
@@ -470,7 +470,7 @@ export function AdminDashboard() {
           <div className="px-4 py-3 border-b border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-brown-600 dark:text-slate-300" />
-              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Top Users</h3>
+              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Top users</h3>
             </div>
             <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">Most active by total engagement</p>
           </div>
@@ -538,7 +538,7 @@ export function AdminDashboard() {
           <div className="px-4 py-3 border-b border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-coral-500" />
-              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Recent Activity</h3>
+              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Recent activity</h3>
               <span className="ml-auto text-xs text-brown-600 dark:text-slate-300 flex items-center gap-1">
                 <RefreshCw className="w-3 h-3" /> Live
               </span>
@@ -613,7 +613,7 @@ export function AdminDashboard() {
                 <Users className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-brown-800 dark:text-white">View All Users</h3>
+                <h3 className="font-semibold text-brown-800 dark:text-white">View all users</h3>
                 <p className="text-sm text-brown-600 dark:text-slate-300">Manage user accounts</p>
               </div>
             </Link>
@@ -652,7 +652,7 @@ export function AdminDashboard() {
                 <Activity className="w-6 h-6 text-teal-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-brown-800 dark:text-white">View App</h3>
+                <h3 className="font-semibold text-brown-800 dark:text-white">View app</h3>
                 <p className="text-sm text-brown-600 dark:text-slate-300">Go to main application</p>
               </div>
             </Link>

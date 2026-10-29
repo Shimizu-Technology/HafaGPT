@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { 
   BarChart3, TrendingUp, Users, Loader2,
   MessageSquare, Gamepad2, GraduationCap, PieChart,
@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useUsageTrends, useUserGrowth, useFeatureUsage, useAdvancedAnalytics } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
+import { fillDailySeries, formatDayKey, periodDays } from '../../lib/adminDailySeries';
 
 type Period = '7d' | '30d' | '90d';
 
@@ -27,15 +28,22 @@ export function AdminAnalytics() {
   const { data: growthData, isLoading: growthLoading } = useUserGrowth(period);
   const { data: featureData, isLoading: featureLoading } = useFeatureUsage();
   const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(period);
+  // Lay activity onto every day of the period so idle days read as zero.
+  const usageSeries = useMemo(() => usageData?.data?.length
+    ? fillDailySeries(usageData.data, periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }))
+    : [], [usageData, period]);
+  const growthSeries = useMemo(() => growthData?.data?.length
+    ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }))
+    : [], [growthData, period]);
   
   const isLoading = usageLoading || growthLoading || featureLoading || advancedLoading;
   
   // Prepare funnel data
   const funnelData = advancedData?.user_funnel ? [
-    { name: 'Any Activity', value: advancedData.user_funnel.total_users, fill: FUNNEL_COLORS[0] },
+    { name: 'Any activity', value: advancedData.user_funnel.total_users, fill: FUNNEL_COLORS[0] },
     { name: 'Chatted', value: advancedData.user_funnel.chatted, fill: FUNNEL_COLORS[1] },
-    { name: 'Played Game', value: advancedData.user_funnel.played_game, fill: FUNNEL_COLORS[2] },
-    { name: 'Took Quiz', value: advancedData.user_funnel.took_quiz, fill: FUNNEL_COLORS[3] },
+    { name: 'Played a game', value: advancedData.user_funnel.played_game, fill: FUNNEL_COLORS[2] },
+    { name: 'Took a quiz', value: advancedData.user_funnel.took_quiz, fill: FUNNEL_COLORS[3] },
     { name: '2+ recorded days', value: advancedData.user_funnel.returned, fill: FUNNEL_COLORS[4] },
   ] : [];
   
@@ -150,20 +158,20 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-                Daily Usage Trends
+                Daily usage
               </h2>
               {usageData?.data && usageData.data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={usageData.data}>
+                  <LineChart data={usageSeries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--muted) / 0.2)" />
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: 12, fill: 'currentColor' }}
-                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      tickFormatter={(value) => formatDayKey(String(value))}
                     />
                     <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
-                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                      labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                     />
@@ -184,25 +192,25 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-teal-500" />
-                User Growth
+                User growth
               </h2>
               {growthData?.data && growthData.data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={growthData.data}>
+                  <BarChart data={growthSeries}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--muted) / 0.2)" />
                     <XAxis 
                       dataKey="date" 
                       tick={{ fontSize: 12, fill: 'currentColor' }}
-                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      tickFormatter={(value) => formatDayKey(String(value))}
                     />
                     <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
-                      labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                      labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                     />
                     <Legend formatter={(value) => <span style={{ color: chartInk }}>{value}</span>} />
-                    <Bar dataKey="new_users" name="New Users" fill="rgb(var(--focus-role))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="new_users" name="New users" fill="rgb(var(--focus-role))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -305,7 +313,7 @@ export function AdminAnalytics() {
             <div className="bg-cream-50 dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-                All-Time Platform Totals
+                All-time platform totals
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center">
@@ -339,7 +347,7 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <Target className="w-5 h-5 text-teal-500" />
-                Quiz Pass Rates
+                Quiz pass rates
               </h2>
               {advancedData?.quiz_pass_rates && advancedData.quiz_pass_rates.length > 0 ? (
                 <div className="space-y-3">
@@ -381,7 +389,7 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-500" />
-                Learning Path Progress
+                Learning path progress
               </h2>
               {advancedData?.learning_path_progress && advancedData.learning_path_progress.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -421,7 +429,7 @@ export function AdminAnalytics() {
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-500" />
-                Peak Activity Hours
+                Peak activity hours
                 <span className="text-xs font-normal text-brown-600 dark:text-slate-300 ml-2">
                   Last {period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}
                 </span>
@@ -534,7 +542,7 @@ export function AdminAnalytics() {
                           ? ((funnelData[2].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-600 dark:text-slate-300">Game Adoption</p>
+                      <p className="text-xs text-brown-600 dark:text-slate-300">Game adoption</p>
                     </div>
                   </div>
                 </div>

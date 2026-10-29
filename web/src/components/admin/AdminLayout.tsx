@@ -24,7 +24,7 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
-  { path: '/admin/audio', label: 'Audio Review', icon: Volume2 },
+  { path: '/admin/audio', label: 'Audio review', icon: Volume2 },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

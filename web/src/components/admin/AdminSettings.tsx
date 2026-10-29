@@ -101,7 +101,7 @@ export function AdminSettings() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error Loading Settings</h2>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error loading settings</h2>
             <p className="text-brown-600 dark:text-gray-400">{error.message}</p>
           </div>
         </div>
@@ -140,7 +140,7 @@ export function AdminSettings() {
             ) : (
               <Save className="w-4 h-4" />
             )}
-            {saveSuccess ? 'Saved!' : 'Save Changes'}
+            {saveSuccess ? 'Saved!' : 'Save changes'}
           </button>
         </div>
         
@@ -157,7 +157,7 @@ export function AdminSettings() {
           <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700 bg-cream-50 dark:bg-slate-800">
             <h2 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
               <Gift className="w-5 h-5 text-coral-700 dark:text-teal-300" />
-              Holiday Promo Settings
+              Holiday promo settings
             </h2>
             <p className="text-sm text-brown-600 dark:text-slate-300 mt-1">
               Control the holiday promotional period for unlimited access
@@ -169,7 +169,7 @@ export function AdminSettings() {
             <div className="flex items-center justify-between p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
               <div>
                 <label htmlFor="promo-enabled" className="font-medium text-brown-800 dark:text-white">
-                  Enable Promotional Period
+                  Enable promotional period
                 </label>
                 <p className="text-sm text-brown-600 dark:text-slate-300 mt-0.5">
                   When enabled, all users get unlimited access
@@ -198,7 +198,7 @@ export function AdminSettings() {
               <label htmlFor="promo-end-date" className="block font-medium text-brown-800 dark:text-white mb-2">
                 <span className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  Promo End Date
+                  Promo end date
                 </span>
               </label>
               <input
@@ -311,7 +311,7 @@ export function AdminSettings() {
               <label htmlFor="seasonal-theme-end-date" className="mb-2 block font-medium text-brown-800 dark:text-white">
                 <span className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Seasonal Theme End Date
+                  Seasonal theme end Date
                 </span>
               </label>
               <input
