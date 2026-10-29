@@ -7658,7 +7658,7 @@ async def get_usage_trends(
     try:
         # Parse period
         days = {"7d": 7, "30d": 30, "90d": 90}.get(period, 30)
-        from api.admin_analytics import window_start
+        from api.admin_analytics import fetch_usage_rows
         from api.time_utils import get_guam_date
         window_end = get_guam_date()
         
@@ -7667,31 +7667,7 @@ async def get_usage_trends(
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
-        # Count completed activities rather than quota reservations / starts.
-        cursor.execute("""
-            WITH activity AS (
-                SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
-                       'chat' AS kind FROM conversation_logs
-                WHERE role IN ('user', 'assistant')
-                  AND timestamp >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day' * %s
-                UNION ALL
-                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'games' FROM game_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
-                UNION ALL
-                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'quizzes' FROM quiz_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
-            )
-            SELECT day,
-                   COUNT(*) FILTER (WHERE kind = 'chat'),
-                   COUNT(*) FILTER (WHERE kind = 'games'),
-                   COUNT(*) FILTER (WHERE kind = 'quizzes'),
-                   COUNT(DISTINCT user_id)
-            FROM activity
-            WHERE day BETWEEN %s AND %s
-            GROUP BY day ORDER BY day
-        """, (days + 1, days + 1, days + 1, window_start(window_end, days), window_end))  # exactly `days` Guam days
-
-        rows = cursor.fetchall()
+        rows = fetch_usage_rows(cursor, days, window_end)
         
         data = []
         totals = {"chat": 0, "games": 0, "quizzes": 0, "active_users": set()}

@@ -12,6 +12,41 @@ def window_start(today: date, days: int) -> date:
     return today - timedelta(days=max(days, 1) - 1)
 
 
+USAGE_SQL = """
+            WITH activity AS (
+                SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
+                       'chat' AS kind FROM conversation_logs
+                WHERE role IN ('user', 'assistant')
+                  AND timestamp >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day' * %s
+                UNION ALL
+                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
+                       'games' FROM game_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
+                UNION ALL
+                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
+                       'quizzes' FROM quiz_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
+            )
+            SELECT day,
+                   COUNT(*) FILTER (WHERE kind = 'chat'),
+                   COUNT(*) FILTER (WHERE kind = 'games'),
+                   COUNT(*) FILTER (WHERE kind = 'quizzes'),
+                   COUNT(DISTINCT user_id)
+            FROM activity
+            WHERE day BETWEEN %s AND %s
+            GROUP BY day ORDER BY day
+        """
+
+
+def fetch_usage_rows(cursor, days: int, window_end: date) -> list[tuple]:
+    """Daily chat, game, and quiz counts for exactly ``days`` Guam days.
+
+    Rows cover ``window_start(window_end, days)`` through ``window_end``.
+    ``conversation_logs.timestamp`` holds naive UTC (see the baseline
+    migration); game and quiz ``created_at`` are timezone-aware.
+    """
+    cursor.execute(USAGE_SQL, (days + 1, days + 1, days + 1, window_start(window_end, days), window_end))
+    return cursor.fetchall()
+
+
 def build_user_growth_series(
     signups: Iterable[tuple[Optional[int], bool]],
     days: int,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fillDailySeries, formatDayKey, guamToday, periodDays } from './adminDailySeries';
+import { daySpan, fillDailySeries, formatDayKey, guamToday, periodDays } from './adminDailySeries';
 
 type Usage = { date: string; chat_count: number };
 type Growth = { date: string; total_users: number; new_users: number };
@@ -40,5 +40,10 @@ describe('admin daily series', () => {
   it('uses Guam time for today and maps periods to day counts', () => {
     expect(guamToday(new Date('2026-10-29T15:30:00Z'))).toBe('2026-10-30');
     expect([periodDays('7d'), periodDays('30d'), periodDays('90d')]).toEqual([7, 30, 90]);
+  });
+
+  it('counts inclusive day spans', () => {
+    expect(daySpan('2026-10-05', '2026-10-05')).toBe(1);
+    expect(daySpan('2026-09-30', '2026-10-02')).toBe(3);
   });
 });

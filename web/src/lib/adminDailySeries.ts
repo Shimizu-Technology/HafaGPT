@@ -49,6 +49,11 @@ export function fillDailySeries<T extends { date: string }>(
   return series;
 }
 
+/** Inclusive number of days from `first` to `last` (YYYY-MM-DD keys). */
+export function daySpan(first: string, last: string): number {
+  return Math.max(1, dayNumber(last) - dayNumber(first) + 1);
+}
+
 /** Number of days in an admin analytics period. */
 export function periodDays(period: '7d' | '30d' | '90d'): number {
   return period === '7d' ? 7 : period === '90d' ? 90 : 30;

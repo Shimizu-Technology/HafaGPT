@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { useUsageTrends, useUserGrowth, useFeatureUsage, useAdvancedAnalytics } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
-import { fillDailySeries, formatDayKey, periodDays } from '../../lib/adminDailySeries';
+import { daySpan, fillDailySeries, formatDayKey, periodDays } from '../../lib/adminDailySeries';
 
 type Period = '7d' | '30d' | '90d';
 
@@ -29,18 +29,31 @@ export function AdminAnalytics() {
   const { data: featureData, isLoading: featureLoading, isError: featureError } = useFeatureUsage();
   const { data: advancedData, isLoading: advancedLoading, isError: advancedError } = useAdvancedAnalytics(period);
   // Lay activity onto every day of the period so idle days read as zero.
-  // A successful response with no rows means an idle period, not missing data.
-  const usageSeries = useMemo(() => usageData
-    ? fillDailySeries(usageData.data ?? [], periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }), usageData.window_end)
-    : [], [usageData, period]);
+  // The API reports the last Guam day it counted (window_end); the chart ends
+  // there. An older API without window_end gets no invented days: usage plots
+  // only its measured span and growth ends on its last row.
+  const usageSeries = useMemo(() => {
+    if (!usageData) return [];
+    const rows = usageData.data ?? [];
+    const zero = (date: string) => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 });
+    if (usageData.window_end) return fillDailySeries(rows, periodDays(period), zero, usageData.window_end);
+    if (!rows.length) return [];
+    const first = rows[0].date;
+    const last = rows[rows.length - 1].date;
+    return fillDailySeries(rows, daySpan(first, last), zero, last);
+  }, [usageData, period]);
+  const growthSeries = useMemo(() => {
+    const rows = growthData?.data ?? [];
+    if (!rows.length) return [];
+    const end = growthData?.window_end ?? rows[rows.length - 1].date;
+    return fillDailySeries(rows, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }), end);
+  }, [growthData, period]);
   // React Query keeps the last good response when a refresh fails; say so.
   const showingStaleData = [
     [usageError, usageData], [growthError, growthData], [featureError, featureData], [advancedError, advancedData],
   ].some(([failed, retained]) => Boolean(failed && retained));
-  const usageIdle = usageSeries.length > 0 && usageSeries.every(day => !day.chat_count && !day.game_count && !day.quiz_count);
-  const growthSeries = useMemo(() => growthData?.data?.length
-    ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }), growthData.window_end)
-    : [], [growthData, period]);
+  // A successful response with no activity is an idle period, not missing data.
+  const usageIdle = Boolean(usageData) && usageSeries.every(day => !day.chat_count && !day.game_count && !day.quiz_count);
   
   const isLoading = usageLoading || growthLoading || featureLoading || advancedLoading;
   
@@ -198,7 +211,7 @@ export function AdminAnalytics() {
                     <Line type="monotone" dataKey="quiz_count" name="Quizzes" stroke="rgb(var(--focus-role))" strokeDasharray="2 3" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
-              ) : (
+              ) : usageData ? null : (
                 <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   Usage data couldn't be loaded. Try another period or refresh.
                 </div>

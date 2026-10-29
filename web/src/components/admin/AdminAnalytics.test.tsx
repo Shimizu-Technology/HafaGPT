@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminAnalytics } from './AdminAnalytics';
 
 const analyticsMocks = vi.hoisted(() => ({
+  periods: [] as string[],
   usage: { data: undefined as unknown, isLoading: false, isError: false },
   growth: { data: undefined as unknown, isLoading: false, isError: false },
   feature: { data: undefined as unknown, isLoading: false, isError: false },
@@ -10,8 +11,8 @@ const analyticsMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../hooks/useAdminQuery', () => ({
-  useUsageTrends: () => analyticsMocks.usage,
-  useUserGrowth: () => analyticsMocks.growth,
+  useUsageTrends: (period: string) => { analyticsMocks.periods.push(`usage:${period}`); return analyticsMocks.usage; },
+  useUserGrowth: (period: string) => { analyticsMocks.periods.push(`growth:${period}`); return analyticsMocks.growth; },
   useFeatureUsage: () => analyticsMocks.feature,
   useAdvancedAnalytics: () => analyticsMocks.advanced,
 }));
@@ -41,6 +42,24 @@ describe('AdminAnalytics data states', () => {
     analyticsMocks.growth = { data: { period: '7d', window_end: '2026-10-30', data: [] }, isLoading: false, isError: false };
     analyticsMocks.feature = { data: undefined, isLoading: false, isError: false };
     analyticsMocks.advanced = { data: undefined, isLoading: false, isError: false };
+    analyticsMocks.periods = [];
+  });
+
+  it('plots only the measured span when an older API omits window_end', () => {
+    analyticsMocks.usage = { data: { period: '30d', data: [
+      { date: '2026-10-05', chat_count: 1, game_count: 0, quiz_count: 0, active_users: 1 },
+      { date: '2026-10-08', chat_count: 2, game_count: 0, quiz_count: 0, active_users: 1 },
+    ], totals: { chat: 3, games: 0, quizzes: 0 } }, isLoading: false, isError: false };
+    render(<AdminAnalytics />);
+    const days = [...screen.getByRole('list', { name: 'Daily usage days' }).querySelectorAll('li')].map(li => li.textContent);
+    expect(days).toEqual(['2026-10-05', '2026-10-06', '2026-10-07', '2026-10-08']);
+  });
+
+  it('switching period refetches both series for that period', () => {
+    render(<AdminAnalytics />);
+    fireEvent.click(screen.getByRole('button', { name: '7 days' }));
+    expect(screen.getByRole('button', { name: '7 days' })).toHaveAttribute('aria-pressed', 'true');
+    expect(analyticsMocks.periods).toEqual(expect.arrayContaining(['usage:7d', 'growth:7d']));
   });
 
   it('plots the days the API counted, ending on its window_end', () => {
