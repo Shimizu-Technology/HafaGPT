@@ -102,13 +102,19 @@ test('tall share image keeps Close in landscape bounds and restores keyboard foc
   await expect(trigger).toBeFocused();
 });
 
-test('public cards stay still on hover and reduced-motion plan actions stay immediate', async ({ page }) => {
+test('public cards stay still on hover and reduced-motion plan actions never move', async ({ page }) => {
   await page.goto('/');
   const dictionary = page.getByRole('link', { name: /Search the dictionary/ });
   await dictionary.hover();
   await expect(dictionary.locator('svg').last()).toHaveCSS('transform', 'none');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/pricing');
-  const duration = await page.getByRole('button', { name: 'Sign Up & Upgrade' }).evaluate((el) => parseFloat(getComputedStyle(el).transitionDuration));
-  expect(duration).toBeLessThanOrEqual(0.001);
+  // Reduced motion removes movement, not feedback: colour and opacity may
+  // still ease briefly, but nothing transforms or scales.
+  const motion = await page.getByRole('button', { name: 'Sign Up & Upgrade' }).evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { property: style.transitionProperty, duration: parseFloat(style.transitionDuration) };
+  });
+  expect(motion.property).not.toMatch(/\b(all|transform|scale|translate|rotate)\b/);
+  expect(motion.duration).toBeLessThanOrEqual(0.15);
 });

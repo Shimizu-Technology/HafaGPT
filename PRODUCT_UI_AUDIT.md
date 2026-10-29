@@ -161,7 +161,9 @@ The impeccable, taste, and Emil Kowalski audit added these rules:
   animate (never `transition-all`). Everything pressable scales to 0.97 on
   press through the `scale` property; button-styled links add `pressable`.
   Hover styles only apply on devices that can hover. Nothing enters from
-  `scale(0)` or bounces. Route changes do not animate.
+  `scale(0)` or bounces. Route changes do not animate. With reduced motion,
+  nothing moves or scales; colour and opacity still ease for 150ms and
+  entrances only fade.
 
 ## Implementation sequence
 
