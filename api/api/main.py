@@ -7658,37 +7658,16 @@ async def get_usage_trends(
     try:
         # Parse period
         days = {"7d": 7, "30d": 30, "90d": 90}.get(period, 30)
+        from api.admin_analytics import fetch_usage_rows
+        from api.time_utils import get_guam_date
+        window_end = get_guam_date()
         
         db_url = os.getenv("DATABASE_URL")
         import psycopg2
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
-        # Count completed activities rather than quota reservations / starts.
-        cursor.execute("""
-            WITH activity AS (
-                SELECT (timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Pacific/Guam')::date AS day, user_id,
-                       'chat' AS kind FROM conversation_logs
-                WHERE role IN ('user', 'assistant')
-                  AND timestamp >= (NOW() AT TIME ZONE 'UTC') - INTERVAL '1 day' * %s
-                UNION ALL
-                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'games' FROM game_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
-                UNION ALL
-                SELECT (created_at AT TIME ZONE 'Pacific/Guam')::date, user_id,
-                       'quizzes' FROM quiz_results WHERE created_at >= NOW() - INTERVAL '1 day' * %s
-            )
-            SELECT day,
-                   COUNT(*) FILTER (WHERE kind = 'chat'),
-                   COUNT(*) FILTER (WHERE kind = 'games'),
-                   COUNT(*) FILTER (WHERE kind = 'quizzes'),
-                   COUNT(DISTINCT user_id)
-            FROM activity
-            WHERE day >= (NOW() AT TIME ZONE 'Pacific/Guam')::date - %s
-            GROUP BY day ORDER BY day
-        """, (days + 1, days + 1, days + 1, days))
-
-        rows = cursor.fetchall()
+        rows = fetch_usage_rows(cursor, days, window_end)
         
         data = []
         totals = {"chat": 0, "games": 0, "quizzes": 0, "active_users": set()}
@@ -7709,6 +7688,7 @@ async def get_usage_trends(
         
         return {
             "period": period,
+            "window_end": window_end.isoformat(),
             "data": data,
             "totals": {
                 "chat": totals["chat"],
@@ -7744,48 +7724,19 @@ async def get_user_growth(
         users_response = clerk.users.list(request={"limit": 500})
         users = users_response if isinstance(users_response, list) else (users_response.data if hasattr(users_response, 'data') else [])
         
-        # Group users by signup date
-        from collections import defaultdict
-        daily_signups = defaultdict(int)
-        daily_premium = defaultdict(int)
-        
-        today = datetime.now().date()
-        cutoff = today - timedelta(days=days)
-        
+        # Day boundaries follow Guam time, like the usage endpoint and the app.
+        from api.admin_analytics import build_user_growth_series
+        from api.time_utils import get_guam_date
+        signups = []
         for user in users:
-            if hasattr(user, 'created_at') and user.created_at:
-                # Clerk timestamps are in milliseconds
-                signup_date = datetime.fromtimestamp(user.created_at / 1000).date()
-                if signup_date >= cutoff:
-                    daily_signups[signup_date.isoformat()] += 1
-                    
-                metadata = getattr(user, 'public_metadata', {}) or {}
-                if metadata.get('is_premium'):
-                    daily_premium[signup_date.isoformat()] += 1
-        
-        # Build cumulative data
-        data = []
-        total_users = len(users)
-        
-        # Start from cutoff date
-        current_date = cutoff
-        cumulative = total_users - sum(daily_signups.values())  # Users before cutoff
-        
-        while current_date <= today:
-            date_str = current_date.isoformat()
-            new_users = daily_signups.get(date_str, 0)
-            cumulative += new_users
-            
-            data.append({
-                "date": date_str,
-                "total_users": cumulative,
-                "new_users": new_users,
-                "premium_users": daily_premium.get(date_str, 0)
-            })
-            current_date += timedelta(days=1)
-        
+            metadata = getattr(user, 'public_metadata', {}) or {}
+            signups.append((getattr(user, 'created_at', None), bool(metadata.get('is_premium'))))
+        window_end = get_guam_date()
+        data = build_user_growth_series(signups, days, window_end)
+
         return {
             "period": period,
+            "window_end": window_end.isoformat(),
             "data": data
         }
         

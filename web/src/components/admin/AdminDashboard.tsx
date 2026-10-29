@@ -1,19 +1,15 @@
 import { Link } from 'react-router-dom';
 import { 
   Users, 
-  Crown, 
   UserCheck, 
   Activity, 
   MessageSquare, 
-  MessagesSquare,
   GraduationCap,
   Gamepad2,
   ArrowRight,
   Loader2,
   AlertCircle,
   Settings,
-  TrendingUp,
-  TrendingDown,
   BarChart3,
   Target,
   BookOpen,
@@ -23,8 +19,7 @@ import {
   CalendarDays,
   CalendarRange,
   HelpCircle,
-  BookOpen as BookOpenIcon
-} from 'lucide-react';
+  BookOpen as BookOpenIcon, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useAdminStats, useAdminActivity } from '../../hooks/useAdminQuery';
 import { AdminLayout } from './AdminLayout';
 
@@ -38,72 +33,38 @@ interface StatComparison {
 interface StatCardProps {
   title: string;
   value: number | string;
-  icon: React.ReactNode;
-  color: string;
   description?: string;
   comparison?: StatComparison | null;
+  comparisonLabel?: string;
 }
 
-function StatCard({ title, value, icon, color, description, comparison }: StatCardProps) {
-  const getComparisonContent = () => {
-    if (!comparison) return null;
-    
-    const { change, change_percent } = comparison;
-    const isPositive = change > 0;
-    const isNegative = change < 0;
-    
-    // Show percentage if available, otherwise show absolute change
-    const displayValue = change_percent !== null 
-      ? `${isPositive ? '+' : ''}${change_percent}%`
-      : `${isPositive ? '+' : ''}${change}`;
-    
-    const colorClasses = isPositive 
-      ? 'text-green-600 dark:text-green-400' 
-      : isNegative 
-        ? 'text-red-500 dark:text-red-400' 
-        : 'text-gray-500 dark:text-gray-400';
-    
-    const bgClasses = isPositive 
-      ? 'bg-green-100 dark:bg-green-900/30' 
-      : isNegative 
-        ? 'bg-red-100 dark:bg-red-900/30' 
-        : 'bg-gray-100 dark:bg-slate-700';
-    
-    return { displayValue, colorClasses, bgClasses, isPositive, isNegative };
-  };
-  
-  const comparisonData = getComparisonContent();
-  
+function StatCard({ title, value, description, comparison, comparisonLabel = 'previous 7 days' }: StatCardProps) {
+  // Every metric on this dashboard is better when it rises, so an increase
+  // reads as good (emerald, up arrow) and a decrease as a concern (red, down
+  // arrow). The arrow and sign carry the meaning without relying on colour.
+  const change = comparison?.change ?? 0;
+  const Direction = change > 0 ? ArrowUp : change < 0 ? ArrowDown : Minus;
+  const tone = change > 0
+    ? 'text-emerald-700 dark:text-emerald-300'
+    : change < 0
+      ? 'text-red-700 dark:text-red-300'
+      : 'text-brown-600 dark:text-slate-300';
+
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-            <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">{title}</p>
-            {/* Desktop: show badge next to title */}
-            {comparisonData && (
-              <span className={`hidden xl:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap ${comparisonData.bgClasses} ${comparisonData.colorClasses}`}>
-                {comparisonData.isPositive && <TrendingUp className="w-3 h-3" />}
-                {comparisonData.isNegative && <TrendingDown className="w-3 h-3" />}
-                {comparisonData.displayValue}
-              </span>
-            )}
-          </div>
-          <p className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white">{value}</p>
+          <p className="text-sm text-brown-600 dark:text-slate-300">{title}</p>
+          <p className="text-2xl font-bold tabular-nums text-brown-800 dark:text-white">{value}</p>
           {description && (
-            <p className="text-[10px] sm:text-xs text-brown-400 dark:text-gray-500 mt-0.5">{description}</p>
+            <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">{description}</p>
           )}
-          {/* Mobile: show comparison as a small pill below the number */}
-          {comparisonData && (
-            <div className={`xl:hidden inline-flex items-center gap-0.5 mt-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium ${comparisonData.bgClasses} ${comparisonData.colorClasses}`}>
-              {comparisonData.isPositive && <TrendingUp className="w-2.5 h-2.5" />}
-              {comparisonData.isNegative && <TrendingDown className="w-2.5 h-2.5" />}
-              <span>{comparisonData.displayValue}</span>
-            </div>
+          {comparison && (
+            <p className={`mt-1 inline-flex items-center gap-1 text-xs font-medium tabular-nums ${tone}`}>
+              <Direction className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+              <span>{change > 0 ? '+' : ''}{change} vs {comparisonLabel}</span>
+            </p>
           )}
-        </div>
-        <div className={`p-2 rounded-lg sm:rounded-xl flex-shrink-0 ${color}`}>
-          {icon}
         </div>
       </div>
     </div>
@@ -136,9 +97,9 @@ export function AdminDashboard() {
       case 'chat':
         return <MessageSquare className="w-4 h-4 text-coral-500" />;
       case 'quiz':
-        return <GraduationCap className="w-4 h-4 text-indigo-500" />;
+        return <GraduationCap className="w-4 h-4 text-teal-500" />;
       case 'game':
-        return <Gamepad2 className="w-4 h-4 text-pink-500" />;
+        return <Gamepad2 className="w-4 h-4 text-teal-500" />;
       case 'lesson':
         return <BookOpenIcon className="w-4 h-4 text-emerald-500" />;
       default:
@@ -165,7 +126,7 @@ export function AdminDashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error Loading Dashboard</h2>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error loading dashboard</h2>
             <p className="text-brown-600 dark:text-gray-400">{error.message}</p>
           </div>
         </div>
@@ -188,10 +149,10 @@ export function AdminDashboard() {
           </div>
           <Link
             to="/admin/users"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+            className="pressable inline-flex min-h-11 items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl font-medium [@media(hover:hover)]:hover:opacity-90 transition-opacity"
           >
             <Users className="w-4 h-4" />
-            Manage Users
+            Manage users
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -203,31 +164,32 @@ export function AdminDashboard() {
           </h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3">
             <StatCard
-              title="Total Users"
-              value={stats?.total_users || 0}
-              icon={<Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />}
-              color="bg-blue-100 dark:bg-blue-900/30"
-              comparison={stats?.new_users_this_week}
+              title="Total users"
+              value={stats?.total_users ?? "—"}
+              description={stats?.new_users_this_week
+                ? `${stats.new_users_this_week.current} new this week · ${stats.new_users_this_week.previous} the week before`
+                : undefined}
             />
             <StatCard
               title="Premium"
-              value={stats?.premium_users || 0}
-              icon={<Crown className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />}
-              color="bg-amber-100 dark:bg-amber-900/30"
+              value={stats?.premium_users ?? "—"}
+
+
               description={`${stats?.total_users ? Math.round((stats.premium_users / stats.total_users) * 100) : 0}% of total`}
             />
             <StatCard
               title="Free"
-              value={stats?.free_users || 0}
-              icon={<UserCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />}
-              color="bg-green-100 dark:bg-green-900/30"
+              value={stats?.free_users ?? "—"}
+
+
             />
             <StatCard
-              title="Active Today"
-              value={stats?.active_today || 0}
-              icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />}
-              color="bg-purple-100 dark:bg-purple-900/30"
+              title="Active this week"
+              value={stats?.active_users_this_week?.current ?? "—"}
+
+
               comparison={stats?.active_users_this_week}
+              comparisonLabel="previous 7 days"
             />
           </div>
         </div>
@@ -235,34 +197,34 @@ export function AdminDashboard() {
         {/* Activity Stats */}
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white mb-3">
-            Platform Activity
+            Platform activity
           </h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3">
             <StatCard
               title="Chats"
-              value={stats?.total_conversations?.toLocaleString() || 0}
-              icon={<MessagesSquare className="w-4 h-4 sm:w-5 sm:h-5 text-coral-600 dark:text-ocean-400" />}
-              color="bg-coral-100 dark:bg-ocean-900/30"
+              value={stats?.total_conversations?.toLocaleString() ?? "—"}
+
+
             />
             <StatCard
               title="Messages"
-              value={stats?.total_messages?.toLocaleString() || 0}
-              icon={<MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />}
-              color="bg-teal-100 dark:bg-teal-900/30"
+              value={stats?.total_messages?.toLocaleString() ?? "—"}
+
+
               comparison={stats?.messages_this_week}
             />
             <StatCard
               title="Quizzes"
-              value={stats?.total_quiz_attempts?.toLocaleString() || 0}
-              icon={<GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />}
-              color="bg-indigo-100 dark:bg-indigo-900/30"
+              value={stats?.total_quiz_attempts?.toLocaleString() ?? "—"}
+
+
               comparison={stats?.quizzes_this_week}
             />
             <StatCard
               title="Games"
-              value={stats?.total_game_plays?.toLocaleString() || 0}
-              icon={<Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" />}
-              color="bg-pink-100 dark:bg-pink-900/30"
+              value={stats?.total_game_plays?.toLocaleString() ?? "—"}
+
+
               comparison={stats?.games_this_week}
             />
           </div>
@@ -274,70 +236,58 @@ export function AdminDashboard() {
             Engagement
           </h2>
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 ">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">Avg Msgs/User</p>
+                  <p className="text-xs sm:text-sm text-brown-600 dark:text-slate-300">Average messages per user</p>
                   <p className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white">
-                    {stats?.avg_messages_per_user?.toFixed(1) || '0'}
+                    {stats?.avg_messages_per_user?.toFixed(1) ?? "—"}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-brown-400 dark:text-gray-500 mt-0.5">
-                    {stats?.users_with_messages || 0} users messaged
+                  <p className="text-xs sm:text-xs text-brown-600 dark:text-slate-300 mt-0.5">
+                    {stats?.users_with_messages ?? "—"} users messaged
                   </p>
-                </div>
-                <div className="p-2 rounded-lg sm:rounded-xl bg-teal-100 dark:bg-teal-900/30">
-                  <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 ">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">Avg Quiz Score</p>
+                  <p className="text-xs sm:text-sm text-brown-600 dark:text-slate-300">Average quiz score</p>
                   <p className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white">
                     {stats?.avg_quiz_score != null ? `${stats.avg_quiz_score.toFixed(0)}%` : '—'}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-brown-400 dark:text-gray-500 mt-0.5">
-                    {stats?.users_with_quizzes || 0} users quizzed
+                  <p className="text-xs sm:text-xs text-brown-600 dark:text-slate-300 mt-0.5">
+                    {stats?.users_with_quizzes ?? "—"} users quizzed
                   </p>
-                </div>
-                <div className="p-2 rounded-lg sm:rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
-                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 ">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">Avg Quizzes/User</p>
+                  <p className="text-xs sm:text-sm text-brown-600 dark:text-slate-300">Average quizzes per user</p>
                   <p className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white">
-                    {stats?.avg_quizzes_per_user?.toFixed(1) || '0'}
+                    {stats?.avg_quizzes_per_user?.toFixed(1) ?? "—"}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-brown-400 dark:text-gray-500 mt-0.5">
-                    {stats?.total_quiz_attempts || 0} total attempts
+                  <p className="text-xs sm:text-xs text-brown-600 dark:text-slate-300 mt-0.5">
+                    {stats?.total_quiz_attempts ?? "—"} total attempts
                   </p>
-                </div>
-                <div className="p-2 rounded-lg sm:rounded-xl bg-violet-100 dark:bg-violet-900/30">
-                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" />
                 </div>
               </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700 ">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">Avg Games/User</p>
+                  <p className="text-xs sm:text-sm text-brown-600 dark:text-slate-300">Average games per user</p>
                   <p className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white">
-                    {stats?.avg_games_per_user?.toFixed(1) || '0'}
+                    {stats?.avg_games_per_user?.toFixed(1) ?? "—"}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-brown-400 dark:text-gray-500 mt-0.5">
-                    {stats?.users_with_games || 0} users played
+                  <p className="text-xs sm:text-xs text-brown-600 dark:text-slate-300 mt-0.5">
+                    {stats?.users_with_games ?? "—"} users played
                   </p>
-                </div>
-                <div className="p-2 rounded-lg sm:rounded-xl bg-pink-100 dark:bg-pink-900/30">
-                  <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 text-pink-600" />
                 </div>
               </div>
             </div>
@@ -347,9 +297,9 @@ export function AdminDashboard() {
         {/* Feature Adoption */}
         <div>
           <h2 className="text-base sm:text-lg font-semibold text-brown-800 dark:text-white mb-3">
-            Feature Adoption
+            Feature adoption
           </h2>
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700 ">
             <div className="space-y-4">
               {/* Chat */}
               <div>
@@ -359,17 +309,17 @@ export function AdminDashboard() {
                     <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Chat</span>
                   </div>
                   <span className="text-sm font-bold text-brown-800 dark:text-white">
-                    {stats?.chat_adoption_pct?.toFixed(0) || 0}%
+                    {stats?.chat_adoption_pct != null ? `${stats.chat_adoption_pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-teal-500 rounded-full transition-[width,background-color] duration-300"
+                    className="h-full bg-teal-600 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.chat_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
-                  {stats?.users_with_messages || 0} of {stats?.total_users || 0} users
+                <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
+                  {stats?.users_with_messages ?? "—"} of {stats?.total_users ?? "—"} users
                 </p>
               </div>
               
@@ -377,21 +327,21 @@ export function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <Gamepad2 className="w-4 h-4 text-pink-600" />
+                    <Gamepad2 className="w-4 h-4 text-teal-600" />
                     <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Games</span>
                   </div>
                   <span className="text-sm font-bold text-brown-800 dark:text-white">
-                    {stats?.games_adoption_pct?.toFixed(0) || 0}%
+                    {stats?.games_adoption_pct != null ? `${stats.games_adoption_pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-pink-500 rounded-full transition-[width,background-color] duration-300"
+                    className="h-full bg-teal-600 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.games_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
-                  {stats?.users_with_games || 0} of {stats?.total_users || 0} users
+                <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
+                  {stats?.users_with_games ?? "—"} of {stats?.total_users ?? "—"} users
                 </p>
               </div>
               
@@ -399,21 +349,21 @@ export function AdminDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-indigo-600" />
+                    <GraduationCap className="w-4 h-4 text-teal-600" />
                     <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Quizzes</span>
                   </div>
                   <span className="text-sm font-bold text-brown-800 dark:text-white">
-                    {stats?.quizzes_adoption_pct?.toFixed(0) || 0}%
+                    {stats?.quizzes_adoption_pct != null ? `${stats.quizzes_adoption_pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-indigo-500 rounded-full transition-[width,background-color] duration-300"
+                    className="h-full bg-teal-600 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.quizzes_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
-                  {stats?.users_with_quizzes || 0} of {stats?.total_users || 0} users
+                <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
+                  {stats?.users_with_quizzes ?? "—"} of {stats?.total_users ?? "—"} users
                 </p>
               </div>
               
@@ -422,20 +372,20 @@ export function AdminDashboard() {
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Learning Path</span>
+                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">Learning path</span>
                   </div>
                   <span className="text-sm font-bold text-brown-800 dark:text-white">
-                    {stats?.learning_path_adoption_pct?.toFixed(0) || 0}%
+                    {stats?.learning_path_adoption_pct != null ? `${stats.learning_path_adoption_pct.toFixed(0)}%` : '—'}
                   </span>
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-emerald-500 rounded-full transition-[width,background-color] duration-300"
+                    className="h-full bg-teal-600 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.learning_path_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
-                  {stats?.users_with_lessons || 0} of {stats?.total_users || 0} users
+                <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
+                  {stats?.users_with_lessons ?? "—"} of {stats?.total_users ?? "—"} users
                 </p>
               </div>
             </div>
@@ -443,18 +393,18 @@ export function AdminDashboard() {
         </div>
         
         {/* Retention Metrics */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700 ">
           <div className="flex items-center gap-2 mb-4">
             <RefreshCw className="w-5 h-5 text-teal-600 dark:text-teal-400" />
             <h3 className="text-base font-semibold text-brown-800 dark:text-white">Retention</h3>
             <div className="relative group ml-auto">
-              <HelpCircle className="w-4 h-4 text-brown-400 dark:text-gray-500 cursor-help" />
+              <HelpCircle className="w-4 h-4 text-brown-600 dark:text-slate-300 cursor-help" />
               <div className="absolute right-0 top-6 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-cream-200 dark:border-slate-600 text-xs text-brown-600 dark:text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-50">
                 <p className="font-semibold mb-2 text-brown-800 dark:text-white">What do these mean?</p>
                 <ul className="space-y-1.5">
-                  <li><span className="font-medium">DAU:</span> Daily Active Users</li>
-                  <li><span className="font-medium">WAU:</span> Weekly Active Users</li>
-                  <li><span className="font-medium">MAU:</span> Monthly Active Users</li>
+                  <li><span className="font-medium">DAU:</span> Daily active users</li>
+                  <li><span className="font-medium">WAU:</span> Weekly active users</li>
+                  <li><span className="font-medium">MAU:</span> Monthly active users</li>
                   <li><span className="font-medium">Stickiness:</span> DAU÷MAU (10-20% is typical, higher = more engaged)</li>
                   <li><span className="font-medium">Returning:</span> % of users who came back after day 1</li>
                 </ul>
@@ -464,43 +414,43 @@ export function AdminDashboard() {
           
           <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
             {/* DAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Daily Active Users - unique users who engaged today">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Daily active users - unique users who engaged today">
               <div className="flex items-center gap-1.5 mb-1">
                 <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">DAU</span>
               </div>
-              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.dau || 0}</p>
-              <p className="text-[10px] text-brown-400 dark:text-gray-500">Active today</p>
+              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.dau ?? "—"}</p>
+              <p className="text-xs text-brown-600 dark:text-slate-300">Active today</p>
             </div>
             
             {/* WAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Weekly Active Users - unique users in last 7 days">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Weekly active users - unique users in last 7 days">
               <div className="flex items-center gap-1.5 mb-1">
-                <CalendarDays className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <CalendarDays className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">WAU</span>
               </div>
-              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.wau || 0}</p>
-              <p className="text-[10px] text-brown-400 dark:text-gray-500">Last 7 days</p>
+              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.wau ?? "—"}</p>
+              <p className="text-xs text-brown-600 dark:text-slate-300">Last 7 days</p>
             </div>
             
             {/* MAU */}
-            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Monthly Active Users - unique users in last 30 days">
+            <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Monthly active users - unique users in last 30 days">
               <div className="flex items-center gap-1.5 mb-1">
-                <CalendarRange className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <CalendarRange className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">MAU</span>
               </div>
-              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.mau || 0}</p>
-              <p className="text-[10px] text-brown-400 dark:text-gray-500">Last 30 days</p>
+              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.mau ?? "—"}</p>
+              <p className="text-xs text-brown-600 dark:text-slate-300">Last 30 days</p>
             </div>
             
             {/* DAU/MAU Ratio (Stickiness) */}
             <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3" title="Stickiness = DAU ÷ MAU. Higher means users come back more often. 10-20% is typical for apps.">
               <div className="flex items-center gap-1.5 mb-1">
-                <Target className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <Target className="w-3.5 h-3.5 text-brown-600 dark:text-slate-300" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">Stickiness</span>
               </div>
-              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.dau_mau_ratio || 0}%</p>
-              <p className="text-[10px] text-brown-400 dark:text-gray-500">DAU/MAU ratio</p>
+              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.dau_mau_ratio != null ? `${stats.dau_mau_ratio}%` : '—'}</p>
+              <p className="text-xs text-brown-600 dark:text-slate-300">DAU/MAU ratio</p>
             </div>
             
             {/* Returning Users */}
@@ -509,35 +459,30 @@ export function AdminDashboard() {
                 <RefreshCw className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-xs font-medium text-brown-600 dark:text-gray-400">Returning</span>
               </div>
-              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.returning_users_pct || 0}%</p>
-              <p className="text-[10px] text-brown-400 dark:text-gray-500">Multi-day users</p>
+              <p className="text-lg font-bold text-brown-800 dark:text-white">{stats?.returning_users_pct != null ? `${stats.returning_users_pct}%` : '—'}</p>
+              <p className="text-xs text-brown-600 dark:text-slate-300">Multi-day users</p>
             </div>
           </div>
         </div>
         
         {/* Top Users */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700  overflow-hidden">
           <div className="px-4 py-3 border-b border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Top Users</h3>
+              <Trophy className="w-5 h-5 text-brown-600 dark:text-slate-300" />
+              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Top users</h3>
             </div>
-            <p className="text-xs text-brown-500 dark:text-gray-400 mt-0.5">Most active by total engagement</p>
+            <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">Most active by total engagement</p>
           </div>
           <div className="divide-y divide-cream-100 dark:divide-slate-700">
             {stats?.top_users && stats.top_users.length > 0 ? (
               stats.top_users.map((user, index) => (
                 <div 
                   key={user.user_id} 
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700/50 transition-colors"
                 >
                   {/* Rank */}
-                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    index === 0 ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' :
-                    index === 1 ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300' :
-                    index === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' :
-                    'bg-cream-100 dark:bg-slate-700 text-brown-500 dark:text-gray-400'
-                  }`}>
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-cream-100 text-xs font-bold text-brown-700 dark:bg-slate-700 dark:text-slate-200">
                     {index + 1}
                   </div>
                   
@@ -563,7 +508,7 @@ export function AdminDashboard() {
                     <p className="text-sm font-medium text-brown-800 dark:text-white truncate">
                       {user.name}
                     </p>
-                    <p className="text-xs text-brown-500 dark:text-gray-400 truncate">
+                    <p className="text-xs text-brown-600 dark:text-slate-300 truncate">
                       {user.email}
                     </p>
                   </div>
@@ -573,14 +518,14 @@ export function AdminDashboard() {
                     <p className="text-sm font-bold text-brown-800 dark:text-white">
                       {user.total_activity.toLocaleString()}
                     </p>
-                    <p className="text-[10px] text-brown-400 dark:text-gray-500">
+                    <p className="text-xs text-brown-600 dark:text-slate-300">
                       {user.messages}m · {user.quizzes}q · {user.games}g
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="px-4 py-8 text-center text-brown-500 dark:text-gray-400">
+              <div className="px-4 py-8 text-center text-brown-600 dark:text-slate-300">
                 <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No user activity yet</p>
               </div>
@@ -589,12 +534,12 @@ export function AdminDashboard() {
         </div>
         
         {/* Activity Feed */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700  overflow-hidden">
           <div className="px-4 py-3 border-b border-cream-200 dark:border-slate-700">
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-coral-500" />
-              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Recent Activity</h3>
-              <span className="ml-auto text-[10px] text-brown-400 dark:text-gray-500 flex items-center gap-1">
+              <h3 className="text-base font-semibold text-brown-800 dark:text-white">Recent activity</h3>
+              <span className="ml-auto text-xs text-brown-600 dark:text-slate-300 flex items-center gap-1">
                 <RefreshCw className="w-3 h-3" /> Live
               </span>
             </div>
@@ -604,7 +549,7 @@ export function AdminDashboard() {
               activityData.activities.map((activity) => (
                 <div 
                   key={activity.id} 
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700/50 transition-colors"
                 >
                   {/* Activity Icon */}
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-cream-100 dark:bg-slate-700 flex items-center justify-center">
@@ -621,7 +566,7 @@ export function AdminDashboard() {
                       />
                     ) : (
                       <div className="w-6 h-6 rounded-full bg-coral-100 dark:bg-ocean-900/30 flex items-center justify-center">
-                        <span className="text-[10px] font-medium text-coral-600 dark:text-ocean-400">
+                        <span className="text-xs font-medium text-coral-600 dark:text-ocean-400">
                           {activity.user_name?.charAt(0).toUpperCase() || '?'}
                         </span>
                       </div>
@@ -634,19 +579,19 @@ export function AdminDashboard() {
                       <span className="font-medium text-brown-800 dark:text-white">{activity.user_name}</span>
                       {' '}{activity.description}
                       {activity.detail && (
-                        <span className="ml-1 text-brown-500 dark:text-gray-400">({activity.detail})</span>
+                        <span className="ml-1 text-brown-600 dark:text-slate-300">({activity.detail})</span>
                       )}
                     </p>
                   </div>
                   
                   {/* Time */}
-                  <div className="flex-shrink-0 text-[10px] text-brown-400 dark:text-gray-500">
+                  <div className="flex-shrink-0 text-xs text-brown-600 dark:text-slate-300">
                     {formatTimeAgo(activity.timestamp)}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="px-4 py-8 text-center text-brown-500 dark:text-gray-400">
+              <div className="px-4 py-8 text-center text-brown-600 dark:text-slate-300">
                 <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No recent activity</p>
               </div>
@@ -662,70 +607,70 @@ export function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Link
               to="/admin/users"
-              className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 hover:border-coral-300 dark:hover:border-ocean-500 transition-colors group"
+              className="pressable flex min-h-11 items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:border-coral-300 dark:[@media(hover:hover)]:hover:border-ocean-500 transition-colors group"
             >
-              <div className="p-3 bg-coral-100 dark:bg-ocean-900/30 rounded-xl group-hover:scale-105 transition-transform">
+              <div className="flex-shrink-0">
                 <Users className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-brown-800 dark:text-white">View All Users</h3>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Manage user accounts</p>
+                <h3 className="font-semibold text-brown-800 dark:text-white">View all users</h3>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Manage user accounts</p>
               </div>
             </Link>
             
             <Link
               to="/admin/analytics"
-              className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors group"
+              className="pressable flex min-h-11 items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:border-teal-300 dark:[@media(hover:hover)]:hover:border-teal-500 transition-colors group"
             >
-              <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl group-hover:scale-105 transition-transform">
-                <BarChart3 className="w-6 h-6 text-indigo-600" />
+              <div className="flex-shrink-0">
+                <BarChart3 className="w-6 h-6 text-teal-600" />
               </div>
               <div>
                 <h3 className="font-semibold text-brown-800 dark:text-white">Analytics</h3>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Usage trends & growth</p>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Usage trends & growth</p>
               </div>
             </Link>
             
             <Link
               to="/admin/settings"
-              className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500 transition-colors group"
+              className="pressable flex min-h-11 items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:border-teal-300 dark:[@media(hover:hover)]:hover:border-teal-500 transition-colors group"
             >
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl group-hover:scale-105 transition-transform">
-                <Settings className="w-6 h-6 text-purple-600" />
+              <div className="flex-shrink-0">
+                <Settings className="w-6 h-6 text-teal-600" />
               </div>
               <div>
                 <h3 className="font-semibold text-brown-800 dark:text-white">Settings</h3>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Promo & theme settings</p>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Promo & theme settings</p>
               </div>
             </Link>
             
             <Link
               to="/"
-              className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-500 transition-colors group"
+              className="pressable flex min-h-11 items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:border-teal-300 dark:[@media(hover:hover)]:hover:border-teal-500 transition-colors group"
             >
-              <div className="p-3 bg-teal-100 dark:bg-teal-900/30 rounded-xl group-hover:scale-105 transition-transform">
+              <div className="flex-shrink-0">
                 <Activity className="w-6 h-6 text-teal-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-brown-800 dark:text-white">View App</h3>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Go to main application</p>
+                <h3 className="font-semibold text-brown-800 dark:text-white">View app</h3>
+                <p className="text-sm text-brown-600 dark:text-slate-300">Go to main application</p>
               </div>
             </Link>
           </div>
         </div>
         
         {/* Whitelisted Info */}
-        {stats?.whitelisted_users && stats.whitelisted_users > 0 && (
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+        {stats && stats.whitelisted_users > 0 && (
+          <div className="bg-cream-50 dark:bg-slate-800 rounded-xl p-4 border border-teal-200 dark:border-teal-800">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <UserCheck className="w-5 h-5 text-purple-600" />
+              <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                <UserCheck className="w-5 h-5 text-teal-600" />
               </div>
               <div>
-                <p className="font-semibold text-purple-800 dark:text-purple-300">
+                <p className="font-semibold text-teal-800 dark:text-teal-300">
                   {stats.whitelisted_users} Whitelisted User{stats.whitelisted_users > 1 ? 's' : ''}
                 </p>
-                <p className="text-sm text-purple-600 dark:text-purple-400">
+                <p className="text-sm text-teal-600 dark:text-teal-400">
                   Friends & Family with free premium access
                 </p>
               </div>

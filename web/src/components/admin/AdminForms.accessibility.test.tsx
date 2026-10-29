@@ -37,7 +37,7 @@ describe('admin form accessibility', () => {
     toggles[0].focus();
     await user.keyboard('{Enter}');
     expect(toggles[0]).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('link', { name: 'View Details' })[0]).toHaveAttribute('href',
+    expect(screen.getAllByRole('link', { name: 'View details' })[0]).toHaveAttribute('href',
       '/admin/users/user%2Ffixture?return_to=%2Fadmin%2Fusers%3Fsearch%3Dfixture%26page%3D2%23users');
     await user.click(screen.getAllByRole('button', { name: 'Cancel' })[0]);
     expect(toggles[0]).toHaveAttribute('aria-expanded', 'false');
@@ -64,10 +64,10 @@ describe('admin form accessibility', () => {
     const user = userEvent.setup();
     mount(<AdminUserDetail />);
     await user.click(screen.getByRole('button', { name: 'Edit' }));
-    expect(screen.getByLabelText('Skill Level')).toHaveRole('combobox');
-    expect(screen.getByLabelText('Learning Goal')).toHaveRole('combobox');
-    await user.click(screen.getByText('Skill Level', { selector: 'label' }));
-    expect(screen.getByLabelText('Skill Level')).toHaveFocus();
+    expect(screen.getByLabelText('Skill level')).toHaveRole('combobox');
+    expect(screen.getByLabelText('Learning goal')).toHaveRole('combobox');
+    await user.click(screen.getByText('Skill level', { selector: 'label' }));
+    expect(screen.getByLabelText('Skill level')).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(mocks.mutate).not.toHaveBeenCalled();
@@ -75,21 +75,21 @@ describe('admin form accessibility', () => {
   it('associates promotional labels and preserves switch state without saving', async () => {
     const user = userEvent.setup();
     mount(<AdminSettings />);
-    const toggle = screen.getByRole('switch', { name: 'Enable Promotional Period' });
-    expect(screen.getByLabelText('Enable Promotional Period')).toBe(toggle);
+    const toggle = screen.getByRole('switch', { name: 'Enable promotional period' });
+    expect(screen.getByLabelText('Enable promotional period')).toBe(toggle);
     expect(toggle).toHaveAttribute('aria-checked', 'true');
-    await user.click(screen.getByText('Enable Promotional Period', { selector: 'label' }));
+    await user.click(screen.getByText('Enable promotional period', { selector: 'label' }));
     expect(toggle).toHaveAttribute('aria-checked', 'false');
-    for (const label of ['Promo End Date', 'Banner Title']) {
+    for (const label of ['Promo end date', 'Banner Title']) {
       const field = screen.getByLabelText(label);
-      await user.click(screen.getByText(label, { selector: label === 'Promo End Date' ? 'span' : 'label' }));
+      await user.click(screen.getByText(label, { selector: label === 'Promo end date' ? 'span' : 'label' }));
       expect(field).toHaveFocus();
     }
     expect(mocks.mutate).not.toHaveBeenCalled();
   });
   it('uses a section heading for banner preview and associates every field label', () => {
     const { container } = mount(<AdminSettings />);
-    expect(screen.getByRole('heading', { level: 3, name: /Banner Preview/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: /Banner content preview/i })).toBeInTheDocument();
     for (const label of container.querySelectorAll('label')) expect(label.control).toBeTruthy();
   });
 });

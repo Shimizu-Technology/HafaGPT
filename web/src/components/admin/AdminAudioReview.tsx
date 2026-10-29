@@ -7,9 +7,9 @@ import { AdminLayout } from "./AdminLayout";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600";
-const primary = `${button} border-transparent bg-coral-700 text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800`;
+const primary = `${button} border-transparent bg-coral-700 text-white [@media(hover:hover)]:hover:bg-coral-800 dark:bg-ocean-700 dark:[@media(hover:hover)]:hover:bg-ocean-800`;
 const field =
-  "mt-1 min-h-11 w-full text-base rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white";
+  "mt-1 min-h-11 w-full text-base rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 placeholder:text-brown-600 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-300";
 interface Word {
   chamorro: string;
   english: string;
@@ -271,9 +271,9 @@ export function AdminAudioReview() {
                   <button
                     aria-pressed={selected?.chamorro === word.chamorro}
                     onClick={() => setSelected(word)}
-                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left hover:bg-cream-100 dark:hover:bg-slate-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-slate-700" : ""}`}
+                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-slate-700" : ""}`}
                   >
-                    <span className="block font-semibold">{word.chamorro}</span>
+                    <span className="block font-chamorro font-semibold">{word.chamorro}</span>
                     <span className="block text-sm text-brown-600 dark:text-slate-300">{word.english}</span>
                     <span className="text-xs text-brown-500 dark:text-slate-400">
                       {word.status === "approved" ? "Reviewed" : "Needs review"}
@@ -295,7 +295,7 @@ export function AdminAudioReview() {
                   <ArrowLeft size={16} />
                   Back to library
                 </button>
-                <h2 ref={detailHeading} tabIndex={-1} className="break-words text-2xl font-bold outline-offset-4">
+                <h2 ref={detailHeading} tabIndex={-1} className="break-words font-chamorro text-2xl font-bold outline-offset-4">
                   {selected.chamorro}
                 </h2>
                 <p className="mb-5 mt-1 text-brown-600 dark:text-slate-300">{selected.english}</p>
