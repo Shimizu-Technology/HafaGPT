@@ -165,12 +165,12 @@ export function VocabularyCategory() {
                         {word.word_id ? (
                           <Link
                             to={appRoutes.word(word.word_id, { returnTo })}
-                            className="rounded font-bold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
+                            className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
                           >
                             {word.chamorro}
                           </Link>
                         ) : (
-                          <h3 className="font-bold text-brown-800 dark:text-white text-lg">
+                          <h3 className="font-chamorro font-semibold text-brown-800 dark:text-white text-lg">
                             {word.chamorro}
                           </h3>
                         )}
@@ -223,7 +223,7 @@ export function VocabularyCategory() {
                       </p>
                       {word.examples.map((example, idx) => (
                         <div key={idx} className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3">
-                          <p className="text-brown-800 dark:text-white font-medium">
+                          <p className="font-chamorro text-brown-800 dark:text-white font-medium">
                             {example.chamorro}
                           </p>
                           <p className="text-brown-600 dark:text-gray-300 text-sm mt-1">

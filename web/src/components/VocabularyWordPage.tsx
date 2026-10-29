@@ -69,7 +69,7 @@ export function VocabularyWordPage() {
               Chamorro headword
             </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <h2 className="text-4xl font-bold tracking-tight text-brown-950 dark:text-white">
+              <h2 className="font-chamorro text-4xl font-semibold tracking-tight text-brown-950 dark:text-white">
                 {word.chamorro || 'Untitled entry'}
               </h2>
               {word.part_of_speech && (
@@ -92,7 +92,7 @@ export function VocabularyWordPage() {
                 <div className="mt-3 space-y-3">
                   {word.examples.map((example, index) => (
                     <div key={`${example.chamorro}-${index}`} className="rounded-2xl bg-cream-50 p-4 dark:bg-slate-900/60">
-                      <p className="font-semibold text-brown-900 dark:text-white">{example.chamorro}</p>
+                      <p className="font-chamorro text-lg font-medium text-brown-900 dark:text-white">{example.chamorro}</p>
                       <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{example.english}</p>
                     </div>
                   ))}

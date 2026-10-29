@@ -612,7 +612,7 @@ export function FallingWords() {
                   ref={wordElementRef}
                   className={`
                     absolute left-1/2 top-0 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
-                    text-lg sm:text-2xl font-bold text-white                     transition-colors duration-200
+                    font-chamorro text-lg sm:text-2xl font-semibold text-white                     transition-colors duration-200
                     ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
                   `}
                   style={{

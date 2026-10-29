@@ -358,7 +358,7 @@ export function SoundMatch() {
               {/* Always show the Chamorro word */}
               {currentWord && (
                 <div className="text-center">
-                  <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
+                  <span className={`font-chamorro text-2xl font-semibold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                     {currentWord.chamorro}
                   </span>
                   <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-teal-700 dark:text-teal-400'}`}>

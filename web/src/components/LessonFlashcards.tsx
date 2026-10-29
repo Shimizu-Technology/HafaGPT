@@ -108,7 +108,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
             >
 
 
-              <p className="text-3xl sm:text-4xl font-bold text-brown-800 dark:text-white text-center">
+              <p className="font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
                 {currentCard.front}
               </p>
 

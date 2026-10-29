@@ -35,7 +35,7 @@ function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
             {difficultyLabels[scenario.difficulty]}
           </span>
         </span>
-        <span className="mt-0.5 block text-sm font-medium text-coral-700 dark:text-ocean-300">{scenario.titleChamorro}</span>
+        <span className="mt-0.5 block font-chamorro text-base font-medium text-coral-700 dark:text-ocean-300">{scenario.titleChamorro}</span>
         <span className="mt-2 block text-sm text-brown-600 dark:text-gray-300">{scenario.description}</span>
         <span className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-brown-500 dark:text-gray-400">
           <span>Talk with {scenario.characterName}</span>

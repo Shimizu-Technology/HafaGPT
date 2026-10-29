@@ -138,7 +138,7 @@ export function StoryViewer() {
         <div className="flex items-start gap-4">
           <div className="text-4xl">{story.icon}</div>
           <div className="flex-1">
-            <h2 tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white">
+            <h2 tabIndex={-1} className="font-chamorro text-2xl font-semibold text-brown-800 dark:text-white">
               {story.title}
             </h2>
             <p className="text-sm text-brown-600 dark:text-gray-300 italic">
@@ -186,7 +186,7 @@ export function StoryViewer() {
           <p className="text-sm text-brown-500 dark:text-gray-400 mb-2 font-semibold">
             Tap any word to translate
           </p>
-          <p className="text-lg leading-loose">
+          <p className="font-chamorro text-xl leading-loose">
             {annotateStoryText(paragraph.chamorro, paragraph.words).map((part, idx) => part.word ? (
               <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`inline rounded -mx-0.5 px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
             ) : <span key={idx}>{part.text}</span>)}
@@ -205,7 +205,7 @@ export function StoryViewer() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
+                <span className="font-chamorro text-2xl font-semibold text-amber-900 dark:text-amber-100">
                   {selectedWord.chamorro}
                 </span>
                 <PronunciationButton text={selectedWord.chamorro} className="bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-200" />

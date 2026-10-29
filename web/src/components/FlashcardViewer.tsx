@@ -668,21 +668,22 @@ function FlashcardSession() {
         )}
         
         {/* Navigation */}
-        <div className="flex items-center justify-center gap-4 mt-4 sm:mt-6">
+        <div className="flex items-center justify-center gap-3 mt-4 sm:mt-6">
           <button
             onClick={handlePrevious}
             aria-label="Previous flashcard"
             disabled={currentIndex === 0}
-            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
+            className="flex-none p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
           >
             <ChevronLeft className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
           </button>
 
-          <div className="flex gap-2">
+          {/* Decorative position strip; the header carries the "n / total" count. */}
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5 overflow-hidden" aria-hidden="true">
             {flashcards.map((_, index) => (
               <div
                 key={index}
-                className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
+                className={`h-2 flex-none rounded-full transition-[width,background-color] duration-300 ${
                   index === currentIndex
                     ? 'w-8 bg-coral-500 dark:bg-ocean-500 '
                     : 'w-2 bg-gray-300 dark:bg-slate-600'
@@ -695,7 +696,7 @@ function FlashcardSession() {
             onClick={handleNext}
             aria-label="Next flashcard"
             disabled={currentIndex === flashcards.length - 1}
-            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
+            className="flex-none p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
           >
             <ChevronRight className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
           </button>
