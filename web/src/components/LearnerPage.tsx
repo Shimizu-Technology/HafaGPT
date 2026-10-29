@@ -70,7 +70,7 @@ export function LearnerPageHeader({
             {subtitle && <p className="break-words text-xs text-brown-500 dark:text-gray-400">{subtitle}</p>}
           </div>
 
-          {trailing && <div className="col-span-3 row-start-3 flex min-w-0 flex-wrap justify-end gap-2">{trailing}</div>}
+          {trailing && <div className="col-span-3 row-start-3 flex min-w-0 flex-wrap justify-start gap-2">{trailing}</div>}
           {showThemeToggle && (
             <button
               type="button"

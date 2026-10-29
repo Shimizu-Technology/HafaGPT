@@ -286,9 +286,8 @@ export function SoundMatch() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
-              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Choose what to practice</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">Tap the speaker to hear each Chamorro word, then choose a picture. You can take your time.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Choose what to practice</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: tap the speaker to hear each Chamorro word, then choose a picture. You can take your time.</p>
             </div>
 
             {/* Category Selection */}

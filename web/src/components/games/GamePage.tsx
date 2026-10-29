@@ -26,7 +26,7 @@ export function GamePage({ children, guard, startStatus, stage }: GamePageProps)
     document.getElementById('root')?.scrollTo({ top: 0, behavior: 'instant' });
   }, [stage]);
   return <div ref={pageRef} className="game-page"><LearnerPageShell>
-    {startStatus?.pending && <p role="status" className="mx-auto max-w-2xl px-4 py-2 text-brown-700 dark:text-gray-200">Starting your round…</p>}
+    {startStatus?.pending && <p role="status" className="animate-fade-in fixed left-1/2 top-3 z-50 -translate-x-1/2 rounded-full bg-brown-900 px-4 py-2 text-sm font-semibold text-white shadow-lg dark:bg-slate-700">Starting your round…</p>}
     {startStatus?.error && <p role="alert" className="mx-auto max-w-2xl rounded-xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{startStatus.error}</p>}
     {children}{guard?.dialog}</LearnerPageShell></div>;
 }

@@ -21,11 +21,8 @@ export function TodayPlanCard({ plan, isLoading = false }: TodayPlanCardProps) {
   const finished = !next && current.activities.length > 0;
   return (
     <section aria-labelledby="today-session-title" className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Today</p>
-        <span className="inline-flex items-center gap-1.5 text-sm text-brown-600 dark:text-gray-300"><Clock3 className="h-4 w-4" aria-hidden="true" />About {current.totalMinutes} min · at your pace</span>
-      </div>
-      <h2 id="today-session-title" className="mt-3 text-2xl font-bold text-brown-900 dark:text-white">{finished ? 'Your session is complete' : 'Your session for today'}</h2>
+      <h2 id="today-session-title" className="text-2xl font-bold text-brown-900 dark:text-white">{finished ? 'Your session is complete' : 'Your session for today'}</h2>
+      <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-brown-600 dark:text-gray-300"><Clock3 className="h-4 w-4" aria-hidden="true" />About {current.totalMinutes} min · at your pace</p>
       <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">
         {finished ? 'You finished your planned steps. Review again when cards are due.' : 'One small step at a time. Your plan stays here while you learn.'}
       </p>

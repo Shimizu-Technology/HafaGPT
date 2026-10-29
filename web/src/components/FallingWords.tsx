@@ -4,7 +4,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowDown, Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw } from 'lucide-react';
+import { ArrowDown, Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, Zap, Trophy, Star, ThumbsUp, Check, Flame } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -446,7 +446,7 @@ export function FallingWords() {
       <main className="max-w-2xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
         {/* Setup Screen */}
         {gameState === 'setup' && (
-          <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
@@ -519,16 +519,16 @@ export function FallingWords() {
               <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
               <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
                 <li className="flex items-center gap-2">
-                  <span className="text-coral-700 dark:text-teal-400">⬇️</span> Words fall from the top
+                  <ArrowDown className="h-4 w-4 flex-none text-coral-700 dark:text-teal-400" aria-hidden="true" /> Words fall from the top
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span> Tap the correct English translation
+                  <Check className="h-4 w-4 flex-none text-emerald-700 dark:text-emerald-400" aria-hidden="true" /> Tap the correct English translation
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-red-500">❤️</span> You have 3 lives - don't miss!
+                  <Heart className="h-4 w-4 flex-none fill-red-600 text-red-600 dark:fill-red-400 dark:text-red-400" aria-hidden="true" /> You have 3 lives - don't miss!
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-yellow-500">⚡</span> Speed increases every 5 words
+                  <Zap className="h-4 w-4 flex-none text-amber-600 dark:text-amber-400" aria-hidden="true" /> Speed increases every 5 words
                 </li>
               </ul>
             </details>
@@ -581,7 +581,7 @@ export function FallingWords() {
                   <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{streak}🔥</p>
+                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{streak}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
                   <p className="text-xs text-brown-500 dark:text-gray-400">Streak</p>
                 </div>
                 <div className="text-center">
@@ -680,16 +680,14 @@ export function FallingWords() {
           <div className="max-w-sm mx-auto text-center space-y-4 sm:space-y-6">
             {/* Game Over */}
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-coral-100 dark:bg-teal-950/50 flex items-center justify-center">
-                <span className="text-4xl sm:text-5xl">
-                  {wordsCompleted >= WIN_WORDS ? '🎉' : wordsCompleted >= 10 ? '🏆' : wordsCompleted >= 5 ? '⭐' : '👍'}
-                </span>
+              <div className="h-20 w-20 sm:h-24 sm:w-24 mx-auto flex items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                {wordsCompleted >= 10 ? <Trophy className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" /> : wordsCompleted >= 5 ? <Star className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" /> : <ThumbsUp className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" />}
               </div>
             </div>
 
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">
-                {wordsCompleted >= WIN_WORDS ? 'You Won! 🎊' : wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
+                {wordsCompleted >= WIN_WORDS ? 'You won!' : wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
               </h2>
               <p className="text-brown-600 dark:text-gray-400">
                 {wordsCompleted >= WIN_WORDS
@@ -699,15 +697,9 @@ export function FallingWords() {
             </div>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2" role="img" aria-label={`${getStars()} out of 3 stars`}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-3xl sm:text-4xl ${i < getStars() ? '' : 'opacity-30'}`}
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  ⭐
-                </span>
+                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
               ))}
             </div>
 

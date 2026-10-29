@@ -242,9 +242,8 @@ export function NumberTap() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
-              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Listen, count, and tap</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">Hear a Chamorro number and choose how many items you see.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Listen, count, and tap</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: hear a Chamorro number and choose how many items you see.</p>
             </div>
 
             {/* Numbers Preview */}

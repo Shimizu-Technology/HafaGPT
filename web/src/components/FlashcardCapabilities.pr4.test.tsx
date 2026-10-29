@@ -58,9 +58,10 @@ it('keeps legacy cards and exact save payload after a failed save, then exposes 
   expect(screen.getByRole('link', { name: 'Review saved deck' })).toHaveAttribute('href', '/flashcards/my-deck/saved-fixture');
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
-it('provides the full dictionary/custom title in a wrapping content heading', async () => {
+it('provides the full dictionary/custom title once, in the wrapping page heading', async () => {
   show('/flashcards/pr4-long-title?type=custom');
-  const title = await screen.findByRole('heading', { level: 2, name: mocks.dictionary.category.title });
+  const title = await screen.findByRole('heading', { level: 1, name: mocks.dictionary.category.title });
+  expect(screen.getAllByRole('heading', { name: mocks.dictionary.category.title })).toHaveLength(1);
   expect(title).toHaveClass('break-words');
   expect(title).not.toHaveClass('truncate');
 });

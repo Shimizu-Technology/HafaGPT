@@ -608,7 +608,6 @@ function FlashcardSession() {
         onTouchEnd={onTouchEnd}
       >
         <div className="w-full max-w-md">
-          <h2 className="mb-3 break-words [overflow-wrap:anywhere] text-xl font-bold text-brown-950 dark:text-white">{deckTitle}</h2>
           {cardTypeParam === 'custom' ? (
             <section aria-label="Save this set" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
               <p className="text-base text-brown-600 dark:text-gray-300">Keep this set in Saved decks to review these cards again.</p>

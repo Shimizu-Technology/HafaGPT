@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { CheckCircle, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, HelpCircle, Check, Lightbulb } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
@@ -652,8 +652,9 @@ function LessonQuizSession({
               ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
               : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
           }`}>
-            <p className="text-sm">
-              {isCorrect ? '✓ ' : '💡 '}{currentQuestion.explanation}
+            <p className="flex items-start gap-2 text-sm">
+              {isCorrect ? <Check className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" /> : <Lightbulb className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />}
+              <span>{currentQuestion.explanation}</span>
             </p>
             <PronunciationButton text={currentQuestion.explanation} label="Hear it" showLabel />
           </div>

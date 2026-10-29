@@ -2,7 +2,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { scrambleLetters } from '../lib/gameRound';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle } from 'lucide-react';
+import { RotateCcw, Timer, Lightbulb, Settings2, Play, Sparkles, BookOpen, Check, X, ArrowRight, Shuffle, Trophy, Star, Flame } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -415,7 +415,7 @@ export function WordScramble() {
       <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {/* Setup Screen */}
         {gameState === 'setup' && (
-          <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {learningContext && (
               <div className="flex items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-900/20">
                 <BookOpen className="h-5 w-5 flex-none text-teal-700 dark:text-teal-300" aria-hidden="true" />
@@ -596,7 +596,7 @@ export function WordScramble() {
             {streak > 1 && (
               <div className="text-center">
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm font-bold">
-                  🔥 {streak} streak!
+                  <Flame className="h-4 w-4" aria-hidden="true" /> {streak} streak!
                 </span>
               </div>
             )}
@@ -765,8 +765,8 @@ export function WordScramble() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-teal-400 dark:bg-teal-500 flex items-center justify-center">
-                <span className="text-2xl sm:text-4xl">🎉</span>
+              <div className="h-14 w-14 sm:h-20 sm:w-20 mx-auto flex items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                <Trophy className="h-7 w-7 sm:h-10 sm:w-10" aria-hidden="true" />
               </div>
             </div>
 
@@ -780,16 +780,9 @@ export function WordScramble() {
             </div>
 
             {/* Stars */}
-            <div className="flex justify-center gap-1">
+            <div className="flex justify-center gap-1" role="img" aria-label={`${getFinalStars()} out of 3 stars`}>
               {[1, 2, 3].map((star) => (
-                <span
-                  key={star}
-                  className={`text-xl sm:text-3xl ${
-                    star <= getFinalStars() ? 'opacity-100' : 'opacity-30 grayscale'
-                  }`}
-                >
-                  ⭐
-                </span>
+                <Star key={star} aria-hidden="true" className={`h-7 w-7 sm:h-9 sm:w-9 ${star <= getFinalStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
               ))}
             </div>
 
@@ -820,10 +813,10 @@ export function WordScramble() {
             {/* Encouragement */}
             <p className="text-xs text-brown-600 dark:text-gray-400">
               {getFinalStars() === 3
-                ? "Perfect! You're a spelling master! 🌟"
+                ? "Perfect! You're a spelling master!"
                 : getFinalStars() === 2
-                  ? "Great work! Try again for 3 stars! 💪"
-                  : "Good effort! Practice makes perfect! 🌱"
+                  ? "Great work! Try again for 3 stars!"
+                  : "Good effort! Practice makes perfect!"
               }
             </p>
 

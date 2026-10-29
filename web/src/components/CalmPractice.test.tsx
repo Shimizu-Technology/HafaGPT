@@ -96,7 +96,8 @@ describe('calm listening games', () => {
     expect(wrongPairs.length).toBeGreaterThanOrEqual(2);
     act(() => { fireEvent.click(wrongPairs[0]); fireEvent.click(wrongPairs[1]); });
     expect(screen.getByRole('img', { name: '1 lives remaining' })).toBeInTheDocument();
-    expect(screen.getByText('0🔥')).toBeInTheDocument();
+    // The combo value sits directly above its "Combo" label; the flame is a decorative icon.
+    expect(screen.getByText('Combo').previousElementSibling).toHaveTextContent(/^0$/);
     expect(screen.getByText('100')).toBeInTheDocument();
   });
 

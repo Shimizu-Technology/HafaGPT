@@ -1,6 +1,6 @@
 import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Palette, Volume2, Play, Sparkles } from 'lucide-react';
+import { Palette, Volume2, Play, Sparkles, Check, X } from 'lucide-react';
 import { useGameTimers } from '../hooks/useGameTimers';
 import { GameSaveStatus } from './games/GameSaveStatus';
 import { createClientAttemptId } from '../lib/clientAttemptId';
@@ -210,9 +210,8 @@ export function ColorTouch() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
-              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Listen first, then choose</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">Hear a Chamorro color and tap the matching square.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Listen first, then choose</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: hear a Chamorro color and tap the matching square.</p>
             </div>
 
             {/* Color Preview */}
@@ -320,10 +319,10 @@ export function ColorTouch() {
                     {showResult && (
                       <div className="absolute inset-0 flex items-center justify-center">
                         {isCorrectAnswer && (
-                          <span className="text-4xl drop-shadow-lg">✅</span>
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-700 text-white shadow-lg"><Check className="h-7 w-7" aria-hidden="true" /></span>
                         )}
                         {isSelected && !isCorrectAnswer && (
-                          <span className="text-4xl drop-shadow-lg">❌</span>
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-red-700 text-white shadow-lg"><X className="h-7 w-7" aria-hidden="true" /></span>
                         )}
                       </div>
                     )}

@@ -163,7 +163,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
         {/* Footer note */}
         <div className="px-6 pb-4 text-center">
           <p className="text-xs text-brown-500 dark:text-gray-400">
-            Your subscription helps keep HåfaGPT running for Chamorro learners 🌺
+            Your subscription helps keep HåfaGPT running for Chamorro learners.
           </p>
         </div>
       </div>

@@ -148,7 +148,7 @@ export function XPToast({ xpEarned, levelUp, newLevel, onClose }: XPToastProps) 
           <span className="font-bold">+{xpEarned} XP</span>
           {levelUp && newLevel && (
             <span className="px-2 py-0.5 bg-white/20 rounded-full text-sm font-medium">
-              Level Up! → {newLevel} 🎉
+              Level up! → {newLevel}
             </span>
           )}
         </div>

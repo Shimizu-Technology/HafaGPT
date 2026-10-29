@@ -5,7 +5,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameTimers } from '../hooks/useGameTimers';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { RotateCcw, Trophy, Timer, MousePointer2, Settings2, Play, Sparkles, BookOpen, Puzzle } from 'lucide-react';
+import { RotateCcw, Trophy, Timer, MousePointer2, Settings2, Play, Sparkles, BookOpen, Puzzle, Star } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { MemoryCard } from './games/MemoryCard';
@@ -454,7 +454,7 @@ export function MemoryMatch() {
       <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {/* Setup Screen */}
         {gameState === 'setup' && (
-          <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
+          <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {learningContext && (
               <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-950/20">
                 <BookOpen className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />
@@ -684,8 +684,8 @@ export function MemoryMatch() {
           <div className="max-w-sm mx-auto text-center space-y-3 sm:space-y-4">
             {/* Celebration */}
             <div className="relative">
-              <div className="w-14 h-14 sm:w-20 sm:h-20 mx-auto rounded-full bg-coral-400 dark:bg-teal-400 flex items-center justify-center">
-                <span className="text-2xl sm:text-4xl">🎉</span>
+              <div className="h-14 w-14 sm:h-20 sm:w-20 mx-auto flex items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                <Trophy className="h-7 w-7 sm:h-10 sm:w-10" aria-hidden="true" />
               </div>
             </div>
 
@@ -699,16 +699,9 @@ export function MemoryMatch() {
             </div>
 
             {/* Stars */}
-            <div className="flex justify-center gap-1">
+            <div className="flex justify-center gap-1" role="img" aria-label={`${getStars} out of 3 stars`}>
               {[1, 2, 3].map((star) => (
-                <span
-                  key={star}
-                  className={`text-xl sm:text-3xl ${
-                    star <= getStars ? 'opacity-100' : 'opacity-30 grayscale'
-                  }`}
-                >
-                  ⭐
-                </span>
+                <Star key={star} aria-hidden="true" className={`h-7 w-7 sm:h-9 sm:w-9 ${star <= getStars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
               ))}
             </div>
 
@@ -736,7 +729,7 @@ export function MemoryMatch() {
                 ? "Perfect! You're a memory master!"
                 : getStars === 2
                   ? "Great work! Try again for 3 stars!"
-                  : "Good effort! Practice makes perfect! 🌱"
+                  : "Good effort! Practice makes perfect!"
               }
             </p>
 

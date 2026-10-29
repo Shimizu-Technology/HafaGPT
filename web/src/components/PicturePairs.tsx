@@ -17,6 +17,7 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { formatUsageSummary } from '../lib/usageDisplay';
 import { GamePage, GamePageHeader } from './games/GamePage';
+import { BrandMark } from './BrandMark';
 
 // Game data: Chamorro words with emoji representations
 interface WordItem {
@@ -331,9 +332,8 @@ export function PicturePairs() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">No reading needed</p>
-              <h2 className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Choose your matching game</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">Find matching pictures and hear each Chamorro word.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Choose your matching game</h2>
+              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: find matching pictures and hear each Chamorro word.</p>
             </div>
 
             {/* Category Selection */}
@@ -440,7 +440,7 @@ export function PicturePairs() {
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
                           : 'bg-white dark:bg-slate-700 border-2 border-teal-400 rotate-0'
-                        : 'bg-teal-400 border-2 border-teal-300  cursor-pointer'
+                        : 'bg-coral-700 border-2 border-coral-400 text-coral-700 dark:bg-teal-700 dark:border-ocean-400 dark:text-teal-700 cursor-pointer'
                     }`}
                     style={{
                       perspective: '1000px',
@@ -449,7 +449,7 @@ export function PicturePairs() {
                     {isFlipped ? (
                       <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="w-full break-words text-base font-semibold text-brown-900 dark:text-white">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-gray-200">Read / hear</span></span>
                     ) : (
-                      <span className="text-2xl sm:text-3xl">❓</span>
+                      <span className="flex h-full items-center justify-center"><BrandMark tone="inverse" className="h-12 w-12 sm:h-16 sm:w-16" /></span>
                     )}
                   </button>
                 );
@@ -493,7 +493,7 @@ export function PicturePairs() {
                   key={star}
                   className={`w-10 h-10 ${
                     star <= finalStars
-                      ? 'text-yellow-400 fill-yellow-400'
+                      ? 'text-amber-400 fill-amber-400'
                       : 'text-gray-300 dark:text-gray-600'
                   }`}
                 />
