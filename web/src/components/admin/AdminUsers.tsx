@@ -22,7 +22,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
       {/* View Details */}
       <Link
         to={detailHref}
-        className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-coral-50 dark:hover:bg-ocean-900/20 text-coral-600 dark:text-ocean-400 transition-colors"
+        className="pressable min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-coral-50 dark:[@media(hover:hover)]:hover:bg-ocean-900/20 text-coral-700 dark:text-teal-300 transition-colors"
       >
         <Eye className="w-4 h-4" />
         <span>View Details</span>
@@ -34,7 +34,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
         <button
           onClick={() => onUpdate(user.user_id, { is_premium: false, is_whitelisted: false })}
           disabled={isUpdating}
-          className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+          className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-red-50 dark:[@media(hover:hover)]:hover:bg-red-900/20 text-red-700 dark:text-red-300 transition-colors"
         >
           <UserMinus className="w-4 h-4" />
           <span>Revoke Premium</span>
@@ -43,7 +43,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
         <button
           onClick={() => onUpdate(user.user_id, { is_premium: true })}
           disabled={isUpdating}
-          className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 transition-colors"
+          className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 text-brown-700 dark:text-slate-200 transition-colors"
         >
           <Crown className="w-4 h-4" />
           <span>Grant Premium</span>
@@ -54,7 +54,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
         <button
           onClick={() => onUpdate(user.user_id, { is_whitelisted: false, is_premium: false })}
           disabled={isUpdating}
-          className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors"
+          className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-red-50 dark:[@media(hover:hover)]:hover:bg-red-900/20 text-red-700 dark:text-red-300 transition-colors"
         >
           <X className="w-4 h-4" />
           <span>Remove from Whitelist</span>
@@ -63,7 +63,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
         <button
           onClick={() => onUpdate(user.user_id, { is_whitelisted: true })}
           disabled={isUpdating}
-          className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 text-purple-600 dark:text-purple-400 transition-colors"
+          className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 text-brown-700 dark:text-slate-200 transition-colors"
         >
           <Star className="w-4 h-4" />
           <span>Add to Whitelist (F&F)</span>
@@ -71,7 +71,7 @@ function UserActionsMenu({ user, onClose, onUpdate, detailHref, isUpdating }: Us
       )}
       
       <div className="border-t border-cream-200 dark:border-slate-700 my-2" />
-      <button onClick={onClose} className="w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-cream-50 dark:hover:bg-slate-700 text-brown-600 dark:text-gray-400 transition-colors">
+      <button onClick={onClose} className="min-h-11 w-full px-4 py-2 flex items-center gap-3 text-left [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 text-brown-600 dark:text-gray-400 transition-colors">
         <X className="w-4 h-4" />
         <span>Cancel</span>
       </button>
@@ -88,7 +88,7 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
   isUpdating: boolean;
 }) {
   return (
-    <tr className="hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors">
+    <tr className="[@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700/50 transition-colors">
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           {user.image_url ? (
@@ -101,8 +101,8 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
             </div>
           )}
           <div>
-            <Link to={detailHref} className="font-medium text-brown-800 dark:text-white hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
-            <p className="text-sm text-brown-500 dark:text-gray-400">{user.email || 'No email'}</p>
+            <Link to={detailHref} className="font-medium text-brown-800 dark:text-white [@media(hover:hover)]:hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
+            <p className="text-sm text-brown-600 dark:text-slate-300">{user.email || 'No email'}</p>
           </div>
         </div>
       </td>
@@ -114,12 +114,12 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
             </span>
           )}
           {user.role === 'admin' && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-xs font-medium">
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-full text-xs font-medium">
               <Shield className="w-3 h-3" /> Admin
             </span>
           )}
           {user.is_premium ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-medium">
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-slate-200 rounded-full text-xs font-medium">
               <Crown className="w-3 h-3" /> Premium
             </span>
           ) : (
@@ -132,25 +132,25 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
           )}
         </div>
       </td>
-      <td className="px-4 py-4">
+      <td className="px-4 py-4 text-right tabular-nums">
         <div className="text-sm text-brown-600 dark:text-gray-400">
           <p>{user.total_messages} messages</p>
           <p>{user.total_quizzes} quizzes · {user.total_games} games</p>
         </div>
       </td>
-      <td className="px-4 py-4">
+      <td className="px-4 py-4 text-right tabular-nums">
         <div className="text-sm">
           {user.last_activity ? (
             <>
               <p className="text-brown-800 dark:text-gray-200">
                 {new Date(user.last_activity).toLocaleDateString()}
               </p>
-              <p className="text-xs text-brown-500 dark:text-gray-500">
+              <p className="text-xs text-brown-600 dark:text-slate-300">
                 {new Date(user.last_activity).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </>
           ) : (
-            <p className="text-brown-400 dark:text-gray-600">Never</p>
+            <p className="text-brown-600 dark:text-slate-300">—</p>
           )}
         </div>
       </td>
@@ -160,7 +160,7 @@ function UserRow({ user, activeMenu, setActiveMenu, handleUpdate, detailHref, is
             aria-label={`Actions for ${[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "user"}`}
             aria-expanded={activeMenu === user.user_id}
             onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === user.user_id ? null : user.user_id); }}
-            className="min-h-11 min-w-11 p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <MoreVertical className="w-5 h-5 text-brown-600 dark:text-gray-400" />
           </button>
@@ -182,7 +182,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
   isUpdating: boolean;
 }) {
   return (
-    <div className="p-4 hover:bg-cream-50 dark:hover:bg-slate-700/50 transition-colors">
+    <div className="p-4 [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700/50 transition-colors">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {user.image_url ? (
@@ -195,8 +195,8 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
             </div>
           )}
           <div className="min-w-0">
-            <Link to={detailHref} className="block font-medium text-brown-800 dark:text-white hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
-            <p className="text-sm text-brown-500 dark:text-gray-400 truncate">{user.email || 'No email'}</p>
+            <Link to={detailHref} className="block font-medium text-brown-800 dark:text-white [@media(hover:hover)]:hover:underline break-words">{[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}</Link>
+            <p className="text-sm text-brown-600 dark:text-slate-300 truncate">{user.email || 'No email'}</p>
           </div>
         </div>
         <div className="relative">
@@ -204,7 +204,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
             aria-label={`Actions for ${[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "user"}`}
             aria-expanded={activeMenu === user.user_id}
             onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === user.user_id ? null : user.user_id); }}
-            className="min-h-11 min-w-11 p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg transition-colors"
           >
             <MoreVertical className="w-5 h-5 text-brown-600 dark:text-gray-400" />
           </button>
@@ -220,12 +220,12 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
           </span>
         )}
         {user.role === 'admin' && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 rounded-full text-xs font-medium">
             <Shield className="w-3 h-3" /> Admin
           </span>
         )}
         {user.is_premium ? (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-slate-200 rounded-full text-xs font-medium">
             <Crown className="w-3 h-3" /> Premium
           </span>
         ) : (
@@ -237,7 +237,7 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
           </span>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs text-brown-500 dark:text-gray-400">
+      <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs text-brown-600 dark:text-slate-300">
         <div className="bg-cream-50 dark:bg-slate-700/50 rounded-lg py-1.5">
           <span className="font-semibold text-brown-700 dark:text-gray-300">{user.total_messages}</span> msgs
         </div>
@@ -248,10 +248,10 @@ function MobileUserCard({ user, activeMenu, setActiveMenu, handleUpdate, detailH
           <span className="font-semibold text-brown-700 dark:text-gray-300">{user.total_games}</span> games
         </div>
       </div>
-      <p className="text-xs text-brown-500 dark:text-gray-500 mt-2">
+      <p className="text-xs text-brown-600 dark:text-slate-300 mt-2">
         Last active: {user.last_activity 
           ? new Date(user.last_activity).toLocaleDateString() + ' at ' + new Date(user.last_activity).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : 'Never'}
+          : '—'}
       </p>
     </div>
   );
@@ -342,12 +342,12 @@ export function AdminUsers() {
         </div>
         
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400 dark:text-gray-500" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-600 dark:text-slate-300" />
           <input
             aria-label="Search users"
             type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by email or name..."
-            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 text-brown-800 dark:text-white placeholder:text-brown-400 dark:placeholder:text-gray-500"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 text-brown-800 dark:text-white placeholder:text-brown-600 dark:placeholder:text-slate-300"
           />
         </div>
         
@@ -358,13 +358,13 @@ export function AdminUsers() {
             <>
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-cream-50 dark:bg-slate-900/50">
+                  <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Activity</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Last Active</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-brown-600 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 ">User</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-brown-600 dark:text-gray-400 ">Status</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-brown-600 dark:text-gray-400">Activity</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-brown-600 dark:text-gray-400">Last active</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-brown-600 dark:text-gray-400 ">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-cream-200 dark:divide-slate-700">
@@ -388,10 +388,10 @@ export function AdminUsers() {
           <div className="flex items-center justify-between">
             <p className="text-sm text-brown-600 dark:text-gray-400">Page {data.page} of {data.total_pages}</p>
             <div className="flex items-center gap-2">
-              <button aria-label="Previous users page" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button aria-label="Previous users page" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="min-h-11 min-w-11 p-2 rounded-lg border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <ChevronLeft className="w-5 h-5 text-brown-600 dark:text-gray-400" />
               </button>
-              <button aria-label="Next users page" onClick={() => setPage(Math.min(data.total_pages, page + 1))} disabled={page === data.total_pages} className="p-2 rounded-lg border border-cream-200 dark:border-slate-700 hover:bg-cream-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              <button aria-label="Next users page" onClick={() => setPage(Math.min(data.total_pages, page + 1))} disabled={page === data.total_pages} className="min-h-11 min-w-11 p-2 rounded-lg border border-cream-200 dark:border-slate-700 [@media(hover:hover)]:hover:bg-cream-50 dark:[@media(hover:hover)]:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <ChevronRight className="w-5 h-5 text-brown-600 dark:text-gray-400" />
               </button>
             </div>

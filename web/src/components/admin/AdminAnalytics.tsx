@@ -14,13 +14,14 @@ import { AdminLayout } from './AdminLayout';
 
 type Period = '7d' | '30d' | '90d';
 
-const COLORS = ['#f97316', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
+const COLORS = ['#0f766e', '#138a82', '#0d5f59', '#35a19a', '#164e49', '#68b8b1'];
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const FUNNEL_COLORS = ['#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+const FUNNEL_COLORS = ['#0f766e', '#0f766e', '#0f766e', '#0f766e', '#0f766e'];
 
 export function AdminAnalytics() {
   const [period, setPeriod] = useState<Period>('30d');
+  const chartInk = 'rgb(var(--muted))';
   
   const { data: usageData, isLoading: usageLoading } = useUsageTrends(period);
   const { data: growthData, isLoading: growthLoading } = useUserGrowth(period);
@@ -80,10 +81,10 @@ export function AdminAnalytics() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`min-h-11 px-4 py-2 rounded-lg font-medium transition-colors ${
                   period === p
                     ? 'bg-coral-700 dark:bg-ocean-700 text-white'
-                    : 'bg-white dark:bg-slate-800 text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
+                    : 'bg-white dark:bg-slate-800 text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
                 }`}
               >
                 {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : '90 Days'}
@@ -103,50 +104,50 @@ export function AdminAnalytics() {
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
                   <MessageSquare className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-                  <span className="text-sm text-brown-500 dark:text-gray-400">Chat Messages</span>
+                  <span className="text-sm text-brown-600 dark:text-slate-300">Chat messages</span>
                 </div>
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">
-                  {usageData?.totals?.chat?.toLocaleString() || 0}
+                  {usageData?.totals?.chat?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-400 dark:text-gray-500">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
               </div>
               
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
-                  <Gamepad2 className="w-5 h-5 text-pink-500" />
-                  <span className="text-sm text-brown-500 dark:text-gray-400">Games Played</span>
+                  <Gamepad2 className="w-5 h-5 text-teal-500" />
+                  <span className="text-sm text-brown-600 dark:text-slate-300">Games played</span>
                 </div>
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">
-                  {usageData?.totals?.games?.toLocaleString() || 0}
+                  {usageData?.totals?.games?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-400 dark:text-gray-500">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
               </div>
               
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
-                  <GraduationCap className="w-5 h-5 text-indigo-500" />
-                  <span className="text-sm text-brown-500 dark:text-gray-400">Completed quizzes</span>
+                  <GraduationCap className="w-5 h-5 text-teal-500" />
+                  <span className="text-sm text-brown-600 dark:text-slate-300">Completed quizzes</span>
                 </div>
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">
-                  {usageData?.totals?.quizzes?.toLocaleString() || 0}
+                  {usageData?.totals?.quizzes?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-400 dark:text-gray-500">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
               </div>
               
               <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="w-5 h-5 text-teal-500" />
-                  <span className="text-sm text-brown-500 dark:text-gray-400">Total Users</span>
+                  <span className="text-sm text-brown-600 dark:text-slate-300">Total users</span>
                 </div>
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">
-                  {growthData?.data?.[growthData.data.length - 1]?.total_users?.toLocaleString() || 0}
+                  {growthData?.data?.[growthData.data.length - 1]?.total_users?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-400 dark:text-gray-500">Current</p>
+                <p className="text-xs text-brown-600 dark:text-slate-300">Current</p>
               </div>
             </div>
             
             {/* Usage Trends Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
                 Daily Usage Trends
@@ -154,33 +155,33 @@ export function AdminAnalytics() {
               {usageData?.data && usageData.data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={usageData.data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--muted) / 0.2)" />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
                       tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
                       labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Legend />
-                    <Line type="monotone" dataKey="chat_count" name="Chat" stroke="#f97316" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="game_count" name="Games" stroke="#ec4899" strokeWidth={2} dot={false} />
-                    <Line type="monotone" dataKey="quiz_count" name="Quizzes" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                    <Legend formatter={(value) => <span style={{ color: chartInk }}>{value}</span>} />
+                    <Line type="monotone" dataKey="chat_count" name="Chat" stroke="rgb(var(--focus-role))" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="game_count" name="Games" stroke="rgb(var(--focus-role))" strokeDasharray="6 3" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="quiz_count" name="Quizzes" stroke="rgb(var(--focus-role))" strokeDasharray="2 3" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[300px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No usage data available for this period
                 </div>
               )}
             </div>
             
             {/* User Growth Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-teal-500" />
                 User Growth
@@ -188,24 +189,24 @@ export function AdminAnalytics() {
               {growthData?.data && growthData.data.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={growthData.data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--muted) / 0.2)" />
                     <XAxis 
                       dataKey="date" 
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
                       tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
                       labelFormatter={(value) => new Date(value).toLocaleDateString()}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Legend />
-                    <Bar dataKey="new_users" name="New Users" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                    <Legend formatter={(value) => <span style={{ color: chartInk }}>{value}</span>} />
+                    <Bar dataKey="new_users" name="New Users" fill="rgb(var(--focus-role))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[300px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No growth data available
                 </div>
               )}
@@ -216,7 +217,7 @@ export function AdminAnalytics() {
               {/* Games Breakdown */}
               <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
                 <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                  <Gamepad2 className="w-5 h-5 text-pink-500" />
+                  <Gamepad2 className="w-5 h-5 text-teal-500" />
                   Games Breakdown
                 </h2>
                 {gamesPieData.length > 0 ? (
@@ -241,7 +242,7 @@ export function AdminAnalytics() {
                     </RechartsPie>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[250px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                     No game data yet
                   </div>
                 )}
@@ -259,7 +260,7 @@ export function AdminAnalytics() {
               {/* Quizzes Breakdown */}
               <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
                 <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-indigo-500" />
+                  <GraduationCap className="w-5 h-5 text-teal-500" />
                   Quizzes Breakdown
                 </h2>
                 {quizzesPieData.length > 0 ? (
@@ -284,7 +285,7 @@ export function AdminAnalytics() {
                     </RechartsPie>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[250px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                     No quiz data yet
                   </div>
                 )}
@@ -301,7 +302,7 @@ export function AdminAnalytics() {
             </div>
             
             {/* All-Time Totals */}
-            <div className="bg-gradient-to-r from-coral-50 to-teal-50 dark:from-slate-800 dark:to-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+            <div className="bg-cream-50 dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <PieChart className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
                 All-Time Platform Totals
@@ -309,25 +310,25 @@ export function AdminAnalytics() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-coral-600 dark:text-ocean-400">
-                    {featureData?.chat_total?.toLocaleString() || 0}
+                    {featureData?.chat_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Chat Messages</p>
+                  <p className="text-sm text-brown-600 dark:text-gray-400">Chat messages</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-pink-600">
-                    {featureData?.games_total?.toLocaleString() || 0}
+                  <p className="text-3xl font-bold text-teal-600">
+                    {featureData?.games_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Games Played</p>
+                  <p className="text-sm text-brown-600 dark:text-gray-400">Games played</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-indigo-600">
-                    {featureData?.quizzes_total?.toLocaleString() || 0}
+                  <p className="text-3xl font-bold text-teal-600">
+                    {featureData?.quizzes_total?.toLocaleString() ?? "—"}
                   </p>
                   <p className="text-sm text-brown-600 dark:text-gray-400">Completed quizzes</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-teal-600">
-                    {featureData?.conversations_total?.toLocaleString() || 0}
+                    {featureData?.conversations_total?.toLocaleString() ?? "—"}
                   </p>
                   <p className="text-sm text-brown-600 dark:text-gray-400">Conversations</p>
                 </div>
@@ -337,7 +338,7 @@ export function AdminAnalytics() {
             {/* Quiz Pass Rates */}
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                <Target className="w-5 h-5 text-indigo-500" />
+                <Target className="w-5 h-5 text-teal-500" />
                 Quiz Pass Rates
               </h2>
               {advancedData?.quiz_pass_rates && advancedData.quiz_pass_rates.length > 0 ? (
@@ -362,7 +363,7 @@ export function AdminAnalytics() {
                             style={{ width: `${quiz.avg_score}%` }}
                           />
                         </div>
-                        <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-0.5">
+                        <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">
                           {quiz.attempts} attempts · {quiz.pass_rate}% pass rate
                         </p>
                       </div>
@@ -370,7 +371,7 @@ export function AdminAnalytics() {
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No quiz data yet
                 </div>
               )}
@@ -395,7 +396,7 @@ export function AdminAnalytics() {
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-2 bg-cream-200 dark:bg-slate-600 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-emerald-500 rounded-full"
+                            className="h-full bg-teal-600 rounded-full"
                             style={{ width: `${topic.completion_rate}%` }}
                           />
                         </div>
@@ -403,14 +404,14 @@ export function AdminAnalytics() {
                           {topic.completion_rate}%
                         </span>
                       </div>
-                      <p className="text-[10px] text-brown-400 dark:text-gray-500 mt-1">
+                      <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
                         {topic.completed}/{topic.started} completed
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No learning path data yet
                 </div>
               )}
@@ -421,7 +422,7 @@ export function AdminAnalytics() {
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-500" />
                 Peak Activity Hours
-                <span className="text-xs font-normal text-brown-400 dark:text-gray-500 ml-2">
+                <span className="text-xs font-normal text-brown-600 dark:text-slate-300 ml-2">
                   Last {period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}
                 </span>
               </h2>
@@ -431,7 +432,7 @@ export function AdminAnalytics() {
                     {/* Hour labels */}
                     <div className="flex mb-1 ml-12">
                       {[0, 3, 6, 9, 12, 15, 18, 21].map((hour) => (
-                        <div key={hour} className="flex-1 text-[10px] text-brown-400 dark:text-gray-500">
+                        <div key={hour} className="flex-1 text-xs text-brown-600 dark:text-slate-300">
                           {hour === 0 ? '12am' : hour === 12 ? '12pm' : hour > 12 ? `${hour-12}pm` : `${hour}am`}
                         </div>
                       ))}
@@ -439,7 +440,7 @@ export function AdminAnalytics() {
                     {/* Heatmap grid */}
                     {advancedData.peak_hours.map((dayData, dayIndex) => (
                       <div key={dayIndex} className="flex items-center gap-1 mb-1">
-                        <span className="w-10 text-xs text-brown-500 dark:text-gray-400 text-right pr-2">
+                        <span className="w-10 text-xs text-brown-600 dark:text-slate-300 text-right pr-2">
                           {DAYS[dayIndex]}
                         </span>
                         <div className="flex-1 flex gap-0.5">
@@ -455,18 +456,18 @@ export function AdminAnalytics() {
                     ))}
                     {/* Legend */}
                     <div className="flex items-center justify-end gap-2 mt-3">
-                      <span className="text-[10px] text-brown-400 dark:text-gray-500">Less</span>
+                      <span className="text-xs text-brown-600 dark:text-slate-300">Less</span>
                       <div className="w-4 h-4 rounded bg-cream-100 dark:bg-slate-700" />
                       <div className="w-4 h-4 rounded bg-teal-100 dark:bg-teal-900/30" />
                       <div className="w-4 h-4 rounded bg-teal-300 dark:bg-teal-700/50" />
                       <div className="w-4 h-4 rounded bg-teal-500 dark:bg-teal-600" />
                       <div className="w-4 h-4 rounded bg-teal-700 dark:bg-teal-500" />
-                      <span className="text-[10px] text-brown-400 dark:text-gray-500">More</span>
+                      <span className="text-xs text-brown-600 dark:text-slate-300">More</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No activity data yet
                 </div>
               )}
@@ -475,11 +476,11 @@ export function AdminAnalytics() {
             {/* User Funnel */}
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                <ArrowRight className="w-5 h-5 text-purple-500" />
+                <ArrowRight className="w-5 h-5 text-teal-500" />
                 Learning activity reach
               </h2>
               <p className="mb-4 text-sm text-brown-600 dark:text-gray-300">Independent activity counts in this period. Learners can use tools in any order; these percentages describe reach, not conversion between steps.</p>
-              <p className="mb-4 text-xs text-brown-500 dark:text-gray-400">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
+              <p className="mb-4 text-xs text-brown-600 dark:text-slate-300">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
               {funnelData.length > 0 && funnelData[0].value > 0 ? (
                 <div className="flex flex-col lg:flex-row items-center gap-6">
                   {/* Funnel visualization */}
@@ -508,7 +509,7 @@ export function AdminAnalytics() {
                               </span>
                             </div>
                             {index > 0 && (
-                              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 text-xs text-brown-500 dark:text-gray-400">
+                              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 text-xs text-brown-600 dark:text-slate-300">
                                 {conversionRate}%
                               </span>
                             )}
@@ -520,12 +521,12 @@ export function AdminAnalytics() {
                   {/* Stats */}
                   <div className="lg:w-48 space-y-3">
                     <div className="text-center lg:text-left">
-                      <p className="text-2xl font-bold text-purple-600">
+                      <p className="text-2xl font-bold text-teal-600">
                         {funnelData[0].value > 0 
                           ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-500 dark:text-gray-400">2+ recorded days</p>
+                      <p className="text-xs text-brown-600 dark:text-slate-300">2+ recorded days</p>
                     </div>
                     <div className="text-center lg:text-left">
                       <p className="text-2xl font-bold text-teal-600">
@@ -533,12 +534,12 @@ export function AdminAnalytics() {
                           ? ((funnelData[2].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-500 dark:text-gray-400">Game Adoption</p>
+                      <p className="text-xs text-brown-600 dark:text-slate-300">Game Adoption</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-500 dark:text-gray-400">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
                   No learning activity yet
                 </div>
               )}

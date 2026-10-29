@@ -9,12 +9,12 @@ import {
   ArrowLeft,
   Menu,
   X,
-  Shield,
   Moon,
   Sun,
   Volume2
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { BrandMark } from '../BrandMark';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -72,14 +72,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <>
         {/* Sidebar Header */}
         <div className="min-h-16 flex flex-none items-center justify-between px-4 pt-[env(safe-area-inset-top)] border-b border-cream-200 dark:border-slate-700">
-          <Link to="/admin" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Shield className="w-6 h-6 text-coral-500 dark:text-ocean-400" />
-            <span className="font-bold text-brown-800 dark:text-white">Admin</span>
+          <Link to="/admin" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2 [@media(hover:hover)]:hover:opacity-80 transition-opacity">
+            <BrandMark className="w-7 h-7" />
+            <span className="font-bold text-brown-800 dark:text-white">HåfaGPT Admin</span>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
             aria-label="Close admin navigation"
-            className="lg:hidden p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg"
+            className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg"
           >
             <X className="w-5 h-5 text-brown-600 dark:text-gray-400" />
           </button>
@@ -99,10 +99,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
+                  pressable flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
                   ${isActive 
-                    ? 'bg-coral-100 dark:bg-ocean-900/30 text-coral-700 dark:text-ocean-400'
-                    : 'text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700'
+                    ? 'bg-coral-50 dark:bg-slate-700 text-coral-800 dark:text-teal-300'
+                    : 'text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700'
                   }
                 `}
               >
@@ -118,7 +118,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <Link
             to="/"
             onClick={() => setSidebarOpen(false)}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-brown-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+            className="pressable flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to App
@@ -129,7 +129,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800 lg:flex">
         {sidebarContent}
       </aside>
@@ -154,21 +154,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               onClick={() => setSidebarOpen(true)}
               aria-label="Open admin navigation"
               aria-expanded={sidebarOpen}
-              className="lg:hidden p-2 hover:bg-cream-100 dark:hover:bg-slate-700 rounded-lg"
+              className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg"
             >
               <Menu className="w-5 h-5 text-brown-600 dark:text-gray-400" />
             </button>
             
             {/* Page title - shows on mobile */}
-            <div className="lg:hidden font-semibold text-brown-800 dark:text-white">
-              Admin Dashboard
+            <div className="flex items-center gap-1 text-sm font-semibold text-brown-800 dark:text-white lg:hidden">
+              <BrandMark className="h-5 w-5" />
+              HåfaGPT Admin
             </div>
             
             {/* Right side */}
             <div className="flex items-center gap-3 ml-auto">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors flex items-center justify-center"
+                className="min-h-11 min-w-11 p-2 rounded-lg [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 transition-colors flex items-center justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' 
@@ -183,11 +184,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     <img 
                       src={user.imageUrl} 
                       alt={user.firstName || 'Admin'} 
-                      className="w-8 h-8 rounded-full"
+                      className="hidden sm:block w-8 h-8 rounded-full"
                     />
                   )}
-                  <span className="hidden sm:inline text-sm font-medium text-brown-700 dark:text-gray-300">
-                    {user.firstName || user.emailAddresses[0]?.emailAddress}
+                  <span className="inline-block max-w-20 truncate text-xs font-medium text-brown-700 dark:text-gray-300 sm:max-w-48 sm:text-sm" title={user.fullName || user.emailAddresses[0]?.emailAddress}>
+                    {user.fullName || user.emailAddresses[0]?.emailAddress}
                   </span>
                 </div>
               )}

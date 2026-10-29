@@ -89,7 +89,7 @@ describe('admin form accessibility', () => {
   });
   it('uses a section heading for banner preview and associates every field label', () => {
     const { container } = mount(<AdminSettings />);
-    expect(screen.getByRole('heading', { level: 3, name: /Banner Preview/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: /Banner content preview/i })).toBeInTheDocument();
     for (const label of container.querySelectorAll('label')) expect(label.control).toBeTruthy();
   });
 });

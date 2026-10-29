@@ -129,8 +129,8 @@ export function AdminSettings() {
             disabled={!hasChanges || updateSettings.isPending || Boolean(themeValidationError)}
             className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors ${
               hasChanges && !themeValidationError
-                ? 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800 shadow-lg'
-                : 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500 cursor-not-allowed'
+                ? 'bg-action text-on-action [@media(hover:hover)]:hover:bg-action-hover'
+                : 'bg-cream-200 dark:bg-slate-700 text-brown-600 dark:text-slate-300 cursor-not-allowed'
             }`}
           >
             {updateSettings.isPending ? (
@@ -153,13 +153,13 @@ export function AdminSettings() {
         )}
         
         {/* Promo Settings Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700 bg-gradient-to-r from-red-50 to-green-50 dark:from-red-900/20 dark:to-green-900/20">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700  overflow-hidden">
+          <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700 bg-cream-50 dark:bg-slate-800">
             <h2 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
-              <Gift className="w-5 h-5 text-red-500" />
+              <Gift className="w-5 h-5 text-coral-700 dark:text-teal-300" />
               Holiday Promo Settings
             </h2>
-            <p className="text-sm text-brown-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-brown-600 dark:text-slate-300 mt-1">
               Control the holiday promotional period for unlimited access
             </p>
           </div>
@@ -171,7 +171,7 @@ export function AdminSettings() {
                 <label htmlFor="promo-enabled" className="font-medium text-brown-800 dark:text-white">
                   Enable Promotional Period
                 </label>
-                <p className="text-sm text-brown-500 dark:text-gray-400 mt-0.5">
+                <p className="text-sm text-brown-600 dark:text-slate-300 mt-0.5">
                   When enabled, all users get unlimited access
                 </p>
               </div>
@@ -179,14 +179,14 @@ export function AdminSettings() {
                 id="promo-enabled"
                 type="button"
                 onClick={() => setPromoEnabled(!promoEnabled)}
-                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                  promoEnabled ? 'bg-green-500' : 'bg-gray-300 dark:bg-slate-600'
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-coral-700 focus:ring-offset-2 dark:focus:ring-teal-300 dark:focus:ring-offset-slate-800 ${
+                  promoEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-slate-600'
                 }`}
                 role="switch"
                 aria-checked={promoEnabled}
               >
                 <span
-                  className={`inline-block h-9 w-9 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out ${
+                  className={`inline-block h-9 w-9 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
                     promoEnabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -208,7 +208,7 @@ export function AdminSettings() {
                 onChange={(e) => setPromoEndDate(e.target.value)}
                 className="w-full sm:w-64 px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
               />
-              <p className="text-sm text-brown-500 dark:text-gray-400 mt-1.5">
+              <p className="text-sm text-brown-600 dark:text-slate-300 mt-1.5">
                 Promo will end at midnight Guam time (ChST) on this date
               </p>
             </div>
@@ -224,7 +224,7 @@ export function AdminSettings() {
                 value={promoTitle}
                 onChange={(e) => setPromoTitle(e.target.value)}
                 placeholder="Felis Påsgua! Holiday Gift: Unlimited Access!"
-                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white placeholder-brown-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white placeholder:text-brown-600 dark:placeholder:text-slate-300 focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
               />
             </div>
             
@@ -232,17 +232,9 @@ export function AdminSettings() {
             {promoEnabled && (
               <div className="mt-4">
                 <h3 className="block text-sm font-medium text-brown-600 dark:text-gray-400 mb-2">
-                  Banner Preview ({theme === 'default' ? 'Default' : theme === 'christmas' ? 'Christmas' : theme === 'newyear' ? 'New Year' : 'Chamorro'} Theme)
+                  Banner content preview ({theme === 'default' ? 'Default' : theme === 'christmas' ? 'Christmas' : theme === 'newyear' ? 'New Year' : 'Chamorro'} theme)
                 </h3>
-                <div className={`relative overflow-hidden rounded-xl p-4 text-white text-center ${
-                  theme === 'christmas' 
-                    ? 'bg-gradient-to-r from-red-600 to-green-600' 
-                    : theme === 'newyear'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-500'
-                    : theme === 'chamorro'
-                    ? 'bg-gradient-to-r from-blue-600 to-red-500'
-                    : 'bg-gradient-to-r from-coral-500 to-teal-500'
-                }`}>
+                <div className="relative overflow-hidden rounded-xl bg-teal-800 p-4 text-center text-white dark:bg-teal-900">
                   {theme === 'christmas' && (
                     <div className="absolute inset-0 opacity-10">
                       <div className="absolute top-1 left-4 text-xl">❄</div>
@@ -276,13 +268,13 @@ export function AdminSettings() {
         </div>
         
         {/* Theme Settings Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700  overflow-hidden">
           <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700">
             <h2 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
-              <Palette className="w-5 h-5 text-purple-500" />
+              <Palette className="w-5 h-5 text-teal-500" />
               Theme Settings
             </h2>
-            <p className="text-sm text-brown-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-brown-600 dark:text-slate-300 mt-1">
               Choose the app theme and independently bound seasonal effects
             </p>
           </div>
@@ -293,7 +285,7 @@ export function AdminSettings() {
                 <label htmlFor="seasonal-theme-toggle" className="font-medium text-brown-800 dark:text-white">
                   Enable seasonal effects
                 </label>
-                <p className="mt-0.5 text-sm text-brown-500 dark:text-gray-400">
+                <p className="mt-0.5 text-sm text-brown-600 dark:text-slate-300">
                   Required for Christmas or New Year visuals. Promo access is controlled separately.
                 </p>
               </div>
@@ -301,8 +293,8 @@ export function AdminSettings() {
                 id="seasonal-theme-toggle"
                 type="button"
                 onClick={() => setThemeEnabled(!themeEnabled)}
-                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                  themeEnabled ? 'bg-purple-500' : 'bg-gray-300 dark:bg-slate-600'
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
+                  themeEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-slate-600'
                 }`}
                 role="switch"
                 aria-checked={themeEnabled}
@@ -327,11 +319,11 @@ export function AdminSettings() {
                 type="date"
                 value={themeEndDate}
                 onChange={(event) => setThemeEndDate(event.target.value)}
-                className="min-h-11 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-brown-800 focus:border-transparent focus:ring-2 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white sm:w-64"
+                className="min-h-11 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-brown-800 focus:border-transparent focus:ring-2 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white sm:w-64"
                 aria-describedby={themeValidationError ? 'seasonal-theme-error' : 'seasonal-theme-help'}
                 aria-invalid={Boolean(themeValidationError)}
               />
-              <p id="seasonal-theme-help" className="mt-1.5 text-sm text-brown-500 dark:text-gray-400">
+              <p id="seasonal-theme-help" className="mt-1.5 text-sm text-brown-600 dark:text-slate-300">
                 Seasonal visuals turn off automatically after this date in Guam time.
               </p>
               {themeValidationError && (
@@ -343,10 +335,10 @@ export function AdminSettings() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { id: 'default', label: 'Default', emoji: '🌺', color: 'from-coral-500 to-coral-600' },
-                { id: 'christmas', label: 'Christmas', emoji: '🎄', color: 'from-red-500 to-green-500' },
-                { id: 'newyear', label: 'New Year', emoji: '🎆', color: 'from-purple-500 to-pink-500' },
-                { id: 'chamorro', label: 'Chamorro', emoji: '🇬🇺', color: 'from-blue-500 to-red-500' },
+                { id: 'default', label: 'Default', emoji: '🌺' },
+                { id: 'christmas', label: 'Christmas', emoji: '🎄' },
+                { id: 'newyear', label: 'New Year', emoji: '🎆' },
+                { id: 'chamorro', label: 'Chamorro', emoji: '🇬🇺' },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -359,10 +351,9 @@ export function AdminSettings() {
                   className={`min-h-11 p-4 rounded-xl border-2 transition-colors bg-white dark:bg-slate-700 ${
                     theme === t.id
                       ? 'border-coral-500 dark:border-ocean-400 ring-2 ring-coral-500/20 dark:ring-ocean-400/20'
-                      : 'border-cream-200 dark:border-slate-600 hover:border-cream-300 dark:hover:border-slate-500'
+                      : 'border-cream-200 dark:border-slate-600 [@media(hover:hover)]:hover:border-cream-300 dark:[@media(hover:hover)]:hover:border-slate-500'
                   }`}
                 >
-                  <div className={`w-full h-8 rounded-lg bg-gradient-to-r ${t.color} mb-2`} />
                   <div className="flex items-center justify-center gap-1.5 bg-cream-100 dark:bg-slate-800 rounded-lg py-1 px-2">
                     <span>{t.emoji}</span>
                     <span className="text-sm font-semibold text-brown-800 dark:text-gray-100">{t.label}</span>
@@ -370,7 +361,7 @@ export function AdminSettings() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-brown-400 dark:text-gray-500 mt-3 text-center">
+            <p className="text-xs text-brown-600 dark:text-slate-300 mt-3 text-center">
               Theme affects snowfall, logos, and promo banner styling
             </p>
           </div>
