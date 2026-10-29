@@ -303,7 +303,7 @@ export function NumberTap() {
               </div>
 
               <div className="text-center">
-                <span className={`text-xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
+                <span className={`font-chamorro text-2xl font-semibold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                   {currentNumber.chamorro}
                 </span>
                 <span className={`text-xs ${isSpeaking ? 'text-white/90' : 'text-teal-500 dark:text-teal-400'}`}>

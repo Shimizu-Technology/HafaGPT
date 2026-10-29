@@ -71,7 +71,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
                 className="flex items-center gap-3 p-3 bg-cream-50 dark:bg-slate-700/50 rounded-xl"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-coral-700 dark:text-ocean-300">
+                  <p className="font-chamorro text-lg font-semibold text-coral-700 dark:text-ocean-300">
                     {chamorro}
                   </p>
                   <p className="text-sm text-brown-600 dark:text-gray-400">

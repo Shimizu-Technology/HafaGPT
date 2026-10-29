@@ -196,12 +196,12 @@ function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: 
             {word.word_id ? (
               <Link
                 to={appRoutes.word(word.word_id, { returnTo })}
-                className="rounded font-bold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
+                className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
               >
                 {word.chamorro}
               </Link>
             ) : (
-              <h3 className="font-bold text-brown-800 dark:text-white text-lg">
+              <h3 className="font-chamorro font-semibold text-brown-800 dark:text-white text-lg">
                 {word.chamorro}
               </h3>
             )}
@@ -243,7 +243,7 @@ function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: 
         <div id={examplesId} className="mt-3 space-y-2 border-t border-cream-200 pt-3 dark:border-slate-700">
           {word.examples.map((example, index) => (
             <div key={index} className="rounded-xl bg-cream-50 p-3 dark:bg-slate-900/60">
-              <p className="font-medium text-brown-800 dark:text-gray-100">{example.chamorro}</p>
+              <p className="font-chamorro font-medium text-brown-800 dark:text-gray-100">{example.chamorro}</p>
               <p className="mt-1 text-sm text-brown-600 dark:text-gray-400">{example.english}</p>
             </div>
           ))}

@@ -521,7 +521,7 @@ function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
       <div>
-        <p className="font-medium text-slate-900 dark:text-white">
+        <p className="font-chamorro text-lg font-medium text-slate-900 dark:text-white">
           {phrase.chamorro}
         </p>
         <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -581,7 +581,7 @@ function MessageBubble({
             : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md border border-slate-200 dark:border-slate-600'
         }`}>
           {/* Chamorro text */}
-          <p className="mb-1">{message.chamorro}</p>
+          <p className="mb-1 font-chamorro text-lg">{message.chamorro}</p>
           
           {/* English translation */}
           {(showTranslation || !message.chamorro.trim()) && message.english && !isUser && (

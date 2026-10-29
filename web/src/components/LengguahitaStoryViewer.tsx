@@ -394,7 +394,7 @@ export function LengguahitaStoryViewer() {
               </span>
               <PronunciationButton text={paragraph.chamorro} className="bg-teal-100 dark:bg-teal-900/30" />
             </div>
-            <p className="text-xl leading-relaxed text-brown-800 dark:text-white">
+            <p className="font-chamorro text-xl leading-relaxed text-brown-800 dark:text-white">
               <TappableText text={paragraph.chamorro} onWordTap={handleWordTap} />
             </p>
             <p className="text-xs text-brown-500 dark:text-gray-400 mt-2">

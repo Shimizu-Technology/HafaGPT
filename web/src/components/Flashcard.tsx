@@ -83,7 +83,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
           <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-700 flex flex-col p-6">
             <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full items-center justify-center">
-                <p className="w-full break-words text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
+                <p className="w-full break-words font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
                   {front}
                 </p>
               </div>
