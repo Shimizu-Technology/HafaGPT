@@ -1,6 +1,6 @@
 # HåfaGPT product UI audit
 
-Last reviewed: August 20, 2026
+Last reviewed: October 29, 2026
 
 ## Product goal
 
@@ -121,8 +121,9 @@ All modernization work should follow these rules:
 - Mobile-first, with no horizontal overflow at supported widths.
 - One dominant action per state; secondary actions remain available but quiet.
 - Minimum 44px touch targets and visible keyboard focus.
-- Lucide icons for interface actions; emoji only for meaningful content or the
-  established flower identity.
+- Lucide icons for interface actions; emoji only as pictures on vocabulary,
+  topic, and game choices (they help pre-readers) and for seasonal themes. The
+  brand mark is the drawn hibiscus (`BrandMark`), not an emoji.
 - White or subtly tinted surfaces, restrained borders and shadows, and no
   decorative gradient as the default container treatment.
 - Page title and primary action remain easy to locate across routes.
@@ -133,6 +134,34 @@ All modernization work should follow these rules:
   understand an action.
 - Existing learning content and capabilities are preserved unless a separate,
   evidence-backed product decision explicitly replaces them.
+
+### Visual system (October 2026 design audit)
+
+The impeccable, taste, and Emil Kowalski audit added these rules:
+
+- **Colour roles.** Coral (`bg-action`) is the one action and selection colour
+  (teal in dark mode). Teal is secondary: audio, information, source-backed
+  content. Cream and brown are surfaces and text. Emerald, amber, and red mean
+  success, caution, and error only. Indigo, purple, violet, pink, sky, and blue
+  are not interface colours; keep real hues only where colour is the lesson
+  (Color Touch, Simon Says, the Colors vocabulary, Wordle tiles).
+- **Surfaces.** Flat colour, no gradients. Shadows only on things that float
+  (dialogs, menus, toasts, fixed bars). One tile treatment and one selected
+  state across pickers and grids.
+- **Type.** English interface text uses the platform sans-serif. Chamorro words,
+  phrases, and passages use `font-chamorro` (Literata), so the language being
+  learned always reads apart from English. Numbers on progress screens are type,
+  not icon tiles. Sentence case; no tracked uppercase labels or decorative
+  eyebrow labels above headings. Learner text is at least 12px.
+- **Contrast.** Every learner text and placeholder meets WCAG AA in light and
+  dark mode.
+- **Motion.** Use the easing tokens (`ease-out` for entering/responding,
+  `ease-in-out` for movement on screen; mirrored as `--ease-*` CSS variables).
+  Interface transitions stay at or under 300ms and name the properties they
+  animate (never `transition-all`). Everything pressable scales to 0.97 on
+  press through the `scale` property; button-styled links add `pressable`.
+  Hover styles only apply on devices that can hover. Nothing enters from
+  `scale(0)` or bounces. Route changes do not animate.
 
 ## Implementation sequence
 
