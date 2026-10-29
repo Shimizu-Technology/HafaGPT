@@ -4,7 +4,7 @@ import { useGameRoundGuard } from '../hooks/useGameRoundGuard';
 import { useGameReturn } from '../hooks/useGameReturn';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick, Zap, Trophy, Star, ThumbsUp, Check, X, Flame } from 'lucide-react';
+import { Heart, Settings2, Play, Sparkles, BookOpen, Pause, RotateCcw, MousePointerClick, Zap, Trophy, Star, ThumbsUp, Check, X, Flame, Timer } from 'lucide-react';
 import { useVocabularyCategories } from '../hooks/useVocabularyQuery';
 import { useDictionaryFlashcards } from '../hooks/useFlashcardsQuery';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
@@ -606,7 +606,7 @@ export function WordCatch() {
                   <Zap className="h-4 w-4 flex-none text-amber-600 dark:text-amber-400" aria-hidden="true" /> Build combos for bonus points
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-coral-700 dark:text-teal-400">⏱️</span> 60 seconds - catch as many as you can!
+                  <Timer className="h-4 w-4 flex-none text-coral-700 dark:text-teal-400" aria-hidden="true" /> 60 seconds - catch as many as you can!
                 </li>
               </ul>
             </details>

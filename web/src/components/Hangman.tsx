@@ -498,7 +498,7 @@ export function Hangman() {
 
         <main className="max-w-2xl mx-auto px-4 py-8">
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 text-center">
-            <div className="mb-4 h-20 w-20 mx-auto flex items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">{gameState === 'won' ? <Trophy className="h-10 w-10" aria-hidden="true" /> : <RotateCcw className="h-10 w-10" aria-hidden="true" />}</div>
+            <div className={`mb-4 h-20 w-20 mx-auto flex items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-200'}`}>{gameState === 'won' ? <Trophy className="h-10 w-10" aria-hidden="true" /> : <RotateCcw className="h-10 w-10" aria-hidden="true" />}</div>
             <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
               {gameState === 'won' ? 'Great Job!' : 'Game Over!'}
             </h2>

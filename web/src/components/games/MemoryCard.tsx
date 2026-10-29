@@ -66,7 +66,7 @@ export const MemoryCard = memo(function MemoryCard({
           `}
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <BrandMark tone="inverse" className="h-8 w-8 text-coral-700 dark:text-teal-700 sm:h-12 sm:w-12 md:h-14 md:w-14" />
+          <BrandMark tone="inverse" className="h-12 w-12 text-coral-700 dark:text-teal-700 sm:h-14 sm:w-14 md:h-16 md:w-16" />
         </div>
 
         {/* Card Front (face-up) */}

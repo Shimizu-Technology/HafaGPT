@@ -487,14 +487,15 @@ export function PicturePairs() {
             </h2>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2 mb-4">
+            <div className="flex justify-center gap-2 mb-4" role="img" aria-label={`${finalStars} out of 3 stars`}>
               {[1, 2, 3].map(star => (
                 <Star
                   key={star}
+                  aria-hidden="true"
                   className={`w-10 h-10 ${
                     star <= finalStars
                       ? 'text-amber-400 fill-amber-400'
-                      : 'text-gray-300 dark:text-gray-600'
+                      : 'text-cream-300 dark:text-slate-600'
                   }`}
                 />
               ))}
