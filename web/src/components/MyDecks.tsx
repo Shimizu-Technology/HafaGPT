@@ -120,7 +120,7 @@ export function MyDecks() {
                       <h3 className="break-words [overflow-wrap:anywhere] font-bold text-brown-950 dark:text-white">{deck.title}</h3>
                       <div className="mt-1 flex items-start justify-between gap-3">
                         <p className="min-w-0 break-words capitalize text-sm text-brown-500 dark:text-gray-400">{formatTopic(deck.topic)}</p>
-                        <ArrowRight className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                        <ArrowRight className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300" aria-hidden="true" />
                       </div>
 
                       <div className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" aria-hidden="true">

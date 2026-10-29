@@ -228,7 +228,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           className={`flex-1 py-3 px-4 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 ${
             allViewed
               ? 'bg-coral-700 dark:bg-teal-700 text-white hover:bg-coral-800 dark:hover:bg-teal-800'
-              : 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+              : 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-400 cursor-not-allowed'
           }`}
         >
           {allViewed ? (

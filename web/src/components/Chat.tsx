@@ -1608,7 +1608,7 @@ End of Export
               <p className="mt-6 text-brown-600 dark:text-gray-400 text-lg font-medium">
                 Loading your conversations...
               </p>
-              <p className="mt-2 text-sm text-brown-500 dark:text-gray-500">
+              <p className="mt-2 text-sm text-brown-500 dark:text-gray-400">
                 This will only take a moment
               </p>
             </div>
@@ -1620,7 +1620,7 @@ End of Export
                 <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
               </div>
-              <p className="mt-3 text-sm text-brown-500 dark:text-gray-500">
+              <p className="mt-3 text-sm text-brown-500 dark:text-gray-400">
                 Loading conversation...
               </p>
             </div>
@@ -1874,7 +1874,7 @@ End of Export
                 {/* Share URL - Stack on mobile, inline on desktop */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 bg-cream-100 dark:bg-slate-800 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 border border-cream-200 dark:border-slate-700 min-w-0">
-                    <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-500 flex-shrink-0" />
+                    <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-400 flex-shrink-0" />
                     <span className="text-xs sm:text-sm text-brown-700 dark:text-gray-300 truncate">
                       {shareInfo.share_url}
                     </span>
@@ -1903,7 +1903,7 @@ End of Export
                 
                 {/* View count */}
                 {shareInfo.view_count !== undefined && shareInfo.view_count > 0 && (
-                  <p className="text-xs text-brown-500 dark:text-gray-500 flex items-center gap-1">
+                  <p className="text-xs text-brown-500 dark:text-gray-400 flex items-center gap-1">
                     <Eye className="h-4 w-4" aria-hidden="true" />
                     {shareInfo.view_count} view{shareInfo.view_count !== 1 ? 's' : ''}
                   </p>

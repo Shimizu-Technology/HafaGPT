@@ -503,7 +503,7 @@ export function CulturalTrivia() {
               >
                 <Sparkles className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-700'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'easy' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Easy</p>
-                <p className={`text-xs ${difficulty === 'easy' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>30s</p>
+                <p className={`text-xs ${difficulty === 'easy' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>30s</p>
               </button>
               <button
                 type="button"
@@ -517,7 +517,7 @@ export function CulturalTrivia() {
               >
                 <Zap className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-700'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'medium' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Medium</p>
-                <p className={`text-xs ${difficulty === 'medium' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>20s</p>
+                <p className={`text-xs ${difficulty === 'medium' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>20s</p>
               </button>
               <button
                 type="button"
@@ -531,7 +531,7 @@ export function CulturalTrivia() {
               >
                 <Flame className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-600'}`} aria-hidden="true" />
                 <p className={`text-sm font-medium ${difficulty === 'hard' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Hard</p>
-                <p className={`text-xs ${difficulty === 'hard' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>10s</p>
+                <p className={`text-xs ${difficulty === 'hard' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>10s</p>
               </button>
             </div>
           </section>
@@ -564,7 +564,7 @@ export function CulturalTrivia() {
                   >
                     <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
                     <p className="truncate text-xs font-medium">{label}</p>
-                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-500'}`}>{count} questions</p>
+                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>{count} questions</p>
                   </button>
                 );
               })}
@@ -595,7 +595,7 @@ export function CulturalTrivia() {
             )}
           </button>
 
-          <p className="text-center text-xs text-brown-500 dark:text-gray-500">
+          <p className="text-center text-xs text-brown-500 dark:text-gray-300">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
@@ -629,11 +629,11 @@ export function CulturalTrivia() {
             <div className="mb-5 grid grid-cols-2 gap-3">
               <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
                 <p className="text-2xl font-bold text-brown-950 dark:text-white">{score}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Points</p>
+                <p className="text-sm text-brown-500 dark:text-gray-300">Points</p>
               </div>
               <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
                 <p className="text-2xl font-bold text-brown-950 dark:text-white">{maxStreak}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Best streak</p>
+                <p className="text-sm text-brown-500 dark:text-gray-300">Best streak</p>
               </div>
             </div>
 

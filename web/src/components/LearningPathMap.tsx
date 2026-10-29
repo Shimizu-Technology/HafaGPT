@@ -72,7 +72,7 @@ function TopicNode({
   };
 
   const iconColors = {
-    locked: 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500',
+    locked: 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-400',
     available: 'bg-coral-100 dark:bg-ocean-800 text-coral-700 dark:text-ocean-400',
     in_progress: 'bg-coral-700 dark:bg-ocean-700 text-white',
     completed: 'bg-emerald-500 text-white',
@@ -102,7 +102,7 @@ function TopicNode({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <h3 className={`font-semibold text-sm leading-snug ${
-            isLocked ? 'text-gray-400 dark:text-gray-500' : 'text-brown-800 dark:text-white'
+            isLocked ? 'text-gray-400 dark:text-gray-400' : 'text-brown-800 dark:text-white'
           }`}>
             {topic.title}
           </h3>

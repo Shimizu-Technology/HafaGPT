@@ -468,7 +468,7 @@ export function FallingWords() {
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
@@ -483,7 +483,7 @@ export function FallingWords() {
                 >
                   <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
@@ -658,7 +658,7 @@ export function FallingWords() {
                     ${feedback && option === currentWord?.english
                       ? 'bg-green-700 text-white'
                       : feedback === 'wrong' && option !== currentWord?.english
-                        ? 'bg-cream-200 dark:bg-slate-700 text-brown-500 dark:text-gray-500'
+                        ? 'bg-cream-200 dark:bg-slate-700 text-brown-500 dark:text-gray-400'
                         : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
                     }
                     disabled:cursor-not-allowed

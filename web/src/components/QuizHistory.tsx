@@ -166,7 +166,7 @@ export function QuizHistory() {
                           {percentage}%
                         </span>
                         <ChevronRight
-                          className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                          className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
                           aria-hidden="true"
                         />
                       </span>

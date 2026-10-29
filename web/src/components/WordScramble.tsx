@@ -450,7 +450,7 @@ export function WordScramble() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -469,7 +469,7 @@ export function WordScramble() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -534,7 +534,7 @@ export function WordScramble() {
                     >
                       <span className="text-lg sm:text-xl font-bold">{count}</span>
                       <span className={`text-xs sm:text-xs block ${
-                        settings.wordsPerRound === count && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-400'
+                        settings.wordsPerRound === count && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-300'
                       }`}>
                         words
                       </span>
@@ -697,7 +697,7 @@ export function WordScramble() {
                     {currentAnswer}
                   </p>
                 ) : (
-                  <p className="text-brown-500 dark:text-gray-500 text-lg">
+                  <p className="text-brown-500 dark:text-gray-400 text-lg">
                     Tap letters above...
                   </p>
                 )}

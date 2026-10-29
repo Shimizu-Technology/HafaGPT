@@ -397,7 +397,7 @@ export function LengguahitaStoryViewer() {
             <p className="text-xl leading-relaxed text-brown-800 dark:text-white">
               <TappableText text={paragraph.chamorro} onWordTap={handleWordTap} />
             </p>
-            <p className="text-xs text-brown-500 dark:text-gray-500 mt-2">
+            <p className="text-xs text-brown-500 dark:text-gray-400 mt-2">
               Tap any word to see its translation
             </p>
           </div>
@@ -482,7 +482,7 @@ export function LengguahitaStoryViewer() {
               />
             ))}
             {story.paragraphs.length > 15 && (
-              <span className="text-xs text-brown-500 dark:text-gray-500 ml-1 self-center">
+              <span className="text-xs text-brown-500 dark:text-gray-400 ml-1 self-center">
                 +{story.paragraphs.length - 15}
               </span>
             )}

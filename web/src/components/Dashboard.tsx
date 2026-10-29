@@ -252,7 +252,7 @@ export function Dashboard() {
                   <span className="block text-sm text-brown-500 dark:text-gray-400">{description}</span>
                 </span>
                 <ChevronRight
-                  className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                  className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
                   aria-hidden="true"
                 />
               </Link>
@@ -318,7 +318,7 @@ export function Dashboard() {
                         {percentage}%
                       </span>
                       <ChevronRight
-                        className="h-4 w-4 text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                        className="h-4 w-4 text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
                         aria-hidden="true"
                       />
                     </div>
@@ -371,7 +371,7 @@ export function Dashboard() {
                       </div>
                       <span className="text-sm font-bold text-brown-700 dark:text-gray-200">{result.score}</span>
                     </div>
-                    <ChevronRight className="h-4 w-4 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400" aria-hidden="true" />
                   </Link>
                 );
               })}

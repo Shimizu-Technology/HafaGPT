@@ -166,7 +166,7 @@ export function GameHistory() {
                         {[1, 2, 3].map((star) => <Star key={star} className={`h-4 w-4 ${star <= (result.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`} aria-hidden="true" />)}
                       </span>
                       <span className="font-bold text-brown-800 dark:text-white">{result.score}</span>
-                      <ChevronRight className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
+                      <ChevronRight className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-400" aria-hidden="true" />
                     </span>
                   </Link>
                 ))}

@@ -716,7 +716,7 @@ export function ChamorroWordle() {
                 <li><strong>× Gray</strong> = Not in word</li>
               </ul>
 
-              <p className="text-xs text-center text-brown-500 dark:text-gray-500 mt-3">
+              <p className="text-xs text-center text-brown-500 dark:text-gray-400 mt-3">
                 You have <strong>6 tries</strong> to guess the word!
               </p>
             </details>
@@ -783,7 +783,7 @@ export function ChamorroWordle() {
               <p className="text-brown-600 dark:text-gray-400">
                 The word was: <strong className="text-coral-700 dark:text-teal-300">{targetWord.word}</strong>
               </p>
-              <p className="text-sm text-brown-500 dark:text-gray-500">
+              <p className="text-sm text-brown-500 dark:text-gray-400">
                 Meaning: {targetWord.meaning}
               </p>
             </div>

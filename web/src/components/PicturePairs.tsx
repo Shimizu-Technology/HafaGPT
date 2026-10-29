@@ -397,7 +397,7 @@ export function PicturePairs() {
             </button>
 
             {/* Games remaining */}
-            <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>

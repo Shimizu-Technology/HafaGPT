@@ -415,7 +415,7 @@ export function SharedConversation() {
           ))}
           {data.messages.length === 0 && (
             <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
-              <MessageSquare className="mx-auto h-7 w-7 text-brown-500 dark:text-gray-500" aria-hidden="true" />
+              <MessageSquare className="mx-auto h-7 w-7 text-brown-500 dark:text-gray-400" aria-hidden="true" />
               <h2 className="mt-3 font-bold text-brown-950 dark:text-white">No messages were shared</h2>
               <p className="mt-1 text-base text-brown-600 dark:text-gray-300">This link is active, but the shared conversation is empty.</p>
             </div>

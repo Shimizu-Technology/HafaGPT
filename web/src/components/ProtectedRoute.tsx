@@ -236,7 +236,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
               </SignInButton>
 
               {/* Free Account Note */}
-              <p className="text-center text-xs text-brown-500 dark:text-gray-500 pt-2">
+              <p className="text-center text-xs text-brown-500 dark:text-gray-400 pt-2">
                 ✨ 100% free • No credit card required
                   </p>
                 </div>
@@ -244,7 +244,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Explore Free Content */}
           <div className="mt-6 text-center">
-                <p className="text-sm text-brown-500 dark:text-gray-500">
+                <p className="text-sm text-brown-500 dark:text-gray-400">
                   Just browsing?{' '}
                   <Link to="/vocabulary" className="inline-flex min-h-11 items-center rounded-lg px-2 text-coral-700 dark:text-ocean-300 hover:underline font-medium">
                     Explore free content →

@@ -112,7 +112,7 @@ export function VocabularyCategory() {
         {/* Search within category */}
         <div className="mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-500 dark:text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-500 dark:text-gray-400" />
             <input
               aria-label={`Search in ${category.title}`}
               type="text"
@@ -120,7 +120,7 @@ export function VocabularyCategory() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search in ${category.title}...`}
-              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-500 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
+              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-500 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
             />
             {searchQuery && (
               <button
@@ -129,7 +129,7 @@ export function VocabularyCategory() {
                 aria-label="Clear category search"
                 className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700"
               >
-                <X className="w-3 h-3 text-brown-500 dark:text-gray-500" />
+                <X className="w-3 h-3 text-brown-500 dark:text-gray-400" />
               </button>
             )}
           </div>
@@ -175,7 +175,7 @@ export function VocabularyCategory() {
                           </h3>
                         )}
                         {word.part_of_speech && (
-                          <span className="text-xs text-brown-500 dark:text-gray-500 italic">
+                          <span className="text-xs text-brown-500 dark:text-gray-400 italic">
                             {word.part_of_speech}
                           </span>
                         )}
@@ -205,9 +205,9 @@ export function VocabularyCategory() {
                         className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-400 dark:hover:bg-slate-700"
                       >
                         {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-brown-500 dark:text-gray-500" />
+                          <ChevronUp className="w-4 h-4 text-brown-500 dark:text-gray-400" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-brown-500 dark:text-gray-500" />
+                          <ChevronDown className="w-4 h-4 text-brown-500 dark:text-gray-400" />
                         )}
                       </button>
                     )}
