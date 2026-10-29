@@ -4,6 +4,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
 import { useChatViewport } from './useChatViewport';
 
+// The navigation reads the seasonal site theme; keep these tests offline.
+vi.mock('./useSubscription', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./useSubscription')>()),
+  usePromoStatus: () => ({ data: undefined }),
+}));
+
 class Viewport extends EventTarget {
   height = 844;
   offsetTop = 0;
@@ -100,23 +106,25 @@ describe('Tutor keyboard navigation', () => {
   it('hides and makes mobile navigation inert only for a confirmed software keyboard', () => {
     render(<MemoryRouter initialEntries={['/chat']}><BottomNav /></MemoryRouter>);
     const nav = screen.getByRole('navigation', { name: 'Primary' });
+    const bar = nav.closest('[data-app-bar]');
     const input = document.createElement('textarea'); document.body.appendChild(input); input.focus();
     resize(400);
-    expect(nav).toHaveAttribute('hidden');
-    expect(nav).toHaveAttribute('inert');
+    expect(bar).toHaveAttribute('hidden');
+    expect(bar).toHaveAttribute('inert');
     expect(screen.queryByRole('link', { name: 'Today' })).not.toBeInTheDocument();
     resize(844);
-    expect(nav).not.toHaveAttribute('hidden');
-    expect(nav).not.toHaveAttribute('inert');
+    expect(bar).not.toHaveAttribute('hidden');
+    expect(bar).not.toHaveAttribute('inert');
     expect(screen.getByRole('link', { name: 'Today' })).toBeInTheDocument();
   });
   it('hides wide navigation too when a touch keyboard opens', () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 844 });
     render(<MemoryRouter initialEntries={['/chat']}><BottomNav /></MemoryRouter>);
     const nav = screen.getByRole('navigation', { name: 'Primary' });
+    const bar = nav.closest('[data-app-bar]');
     const input = document.createElement('textarea'); document.body.appendChild(input); input.focus();
     resize(400);
-    expect(nav).toHaveAttribute('hidden');
+    expect(bar).toHaveAttribute('hidden');
     expect(screen.queryByRole('link', { name: 'Today' })).not.toBeInTheDocument();
   });
 });

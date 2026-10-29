@@ -9,6 +9,11 @@ export default {
   },
   theme: {
     extend: {
+      fontFamily: {
+        // Chamorro language text (words, phrases, stories). English UI text
+        // stays in the platform sans-serif face set on <body>.
+        chamorro: ['"Literata Variable"', 'Literata', 'Georgia', 'serif'],
+      },
       colors: {
         // Small semantic contract. Existing palette aliases remain compatible.
         action: 'rgb(var(--action) / <alpha-value>)',

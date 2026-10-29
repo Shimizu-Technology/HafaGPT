@@ -32,6 +32,7 @@ import { ConversationSidebar } from './ConversationSidebar';
 import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
 import { PublicBanner } from './PublicBanner';
+import { BrandMark } from './BrandMark';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { forgetConversationIntent, getChatIntentPlaceholder, normalizeChatIntent, rememberConversationIntent, rememberedConversationIntent, type ChatIntent } from '../lib/chatIntent';
@@ -1553,8 +1554,8 @@ End of Export
               className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
               <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
             </button>}
-            {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-8 shrink-0 items-center justify-center text-2xl">
-              <span aria-hidden="true">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
+            {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-9 shrink-0 items-center justify-center sm:hidden">
+              <BrandMark className="h-8 w-8" seasonal={isChristmasTheme ? 'christmas' : isNewYearTheme ? 'newyear' : null} />
             </Link>}
             <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
               {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
