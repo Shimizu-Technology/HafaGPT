@@ -77,7 +77,7 @@ export function VocabularyCategory() {
           </>}
           <button
             onClick={() => navigate('/vocabulary', { replace: true })}
-            className="min-h-11 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
+            className="min-h-11 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 dark:hover:bg-teal-800"
           >
             Back to Vocabulary
           </button>

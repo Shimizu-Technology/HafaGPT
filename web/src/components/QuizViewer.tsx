@@ -685,7 +685,7 @@ function QuizViewerSession() {
                 ) : (
                   <Link
                     to={`/quiz/dict-${actualCategoryId}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-sm font-semibold transition-colors"
                   >
                     Try Dictionary Mode
                     <ChevronRight className="w-4 h-4" />

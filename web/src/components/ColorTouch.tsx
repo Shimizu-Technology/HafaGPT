@@ -223,7 +223,7 @@ export function ColorTouch() {
                   <div
                     key={color.chamorro}
                     className="w-10 h-10 rounded-xl border-2 border-white dark:border-slate-600"
-                    style={{ backgroundColor: color.hex }}
+                    style={{ backgroundColor: color.hex, boxShadow: color.english === 'White' ? 'inset 0 0 0 2px rgba(0,0,0,0.1)' : undefined }}
                     title={`${color.chamorro} (${color.english})`}
                   />
                 ))}

@@ -139,6 +139,10 @@ describe('practice entry pages', () => {
     expect(screen.getByRole('heading', { name: 'Beginner' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Intermediate' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Advanced' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Meeting Someone New/ })).toHaveAttribute('href', '/practice/meeting-someone');
+    const scenario = screen.getByRole('link', { name: /Meeting Someone New/ });
+    expect(scenario).toHaveAttribute('href', '/practice/meeting-someone');
+    // Each card names its level in words, never as styling tokens.
+    expect(scenario).toHaveTextContent('Beginner');
+    expect(scenario.textContent).not.toMatch(/bg-|text-|dark:/);
   });
 });

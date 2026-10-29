@@ -164,7 +164,7 @@ function LessonPageSession() {
           </h1>
           <Link
             to="/"
-            className="pressable inline-flex min-h-11 items-center rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800"
+            className="pressable inline-flex min-h-11 items-center rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 dark:hover:bg-teal-800"
           >
             Return to home
           </Link>

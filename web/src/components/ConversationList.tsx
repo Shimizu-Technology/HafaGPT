@@ -12,9 +12,9 @@ const difficultyStyles = {
 };
 
 const difficultyLabels = {
-  beginner: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
-  intermediate: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
-  advanced: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
 };
 
 /** Present a single conversation scenario as an accessible practice link. */

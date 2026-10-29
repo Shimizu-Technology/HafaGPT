@@ -43,7 +43,7 @@ export function TodayPlanCard({ plan, isLoading = false }: TodayPlanCardProps) {
         })}
       </ol>
       {!storageAvailable && <p role="status" className="mt-3 text-sm text-amber-800 dark:text-amber-200">Browser storage is unavailable. Keep this page open to retain your session.</p>}
-      <Link to={next ? contextualHref(next.to, activityStep(next)) : '/learning'} className="pressable mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 sm:w-auto">
+      <Link to={next ? contextualHref(next.to, activityStep(next)) : '/learning'} className="pressable mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 dark:hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 sm:w-auto">
         {finished ? 'Choose another topic' : completed.length ? 'Continue today' : 'Start today'}<ArrowRight className="h-4 w-4" aria-hidden="true" />
       </Link>
       <p className="mt-3 text-xs text-brown-500 dark:text-gray-400">Session checklist saved on this browser. Time is an estimate; steps count after results save.</p>
