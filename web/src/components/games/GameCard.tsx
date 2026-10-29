@@ -67,7 +67,7 @@ export function GameCard({ to, title, description, icon, difficulty, comingSoon 
         <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${difficultyColors[difficulty] || difficultyColors['All ages']}`}>
           {difficulty}
         </span>
-        <ChevronRight className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+        <ChevronRight className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
       </div>
     </Link>
   );

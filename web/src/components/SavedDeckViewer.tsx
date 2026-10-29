@@ -35,7 +35,7 @@ function DeckState({
     <section className={`rounded-3xl border bg-white p-6 text-center dark:bg-slate-800 sm:p-8 ${
       tone === 'error' ? 'border-red-200 dark:border-red-900' : 'border-cream-200 dark:border-slate-700'
     }`}>
-      <Icon className={`mx-auto h-9 w-9 ${tone === 'error' ? 'text-red-600 dark:text-red-300' : 'text-coral-600 dark:text-teal-300'}`} aria-hidden="true" />
+      <Icon className={`mx-auto h-9 w-9 ${tone === 'error' ? 'text-red-600 dark:text-red-300' : 'text-coral-700 dark:text-teal-300'}`} aria-hidden="true" />
       <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">{description}</p>
       {onRetry ? (
@@ -50,7 +50,7 @@ function DeckState({
       ) : (
         <Link
           to="/flashcards/my-decks" replace
-          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+          className="pressable mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
         >
           {action}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -191,7 +191,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
             className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
             aria-live="polite"
           >
-            <Loader2 className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your deck…</p>
           </section>
         ) : isError ? (

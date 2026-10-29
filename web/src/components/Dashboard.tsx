@@ -177,13 +177,13 @@ export function Dashboard() {
             <div className="flex flex-wrap gap-1 sm:justify-end">
               <Link
                 to="/dashboard/quiz-history"
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
               >
                 <History className="h-4 w-4" aria-hidden="true" /> Quiz history
               </Link>
               <Link
                 to={appRoutes.gameHistory}
-                className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
               >
                 <History className="h-4 w-4" aria-hidden="true" /> Game history
               </Link>
@@ -252,7 +252,7 @@ export function Dashboard() {
                   <span className="block text-sm text-brown-500 dark:text-gray-400">{description}</span>
                 </span>
                 <ChevronRight
-                  className="h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                  className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
                   aria-hidden="true"
                 />
               </Link>
@@ -268,7 +268,7 @@ export function Dashboard() {
               </h2>
               <Link
                 to="/dashboard/quiz-history"
-                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
               >
                 View all
               </Link>
@@ -295,7 +295,7 @@ export function Dashboard() {
                             {result.category_title || 'Quiz'}
                           </p>
                           {isDictionary && (
-                            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
                               Dictionary
                             </span>
                           )}
@@ -318,7 +318,7 @@ export function Dashboard() {
                         {percentage}%
                       </span>
                       <ChevronRight
-                        className="h-4 w-4 text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                        className="h-4 w-4 text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
                         aria-hidden="true"
                       />
                     </div>
@@ -333,7 +333,7 @@ export function Dashboard() {
           <section aria-labelledby="recent-games-title">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="recent-games-title" className="text-xl font-bold text-brown-950 dark:text-white">Recent games</h2>
-              <Link to={appRoutes.gameHistory} className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-teal-300 dark:hover:bg-teal-950/30">View all</Link>
+              <Link to={appRoutes.gameHistory} className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-teal-300 dark:hover:bg-teal-950/30">View all</Link>
             </div>
             <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
               {gameStatsData.recent_results.slice(0, 5).map((result, idx) => {
@@ -350,7 +350,7 @@ export function Dashboard() {
                           <p className="truncate text-sm font-bold text-brown-950 dark:text-white">
                             {result.category_title || result.category_id}
                           </p>
-                          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-brown-600 dark:bg-slate-700 dark:text-gray-300">
+                          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-xs font-semibold capitalize text-brown-600 dark:bg-slate-700 dark:text-gray-300">
                             {result.difficulty}
                           </span>
                         </div>
@@ -371,7 +371,7 @@ export function Dashboard() {
                       </div>
                       <span className="text-sm font-bold text-brown-700 dark:text-gray-200">{result.score}</span>
                     </div>
-                    <ChevronRight className="h-4 w-4 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
                   </Link>
                 );
               })}
@@ -391,7 +391,7 @@ export function Dashboard() {
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 to="/chat"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="pressable inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 Ask a question
               </Link>

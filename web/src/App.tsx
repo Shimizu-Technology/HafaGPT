@@ -93,6 +93,7 @@ const AdminAudioReview = lazyNamed(() => import('./components/admin/AdminAudioRe
 const AdminSettings = lazyNamed(() => import('./components/admin/AdminSettings'), 'AdminSettings');
 const PrivacyPolicy = lazy(() => loadRoute(() => import('./components/PrivacyPolicy')));
 const SupportPage = lazy(() => loadRoute(() => import('./components/SupportPage')));
+const NotFoundPage = lazyNamed(() => import('./components/NotFoundPage'), 'NotFoundPage');
 
 function RouteLoadingFallback() {
   return (
@@ -259,6 +260,9 @@ function AppRoutes() {
         <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
         <Route path="/admin/audio" element={<AdminRoute><AdminAudioReview /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+
+        {/* Anything else: say so plainly and offer a way back. */}
+        <Route path="*" element={<NotFoundPage />} />
           </Routes>
           {/* This commits only after the initial lazy route has loaded. */}
           <BootSuccessMarker />

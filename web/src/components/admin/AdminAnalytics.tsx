@@ -355,7 +355,7 @@ export function AdminAnalytics() {
                         </div>
                         <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                           <div 
-                            className={`h-full rounded-full transition-all duration-500 ${
+                            className={`h-full rounded-full transition-[width,background-color] duration-300 ${
                               quiz.avg_score >= 70 ? 'bg-emerald-500' : 
                               quiz.avg_score >= 50 ? 'bg-amber-500' : 'bg-red-500'
                             }`}
@@ -493,7 +493,7 @@ export function AdminAnalytics() {
                         return (
                           <div key={stage.name} className="relative">
                             <div 
-                              className="h-10 rounded-lg flex items-center justify-between px-4 transition-all"
+                              className="h-10 rounded-lg flex items-center justify-between px-4 transition-colors"
                               style={{ 
                                 width: `${Math.max(widthPercent, 20)}%`,
                                 backgroundColor: stage.fill,

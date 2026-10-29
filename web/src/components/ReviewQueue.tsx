@@ -75,7 +75,7 @@ function ReviewQueueSession() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream-50 dark:bg-slate-900">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coral-600" aria-hidden="true" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coral-700" aria-hidden="true" />
           <p className="mt-3 text-brown-700 dark:text-gray-200">Loading your reviews…</p>
         </div>
       </main>
@@ -86,7 +86,7 @@ function ReviewQueueSession() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream-50 px-4 dark:bg-slate-900">
         <div className="max-w-sm text-center">
-          <RotateCcw className="mx-auto h-10 w-10 text-coral-600" aria-hidden="true" />
+          <RotateCcw className="mx-auto h-10 w-10 text-coral-700" aria-hidden="true" />
           <h1 className="mt-3 text-xl font-bold text-brown-900 dark:text-white">Reviews could not load</h1>
           <button
             type="button"
@@ -104,7 +104,7 @@ function ReviewQueueSession() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-cream-50 dark:bg-slate-900">
         <div className="text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coral-600" aria-hidden="true" />
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-coral-700" aria-hidden="true" />
           <p className="mt-3 text-brown-700 dark:text-gray-200">Loading more reviews…</p>
         </div>
       </main>
@@ -121,7 +121,7 @@ function ReviewQueueSession() {
             Nice work. New reviews will appear here when they are due.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to="/" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
+            <Link to="/" className="pressable inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
             <Link
               to="/flashcards"
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 py-2.5 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"

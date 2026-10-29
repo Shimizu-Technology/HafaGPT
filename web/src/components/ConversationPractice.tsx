@@ -232,7 +232,7 @@ export function ConversationPractice() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 p-4">
         <div className="max-w-2xl mx-auto pt-20 text-center">
-          <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-500 dark:text-ocean-300" aria-hidden="true" />
+          <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             Sign in Required
           </h1>
@@ -241,7 +241,7 @@ export function ConversationPractice() {
           </p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-coral-700 text-white rounded-lg hover:bg-coral-800 transition-colors"
+            className="pressable inline-flex items-center gap-2 px-4 py-2 bg-coral-700 text-white rounded-lg hover:bg-coral-800 transition-colors"
           >
             ← Back to Home
           </Link>
@@ -297,7 +297,7 @@ export function ConversationPractice() {
             <ul className="space-y-2">
               {scenario.objectives.map((obj, i) => (
                 <li key={i} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                  <Check className="mt-0.5 h-4 w-4 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />
                   {obj}
                 </li>
               ))}
@@ -384,7 +384,7 @@ export function ConversationPractice() {
               </button>
               <Link replace
                 to="/practice"
-                className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-700 px-4 py-3 text-center font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+                className="pressable flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-700 px-4 py-3 text-center font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
               >
                 More scenarios
               </Link>

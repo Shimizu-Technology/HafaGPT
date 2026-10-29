@@ -129,7 +129,7 @@ export function StoryList() {
               <p className="text-sm text-brown-600 dark:text-gray-300">
                 {mode === 'curated' ? (
                   <>
-                    Read Chamorro stories and <span className="font-semibold text-amber-600 dark:text-amber-400">tap any word</span> to see its translation. 
+                    Read Chamorro stories and <span className="font-semibold text-amber-700 dark:text-amber-400">tap any word</span> to see its translation. 
                     After each story, test your understanding with comprehension questions!
                   </>
                 ) : (
@@ -190,7 +190,7 @@ export function StoryList() {
                             </div>
                             
                             {/* Difficulty Badge */}
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
                               {story.difficulty}
                             </span>
                           </div>
@@ -279,7 +279,7 @@ export function StoryList() {
                               </div>
                               
                               {/* Difficulty Badge */}
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
                                 {story.difficulty}
                               </span>
                             </div>
@@ -319,7 +319,7 @@ export function StoryList() {
                   href={externalAvailability?.sourceUrl || 'https://lengguahita.com/resources/'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 rounded-full bg-teal-700 text-white font-medium hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 transition-colors"
+                  className="pressable inline-flex min-h-11 items-center justify-center gap-2 px-4 py-2 rounded-full bg-teal-700 text-white font-medium hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 transition-colors"
                 >
                   Visit Lengguahi-ta
                   <ExternalLink className="w-4 h-4" aria-hidden="true" />
@@ -333,7 +333,7 @@ export function StoryList() {
         {mode === 'curated' && <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
           <div className="flex items-center gap-3 mb-2">
             {mode === 'curated' ? (
-              <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              <Sparkles className="w-5 h-5 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             ) : (
               <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             )}

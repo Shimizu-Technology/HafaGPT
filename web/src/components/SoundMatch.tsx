@@ -361,7 +361,7 @@ export function SoundMatch() {
                   <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-purple-700 dark:text-purple-300'}`}>
                     {currentWord.chamorro}
                   </span>
-                  <span className={`text-sm ${isSpeaking ? 'text-white/80' : 'text-purple-500 dark:text-purple-400'}`}>
+                  <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-purple-500 dark:text-purple-400'}`}>
                     {isSpeaking ? 'Playing…' : 'Tap to hear'}
                   </span>
                 </div>

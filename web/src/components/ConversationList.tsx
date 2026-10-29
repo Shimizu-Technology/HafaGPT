@@ -43,7 +43,7 @@ function ScenarioCard({ scenario }: { scenario: ConversationScenario }) {
         </span>
       </span>
 
-      <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+      <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
     </Link>
   );
 }

@@ -450,7 +450,7 @@ export function WordScramble() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -469,7 +469,7 @@ export function WordScramble() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -534,7 +534,7 @@ export function WordScramble() {
                     >
                       <span className="text-lg sm:text-xl font-bold">{count}</span>
                       <span className={`text-xs sm:text-xs block ${
-                        settings.wordsPerRound === count && !isDisabled ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'
+                        settings.wordsPerRound === count && !isDisabled ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'
                       }`}>
                         words
                       </span>
@@ -580,7 +580,7 @@ export function WordScramble() {
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Word</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-400">
+                  <p className="text-lg sm:text-xl font-bold text-amber-700 dark:text-amber-400">
                     {score}
                   </p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
@@ -658,7 +658,7 @@ export function WordScramble() {
                         transition-colors duration-200 transform
                         ${isSelected
                           ? 'bg-purple-700 text-white scale-95 shadow-inner'
-                          : 'bg-gradient-to-br from-cream-100 to-cream-200 dark:from-slate-700 dark:to-slate-600 text-brown-800 dark:text-white shadow-md  active:scale-95'
+                          : 'bg-gradient-to-br from-cream-100 to-cream-200 dark:from-slate-700 dark:to-slate-600 text-brown-800 dark:text-white shadow-md '
                         }
                         ${feedback === 'correct' && isSelected ? 'bg-green-500' : ''}
                         ${feedback === 'incorrect' && isSelected ? 'bg-red-500' : ''}
@@ -697,7 +697,7 @@ export function WordScramble() {
                     {currentAnswer}
                   </p>
                 ) : (
-                  <p className="text-brown-400 dark:text-gray-500 text-lg">
+                  <p className="text-brown-500 dark:text-gray-500 text-lg">
                     Tap letters above...
                   </p>
                 )}
@@ -857,7 +857,7 @@ export function WordScramble() {
               <button
                 onClick={startGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-purple-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again

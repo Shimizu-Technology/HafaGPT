@@ -73,14 +73,14 @@ function TopicNode({
 
   const iconColors = {
     locked: 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-500',
-    available: 'bg-coral-100 dark:bg-ocean-800 text-coral-600 dark:text-ocean-400',
+    available: 'bg-coral-100 dark:bg-ocean-800 text-coral-700 dark:text-ocean-400',
     in_progress: 'bg-coral-700 dark:bg-ocean-700 text-white',
     completed: 'bg-emerald-500 text-white',
   };
 
   const content = (
     <div
-      className={`relative p-3 sm:p-4 rounded-xl border-2 transition-all ${statusColors[status]} ${
+      className={`relative p-3 sm:p-4 rounded-xl border-2 transition-colors ${statusColors[status]} ${
         isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-coral-400 dark:hover:border-teal-500 cursor-pointer'
       }`}
     >
@@ -119,7 +119,7 @@ function TopicNode({
               <>
                 <StarDisplay count={stars} />
                 {progress?.best_quiz_score != null && (
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
                     {progress?.best_quiz_score}%
                   </span>
                 )}
@@ -148,8 +148,8 @@ function TopicNode({
         {!isLocked && (
           <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
             status === 'completed' 
-              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
-              : 'bg-coral-100 dark:bg-ocean-800 text-coral-600 dark:text-ocean-400'
+              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+              : 'bg-coral-100 dark:bg-ocean-800 text-coral-700 dark:text-ocean-400'
           }`}>
             {status === 'completed' ? (
               <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -230,7 +230,7 @@ function LevelSection({
         aria-controls={`learning-topics-${level}`}
         disabled={isLocked}
         className={`w-full p-3 sm:p-4 flex items-center justify-between ${colors.bg} ${
-          isLocked ? 'cursor-not-allowed' : 'hover:brightness-95 transition-all'
+          isLocked ? 'cursor-not-allowed' : 'hover:brightness-95 transition-[filter]'
         }`}
       >
         <div className="flex items-center gap-2 sm:gap-3">
@@ -381,7 +381,7 @@ export function LearningPathMap() {
       <div className="mb-4 sm:mb-6">
         <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-amber-500 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-amber-500 rounded-full transition-[width,background-color] duration-300"
             style={{ width: `${(totalCompleted / totalTopics) * 100}%` }}
           />
         </div>

@@ -568,7 +568,7 @@ export function ChamorroWordle() {
             >
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-coral-100 dark:bg-teal-950/50">
-                  <Calendar className="h-6 w-6 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+                  <Calendar className="h-6 w-6 text-coral-700 dark:text-teal-300" aria-hidden="true" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-bold text-brown-800 dark:text-white">Daily Challenge</h3>
@@ -576,7 +576,7 @@ export function ChamorroWordle() {
                     {dailyPlayed ? 'Already played today!' : '5-letter word • Same for everyone'}
                   </p>
                 </div>
-                {!dailyPlayed && <Play className="h-5 w-5 text-coral-500 dark:text-teal-300" aria-hidden="true" />}
+                {!dailyPlayed && <Play className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />}
               </div>
             </button>
 
@@ -584,7 +584,7 @@ export function ChamorroWordle() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <Shuffle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <Shuffle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
                 </div>
                 <div>
                   <h3 className="font-bold text-brown-800 dark:text-white">Practice Mode</h3>
@@ -707,8 +707,8 @@ export function ChamorroWordle() {
               <div className="flex justify-center gap-2 mb-3">
                 <div className="w-10 h-10 bg-green-700 text-white rounded flex items-center justify-center font-bold">H</div>
                 <div className="w-10 h-10 bg-yellow-700 text-white rounded flex items-center justify-center font-bold">Å</div>
-                <div className="w-10 h-10 bg-gray-400 text-white rounded flex items-center justify-center font-bold">F</div>
-                <div className="w-10 h-10 bg-gray-400 text-white rounded flex items-center justify-center font-bold">A</div>
+                <div className="w-10 h-10 bg-gray-600 text-white rounded flex items-center justify-center font-bold">F</div>
+                <div className="w-10 h-10 bg-gray-600 text-white rounded flex items-center justify-center font-bold">A</div>
               </div>
               <ul className="space-y-1 text-center text-xs text-brown-500 dark:text-gray-400">
                 <li><strong>✓ Green</strong> = Right letter, right spot</li>
@@ -716,7 +716,7 @@ export function ChamorroWordle() {
                 <li><strong>× Gray</strong> = Not in word</li>
               </ul>
 
-              <p className="text-xs text-center text-brown-400 dark:text-gray-500 mt-3">
+              <p className="text-xs text-center text-brown-500 dark:text-gray-500 mt-3">
                 You have <strong>6 tries</strong> to guess the word!
               </p>
             </details>
@@ -754,7 +754,7 @@ export function ChamorroWordle() {
 
             {/* Enter hint - shows when word is complete */}
             {currentGuess.length === wordLength && (
-              <div className="animate-pulse text-center text-sm font-medium text-coral-600 dark:text-teal-300">
+              <div className="animate-pulse text-center text-sm font-medium text-coral-700 dark:text-teal-300">
                 Press Enter ↵ to submit
               </div>
             )}
@@ -781,7 +781,7 @@ export function ChamorroWordle() {
                 {gameState === 'won' ? 'Håfa Adai! You got it!' : 'Better luck next time!'}
               </h2>
               <p className="text-brown-600 dark:text-gray-400">
-                The word was: <strong className="text-coral-600 dark:text-teal-300">{targetWord.word}</strong>
+                The word was: <strong className="text-coral-700 dark:text-teal-300">{targetWord.word}</strong>
               </p>
               <p className="text-sm text-brown-500 dark:text-gray-500">
                 Meaning: {targetWord.meaning}
@@ -813,7 +813,7 @@ export function ChamorroWordle() {
                       key={cellIndex}
                       className={`
                         w-8 h-8 rounded
-                        ${state === 'correct' ? 'bg-green-500' : state === 'present' ? 'bg-yellow-500' : 'bg-gray-400'}
+                        ${state === 'correct' ? 'bg-green-700' : state === 'present' ? 'bg-yellow-700' : 'bg-gray-600'}
                       `}
                     />
                   ))}
@@ -844,7 +844,7 @@ export function ChamorroWordle() {
               )}
             </div>
 
-            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-600 [@media(hover:hover)_and_(pointer:fine)]:hover:underline dark:text-teal-300">
+            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline dark:text-teal-300">
               {gameReturn.label}
             </button>
           </div>

@@ -81,7 +81,7 @@ export function QuizHistory() {
             aria-live="polite"
           >
             <Loader2
-              className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300"
+              className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300"
               aria-hidden="true"
             />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your quiz history…</p>
@@ -111,7 +111,7 @@ export function QuizHistory() {
             </p>
             <Link
               to="/quiz"
-              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               Choose a quiz
             </Link>
@@ -144,7 +144,7 @@ export function QuizHistory() {
                               {result.category_title || 'Quiz'}
                             </span>
                             {isDictionary && (
-                              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
                                 Dictionary
                               </span>
                             )}
@@ -166,7 +166,7 @@ export function QuizHistory() {
                           {percentage}%
                         </span>
                         <ChevronRight
-                          className="h-5 w-5 text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
+                          className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300"
                           aria-hidden="true"
                         />
                       </span>

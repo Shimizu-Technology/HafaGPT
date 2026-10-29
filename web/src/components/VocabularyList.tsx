@@ -135,14 +135,14 @@ export function VocabularyList() {
         {/* Search Bar */}
         <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400 dark:text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-500 dark:text-gray-500" />
             <input
               aria-label="Search all Chamorro words"
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search all Chamorro words..."
-              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-400 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-ocean-400 dark:focus:ring-ocean-400/30"
+              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-500 shadow-sm focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-ocean-400 dark:focus:ring-ocean-400/30"
             />
             {searchQuery && (
               <button
@@ -151,7 +151,7 @@ export function VocabularyList() {
                 aria-label="Clear dictionary search"
                 className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 dark:text-gray-400 dark:hover:bg-slate-700"
               >
-                <X className="w-4 h-4 text-brown-400 dark:text-gray-500" />
+                <X className="w-4 h-4 text-brown-500 dark:text-gray-500" />
               </button>
             )}
           </div>
@@ -163,7 +163,7 @@ export function VocabularyList() {
             {searchError && <RecordsError title="Dictionary search is unavailable" hasData={Boolean(displayedSearch)} retrying={searchFetching} onRetry={() => void retrySearch()} />}
             {searchLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-coral-500 dark:text-ocean-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-coral-700 dark:text-ocean-400" />
                 <span aria-live="polite" className="ml-2 text-brown-600 dark:text-gray-400">Searching...</span>
               </div>
             ) : displayedSearch ? (
@@ -209,7 +209,7 @@ export function VocabularyList() {
             {/* Loading State */}
             {categoriesLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400" />
               </div>
             ) : categoriesData ? (
               <>
@@ -287,7 +287,7 @@ function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: 
               </h3>
             )}
             {word.part_of_speech && (
-              <span className="text-xs text-brown-400 dark:text-gray-500 italic">
+              <span className="text-xs text-brown-500 dark:text-gray-500 italic">
                 {word.part_of_speech}
               </span>
             )}
@@ -313,7 +313,7 @@ function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: 
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
             aria-controls={examplesId}
-            className="inline-flex min-h-11 flex-none items-center gap-1 rounded-xl px-2 text-xs font-medium text-coral-600 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+            className="inline-flex min-h-11 flex-none items-center gap-1 rounded-xl px-2 text-xs font-medium text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
           >
             {expanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
             {word.examples.length} example{word.examples.length !== 1 ? 's' : ''}

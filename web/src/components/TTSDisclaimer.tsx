@@ -40,7 +40,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
       <div className={`bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 ${className}`}>
         <div className="flex items-start gap-3">
           <div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
-            <Volume2 className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <Volume2 className="w-5 h-5 text-amber-700 dark:text-amber-400" />
           </div>
           <div className="flex-1">
             <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">
@@ -60,7 +60,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
 
   if (variant === 'inline') {
     return (
-      <div className={`flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 ${className}`}>
+      <div className={`flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400 ${className}`}>
         <Volume2 className="w-3.5 h-3.5 flex-shrink-0" />
         <span>{shortText}</span>
       </div>
@@ -79,7 +79,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
           aria-expanded={showTooltip}
           aria-controls={showTooltip ? disclosureId : undefined}
         >
-          <Volume2 className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <Volume2 className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
         </button>
         
         {showTooltip && (
@@ -104,7 +104,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                     aria-label="Close audio pronunciation note"
                     className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded"
                   >
-                    <X className="w-4 h-4 text-brown-400" />
+                    <X className="w-4 h-4 text-brown-500" />
                   </button>
                 </div>
                 <div className="text-xs text-brown-600 dark:text-gray-400 space-y-2">
@@ -150,7 +150,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-amber-100 dark:bg-amber-900/40 rounded-lg">
-                    <Volume2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <Volume2 className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                   </div>
                   <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">About Audio Pronunciation</span>
                 </div>
@@ -159,7 +159,7 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                   aria-label="Close audio quality note"
                   className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded sm:hidden"
                 >
-                  <X className="w-4 h-4 text-brown-400" />
+                  <X className="w-4 h-4 text-brown-500" />
                 </button>
               </div>
               

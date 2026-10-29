@@ -274,10 +274,10 @@ export function SimonSays() {
                 <span className={`text-lg font-bold block ${isSpeaking ? 'text-white' : 'text-indigo-700 dark:text-indigo-300'}`}>
                   "{currentBodyPart.instruction}"
                 </span>
-                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
                   "Touch your {currentBodyPart.english.toLowerCase()}!"
                 </span>
-                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>

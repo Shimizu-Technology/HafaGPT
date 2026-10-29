@@ -273,7 +273,7 @@ export function ColorTouch() {
                 <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-pink-700 dark:text-pink-300'}`}>
                   {currentColor.chamorro}
                 </span>
-                <span className={`text-sm ${isSpeaking ? 'text-white/80' : 'text-pink-500 dark:text-pink-400'}`}>
+                <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-pink-500 dark:text-pink-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>

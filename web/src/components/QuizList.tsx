@@ -32,7 +32,7 @@ export function QuizList() {
         subtitle="Check what you know and learn from every answer"
         icon={Brain}
         trailing={(
-          <Link to="/dashboard/quiz-history" aria-label="Open quiz history" className="flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 dark:text-ocean-300 dark:hover:bg-ocean-950">
+          <Link to="/dashboard/quiz-history" aria-label="Open quiz history" className="pressable flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 dark:text-ocean-300 dark:hover:bg-ocean-950">
             <History className="h-5 w-5" aria-hidden="true" />
             <span className="hidden sm:inline">History</span>
           </Link>
@@ -133,7 +133,7 @@ export function QuizList() {
                   <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{category.description}</span>
                   <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-gray-400">{category.questions.length} questions • {category.difficulty}</span>
                 </span>
-                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
             ))
             : dictionaryCategories.map((category) => (
@@ -144,7 +144,7 @@ export function QuizList() {
                   <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{category.description}</span>
                   <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-gray-400">10 random questions • {category.word_count} words</span>
                 </span>
-                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
             ))}
         </div>

@@ -14,6 +14,11 @@
     --focus-role: 61 114 115;
     --danger: 185 28 28;
     --danger-hover: 153 27 27;
+
+    /* Motion tokens (mirrored in tailwind.config.js transitionTimingFunction). */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   }
   .dark {
     --action: 61 114 115; /* teal-700 */
@@ -23,6 +28,24 @@
     --ink: 255 255 255;
     --muted: 209 213 219;
     --focus-role: 136 213 214;
+  }
+
+  /* Press feedback for everything pressable. Uses the independent `scale`
+     property so it composes with any positioning transform an element
+     already has. Zero-specificity :where() lets component transitions win;
+     their transition lists include `scale` (tailwind.config.js). */
+  :where(button, [role="button"], summary, .action-button, .pressable) {
+    transition: scale 160ms var(--ease-out);
+  }
+  :where(button, [role="button"], summary, .action-button, .pressable):where(:not(:disabled, [aria-disabled="true"], .no-press)):active {
+    scale: 0.97;
+  }
+
+  /* Headings and regions that receive focus programmatically after
+     navigation are not controls; announcing them is enough. */
+  :where(h1, h2, h3, main, section, article, div, p)[tabindex="-1"]:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 
   * {
@@ -161,35 +184,14 @@
     display: none;
   }
 
-  /* Enhanced animations */
+  /* Interface motion. Enter animations use the strong ease-out token and
+     stay at or under 250ms; nothing appears from nothing (scale >= 0.95). */
   @keyframes fade-in {
     from {
       opacity: 0;
     }
     to {
       opacity: 1;
-    }
-  }
-
-  @keyframes slide-in-right {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes slide-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
     }
   }
 
@@ -207,7 +209,7 @@
   @keyframes slide-down {
     from {
       opacity: 0;
-      transform: translate(-50%, -20px);
+      transform: translate(-50%, -12px);
     }
     to {
       opacity: 1;
@@ -216,39 +218,15 @@
   }
 
   .animate-fade-in {
-    animation: fade-in 0.3s ease-out forwards;
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.4s ease-out forwards;
-  }
-
-  .animate-slide-up {
-    animation: slide-up 0.3s ease-out forwards;
+    animation: fade-in 200ms var(--ease-out) both;
   }
 
   .animate-scale-in {
-    animation: scale-in 0.2s ease-out forwards;
-  }
-
-  /* Scale up animation for modals */
-  @keyframes scale-up {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  .animate-scale-up {
-    animation: scale-up 0.2s ease-out forwards;
+    animation: scale-in 200ms var(--ease-out) both;
   }
 
   .animate-slide-down {
-    animation: slide-down 0.3s ease-out forwards;
+    animation: slide-down 250ms var(--ease-out) both;
   }
 
   /* Fast fade-in for streaming text transition */
@@ -262,7 +240,7 @@
   }
 
   .animate-fade-in-fast {
-    animation: fade-in-fast 0.15s ease-out forwards;
+    animation: fade-in-fast 150ms var(--ease-out) forwards;
   }
 
   /* 3D Flip Animation for Flashcards */
@@ -281,45 +259,6 @@
 
   .rotate-y-180 {
     transform: rotateY(180deg);
-  }
-
-  /* Page enter animation - smooth fade + slight slide up */
-  @keyframes page-enter {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-page-enter {
-    animation: page-enter 0.25s ease-out forwards;
-  }
-
-  /* Button press feedback - subtle scale down on click */
-  .btn-press {
-    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-  }
-
-  .btn-press:active {
-    transform: scale(0.97);
-  }
-
-  /* Card hover lift effect */
-  .card-hover {
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-  }
-
-  .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-
-  .card-hover:active {
-    transform: translateY(0);
   }
 }
 

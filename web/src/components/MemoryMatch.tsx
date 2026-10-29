@@ -457,7 +457,7 @@ export function MemoryMatch() {
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
             {learningContext && (
               <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-950/20">
-                <BookOpen className="h-5 w-5 flex-none text-coral-600 dark:text-teal-300" aria-hidden="true" />
+                <BookOpen className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />
                 <p className="text-sm text-brown-700 dark:text-gray-200">
                   Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from {learningContext.source === 'today' ? 'Today' : 'your lesson'}.
                 </p>
@@ -489,7 +489,7 @@ export function MemoryMatch() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -508,7 +508,7 @@ export function MemoryMatch() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -582,7 +582,7 @@ export function MemoryMatch() {
                       </div>
                       <span className="text-xs sm:text-xs font-medium capitalize">{key}</span>
                       <span className={`text-xs sm:text-xs block ${
-                        settings.difficulty === key && !isDisabled ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'
+                        settings.difficulty === key && !isDisabled ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'
                       }`}>
                         {config.pairs} pairs
                       </span>
@@ -592,7 +592,7 @@ export function MemoryMatch() {
               </div>
               {/* Show card count warning */}
               {availableCardCount > 0 && availableCardCount < 8 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 text-center">
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-2 text-center">
                   This category has {availableCardCount} cards available
                 </p>
               )}
@@ -637,7 +637,7 @@ export function MemoryMatch() {
                   <span className="font-bold text-xs">{formatTime(elapsedTime)}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-coral-500 dark:text-teal-400">
+              <div className="flex items-center gap-1 text-coral-700 dark:text-teal-400">
                 <Trophy className="w-3 h-3" />
                 <span className="font-bold text-xs">{matchedPairs.length}/{settings.pairsCount}</span>
               </div>
@@ -716,15 +716,15 @@ export function MemoryMatch() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{moves}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{moves}</p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Moves</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{formatTime(elapsedTime)}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{formatTime(elapsedTime)}</p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-500 dark:text-teal-400">{calculateScore}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{calculateScore}</p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
               </div>
@@ -770,7 +770,7 @@ export function MemoryMatch() {
               <button
                 onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -790,7 +790,7 @@ export function MemoryMatch() {
               <button
                 type="button"
                 disabled
-                className="inline-block cursor-not-allowed text-xs font-medium text-coral-500 opacity-60 dark:text-teal-400 sm:text-sm"
+                className="inline-block cursor-not-allowed text-xs font-medium text-coral-700 opacity-60 dark:text-teal-400 sm:text-sm"
               >
                 {gameReturn.label}
               </button>
@@ -798,7 +798,7 @@ export function MemoryMatch() {
               <Link
                 to={gameReturn.to}
                 replace
-                className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
+                className="inline-block text-coral-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}
               </Link>

@@ -50,7 +50,7 @@ export function StreakWidget() {
               </span>
             </div>
             {!is_today_active && current_streak > 0 && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
+              <p className="text-xs text-amber-700 dark:text-amber-400">
                 Do an activity to keep your streak!
               </p>
             )}
@@ -89,7 +89,7 @@ export function StreakWidget() {
             <MessageSquare className={`w-3.5 h-3.5 ${
               today_activities.chat > 0 
                 ? 'text-teal-600 dark:text-teal-400' 
-                : 'text-brown-400 dark:text-gray-500'
+                : 'text-brown-500 dark:text-gray-500'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.chat > 0 
@@ -114,7 +114,7 @@ export function StreakWidget() {
             <Gamepad2 className={`w-3.5 h-3.5 ${
               today_activities.games > 0 
                 ? 'text-pink-600 dark:text-pink-400' 
-                : 'text-brown-400 dark:text-gray-500'
+                : 'text-brown-500 dark:text-gray-500'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.games > 0 
@@ -139,7 +139,7 @@ export function StreakWidget() {
             <GraduationCap className={`w-3.5 h-3.5 ${
               today_activities.quizzes > 0 
                 ? 'text-indigo-600 dark:text-indigo-400' 
-                : 'text-brown-400 dark:text-gray-500'
+                : 'text-brown-500 dark:text-gray-500'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.quizzes > 0 

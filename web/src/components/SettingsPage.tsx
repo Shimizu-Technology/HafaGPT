@@ -113,7 +113,7 @@ function SettingsChoice<T extends string | number>({
         <span className="block text-sm font-bold text-brown-950 dark:text-white">{title}</span>
         <span className="mt-0.5 block text-xs leading-snug text-brown-600 dark:text-gray-300">{description}</span>
       </span>
-      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-teal-300" aria-hidden="true" />}
+      {selected && <Check className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />}
     </button>
   );
 }
@@ -390,14 +390,14 @@ export function SettingsPage() {
               to="/support"
               className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
             >
-              <HelpCircle className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+              <HelpCircle className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
               <span className="font-semibold text-brown-800 dark:text-gray-200">Help & support</span>
             </Link>
             <Link
               to="/privacy"
               className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
             >
-              <Shield className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+              <Shield className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
               <span className="font-semibold text-brown-800 dark:text-gray-200">Privacy policy</span>
             </Link>
           </div>

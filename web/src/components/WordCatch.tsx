@@ -546,7 +546,7 @@ export function WordCatch() {
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
@@ -559,9 +559,9 @@ export function WordCatch() {
                     }
                   `}
                 >
-                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
+                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
@@ -606,7 +606,7 @@ export function WordCatch() {
                   <span className="text-yellow-500">⚡</span> Build combos for bonus points
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="text-coral-500 dark:text-teal-400">⏱️</span> 60 seconds - catch as many as you can!
+                  <span className="text-coral-700 dark:text-teal-400">⏱️</span> 60 seconds - catch as many as you can!
                 </li>
               </ul>
             </details>
@@ -655,7 +655,7 @@ export function WordCatch() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
+                  <p className="text-lg sm:text-xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
                   <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div className="text-center">
@@ -692,7 +692,7 @@ export function WordCatch() {
                       ? pair.isCorrect
                         ? 'bg-green-700 text-white'
                         : 'bg-red-700 text-white'
-                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600  active:scale-95'
+                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600 '
                     }
                   `}
                   style={{
@@ -789,7 +789,7 @@ export function WordCatch() {
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-coral-500 dark:text-teal-400">{score}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
                   <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
                 </div>
                 <div>
@@ -808,7 +808,7 @@ export function WordCatch() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  active:scale-[0.98] transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
@@ -825,7 +825,7 @@ export function WordCatch() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-500 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
+              className="inline-block text-coral-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>

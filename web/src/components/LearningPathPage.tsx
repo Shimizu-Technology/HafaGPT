@@ -53,23 +53,23 @@ export function LearningPathPage() {
             {/* Tips Section - Desktop only */}
             <div className="mt-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
               <h3 className="mb-3 flex items-center gap-2 font-semibold text-brown-900 dark:text-white">
-                <Lightbulb className="h-5 w-5 text-amber-600 dark:text-amber-300" aria-hidden="true" /> Learning tips
+                <Lightbulb className="h-5 w-5 text-amber-700 dark:text-amber-300" aria-hidden="true" /> Learning tips
               </h3>
               <ul className="space-y-2 text-sm text-brown-600 dark:text-gray-300">
                 <li className="flex items-start gap-2">
-                  <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
+                  <span className="text-coral-700 dark:text-ocean-400 mt-0.5">•</span>
                   <span>Complete flashcards before taking the quiz</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
+                  <span className="text-coral-700 dark:text-ocean-400 mt-0.5">•</span>
                   <span>Score 90%+ on quizzes to earn 3 stars</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
+                  <span className="text-coral-700 dark:text-ocean-400 mt-0.5">•</span>
                   <span>Review completed topics to improve your score</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-coral-500 dark:text-ocean-400 mt-0.5">•</span>
+                  <span className="text-coral-700 dark:text-ocean-400 mt-0.5">•</span>
                   <span>Practice regularly to build a steady habit</span>
                 </li>
               </ul>

@@ -539,7 +539,7 @@ function FlashcardSession() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-2" />
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-2" />
           <p className="text-brown-600 dark:text-gray-300">Loading dictionary flashcards...</p>
         </div>
       </LearnerPageShell>
@@ -551,7 +551,7 @@ function FlashcardSession() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-2" />
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-2" />
           <p className="text-brown-600 dark:text-gray-300">Loading flashcards...</p>
         </div>
       </LearnerPageShell>
@@ -593,7 +593,7 @@ function FlashcardSession() {
         below={(
           <div className="flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Flashcard progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-              <div className="h-full bg-coral-700 transition-all dark:bg-ocean-500" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-coral-700 transition-[width,background-color] duration-300 dark:bg-ocean-500" style={{ width: `${progress}%` }} />
             </div>
             <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {flashcards.length}</span>
           </div>
@@ -673,16 +673,16 @@ function FlashcardSession() {
             onClick={handlePrevious}
             aria-label="Previous flashcard"
             disabled={currentIndex === 0}
-            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
+            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-colors touch-manipulation"
           >
-            <ChevronLeft className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
+            <ChevronLeft className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
           </button>
 
           <div className="flex gap-2">
             {flashcards.map((_, index) => (
               <div
                 key={index}
-                className={`h-2 rounded-full transition-all ${
+                className={`h-2 rounded-full transition-[width,background-color] duration-300 ${
                   index === currentIndex
                     ? 'w-8 bg-gradient-to-r from-coral-500 to-coral-600 dark:from-ocean-500 dark:to-ocean-600 shadow-sm'
                     : 'w-2 bg-gray-300 dark:bg-slate-600'
@@ -695,9 +695,9 @@ function FlashcardSession() {
             onClick={handleNext}
             aria-label="Next flashcard"
             disabled={currentIndex === flashcards.length - 1}
-            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-all touch-manipulation"
+            className="p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 hover:shadow-md transition-colors touch-manipulation"
           >
-            <ChevronRight className="w-6 h-6 text-coral-600 dark:text-ocean-400" />
+            <ChevronRight className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
           </button>
         </div>
 
@@ -719,7 +719,7 @@ function FlashcardSession() {
                 <button
                   onClick={loadMoreDictionaryCards}
                   disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError}
-                  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-colors disabled:opacity-50"
                 >
                   {isDictionaryLoading ? (
                     <>
@@ -736,7 +736,7 @@ function FlashcardSession() {
               )}
               
               {cardType === 'curated' && (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">
+                <p className="text-sm text-emerald-700 dark:text-emerald-400">
                   Try <span className="font-semibold">Dictionary mode</span> for unlimited practice!
                 </p>
               )}
@@ -759,7 +759,7 @@ function FlashcardSession() {
       {isGeneratingMore && !showNewCardsNotification && (
         <div className="fixed learner-toast-offset left-1/2 transform -translate-x-1/2 z-20">
           <div className="bg-white dark:bg-slate-800 rounded-full shadow-xl border-2 border-coral-200 dark:border-ocean-900/50 px-6 py-3 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-coral-500 dark:text-ocean-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-coral-700 dark:text-ocean-400" />
             <span className="text-sm font-semibold text-brown-800 dark:text-white">
               Generating 3 more cards...
             </span>

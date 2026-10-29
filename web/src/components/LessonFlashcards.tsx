@@ -62,7 +62,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
         </p>
         <button
           onClick={onSkip}
-          className="mt-4 text-coral-600 dark:text-ocean-400 hover:underline"
+          className="mt-4 text-coral-700 dark:text-ocean-400 hover:underline"
         >
           Skip to quiz →
         </button>

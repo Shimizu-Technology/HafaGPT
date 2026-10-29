@@ -29,7 +29,7 @@ export class StartupErrorBoundary extends Component<StartupErrorBoundaryProps, S
           className="w-full max-w-sm rounded-3xl border border-cream-300 bg-white p-7 text-center shadow-[0_18px_45px_rgba(83,55,34,0.10)] dark:border-slate-700 dark:bg-slate-900"
           role="alert"
         >
-          <p className="text-sm font-extrabold uppercase tracking-[0.08em] text-coral-600 dark:text-ocean-300">
+          <p className="text-sm font-extrabold uppercase tracking-[0.08em] text-coral-700 dark:text-ocean-300">
             HåfaGPT
           </p>
           <h1 className="mt-4 text-2xl font-bold tracking-tight">This browser needs a quick refresh</h1>

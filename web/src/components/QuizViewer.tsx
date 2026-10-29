@@ -255,7 +255,7 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
           <h1 className="text-brown-600 dark:text-gray-400">Generating quiz questions...</h1>
         </div>
       </div>
@@ -311,7 +311,7 @@ function QuizViewerSession() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
           <h1 className="text-brown-600 dark:text-gray-400">Loading questions...</h1>
         </div>
       </div>
@@ -328,7 +328,7 @@ function QuizViewerSession() {
           <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
           <Link
             to={quizReturnTo}
-            className="inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
+            className="pressable inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
           >
             {quizReturnLabel}
           </Link>
@@ -349,7 +349,7 @@ function QuizViewerSession() {
           </p>
           <Link replace
             to="/quiz"
-            className="inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
+            className="pressable inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
           >
             Back to Quiz List
           </Link>
@@ -552,7 +552,7 @@ function QuizViewerSession() {
               scorePercent >= 80 
                 ? 'text-green-600 dark:text-green-400'
                 : scorePercent >= 60
-                ? 'text-amber-600 dark:text-amber-400'
+                ? 'text-amber-700 dark:text-amber-400'
                 : 'text-red-600 dark:text-red-400'
             }`} />
             <h2 className="text-3xl font-bold text-brown-800 dark:text-white mb-2">
@@ -654,7 +654,7 @@ function QuizViewerSession() {
             ) : (
               <Link replace
                 to="/quiz"
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-colors"
+                className="pressable flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-colors"
               >
                 Other Quizzes
               </Link>
@@ -731,7 +731,7 @@ function QuizViewerSession() {
             {/* Question */}
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
               <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-500 dark:text-ocean-400" />
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-700 dark:text-ocean-400" />
                 <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide">
                   {currentQuestion.type === 'multiple_choice' ? 'Multiple Choice' : 
                    currentQuestion.type === 'type_answer' ? 'Type Your Answer' : 'Fill in the Blank'}
@@ -878,7 +878,7 @@ function QuizViewerSession() {
                       </button>
                       <button
                         onClick={handleDontKnow}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors active:scale-98"
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                       >
                         <HelpCircle className="w-5 h-5" />
                         I don't know

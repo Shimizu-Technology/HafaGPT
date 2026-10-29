@@ -32,7 +32,7 @@ export default function SupportPage() {
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
           Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
-        <a href="mailto:support@shimizutechnology.com" className="mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+        <a href="mailto:support@shimizutechnology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
           <Mail className="h-5 w-5" aria-hidden="true" />
           Email support
         </a>
@@ -54,7 +54,7 @@ export default function SupportPage() {
             <details key={faq.question} className="group py-1">
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-brown-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white [&::-webkit-details-marker]:hidden">
                 {faq.question}
-                <span className="text-xl font-normal text-coral-600 group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
+                <span className="text-xl font-normal text-coral-700 group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
               </summary>
               <p className="pb-4 pr-8 text-base leading-relaxed text-brown-600 dark:text-gray-300">{faq.answer}</p>
             </details>
@@ -64,7 +64,7 @@ export default function SupportPage() {
 
       <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
         <div className="mb-4 flex items-center gap-3">
-          <BookOpen className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+          <BookOpen className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
           <h2 className="text-xl font-bold text-brown-950 dark:text-white">Helpful links</h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
