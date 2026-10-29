@@ -22,7 +22,7 @@ export function VocabularyWordPage() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="flex items-center gap-3 text-brown-600 dark:text-gray-300" role="status">
-          <Loader2 className="h-6 w-6 animate-spin text-coral-500 dark:text-ocean-400" aria-hidden="true" />
+          <Loader2 className="h-6 w-6 animate-spin text-coral-700 dark:text-ocean-400" aria-hidden="true" />
           <span>Loading dictionary entry…</span>
         </div>
       </LearnerPageShell>
@@ -107,7 +107,7 @@ export function VocabularyWordPage() {
               href="https://natibunmarianas.org/dictionary-introduction/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+              className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
             >
               About the source dictionary
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

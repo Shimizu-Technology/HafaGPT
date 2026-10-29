@@ -65,7 +65,7 @@ export function AboutPage() {
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-brown-600 dark:text-gray-300">
             A family project that grew into a practical place to ask, translate, listen, practice, and learn Chamorro.
           </p>
-          <Link to="/chat" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <Link to="/chat" className="pressable mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800">
             Ask HåfaGPT
           </Link>
         </div>
@@ -103,7 +103,7 @@ export function AboutPage() {
           <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
             {capabilities.map(({ label, icon: Icon }) => (
               <div key={label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl bg-cream-50 p-3 text-center dark:bg-slate-700/60">
-                <Icon className="h-5 w-5 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+                <Icon className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
                 <span className="text-xs font-semibold text-brown-700 dark:text-gray-200">{label}</span>
               </div>
             ))}
@@ -133,7 +133,7 @@ export function AboutPage() {
       <section className="mt-8 rounded-3xl border border-coral-200 bg-coral-50 p-6 text-center dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
         <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Start with whatever you need today</h2>
         <p className="mx-auto mt-2 max-w-xl text-brown-600 dark:text-gray-300">Ask a question, translate a message, or choose a guided learning activity.</p>
-        <Link to="/" className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Explore HåfaGPT</Link>
+        <Link to="/" className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Explore HåfaGPT</Link>
         <p className="mt-4 text-xs text-brown-500 dark:text-gray-400">
           Built by <a href="https://shimizutechnology.com" target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2">Shimizu Technology</a>
         </p>

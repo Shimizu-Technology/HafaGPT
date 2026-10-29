@@ -241,7 +241,7 @@ export function SimonSays() {
               Start Game
             </button>
 
-            <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -274,10 +274,10 @@ export function SimonSays() {
                 <span className={`text-lg font-bold block ${isSpeaking ? 'text-white' : 'text-indigo-700 dark:text-indigo-300'}`}>
                   "{currentBodyPart.instruction}"
                 </span>
-                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-xs block mt-1 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
                   "Touch your {currentBodyPart.english.toLowerCase()}!"
                 </span>
-                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/80' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                <span className={`text-sm mt-2 ${isSpeaking ? 'text-white/90' : 'text-indigo-500 dark:text-indigo-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
@@ -321,7 +321,7 @@ export function SimonSays() {
                       {part.chamorro}
                     </span>
                     {showResult && (
-                      <span className="text-xs text-brown-500 dark:text-gray-500 block">
+                      <span className="text-xs text-brown-500 dark:text-gray-400 block">
                         ({part.english})
                       </span>
                     )}

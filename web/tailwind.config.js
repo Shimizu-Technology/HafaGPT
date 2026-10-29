@@ -2,6 +2,11 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   darkMode: 'class',
+  future: {
+    // Touch devices fire :hover on tap and keep it; hover styles only apply
+    // where a real pointer can hover.
+    hoverOnlyWhenSupported: true,
+  },
   theme: {
     extend: {
       colors: {
@@ -89,36 +94,23 @@ export default {
           950: '#451517',
         },
       },
-      animation: {
-        'fade-in': 'fadeIn 0.3s ease-in-out',
-        'slide-up': 'slideUp 0.3s ease-out',
-        'slide-in-right': 'slideInRight 0.3s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'shimmer': 'shimmer 2s infinite',
-        'bounce-in': 'bounceIn 0.5s ease-out',
+      // Motion contract: strong ease-out for UI that responds or enters,
+      // strong ease-in-out for things moving on screen. Built-in CSS curves
+      // feel sluggish. Durations stay under 300ms for interface feedback.
+      transitionTimingFunction: {
+        DEFAULT: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        out: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        'in-out': 'cubic-bezier(0.77, 0, 0.175, 1)',
+        drawer: 'cubic-bezier(0.32, 0.72, 0, 1)',
       },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideInRight: {
-          '0%': { opacity: '0', transform: 'translateX(-20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(100%)' },
-        },
-        bounceIn: {
-          '0%': { opacity: '0', transform: 'translateX(-50%) scale(0.5)' },
-          '50%': { transform: 'translateX(-50%) scale(1.1)' },
-          '100%': { opacity: '1', transform: 'translateX(-50%) scale(1)' },
-        },
+      // `scale` is the press-feedback property (see index.css). Including it
+      // keeps press feedback smooth on elements that set their own transition.
+      transitionProperty: {
+        DEFAULT: 'color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, scale',
+        colors: 'color, background-color, border-color, text-decoration-color, fill, stroke, scale',
+        opacity: 'opacity, scale',
+        shadow: 'box-shadow, scale',
+        transform: 'transform, scale',
       },
     },
   },

@@ -94,7 +94,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             You have used all {displayedLimit} free {info.unit} for today.
           </p>
           {usageCount !== undefined && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full text-white text-sm">
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-black/15 rounded-full text-white text-sm">
               <span>{usageCount}/{displayedLimit} used today</span>
             </div>
           )}
@@ -146,7 +146,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             <Link
               to="/pricing"
               onClick={onClose}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               <Zap className="w-5 h-5" />
               Upgrade Now

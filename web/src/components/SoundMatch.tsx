@@ -326,7 +326,7 @@ export function SoundMatch() {
             </button>
 
             {/* Games remaining */}
-            <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -361,7 +361,7 @@ export function SoundMatch() {
                   <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-purple-700 dark:text-purple-300'}`}>
                     {currentWord.chamorro}
                   </span>
-                  <span className={`text-sm ${isSpeaking ? 'text-white/80' : 'text-purple-500 dark:text-purple-400'}`}>
+                  <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-purple-500 dark:text-purple-400'}`}>
                     {isSpeaking ? 'Playing…' : 'Tap to hear'}
                   </span>
                 </div>
@@ -399,7 +399,7 @@ export function SoundMatch() {
                   >
                     <span className="text-5xl sm:text-6xl block mb-2">{option.emoji}</span>
                     {showResult && (
-                      <span className={`text-sm font-medium ${isCorrectAnswer ? 'text-green-600 dark:text-green-400' : 'text-brown-500 dark:text-gray-500'}`}>
+                      <span className={`text-sm font-medium ${isCorrectAnswer ? 'text-green-600 dark:text-green-400' : 'text-brown-500 dark:text-gray-400'}`}>
                         {option.english}
                       </span>
                     )}

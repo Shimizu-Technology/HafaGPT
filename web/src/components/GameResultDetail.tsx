@@ -62,7 +62,7 @@ export function GameResultDetail() {
       <main className="mx-auto max-w-2xl px-4 py-5 sm:py-8">
         {isLoading ? (
           <section className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800" aria-live="polite">
-            <Loader2 className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your game result…</p>
           </section>
         ) : error || !result ? (
@@ -118,7 +118,7 @@ export function GameResultDetail() {
                         const cardIndex = findCuratedConceptIndex(result.category_id, conceptId);
                         if (cardIndex === null) return null;
                         return (
-                          <Link key={conceptId} to={withGameConceptReview(result.category_id, conceptId, result.id)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-coral-200 bg-coral-50 px-3 text-sm font-semibold text-coral-800 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200">
+                          <Link key={conceptId} to={withGameConceptReview(result.category_id, conceptId, result.id)} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl border border-coral-200 bg-coral-50 px-3 text-sm font-semibold text-coral-800 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200">
                             <Layers3 className="h-4 w-4" aria-hidden="true" />Review card {cardIndex + 1}
                           </Link>
                         );
@@ -130,7 +130,7 @@ export function GameResultDetail() {
             </section>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to={appRoutes.games} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">Play another game</Link>
+              <Link to={appRoutes.games} className="pressable inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">Play another game</Link>
               <Link replace to={backTo} className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 font-semibold text-brown-800 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-700 dark:text-white">Return</Link>
             </div>
           </div>

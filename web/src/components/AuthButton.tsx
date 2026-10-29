@@ -35,7 +35,7 @@ export function AuthButton() {
       {/* Show sign in button when logged out */}
       <SignedOut>
         <SignInButton mode="modal">
-          <button className="min-h-11 px-3 sm:px-4 py-2 bg-teal-700 hover:bg-teal-800 dark:bg-ocean-700 dark:hover:bg-ocean-800 text-white rounded-lg sm:rounded-xl transition-all duration-200 text-xs sm:text-sm font-medium shadow-sm hover:shadow-md active:scale-95">
+          <button className="min-h-11 px-3 sm:px-4 py-2 bg-teal-700 hover:bg-teal-800 dark:bg-ocean-700 dark:hover:bg-ocean-800 text-white rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-medium shadow-sm hover:shadow-md">
             Sign In
           </button>
         </SignInButton>

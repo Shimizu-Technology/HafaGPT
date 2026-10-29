@@ -44,7 +44,7 @@ export function LessonComplete({ topic, totalTopics, completedTopics, quizScore,
         {completedTopics !== undefined && <p className="mt-4 text-sm text-brown-600 dark:text-gray-300">{levelLabel} Path Progress: {completedTopics}/{totalTopics} topics completed</p>}
         {completedTopics === totalTopics && <p className="mt-2 text-sm font-semibold text-teal-700 dark:text-teal-300">You've completed all {topic.level} topics!</p>}
       </section>
-      {today && <Link to="/" replace className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 focus-visible:ring-2 focus-visible:ring-coral-500">Continue Today<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
+      {today && <Link to="/" replace className="pressable flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 focus-visible:ring-2 focus-visible:ring-coral-500">Continue Today<ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>}
       {isPassing && practice && <section className="rounded-2xl border border-teal-200 bg-teal-50 p-5 dark:border-teal-800 dark:bg-teal-950/30">
         <h3 className="font-semibold text-brown-900 dark:text-white">Practice what you learned</h3>
         <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{practice.description}</p>

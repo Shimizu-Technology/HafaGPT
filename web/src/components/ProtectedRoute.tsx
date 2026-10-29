@@ -189,7 +189,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             {/* Feature Info */}
             <div className="text-center mb-6">
               <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-coral-100 to-coral-200 dark:from-ocean-900/50 dark:to-ocean-800/50 flex items-center justify-center mb-4`}>
-                <FeatureIcon className="w-8 h-8 text-coral-600 dark:text-ocean-400" />
+                <FeatureIcon className="w-8 h-8 text-coral-700 dark:text-ocean-400" />
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
                   {featureInfo.title}
@@ -205,7 +205,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
                   {featureInfo.benefits.map((benefit, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                        <Check className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
                       </div>
                     <span className="text-sm text-brown-700 dark:text-gray-300">{benefit}</span>
                     </li>
@@ -221,7 +221,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Primary CTA - Sign Up */}
               <SignUpButton mode="modal">
-                <button className="w-full py-3.5 bg-gradient-to-r from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                <button className="w-full py-3.5 bg-gradient-to-r from-coral-700 to-coral-800 dark:from-ocean-700 dark:to-ocean-800 hover:from-coral-600 hover:to-coral-700 dark:hover:from-ocean-600 dark:hover:to-ocean-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-colors flex items-center justify-center gap-2">
                   <UserPlus className="w-5 h-5" />
                   Create Free Account
                 </button>
@@ -229,14 +229,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Secondary CTA - Sign In */}
               <SignInButton mode="modal">
-                <button className="w-full py-3 border-2 border-coral-300 dark:border-ocean-500 text-coral-600 dark:text-ocean-400 hover:bg-coral-50 dark:hover:bg-ocean-900/30 rounded-xl font-semibold transition-all flex items-center justify-center gap-2">
+                <button className="w-full py-3 border-2 border-coral-300 dark:border-ocean-500 text-coral-700 dark:text-ocean-400 hover:bg-coral-50 dark:hover:bg-ocean-900/30 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
                   <LogIn className="w-5 h-5" />
                   Already have an account? Sign In
                 </button>
               </SignInButton>
 
               {/* Free Account Note */}
-              <p className="text-center text-xs text-brown-500 dark:text-gray-500 pt-2">
+              <p className="text-center text-xs text-brown-500 dark:text-gray-400 pt-2">
                 ✨ 100% free • No credit card required
                   </p>
                 </div>
@@ -244,7 +244,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Explore Free Content */}
           <div className="mt-6 text-center">
-                <p className="text-sm text-brown-500 dark:text-gray-500">
+                <p className="text-sm text-brown-500 dark:text-gray-400">
                   Just browsing?{' '}
                   <Link to="/vocabulary" className="inline-flex min-h-11 items-center rounded-lg px-2 text-coral-700 dark:text-ocean-300 hover:underline font-medium">
                     Explore free content →

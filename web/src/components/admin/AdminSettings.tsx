@@ -127,7 +127,7 @@ export function AdminSettings() {
           <button
             onClick={handleSave}
             disabled={!hasChanges || updateSettings.isPending || Boolean(themeValidationError)}
-            className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-all ${
+            className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors ${
               hasChanges && !themeValidationError
                 ? 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800 shadow-lg'
                 : 'bg-cream-200 dark:bg-slate-700 text-brown-400 dark:text-gray-500 cursor-not-allowed'
@@ -356,7 +356,7 @@ export function AdminSettings() {
                       setThemeEnabled(false);
                     }
                   }}
-                  className={`min-h-11 p-4 rounded-xl border-2 transition-all bg-white dark:bg-slate-700 ${
+                  className={`min-h-11 p-4 rounded-xl border-2 transition-colors bg-white dark:bg-slate-700 ${
                     theme === t.id
                       ? 'border-coral-500 dark:border-ocean-400 ring-2 ring-coral-500/20 dark:ring-ocean-400/20'
                       : 'border-cream-200 dark:border-slate-600 hover:border-cream-300 dark:hover:border-slate-500'

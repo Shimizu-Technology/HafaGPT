@@ -86,7 +86,7 @@ export function QuizReview() {
             aria-live="polite"
           >
             <Loader2
-              className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300"
+              className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300"
               aria-hidden="true"
             />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your quiz review…</p>
@@ -205,7 +205,7 @@ export function QuizReview() {
                           {answer.explanation && (
                             <div className="mt-4 flex items-start gap-2 rounded-xl bg-white/70 p-3 text-sm leading-relaxed text-brown-700 dark:bg-slate-800/60 dark:text-gray-300">
                               <Lightbulb
-                                className="mt-0.5 h-4 w-4 flex-none text-amber-600 dark:text-amber-300"
+                                className="mt-0.5 h-4 w-4 flex-none text-amber-700 dark:text-amber-300"
                                 aria-hidden="true"
                               />
                               <p>{answer.explanation}</p>
@@ -243,7 +243,7 @@ export function QuizReview() {
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <Link
                 to={`/quiz/${result.category_id}`}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" /> Try again
               </Link>

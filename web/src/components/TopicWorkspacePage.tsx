@@ -90,7 +90,7 @@ export function TopicWorkspacePage() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center text-brown-600 dark:text-gray-300">
-          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-coral-600 dark:text-ocean-300" aria-hidden="true" />
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-coral-700 dark:text-ocean-300" aria-hidden="true" />
           Loading topic workspace…
         </div>
       </LearnerPageShell>
@@ -149,19 +149,19 @@ export function TopicWorkspacePage() {
       />
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:py-8">
-        <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-coral-500 to-coral-700 p-6 text-white shadow-lg dark:from-ocean-700 dark:to-ocean-950 sm:p-8">
+        <section className="overflow-hidden rounded-3xl bg-coral-700 p-6 text-white dark:bg-ocean-900 sm:p-8">
           <div className="flex items-start gap-4">
             <span className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-white/15 text-3xl" aria-hidden="true">{localTopic.icon}</span>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-bold sm:text-3xl">{data.topic.title}</h1>
-              <p className="mt-2 max-w-2xl text-sm text-white/85 sm:text-base">{data.topic.description}</p>
+              <p className="mt-2 max-w-2xl text-sm text-white/90 sm:text-base">{data.topic.description}</p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />About {data.topic.estimated_minutes} minutes</span>
-                {data.progress.completed_at && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Completed</span>}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3 py-2"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />About {data.topic.estimated_minutes} minutes</span>
+                {data.progress.completed_at && <span className="inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3 py-2"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Completed</span>}
               </div>
             </div>
           </div>
-          <Link to={lessonHref} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 shadow-sm hover:bg-cream-50 dark:text-ocean-800 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
+          <Link to={lessonHref} className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 shadow-sm hover:bg-cream-50 dark:text-ocean-800 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
         </section>
 
         <section aria-labelledby="progress-heading">

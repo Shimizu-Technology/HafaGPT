@@ -232,7 +232,7 @@ function TappableText({
             type="button"
             key={i}
             onClick={() => onWordTap(cleanWord)}
-            className="inline min-h-9 rounded bg-transparent px-0.5 py-1 text-left transition-colors hover:bg-teal-100 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-teal-900/30 dark:hover:text-teal-400"
+            className="inline min-h-9 rounded bg-transparent -mx-0.5 px-0.5 py-1 text-left transition-colors hover:bg-teal-100 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:hover:bg-teal-900/30 dark:hover:text-teal-400"
           >
             {word}
           </button>
@@ -338,7 +338,7 @@ export function LengguahitaStoryViewer() {
         )}
         below={(
           <div className="h-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Story progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-            <div className="h-full bg-teal-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-teal-500 transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
           </div>
         )}
       />
@@ -397,7 +397,7 @@ export function LengguahitaStoryViewer() {
             <p className="text-xl leading-relaxed text-brown-800 dark:text-white">
               <TappableText text={paragraph.chamorro} onWordTap={handleWordTap} />
             </p>
-            <p className="text-xs text-brown-400 dark:text-gray-500 mt-2">
+            <p className="text-xs text-brown-500 dark:text-gray-400 mt-2">
               Tap any word to see its translation
             </p>
           </div>
@@ -431,9 +431,9 @@ export function LengguahitaStoryViewer() {
             <button
               onClick={goToPrevious}
               disabled={currentParagraph === 0}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
                 currentParagraph === 0
-                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
+                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-500 dark:text-gray-600 cursor-not-allowed'
                   : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 shadow-sm border border-cream-200 dark:border-slate-700'
               }`}
             >
@@ -451,9 +451,9 @@ export function LengguahitaStoryViewer() {
             <button
               onClick={goToNext}
               disabled={currentParagraph === story.paragraphs.length - 1}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-all flex-shrink-0 ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
                 currentParagraph === story.paragraphs.length - 1
-                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-400 dark:text-gray-600 cursor-not-allowed'
+                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-500 dark:text-gray-600 cursor-not-allowed'
                   : 'bg-teal-700 text-white hover:bg-teal-800'
               }`}
             >
@@ -471,7 +471,7 @@ export function LengguahitaStoryViewer() {
                   setCurrentParagraph(i);
                   setShowEnglish(false);
                 }}
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                className={`w-2.5 h-2.5 rounded-full transition-[width,background-color] duration-300 ${
                   i === currentParagraph
                     ? 'bg-teal-500 w-6'
                     : i < currentParagraph
@@ -482,7 +482,7 @@ export function LengguahitaStoryViewer() {
               />
             ))}
             {story.paragraphs.length > 15 && (
-              <span className="text-xs text-brown-400 dark:text-gray-500 ml-1 self-center">
+              <span className="text-xs text-brown-500 dark:text-gray-400 ml-1 self-center">
                 +{story.paragraphs.length - 15}
               </span>
             )}

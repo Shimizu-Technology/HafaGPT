@@ -364,7 +364,7 @@ export function AdminDashboard() {
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-teal-500 rounded-full transition-all duration-500"
+                    className="h-full bg-teal-500 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.chat_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
@@ -386,7 +386,7 @@ export function AdminDashboard() {
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                    className="h-full bg-pink-500 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.games_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
@@ -408,7 +408,7 @@ export function AdminDashboard() {
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                    className="h-full bg-indigo-500 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.quizzes_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
@@ -430,7 +430,7 @@ export function AdminDashboard() {
                 </div>
                 <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-[width,background-color] duration-300"
                     style={{ width: `${Math.min(stats?.learning_path_adoption_pct || 0, 100)}%` }}
                   />
                 </div>
@@ -449,7 +449,7 @@ export function AdminDashboard() {
             <h3 className="text-base font-semibold text-brown-800 dark:text-white">Retention</h3>
             <div className="relative group ml-auto">
               <HelpCircle className="w-4 h-4 text-brown-400 dark:text-gray-500 cursor-help" />
-              <div className="absolute right-0 top-6 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-cream-200 dark:border-slate-600 text-xs text-brown-600 dark:text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+              <div className="absolute right-0 top-6 w-64 p-3 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-cream-200 dark:border-slate-600 text-xs text-brown-600 dark:text-gray-300 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity z-50">
                 <p className="font-semibold mb-2 text-brown-800 dark:text-white">What do these mean?</p>
                 <ul className="space-y-1.5">
                   <li><span className="font-medium">DAU:</span> Daily Active Users</li>

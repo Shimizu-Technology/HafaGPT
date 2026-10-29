@@ -95,7 +95,7 @@ export function Games() {
             </div>
             <Link
               to="/games/sound-match"
-              className="flex min-h-12 flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 py-3 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable flex min-h-12 flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 py-3 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               Play Sound Match <ArrowRight className="h-5 w-5" aria-hidden="true" />
             </Link>

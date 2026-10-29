@@ -69,21 +69,21 @@ export function LearningProgressStats() {
       label: 'Topics',
       value: `${completedTopics}/${totalTopics}`,
       subtext: 'completed',
-      color: 'bg-coral-100 dark:bg-ocean-900/50 text-coral-600 dark:text-ocean-400',
+      color: 'bg-coral-100 dark:bg-ocean-900/50 text-coral-700 dark:text-ocean-400',
     },
     {
       icon: <Star className="w-5 h-5" />,
       label: 'Stars',
       value: `${stars.earned}/${stars.total}`,
       subtext: 'earned',
-      color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
+      color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     },
     {
       icon: <Target className="w-5 h-5" />,
       label: 'Avg Score',
       value: avgScore !== null ? `${avgScore}%` : '—',
       subtext: avgScore !== null ? 'on quizzes' : 'no quizzes yet',
-      color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400',
+      color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
     },
     {
       icon: <Flame className="w-5 h-5" />,
@@ -117,7 +117,7 @@ export function LearningProgressStats() {
             <div className="text-base sm:text-xl font-bold text-brown-800 dark:text-white">
               {stat.value}
             </div>
-            <div className="text-[10px] sm:text-xs text-brown-500 dark:text-gray-400 truncate">
+            <div className="text-xs text-brown-500 dark:text-gray-400 truncate">
               {stat.subtext}
             </div>
           </div>

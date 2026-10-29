@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
           {/* Introduction */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Lock className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <Lock className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               Introduction
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
           {/* Information We Collect */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Database className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <Database className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               Information We Collect
             </h2>
             <div className="space-y-4 text-brown-700 dark:text-gray-300">
@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
           {/* How We Use Your Information */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Eye className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <Eye className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               How We Use Your Information
             </h2>
             <ul className="list-disc list-inside space-y-2 text-brown-700 dark:text-gray-300">
@@ -76,7 +76,7 @@ export default function PrivacyPolicy() {
           {/* AI Chat & Conversations */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <UserCheck className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <UserCheck className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               AI Chat & Conversations
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
@@ -91,7 +91,7 @@ export default function PrivacyPolicy() {
           {/* Data Security */}
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <Shield className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               Data Security
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
@@ -167,7 +167,7 @@ export default function PrivacyPolicy() {
           {/* Contact Us */}
           <section className="mb-4">
             <h2 className="text-xl font-semibold text-brown-800 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+              <Mail className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
               Contact Us
             </h2>
             <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
@@ -175,7 +175,7 @@ export default function PrivacyPolicy() {
             </p>
             <a 
               href="mailto:support@shimizutechnology.com" 
-              className="inline-block mt-2 text-coral-600 dark:text-ocean-400 hover:underline font-medium"
+              className="inline-block mt-2 text-coral-700 dark:text-ocean-400 hover:underline font-medium"
             >
               support@shimizutechnology.com
             </a>

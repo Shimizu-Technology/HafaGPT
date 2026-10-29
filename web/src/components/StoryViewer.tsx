@@ -52,7 +52,7 @@ export function StoryViewer() {
       <LearnerPageShell className="flex items-center justify-center p-4">
         <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
           <h1 className="text-xl text-brown-600 dark:text-gray-400 mb-4">Story not found</h1>
-          <Link replace to="/stories" className="text-coral-600 dark:text-ocean-400 hover:underline">
+          <Link replace to="/stories" className="text-coral-700 dark:text-ocean-400 hover:underline">
             Back to Stories
           </Link>
         </div>
@@ -194,7 +194,7 @@ export function StoryViewer() {
           </p>
           <p className="text-lg leading-loose">
             {annotateStoryText(paragraph.chamorro, paragraph.words).map((part, idx) => part.word ? (
-              <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`inline rounded px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
+              <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`inline rounded -mx-0.5 px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
             ) : <span key={idx}>{part.text}</span>)}
           </p>
         </div>

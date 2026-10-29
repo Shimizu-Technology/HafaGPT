@@ -137,7 +137,7 @@ function ChoiceCard<T extends string | number>({
           {description}
         </span>
       </span>
-      {selected && <Check className="h-5 w-5 flex-none text-coral-600 dark:text-ocean-300" aria-hidden="true" />}
+      {selected && <Check className="h-5 w-5 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />}
     </button>
   );
 }

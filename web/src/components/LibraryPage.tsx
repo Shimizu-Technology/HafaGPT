@@ -26,7 +26,7 @@ export function LibraryPage() {
             <h2 id="listening-heading" className="flex items-center gap-2 text-lg font-bold"><Volume2 aria-hidden="true" className="h-5 w-5" />{together ? 'Learn together' : 'Listen and look first'}</h2>
             <p className="mt-2 text-base text-brown-600 dark:text-gray-300">{together ? 'Take turns listening and choosing a picture. An adult can replay audio and help with instructions.' : 'Start with a picture or sound activity. Replay audio whenever you need.'}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Link to="/games/sound-match" className="inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">Sound Match</Link>
+              <Link to="/games/sound-match" className="pressable inline-flex min-h-11 items-center rounded-xl bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">Sound Match</Link>
               <Link to="/games/picture-pairs" className="inline-flex min-h-11 items-center rounded-xl border border-teal-300 px-4 font-semibold dark:border-ocean-700">Picture Pairs</Link>
             </div>
           </section>

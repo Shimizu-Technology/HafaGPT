@@ -144,7 +144,7 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
         <Link
           to={gameReturn.to}
           replace
-          className="flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+          className="pressable flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>

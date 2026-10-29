@@ -273,7 +273,7 @@ export function NumberTap() {
               Start Game
             </button>
 
-            <p className="text-center text-sm text-brown-500 dark:text-gray-500 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -306,7 +306,7 @@ export function NumberTap() {
                 <span className={`text-xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                   {currentNumber.chamorro}
                 </span>
-                <span className={`text-xs ${isSpeaking ? 'text-white/80' : 'text-teal-500 dark:text-teal-400'}`}>
+                <span className={`text-xs ${isSpeaking ? 'text-white/90' : 'text-teal-500 dark:text-teal-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>

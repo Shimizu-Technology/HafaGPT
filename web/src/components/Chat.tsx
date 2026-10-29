@@ -1544,7 +1544,7 @@ End of Export
         <header
           data-testid="chat-header"
           hidden={compactKeyboard}
-          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-[color,background-color,border-color,opacity,transform] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-[color,background-color,border-color,opacity,transform,scale] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
         >
           <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
             {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
@@ -1608,7 +1608,7 @@ End of Export
               <p className="mt-6 text-brown-600 dark:text-gray-400 text-lg font-medium">
                 Loading your conversations...
               </p>
-              <p className="mt-2 text-sm text-brown-500 dark:text-gray-500">
+              <p className="mt-2 text-sm text-brown-500 dark:text-gray-400">
                 This will only take a moment
               </p>
             </div>
@@ -1620,7 +1620,7 @@ End of Export
                 <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
                 <div className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
               </div>
-              <p className="mt-3 text-sm text-brown-500 dark:text-gray-500">
+              <p className="mt-3 text-sm text-brown-500 dark:text-gray-400">
                 Loading conversation...
               </p>
             </div>
@@ -1847,7 +1847,7 @@ End of Export
           >
             <div className="flex items-center justify-between mb-4">
               <h2 id="share-chat-title" className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
-                <Share2 className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+                <Share2 className="w-5 h-5 text-coral-700 dark:text-ocean-400" />
                 Share Conversation
               </h2>
               <button
@@ -1874,14 +1874,14 @@ End of Export
                 {/* Share URL - Stack on mobile, inline on desktop */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 bg-cream-100 dark:bg-slate-800 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 border border-cream-200 dark:border-slate-700 min-w-0">
-                    <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-500 flex-shrink-0" />
+                    <Link2 className="w-4 h-4 text-brown-500 dark:text-gray-400 flex-shrink-0" />
                     <span className="text-xs sm:text-sm text-brown-700 dark:text-gray-300 truncate">
                       {shareInfo.share_url}
                     </span>
                   </div>
                   <button
                     onClick={handleCopyShareLink}
-                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-[color,background-color,border-color,opacity,transform] flex-shrink-0 ${
+                    className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl font-medium flex items-center justify-center gap-2 transition-[color,background-color,border-color,opacity,transform,scale] flex-shrink-0 ${
                       shareCopied
                         ? 'bg-green-500 text-white'
                         : 'bg-coral-700 dark:bg-ocean-700 text-white hover:bg-coral-800 dark:hover:bg-ocean-800'
@@ -1903,7 +1903,7 @@ End of Export
                 
                 {/* View count */}
                 {shareInfo.view_count !== undefined && shareInfo.view_count > 0 && (
-                  <p className="text-xs text-brown-500 dark:text-gray-500 flex items-center gap-1">
+                  <p className="text-xs text-brown-500 dark:text-gray-400 flex items-center gap-1">
                     <Eye className="h-4 w-4" aria-hidden="true" />
                     {shareInfo.view_count} view{shareInfo.view_count !== 1 ? 's' : ''}
                   </p>

@@ -36,14 +36,14 @@ export function MyDecks() {
       <main className="mx-auto max-w-4xl px-4 py-5 sm:py-8">
         {isLoaded && !user ? (
           <section className="rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
-            <BookOpen className="mx-auto h-9 w-9 text-coral-600 dark:text-teal-300" aria-hidden="true" />
+            <BookOpen className="mx-auto h-9 w-9 text-coral-700 dark:text-teal-300" aria-hidden="true" />
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">Sign in to use saved decks</h2>
             <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
               Sign in to review decks already saved to your account.
             </p>
             <Link
               to="/flashcards"
-              className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               Browse flashcards
             </Link>
@@ -53,7 +53,7 @@ export function MyDecks() {
             className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
             aria-live="polite"
           >
-            <Loader2 className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your saved decks…</p>
           </section>
         ) : isError ? (
@@ -83,7 +83,7 @@ export function MyDecks() {
             </p>
             <Link
               to="/flashcards"
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
             >
               Browse flashcards
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -120,7 +120,7 @@ export function MyDecks() {
                       <h3 className="break-words [overflow-wrap:anywhere] font-bold text-brown-950 dark:text-white">{deck.title}</h3>
                       <div className="mt-1 flex items-start justify-between gap-3">
                         <p className="min-w-0 break-words capitalize text-sm text-brown-500 dark:text-gray-400">{formatTopic(deck.topic)}</p>
-                        <ArrowRight className="h-5 w-5 flex-none text-brown-400 group-hover:text-coral-600 dark:text-gray-500 dark:group-hover:text-teal-300" aria-hidden="true" />
+                        <ArrowRight className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300" aria-hidden="true" />
                       </div>
 
                       <div className="mt-4 h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" aria-hidden="true">

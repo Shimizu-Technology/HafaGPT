@@ -83,7 +83,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
                   onClick={() => handleSpeak(phrase)}
                   aria-label={`Play pronunciation for ${chamorro}`}
                   disabled={isSpeaking}
-                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-coral-100 dark:bg-ocean-900/40 text-coral-600 dark:text-ocean-400
+                  className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-coral-100 dark:bg-ocean-900/40 text-coral-700 dark:text-ocean-400
                            hover:bg-coral-200 dark:hover:bg-ocean-800/40 transition-colors disabled:opacity-50"
                 >
                   <Volume2 className="w-5 h-5" />
@@ -117,7 +117,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
         className="w-full py-4 bg-coral-700 dark:bg-teal-700
                    text-white font-semibold rounded-2xl shadow-lg
                    hover:bg-coral-800 dark:hover:bg-teal-800
-                   transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                   transition-colors flex items-center justify-center gap-2"
       >
         Start Flashcards
         <ArrowRight className="w-5 h-5" />

@@ -377,7 +377,7 @@ export function Hangman() {
           {/* Mode Selection */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
             <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-coral-500 dark:text-teal-400" />
+              <BookOpen className="w-5 h-5 text-coral-700 dark:text-teal-400" />
               Choose Mode
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -391,10 +391,10 @@ export function Hangman() {
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
-                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-500 dark:text-teal-400'}`} />
+                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Beginner</p>
-                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Common words</p>
+                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Common words</p>
               </button>
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
@@ -409,7 +409,7 @@ export function Hangman() {
                   <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Challenge</p>
-                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white/80' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</p>
+                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</p>
               </button>
             </div>
           </div>
@@ -418,7 +418,7 @@ export function Hangman() {
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
             <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Choose Topic</h3>
             {isLoading ? (
-              <div className="text-center py-4 text-brown-500 dark:text-gray-400">Loading categories...</div>
+              <div className="text-center py-4 text-brown-500 dark:text-gray-300">Loading categories...</div>
             ) : (
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {currentCategories.map(catId => {
@@ -448,7 +448,7 @@ export function Hangman() {
                       <span className="text-xl">{icon}</span>
                       </div>
                       <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
-                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/80' : 'text-brown-400 dark:text-gray-500'}`}>
+                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
                         {wordCount} word{wordCount !== 1 ? 's' : ''}
                       </p>
                     </button>
@@ -478,7 +478,7 @@ export function Hangman() {
           </button>
 
           {/* Daily limit indicator */}
-          <p className="text-center text-xs text-brown-400 dark:text-gray-500">
+          <p className="text-center text-xs text-brown-500 dark:text-gray-300">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
       </main>
@@ -505,7 +505,7 @@ export function Hangman() {
 
             {gameState === 'lost' && (
               <p className="text-brown-600 dark:text-gray-400 mb-4">
-                The word was: <span className="font-bold text-coral-500 dark:text-teal-400">{currentWord}</span>
+                The word was: <span className="font-bold text-coral-700 dark:text-teal-400">{currentWord}</span>
               </p>
             )}
 
@@ -520,11 +520,11 @@ export function Hangman() {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">{wordsCompleted}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Words</p>
+                <p className="text-sm text-brown-500 dark:text-gray-300">Words</p>
               </div>
               <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
                 <p className="text-2xl font-bold text-brown-800 dark:text-white">{totalScore}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-400">Score</p>
+                <p className="text-sm text-brown-500 dark:text-gray-300">Score</p>
               </div>
             </div>
 
@@ -600,7 +600,7 @@ export function Hangman() {
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 shadow-sm">
           {/* Hint */}
           <div className="flex items-center justify-center gap-2 mb-4">
-            <HelpCircle className="w-4 h-4 text-coral-500 dark:text-teal-400" />
+            <HelpCircle className="w-4 h-4 text-coral-700 dark:text-teal-400" />
             <p className="text-brown-600 dark:text-gray-400 text-center">{currentHint}</p>
           </div>
 
@@ -614,7 +614,7 @@ export function Hangman() {
                     ? 'bg-cream-100 dark:bg-slate-700 border-2 border-dashed border-cream-300 dark:border-slate-600'
                     : isWordComplete
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                    : 'bg-coral-100 dark:bg-teal-950/30 text-coral-600 dark:text-teal-400'
+                    : 'bg-coral-100 dark:bg-teal-950/30 text-coral-700 dark:text-teal-400'
                 }`}
               >
                 {letter === '_' ? '' : letter}

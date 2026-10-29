@@ -121,7 +121,7 @@ export function GameHistory() {
 
         {isLoading ? (
           <section className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800" aria-live="polite">
-            <Loader2 className="h-8 w-8 animate-spin text-coral-600 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
+            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
             <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your game history…</p>
           </section>
         ) : error ? (
@@ -132,10 +132,10 @@ export function GameHistory() {
           </section>
         ) : !data || data.results.length === 0 ? (
           <section className="rounded-3xl border border-emerald-200 bg-white p-6 text-center dark:border-emerald-900 dark:bg-slate-800">
-            <Gamepad2 className="mx-auto h-10 w-10 text-emerald-600 dark:text-emerald-300" aria-hidden="true" />
+            <Gamepad2 className="mx-auto h-10 w-10 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No matching game results</h2>
             <p className="mx-auto mt-2 max-w-sm text-brown-600 dark:text-gray-400">Play a game and its saved result will appear here.</p>
-            <Link to={appRoutes.games} className="mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Choose a game</Link>
+            <Link to={appRoutes.games} className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Choose a game</Link>
           </section>
         ) : (
           <>
@@ -166,7 +166,7 @@ export function GameHistory() {
                         {[1, 2, 3].map((star) => <Star key={star} className={`h-4 w-4 ${star <= (result.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`} aria-hidden="true" />)}
                       </span>
                       <span className="font-bold text-brown-800 dark:text-white">{result.score}</span>
-                      <ChevronRight className="h-5 w-5 text-brown-400 group-hover:text-coral-600 dark:text-gray-500" aria-hidden="true" />
+                      <ChevronRight className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-400" aria-hidden="true" />
                     </span>
                   </Link>
                 ))}

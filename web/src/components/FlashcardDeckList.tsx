@@ -125,7 +125,7 @@ export function FlashcardDeckList() {
           <p className="mb-1 text-sm font-bold text-coral-700 dark:text-coral-300">Practice</p>
           <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Build recall one card at a time</h2>
           <p className="mt-2 text-brown-600 dark:text-gray-300">Choose a ready-made beginner deck or practice words from the full dictionary.</p>
-          <Link to="/flashcards/my-decks" className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950">
+          <Link to="/flashcards/my-decks" className="pressable mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950">
             <Library className="h-5 w-5 flex-none" aria-hidden="true" />
             Saved decks
           </Link>
@@ -188,7 +188,7 @@ export function FlashcardDeckList() {
                     <span>{deck.cardCount} cards</span><span aria-hidden="true">•</span><span>{deck.difficulty}</span>
                   </span>
                 </span>
-                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
             ))
             : dictionaryCategories.map((category) => (
@@ -199,7 +199,7 @@ export function FlashcardDeckList() {
                   <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{category.description}</span>
                   <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-gray-400">{category.word_count} words • Random practice</span>
                 </span>
-                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>
             ))}
         </div>

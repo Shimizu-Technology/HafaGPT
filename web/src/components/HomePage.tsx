@@ -92,7 +92,7 @@ function UtilityLinks() {
             </div>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link to="/chat?intent=translate" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800">
+            <Link to="/chat?intent=translate" className="pressable inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800">
               Translate
             </Link>
             <Link to="/chat?intent=ask" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 bg-white px-3 py-2.5 text-sm font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700">
@@ -188,7 +188,7 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, complete
           <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">At a glance</p>
           <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
         </div>
-        <Link to="/dashboard" className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30">
+        <Link to="/dashboard" className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30">
           Details <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
@@ -261,10 +261,10 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
           <div className="rounded-3xl bg-cream-50 p-5 dark:bg-slate-900/60 sm:p-6">
             <p className="text-sm font-semibold text-brown-700 dark:text-gray-200">One welcoming place for</p>
             <ul className="mt-4 space-y-3 text-base text-brown-700 dark:text-gray-300">
-              <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-600" aria-hidden="true" /> Quick questions and translations</li>
+              <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-700" aria-hidden="true" /> Quick questions and translations</li>
               <li className="flex items-center gap-3"><GraduationCap className="h-5 w-5 text-blue-600" aria-hidden="true" /> 21 guided lesson topics</li>
               <li className="flex items-center gap-3"><Book className="h-5 w-5 text-indigo-600" aria-hidden="true" /> A 10,000+ word dictionary</li>
-              <li className="flex items-center gap-3"><Gamepad2 className="h-5 w-5 text-emerald-600" aria-hidden="true" /> Listening, stories, cards, and games</li>
+              <li className="flex items-center gap-3"><Gamepad2 className="h-5 w-5 text-emerald-700" aria-hidden="true" /> Listening, stories, cards, and games</li>
             </ul>
           </div>
         </div>
@@ -282,7 +282,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
           <Link to="/stories" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"><BookMarked className="h-6 w-6" aria-hidden="true" /></span>
             <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Read a Chamorro story</span><span className="mt-1 block text-base text-brown-600 dark:text-gray-300">Learn language through stories and culture.</span></span>
-            <ArrowRight className="h-5 w-5 text-amber-600" aria-hidden="true" />
+            <ArrowRight className="h-5 w-5 text-amber-700" aria-hidden="true" />
           </Link>
         </div>
       </section>

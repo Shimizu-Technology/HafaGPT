@@ -74,7 +74,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         aria-describedby={isFlipped ? `${backContentId} ${readingHintId}` : readingHintId}
         aria-pressed={isFlipped}
         aria-label={isFlipped ? `Show the Chamorro side for ${back}` : `Show the meaning of ${front}`}
-        className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${
+        className={`relative w-full h-full transition-transform duration-300 ease-in-out transform-style-3d ${
           isFlipped ? 'rotate-y-180' : ''
         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4 rounded-2xl`}
       >
@@ -135,7 +135,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
           onClick={handleSpeak}
           onTouchEnd={handleSpeakTouch}
           aria-label={isSpeaking ? `Stop playing ${front}` : `Listen to ${front}`}
-          className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-coral-100 text-coral-600 transition-colors hover:bg-coral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-900/30 dark:text-ocean-400 dark:hover:bg-ocean-800/50"
+          className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-coral-100 text-coral-700 transition-colors hover:bg-coral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-900/30 dark:text-ocean-400 dark:hover:bg-ocean-800/50"
         >
           <Volume2 className={`w-5 h-5 ${isSpeaking ? 'motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
         </button>
