@@ -13,7 +13,6 @@ import {
   Moon,
   Search,
   Settings,
-  Sparkles,
   Sun,
 } from 'lucide-react';
 import { useClerk, useUser } from '@clerk/clerk-react';
@@ -29,24 +28,23 @@ import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
 import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { TodayPlanCard } from './TodayPlanCard';
+import { BrandMark } from './BrandMark';
 
 function HomeHeader({ signedIn }: { signedIn: boolean }) {
   const { theme, toggleTheme } = useTheme();
   const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
-      <div className="safe-area-top mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <Link to="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-700 text-lg text-white shadow-sm dark:bg-ocean-700" aria-hidden="true">
-            {isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}
-          </span>
+    <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:border-b-0 sm:bg-transparent sm:backdrop-blur-none sm:dark:bg-transparent">
+      <div className="safe-area-top mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <Link to="/" className="flex min-h-11 items-center gap-3 rounded-xl sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
+          <BrandMark className="h-10 w-10" seasonal={isChristmasTheme ? 'christmas' : isNewYearTheme ? 'newyear' : null} />
           <span>
             <span className="block text-lg font-bold leading-tight text-brown-950 dark:text-white">HåfaGPT</span>
             <span className="hidden text-xs text-brown-500 dark:text-gray-400 sm:block">Learn Chamorro with confidence</span>
           </span>
         </Link>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1">
           {signedIn && (
             <Link
               to="/settings"
@@ -76,8 +74,7 @@ function UtilityLinks() {
     <section aria-labelledby="utility-heading">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Quick help</p>
-          <h2 id="utility-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Ask, translate, or look up a word</h2>
+          <h2 id="utility-heading" className="text-xl font-bold text-brown-950 dark:text-white">Ask, translate, or look up a word</h2>
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -103,16 +100,16 @@ function UtilityLinks() {
 
         <Link
           to="/vocabulary"
-          className="group flex min-h-36 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-4 hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/20 sm:p-5"
+          className="group flex min-h-36 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/20 sm:p-5"
         >
-          <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+          <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-ocean-300">
             <Search className="h-6 w-6" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block font-bold text-brown-900 dark:text-white">Dictionary</span>
             <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">Search more than 10,000 Chamorro words and meanings.</span>
           </span>
-          <ArrowRight className="h-5 w-5 flex-none text-indigo-600 transition-transform group-hover:translate-x-1 dark:text-indigo-300" aria-hidden="true" />
+          <ArrowRight className="h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-1 dark:text-gray-400" aria-hidden="true" />
         </Link>
       </div>
     </section>
@@ -148,8 +145,7 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, complete
         aria-busy="true"
         className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5"
       >
-        <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">At a glance</p>
-        <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
+        <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
         <span className="sr-only">Loading your progress</span>
         <div className="mt-4 animate-pulse space-y-3 motion-reduce:animate-none" aria-hidden="true">
           <div className="h-2 rounded-full bg-cream-200 dark:bg-slate-700" />
@@ -163,8 +159,7 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, complete
   if (hasError) {
     return (
       <section aria-labelledby="progress-heading" className="rounded-2xl border border-amber-200 bg-white p-4 dark:border-amber-900 dark:bg-slate-800 sm:p-5">
-        <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">At a glance</p>
-        <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Progress unavailable</h2>
+        <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-white">Progress unavailable</h2>
         <p role="alert" className="mt-2 text-sm text-brown-600 dark:text-gray-300">
           We could not load your progress. Nothing was reset or changed.
         </p>
@@ -185,8 +180,7 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, complete
     <section aria-labelledby="progress-heading" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">At a glance</p>
-          <h2 id="progress-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
+          <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-white">Your progress</h2>
         </div>
         <Link to="/dashboard" className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30">
           Details <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -214,7 +208,6 @@ export function ProgressSummary({ isLoading, hasError = false, onRetry, complete
 function TodayDataError({ onRetry }: { onRetry: () => void }) {
   return (
     <section aria-labelledby="today-error-heading" className="rounded-3xl border border-amber-200 bg-white p-5 dark:border-amber-900 dark:bg-slate-800 sm:p-7">
-      <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">Today</p>
       <h2 id="today-error-heading" className="mt-1 text-2xl font-bold text-brown-950 dark:text-white">Your plan is temporarily unavailable</h2>
       <p role="alert" className="mt-2 max-w-2xl text-brown-600 dark:text-gray-300">
         We could not load your learning history, so we will not guess at your next step. Your progress is safe.
@@ -232,14 +225,11 @@ function TodayDataError({ onRetry }: { onRetry: () => void }) {
 
 function SignedOutHome({ onStart }: { onStart: () => void }) {
   return (
-    <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 pb-28 sm:py-10 sm:pb-12">
-      <section className="overflow-hidden rounded-3xl border border-coral-200 bg-white p-6 dark:border-ocean-800 dark:bg-slate-800 sm:p-10">
+    <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 pb-28 sm:py-10 sm:pb-12">
+      <section className="overflow-hidden rounded-3xl bg-white p-6 dark:bg-slate-800 sm:p-10">
         <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-coral-100 px-3 py-1.5 text-sm font-semibold text-coral-800 dark:bg-ocean-950 dark:text-ocean-200">
-              <Sparkles className="h-4 w-4" aria-hidden="true" /> Built for Chamorro learning
-            </p>
-            <h1 className="mt-5 max-w-3xl text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-5xl">
+            <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-5xl">
               Learn a little Chamorro every day.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-brown-600 dark:text-gray-300 sm:text-lg">
@@ -261,28 +251,27 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
           <div className="rounded-3xl bg-cream-50 p-5 dark:bg-slate-900/60 sm:p-6">
             <p className="text-sm font-semibold text-brown-700 dark:text-gray-200">One welcoming place for</p>
             <ul className="mt-4 space-y-3 text-base text-brown-700 dark:text-gray-300">
-              <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-700" aria-hidden="true" /> Quick questions and translations</li>
-              <li className="flex items-center gap-3"><GraduationCap className="h-5 w-5 text-blue-600" aria-hidden="true" /> 21 guided lesson topics</li>
-              <li className="flex items-center gap-3"><Book className="h-5 w-5 text-indigo-600" aria-hidden="true" /> A 10,000+ word dictionary</li>
-              <li className="flex items-center gap-3"><Gamepad2 className="h-5 w-5 text-emerald-700" aria-hidden="true" /> Listening, stories, cards, and games</li>
+              <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Quick questions and translations</li>
+              <li className="flex items-center gap-3"><GraduationCap className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> 21 guided lesson topics</li>
+              <li className="flex items-center gap-3"><Book className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> A 10,000+ word dictionary</li>
+              <li className="flex items-center gap-3"><Gamepad2 className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Listening, stories, cards, and games</li>
             </ul>
           </div>
         </div>
       </section>
 
       <section aria-labelledby="public-tools-heading">
-        <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Try it now</p>
         <h2 id="public-tools-heading" className="mt-0.5 text-2xl font-bold text-brown-950 dark:text-white">Public learning tools</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <Link to="/vocabulary" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"><Search className="h-6 w-6" aria-hidden="true" /></span>
+          <Link to="/vocabulary" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-ocean-300"><Search className="h-6 w-6" aria-hidden="true" /></span>
             <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Search the dictionary</span><span className="mt-1 block text-base text-brown-600 dark:text-gray-300">Find a Chamorro word or browse a category.</span></span>
-            <ArrowRight className="h-5 w-5 text-indigo-600" aria-hidden="true" />
+            <ArrowRight className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
           </Link>
-          <Link to="/stories" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"><BookMarked className="h-6 w-6" aria-hidden="true" /></span>
+          <Link to="/stories" className="group flex min-h-32 items-center gap-4 rounded-2xl border border-cream-200 bg-white p-5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-ocean-300"><BookMarked className="h-6 w-6" aria-hidden="true" /></span>
             <span className="min-w-0 flex-1"><span className="block font-bold text-brown-900 dark:text-white">Read a Chamorro story</span><span className="mt-1 block text-base text-brown-600 dark:text-gray-300">Learn language through stories and culture.</span></span>
-            <ArrowRight className="h-5 w-5 text-amber-700" aria-hidden="true" />
+            <ArrowRight className="h-5 w-5 text-brown-500 transition-transform group-hover:translate-x-1 dark:text-gray-400" aria-hidden="true" />
           </Link>
         </div>
       </section>
@@ -352,7 +341,7 @@ export function HomePage() {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
         <HomeHeader signedIn={false} />
-        <main className="mx-auto max-w-6xl animate-pulse space-y-4 px-4 py-8 motion-reduce:animate-none">
+        <main className="mx-auto max-w-5xl animate-pulse space-y-4 px-4 py-8 motion-reduce:animate-none">
           <div className="h-56 rounded-3xl bg-white dark:bg-slate-800" />
           <div className="grid gap-4 sm:grid-cols-2"><div className="h-36 rounded-2xl bg-white dark:bg-slate-800" /><div className="h-36 rounded-2xl bg-white dark:bg-slate-800" /></div>
         </main>
@@ -364,11 +353,11 @@ export function HomePage() {
     <div className="min-h-screen bg-cream-50 text-brown-950 dark:bg-slate-900 dark:text-white">
       <HomeHeader signedIn={isSignedIn} />
       {isLoaded && isSignedIn ? (
-        <main className="mx-auto max-w-6xl space-y-8 px-4 py-6 pb-24 sm:py-8 sm:pb-12">
+        <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 pb-24 sm:py-8 sm:pb-12">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Håfa Adai{user?.firstName ? `, ${user.firstName}` : ''}</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">What would you like to learn today?</h1>
+              <p className="font-chamorro text-3xl font-semibold tracking-tight text-coral-800 dark:text-coral-200 sm:text-4xl">Håfa Adai{user?.firstName ? `, ${user.firstName}` : ''}</p>
+              <h1 className="mt-2 text-lg font-semibold text-brown-700 dark:text-gray-200 sm:text-xl">What would you like to learn today?</h1>
             </div>
             {streak && streak.current_streak > 0 && (
               <div className="inline-flex min-h-11 items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">

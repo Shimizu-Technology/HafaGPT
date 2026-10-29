@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { BottomNav } from './BottomNav';
+
 import { ImageModal } from './ImageModal';
 import { UpgradePrompt } from './UpgradePrompt';
 import { TTSDisclaimer } from './TTSDisclaimer';
@@ -14,6 +15,7 @@ vi.mock('@clerk/clerk-react', () => ({
 
 vi.mock('../hooks/useSubscription', () => ({
   useSubscription: () => ({ isChristmasTheme: false, isNewYearTheme: false }),
+  usePromoStatus: () => ({ data: undefined }),
 }));
 
 function UpgradeHarness() {
@@ -55,8 +57,9 @@ function SidebarHarness() {
 describe('shared navigation and modal accessibility', () => {
   it('groups learning tools under Library and keeps four named destinations', () => {
     render(<MemoryRouter initialEntries={['/vocabulary']}><BottomNav /></MemoryRouter>);
-    expect(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
-    expect(screen.getAllByRole('link')).toHaveLength(4);
+    const primary = screen.getByRole('navigation', { name: 'Primary' });
+    expect(within(primary).getAllByRole('link')).toHaveLength(4);
+    expect(screen.getByRole('link', { name: 'HåfaGPT home' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Today' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Tutor' })).toHaveAttribute('href', '/chat');
