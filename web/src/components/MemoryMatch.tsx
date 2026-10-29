@@ -489,7 +489,7 @@ export function MemoryMatch() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -508,7 +508,7 @@ export function MemoryMatch() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -582,7 +582,7 @@ export function MemoryMatch() {
                       </div>
                       <span className="text-xs sm:text-xs font-medium capitalize">{key}</span>
                       <span className={`text-xs sm:text-xs block ${
-                        settings.difficulty === key && !isDisabled ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'
+                        settings.difficulty === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-400'
                       }`}>
                         {config.pairs} pairs
                       </span>

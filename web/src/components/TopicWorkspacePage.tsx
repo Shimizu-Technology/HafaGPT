@@ -156,8 +156,8 @@ export function TopicWorkspacePage() {
               <h1 className="text-2xl font-bold sm:text-3xl">{data.topic.title}</h1>
               <p className="mt-2 max-w-2xl text-sm text-white/90 sm:text-base">{data.topic.description}</p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold text-white/90">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />About {data.topic.estimated_minutes} minutes</span>
-                {data.progress.completed_at && <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-2"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Completed</span>}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3 py-2"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />About {data.topic.estimated_minutes} minutes</span>
+                {data.progress.completed_at && <span className="inline-flex items-center gap-1.5 rounded-full bg-black/15 px-3 py-2"><CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />Completed</span>}
               </div>
             </div>
           </div>

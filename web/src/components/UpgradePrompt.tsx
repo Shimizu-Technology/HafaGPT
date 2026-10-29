@@ -94,7 +94,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             You have used all {displayedLimit} free {info.unit} for today.
           </p>
           {usageCount !== undefined && (
-            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-white/20 rounded-full text-white text-sm">
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-black/15 rounded-full text-white text-sm">
               <span>{usageCount}/{displayedLimit} used today</span>
             </div>
           )}

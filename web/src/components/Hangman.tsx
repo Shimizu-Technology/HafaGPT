@@ -394,7 +394,7 @@ export function Hangman() {
                   <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Beginner</p>
-                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>Common words</p>
+                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>Common words</p>
               </button>
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
@@ -409,7 +409,7 @@ export function Hangman() {
                   <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-purple-500'}`} />
                 </div>
                 <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Challenge</p>
-                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white/90' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</p>
+                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-400'}`}>Full dictionary</p>
               </button>
             </div>
           </div>
@@ -448,7 +448,7 @@ export function Hangman() {
                       <span className="text-xl">{icon}</span>
                       </div>
                       <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
-                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white/90' : 'text-brown-500 dark:text-gray-500'}`}>
+                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white' : 'text-brown-500 dark:text-gray-500'}`}>
                         {wordCount} word{wordCount !== 1 ? 's' : ''}
                       </p>
                     </button>
