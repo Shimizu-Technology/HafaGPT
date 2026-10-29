@@ -90,7 +90,7 @@ export function GameProgress({ current, total, score, streak = 0 }: GameProgress
         </span>
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-coral-700 transition-transform dark:bg-teal-500" style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${(progress) / 100})` }} />
+        <div className="h-full rounded-full bg-coral-700 dark:bg-teal-700 transition-transform dark:bg-teal-500" style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${(progress) / 100})` }} />
       </div>
     </section>
   );
@@ -114,7 +114,6 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
       <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
         <Trophy className="h-10 w-10" aria-hidden="true" />
       </span>
-      <p className="mb-1 text-sm font-semibold text-coral-700 dark:text-teal-300">Game complete</p>
       <h2 id="game-result-title" className="text-2xl font-bold text-brown-950 dark:text-white">{heading}</h2>
 
       <div className="my-5 flex justify-center gap-1" aria-label={`${stars} out of 3 stars`}>

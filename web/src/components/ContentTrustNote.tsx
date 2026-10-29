@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { BookOpenCheck, ChevronDown, ExternalLink, FlaskConical, Sparkles } from 'lucide-react';
-import { TRUST_LEVEL_SURFACE_CLASSES, type ContentTrust } from '../data/contentTrust';
+import type { ContentTrust } from '../data/contentTrust';
 
 interface ContentTrustNoteProps {
   trust: ContentTrust;
@@ -10,9 +10,9 @@ interface ContentTrustNoteProps {
 
 const levelStyles: Record<ContentTrust['level'], string> = {
   current_source: 'text-teal-900 dark:text-teal-100',
-  source_backed: 'text-sky-900 dark:text-sky-100',
+  source_backed: 'text-teal-900 dark:text-teal-100',
   developing: 'text-amber-950 dark:text-amber-100',
-  ai_practice: 'text-violet-950 dark:text-violet-100',
+  ai_practice: 'text-teal-950 dark:text-teal-100',
 };
 
 /** Select the visual marker associated with a content-trust level. */
@@ -28,26 +28,25 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
   const detailId = useId();
 
   return (
-    <aside className={`overflow-hidden rounded-2xl border ${TRUST_LEVEL_SURFACE_CLASSES[trust.level]} ${levelStyles[trust.level]} ${className}`} aria-label="Content source status">
+    <aside className={`max-w-prose ${levelStyles[trust.level]} ${className}`} aria-label="Content source status">
       <button
         type="button"
-        className={`flex min-h-11 w-full items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-inset ${compact ? 'px-3 py-2' : 'px-4 py-3'}`}
+        className={`inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-inset ${compact ? 'py-1' : 'py-2'}`}
         aria-expanded={expanded}
         aria-controls={expanded ? detailId : undefined}
         onClick={() => setExpanded((value) => !value)}
       >
-        <span className="flex h-8 w-8 flex-none items-center justify-center rounded-xl bg-white/70 dark:bg-slate-900/50">
+        <span className="flex flex-none items-center justify-center">
           <TrustIcon level={trust.level} />
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-xs font-bold uppercase tracking-wide">{trust.label}</span>
-          {!compact && <span className="mt-0.5 block text-sm opacity-80">See what this label means</span>}
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold">{trust.label}</span>
         </span>
         <ChevronDown className={`h-4 w-4 flex-none transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {expanded && (
-        <div id={detailId} className="border-t border-current/15 px-4 py-4 text-sm">
+        <div id={detailId} className="border-l border-current/25 pl-4 py-2 text-sm">
           <p className="leading-relaxed">{trust.summary}</p>
           <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
             {trust.region && <div><dt className="font-bold">Region</dt><dd className="mt-0.5 opacity-80">{trust.region}</dd></div>}

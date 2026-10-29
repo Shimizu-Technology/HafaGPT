@@ -101,8 +101,8 @@ export function QuizHistory() {
             </button>
           </section>
         ) : !data || data.results.length === 0 ? (
-          <section className="rounded-3xl border border-purple-200 bg-white p-6 text-center dark:border-purple-900 dark:bg-slate-800">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+          <section className="rounded-3xl border border-teal-200 bg-white p-6 text-center dark:border-teal-900 dark:bg-slate-800">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
               <Trophy className="h-7 w-7" aria-hidden="true" />
             </span>
             <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No quizzes yet</h2>
@@ -119,7 +119,6 @@ export function QuizHistory() {
         ) : (
           <>
             <section aria-labelledby="quiz-results-title">
-              <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Past practice</p>
               <h2 id="quiz-results-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-white">
                 Review your results
               </h2>
@@ -135,7 +134,7 @@ export function QuizHistory() {
                       className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
                     >
                       <span className="flex min-w-0 items-center gap-3">
-                        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                        <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                           <Brain className="h-5 w-5" aria-hidden="true" />
                         </span>
                         <span className="min-w-0">
@@ -144,7 +143,7 @@ export function QuizHistory() {
                               {result.category_title || 'Quiz'}
                             </span>
                             {isDictionary && (
-                              <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-950/50 dark:text-purple-300">
+                              <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
                                 Dictionary
                               </span>
                             )}

@@ -1,4 +1,3 @@
-import { BookOpen, Trophy, Target, Flame, Star } from 'lucide-react';
 import { useAllProgress } from '../hooks/useLearningPath';
 import { useStreak } from '../hooks/useStreak';
 
@@ -41,7 +40,7 @@ export function LearningProgressStats() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-cream-200 dark:border-slate-700">
         <div className="animate-pulse">
           <div className="h-6 w-40 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
           <div className="grid grid-cols-2 gap-3">
@@ -65,43 +64,34 @@ export function LearningProgressStats() {
 
   const stats = [
     {
-      icon: <BookOpen className="w-5 h-5" />,
       label: 'Topics',
       value: `${completedTopics}/${totalTopics}`,
       subtext: 'completed',
-      color: 'bg-coral-100 dark:bg-ocean-900/50 text-coral-700 dark:text-ocean-400',
     },
     {
-      icon: <Star className="w-5 h-5" />,
       label: 'Stars',
       value: `${stars.earned}/${stars.total}`,
       subtext: 'earned',
-      color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
     },
     {
-      icon: <Target className="w-5 h-5" />,
-      label: 'Avg Score',
+      label: 'Avg score',
       value: avgScore !== null ? `${avgScore}%` : '—',
       subtext: avgScore !== null ? 'on quizzes' : 'no quizzes yet',
-      color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
     },
     {
-      icon: <Flame className="w-5 h-5" />,
       label: 'Streak',
       value: currentStreak.toString(),
       subtext: currentStreak === 1 ? 'day' : 'days',
-      color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400',
     },
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white">
           Your Learning Progress
         </h2>
-        <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500" />
       </div>
 
       {/* Stats Grid - 4 columns on mobile for compact view */}
@@ -109,16 +99,13 @@ export function LearningProgressStats() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-cream-50 dark:bg-slate-700/50 text-center sm:text-left"
+            className="py-3 border-t border-cream-200 dark:border-slate-700 text-center sm:text-left"
           >
-            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center mb-1 sm:mb-2 mx-auto sm:mx-0 ${stat.color} [&>svg]:w-3.5 [&>svg]:h-3.5 sm:[&>svg]:w-5 sm:[&>svg]:h-5`}>
-              {stat.icon}
-            </div>
-            <div className="text-base sm:text-xl font-bold text-brown-800 dark:text-white">
+            <div className="text-xl sm:text-2xl font-bold text-brown-800 dark:text-white">
               {stat.value}
             </div>
-            <div className="text-xs text-brown-500 dark:text-gray-400 truncate">
-              {stat.subtext}
+            <div className="text-sm text-brown-500 dark:text-gray-400 truncate">
+              {stat.label}<span className="block text-xs">{stat.subtext}</span>
             </div>
           </div>
         ))}
@@ -126,19 +113,19 @@ export function LearningProgressStats() {
 
       {/* Encouragement message */}
       {completedTopics > 0 && completedTopics < totalTopics && (
-        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-coral-50 to-teal-50 dark:from-ocean-900/30 dark:to-teal-900/30 border border-coral-100 dark:border-ocean-700">
+        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-coral-50 dark:bg-ocean-900/30 border border-coral-100 dark:border-ocean-700">
           <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
-            {completedTopics < 3 && "Great start! Keep going 🌟"}
-            {completedTopics >= 3 && completedTopics < 5 && "Halfway there! 🚀"}
-            {completedTopics >= 5 && completedTopics < totalTopics && "Almost there! 💪"}
+            {completedTopics < 3 && "Great start! Keep going."}
+            {completedTopics >= 3 && completedTopics < 5 && "Halfway there!"}
+            {completedTopics >= 5 && completedTopics < totalTopics && "Almost there!"}
           </p>
         </div>
       )}
 
       {completedTopics === totalTopics && (
-        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-50 to-emerald-50 dark:from-amber-900/30 dark:to-emerald-900/30 border border-amber-200 dark:border-amber-700">
+        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700">
           <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
-            🎉 All beginner topics completed!
+             All beginner topics completed!
           </p>
         </div>
       )}
@@ -146,7 +133,7 @@ export function LearningProgressStats() {
       {/* Flashcards viewed stat - hidden on mobile */}
       {flashcardsViewed > 0 && (
         <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-brown-500 dark:text-gray-400 hidden sm:block">
-          📚 {flashcardsViewed} flashcard{flashcardsViewed !== 1 ? 's' : ''} studied so far
+           {flashcardsViewed} flashcard{flashcardsViewed !== 1 ? 's' : ''} studied so far
         </div>
       )}
     </div>

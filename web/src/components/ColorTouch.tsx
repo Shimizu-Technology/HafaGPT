@@ -222,8 +222,8 @@ export function ColorTouch() {
                 {COLORS.slice(0, 8).map(color => (
                   <div
                     key={color.chamorro}
-                    className="w-10 h-10 rounded-xl shadow-md border-2 border-white dark:border-slate-600"
-                    style={{ backgroundColor: color.hex }}
+                    className="w-10 h-10 rounded-xl border-2 border-white dark:border-slate-600"
+                    style={{ backgroundColor: color.hex, boxShadow: color.english === 'White' ? 'inset 0 0 0 2px rgba(0,0,0,0.1)' : undefined }}
                     title={`${color.chamorro} (${color.english})`}
                   />
                 ))}
@@ -257,23 +257,23 @@ export function ColorTouch() {
               disabled={isSpeaking}
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-pink-700 text-white '
-                  : 'bg-gradient-to-br from-pink-100 to-orange-100 dark:from-pink-900/50 dark:to-orange-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-pink-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-orange-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-pink-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-orange-900/70 border-2 border-pink-300 dark:border-pink-700'
+                  ? 'bg-teal-700 text-white '
+                  : 'bg-teal-100 dark:bg-teal-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                 isSpeaking
                   ? 'bg-white/20'
-                  : 'bg-pink-500 shadow-lg shadow-pink-500/30'
+                  : 'bg-teal-700 '
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
 
               <div className="text-center">
-                <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-pink-700 dark:text-pink-300'}`}>
+                <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                   {currentColor.chamorro}
                 </span>
-                <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-pink-500 dark:text-pink-400'}`}>
+                <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-teal-700 dark:text-teal-400'}`}>
                   {isSpeaking ? 'Playing…' : 'Tap to hear'}
                 </span>
               </div>
@@ -288,12 +288,12 @@ export function ColorTouch() {
                 const isCorrectAnswer = option.chamorro === currentColor.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'border-4 border-white dark:border-slate-600  shadow-lg';
+                let buttonClass = 'border-4 border-white dark:border-slate-600  ';
                 let overlayClass = '';
 
                 if (showResult) {
                   if (isCorrectAnswer) {
-                    buttonClass = 'border-4 border-green-500  shadow-xl';
+                    buttonClass = 'border-4 border-green-500  ';
                     overlayClass = 'ring-4 ring-green-400 ring-opacity-50';
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'border-4 border-red-500 opacity-60';

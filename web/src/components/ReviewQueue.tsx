@@ -91,7 +91,7 @@ function ReviewQueueSession() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-5 min-h-11 rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
+            className="mt-5 min-h-11 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
           >
             Try again
           </button>
@@ -121,7 +121,7 @@ function ReviewQueueSession() {
             Nice work. New reviews will appear here when they are due.
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link to="/" className="pressable inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
+            <Link to="/" className="pressable inline-flex min-h-11 items-center justify-center rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white">{today ? 'Continue Today' : 'Back to Today'}</Link>
             <Link
               to="/flashcards"
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-cream-300 bg-white px-5 py-2.5 font-semibold text-brown-700 hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"

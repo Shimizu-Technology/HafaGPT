@@ -19,7 +19,6 @@ export function LearningPathPage() {
               <BookOpen className="h-6 w-6" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Choose your starting point</p>
               <h2 id="beginner-path-heading" className="mt-0.5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">Learn one useful topic at a time</h2>
               <p className="mt-1 max-w-2xl text-sm text-brown-600 dark:text-gray-300">Start with Beginner for a guided introduction, or choose any topic if you already know some Chamorro.</p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-brown-600 dark:text-gray-300">

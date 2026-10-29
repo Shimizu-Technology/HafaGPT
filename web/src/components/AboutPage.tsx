@@ -73,15 +73,15 @@ export function AboutPage() {
       </section>
 
       <div className="mt-8 space-y-5">
-        <StorySection title="The problem" icon={Heart} iconClassName="bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+        <StorySection title="The problem" icon={Heart} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
           <p>I was born and raised in Guam, but I never really learned Chamorro. Like many Chamorros my age, I grew up speaking English at home, and the language slowly faded into the background.</p>
           <p>That changed when my daughter <strong>Stassie</strong>—whose Chamorro name is <strong>Tasi</strong>—started at <strong>Hurao Academy</strong>, a Chamorro immersion school. Homework, announcements, and parent messages arrived in Chamorro, and I often could not understand them.</p>
-          <blockquote className="rounded-r-2xl border-l-4 border-coral-500 bg-cream-50 px-4 py-3 italic dark:bg-slate-700/50">
+          <blockquote className="rounded-2xl border border-cream-200 dark:border-slate-700 bg-cream-50 px-4 py-3 italic dark:bg-slate-700/50">
             ChatGPT and Google Translate helped sometimes, but the translations were not consistently reliable. As a software engineer, I started wondering whether I could build something more useful for our family.
           </blockquote>
         </StorySection>
 
-        <StorySection title="The spark" icon={Lightbulb} iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+        <StorySection title="The spark" icon={Lightbulb} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
           <p>
             I am a software engineer and teach software engineering at{' '}
             <a href="https://codeschoolofguam.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-coral-700 underline underline-offset-2 dark:text-teal-300">Code School of Guam</a>. I began experimenting with AI tools both for this project and to better understand what I could teach my students.
@@ -90,7 +90,7 @@ export function AboutPage() {
           <p className="font-semibold text-coral-700 dark:text-teal-300">That is when the answers became meaningfully more useful.</p>
         </StorySection>
 
-        <StorySection title="How it grew" icon={Rocket} iconClassName="bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">
+        <StorySection title="How it grew" icon={Rocket} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
           <p>
             HåfaGPT&apos;s source registry includes Chamorro dictionaries, grammar guides, and learning resources that can support retrieval, comparison, and citations when their usage policy allows it. Registered sources include{' '}
             <a href="https://www.guampedia.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Guampedia</a>,{' '}
@@ -110,7 +110,7 @@ export function AboutPage() {
           </div>
         </StorySection>
 
-        <StorySection title="How to read our content labels" icon={ShieldCheck} iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+        <StorySection title="How to read our content labels" icon={ShieldCheck} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
           <p>HåfaGPT keeps useful material available while showing how strongly each learning surface is supported. A source-backed label does not mean a person has independently approved every example.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {(Object.entries(TRUST_LABELS) as Array<[ContentTrustLevel, (typeof TRUST_LABELS)[ContentTrustLevel]]>).map(([level, details]) => (
@@ -123,7 +123,7 @@ export function AboutPage() {
           <p>Confirmed errors are corrected. Regional variants remain discoverable and are labeled instead of being treated as mistakes. Human review can be added later without withholding the rest of the learning library.</p>
         </StorySection>
 
-        <StorySection title="Built for every kind of learner" icon={Users} iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
+        <StorySection title="Built for every kind of learner" icon={Users} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
           <p>HåfaGPT began for Stassie, Kami, and me, but it is for anyone who wants to learn about the Chamorro language, Guam, its people, and its history: children learning with a caregiver, students, teens, adults reconnecting with family, and curious visitors.</p>
           <p>It can be a quick reference for one school message or a place to build a daily learning habit. The goal is the same: make it easier to begin, while staying honest about sources and the limits of AI.</p>
           <p className="pt-2 text-center text-lg font-semibold text-coral-700 dark:text-teal-300">Si Yu&apos;os Ma&apos;åse&apos; for being here.</p>

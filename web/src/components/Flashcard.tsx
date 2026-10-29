@@ -80,7 +80,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden" aria-hidden={isFlipped}>
-          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-cream-300 dark:border-slate-700 flex flex-col p-6">
+          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-700 flex flex-col p-6">
             <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full items-center justify-center">
                 <p className="w-full break-words text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
@@ -97,7 +97,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
 
         {/* Back of card */}
         <div className="absolute inset-0 backface-hidden rotate-y-180" aria-hidden={!isFlipped}>
-          <div className="w-full h-full bg-coral-700 dark:bg-teal-800 rounded-2xl shadow-sm border border-coral-800 dark:border-teal-700 flex flex-col p-6 text-white">
+          <div className="w-full h-full bg-coral-700 dark:bg-teal-700 rounded-2xl border border-coral-800 dark:border-teal-700 flex flex-col p-6 text-white">
             <div ref={backContent} id={backContentId} data-testid="flashcard-back-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full flex-col items-center justify-center gap-3">
                 <p className="w-full break-words text-2xl sm:text-3xl font-semibold text-center">

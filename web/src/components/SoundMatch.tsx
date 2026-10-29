@@ -302,12 +302,12 @@ export function SoundMatch() {
                     aria-pressed={selectedCategory.id === category.id}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
-                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30'
-                        : 'border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-300'
+                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
+                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
-                    <span className="text-sm font-medium text-brown-700 dark:text-gray-300">{category.name}</span>
+                    <span className="text-sm font-medium">{category.name}</span>
                   </button>
                 ))}
               </div>
@@ -343,14 +343,14 @@ export function SoundMatch() {
               disabled={isSpeaking}
               className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
-                  ? 'bg-purple-500 text-white '
-                  : 'bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-200 [@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:from-purple-900/70 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:to-pink-900/70 border-2 border-purple-300 dark:border-purple-700'
+                  ? 'bg-teal-700 text-white'
+                  : 'bg-teal-100 dark:bg-teal-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-900/70 border-2 border-teal-300 dark:border-teal-700'
               }`}
             >
               <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                 isSpeaking
                   ? 'bg-white/20'
-                  : 'bg-purple-500 shadow-lg shadow-purple-500/30'
+                  : 'bg-teal-700 '
               }`}>
                 <Volume2 className={`w-6 h-6 ${isSpeaking ? 'animate-pulse text-white' : 'text-white'}`} />
               </div>
@@ -358,10 +358,10 @@ export function SoundMatch() {
               {/* Always show the Chamorro word */}
               {currentWord && (
                 <div className="text-center">
-                  <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-purple-700 dark:text-purple-300'}`}>
+                  <span className={`text-2xl font-bold block ${isSpeaking ? 'text-white' : 'text-teal-700 dark:text-teal-300'}`}>
                     {currentWord.chamorro}
                   </span>
-                  <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-purple-500 dark:text-purple-400'}`}>
+                  <span className={`text-sm ${isSpeaking ? 'text-white/90' : 'text-teal-700 dark:text-teal-400'}`}>
                     {isSpeaking ? 'Playing…' : 'Tap to hear'}
                   </span>
                 </div>
@@ -377,7 +377,7 @@ export function SoundMatch() {
                 const isCorrectAnswer = option.chamorro === currentWord.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-purple-400 ';
+                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {

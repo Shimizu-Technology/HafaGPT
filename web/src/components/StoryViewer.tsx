@@ -134,7 +134,7 @@ export function StoryViewer() {
   const renderReading = () => (
     <>
       {/* Story Header */}
-      <div className="mb-6 rounded-2xl border border-amber-200 bg-white p-5 dark:border-amber-800 dark:bg-slate-800">
+      <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-start gap-4">
           <div className="text-4xl">{story.icon}</div>
           <div className="flex-1">
@@ -145,13 +145,7 @@ export function StoryViewer() {
               {story.titleEnglish}
             </p>
             <div className="flex items-center gap-3 mt-2 text-xs text-brown-500 dark:text-gray-400">
-              <span className={`px-2 py-0.5 rounded-full font-medium ${
-                story.difficulty === 'beginner'
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                  : story.difficulty === 'intermediate'
-                  ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-                  : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-              }`}>
+              <span className="px-2 py-0.5 rounded-full font-medium bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200">
                 {story.difficulty}
               </span>
               <span>{story.readingTime} min read</span>
@@ -160,26 +154,26 @@ export function StoryViewer() {
         </div>
       </div>
 
-      <ContentTrustNote trust={STORY_CONTENT_TRUST} className="mb-4" />
-      <TTSDisclaimer variant="inline" className="mb-4 !text-amber-800 dark:!text-amber-200" />
+      <ContentTrustNote trust={STORY_CONTENT_TRUST} className="mb-1" />
+      <TTSDisclaimer variant="inline" className="mb-1 !text-muted" />
 
-      {/* Cultural Note Toggle */}
+      {/* Cultural note Toggle */}
       {story.culturalNote && (
         <button
           onClick={() => setShowCulturalNote(!showCulturalNote)}
           aria-expanded={showCulturalNote}
           aria-controls="story-cultural-note"
-          className="w-full mb-4 flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+          className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-lg text-teal-800 dark:text-teal-200 hover:underline transition-colors"
         >
           <Info className="w-4 h-4" />
-          <span className="text-sm font-medium">Cultural Note</span>
-          <ChevronRight className={`w-4 h-4 ml-auto transition-transform ${showCulturalNote ? 'rotate-90' : ''}`} />
+          <span className="text-sm font-medium">Cultural note</span>
+          <ChevronRight className={`w-4 h-4 transition-transform ${showCulturalNote ? 'rotate-90' : ''}`} />
         </button>
       )}
       
       {showCulturalNote && story.culturalNote && (
-        <div id="story-cultural-note" className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-          <p className="text-sm text-blue-800 dark:text-blue-200">
+        <div id="story-cultural-note" className="mb-4 border-l border-teal-200 pl-4 py-2 dark:border-teal-800">
+          <p className="text-sm text-teal-800 dark:text-teal-200">
             {story.culturalNote}
           </p>
         </div>
@@ -189,7 +183,7 @@ export function StoryViewer() {
       <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
         {/* Chamorro Text - Tappable Words */}
         <div className="mb-6">
-          <p className="text-xs text-brown-500 dark:text-gray-400 uppercase tracking-wide mb-2 font-medium">
+          <p className="text-sm text-brown-500 dark:text-gray-400 mb-2 font-semibold">
             Tap any word to translate
           </p>
           <p className="text-lg leading-loose">
@@ -214,7 +208,7 @@ export function StoryViewer() {
                 <span className="text-2xl font-bold text-amber-900 dark:text-amber-100">
                   {selectedWord.chamorro}
                 </span>
-                <PronunciationButton text={selectedWord.chamorro} className="bg-amber-200 text-amber-800 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-200" />
+                <PronunciationButton text={selectedWord.chamorro} className="bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-200" />
               </div>
               {selectedWord.pronunciation && (
                 <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
@@ -252,7 +246,7 @@ export function StoryViewer() {
           onClick={goToPrevParagraph}
           aria-label="Previous paragraph"
           disabled={currentParagraph === 0}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="hidden sm:inline">Previous</span>
@@ -299,7 +293,7 @@ export function StoryViewer() {
       </div>
 
       {/* Question Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700 mb-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 mb-4">
         <h3 id="story-question" tabIndex={-1} className="text-lg font-semibold text-brown-800 dark:text-white mb-4">
           {question.question}
         </h3>
@@ -369,8 +363,8 @@ export function StoryViewer() {
 
         {/* Explanation */}
         {showExplanation && (
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="mt-4 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
+            <p className="text-sm text-teal-800 dark:text-teal-200">
               <span className="font-semibold">Explanation:</span> {question.explanation}
             </p>
             <PronunciationButton text={question.explanation} label="Hear it" showLabel />
@@ -411,10 +405,10 @@ export function StoryViewer() {
       {/* Results Card */}
       <div className={`rounded-2xl p-6 mb-6 ${
         scorePercentage >= 80
-          ? 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200/50 dark:border-green-700/30'
+          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200/50 dark:border-green-700/30'
           : scorePercentage >= 60
-          ? 'bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200/50 dark:border-amber-700/30'
-          : 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200/50 dark:border-red-700/30'
+          ? 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-700/30'
+          : 'bg-red-50 dark:bg-red-900/20 border border-red-200/50 dark:border-red-700/30'
       }`}>
         <div className="text-center">
           <div className="text-3xl mb-2">
@@ -472,9 +466,9 @@ export function StoryViewer() {
         backTo={topicReturn?.to ?? '/stories'}
         backLabel={topicReturn?.label ?? 'Back to stories'}
         maxWidthClassName="max-w-2xl"
-        iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+        iconClassName="bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
         trailing={viewMode === 'reading' ? (
-          <PronunciationButton text={paragraph.chamorro} label="Hear it" showLabel className="bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300" />
+          <PronunciationButton text={paragraph.chamorro} label="Hear it" showLabel className="bg-teal-100 text-teal-700 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-300" />
         ) : undefined}
       />
 

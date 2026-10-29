@@ -158,7 +158,7 @@ export function SharedConversation() {
     <>
     <PublicPage title="Shared conversation" subtitle={data.title} icon={MessageSquare} maxWidthClassName="max-w-4xl">
       <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-        <p className="text-xs font-semibold uppercase tracking-wide text-coral-700 dark:text-teal-300">Shared conversation · read only</p>
+        <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">Shared conversation · read only</p>
         <h2 className="mt-1 break-words text-xl font-bold text-brown-950 dark:text-white">{data.title}</h2>
         <div className="mt-2 flex flex-wrap gap-4 text-xs text-brown-500 dark:text-gray-400">
           <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{formatDate(data.created_at)}</span>
@@ -178,7 +178,7 @@ export function SharedConversation() {
                     ? 'bg-coral-700 dark:bg-ocean-700 text-white'
                     : message.role === 'system'
                     ? 'bg-cream-200 dark:bg-slate-800 text-brown-600 dark:text-gray-400 text-base italic text-center mx-auto'
-                    : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-slate-700 shadow-sm'
+                    : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-slate-700 '
                 }`}
               >
                 {message.role === 'assistant' && (

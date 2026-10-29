@@ -174,7 +174,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
             aria-valuemax={cards.length}
             aria-valuenow={currentIndex + 1}
           >
-            <div className="h-full rounded-full bg-coral-500 dark:bg-teal-500" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-coral-700 dark:bg-teal-700" style={{ width: `${progress}%` }} />
           </div>
         ) : undefined}
       />

@@ -29,14 +29,14 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
 
   if (compact) {
     return (
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/30 dark:to-yellow-900/30 rounded-full border border-amber-200 dark:border-amber-700">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/30 rounded-full border border-amber-200 dark:border-amber-700">
         <span className="text-lg">{levelInfo.emoji}</span>
         <span className="text-sm font-bold text-amber-700 dark:text-amber-300">
           Lv.{xpData.level}
         </span>
         <div className="w-16 h-1.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full origin-left"
+            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full origin-left"
             style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
           />
         </div>
@@ -49,11 +49,11 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
   }
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 dark:from-amber-900/20 dark:via-yellow-900/20 dark:to-orange-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-amber-200 dark:border-amber-700/50 shadow-sm">
+    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-amber-200 dark:border-amber-700/50">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-md">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-400 flex items-center justify-center">
             <span className="text-xl sm:text-2xl">{levelInfo.emoji}</span>
           </div>
           <div>
@@ -92,7 +92,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </div>
         <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 rounded-full origin-left relative overflow-hidden"
+            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full origin-left relative overflow-hidden"
             style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
           />
         </div>

@@ -197,28 +197,13 @@ function LevelSection({
   onToggle,
 }: LevelSectionProps) {
 
-  const levelColors: Record<LearningLevel, { bg: string; border: string; text: string; progress: string }> = {
-    beginner: {
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      border: 'border-emerald-200 dark:border-emerald-700',
-      text: 'text-emerald-700 dark:text-emerald-400',
-      progress: 'from-emerald-400 to-teal-500',
-    },
-    intermediate: {
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      border: 'border-amber-200 dark:border-amber-700',
-      text: 'text-amber-700 dark:text-amber-400',
-      progress: 'from-amber-400 to-orange-500',
-    },
-    advanced: {
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      border: 'border-purple-200 dark:border-purple-700',
-      text: 'text-purple-700 dark:text-purple-400',
-      progress: 'from-purple-400 to-pink-500',
-    },
+  const colors = {
+    bg: 'bg-cream-50 dark:bg-slate-800',
+    border: 'border-cream-200 dark:border-slate-700',
+    text: 'text-brown-800 dark:text-white',
+    progress: 'bg-coral-700 dark:bg-teal-700',
   };
 
-  const colors = levelColors[level];
   const isComplete = completedCount === topics.length;
 
   return (
@@ -258,7 +243,7 @@ function LevelSection({
           {!isLocked && (
             <div className="hidden sm:block w-20 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
               <div
-                className={`h-full bg-gradient-to-r ${colors.progress} rounded-full`}
+                className={`h-full ${colors.progress} rounded-full`}
                 style={{ width: `${(completedCount / topics.length) * 100}%` }}
               />
             </div>
@@ -329,7 +314,7 @@ export function LearningPathMap() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-cream-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
         <div className="animate-pulse">
           <div className="h-6 w-48 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
           <div className="space-y-4">
@@ -363,7 +348,7 @@ export function LearningPathMap() {
   const totalCompleted = beginnerCompleted + intermediateCompleted + advancedCompleted;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-cream-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-slate-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
@@ -374,14 +359,13 @@ export function LearningPathMap() {
             {totalCompleted} of {totalTopics} topics completed
           </p>
         </div>
-        <div className="text-2xl sm:text-3xl">🗺️</div>
       </div>
 
       {/* Overall progress bar */}
       <div className="mb-4 sm:mb-6">
         <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-emerald-400 via-teal-500 to-amber-500 rounded-full transition-[width,background-color] duration-300"
+            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full transition-[width,background-color] duration-300"
             style={{ width: `${(totalCompleted / totalTopics) * 100}%` }}
           />
         </div>

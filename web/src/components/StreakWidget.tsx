@@ -19,30 +19,16 @@ export function StreakWidget() {
   const { current_streak, longest_streak, is_today_active, today_activities } = streak;
   const totalTodayActivities = today_activities.chat + today_activities.games + today_activities.quizzes;
 
-  // Determine streak status and color
-  const isStreakActive = current_streak > 0;
-  const streakColor = is_today_active
-    ? 'text-orange-500'
-    : current_streak > 0
-    ? 'text-amber-400' // Streak at risk (yesterday was active, today not yet)
-    : 'text-gray-400 dark:text-gray-400';
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50 shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50">
       {/* Header with streak count */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`relative ${is_today_active ? 'motion-safe:animate-pulse' : ''}`}>
-            <Flame className={`w-7 h-7 ${streakColor}`} />
-            {is_today_active && (
-              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" />
-            )}
-          </div>
+          <Flame className="h-4 w-4 text-muted" aria-hidden="true" />
           <div>
             <div className="flex items-baseline gap-1.5">
-              <span className={`text-2xl font-bold ${
-                isStreakActive ? 'text-brown-800 dark:text-white' : 'text-gray-400 dark:text-gray-400'
-              }`}>
+              <span className="text-2xl font-bold text-ink">
                 {current_streak}
               </span>
               <span className="text-sm text-brown-500 dark:text-gray-400">
@@ -50,7 +36,7 @@ export function StreakWidget() {
               </span>
             </div>
             {!is_today_active && current_streak > 0 && (
-              <p className="text-xs text-amber-700 dark:text-amber-400">
+              <p className="text-xs text-muted">
                 Do an activity to keep your streak!
               </p>
             )}
@@ -59,9 +45,9 @@ export function StreakWidget() {
 
         {/* Personal best badge */}
         {longest_streak > 0 && (
-          <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-            <Trophy className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+          <div className="flex items-center gap-1 px-2 py-1 text-muted">
+            <Trophy className="w-3.5 h-3.5 text-muted" />
+            <span className="text-xs font-medium text-muted">
               Best: {longest_streak}
             </span>
           </div>
@@ -70,30 +56,26 @@ export function StreakWidget() {
 
       {/* Today's progress */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-brown-600 dark:text-gray-400 uppercase tracking-wide">
-          Today's Activity
+        <p className="text-sm font-semibold text-brown-600 dark:text-gray-400">
+          Today's activity
         </p>
         
         <div className="grid grid-cols-3 gap-2">
           {/* Chat */}
-          <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
-            today_activities.chat > 0 
-              ? 'bg-teal-50 dark:bg-teal-900/20' 
-              : 'bg-cream-50 dark:bg-slate-700/50'
-          }`}>
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
             {today_activities.chat > 0 ? (
-              <CheckCircle2 className="w-4 h-4 text-teal-500" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
               <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
             )}
             <MessageSquare className={`w-3.5 h-3.5 ${
               today_activities.chat > 0 
-                ? 'text-teal-600 dark:text-teal-400' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.chat > 0 
-                ? 'text-teal-700 dark:text-teal-300' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`}>
               {today_activities.chat}
@@ -101,24 +83,20 @@ export function StreakWidget() {
           </div>
 
           {/* Games */}
-          <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
-            today_activities.games > 0 
-              ? 'bg-pink-50 dark:bg-pink-900/20' 
-              : 'bg-cream-50 dark:bg-slate-700/50'
-          }`}>
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
             {today_activities.games > 0 ? (
-              <CheckCircle2 className="w-4 h-4 text-pink-500" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
               <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
             )}
             <Gamepad2 className={`w-3.5 h-3.5 ${
               today_activities.games > 0 
-                ? 'text-pink-600 dark:text-pink-400' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.games > 0 
-                ? 'text-pink-700 dark:text-pink-300' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`}>
               {today_activities.games}
@@ -126,24 +104,20 @@ export function StreakWidget() {
           </div>
 
           {/* Quizzes */}
-          <div className={`flex items-center gap-1.5 p-2 rounded-lg ${
-            today_activities.quizzes > 0 
-              ? 'bg-indigo-50 dark:bg-indigo-900/20' 
-              : 'bg-cream-50 dark:bg-slate-700/50'
-          }`}>
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
             {today_activities.quizzes > 0 ? (
-              <CheckCircle2 className="w-4 h-4 text-indigo-500" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
               <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
             )}
             <GraduationCap className={`w-3.5 h-3.5 ${
               today_activities.quizzes > 0 
-                ? 'text-indigo-600 dark:text-indigo-400' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.quizzes > 0 
-                ? 'text-indigo-700 dark:text-indigo-300' 
+                ? 'text-muted'
                 : 'text-brown-500 dark:text-gray-400'
             }`}>
               {today_activities.quizzes}

@@ -336,7 +336,7 @@ function LessonQuizSession({
         </p>
         <button
           onClick={() => onComplete(100)}
-          className="mt-4 px-6 py-2 bg-coral-700 text-white rounded-xl"
+          className="mt-4 px-6 py-2 bg-coral-700 dark:bg-teal-700 text-white rounded-xl"
         >
           Continue anyway
         </button>
@@ -348,7 +348,7 @@ function LessonQuizSession({
   if (showResumePrompt && savedState) {
     return (
       <div className="space-y-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50 text-center">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50 text-center">
           <div className="w-16 h-16 bg-coral-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <ArrowRight className="w-8 h-8 text-coral-700 dark:text-teal-300" />
           </div>
@@ -501,14 +501,14 @@ function LessonQuizSession({
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{isAnswered ? isCorrect ? 'Correct.' : `Incorrect. Correct answer: ${currentQuestion.correctAnswer}` : ''}</p>
 
       {/* Question card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-cream-200/50 dark:border-slate-700/50">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50">
         {/* Question type badge */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
             currentQuestion.type === 'multiple_choice'
-              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+              ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
               : currentQuestion.type === 'fill_blank'
-              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300'
+              ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300'
               : 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
           }`}>
             {currentQuestion.type === 'multiple_choice' ? 'Multiple Choice' :

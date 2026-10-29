@@ -562,7 +562,7 @@ export function ChamorroWordle() {
                 w-full p-4 rounded-2xl text-left transition-colors
                 ${dailyPlayed
                   ? 'bg-cream-100 dark:bg-slate-800 opacity-60 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-lg  shadow-md border border-cream-200 dark:border-slate-700'
+                  : 'bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700'
                 }
               `}
             >
@@ -581,7 +581,7 @@ export function ChamorroWordle() {
             </button>
 
             {/* Practice Mode Settings */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                   <Shuffle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
@@ -602,7 +602,7 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'beginner'}
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'beginner'
-                        ? 'bg-amber-700 text-white shadow-lg'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
@@ -616,7 +616,7 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'challenge'}
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'challenge'
-                        ? 'bg-amber-700 text-white shadow-lg'
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }`}
                   >
@@ -639,7 +639,7 @@ export function ChamorroWordle() {
                       aria-pressed={difficulty === d}
                       className={`p-2 rounded-xl text-center transition-colors ${
                         difficulty === d
-                          ? 'bg-teal-700 text-white shadow-lg'
+                          ? 'bg-coral-700 dark:bg-teal-700 text-white'
                           : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }`}
                     >
@@ -663,7 +663,7 @@ export function ChamorroWordle() {
                         aria-pressed={category === cat.id}
                         className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                           category === cat.id
-                            ? 'bg-coral-700 text-white dark:bg-teal-700'
+                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
                             : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                         }`}
                       >

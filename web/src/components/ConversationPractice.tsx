@@ -230,7 +230,7 @@ export function ConversationPractice() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 p-4">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 p-4">
         <div className="max-w-2xl mx-auto pt-20 text-center">
           <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
@@ -241,7 +241,7 @@ export function ConversationPractice() {
           </p>
           <Link
             to="/"
-            className="pressable inline-flex items-center gap-2 px-4 py-2 bg-coral-700 text-white rounded-lg hover:bg-coral-800 transition-colors"
+            className="pressable inline-flex items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-teal-700 text-white rounded-lg hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
           >
             ← Back to Home
           </Link>
@@ -252,7 +252,7 @@ export function ConversationPractice() {
 
   if (!scenario) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
         <h1 className="text-xl font-bold text-brown-950 dark:text-white">Loading practice…</h1>
       </div>
     );
@@ -577,8 +577,8 @@ function MessageBubble({
         {/* Bubble */}
         <div className={`rounded-2xl px-4 py-3 ${
           isUser 
-            ? 'bg-coral-700 text-white rounded-br-md'
-            : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md shadow-sm border border-slate-200 dark:border-slate-600'
+            ? 'bg-coral-700 dark:bg-teal-700 text-white rounded-br-md'
+            : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md border border-slate-200 dark:border-slate-600'
         }`}>
           {/* Chamorro text */}
           <p className="mb-1">{message.chamorro}</p>
@@ -609,11 +609,11 @@ function MessageBubble({
 
         {/* Feedback (for character messages after user input) */}
         {message.feedback && hasVisiblePracticeFeedback(feedbackSuggestions, message.feedback.encouragement) && (
-          <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="mt-2 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800">
             {feedbackSuggestions.length > 0 && (
               <div className="mb-2">
-                <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-blue-800 dark:text-blue-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />AI suggestions</p>
-                <ul className="list-disc space-y-1 pl-4 text-sm text-blue-700 dark:text-blue-300">
+                <p className="mb-1 flex items-center gap-1.5 text-xs font-medium text-teal-800 dark:text-teal-200"><Sparkles className="h-3.5 w-3.5" aria-hidden="true" />AI suggestions</p>
+                <ul className="list-disc space-y-1 pl-4 text-sm text-teal-700 dark:text-teal-300">
                   {feedbackSuggestions.map((suggestion, index) => (
                     <li key={index}>{suggestion}</li>
                   ))}

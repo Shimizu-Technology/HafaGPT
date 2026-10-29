@@ -448,7 +448,7 @@ export function FallingWords() {
         {gameState === 'setup' && (
           <div className="max-w-md mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -461,7 +461,7 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-amber-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -476,7 +476,7 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg scale-[1.02]'
+                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
                       : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                     }
                   `}
@@ -489,7 +489,7 @@ export function FallingWords() {
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
               <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Topic</h3>
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
@@ -500,7 +500,7 @@ export function FallingWords() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white shadow-lg '
+                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
                         : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
                       }
                     `}
@@ -561,7 +561,7 @@ export function FallingWords() {
         {(gameState === 'playing' || gameState === 'paused') && (
           <div className="relative">
             {/* Stats Bar */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 border border-cream-200 dark:border-slate-700">
               <div className="flex items-center gap-2">
                 {/* Lives */}
                 <div className="flex items-center gap-0.5">
@@ -595,7 +595,7 @@ export function FallingWords() {
             <div className="mb-3 sm:mb-4">
               <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-coral-400 to-coral-500 dark:from-teal-400 dark:to-teal-500 transition-colors duration-300"
+                  className="h-full bg-coral-700 dark:bg-teal-700 transition-colors duration-300"
                   style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${((wordsCompleted / WIN_WORDS) * 100) / 100})` }}
                 />
               </div>
@@ -605,15 +605,14 @@ export function FallingWords() {
             </div>
 
             {/* Game Area */}
-            <div ref={gameAreaRef} className="relative bg-gradient-to-b from-cream-100 to-cream-200 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-cream-300 dark:border-slate-600 h-[50vh] sm:h-[55vh] overflow-hidden shadow-inner">
+            <div ref={gameAreaRef} className="relative bg-cream-100 dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-600 h-[50vh] sm:h-[55vh] overflow-hidden">
               {/* Falling Word */}
               {currentWord && (
                 <div
                   ref={wordElementRef}
                   className={`
                     absolute left-1/2 top-0 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
-                    text-lg sm:text-2xl font-bold text-white shadow-xl
-                    transition-colors duration-200
+                    text-lg sm:text-2xl font-bold text-white                     transition-colors duration-200
                     ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
                   `}
                   style={{
@@ -627,7 +626,7 @@ export function FallingWords() {
               )}
 
               {/* Danger Zone */}
-              {pace.challenge && <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-gradient-to-t from-red-500/30 to-transparent border-t-2 border-red-500/50 border-dashed" />}
+              {pace.challenge && <div className="absolute bottom-0 left-0 right-0 h-[15%] bg-red-500/30 border-t-2 border-red-500/50 border-dashed" />}
 
               {/* Paused Overlay */}
               {gameState === 'paused' && (
@@ -654,9 +653,9 @@ export function FallingWords() {
                   disabled={!!feedback || gameState === 'paused'}
                   className={`
                     py-3 sm:py-4 px-3 rounded-xl font-bold text-sm sm:text-base
-                    transition-colors duration-200 shadow-md
+                    transition-colors duration-200
                     ${feedback && option === currentWord?.english
-                      ? 'bg-green-700 text-white'
+                      ? 'bg-emerald-700 text-white'
                       : feedback === 'wrong' && option !== currentWord?.english
                         ? 'bg-cream-200 dark:bg-slate-700 text-brown-500 dark:text-gray-400'
                         : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
@@ -681,7 +680,7 @@ export function FallingWords() {
           <div className="max-w-sm mx-auto text-center space-y-4 sm:space-y-6">
             {/* Game Over */}
             <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-gradient-to-br from-coral-100 to-coral-200 dark:from-teal-950/50 dark:to-teal-800/50 flex items-center justify-center shadow-xl">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-coral-100 dark:bg-teal-950/50 flex items-center justify-center">
                 <span className="text-4xl sm:text-5xl">
                   {wordsCompleted >= WIN_WORDS ? '🎉' : wordsCompleted >= 10 ? '🏆' : wordsCompleted >= 5 ? '⭐' : '👍'}
                 </span>
@@ -713,7 +712,7 @@ export function FallingWords() {
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
                   <p className="text-2xl sm:text-3xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
@@ -735,7 +734,7 @@ export function FallingWords() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold shadow-lg [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-xl  transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again

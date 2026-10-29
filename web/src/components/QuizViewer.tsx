@@ -236,7 +236,7 @@ function QuizViewerSession() {
   // Show upgrade prompt FIRST (before any early returns)
   if (showUpgradePrompt) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
         <UpgradePrompt
           feature="quiz"
           onClose={() => {
@@ -253,7 +253,7 @@ function QuizViewerSession() {
   // Loading state for dictionary quiz
   if (isDictionaryQuiz && isDictLoading && !savedQuiz) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
           <h1 className="text-brown-600 dark:text-gray-400">Generating quiz questions...</h1>
@@ -264,8 +264,8 @@ function QuizViewerSession() {
 
   if (isDictionaryQuiz && isDictError && !savedQuiz) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
           <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             We couldn't load this quiz
           </h1>
@@ -295,7 +295,7 @@ function QuizViewerSession() {
   // Not found state
   if (!isDictionaryQuiz && !category) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-brown-600 dark:text-gray-400 mb-4">Quiz not found</h1>
           <Link replace to="/quiz" className="text-coral-700 dark:text-ocean-300 hover:underline">
@@ -309,7 +309,7 @@ function QuizViewerSession() {
   // No questions yet (but not at limit - show loading)
   if (questions.length === 0 && !usageChecked) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
           <h1 className="text-brown-600 dark:text-gray-400">Loading questions...</h1>
@@ -320,8 +320,8 @@ function QuizViewerSession() {
 
   if (quizError) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
           <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             Quiz temporarily unavailable
           </h1>
@@ -339,8 +339,8 @@ function QuizViewerSession() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cream-50 to-cream-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
           <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
             No quiz questions available
           </h1>
@@ -664,12 +664,12 @@ function QuizViewerSession() {
           {/* Dictionary mode hint OR Try Dictionary Mode button */}
           {isDictionaryQuiz ? (
             <p className="text-center text-sm text-brown-600 dark:text-gray-400 mt-4">
-              💡 Dictionary quizzes generate new random questions each time!
+              Dictionary quizzes generate new random questions each time!
             </p>
           ) : (
-            <div className="mt-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
+            <div className="mt-6 p-4 bg-teal-50 dark:bg-teal-900/20 rounded-xl border border-teal-200 dark:border-teal-800">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                <div className="flex items-center gap-2 text-teal-700 dark:text-teal-300">
                   <BookOpen className="w-5 h-5" />
                   <span className="text-sm font-medium">Want more practice?</span>
                 </div>
@@ -677,7 +677,7 @@ function QuizViewerSession() {
                   <button
                     type="button"
                     disabled
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold transition-colors cursor-not-allowed opacity-60"
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-not-allowed opacity-60"
                   >
                     Try Dictionary Mode
                     <ChevronRight className="w-4 h-4" />
@@ -685,14 +685,14 @@ function QuizViewerSession() {
                 ) : (
                   <Link
                     to={`/quiz/dict-${actualCategoryId}`}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-700 hover:bg-teal-800 text-white rounded-lg text-sm font-semibold transition-colors"
                   >
                     Try Dictionary Mode
                     <ChevronRight className="w-4 h-4" />
                   </Link>
                 )}
               </div>
-              <p className="text-xs text-purple-600 dark:text-purple-400 mt-2 text-center sm:text-left">
+              <p className="text-xs text-teal-700 dark:text-teal-400 mt-2 text-center sm:text-left">
                 10,350+ words • Unlimited new questions • More variety
               </p>
             </div>
@@ -729,12 +729,12 @@ function QuizViewerSession() {
         {currentQuestion && (
           <>
             {/* Question */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
               <div className="flex items-center gap-2 mb-2 sm:mb-4">
                 <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-700 dark:text-ocean-400" />
-                <span className="text-xs font-medium text-brown-500 dark:text-gray-400 uppercase tracking-wide">
-                  {currentQuestion.type === 'multiple_choice' ? 'Multiple Choice' : 
-                   currentQuestion.type === 'type_answer' ? 'Type Your Answer' : 'Fill in the Blank'}
+                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400">
+                  {currentQuestion.type === 'multiple_choice' ? 'Multiple choice' :
+                   currentQuestion.type === 'type_answer' ? 'Type your answer' : 'Fill in the blank'}
                 </span>
               </div>
               <div className="flex flex-col items-start gap-3">

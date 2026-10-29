@@ -439,7 +439,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
     const modeDetails = getModeDetails(mode);
     return (
       <div className="flex justify-center mb-4 sm:mb-6 animate-fade-in">
-        <div className="bg-cream-200/80 dark:bg-slate-800/80 backdrop-blur-sm border border-cream-300 dark:border-slate-700 rounded-xl px-4 py-2 shadow-sm max-w-md">
+        <div className="bg-cream-200/80 dark:bg-slate-800/80 backdrop-blur-sm border border-cream-300 dark:border-slate-700 rounded-xl px-4 py-2 max-w-md">
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-lg">{modeDetails.icon}</span>
             <span className="font-semibold text-brown-800 dark:text-white">
@@ -491,7 +491,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
             {timestamp && <span>{getRelativeTime(timestamp)}</span>}
           </div>
-          <div className="bg-cream-100 dark:bg-slate-800/50 border border-cream-300 dark:border-slate-700 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm">
+          <div className="bg-cream-100 dark:bg-slate-800/50 border border-cream-300 dark:border-slate-700 rounded-2xl rounded-tl-md px-4 py-3">
             <div className="flex items-center gap-2 text-brown-500 dark:text-gray-400">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -516,7 +516,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
 
         {/* Message Bubble */}
         <div
-          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 shadow-sm ${
+          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 ${
             isUser
               ? 'bg-coral-700 dark:bg-ocean-700 text-white rounded-tr-md'
               : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-slate-700'
@@ -539,7 +539,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                           onClick={() => onImageClick?.(file.url)}
                           className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
                         >
-                          <img src={file.url} alt={file.filename} className="max-h-32 max-w-[150px] rounded-lg shadow-md object-cover" />
+                          <img src={file.url} alt={file.filename} className="max-h-32 max-w-[150px] rounded-lg object-cover" />
                         </button>
                       ) : (
                         // Document preview (PDF, Word, Text)
@@ -554,7 +554,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                           {file.content_type?.includes('text') && <File className="w-4 h-4" />}
                           {!file.content_type?.match(/pdf|word|text/) && <File className="w-4 h-4" />}
                           <div className="flex flex-col">
-                            <span className="text-xs opacity-80 uppercase">
+                            <span className="text-sm opacity-80">
                               {file.content_type?.includes('pdf') ? 'PDF' : 
                                file.content_type?.includes('word') ? 'DOC' :
                                file.content_type?.includes('text') ? 'TXT' : 'FILE'}
@@ -583,7 +583,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                       onClick={() => onImageClick?.(imageUrl)}
                       className="inline-flex min-h-11 min-w-11 max-w-full items-center justify-center rounded-lg transition-opacity enabled:hover:opacity-90 focus-visible:outline-white"
                     >
-                      <img src={imageUrl} alt="Uploaded content" className="max-h-48 max-w-full rounded-lg shadow-md" />
+                      <img src={imageUrl} alt="Uploaded content" className="max-h-48 max-w-full rounded-lg" />
                     </button>
                   ) : (
                     // Document preview (PDF, Word, Text)
