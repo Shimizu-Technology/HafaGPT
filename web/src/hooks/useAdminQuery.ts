@@ -328,6 +328,8 @@ export interface DailyUsagePoint {
 
 export interface UsageTrendsResponse {
   period: string;
+  /** Last Guam day in the window (YYYY-MM-DD). */
+  window_end?: string;
   data: DailyUsagePoint[];
   totals: {
     chat: number;
@@ -345,6 +347,8 @@ export interface UserGrowthPoint {
 
 export interface UserGrowthResponse {
   period: string;
+  /** Last Guam day in the window (YYYY-MM-DD). */
+  window_end?: string;
   data: UserGrowthPoint[];
 }
 

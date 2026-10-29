@@ -7658,6 +7658,9 @@ async def get_usage_trends(
     try:
         # Parse period
         days = {"7d": 7, "30d": 30, "90d": 90}.get(period, 30)
+        from api.admin_analytics import window_start
+        from api.time_utils import get_guam_date
+        window_end = get_guam_date()
         
         db_url = os.getenv("DATABASE_URL")
         import psycopg2
@@ -7684,9 +7687,9 @@ async def get_usage_trends(
                    COUNT(*) FILTER (WHERE kind = 'quizzes'),
                    COUNT(DISTINCT user_id)
             FROM activity
-            WHERE day >= (NOW() AT TIME ZONE 'Pacific/Guam')::date - %s
+            WHERE day BETWEEN %s AND %s
             GROUP BY day ORDER BY day
-        """, (days + 1, days + 1, days + 1, days - 1))  # exactly `days` Guam days, ending today
+        """, (days + 1, days + 1, days + 1, window_start(window_end, days), window_end))  # exactly `days` Guam days
 
         rows = cursor.fetchall()
         
@@ -7709,6 +7712,7 @@ async def get_usage_trends(
         
         return {
             "period": period,
+            "window_end": window_end.isoformat(),
             "data": data,
             "totals": {
                 "chat": totals["chat"],
@@ -7751,10 +7755,12 @@ async def get_user_growth(
         for user in users:
             metadata = getattr(user, 'public_metadata', {}) or {}
             signups.append((getattr(user, 'created_at', None), bool(metadata.get('is_premium'))))
-        data = build_user_growth_series(signups, days, get_guam_date())
+        window_end = get_guam_date()
+        data = build_user_growth_series(signups, days, window_end)
 
         return {
             "period": period,
+            "window_end": window_end.isoformat(),
             "data": data
         }
         

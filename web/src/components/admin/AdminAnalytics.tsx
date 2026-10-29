@@ -24,18 +24,20 @@ export function AdminAnalytics() {
   const [period, setPeriod] = useState<Period>('30d');
   const chartInk = 'rgb(var(--muted))';
   
-  const { data: usageData, isLoading: usageLoading } = useUsageTrends(period);
-  const { data: growthData, isLoading: growthLoading } = useUserGrowth(period);
+  const { data: usageData, isLoading: usageLoading, isError: usageError } = useUsageTrends(period);
+  const { data: growthData, isLoading: growthLoading, isError: growthError } = useUserGrowth(period);
   const { data: featureData, isLoading: featureLoading } = useFeatureUsage();
   const { data: advancedData, isLoading: advancedLoading } = useAdvancedAnalytics(period);
   // Lay activity onto every day of the period so idle days read as zero.
   // A successful response with no rows means an idle period, not missing data.
   const usageSeries = useMemo(() => usageData
-    ? fillDailySeries(usageData.data ?? [], periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }))
+    ? fillDailySeries(usageData.data ?? [], periodDays(period), date => ({ date, chat_count: 0, game_count: 0, quiz_count: 0, active_users: 0 }), usageData.window_end)
     : [], [usageData, period]);
+  // React Query keeps the last good response when a refresh fails; say so.
+  const showingStaleData = (usageError && Boolean(usageData)) || (growthError && Boolean(growthData));
   const usageIdle = usageSeries.length > 0 && usageSeries.every(day => !day.chat_count && !day.game_count && !day.quiz_count);
   const growthSeries = useMemo(() => growthData?.data?.length
-    ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }))
+    ? fillDailySeries(growthData.data, periodDays(period), (date, previous) => ({ date, new_users: 0, total_users: previous?.total_users ?? 0, premium_users: previous?.premium_users ?? 0 }), growthData.window_end)
     : [], [growthData, period]);
   
   const isLoading = usageLoading || growthLoading || featureLoading || advancedLoading;
@@ -91,17 +93,24 @@ export function AdminAnalytics() {
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
+                aria-pressed={period === p}
                 className={`min-h-11 px-4 py-2 rounded-lg font-medium transition-colors ${
                   period === p
                     ? 'bg-coral-700 dark:bg-ocean-700 text-white'
                     : 'bg-white dark:bg-slate-800 text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
                 }`}
               >
-                {p === '7d' ? '7 Days' : p === '30d' ? '30 Days' : '90 Days'}
+                {p === '7d' ? '7 days' : p === '30d' ? '30 days' : '90 days'}
               </button>
             ))}
           </div>
         </div>
+
+        {showingStaleData && (
+          <p role="status" className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+            Couldn't refresh analytics. Showing the last data that loaded.
+          </p>
+        )}
         
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
@@ -179,6 +188,7 @@ export function AdminAnalytics() {
                       labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
+                      itemStyle={{ color: '#f8fafc' }}
                     />
                     <Legend formatter={(value) => <span style={{ color: chartInk }}>{value}</span>} />
                     <Line type="monotone" dataKey="chat_count" name="Chat" stroke="rgb(var(--focus-role))" strokeWidth={2} dot={false} />
@@ -213,6 +223,7 @@ export function AdminAnalytics() {
                       labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
                       contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
+                      itemStyle={{ color: '#f8fafc' }}
                     />
                     <Legend formatter={(value) => <span style={{ color: chartInk }}>{value}</span>} />
                     <Bar dataKey="new_users" name="New users" fill="rgb(var(--focus-role))" radius={[4, 4, 0, 0]} />
