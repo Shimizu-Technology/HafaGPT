@@ -133,13 +133,17 @@ def _candidate_correction(value: str) -> str:
 
 def _translation_thread_state(
     past_messages: list[dict[str, Any]],
+    tutor_intent: str | None = None,
 ) -> tuple[str, str] | None:
     """Resolve the latest contiguous user translation thread.
 
     Work backwards so a replacement such as ``What about tree?`` supplies the
     newest target while an older explicit request supplies the direction. Stop
     at unrelated user text to avoid carrying stale translation intent into a
-    different topic.
+    different topic. Under the selected Translate task, the task picker is
+    locked for the whole conversation, so a plain earlier turn such as
+    ``hånom`` was itself text to translate and is re-resolved with the same
+    rules as the current turn. Assistant answers are never consulted.
     """
 
     target = ""
@@ -164,6 +168,14 @@ def _translation_thread_state(
         if _SAME_TARGET_FOLLOW_UP_PATTERN.search(previous):
             continue
 
+        if tutor_intent == "translate":
+            explicit = _explicit_translation_request(
+                selected_task_translation_query(previous)
+            )
+            if explicit:
+                explicit_target, direction = explicit
+                return target or explicit_target, direction
+
         break
     return None
 
@@ -177,6 +189,7 @@ def _canonical_translation_query(target: str, direction: str) -> str:
 def _translation_follow_up_query(
     current: str,
     past_messages: list[dict[str, Any]],
+    tutor_intent: str | None = None,
 ) -> str:
     """Restate a short follow-up inside a translation thread, or return ""."""
 
@@ -185,7 +198,7 @@ def _translation_follow_up_query(
     candidate_correction = _candidate_correction(current)
     if not (replacement_target or same_target_follow_up or candidate_correction):
         return ""
-    thread_state = _translation_thread_state(past_messages)
+    thread_state = _translation_thread_state(past_messages, tutor_intent)
     if not thread_state:
         return ""
     previous_target, direction = thread_state
@@ -210,22 +223,24 @@ def resolve_translation_routing_query(
 
     A recognized request is returned unchanged. A short follow-up such as
     "What about tree?" inherits the direction of the user's preceding lookup,
-    an ambiguous natural cue ("I want to say the store closes at five") counts
-    as a translation inside a translation thread or under the Translate task,
-    and any other message typed under the Translate task is the text to
-    translate. Only user-authored history is consulted. The model still
-    receives the original message; this string only steers routing.
+    including a plain earlier turn typed under the Translate task. An
+    ambiguous natural cue ("I want to say the store closes at five") counts as
+    a translation inside a translation thread or under the Translate task, and
+    any other message typed under the Translate task is the text to translate.
+    Only user-authored history is consulted. The model still receives the
+    original message; this string only steers routing.
     """
 
     current = current_message.strip()
     if not current or classify_translation_request(current) != "none":
         return current_message
-    follow_up = _translation_follow_up_query(current, past_messages)
+    follow_up = _translation_follow_up_query(current, past_messages, tutor_intent)
     if follow_up:
         return follow_up
     natural_payload = natural_translation_payload(current)
     if natural_payload and (
-        tutor_intent == "translate" or _translation_thread_state(past_messages)
+        tutor_intent == "translate"
+        or _translation_thread_state(past_messages, tutor_intent)
     ):
         if "\n" in natural_payload or len(natural_payload) > 200:
             return f"Translate this to Chamorro:\n\n{natural_payload}"

@@ -312,3 +312,64 @@ def test_selected_translate_task_keeps_english_as_english(text: str) -> None:
 def test_undirected_translate_command_uses_headword_detection() -> None:
     assert translation_direction("Translate hanom") == "to_english"
     assert translation_direction("Translate tree") == "to_chamorro"
+
+
+@pytest.mark.parametrize(
+    ("previous", "current", "expected"),
+    [
+        ("hånom", "What about guma'?", 'What does "guma\'" mean in English?'),
+        ("hanom", "And guma?", 'What does "guma" mean in English?'),
+        ("tree", "What about blue?", 'How do you say "blue" in Chamorro?'),
+        (
+            "hahaha thank you, I'll be over in a bit",
+            "What about see you soon?",
+            'How do you say "see you soon" in Chamorro?',
+        ),
+    ],
+)
+def test_translate_task_follow_up_keeps_direction_and_extracts_target(
+    previous: str, current: str, expected: str
+) -> None:
+    history = _thread(previous)
+
+    routed = resolve_translation_routing_query(current, history, "translate")
+
+    assert routed == expected
+    assert build_contextual_retrieval_query(routed, history) == routed
+
+
+def test_translate_task_follow_up_chain_keeps_first_direction() -> None:
+    history = _thread("hånom", "What about guma'?")
+
+    assert resolve_translation_routing_query("How about tasi?", history, "translate") == (
+        'What does "tasi" mean in English?'
+    )
+
+
+def test_plain_earlier_turn_only_sets_a_thread_under_translate_task() -> None:
+    history = _thread("hånom")
+
+    assert resolve_translation_routing_query("What about guma'?", history) == (
+        "What about guma'?"
+    )
+
+
+def test_assistant_answers_never_supply_translation_state() -> None:
+    history = [
+        {"role": "user", "content": "Tell me about Guam"},
+        {"role": "assistant", "content": 'How do you say "tree" in Chamorro? Tronkon håyu.'},
+    ]
+
+    assert resolve_translation_routing_query("What about blue?", history) == (
+        "What about blue?"
+    )
+
+    # Under the Translate task the user's own earlier text sets the direction,
+    # even when the assistant's answer reads like a request the other way.
+    translate_history = [
+        {"role": "user", "content": "tree"},
+        {"role": "assistant", "content": 'What does "håyu" mean in English?'},
+    ]
+    assert resolve_translation_routing_query(
+        "What about blue?", translate_history, "translate"
+    ) == 'How do you say "blue" in Chamorro?'
