@@ -1,0 +1,5 @@
+# Raw responses, cached embeddings, prompts and blind keys remain local.
+*
+!.gitignore
+!*.md
+!*.summary.json
