@@ -6,6 +6,7 @@ from typing import Any, Iterable
 
 from src.rag.knowledge_cards import is_public_http_url
 from src.rag.source_reviews import build_registered_source_citation
+from src.rag.source_policy import get_registered_source
 
 
 LEGACY_SOURCE_IDS = {
@@ -59,7 +60,8 @@ def format_source_citations(sources: Iterable[object]) -> list[dict[str, Any]]:
             if not isinstance(citation.get("name"), str) or not citation["name"].strip():
                 continue
             url = citation.get("url")
-            if not is_public_http_url(url):
+            registered = get_registered_source(citation.get("source_id"))
+            if (registered and registered.get("citation_url_allowed") is False) or not is_public_http_url(url):
                 citation["url"] = None
         elif isinstance(source, (tuple, list)) and source:
             name = str(source[0]).strip()

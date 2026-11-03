@@ -19,3 +19,10 @@ The registry grows from 32 to **45** sources, with **45** editorial records and 
 The duplicate `scripts/crawlers/crawl_website.py` becomes a small compatibility entry point for `src/crawlers/crawl_website.py`. The latter already calls `RAGDatabaseManager.add_governed_documents`, which validates all documents before writing. A regression test verifies delegation without importing the crawler or connecting to a database. No ingestion was performed.
 
 `crawlers/SOURCES.md` and `HOW_RAG_WORKS.md` now describe v3, 384-dimensional `text-embedding-3-small`, and the code's main `gpt-5.6-luna`/OpenRouter default. The 14,800-document count is explicitly the dated read-only local audit, not a production measurement. Deployment settings, the actual production SHA, native language accuracy, and live tutor output remain unverified by this worker.
+
+
+## Initial CodeRabbit review disposition
+
+Applied: corrected the Guam Code and Chamoru.info evidence access dates; type-annotated new builder/tests; added pinned raw-input digest preflight, SHA-256 shape validation, and an empty-output guard with regression tests. The unavailable lessons URL now stays in the provenance registry but is omitted from both citation construction paths and from structured citation formatting, preserving attribution and retained content.
+
+Not applied: suppressing the working HTTP dictionary link merely because it lacks TLS. The task explicitly requests the verified HTTP scheme where HTTPS fails and keeps Chamoru.info in use. The dictionary endpoint returned 200; its HTTPS certificate check failed. This intentional behavior remains for the lead to assess; no unverified HTTPS substitute is introduced. CodeRabbit's initial review is not represented as approval of the later fixes.

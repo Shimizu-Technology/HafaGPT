@@ -246,6 +246,7 @@
       "id": "chamoru_info_lessons",
       "name": "Chamoru.info language lessons",
       "canonical_url": "http://www.chamoru.info/language-lessons/",
+      "citation_url_allowed": false,
       "match": {
         "source_contains": [
           "chamoru.info/language-lessons",

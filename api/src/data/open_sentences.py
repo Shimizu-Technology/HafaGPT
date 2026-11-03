@@ -25,8 +25,19 @@ def validate_open_sentence_snapshot(payload: dict) -> None:
     source_id = payload.get('source_id')
     if source_id not in LICENSES:
         raise ValueError('Unknown open-sentence source')
-    if not payload.get('source_version') or not payload.get('artifact') or not payload.get('notices'):
+    artifact = payload.get('artifact')
+    if not payload.get('source_version') or not isinstance(artifact, dict) or not payload.get('notices'):
         raise ValueError('Snapshot needs versioned artifact provenance and notices')
+    if source_id == 'tatoeba_chamorro':
+        pages = artifact.get('pages')
+        if not isinstance(pages, list) or not pages or any(not isinstance(page, dict) for page in pages):
+            raise ValueError('Snapshot requires hashed Tatoeba page artifacts')
+        digests = [page.get('sha256') for page in pages]
+    else:
+        digests = [artifact.get('sha256')]
+    if any(not isinstance(digest, str) or len(digest) != 64
+           or any(char not in '0123456789abcdefABCDEF' for char in digest) for digest in digests):
+        raise ValueError('Snapshot artifacts require valid SHA-256 digests')
     pairs = payload.get('pairs')
     if not isinstance(pairs, list) or payload.get('pair_count') != len(pairs) or not pairs:
         raise ValueError('Invalid snapshot pair count')

@@ -110,7 +110,7 @@
       "review_status": "complete",
       "quality": {"authority_score": 3, "temporal_scope": "mixed", "regions": ["Guam"], "lineage": "derivative", "extraction_risk": "medium", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "usage", "educational"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/dictionary/", "accessed_at": "2026-08-18", "supports": "Public learner dictionary derived in part from older lexicons."}],
+      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/dictionary/", "accessed_at": "2026-11-03", "supports": "Public learner dictionary derived in part from older lexicons."}],
       "rationale": "Useful lookup evidence, but derivative lineage must be preserved and it cannot count as an independent vote."
     },
     {
@@ -119,7 +119,7 @@
       "review_status": "provisional",
       "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "medium", "confidence": "medium"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/language-lessons/", "accessed_at": "2026-08-18", "supports": "Publicly accessible learner explanations and examples."}],
+      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/language-lessons/", "accessed_at": "2026-11-03", "supports": "Retained lesson snapshot remains in use; the public HTTP index currently returns 500, so its citation link is suppressed pending recovery."}],
       "rationale": "Suitable for corroborating original learner explanations, not canonical adjudication."
     },
     {
@@ -299,7 +299,7 @@
       "review_status": "complete",
       "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "institution", "reference": "https://col.guamcourts.gov/sites/default/files/01gc007.pdf", "accessed_at": "2026-08-19", "supports": "Section 706 of Title 1 identifies English and Chamorro as Guam's official languages."}],
+      "evidence": [{"kind": "institution", "reference": "https://col.guamcourts.gov/sites/default/files/01gc007.pdf", "accessed_at": "2026-11-03", "supports": "Section 706 of Title 1 identifies English and Chamorro as Guam's official languages."}],
       "rationale": "Controlling primary legal source for the official-language claim; cite section 706 without reproducing the code as a corpus."
     },
     {

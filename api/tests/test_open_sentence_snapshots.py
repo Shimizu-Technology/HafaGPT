@@ -1,5 +1,6 @@
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -12,7 +13,7 @@ EXPECTED = {
 }
 
 
-def test_all_versioned_snapshots_validate_without_enabling_ingestion():
+def test_all_versioned_snapshots_validate_without_enabling_ingestion() -> None:
     actual = {}
     for path in SNAPSHOT_DIR.glob('*.json'):
         payload = json.loads(path.read_text())
@@ -25,7 +26,7 @@ def test_all_versioned_snapshots_validate_without_enabling_ingestion():
     assert actual == EXPECTED
 
 
-def test_default_loader_excludes_every_historical_pair_and_never_claims_review():
+def test_default_loader_excludes_every_historical_pair_and_never_claims_review() -> None:
     modern = load_open_sentence_pairs()
     all_pairs = load_open_sentence_pairs(include_historical=True)
     assert len(modern) == 1214
@@ -35,7 +36,7 @@ def test_default_loader_excludes_every_historical_pair_and_never_claims_review()
     assert all(pair['teaching_eligible'] is False and pair['review_status'] == 'unreviewed' for pair in all_pairs)
 
 
-def first_snapshot(source_id='tatoeba_chamorro'):
+def first_snapshot(source_id: str = 'tatoeba_chamorro') -> dict:
     return json.loads((SNAPSHOT_DIR / f'{source_id}.json').read_text())
 
 
@@ -44,21 +45,21 @@ def first_snapshot(source_id='tatoeba_chamorro'):
     ('sentence_ids', {}), ('orthography', 'modern'), ('retrieved_at', 'not-a-date'),
     ('teaching_eligible', True), ('review_status', 'native_reviewed'),
 ])
-def test_missing_or_unsafe_pair_metadata_is_rejected(field, value):
+def test_missing_or_unsafe_pair_metadata_is_rejected(field: str, value: object) -> None:
     payload = first_snapshot()
     payload['pairs'][0][field] = value
     with pytest.raises(ValueError):
         validate_open_sentence_snapshot(payload)
 
 
-def test_bible_cannot_lose_its_historical_flag():
+def test_bible_cannot_lose_its_historical_flag() -> None:
     payload = first_snapshot('opus_bible_uedin_ch_en')
     payload['pairs'][0]['orthography'] = 'unknown'
     with pytest.raises(ValueError, match='historical'):
         validate_open_sentence_snapshot(payload)
 
 
-def test_source_ids_distinguish_original_ids_from_archive_row_identifiers():
+def test_source_ids_distinguish_original_ids_from_archive_row_identifiers() -> None:
     direct = first_snapshot()['pairs'][0]
     assert direct['sentence_id_kind'] == 'tatoeba_sentence'
     assert direct['sentence_ids']['chamorro'][0].isdigit()
@@ -71,7 +72,7 @@ def test_source_ids_distinguish_original_ids_from_archive_row_identifiers():
     assert bible['sentence_ids']['chamorro'] == ['b.PSA.1.1.1']
 
 
-def test_duplicate_pair_ids_and_incomplete_snapshots_fail_closed(tmp_path):
+def test_duplicate_pair_ids_and_incomplete_snapshots_fail_closed(tmp_path: Path) -> None:
     payload = first_snapshot()
     payload['pairs'][1] = copy.deepcopy(payload['pairs'][0])
     with pytest.raises(ValueError, match='Duplicate'):
@@ -82,3 +83,54 @@ def test_duplicate_pair_ids_and_incomplete_snapshots_fail_closed(tmp_path):
         validate_open_sentence_snapshot(payload)
     with pytest.raises(ValueError, match='No open-sentence'):
         load_open_sentence_pairs(snapshot_dir=tmp_path)
+
+
+@pytest.mark.parametrize('artifact', [
+    {}, {'pages': []}, {'pages': ['not an object']}, {'pages': [{}]},
+    {'pages': [{'sha256': 'not-a-digest'}]},
+])
+def test_tatoeba_requires_every_page_digest(artifact: object) -> None:
+    payload = first_snapshot()
+    payload['artifact'] = artifact
+    with pytest.raises(ValueError):
+        validate_open_sentence_snapshot(payload)
+
+
+def test_opus_requires_archive_digest() -> None:
+    payload = first_snapshot('opus_tatoeba_ch_en')
+    del payload['artifact']['sha256']
+    with pytest.raises(ValueError, match='SHA-256'):
+        validate_open_sentence_snapshot(payload)
+
+
+def test_builder_hash_preflight_rejects_tampered_raw_before_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import hashlib
+    from scripts import build_open_sentence_snapshots as builder
+    monkeypatch.setattr(builder, 'OPUS', ())
+    raw = tmp_path / 'raw'
+    raw.mkdir()
+    page = raw / 'tatoeba-api.json'
+    page.write_bytes(b'original')
+    manifest = tmp_path / 'manifest.json'
+    manifest.write_text(json.dumps({'snapshot_version': 'v1', 'retrieved_at': '2026-11-03',
+                                    'files': {page.name: hashlib.sha256(b'original').hexdigest()}}))
+    builder.verify_raw_inputs(raw, '2026-11-03', manifest)
+    page.write_bytes(b'changed')
+    with pytest.raises(ValueError, match='SHA-256 mismatch'):
+        builder.verify_raw_inputs(raw, '2026-11-03', manifest)
+    with pytest.raises(ValueError, match='new version'):
+        builder.verify_raw_inputs(raw, '2026-11-04', manifest)
+
+
+def test_builder_cannot_overwrite_an_existing_snapshot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from scripts import build_open_sentence_snapshots as builder
+    output = tmp_path / 'output'
+    output.mkdir()
+    sentinel = output / 'existing.json'
+    sentinel.write_text('preserve me')
+    monkeypatch.setattr('sys.argv', ['builder', '--raw-dir', str(tmp_path / 'missing'),
+                                    '--output-dir', str(output), '--retrieved-at', '2026-11-03'])
+    with pytest.raises(SystemExit):
+        builder.main()
+    assert sentinel.read_text() == 'preserve me'
+    assert list(output.iterdir()) == [sentinel]

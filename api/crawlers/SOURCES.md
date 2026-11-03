@@ -10,7 +10,7 @@ The code defaults to **`hafagpt_governed_openai_v3`**, OpenAI `text-embedding-3-
 | --- | --- |
 | Local Revised snapshot / Natibu Marianas lineage | CNMI 2010 lexical reference; legacy snapshot remains available while provenance/permission work continues. No new ingestion grant. |
 | [Chamoru.info dictionary](http://www.chamoru.info/dictionary/) | Mixed source traditions; remains in use by Leon's decision while permission is pending. Derivative lineage is not independent corroboration. HTTP dictionary returned 200; HTTPS failed certificate validation. |
-| [Chamoru.info lessons](http://www.chamoru.info/language-lessons/) | Registered transitional pedagogy. Scheme corrected, but the HTTP lessons endpoint returned 500 during this check; HTTPS was also unavailable. |
+| [Chamoru.info lessons](http://www.chamoru.info/language-lessons/) | Registered transitional pedagogy. Scheme corrected, but the HTTP lessons endpoint returned 500 during this check; HTTPS was also unavailable. Citation links are suppressed while the endpoint fails; retained source content remains available. |
 | Topping, Ogo, and Dungca (1975) | Legacy orthography, scoped historical/lexical evidence; permission still unresolved. |
 | Sandra Chung, Chamorro Grammar (2020) | Grammar reference; full-text reuse permission remains unresolved. |
 | Guampedia / copied Lengguahi-ta stories | Blocked pending written permission; old crawler priority numbers do not override policy. |

@@ -79,3 +79,14 @@ def test_source_info_preserves_governed_citation_metadata() -> None:
     assert serialized["locator"] == "Dictionary entry hånom"
     assert serialized["content_role"] == "lexical_reference"
     assert serialized["evidence_kind"] == "legacy_retrieval"
+
+
+def test_unavailable_lessons_keep_attribution_without_a_broken_link() -> None:
+    from src.rag.source_reviews import build_registered_source_citation, build_citation_contract
+    source_id = 'chamoru_info_lessons'
+    assert build_registered_source_citation(source_id)['url'] is None
+    assert build_citation_contract({'source': 'http://www.chamoru.info/language-lessons/example'})['url'] is None
+    citation = format_source_citations([{'source_id': source_id, 'name': 'Chamoru.info language lessons',
+                                         'url': 'http://www.chamoru.info/language-lessons/'}])[0]
+    assert citation['name'] == 'Chamoru.info language lessons'
+    assert citation['url'] is None

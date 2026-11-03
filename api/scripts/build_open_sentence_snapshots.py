@@ -13,6 +13,9 @@ import json
 from pathlib import Path
 import xml.etree.ElementTree as ET
 import zipfile
+from typing import Any
+
+RAW_MANIFEST = Path(__file__).resolve().parents[1] / "data/open_sentences/raw_artifacts_v1.json"
 
 
 OPUS = (
@@ -27,11 +30,11 @@ OPUS = (
 )
 
 
-def sha256(path):
+def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def write_snapshot(output_dir, source_id, version, artifact, pairs, notices):
+def write_snapshot(output_dir: Path, source_id: str, version: str, artifact: dict[str, Any], pairs: list[dict[str, Any]], notices: list[str]) -> None:
     payload = {
         'schema_version': 1, 'snapshot_version': 'v1', 'source_id': source_id,
         'source_version': version, 'artifact': artifact, 'pair_count': len(pairs),
@@ -44,7 +47,7 @@ def write_snapshot(output_dir, source_id, version, artifact, pairs, notices):
     (output_dir / f'{source_id}.json').write_text(prefix + ',\n  "pairs": [\n' + body + '\n  ]\n}\n', encoding='utf-8')
 
 
-def build_tatoeba(raw_dir, output_dir, retrieved_at):
+def build_tatoeba(raw_dir: Path, output_dir: Path, retrieved_at: str) -> int:
     paths = [raw_dir / 'tatoeba-api.json', *sorted(raw_dir.glob('tatoeba-api-[0-9]*.json'))]
     pages = [json.loads(path.read_text(encoding='utf-8')) for path in paths]
     if pages[-1]['paging'].get('has_next'):
@@ -86,7 +89,7 @@ def build_tatoeba(raw_dir, output_dir, retrieved_at):
     return len(pairs)
 
 
-def build_opus(raw_dir, output_dir, retrieved_at):
+def build_opus(raw_dir: Path, output_dir: Path, retrieved_at: str) -> dict[str, int]:
     counts = {}
     for corpus, version, source_id, license_id, license_url, orthography, expected_count in OPUS:
         path = raw_dir / f'{corpus}.zip'
@@ -145,14 +148,31 @@ def build_opus(raw_dir, output_dir, retrieved_at):
     return counts
 
 
-def main():
+def verify_raw_inputs(raw_dir: Path, retrieved_at: str, manifest_path: Path = RAW_MANIFEST) -> None:
+    """Reject changed bytes before creating any output for the frozen v1 capture."""
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    if manifest['snapshot_version'] != 'v1' or retrieved_at != manifest['retrieved_at']:
+        raise ValueError('This builder only reproduces the pinned v1 capture; record a new version for a refresh')
+    expected = manifest['files']
+    actual_names = {path.name for path in raw_dir.glob('tatoeba-api*.json')} | {f'{corpus}.zip' for corpus, *_rest in OPUS}
+    if actual_names != set(expected):
+        raise ValueError('Raw input files differ from the pinned v1 manifest')
+    for name, digest in expected.items():
+        if sha256(raw_dir / name) != digest:
+            raise ValueError(f'Raw input SHA-256 mismatch: {name}')
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--raw-dir', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--retrieved-at', required=True, type=date.fromisoformat)
     args = parser.parse_args()
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    if args.output_dir.exists() and (not args.output_dir.is_dir() or any(args.output_dir.iterdir())):
+        parser.error('--output-dir must be empty or absent')
     retrieved_at = args.retrieved_at.isoformat()
+    verify_raw_inputs(args.raw_dir, retrieved_at)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
     counts = {'tatoeba_chamorro': build_tatoeba(args.raw_dir, args.output_dir, retrieved_at)}
     counts.update(build_opus(args.raw_dir, args.output_dir, retrieved_at))
     print(json.dumps(counts, indent=2))

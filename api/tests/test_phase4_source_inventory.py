@@ -17,7 +17,7 @@ NEW_IDS = {
 
 
 @pytest.mark.parametrize('source_id', sorted(NEW_IDS))
-def test_new_candidates_and_licensed_snapshots_never_enable_rag(source_id):
+def test_new_candidates_and_licensed_snapshots_never_enable_rag(source_id: str) -> None:
     source = get_registered_source(source_id)
     assert source['ingestion']['allowed'] is False
     assert source['retrieval']['allowed'] is False
@@ -32,11 +32,11 @@ def test_new_candidates_and_licensed_snapshots_never_enable_rag(source_id):
     ('https://kumisionchamoru.guam.gov/wp-content/uploads/2026/10/2027-Utugrafihan-CHamoru-Guahan.pdf', 'kumision_guam_orthography_2027_candidate'),
     ('https://object.pouta.csc.fi/OPUS-Tatoeba/v2026-07-08/moses/ch-en.txt.zip', 'opus_tatoeba_ch_en'),
 ])
-def test_specific_source_paths_are_not_shadowed_by_broader_match_rules(url, source_id):
+def test_specific_source_paths_are_not_shadowed_by_broader_match_rules(url: str, source_id: str) -> None:
     assert resolve_source({'source': url})['id'] == source_id
 
 
-def test_legacy_crawler_delegates_to_the_governed_implementation(monkeypatch):
+def test_legacy_crawler_delegates_to_the_governed_implementation(monkeypatch: pytest.MonkeyPatch) -> None:
     calls = []
     monkeypatch.setattr(runpy, 'run_module', lambda *args, **kwargs: calls.append((args, kwargs)))
     shim = Path(__file__).resolve().parents[1] / 'scripts/crawlers/crawl_website.py'
