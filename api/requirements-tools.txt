@@ -361,7 +361,7 @@ psycopg2-binary==2.9.12
     # via
     #   -c requirements.txt
     #   hafagpt-api (pyproject.toml)
-pyasn1==0.6.4
+pyasn1==0.6.5
     # via
     #   -c requirements.txt
     #   python-jose
@@ -401,7 +401,7 @@ pyjwt==2.15.0
     #   clerk-backend-api
 pyopenssl==26.4.0
     # via crawl4ai
-pypdf==6.19.0
+pypdf==6.21.4
     # via
     #   -c requirements.txt
     #   hafagpt-api (pyproject.toml)
