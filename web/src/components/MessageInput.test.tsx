@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
+import { GUEST_DRAFT_SCOPE } from '../lib/pendingReply';
 
 describe('MessageInput', () => {
   it('updates the typed height floor when the compact layout changes', () => {
@@ -210,5 +211,34 @@ describe('MessageInput keyboard activation', () => {
       expect(onSend).not.toHaveBeenCalled();
       expect(input).toHaveValue('Retained draft');
     });
+  });
+});
+
+describe('MessageInput for a signed-out learner', () => {
+  it('lets a guest type and asks for an account on send without clearing the draft', async () => {
+    const onSend = vi.fn();
+    const requireAccount = vi.fn();
+    render(<MessageInput onSend={onSend} requireAccount={requireAccount} draftScope={GUEST_DRAFT_SCOPE} />);
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveAttribute('readonly');
+    fireEvent.change(input, { target: { value: 'Translate this school notice' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(requireAccount).toHaveBeenCalledOnce();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(input).toHaveValue('Translate this school notice');
+    // Sign-in finishes with a page load, so the text is held for this tab only.
+    expect(JSON.parse(window.sessionStorage.getItem('tutor_guest_draft')!).text).toBe('Translate this school notice');
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+    expect(requireAccount).toHaveBeenCalledTimes(2);
+  });
+
+  it('fills the composer from a tapped starter and applies each tap once', () => {
+    const view = render(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} />);
+    view.rerender(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} prefill={{ text: 'Translate ‘Thank you’ into Chamorro.', id: 1 }} />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue('Translate ‘Thank you’ into Chamorro.');
+    fireEvent.change(input, { target: { value: 'My own edit' } });
+    view.rerender(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} prefill={{ text: 'Translate ‘Thank you’ into Chamorro.', id: 1 }} />);
+    expect(input).toHaveValue('My own edit');
   });
 });

@@ -43,6 +43,10 @@ interface MessageInputProps {
   bodyMaxHeight?: string;
   sendError?: ReactNode;
   onDisabledClick?: () => void;
+  /** Signed out: typing works, but sending or attaching asks for an account and keeps the draft. */
+  requireAccount?: () => void;
+  /** Replace the draft with this text (a tapped starter). A new `id` applies it again. */
+  prefill?: { text: string; id: number };
   loading?: boolean;
   onCancel?: () => void;
 }
@@ -53,7 +57,7 @@ interface FileWithPreview {
   id: string; // Unique ID for React keys
 }
 
-export function MessageInput({ draftScope, onSend, completedSend, disabled, inputRef, placeholder, contextLabel, taskControl, showDisclaimer = true, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, loading, onCancel }: MessageInputProps) {
+export function MessageInput({ draftScope, onSend, completedSend, disabled, inputRef, placeholder, contextLabel, taskControl, showDisclaimer = true, compact = false, inline = false, bodyMaxHeight, sendError, onDisabledClick, requireAccount, prefill, loading, onCancel }: MessageInputProps) {
   const [input, setInput] = useState(() => readTutorDraft(draftScope).text);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
@@ -76,6 +80,19 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedFilesRef = useRef<FileWithPreview[]>([]);
+  const appliedPrefill = useRef(prefill?.id);
+  useEffect(() => {
+    if (!prefill || prefill.id === appliedPrefill.current) return;
+    appliedPrefill.current = prefill.id;
+    draftRevision.current += 1;
+    setInput(prefill.text);
+    requestAnimationFrame(() => {
+      const field = textareaRef.current;
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(prefill.text.length, prefill.text.length);
+    });
+  }, [prefill, textareaRef]);
 
   // Auto-resize textarea as content grows (respects CSS max-height)
   useEffect(() => {
@@ -254,6 +271,8 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
     if (pastedFiles.length === 0) return;
 
     e.preventDefault();
+    // Attachments cannot be carried through sign-in, so ask first.
+    if (requireAccount) return requireAccount();
     addFiles(pastedFiles);
   };
 
@@ -350,6 +369,10 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
   }, []);
 
   const handleSend = async () => {
+    if (requireAccount) {
+      if (input.trim() && !disabled) requireAccount();
+      return;
+    }
     if ((input.trim() || selectedFiles.length > 0) && !disabled && !submittingRef.current) {
       // Default message based on file types
       let defaultMessage = 'What does this say?';
@@ -487,8 +510,8 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
           />
           </div>
           <div className={`${inline ? 'shrink-0' : 'mt-1'} relative flex items-center gap-1`}>
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={disabled || submitting || !canAddMoreFiles} aria-label="Upload files"
-              title={canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
+            <button type="button" onClick={() => requireAccount ? requireAccount() : fileInputRef.current?.click()} disabled={disabled || submitting || !canAddMoreFiles} aria-label="Upload files"
+              title={requireAccount ? 'Sign in to attach files' : canAddMoreFiles ? `Upload files (${selectedFiles.length}/${MAX_FILES})` : `Maximum ${MAX_FILES} files reached`}
               className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl px-2 text-brown-600 hover:bg-cream-100 disabled:opacity-40 dark:text-gray-300 dark:hover:bg-slate-800">
               <Paperclip className="h-5 w-5" />{selectedFiles.length > 0 && <span className="text-xs font-semibold">{selectedFiles.length}</span>}
             </button>
@@ -499,7 +522,7 @@ export function MessageInput({ draftScope, onSend, completedSend, disabled, inpu
             {!inline && (taskControl || (contextLabel && <span className="ml-1 flex min-w-0 items-center gap-1 text-xs font-medium text-brown-600 dark:text-gray-300"><Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{contextLabel}</span></span>))}
             <div className="flex-1" />
             {loading ? <button type="button" onClick={onCancel} aria-label="Stop generating" title="Stop generating" className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-red-700 px-3 text-sm font-semibold text-white hover:bg-red-800"><Square className="h-4 w-4 fill-current" /><span className="hidden sm:inline">Stop</span></button>
-              : <button type="button" onClick={handleSend} disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)} aria-label="Send message" title="Send message"
+              : <button type="button" onClick={handleSend} disabled={disabled || submitting || (!input.trim() && selectedFiles.length === 0)} aria-label="Send message" title={requireAccount ? 'Sign in to send' : 'Send message'}
                 className="flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-coral-700 px-3 text-sm font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-35 dark:bg-ocean-700 dark:hover:bg-ocean-800"><Send className="h-5 w-5" /><span className="hidden sm:inline">Send</span></button>}
           </div>
         </div>

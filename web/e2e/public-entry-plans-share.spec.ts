@@ -77,7 +77,7 @@ test('Home discloses the account step and links Translate, Support and Plans', a
   await expect(translate).toHaveAccessibleDescription(/free account needed/i);
   await translate.click();
   await expect(page).toHaveURL(/\/chat\?intent=translate$/);
-  await expect(page.getByPlaceholder('Sign in to chat...')).toBeVisible();
+  await expect(page.getByPlaceholder('Paste a phrase, message, or notice…')).toBeVisible();
   await expect(page.getByRole('button', { name: /send message/i })).toBeDisabled();
   // Each public page's own h1 is its title; the shell label is plain context.
   for (const [name, title] of [['Support', 'How can we help?'], ['Plans', 'Unlock Unlimited Learning']]) {

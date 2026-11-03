@@ -40,3 +40,38 @@ test('streaming preserves reading position and Markdown nodes, then resumes foll
   await page.getByRole('button', { name: 'Cancel response' }).click();
   await expect(page.getByText('Message cancelled')).toBeVisible();
 });
+
+test('answers read as a wide column with a readable evidence line and a calm wait state', async ({ page }) => {
+  await page.goto('/e2e/streaming-fixture/answers.html');
+  const evidence = page.getByRole('button', { name: /^From the dictionary: Revised Chamorro dictionary and Chamoru\.info dictionary$/ });
+  await expect(evidence).toBeVisible();
+  expect(Number.parseFloat(await evidence.evaluate(el => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(13);
+  const none = page.getByRole('note', { name: 'Answer evidence: No dictionary reference for this answer' });
+  expect(Number.parseFloat(await none.evaluate(el => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(13);
+  await expect(none.locator('.lucide-sparkles')).toHaveCount(0);
+  // Repeated passages of one book are listed once.
+  await page.getByRole('button', { name: 'From references: Chamorro Grammar by Sandra Chung' }).click();
+  await expect(page.getByText('Chamorro Grammar by Sandra Chung', { exact: true })).toHaveCount(1);
+  const body = page.getByText(/^When you write a reply for a school notice/);
+  expect(Number.parseFloat(await body.evaluate(el => getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(16);
+  // The reading column is capped near 68 characters, not a 75% bubble.
+  const width = await body.evaluate(el => el.getBoundingClientRect().width);
+  const viewport = page.viewportSize()!.width;
+  if (viewport >= 1024) expect(width).toBeGreaterThan(600);
+  expect(width).toBeLessThanOrEqual(68 * 16);
+  // Waiting: a steady status and opacity-only dots, never bounce.
+  const status = page.getByRole('status');
+  await expect(status).toHaveText('Checking the dictionary…');
+  expect(await status.evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+  const animations = await page.locator('.thinking-dot').evaluateAll(dots => dots.map(dot => getComputedStyle(dot).animationName));
+  expect(animations).toEqual(['thinking-dot', 'thinking-dot', 'thinking-dot']);
+  expect(await page.content()).not.toMatch(/bounce/);
+});
+
+test('reduced motion keeps the waiting dots still and fully visible', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/e2e/streaming-fixture/answers.html');
+  await page.waitForTimeout(100);
+  const opacities = await page.locator('.thinking-dot').evaluateAll(dots => dots.map(dot => getComputedStyle(dot).opacity));
+  expect(opacities).toEqual(['1', '1', '1']);
+});

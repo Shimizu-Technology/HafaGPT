@@ -264,6 +264,29 @@
     animation: fade-in-fast 150ms var(--ease-out) forwards;
   }
 
+  /* Tutor waiting state: opacity only, no movement. Reduced motion stops the
+     loop at full opacity (see the reduced-motion block below). */
+  @keyframes thinking-dot {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  .thinking-dot {
+    animation: thinking-dot 1200ms var(--ease-in-out) infinite;
+  }
+
+  .thinking-dot:nth-child(2) {
+    animation-delay: 160ms;
+  }
+
+  .thinking-dot:nth-child(3) {
+    animation-delay: 320ms;
+  }
+
   /* 3D Flip Animation for Flashcards */
   .perspective-1000 {
     perspective: 1000px;

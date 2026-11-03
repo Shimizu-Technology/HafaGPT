@@ -53,22 +53,44 @@ describe('Message evidence disclosure', () => {
     ).toHaveTextContent('They may support only parts of this answer.');
   });
 
-  it('shows web-informed when current web context was used without RAG citations', () => {
+  it('says plainly when web results, not the dictionary, informed an answer', () => {
     render(<Message role="assistant" content="Current answer" used_web_search />);
 
-    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(
-      screen.getByRole('note', { name: 'Answer evidence: Web-informed' }),
+      screen.getByRole('note', { name: 'Answer evidence: No dictionary reference for this answer' }),
     ).toHaveTextContent('Current web results were used.');
   });
 
-  it('clearly marks an answer with no attached references', () => {
-    render(<Message role="assistant" content="Possible answer" />);
+  it('shows a visible, neutral line for an answer with no references, without a disclosure', () => {
+    const { container } = render(<Message role="assistant" content="Possible answer" />);
 
-    fireEvent.click(document.querySelector('button[aria-controls]')!);
     expect(
-      screen.getByRole('note', { name: 'Answer evidence: No references attached' }),
-    ).toHaveTextContent('Check important claims against the original material.');
+      screen.getByRole('note', { name: 'Answer evidence: No dictionary reference for this answer' }),
+    ).toHaveTextContent('No dictionary reference for this answer. Check important claims against the original material.');
+    expect(container.querySelector('button[aria-expanded]')).toBeNull();
+    expect(container.querySelector('.lucide-sparkles')).toBeNull();
+    expect(container.querySelector('.lucide-info')).not.toBeNull();
+  });
+
+  it('names dictionary references in the evidence line and lists each work once', () => {
+    render(<Message role="assistant" content="Answer" sources={[
+      { name: 'Revised dictionary', source_id: 'local_revised_dictionary_snapshot', page: 12, content_role: 'reviewed_lexicon' },
+      { name: 'Revised dictionary', source_id: 'local_revised_dictionary_snapshot', page: 40, content_role: 'reviewed_lexicon' },
+      { name: 'Chamoru.info', source_id: 'chamoru_info_dictionary', page: null, content_role: 'lexical_reference' },
+    ]} />);
+    const line = screen.getByRole('button', { name: 'From the dictionary: Revised Chamorro dictionary and Chamoru.info dictionary' });
+    expect(line).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(line);
+    expect(screen.getAllByText(/^Revised Chamorro dictionary/)).toHaveLength(1);
+    expect(screen.getByText('Revised Chamorro dictionary (pp. 12, 40)')).toBeVisible();
+  });
+
+  it('collapses repeated passages of one book into a single source entry', () => {
+    const chung = { name: 'Chamorro Grammar by Sandra Chung', page: null };
+    render(<Message role="assistant" content="Answer" sources={[chung, chung, chung, chung]} />);
+    const line = screen.getByRole('button', { name: 'From references: Chamorro Grammar by Sandra Chung' });
+    fireEvent.click(line);
+    expect(screen.getAllByText('Chamorro Grammar by Sandra Chung')).toHaveLength(1);
   });
 });
 
@@ -97,7 +119,7 @@ describe('message actions', () => {
     expect(screen.getAllByRole('button', { name: 'Copy message' })).toHaveLength(1);
     const disclosure = container.querySelectorAll('button[aria-expanded]');
     expect(disclosure).toHaveLength(1);
-    expect(disclosure[0]).toHaveTextContent('Sources (1)');
+    expect(disclosure[0]).toHaveTextContent('From references: Dictionary');
     expect(disclosure[0]).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('KB')).not.toBeInTheDocument();
     expect(screen.queryByText('Web Search')).not.toBeInTheDocument();
@@ -235,5 +257,31 @@ describe('edit failure while a dialog is open', () => {
       expect(screen.getByRole('textbox', { name: 'Edit message text' })).toHaveValue('Retain this edited question');
       expect(screen.getByText('Could not update this message. Your edit is still here.')).toBeInTheDocument();
     } finally { frame.mockRestore(); }
+  });
+});
+
+
+describe('reply motion', () => {
+  it('fades in only messages that arrive during this visit', () => {
+    const { container, rerender } = render(<Message role="assistant" content="Loaded from history" />);
+    expect(container.firstElementChild).not.toHaveClass('animate-fade-in');
+    rerender(<Message role="assistant" content="Loaded from history" animateIn />);
+    expect(container.firstElementChild).not.toHaveClass('animate-fade-in');
+    const fresh = render(<Message role="user" content="Just sent" animateIn />);
+    expect(fresh.container.firstElementChild).toHaveClass('animate-fade-in');
+  });
+
+  it('waits with a steady status and no bounce or pulsing text', () => {
+    const { container } = render(<Message role="assistant" content="" isStreaming statusText="Checking the dictionary…" />);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('Checking the dictionary…');
+    expect(status.className).not.toMatch(/pulse|bounce/);
+    expect(container.innerHTML).not.toMatch(/bounce/);
+    expect(container.querySelectorAll('.thinking-dot')).toHaveLength(3);
+  });
+
+  it('shows no streaming cursor once words are arriving', () => {
+    const { container } = render(<Message role="assistant" content="Partial answer" isStreaming />);
+    expect(container.innerHTML).not.toMatch(/animate-pulse/);
   });
 });

@@ -6,11 +6,50 @@ const drafts = new Map<string, TutorDraft>();
 const emptyDraft: TutorDraft = { text: '', files: [] };
 const dispatchedDrafts = new Map<string, { scope: string; draft: TutorDraft }>();
 export const tutorDraftKey = (ownerId: string, conversationId: string | null) => JSON.stringify([ownerId, conversationId]);
+
+// The one exception: a signed-out learner's typed text must survive signing in,
+// and Clerk finishes sign-in with a full page load. Keep only that text, only in
+// this tab, briefly, and hand it to the account that signs in.
+export const GUEST_DRAFT_SCOPE = 'guest';
+const guestDraftKey = 'tutor_guest_draft';
+const guestDraftLifetimeMs = 30 * 60 * 1000;
+function readGuestText(): string {
+  try {
+    const saved = JSON.parse(window.sessionStorage.getItem(guestDraftKey) || 'null') as { text?: unknown; at?: unknown } | null;
+    if (saved && typeof saved.text === 'string' && typeof saved.at === 'number' && Date.now() - saved.at < guestDraftLifetimeMs) return saved.text;
+    window.sessionStorage.removeItem(guestDraftKey);
+  } catch { /* Storage can be unavailable; the draft then lives only on screen. */ }
+  return '';
+}
+function writeGuestText(text: string): void {
+  try {
+    if (text.trim()) window.sessionStorage.setItem(guestDraftKey, JSON.stringify({ text, at: Date.now() }));
+    else window.sessionStorage.removeItem(guestDraftKey);
+  } catch { /* See readGuestText. */ }
+}
+const adoptedScopes = new Set<string>();
+/** Move a signed-out draft into this account's new-chat composer. Returns whether that
+ *  draft is still waiting there, so a repeated call (React StrictMode) gives the same answer. */
+export function adoptGuestDraft(ownerId: string): boolean {
+  const scope = tutorDraftKey(ownerId, null);
+  const text = readGuestText();
+  if (text) {
+    writeGuestText('');
+    if (!drafts.get(scope)?.text) {
+      drafts.set(scope, { text, files: [] });
+      adoptedScopes.add(scope);
+    }
+  }
+  return adoptedScopes.has(scope) && Boolean(drafts.get(scope)?.text);
+}
+
 export function readTutorDraft(scope?: string): TutorDraft {
+  if (scope === GUEST_DRAFT_SCOPE) return { text: readGuestText(), files: [] };
   return scope && drafts.get(scope) || emptyDraft;
 }
 export function keepTutorDraft(scope: string | undefined, draft: TutorDraft): void {
   if (!scope) return;
+  if (scope === GUEST_DRAFT_SCOPE) return writeGuestText(draft.text);
   const previous = drafts.get(scope);
   // A remount keeps the revision; only actual content changes replace it.
   if (previous && previous.text === draft.text && previous.files.length === draft.files.length
@@ -18,7 +57,7 @@ export function keepTutorDraft(scope: string | undefined, draft: TutorDraft): vo
   if (draft.text || draft.files.length) drafts.set(scope, draft);
   else drafts.delete(scope);
 }
-export function clearTutorDrafts(): void { drafts.clear(); dispatchedDrafts.clear(); }
+export function clearTutorDrafts(): void { drafts.clear(); dispatchedDrafts.clear(); adoptedScopes.clear(); writeGuestText(''); }
 export function captureDispatchedDraft(id: string, scope: string, draft: TutorDraft): void {
   dispatchedDrafts.set(id, { scope, draft });
 }

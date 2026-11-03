@@ -4,7 +4,7 @@ import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Ch
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
 import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
-import { captureDispatchedDraft, confirmDispatchedDraft, forgetPreparingSend, clearTutorDrafts, keepTutorDraft, readTutorDraft, moveTutorDraft, tutorDraftKey, forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
+import { adoptGuestDraft, captureDispatchedDraft, confirmDispatchedDraft, forgetPreparingSend, clearTutorDrafts, keepTutorDraft, readTutorDraft, moveTutorDraft, tutorDraftKey, GUEST_DRAFT_SCOPE, forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
 import { useResumedReply } from '../hooks/useResumedReply';
 import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
@@ -138,7 +138,8 @@ export function Chat() {
       watchedClerks.add(clerk);
       let ownerId = user?.id;
       clerk.addListener(({ user: next }) => {
-        if (next?.id !== ownerId) clearTutorDrafts();
+        // Signing in carries a guest's draft into the account; any other account change clears drafts.
+        if (next?.id !== ownerId && ownerId) clearTutorDrafts();
         ownerId = next?.id;
       });
     }
@@ -177,12 +178,14 @@ function ChatSession() {
   // Track when switching conversations for smooth transition
   const [isSwitchingConversation, setIsSwitchingConversation] = useState(false);
   
+  // A learner who signed in to send a guest draft continues in a new chat with that draft.
+  const [adoptedGuestDraft] = useState(() => Boolean(user?.id) && adoptGuestDraft(user!.id));
   // On mount, check if user has an active conversation from a previous session (page refresh)
   // If first login, start with new chat. If page refresh, restore their conversation.
   const restoredConversationIdRef = useRef<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(() => {
     if (routeConversationId) return routeConversationId;
-    if (activeStorageKey && !searchParams.toString()) {
+    if (activeStorageKey && !searchParams.toString() && !adoptedGuestDraft) {
       const savedId = browserStorage.get(activeStorageKey);
       // Each learner restores only their own generic tutor entry. Explicit task/topic links start fresh.
       restoredConversationIdRef.current = savedId;
@@ -547,17 +550,17 @@ function ChatSession() {
     clerk.openSignIn();
   };
 
+  // Guests can explore every task; an account is needed only to send.
   const handleStarterSelect = (intent: ChatIntent) => {
-    if (!isSignedIn) {
-      handleSignInClick();
-      return;
-    }
-
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set('intent', intent);
     setSearchParams(nextParams, { replace: true });
-    requestAnimationFrame(() => messageInputRef.current?.focus());
+    // A guest is still looking around, so keep the phone keyboard closed.
+    if (isSignedIn) requestAnimationFrame(() => messageInputRef.current?.focus());
   };
+  // A guest's starter goes into the composer to edit or send after signing in.
+  const [composerPrefill, setComposerPrefill] = useState<{ text: string; id: number }>();
+  const prefillComposer = (text: string) => setComposerPrefill(previous => ({ text, id: (previous?.id ?? 0) + 1 }));
 
   const handleSend = async (message: string, files?: File[], learningTopicOverride?: string, retry?: SendAttempt, usageApproved = false): Promise<boolean> => {
     if (failedAttempt?.reservationPending && !retry) return false;
@@ -1495,7 +1498,7 @@ End of Export
 
   const draftScopeRef = useRef<string | undefined>(undefined);
   const composerScope = isSendingMessageRef.current ? draftScopeRef.current
-    : user?.id ? tutorDraftKey(user.id, activeConversationId) : undefined;
+    : user?.id ? tutorDraftKey(user.id, activeConversationId) : GUEST_DRAFT_SCOPE;
   draftScopeRef.current = composerScope;
 
   const conversationTitle = resolvedConversationRecord?.title
@@ -1550,9 +1553,9 @@ End of Export
         <header
           data-testid="chat-header"
           hidden={compactKeyboard}
-          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-[color,background-color,border-color,opacity,transform,scale] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
+          className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl max-sm:safe-area-top sm:pt-[env(safe-area-inset-top)] transition-[color,background-color,border-color,opacity,transform,scale] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
         >
-          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:min-h-12 sm:px-5">
+          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:min-h-12 sm:px-5 sm:py-1.5">
             <div className="flex min-w-0 flex-1 basis-0 items-center gap-2">
               {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
               {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
@@ -1588,7 +1591,7 @@ End of Export
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
       <div
         data-testid="chat-messages-viewport"
-        className={`${viewport.keyboardOpen && viewport.height < 160 ? 'hidden' : ''} min-h-0 flex-1 pt-3 sm:pt-5`}
+        className={`${viewport.keyboardOpen && viewport.height < 160 ? 'hidden' : ''} min-h-0 flex-1 pt-3 sm:pt-4`}
       >
         <div
           ref={messagesContainerRef}
@@ -1637,7 +1640,11 @@ End of Export
               </p>
             </div>
           ) : messages.length === 0 && !loading && !resumedReply.pending ? (
-            <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : handleSignInClick()} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => isSignedIn ? void handleSend(linkedTopic ? `Help me practice ${linkedTopic.title}` : "Help me practice introducing myself", undefined, linkedTopic?.id || "greetings") : handleSignInClick()} />
+            <WelcomeMessage onSelect={handleStarterSelect} onPrompt={prompt => isSignedIn ? void handleSend(prompt) : prefillComposer(prompt)} disabled={loading || preparingSend} intent={chatIntent} onStartPractice={() => {
+              const practicePrompt = linkedTopic ? `Help me practice ${linkedTopic.title}` : 'Help me practice introducing myself';
+              if (isSignedIn) void handleSend(practicePrompt, undefined, linkedTopic?.id || 'greetings');
+              else prefillComposer(practicePrompt);
+            }} />
           ) : (
             <>
               {messages.map((message, index) => {
@@ -1652,6 +1659,8 @@ End of Export
                     // A conversation log row can produce both the user and assistant
                     // message, so its database id is only unique together with role.
                     key={message.renderKey || (message.id ? `${message.id}-${message.role}` : index)}
+                    // Messages added during this visit carry a local render key; loaded history does not.
+                    animateIn={Boolean(message.renderKey)}
                     role={message.role}
                     content={message.content}
                     imageUrl={message.imageUrl}
@@ -1752,9 +1761,11 @@ End of Export
           </div>
           ) : error && unsavedReply ? <div role="alert" className="mb-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">{error}</div> : undefined}
           completedSend={completedSend}
-          disabled={!isSignedIn || loading || replyPending || preparingSend || failedAttempt?.reservationPending || savedConversationRequiresSignIn || conversationUnavailable}
+          disabled={loading || replyPending || preparingSend || failedAttempt?.reservationPending || savedConversationRequiresSignIn || conversationUnavailable}
           inputRef={messageInputRef}
-          placeholder={!isSignedIn ? "Sign in to chat..." : intentPlaceholder}
+          placeholder={intentPlaceholder}
+          prefill={composerPrefill}
+          requireAccount={!isSignedIn ? handleSignInClick : undefined}
           taskControl={activeConversationId || routeConversationId || messages.length > 0
             ? <TaskMenu intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend || replyPending} />
             : undefined}
