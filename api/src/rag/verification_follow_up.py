@@ -15,7 +15,11 @@ import re
 import unicodedata
 from functools import lru_cache
 
-from src.rag.language_detection import chamorro_headword_tokens, is_distinctive_chamorro_token
+from src.rag.language_detection import (
+    accented_headword_words,
+    canonical_ledger_tokens,
+    is_distinctive_chamorro_token,
+)
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.translation_policy import classify_translation_request
 
@@ -96,6 +100,54 @@ _TRAILING_REMARK = re.compile(
     r")(?:[\s,]+(?:thanks?|please|pls|lol|haha))*\s*[.!…]*\s*$",
     re.IGNORECASE,
 )
+# "I want to send it to my boss tonight.", "It's for my teacher.": why the
+# learner asks. The remark must point back at the answer ("it", "this") or
+# name who or what it is for, and its other words may not ask for anything.
+_USE_VERB = r"(?:send|use|give|show|post|text|email|put|print|share|read|present|include|write|say|tell)"
+_CONTEXT_REMARK = re.compile(
+    r"^\s*(?:"
+    # "I want to send it…", "I'm going to use this…", "I'll print it…"
+    r"(?:i|we)(?:\s+(?:just|really|still))?"
+    r"(?:\s+(?:(?:want|need|plan|have|hope|would\s+like)\s+to|(?:am|are)\s+(?:going\s+to|gonna)"
+    r"|wanna|gotta|will)"
+    r"|['’](?:m|re)\s+(?:going\s+to|gonna)|['’]ll|['’]d\s+like\s+to)"
+    rf"\s+{_USE_VERB}"
+    # "I'm sending it…", "We are using this…"
+    r"|(?:i|we)(?:['’](?:m|re)|\s+(?:am|are))\s+"
+    r"(?:sending|using|giving|showing|posting|texting|emailing|putting|printing|sharing|"
+    r"reading|presenting|including|writing|saying|telling))"
+    r"\s+(?:it|this|that|them|these|those|(?:the|this|that|these|those|your)\s+"
+    r"(?:words?|phrases?|message|translation|answer|draft|ones?|sentences?|reply|response))\b"
+    # "It's for my teacher.", "This is going in a card.", "For my boss."
+    r"|^\s*(?:(?:it|this|that)(?:['’]s|\s+is)|(?:they|these|those)(?:['’]re|\s+are))?\s*"
+    r"(?:(?:really|very|pretty|kind\s+of|super)\s+)?"
+    r"(?:for\s+(?:my|our|a|an|the|work|school|class)\b|going\s+(?:to|in|on|into)\b|important|urgent)"
+    r"|^\s*(?:just\s+(?:double[\s-]?checking|to\s+be\s+(?:sure|safe))|better\s+safe\s+than\s+sorry)\b",
+    re.IGNORECASE,
+)
+# Words that turn a remark into another request.
+_REQUEST_WORDS = re.compile(
+    r"\b(?:translate|translation\s+of|tell\s+me|teach|word\s+for|words\s+for|how|what|which|"
+    r"another|also|too|instead|mean|means|spell|say\s+(?!it\b|this\b|that\b|them\b)|"
+    r"(?:can|could|would|will)\s+(?:you|u)|give\s+me|show\s+me|write\s+me)\b",
+    re.IGNORECASE,
+)
+_MAX_CONTEXT_REMARK_WORDS = 16
+
+
+def _is_context_remark(sentence: str) -> bool:
+    """Return whether a sentence only says why the learner asks.
+
+    It must start with a purpose or context phrase, stay short, hold only
+    plain words, and contain no word that asks for something else.
+    """
+
+    return bool(
+        _CONTEXT_REMARK.match(sentence)
+        and re.fullmatch(r"[A-Za-z0-9'’,\s-]*[.!…]*\s*", sentence)
+        and len(sentence.split()) <= _MAX_CONTEXT_REMARK_WORDS
+        and not _REQUEST_WORDS.search(sentence)
+    )
 
 
 def is_verification_follow_up(message: str) -> bool:
@@ -120,10 +172,13 @@ def is_verification_follow_up(message: str) -> bool:
     def asks_to_verify(sentence: str) -> bool:
         return any(pattern.match(sentence) for pattern in _VERIFICATION_PATTERNS)
 
-    # The question must lead. Every later sentence is another re-check or a
-    # remark with no request of its own.
+    # The question must lead. Every later sentence is another re-check, a
+    # courtesy, or a short remark on why the learner asks, with no request of
+    # its own.
     return bool(sentences) and asks_to_verify(sentences[0]) and all(
-        asks_to_verify(sentence) or _TRAILING_REMARK.match(sentence)
+        asks_to_verify(sentence)
+        or _TRAILING_REMARK.match(sentence)
+        or _is_context_remark(sentence)
         for sentence in sentences[1:]
     )
 
@@ -137,71 +192,133 @@ _EMPHASIS = (
     re.compile(r"\"([^\"\n]+)\""),
     re.compile(r"“([^”\n]+)”"),
 )
-_LETTER = r"A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ"
-_WORD = re.compile(rf"[{_LETTER}]+(?:['’ʼ‘-][{_LETTER}]*)*")
-# An emphasized span is a term only if it holds nothing but words: no
-# brackets, markup, digits, or other scripts that could carry instructions.
-_TERM_TEXT = re.compile(rf"{_WORD.pattern}(?:\s+{_WORD.pattern})*")
+_APOSTROPHE = "'’ʼ‘"
+_COMBINING_MARKS = "\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f"
+# A complete word in any script, with its digits, combining marks,
+# apostrophes, and hyphens. A word is judged whole, so one Cyrillic letter or
+# an underdot rejects it instead of leaving a Latin fragment ("mаgof" is not
+# "gof").
+_TOKEN = re.compile(rf"[^\W\d_](?:[^\W_]|[{_COMBINING_MARKS}{_APOSTROPHE}-])*")
+# The Chamorro alphabet as the sources write it: å, ñ, the glottal stop, and
+# the acute stress mark some dictionary entries use ("Kafé", "Kulót").
+_CHAMORRO_LETTER = "a-zåñáéíóú"
+_CHAMORRO_SPELLING = re.compile(
+    rf"[{_CHAMORRO_LETTER}]+(?:[{_APOSTROPHE}-][{_CHAMORRO_LETTER}]*)*", re.IGNORECASE,
+)
+_ACUTE = re.compile(r"[áéíóú]", re.IGNORECASE)
+_NO_APOSTROPHES = str.maketrans("", "", _APOSTROPHE)
 _EDGE_PUNCTUATION = " \t.,;:!?-—–"
 _ENGLISH_CONTRACTION = re.compile(
-    r"^[A-Za-z]+(?:n['’ʼ‘]t|['’ʼ‘](?:s|re|ve|ll|d|m))$", re.IGNORECASE,
+    rf"^[A-Za-z]+(?:n[{_APOSTROPHE}]t|[{_APOSTROPHE}](?:s|re|ve|ll|d|m))$", re.IGNORECASE,
 )
 # Language names and markup words that match a headword but are not answers.
 _NOT_TERMS = frozenset({"chamorro", "chamoru", "english", "guam", "cnmi", "saipan", "note"})
 
-
-def is_chamorro_word(word: str) -> bool:
-    """Return whether every part of a word is a Chamorro headword.
-
-    Orthography alone is not enough: "don't" has a word-internal apostrophe
-    and Spanish "niño" has ñ. The word must be in the dictionary or ledger
-    headword index and must not be common English or an English contraction.
-    """
-
-    if _ENGLISH_CONTRACTION.match(word):
-        return False
-    parts = normalize_chamorro_match_text(word, repair_ocr_splits=False).split()
-    return bool(parts) and all(
-        part not in _NOT_TERMS and is_distinctive_chamorro_token(part) for part in parts
-    )
-
-
-# Frequent Spanish, French, and German words. Any that are also Chamorro
-# headwords (Spanish loans such as "para" and "esta") are left out at use.
+# Frequent Spanish, French, German, Italian, and Portuguese words, without
+# accents. Many are also Chamorro dictionary headwords ("la", "una",
+# "bonita"), so they never count as Chamorro on their own. Words of the
+# canonical ledger ("Familia", "Dos", "Buenas noches") are removed at use, so
+# a governed Chamorro term that matches Spanish still counts. Chamorro
+# grammar words that match one of these languages ("ya", "para", "si", "ta",
+# "na", "esta", "mas", "un", "di") are left out.
 _OTHER_LANGUAGE_WORDS = frozenset(
     """
-    que est je il der und ist nicht das el y les du del con por muy ser soy eres
-    usted ustedes nosotros pero porque cuando donde como aqui hola gracias senor
-    ich wir sie ein eine nous vous ils elle avec dans pour sur merci bonjour oui
-    qui ce cette sont avoir etre
+    el la los las una unos unas de del al que es son este estos ese esa eso
+    por con sobre muy pero como cuando donde porque quien tu usted ustedes
+    nosotros ellos ellas mis su sus tiene tengo tienes hay ser estar soy eres
+    somos estoy hola gracias bueno buena buenos bien bonita bonito casa nino
+    nina senor senora amigo amiga hasta manana tambien aqui alli todo toda
+    todos siempre nunca ahora hoy dia noche mucho mucha poco grande pequeno
+    hermosa hermoso agua comida perro gato libro escuela trabajo madre padre
+    hijo hija hermano hermana gusta quiero puedo puede hace hablar habla
+    espanol ingles le les se me te otra otro cosa vez vida mundo seguro estas
+    tarde tardes
+    une des du et est sont je il elle nous vous ils elles ce cette ces
+    mon ton ses qui pas ne avec dans pour sur tres oui non merci bonjour
+    bonsoir salut au aux ou mais comme suis sommes etes avoir etre fait jolie
+    joli belle beau maison chat chien ami amie aujourd hui cest sais vie
+    der die das ein eine einen und ist sind ich du er sie wir ihr nicht ja
+    nein mit fur auf zu von bei gut guten morgen tag danke bitte hallo schon
+    sehr haus hund katze weiss
+    il lo gli da su per che non sono sei siamo ciao grazie prego
+    buongiorno buonasera bella bello molto questo questa bene stai
+    os um uma do das em nao sim obrigado obrigada ola bom boa muito voce
+    eu ele ela sao tudo bem
     """.split()
 )
-_OTHER_LANGUAGE_MARKS = re.compile(r"[¿¡]|[áéíóúàèìòùâêîôûäëïöüçßœ]", re.IGNORECASE)
 
 
 @lru_cache(maxsize=1)
 def _other_language_words() -> frozenset[str]:
-    return _OTHER_LANGUAGE_WORDS - chamorro_headword_tokens()
+    return _OTHER_LANGUAGE_WORDS - canonical_ledger_tokens()
+
+
+def _has_chamorro_spelling(word: str) -> bool:
+    """Return whether a word uses only Chamorro letters and accents as sources do.
+
+    An acute accent counts only on a word some headword writes with it, so
+    "Kafé" passes and Spanish "está" or "aquí" does not.
+    """
+
+    if not _CHAMORRO_SPELLING.fullmatch(word):
+        return False
+    if _ACUTE.search(word):
+        return word.casefold().translate(_NO_APOSTROPHES).strip("-") in accented_headword_words()
+    return True
+
+
+
+def _is_other_language_word(word: str) -> bool:
+    """Return whether a word is a cue for Spanish, French, German, and the like.
+
+    That is a frequent word of those languages, or a Latin-script word with
+    a mark Chamorro does not use ("très", "weiß", "não", "está").
+    """
+
+    if not _has_chamorro_spelling(word):
+        return all(
+            not character.isalpha() or unicodedata.name(character, "").startswith("LATIN")
+            for character in word
+        ) and not re.search(f"[{_COMBINING_MARKS}]", word)
+    return normalize_chamorro_match_text(word, repair_ocr_splits=False) in _other_language_words()
+
+
+def is_chamorro_word(word: str) -> bool:
+    """Return whether a word is distinctively Chamorro.
+
+    Orthography alone is not enough: "don't" has a word-internal apostrophe
+    and Spanish "niño" has ñ. The word must use the Chamorro alphabet, be in
+    the dictionary or ledger headword index, and not be common English, an
+    English contraction, or a frequent word of Spanish, French, German,
+    Italian, or Portuguese ("la", "una", "bonita") unless the canonical
+    ledger has it ("Familia").
+    """
+
+    if not _has_chamorro_spelling(word) or _ENGLISH_CONTRACTION.match(word):
+        return False
+    parts = normalize_chamorro_match_text(word, repair_ocr_splits=False).split()
+    return bool(parts) and all(
+        part not in _NOT_TERMS
+        and part not in _other_language_words()
+        and is_distinctive_chamorro_token(part)
+        for part in parts
+    )
 
 
 def _reads_as_another_language(text: str) -> bool:
-    """Return whether an answer is mostly Spanish, French, or German.
+    """Return whether an answer is mostly Spanish, French, German, or the like.
 
-    Chamorro has many Spanish loans, so a Spanish answer can be full of
-    headwords. Frequent words and diacritics of those languages that are not
-    Chamorro headwords are counted against the Chamorro words.
+    Chamorro has many Spanish loans, so such an answer can be full of
+    headwords. Frequent words and marks of those languages are counted
+    against the distinctively Chamorro words.
     """
 
-    words = re.findall(rf"[{_LETTER}]+", text)
     other = text.count("¿") + text.count("¡")
     chamorro = 0
-    for word in words:
+    for word in _TOKEN.findall(text):
         if is_chamorro_word(word):
             chamorro += 1
-        elif (
-            _OTHER_LANGUAGE_MARKS.search(word)
-            or normalize_chamorro_match_text(word, repair_ocr_splits=False) in _other_language_words()
-        ):
+        elif _is_other_language_word(word):
             other += 1
     return other >= 3 and other * 2 >= chamorro
 
@@ -242,17 +359,31 @@ def _term_from_words(words: list[str]) -> str | None:
     return None
 
 
-def _emphasized_terms(text: str) -> list[str]:
+def _emphasized_terms(text: str) -> tuple[list[str], str]:
+    """Return emphasized or quoted terms and the text left for the run scan.
+
+    A span holding a word outside the Chamorro alphabet (another script, a
+    mixed-script word, an unsupported mark) is dropped whole and blanked out,
+    so none of its words come back through the run scan. A span of ordinary
+    words that is not all Chamorro ("**asut means blue**") stays for the run
+    scan.
+    """
+
     terms = []
+    blanked = list(text)
     for pattern in _EMPHASIS:
         for match in pattern.finditer(text):
             span = match.group(1).strip(_EDGE_PUNCTUATION)
-            if not _TERM_TEXT.fullmatch(span):
+            words = _TOKEN.findall(span)
+            if any(not _CHAMORRO_SPELLING.fullmatch(word) for word in words):
+                blanked[match.start():match.end()] = "\n" * (match.end() - match.start())
                 continue
-            term = _term_from_words(_WORD.findall(span))
+            if " ".join(words) != " ".join(span.split()):
+                continue
+            term = _term_from_words(words)
             if term:
                 terms.append((match.start(), term))
-    return [term for _, term in sorted(terms)]
+    return [term for _, term in sorted(terms)], "".join(blanked)
 
 
 def _chamorro_runs(text: str) -> list[str]:
@@ -267,7 +398,7 @@ def _chamorro_runs(text: str) -> list[str]:
     for segment in re.split(r"[\n.,;:!?()\[\]{}/|—–]+|\s-\s", plain):
         current: list[str] = []
         previous_end = None
-        for match in _WORD.finditer(segment):
+        for match in _TOKEN.finditer(segment):
             word = match.group(0)
             if match.start() > 0 and segment[match.start() - 1] in "'‘" and word[-1] in "'’":
                 # 'asut' in single quotes: the closing quote is not a glottal stop.
@@ -307,18 +438,21 @@ def extract_answer_terms(
     """Return Chamorro terms from an earlier answer and whether more may exist.
 
     Emphasized or quoted spans come first, then runs of consecutive words that
-    are dictionary or ledger headwords and not common English. Citations are
-    removed first so a source name is never mistaken for a term. A term is
-    rebuilt from its validated words only, so nothing else from the answer
-    (markup, other scripts, instructions) reaches the prompt.
+    are distinctively Chamorro (see is_chamorro_word). Citations are removed
+    first so a source name is never mistaken for a term. A term is rebuilt
+    from its validated words only, so nothing else from the answer (markup,
+    other scripts, instructions) reaches the prompt. An answer with no
+    distinctively Chamorro word, such as a short Spanish reply full of
+    Spanish loans, gives no terms and so no re-check.
     """
 
     cleaned, cut = _prepare_answer(text)
     if _reads_as_another_language(cleaned):
         return (), False
+    emphasized, remaining = _emphasized_terms(cleaned)
     terms: list[str] = []
     seen: set[str] = set()
-    for term in _emphasized_terms(cleaned) + _chamorro_runs(cleaned):
+    for term in emphasized + _chamorro_runs(remaining):
         key = normalize_chamorro_match_text(term, repair_ocr_splits=False)
         if not key or key in seen:
             continue

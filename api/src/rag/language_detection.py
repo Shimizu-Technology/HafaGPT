@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
@@ -45,43 +46,80 @@ _COMMON_ENGLISH_WORDS = frozenset(
     yours
     """.split()
 )
+_ACUTE = re.compile(r"[áéíóú]")
+_APOSTROPHES = str.maketrans("", "", "'’ʼ‘")
 _ORTHOGRAPHY_PATTERN = re.compile(r"[åÅñÑ]|\w[’']\w*[’']|\w[’']$")
 
 
+def _ledger_headwords() -> list[str]:
+    try:
+        ledger = json.loads(_CANONICAL_VOCABULARY.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ledger = {}
+    headwords: list[str] = []
+    for entry in ledger.get("entries", []):
+        headwords.append(entry.get("canonical_chamorro"))
+        headwords.append(entry.get("recommended_teaching_term"))
+        for variant in entry.get("variants", []):
+            if isinstance(variant, dict):
+                headwords.append(variant.get("term"))
+    return [headword for headword in headwords if isinstance(headword, str)]
+
+
 @lru_cache(maxsize=1)
-def chamorro_headword_tokens() -> frozenset[str]:
-    """Return normalized tokens of every local dictionary and ledger headword."""
+def _all_headwords() -> tuple[str, ...]:
+    """Return every local dictionary and ledger headword as written."""
 
-    tokens: set[str] = set()
-
-    def add(value: object) -> None:
-        if isinstance(value, str):
-            tokens.update(
-                normalize_chamorro_match_text(value, repair_ocr_splits=False).split()
-            )
-
+    headwords: list[str] = []
     for filename in _DICTIONARY_FILES:
         path = _API_ROOT / "dictionary_data" / filename
         try:
             entries = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
-        for headword in entries:
-            add(headword)
+        headwords.extend(headword for headword in entries if isinstance(headword, str))
+    return (*headwords, *_ledger_headwords())
 
-    try:
-        ledger = json.loads(_CANONICAL_VOCABULARY.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        ledger = {}
-    for entry in ledger.get("entries", []):
-        add(entry.get("canonical_chamorro"))
-        add(entry.get("recommended_teaching_term"))
-        for variant in entry.get("variants", []):
-            if isinstance(variant, dict):
-                add(variant.get("term"))
 
+def _tokens(headwords) -> frozenset[str]:
+    tokens = {
+        token
+        for headword in headwords
+        for token in normalize_chamorro_match_text(headword, repair_ocr_splits=False).split()
+    }
     # Digits and single letters say nothing about the language.
     return frozenset(token for token in tokens if len(token) > 1 and token.isalpha())
+
+
+@lru_cache(maxsize=1)
+def chamorro_headword_tokens() -> frozenset[str]:
+    """Return normalized tokens of every local dictionary and ledger headword."""
+
+    return _tokens(_all_headwords())
+
+
+@lru_cache(maxsize=1)
+def canonical_ledger_tokens() -> frozenset[str]:
+    """Return normalized tokens of the canonical ledger's terms and variants."""
+
+    return _tokens(_ledger_headwords())
+
+
+@lru_cache(maxsize=1)
+def accented_headword_words() -> frozenset[str]:
+    """Return headword words that carry an acute accent, as written.
+
+    The dictionaries mark stress with an acute accent in some entries
+    ("Kafé", "Kulót"). The words are casefolded and their apostrophes removed.
+    """
+
+    words = set()
+    for headword in _all_headwords():
+        for word in unicodedata.normalize("NFC", headword).casefold().split():
+            word = word.strip(".,;:!?()-").translate(_APOSTROPHES)
+            if _ACUTE.search(word):
+                words.add(word)
+    return frozenset(words)
 
 
 def is_distinctive_chamorro_token(token: str) -> bool:
