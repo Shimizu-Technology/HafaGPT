@@ -11,10 +11,14 @@ import { ConversationSidebar } from './ConversationSidebar';
 
 vi.mock('@clerk/clerk-react', () => ({
   useUser: () => ({ user: null }),
+  SignedIn: () => null,
+  SignedOut: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SignInButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  UserButton: () => null,
 }));
 
 vi.mock('../hooks/useSubscription', () => ({
-  useSubscription: () => ({ isChristmasTheme: false, isNewYearTheme: false }),
+  useSubscription: () => ({ isChristmasTheme: false, isNewYearTheme: false, isPremium: false }),
   usePromoStatus: () => ({ data: undefined }),
 }));
 
@@ -63,6 +67,17 @@ describe('shared navigation and modal accessibility', () => {
     expect(screen.getByRole('link', { name: 'Today' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Tutor' })).toHaveAttribute('href', '/chat');
+  });
+
+  it('puts theme and account controls beside the destinations, outside the Primary landmark', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('640px'), addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    render(<MemoryRouter initialEntries={['/']}><BottomNav /></MemoryRouter>);
+    const primary = screen.getByRole('navigation', { name: 'Primary' });
+    const theme = screen.getByRole('button', { name: 'Toggle theme' });
+    expect(primary).not.toContainElement(theme);
+    expect(await screen.findByRole('button', { name: 'Sign In' })).toBeInTheDocument();
+    expect(within(primary).getAllByRole('link')).toHaveLength(4);
+    vi.unstubAllGlobals();
   });
 
   it('keeps the upgrade message synchronized with the current plan and restores focus', async () => {

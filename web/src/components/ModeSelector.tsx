@@ -14,11 +14,14 @@ interface ModeSelectorProps {
   disabled?: boolean;
 }
 
-/** Full task choice for a new chat, where there is room to compare all three. */
-export function ModeSelector({ intent, onIntentChange, disabled }: ModeSelectorProps) {
+/** Full task choice for a new chat, where there is room to compare all three.
+ *  `compact` drops the surrounding border and padding so a parent can place the
+ *  tabs inline (the wide tutor header row). */
+export function ModeSelector({ intent, onIntentChange, disabled, layout = 'default' }: ModeSelectorProps & { layout?: 'default' | 'compact' }) {
+  const compact = layout === 'compact';
   return (
-    <div className="border-t border-cream-200/80 px-3 py-2 dark:border-slate-800 sm:px-6">
-      <div className="mx-auto w-full max-w-3xl">
+    <div className={compact ? '' : 'border-t border-cream-200/80 px-3 py-2 dark:border-slate-800 sm:px-6'}>
+      <div className={compact ? 'w-full' : 'mx-auto w-full max-w-3xl'}>
         <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-slate-800" role="group" aria-label="Tutor task">
           {TASKS.map(({ id, label, icon: Icon }) => (
             <button key={id} type="button" disabled={disabled} onClick={() => onIntentChange(id)} aria-pressed={intent === id}

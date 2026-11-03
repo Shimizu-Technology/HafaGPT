@@ -6,7 +6,10 @@ import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 interface PublicPageProps {
   title: string;
   subtitle: string;
-  icon: LucideIcon;
+  /** Kept so existing pages still compile; the header no longer draws an icon tile. */
+  icon?: LucideIcon;
+  /** Use `p` when the page body supplies its own `<h1>`, so the route has one. */
+  titleAs?: 'h1' | 'p';
   children: ReactNode;
   maxWidthClassName?: string;
   trailing?: ReactNode;
@@ -32,7 +35,7 @@ export function PublicPageFooter({ maxWidthClassName = 'max-w-4xl' }: { maxWidth
 export function PublicPage({
   title,
   subtitle,
-  icon,
+  titleAs,
   children,
   maxWidthClassName = 'max-w-4xl',
   trailing,
@@ -45,7 +48,7 @@ export function PublicPage({
       <LearnerPageHeader
         title={title}
         subtitle={subtitle}
-        icon={icon}
+        titleAs={titleAs}
         backTo="/"
         backLabel="Back home"
         maxWidthClassName={maxWidthClassName}

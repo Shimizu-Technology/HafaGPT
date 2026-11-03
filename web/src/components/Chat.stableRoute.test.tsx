@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
@@ -124,7 +124,6 @@ vi.mock('./ConversationSidebar', () => ({ ConversationSidebar: ({ onSelectConver
   <button onClick={() => onSelectConversation('conv-b')}>Select B</button>
   <button onClick={() => onDeleteConversation('conv-old')}>Delete old</button>
 </> }));
-vi.mock('./PublicBanner', () => ({ PublicBanner: () => <div>Public tutor</div> }));
 vi.mock('./MessageInput', () => ({
   MessageInput: ({
     disabled,
@@ -267,13 +266,24 @@ describe('Chat stable conversation route', () => {
     expect(screen.queryByText('Message not sent')).not.toBeInTheDocument();
   });
 
+  it('names the page Tutor and gives a guest one quiet sign-in line above the composer', () => {
+    state.isSignedIn = false;
+    renderChat('/chat');
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 1, name: 'Tutor' })).toBeInTheDocument();
+    expect(screen.queryByText('Learn Chamorro for Free!')).not.toBeInTheDocument();
+    const note = screen.getByText(/Free account needed to send/);
+    expect(within(note).getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
+  });
+
   it('requires owner authentication without hiding the public tutor shell', () => {
     state.isSignedIn = false;
     renderChat('/chat/conv-private');
 
     expect(screen.getByRole('heading', { name: 'Sign in to open this saved chat' }))
       .toBeInTheDocument();
-    expect(screen.getByText('Public tutor')).toBeInTheDocument();
+    expect(screen.getByText(/Free account needed to send/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Chat input' })).toBeDisabled();
   });
 

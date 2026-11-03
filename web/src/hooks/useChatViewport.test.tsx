@@ -8,6 +8,16 @@ import { useChatViewport } from './useChatViewport';
 vi.mock('./useSubscription', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./useSubscription')>()),
   usePromoStatus: () => ({ data: undefined }),
+  useSubscription: () => ({ isPremium: false }),
+}));
+
+// The bar's account and theme controls read the signed-out Clerk state.
+vi.mock('@clerk/clerk-react', () => ({
+  useUser: () => ({ user: null }),
+  SignedIn: () => null,
+  SignedOut: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SignInButton: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  UserButton: () => null,
 }));
 
 class Viewport extends EventTarget {

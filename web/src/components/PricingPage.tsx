@@ -35,12 +35,12 @@ export function PricingPage() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   return (
-    <PublicPage title="Plans" subtitle="Compare current access and subscription options" icon={Crown} maxWidthClassName="max-w-5xl" stickyHeader={false}>
+    <PublicPage title="Plans" titleAs="p" subtitle="Compare current access and subscription options" icon={Crown} maxWidthClassName="max-w-5xl" stickyHeader={false}>
       <div className="mb-6 text-center">
         <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-coral-100 px-4 py-2 text-sm font-medium text-coral-800 dark:bg-teal-950 dark:text-teal-300">
           <Sparkles className="h-4 w-4" aria-hidden="true" /> Start learning Chamorro today
         </div>
-        <h2 className="text-2xl font-bold text-brown-800 dark:text-white sm:text-4xl">Unlock Unlimited Learning</h2>
+        <h1 className="text-2xl font-bold text-brown-800 dark:text-white sm:text-4xl">Unlock Unlimited Learning</h1>
         <p className="mx-auto mt-3 max-w-xl text-base text-brown-600 dark:text-gray-300">Start free, or choose Premium for unlimited chat, games, and quizzes.</p>
       </div>
 

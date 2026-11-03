@@ -594,11 +594,11 @@ test('public information and shared-link recovery stay clear without authenticat
   const errors = monitorRuntimeErrors(page);
 
   await page.goto('/about');
-  await expect(page.getByRole('heading', { name: 'Our story' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why I built HåfaGPT' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ask HåfaGPT' })).toBeVisible();
 
   await page.goto('/support');
-  await expect(page.getByRole('heading', { name: 'Support' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'How can we help?' })).toBeVisible();
   await page.getByText('How accurate is the AI tutor?').click();
   await expect(page.getByText(/retrieves from governed Chamorro references/i)).toBeVisible();
 
@@ -607,7 +607,7 @@ test('public information and shared-link recovery stay clear without authenticat
   await expect(page.getByRole('heading', { name: "Children's Privacy" })).toBeVisible();
 
   await page.goto('/pricing');
-  await expect(page.getByRole('heading', { name: 'Plans' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Unlock Unlimited Learning' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Free', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Premium', exact: true })).toBeVisible();
 
