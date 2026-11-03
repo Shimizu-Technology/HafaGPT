@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from src.rag.conversation_retrieval import ConversationHistory
+
 
 def _load_get_conversation_history():
     source_path = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -21,6 +23,7 @@ def _load_get_conversation_history():
         "resolve_private_upload_reference": lambda value: value,
         "urlsplit": urlsplit,
         "json": json,
+        "ConversationHistory": ConversationHistory,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_history"]
@@ -98,6 +101,26 @@ def test_get_conversation_history_skips_rows_without_user_text_or_image():
         {"role": "user", "content": "Real question"},
         {"role": "assistant", "content": "Real answer"},
     ]
+
+
+def test_history_carries_each_turns_recorded_task_outside_the_messages():
+    get_conversation_history = _load_get_conversation_history()
+    rows = [
+        ("Explain the word fixture", "Answer", None, None, None, "explain"),
+        (None, "Assistant-only row", None, None, None, "translate"),
+        ("fixture", "Answer", None, None, None, "translate"),
+        ("Legacy question", "Answer", None, None, None, None),
+    ]
+    fake_connection = FakeConnection(rows)
+
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+    history = get_conversation_history("conv-123")
+
+    assert "tutor_intent" in fake_connection.cursor_instance.executions[0][0]
+    # Skipped rows drop their task too, so tasks stay aligned with user turns.
+    assert history.user_turn_intents == ("explain", "translate", None)
+    # The provider never sees the recorded task.
+    assert all(set(message) == {"role", "content"} for message in history)
 
 
 def test_get_conversation_history_accepts_signed_private_image_url():

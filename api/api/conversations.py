@@ -236,7 +236,8 @@ def _owned_regeneration_rows(cursor: Any, conversation_id: str, user_id: str, fo
     query = """
         SELECT logs.id, logs.role, logs.user_message, logs.bot_response,
                logs.timestamp, logs.sources_used, logs.used_rag, logs.used_web_search,
-               logs.image_url, logs.mode, logs.response_time_seconds, logs.file_urls, logs.pending_id
+               logs.image_url, logs.mode, logs.response_time_seconds, logs.file_urls, logs.pending_id,
+               logs.tutor_intent
         FROM conversations AS conversation
         JOIN conversation_logs AS logs ON logs.conversation_id = conversation.id
         WHERE conversation.id = %s AND conversation.user_id = %s
@@ -274,7 +275,7 @@ def regeneration_prefix_rows(snapshot: RegenerationSnapshot) -> list[tuple[Any, 
         if row[0] == snapshot.message_id:
             break
         if row[1] != "system":
-            prefix.append((row[2], row[3], row[8], row[11], row[4]))
+            prefix.append((row[2], row[3], row[8], row[11], row[4], row[13] if len(row) > 13 else None))
     return prefix
 
 
@@ -283,6 +284,7 @@ def replace_regenerated_exchange(
     sources: list[dict[str, Any]], used_rag: bool, used_web_search: bool,
     response_time: float, session_id: Optional[str], pending_id: str,
     file_urls: list[dict[str, Any]], cancelled: Callable[[], bool],
+    tutor_intent: Optional[str] = None,
 ) -> int:
     """Swap the unchanged owned suffix and complete replacement in one short transaction."""
     conn = None
@@ -313,13 +315,14 @@ def replace_regenerated_exchange(
             """
             INSERT INTO conversation_logs (
                 session_id, user_id, conversation_id, role, mode, user_message, bot_response,
-                sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
-            ) VALUES (%s, %s, %s, 'user', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id,
+                tutor_intent
+            ) VALUES (%s, %s, %s, 'user', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (session_id, snapshot.user_id, snapshot.conversation_id, mode, message, response,
              json.dumps(sources), used_rag, used_web_search, response_time, image_url,
-             json.dumps(file_urls) if file_urls else None, pending_id),
+             json.dumps(file_urls) if file_urls else None, pending_id, tutor_intent),
         )
         message_id = cursor.fetchone()[0]
         cursor.execute(

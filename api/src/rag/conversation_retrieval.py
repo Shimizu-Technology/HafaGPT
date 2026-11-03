@@ -131,6 +131,19 @@ def _candidate_correction(value: str) -> str:
     return _clean_target(match.group(1)) if match else ""
 
 
+class ConversationHistory(list):
+    """Model-ready history plus the tutor task recorded for each user turn.
+
+    ``user_turn_intents[i]`` is the task selected when the i-th user message
+    was sent, or ``None`` when no task was recorded. The intents live beside
+    the messages rather than inside them so the provider never receives an
+    unknown message field. Plain lists are accepted everywhere and mean every
+    task is unknown.
+    """
+
+    user_turn_intents: tuple[str | None, ...] = ()
+
+
 def _translation_thread_state(
     past_messages: list[dict[str, Any]],
     tutor_intent: str | None = None,

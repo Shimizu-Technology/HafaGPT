@@ -30,6 +30,7 @@ from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
 from src.rag.conversation_retrieval import (
+    ConversationHistory,
     build_contextual_retrieval_query,
     resolve_translation_routing_query,
 )
@@ -922,7 +923,7 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
 
             if max_messages is None:
                 cursor.execute("""
-                    SELECT user_message, bot_response, image_url, file_urls, timestamp
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                     FROM conversation_logs
                     WHERE conversation_id = %s
                       AND COALESCE(role, 'user') != 'system'
@@ -931,9 +932,9 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
             else:
                 # Limit from the end, then restore chronological order.
                 cursor.execute("""
-                    SELECT user_message, bot_response, image_url, file_urls, timestamp
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                     FROM (
-                        SELECT id, user_message, bot_response, image_url, file_urls, timestamp
+                        SELECT id, user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                         FROM conversation_logs
                         WHERE conversation_id = %s
                           AND COALESCE(role, 'user') != 'system'
@@ -956,8 +957,12 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
 
 def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
     """Format persisted row contents without introducing tentative edited turns."""
-    history = []
-    for user_msg, bot_msg, img_url, file_urls, timestamp in rows:
+    history = ConversationHistory()
+    turn_intents: list[str | None] = []
+    for row in rows:
+        user_msg, bot_msg, img_url, file_urls, _timestamp = row[:5]
+        # Older callers and fixtures pass rows without the recorded task.
+        turn_intent = row[5] if len(row) > 5 else None
         if isinstance(file_urls, str):
             try:
                 file_urls = json.loads(file_urls)
@@ -1014,12 +1019,14 @@ def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
             })
         else:
             history.append({"role": "user", "content": text_content})
+        turn_intents.append(turn_intent)
 
         # Skip blank assistant messages. Some historical rows can contain
         # NULL/empty bot responses, which OpenAI-compatible APIs reject.
         if bot_msg and bot_msg.strip():
             history.append({"role": "assistant", "content": bot_msg})
 
+    history.user_turn_intents = tuple(turn_intents)
     return history
 
 
@@ -1038,6 +1045,7 @@ def log_conversation(
     image_url: str = None,  # NEW: S3 URL of uploaded image
     file_urls: list[dict] | None = None,
     pending_id: str = None,
+    tutor_intent: str | None = None,
 ) -> bool:
     """
     Log conversation to PostgreSQL database for future training/analysis.
@@ -1054,6 +1062,9 @@ def log_conversation(
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
         image_url: Optional S3 URL of uploaded image
+        tutor_intent: Tutor task selected when the user sent this turn. Later
+            turns read it to route translation follow-ups truthfully, because
+            the task picker can change mid-conversation.
     """
     try:
         # Use retry wrapper for serverless database connections
@@ -1062,8 +1073,9 @@ def log_conversation(
                 cursor.execute("""
                     INSERT INTO conversation_logs (
                         session_id, user_id, conversation_id, mode, user_message, bot_response,
-                        sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id,
+                        tutor_intent
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     session_id,
                     user_id,
@@ -1078,6 +1090,7 @@ def log_conversation(
                     image_url,
                     json.dumps(file_urls) if file_urls else None,
                     pending_id,
+                    tutor_intent,
                 ))
 
                 if conversation_id and user_id:
@@ -1404,6 +1417,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             response_time=response_time, session_id=session_id, user_id=user_id,
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
         cleanup_cancelled_message(pending_id)
     if was_cancelled:
@@ -1493,6 +1507,7 @@ def get_chatbot_response(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         cleanup_cancelled_message(pending_id)
@@ -1793,6 +1808,7 @@ def get_chatbot_response(
             image_url=image_url,
             file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
         cleanup_cancelled_message(pending_id)
         return {
@@ -1821,6 +1837,7 @@ def get_chatbot_response(
         image_url=image_url,
         file_urls=file_urls,
         pending_id=pending_id,
+        tutor_intent=intent,
     )
     
     # Cleanup pending_id tracking
@@ -1909,6 +1926,7 @@ def get_chatbot_response_stream(
                 response_time=time.time() - start_time, session_id=session_id,
                 user_id=user_id, conversation_id=conversation_id, image_url=image_url,
                 file_urls=file_urls, pending_id=pending_id,
+                tutor_intent=intent,
             )
             if not event["saved"]:
                 event["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
@@ -2134,6 +2152,7 @@ def get_chatbot_response_stream(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         yield {"type": "error", "content": error_message}
@@ -2251,6 +2270,7 @@ def get_chatbot_response_stream(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         yield {"type": "error", "content": error_message}
@@ -2288,6 +2308,7 @@ def get_chatbot_response_stream(
             image_url=image_url,
             file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
     
     if persist:
