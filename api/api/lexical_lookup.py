@@ -25,6 +25,7 @@ from functools import lru_cache
 
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.translation_policy import (
+    DESTINATION_PREPOSITION,
     classify_translation_request,
     extract_translation_payload,
     extract_translation_retrieval_payload,
@@ -84,7 +85,7 @@ when where which while who whom why will with would write you your yours
 want wanna need like help tell ask chamorro chamoru english word words term
 phrase translate translation mean means meaning okay ok oh hi hello
 """.split())
-_CHAMORRO_FOR_REQUEST = re.compile(r"(?i)\b(?:in|into|to)\s+chamor(?:ro|u)\b[?.!:]*")
+_CHAMORRO_FOR_REQUEST = re.compile(rf"(?i)\b{DESTINATION_PREPOSITION}\s+chamor(?:ro|u)\b[?.!:]*")
 _FOLLOW_UP_LOOKUP = re.compile(r"(?is)^\s*(?:and\s+)?(?:what|how)\s+about\s+(?P<payload>.+?)\s*[?.!]*\s*$")
 _LABELED_PAYLOAD = re.compile(
     r"(?is)\b(?:(?:put|say|write)\s+(?:this|that|it)\s+in\s+chamor(?:ro|u)|"
@@ -94,10 +95,10 @@ _LABELED_PAYLOAD = re.compile(
 _COMPOSITION_REQUEST = re.compile(
     r"(?is)^\s*(?:please\s+)?(?:help\s+me|how\s+(?:do|can|would|should)\s+(?:i|we))\s+"
     r"(?P<payload>(?:say|write|tell|thank|ask|reply|answer|greet|wish)\b.+?)"
-    r"\s+(?:in|into)\s+chamor(?:ro|u)\s*[?.!]*\s*$"
+    r"\s+(?:in\s+to|into|in)\s+chamor(?:ro|u)\s*[?.!]*\s*$"
 )
 _QUOTED_SPAN = re.compile(r"[\"“](?P<payload>[^\"”\n]{1,80})[\"”]")
-_TRAILING_CHAMORRO = re.compile(r"(?is)^\s*(?P<payload>[^?\n]{1,60}?)\s+(?:in|into)\s+chamor(?:ro|u)\s*[?.!]*\s*$")
+_TRAILING_CHAMORRO = re.compile(r"(?is)^\s*(?P<payload>[^?\n]{1,60}?)\s+(?:in\s+to|into|in)\s+chamor(?:ro|u)\s*[?.!]*\s*$")
 _CONVERSATIONAL = re.compile(
     r"(?i)^(?:test(?:ing)?|ok(?:ay)?|k|yes|no|sure|yep|nope|yeah|nah|yup|thanks?|thank\s*you|ty|thx|"
     r"cool|nice|great|awesome|wow|lol|haha|interesting|got\s*it|i\s*see|makes\s*sense|understood|"

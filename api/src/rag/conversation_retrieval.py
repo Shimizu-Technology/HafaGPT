@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from src.rag.translation_policy import (
+    DESTINATION_PREPOSITION,
     classify_translation_request,
     extract_translation_payload,
     natural_translation_payload,
@@ -27,10 +28,10 @@ _AMBIGUOUS_FOLLOW_UPS = (
 _TRANSLATION_TARGET_PATTERNS = (
     (re.compile(r"\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\b(?:the\s+)?chamor(?:ro|u) word for\s+(.+?)[?.!]*$", re.IGNORECASE), "to_chamorro"),
-    (re.compile(r"\btranslate\s+(.+?)\s+to\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
+    (re.compile(rf"\btranslate\s+(.+?)\s+{DESTINATION_PREPOSITION}\s+chamor(?:ro|u)[?.!]*$", re.IGNORECASE), "to_chamorro"),
     (re.compile(r"\bwhat does\s+(.+?)\s+mean(?:\s+in\s+english)?[?.!]*$", re.IGNORECASE), "to_english"),
     (re.compile(r"\bwhat is\s+(.+?)\s+in\s+english[?.!]*$", re.IGNORECASE), "to_english"),
-    (re.compile(r"\btranslate\s+(.+?)\s+to\s+english[?.!]*$", re.IGNORECASE), "to_english"),
+    (re.compile(rf"\btranslate\s+(.+?)\s+{DESTINATION_PREPOSITION}\s+english[?.!]*$", re.IGNORECASE), "to_english"),
 )
 _CANDIDATE_CORRECTION_PATTERN = re.compile(
     r"^\s*(?:i\s+thought\s+(?:it\s+)?was|"

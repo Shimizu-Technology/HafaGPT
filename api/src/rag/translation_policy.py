@@ -44,6 +44,10 @@ specific uncertain words.
 """
 
 _WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
+# "to", "in", "into", or "in to" before a destination language. Every pattern
+# that reads a destination uses this one alternation, so "Translate X into
+# Chamorro" can never be read as a request for English.
+DESTINATION_PREPOSITION = r"(?:in\s+to|into|to|in)"
 _WHAT_IS = r"what(?:['’]s|\s+is)"
 _CHAMORRO_FOR = (
     rf"(?:{_WHAT_IS}\s+(?:the\s+)?chamor(?:ro|u)\s+(?:word\s+|term\s+|phrase\s+)?for|"
@@ -69,7 +73,7 @@ _WANT_TO_SAY_PATTERN = re.compile(
     r"\s+say\b(?:\s+(?:something|anything)\s+like\b)?",
     re.IGNORECASE,
 )
-_NAMES_CHAMORRO_PATTERN = re.compile(r"(?i)\b(?:in|into|to)\s+chamor(?:ro|u)\b")
+_NAMES_CHAMORRO_PATTERN = re.compile(rf"(?i)\b{DESTINATION_PREPOSITION}\s+chamor(?:ro|u)\b")
 _QUOTED_PAYLOAD_PATTERN = re.compile(
     r"[\"“][^\"”]*\w[^\"”]*[\"”]|(?:^|\s)[‘'][^’']*\w[^’']*[’'](?=\s|$|[?.!,])"
 )
@@ -175,14 +179,14 @@ def _explicit_translation_destination(query: str) -> str:
     )
     wrapper_match = re.search(
         r"(?i)\btranslate\s+this(?:\s+(?:sentence|paragraph|message|phrase))?"
-        r"\s+to\s+(english|chamor(?:ro|u))\b",
+        rf"\s+{DESTINATION_PREPOSITION}\s+(english|chamor(?:ro|u))\b",
         instruction_text,
     )
     if wrapper_match:
         return wrapper_match.group(1).casefold()
 
     trailing_match = re.search(
-        r"(?i)\b(?:to|in)\s+(english|chamor(?:ro|u))\b[?.!]*\s*$",
+        rf"(?i)\b{DESTINATION_PREPOSITION}\s+(english|chamor(?:ro|u))\b[?.!]*\s*$",
         instruction_text,
     )
     if trailing_match:
@@ -203,9 +207,7 @@ def _select_wrapper_payload(paragraphs: list[str], query: str) -> str:
     if not content_candidates:
         content_candidates = candidates
 
-    translating_to_chamorro = bool(
-        re.search(r"(?i)\b(?:to|in)\s+chamor(?:ro|u)\b", query)
-    )
+    translating_to_chamorro = bool(_NAMES_CHAMORRO_PATTERN.search(query))
     if translating_to_chamorro:
         # This value is used for intent classification, not retrieval. Preserve
         # every remaining block because English prose cannot reliably distinguish
@@ -292,7 +294,7 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         )
     if payload_match:
         payload = re.sub(
-            r"(?is)\s*[-–—]?\s+(?:in|into)\s+chamor(?:ro|u)[?.!]*\s*$",
+            rf"(?is)\s*[-–—]?\s+{DESTINATION_PREPOSITION}\s+chamor(?:ro|u)[?.!]*\s*$",
             "",
             payload_match.group(1),
         )
@@ -313,7 +315,8 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         return _strip_wrapping_quotes(what_is_match.group(1))
 
     translate_match = re.search(
-        r"(?is)\btranslate(?:\s+this(?:\s+(?:sentence|paragraph|message|phrase))?)?\s*[-:–—]?\s*(.+?)(?:\s+to\s+(?:english|chamor(?:ro|u)))(?:\?|$)",
+        r"(?is)\btranslate(?:\s+this(?:\s+(?:sentence|paragraph|message|phrase))?)?\s*[-:–—]?\s*(.+?)"
+        rf"(?:\s+{DESTINATION_PREPOSITION}\s+(?:english|chamor(?:ro|u)))(?:\?|[?.!]*$)",
         normalized,
     )
     if translate_match:
@@ -510,7 +513,7 @@ def classify_translation_request(query: str) -> TranslationIntent:
         return "passage_to_english"
     if explicit_destination in {"chamorro", "chamoru"}:
         return "passage_to_chamorro"
-    if re.search(r"\b(?:to|in)\s+chamor(?:ro|u)\b", query_lower) or to_chamorro_cue:
+    if _NAMES_CHAMORRO_PATTERN.search(query_lower) or to_chamorro_cue:
         return "passage_to_chamorro"
     return "passage_to_english"
 
@@ -543,7 +546,7 @@ def translation_direction(query: str) -> Literal["to_chamorro", "to_english", ""
         return "to_english"
     if _explicit_translation_destination(query) or _has_to_chamorro_cue(query):
         return "to_chamorro"
-    if re.search(r"(?i)\b(?:to|in)\s+chamor(?:ro|u)\b|\bchamor(?:ro|u)\s+(?:word|term|phrase)?\s*for\b", query):
+    if _NAMES_CHAMORRO_PATTERN.search(query) or re.search(r"(?i)\bchamor(?:ro|u)\s+(?:word|term|phrase)?\s*for\b", query):
         return "to_chamorro"
     return "to_english" if looks_like_chamorro(extract_translation_payload(query)) else "to_chamorro"
 
@@ -594,7 +597,7 @@ def extract_short_lexical_target(query: str, max_words: int = 4) -> str:
         else "english"
     )
     payload = re.sub(
-        rf"(?i)[\s,;:\-–—]*\b(?:in|to)\s+{direction_language}\b\s*$",
+        rf"(?i)[\s,;:\-–—]*\b{DESTINATION_PREPOSITION}\s+{direction_language}\b\s*$",
         "",
         payload,
     ).strip(" \t.,!?;:")
