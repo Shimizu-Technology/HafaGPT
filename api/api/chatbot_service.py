@@ -22,11 +22,11 @@ from openai import OpenAI
 # Add parent directory to path for root-level imports.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from .prompt_budget import assemble_system_prompt
+from .prompt_budget import assemble_system_prompt, fit_references
 from .image_translation import translate_image_pages
 from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
 from .canonical_context import get_canonical_tutor_context
-from .verification_evidence import verification_term_context
+from .verification_evidence import VerificationLookups, verification_term_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
@@ -1196,7 +1196,7 @@ def get_rag_context(
     intent: str | None = None,
     learning_topic_id: str | None = None,
     cancelled: "Callable[[], bool] | None" = None,
-    verification_terms: tuple[str, ...] = (),
+    verification_lookups: "VerificationLookups | None" = None,
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1206,8 +1206,8 @@ def get_rag_context(
         conversation_length: Number of messages in conversation
         max_tokens: Maximum tokens for RAG context
         contextual_card_ids: Production card ids supplied by trusted app context
-        verification_terms: Terms from the previous answer the user asked to
-            re-check; each gets an exact dictionary and ledger lookup
+        verification_lookups: Exact dictionary and ledger entries for the
+            terms of the previous answer the user asked to re-check
     
     Returns:
         tuple: (context_string, sources_list)
@@ -1223,7 +1223,7 @@ def get_rag_context(
         # empty or conversational. Trusted vision context still needs a prompt
         # path, and full mode preserves any relevant corpus support.
         use_rag, rag_mode = True, "full"
-    if verification_terms and not use_rag:
+    if verification_lookups is not None and not use_rag:
         # "Are you sure?" has no lookup words of its own; the terms do.
         use_rag, rag_mode = True, "full"
     
@@ -1247,13 +1247,9 @@ def get_rag_context(
     sources: list[object] = list(curriculum_sources)
 
     # Term lookups go first so truncation drops broad retrieval, not them.
-    if verification_terms:
-        verification_context, verification_sources = verification_term_context(
-            verification_terms,
-        )
-        if verification_context:
-            contexts.append(verification_context)
-            sources.extend(verification_sources)
+    if verification_lookups is not None and verification_lookups.context:
+        contexts.append(verification_lookups.context)
+        sources.extend(verification_lookups.sources)
 
     # Exact canonical matches and approved cards do not depend on the vector
     # database, so a transient database failure must not erase them.
@@ -1646,6 +1642,9 @@ def get_chatbot_response(
         "image" if image_context.school_announcement else "text" if school_announcement else "none",
         len(contextual_card_ids),
     )
+    verification_lookups = (
+        verification_term_context(verification.terms) if verification else None
+    )
     rag_context, sources = get_rag_context(
         effective_translation_message,
         conversation_length,
@@ -1655,7 +1654,7 @@ def get_chatbot_response(
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
-        verification_terms=verification.terms if verification else (),
+        verification_lookups=verification_lookups,
     )
     if is_message_cancelled(pending_id):
         return early_cancelled_response()
@@ -1686,7 +1685,11 @@ def get_chatbot_response(
         has_references=bool(rag_context),
     )
     if verification:
-        system_prompt += verification.prompt_guidance()
+        system_prompt += verification.prompt_guidance(
+            verification_lookups.found,
+            verification_lookups.found_parts,
+            verification_lookups.missing,
+        )
 
     if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
@@ -1694,6 +1697,11 @@ def get_chatbot_response(
     # Initialize token manager for this request
     token_manager = TokenManager(budget=TokenBudget(), model=LLM_MODEL_ID)
 
+    if verification:
+        # The re-check block is added after retrieval budgeted the references.
+        rag_context, sources = fit_references(
+            system_prompt, rag_context, sources, token_manager.budget,
+        )
     system_prompt, web_results_used = assemble_system_prompt(
         system_prompt, rag_context, web_context, token_manager.budget,
     )
@@ -2066,6 +2074,9 @@ def get_chatbot_response_stream(
         "image" if image_context.school_announcement else "text" if school_announcement else "none",
         len(contextual_card_ids),
     )
+    verification_lookups = (
+        verification_term_context(verification.terms) if verification else None
+    )
     rag_context, sources = get_rag_context(
         effective_translation_message,
         conversation_length,
@@ -2076,7 +2087,7 @@ def get_chatbot_response_stream(
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
-        verification_terms=verification.terms if verification else (),
+        verification_lookups=verification_lookups,
     )
     if is_message_cancelled(pending_id):
         yield cancelled_event()
@@ -2107,11 +2118,20 @@ def get_chatbot_response_stream(
         has_references=bool(rag_context),
     )
     if verification:
-        system_prompt += verification.prompt_guidance()
+        system_prompt += verification.prompt_guidance(
+            verification_lookups.found,
+            verification_lookups.found_parts,
+            verification_lookups.missing,
+        )
 
     if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
+    if verification:
+        # The re-check block is added after retrieval budgeted the references.
+        rag_context, sources = fit_references(
+            system_prompt, rag_context, sources, token_manager.budget,
+        )
     system_prompt, web_results_used = assemble_system_prompt(
         system_prompt, rag_context, web_context, token_manager.budget,
     )

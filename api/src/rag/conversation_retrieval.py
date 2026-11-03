@@ -387,8 +387,40 @@ class VerificationFollowUp:
     retrieval_query: str
     truncated: bool = False
 
-    def prompt_guidance(self) -> str:
-        return verification_follow_up_guidance(self.terms, self.truncated)
+    def prompt_guidance(
+        self,
+        found: tuple[str, ...] = (),
+        found_parts: tuple[str, ...] = (),
+        missing: tuple[str, ...] = (),
+    ) -> str:
+        return verification_follow_up_guidance(
+            self.terms, self.truncated, found, found_parts, missing,
+        )
+
+
+# How many earlier re-checks ("Are you sure?" → "Really?") to step over when
+# looking for the request they all question.
+_MAX_CHAINED_VERIFICATIONS = 4
+
+
+def _previous_answer_index(messages: list[dict[str, Any]], before: int) -> int | None:
+    return next(
+        (
+            index
+            for index in range(before - 1, -1, -1)
+            if messages[index].get("role") == "assistant"
+            and _message_text(messages[index])
+            and _message_text(messages[index]) != _CANCELLED_REPLY
+        ),
+        None,
+    )
+
+
+def _previous_user_index(messages: list[dict[str, Any]], before: int) -> int | None:
+    return next(
+        (index for index in range(before - 1, -1, -1) if messages[index].get("role") == "user"),
+        None,
+    )
 
 
 def resolve_verification_follow_up(
@@ -399,39 +431,35 @@ def resolve_verification_follow_up(
 
     "Are you sure about these words?" names none of the words. The previous
     assistant answer is read only to find which Chamorro terms to look up, and
-    the user request it answered is re-resolved for retrieval. Returns None
-    for any other message, or when the previous answer gave no Chamorro terms
-    (so "Are you sure you can help me?" stays ordinary chat).
+    the user request it answered is re-resolved for retrieval. When that
+    request was itself a re-check, earlier re-checks are stepped over to the
+    original request. Returns None for any other message, or when the previous
+    answer gave no Chamorro terms (so "Are you sure you can help me?" stays
+    ordinary chat).
     """
 
     if not is_verification_follow_up(current_message):
         return None
-    answer_index = next(
-        (
-            index
-            for index in range(len(past_messages) - 1, -1, -1)
-            if past_messages[index].get("role") == "assistant"
-            and _message_text(past_messages[index])
-            and _message_text(past_messages[index]) != _CANCELLED_REPLY
-        ),
-        None,
-    )
+    answer_index = _previous_answer_index(past_messages, len(past_messages))
     if answer_index is None:
         return None
     terms, truncated = extract_answer_terms(_message_text(past_messages[answer_index]))
     if not terms:
         return None
 
-    request_index = next(
-        (
-            index
-            for index in range(answer_index - 1, -1, -1)
-            if past_messages[index].get("role") == "user"
-        ),
-        None,
-    )
+    request_index = _previous_user_index(past_messages, answer_index)
+    for _ in range(_MAX_CHAINED_VERIFICATIONS):
+        if request_index is None or not is_verification_follow_up(
+            _plain_user_text(past_messages[request_index])
+        ):
+            break
+        earlier_answer = _previous_answer_index(past_messages, request_index)
+        request_index = (
+            None if earlier_answer is None
+            else _previous_user_index(past_messages, earlier_answer)
+        )
     request = _plain_user_text(past_messages[request_index]) if request_index is not None else ""
-    if not request:
+    if not request or is_verification_follow_up(request):
         return VerificationFollowUp(terms, "Chamorro terms: " + ", ".join(terms), truncated)
 
     # Replay the earlier request with the history and task it was sent with.

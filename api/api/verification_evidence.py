@@ -8,6 +8,8 @@ are lookup keys only; nothing from the previous answer becomes evidence.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.verification_follow_up import is_chamorro_word
 
@@ -23,12 +25,28 @@ def _source_key(source: object) -> tuple[object, object]:
     return tuple(source[:2]) if isinstance(source, (tuple, list)) else (source, None)
 
 
-def verification_term_context(terms: tuple[str, ...]) -> tuple[str, list[object]]:
+@dataclass(frozen=True)
+class VerificationLookups:
+    """Lookup evidence for the re-checked terms, kept apart from their labels.
+
+    ``context`` holds only governed dictionary and ledger entries. Which terms
+    were found is reported separately, so the prompt can quote the terms as
+    data instead of placing text from the previous answer among the evidence.
+    """
+
+    context: str = ""
+    sources: list[object] = field(default_factory=list)
+    found: tuple[str, ...] = ()
+    found_parts: tuple[str, ...] = ()
+    missing: tuple[str, ...] = ()
+
+
+def verification_term_context(terms: tuple[str, ...]) -> VerificationLookups:
     """Return exact-lookup evidence for each term and the matching sources.
 
     Each Chamorro word of a multi-word term ("Hu guaiya hao") is also looked
-    up, within a fixed lookup budget. Terms with no entry at all are listed so
-    the model can say so instead of guessing.
+    up, within a fixed lookup budget. Terms with no entry at all are reported
+    so the model can say so instead of guessing.
     """
 
     paragraphs: list[str] = []
@@ -67,29 +85,19 @@ def verification_term_context(terms: tuple[str, ...]) -> tuple[str, list[object]
         for term in terms
         if len(term.split()) > 1
     }
-    found = [term for term in terms if whole[term]]
-    found_parts = [term for term in terms if not whole[term] and parts.get(term)]
-    missing = [term for term in terms if not whole[term] and not parts.get(term)]
-
-    if not paragraphs and not missing:
-        return "", []
-    lines = [
-        "=== LOOKUPS FOR THE TERMS IN THE PREVIOUS ANSWER ===",
+    lookups = VerificationLookups(
+        found=tuple(term for term in terms if whole[term]),
+        found_parts=tuple(term for term in terms if not whole[term] and parts.get(term)),
+        missing=tuple(term for term in terms if not whole[term] and not parts.get(term)),
+    )
+    if not paragraphs:
+        return lookups
+    header = (
+        "=== LOOKUPS FOR THE TERMS IN THE PREVIOUS ANSWER ===\n"
         "Each term from the previous answer was looked up by exact headword. "
-        "Only the entries below are evidence; the previous answer is not.",
-    ]
-    if found:
-        lines.append("Lookups returned entries for: " + ", ".join(found) + ".")
-    if found_parts:
-        lines.append(
-            "No exact entry for the whole phrase, but entries for some of its words: "
-            + ", ".join(found_parts) + "."
-        )
-    if missing:
-        lines.append(
-            "No exact dictionary or ledger entry for: " + ", ".join(missing)
-            + ". A missing entry alone does not show a term is wrong."
-        )
-    header = "\n".join(lines)
-    return "\n\n".join([header, *paragraphs]), sources
-
+        "Only the entries below are evidence; the previous answer is not."
+    )
+    return VerificationLookups(
+        "\n\n".join([header, *paragraphs]), sources,
+        lookups.found, lookups.found_parts, lookups.missing,
+    )
