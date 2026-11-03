@@ -33,7 +33,7 @@ The final web-only launcher run claimed its direct Vite PID and finite Playwrigh
 
 ## Review round 1 — PR #103
 
-Refreshed against main `609a8eb` (including tutor routing merge `6d83b7f`). Agent-executed affected-flow acceptance: preserve pending embedded and standalone quiz answers/attempt IDs across retirement and reload, retry historical submissions, replay legacy ten-card exposure queues without retired credit, and retain structurally supported dictionary prefixes.
+Refreshed against remote main `6d83b7f` (tutor routing merge). Agent-executed affected-flow acceptance: preserve pending embedded and standalone quiz answers/attempt IDs across retirement and reload, retry historical submissions, replay legacy ten-card exposure queues without retired credit, and retain structurally supported dictionary prefixes.
 
 - Both browser quiz stores keep answered history verbatim, remove only unanswered retired IDs, and preserve current-question/draft state. Embedded history uses exact pre-retirement question records; Start Fresh and standalone restart use only the active pool. Answers never transfer to replacement questions. API validation accepts only the original retired question/concept relationships; persistence and result detail retain their original IDs. Retired concepts remain absent from the active manifest and cannot become new curated mastery/review targets.
 - Legacy exposure requests ignore known retired verb IDs and retired review cards, write the seven surviving stable IDs, and still reject invented or cross-topic IDs. Repeated replay is covered through the route and transactional cursor fixture.
