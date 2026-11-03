@@ -217,3 +217,33 @@ prefixes so annotations cannot silently survive parser/source drift.
 D03 and C03 passed locally. Full-gate and B03 execution evidence follows after
 verification. This sample is not proof of language correctness or complete
 English extraction across the whole snapshot.
+
+Verification at executable head `09ae024` (main `a9fbcc8` integrated):
+
+- D03/C03 passed: focused parser regressions **49 passed**; counts and exact
+  final sample/source-prefix checks passed. All 13 requested fixtures have the
+  outcomes above. `--check` confirms the regenerated counts are current.
+- Serial `./scripts/check.sh` passed: **1,196 API passed / 40 skipped; 129 Vitest
+  files / 837 tests passed**. Canonical/governance/routing/audio validators,
+  lint, typecheck, production build, PWA and bundle checks passed. Four existing
+  lint warnings remain. The six opt-in PostgreSQL SRS tests were skipped without
+  `SRS_TEST_DSN`; round 2 executed them, and this round changes none of their
+  implementation or fixtures.
+- B03 passed **2/2**: desktop Chromium and Pixel 7 emulation, public entry →
+  dictionary → search → return, mocked API. Actual bundled-source parsing is
+  covered separately by API tests. The extra preview tab only observed the
+  homepage with no live API; it is not evidence of a live API dictionary journey.
+- Exact owned Vite PID, finite Playwright/gate runners, and preview tab were
+  cleaned/released; lifecycle session
+  `01a1a1c1-cb02-7bb2-b716-bbf5b82a5c6e` reports no active owned resources.
+  No API server or database was started; borrowed/protected services remain
+  running. Task-only dependencies/build output/browser configuration are removed
+  after preserving the QA report outside the worktree. No resource handoff.
+- Source dictionary and audio manifests remain unchanged; the manifests compare
+  equal. `50f715a` remains an ancestor, with its three files unchanged since the
+  round-2 head. CodeRabbit is not awaited and no new review is claimed. The lead
+  owns final review/CI assessment and merge; the worker does not merge.
+
+Logs, raw final sample prefixes, Playwright HTML report, and worker handoff are
+local at `output/hafagpt-review-2026-11-03/data-worker-round3/` under the canonical
+Shimizu Technology root. Final evidence commit changes documentation only.
