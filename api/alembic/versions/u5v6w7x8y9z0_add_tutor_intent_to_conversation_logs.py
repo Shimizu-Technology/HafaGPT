@@ -19,6 +19,10 @@ depends_on = None
 
 
 def upgrade():
+    # Adding a nullable column needs only a brief ACCESS EXCLUSIVE lock, but it
+    # must not queue behind a long transaction and block every later read.
+    # Fail fast instead; the deploy can be retried.
+    op.execute("SET LOCAL lock_timeout = '5s'")
     op.add_column('conversation_logs', sa.Column('tutor_intent', sa.String(length=16), nullable=True))
 
 

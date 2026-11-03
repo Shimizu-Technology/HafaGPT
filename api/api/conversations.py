@@ -231,6 +231,8 @@ class RegenerationCancelled(ValueError):
     """Cancellation won before the replacement transaction committed."""
 
 
+# Edit revisions hash full rows, so this projection must match the one in
+# get_conversation_messages column for column (tests/test_transcript_revision_projection.py).
 def _owned_regeneration_rows(cursor: Any, conversation_id: str, user_id: str, for_update: bool = False) -> list[tuple[Any, ...]]:
     """Read one active owner's transcript in the same order used by the UI."""
     query = """
@@ -414,7 +416,8 @@ def get_conversation_messages(conversation_id: str, user_id: Optional[str] = Non
                 mode,
                 response_time_seconds,
                 file_urls,
-                pending_id
+                pending_id,
+                tutor_intent
             FROM conversation_logs
             WHERE conversation_id = %s
         """
