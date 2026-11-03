@@ -271,7 +271,7 @@ def test_multiword_english_request_uses_passage_translation_policy() -> None:
     assert classify_translation_request(query) == "passage_to_chamorro"
     assert detect_query_type(query) == "educational"
     guidance = translation_prompt_guidance(query, has_references=False)
-    assert "complete translation" in guidance
+    assert "complete natural translation first" in guidance
     assert "need to contain every" in guidance
     assert "No governed reference was retrieved" in guidance
 

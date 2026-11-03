@@ -2115,7 +2115,7 @@ async def regenerate_conversation_message(
         persisted_id = conversations.replace_regenerated_exchange(
             snapshot, message, response, mode, metadata.get("sources", []), bool(metadata.get("used_rag")),
             bool(metadata.get("used_web_search")), metadata.get("response_time", 0), session_id, pending_id,
-            attachments, cancelled,
+            attachments, cancelled, tutor_intent=intent,
         )
         committed.set()
         return persisted_id
