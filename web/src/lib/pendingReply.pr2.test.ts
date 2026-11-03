@@ -132,6 +132,36 @@ it('does not show a draft already bound to an account in the guest composer', ()
   window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
   expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
   expect(adoptGuestDraft('account-b')).toBe(false);
+  clearTutorDrafts(); // a fresh tab, where account A is the one signing in
   window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
   expect(adoptGuestDraft('account-a')).toBe(true);
+});
+
+describe('reconciliation is synchronous and guards adoption', () => {
+  beforeEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+
+  it('keeps a bound draft while the guest composer restores empty during sign-in loading', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a'); // signed in on another page; the draft is now A's
+    // After a reload, the guest composer mounts empty before Clerk resolves.
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: readTutorDraft(GUEST_DRAFT_SCOPE).text, files: [] });
+    expect(adoptGuestDraft('account-a')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-a', null)).text).toBe('Guest question');
+  });
+
+  it('binds the draft at sign-in without loading the tutor, so a later account cannot take it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    reconcileDraftAccount('account-b');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+  });
+
+  it('records a fast switch at adoption even if the shell has not reconciled yet', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    // Account B adopts before the shell observed the switch.
+    expect(adoptGuestDraft('account-b')).toBe(false);
+    expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('');
+  });
 });

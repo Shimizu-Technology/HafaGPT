@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
 import { adoptGuestDraft, clearTutorDrafts, GUEST_DRAFT_SCOPE, readTutorDraft, tutorDraftKey } from '../lib/pendingReply';
@@ -288,5 +289,13 @@ describe('account-owned guest drafts', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New guest text' } });
     expect(adoptGuestDraft('account-b')).toBe(true);
     expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('New guest text');
+  });
+
+  it('does not delete a bound draft when the guest composer mounts during sign-in loading', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+    const view = render(<StrictMode><MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} /></StrictMode>);
+    view.unmount();
+    expect(adoptGuestDraft('account-a')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-a', null)).text).toBe('Account A question');
   });
 });

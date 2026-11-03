@@ -20,6 +20,7 @@ import { BottomNav } from './components/BottomNav';
 import { useUser } from '@clerk/clerk-react';
 import { ScrollToTop } from './components/ScrollToTop';
 import { lazyNamed, loadRoute } from './lib/lazyNamed';
+import { reconcileDraftAccount } from './lib/guestDraft';
 
 // Each page is loaded only when its route is visited. This keeps games,
 // administration, charts, and the AI chat out of the initial home-page bundle.
@@ -148,13 +149,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
 function DraftAccountGuard() {
   const { isLoaded, user } = useUser();
   const userId = user?.id ?? null;
-  useEffect(() => {
-    if (!isLoaded) return;
-    // Loaded on demand so the tutor's draft store stays out of the initial bundle.
-    void import('./lib/pendingReply')
-      .then(({ reconcileDraftAccount }) => reconcileDraftAccount(userId))
-      .catch(() => undefined);
-  }, [isLoaded, userId]);
+  useEffect(() => { if (isLoaded) reconcileDraftAccount(userId); }, [isLoaded, userId]);
   return null;
 }
 
