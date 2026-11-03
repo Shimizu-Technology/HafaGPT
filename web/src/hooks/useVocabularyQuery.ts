@@ -1,4 +1,5 @@
 import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import type { ContentTrust } from '../data/contentTrust';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -163,24 +164,83 @@ export interface WordOfTheDay {
   trust?: ContentTrust;
 }
 
-async function fetchWordOfTheDay(): Promise<WordOfTheDay> {
-  const response = await fetch(`${API_URL}/api/vocabulary/word-of-the-day`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch word of the day');
-  }
-  return response.json();
+const WORD_OF_THE_DAY_TIMEOUT_MS = 10_000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const GUAM_UTC_OFFSET_MS = 10 * 60 * 60 * 1000; // Guam has no daylight saving time
+
+class WordOfTheDayTimeout extends Error {}
+
+/** The Guam calendar date ("2026-11-04"), which is how the API picks the word. */
+export function guamDateKey(now: number = Date.now()): string {
+  return new Date(now + GUAM_UTC_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-/** Shared by the hook and by callers that start the request before the card's code has loaded. */
-export const wordOfTheDayQueryOptions = queryOptions({
-  queryKey: ['vocabulary', 'word-of-the-day'],
-  queryFn: fetchWordOfTheDay,
-  staleTime: 1000 * 60 * 60, // 1 hour - word changes daily
-  gcTime: 1000 * 60 * 60 * 24, // 24 hours
-});
+export function msUntilGuamMidnight(now: number = Date.now()): number {
+  return DAY_MS - ((now + GUAM_UTC_OFFSET_MS) % DAY_MS);
+}
+
+async function fetchWordOfTheDay({ signal }: { signal?: AbortSignal } = {}): Promise<WordOfTheDay> {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, WORD_OF_THE_DAY_TIMEOUT_MS);
+  const cancel = () => controller.abort();
+  signal?.addEventListener('abort', cancel, { once: true });
+  try {
+    const response = await fetch(`${API_URL}/api/vocabulary/word-of-the-day`, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error('Failed to fetch word of the day');
+    }
+    return await response.json();
+  } catch (error) {
+    if (timedOut) throw new WordOfTheDayTimeout('Word of the day timed out');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
+  }
+}
+
+/**
+ * Shared by the hook and by callers that start the request before the card's code has loaded.
+ * The Guam date is part of the key so a word cached yesterday is never served as today's.
+ */
+export function wordOfTheDayQueryOptions(date: string = guamDateKey()) {
+  return queryOptions({
+    queryKey: ['vocabulary', 'word-of-the-day', date],
+    queryFn: fetchWordOfTheDay,
+    staleTime: 1000 * 60 * 60, // 1 hour - word changes daily
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours
+    // A stalled request already waited the full timeout; show the unavailable state instead of waiting again.
+    retry: (failureCount, error) => !(error instanceof WordOfTheDayTimeout) && failureCount < 1,
+  });
+}
+
+/** Tracks the Guam date, moving at Guam midnight and when a sleeping tab or restored page resumes. */
+function useGuamDate(): string {
+  const [date, setDate] = useState(() => guamDateKey());
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const sync = () => {
+      clearTimeout(timer);
+      setDate(guamDateKey());
+      // The extra second keeps a slightly early timer from firing before the date turns over.
+      timer = setTimeout(sync, msUntilGuamMidnight() + 1000);
+    };
+    const onResume = () => { if (document.visibilityState === 'visible') sync(); };
+    sync();
+    document.addEventListener('visibilitychange', onResume);
+    window.addEventListener('pageshow', onResume);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onResume);
+      window.removeEventListener('pageshow', onResume);
+    };
+  }, []);
+  return date;
+}
 
 export function useWordOfTheDay() {
-  return useQuery(wordOfTheDayQueryOptions);
+  return useQuery(wordOfTheDayQueryOptions(useGuamDate()));
 }
 
 // Dictionary Quiz types and hook

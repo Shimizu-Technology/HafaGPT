@@ -240,7 +240,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
 
   // Start the request now, in parallel with the card's code, instead of after it.
   useEffect(() => {
-    void queryClient.prefetchQuery(wordOfTheDayQueryOptions);
+    void queryClient.prefetchQuery(wordOfTheDayQueryOptions());
   }, [queryClient]);
 
   return (
@@ -248,7 +248,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
       <section className="overflow-hidden rounded-3xl bg-white p-6 dark:bg-slate-800 sm:p-10">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-10">
           <div>
-            <p className="font-chamorro text-5xl font-semibold leading-none tracking-tight text-coral-800 dark:text-coral-200 sm:text-6xl lg:text-7xl">Håfa Adai</p>
+            <p lang="ch" className="font-chamorro text-5xl font-semibold leading-none tracking-tight text-coral-800 dark:text-coral-200 sm:text-6xl lg:text-7xl">Håfa Adai</p>
             <h1 className="mt-4 max-w-3xl text-balance text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">
               Learn a little Chamorro every day.
             </h1>

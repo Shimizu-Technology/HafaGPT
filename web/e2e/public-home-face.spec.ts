@@ -31,10 +31,13 @@ test('Home greets in Chamorro, keeps its one h1, and shows today\'s word with it
   const greeting = page.getByText('Håfa Adai', { exact: true }).first();
   await expect(greeting).toBeVisible();
   await expect(greeting).toHaveClass(/font-chamorro/);
+  await expect(greeting).toHaveAttribute('lang', 'ch');
   await expect(page.locator('h1:visible')).toHaveText('Learn a little Chamorro every day.');
 
   const card = page.getByRole('region', { name: "Today's word" });
   await expect(card.getByText('Nuebi')).toHaveClass(/font-chamorro/);
+  await expect(card.getByText('Nuebi')).toHaveAttribute('lang', 'ch');
+  await expect(card.getByText('Nine')).not.toHaveAttribute('lang', 'ch');
   await expect(card.getByText('Nine')).toBeVisible();
   await expect(card.getByRole('button', { name: /source-backed/i })).toBeVisible();
   await expect(card.getByRole('link', { name: /see the full entry/i })).toHaveAttribute('href', '/words/word-1');

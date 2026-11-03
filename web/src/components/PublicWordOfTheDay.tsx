@@ -59,7 +59,7 @@ export function PublicWordOfTheDay() {
       </div>
 
       <div className="mt-3 flex min-h-16 flex-wrap items-start justify-between gap-x-3">
-        <p className={`min-w-0 max-w-full break-words font-chamorro font-semibold leading-tight tracking-tight text-brown-950 dark:text-white ${isLongWord ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>
+        <p lang="ch" className={`min-w-0 max-w-full break-words font-chamorro font-semibold leading-tight tracking-tight text-brown-950 dark:text-white ${isLongWord ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'}`}>
           {word.chamorro}
         </p>
         <div className="flex-none">
@@ -74,7 +74,7 @@ export function PublicWordOfTheDay() {
 
       {word.example && (
         <div className="mt-4 rounded-2xl bg-white p-4 dark:bg-slate-800">
-          <p className="font-chamorro text-lg font-medium text-brown-900 dark:text-white">{word.example.chamorro}</p>
+          <p lang="ch" className="font-chamorro text-lg font-medium text-brown-900 dark:text-white">{word.example.chamorro}</p>
           <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">{word.example.english}</p>
         </div>
       )}

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { WordOfTheDay } from '../hooks/useVocabularyQuery';
@@ -55,7 +55,8 @@ describe('public word of the day', () => {
 
     expect(screen.getByText('Loading today\'s word')).toBeInTheDocument();
     expect(await screen.findByText('Nuebi')).toHaveClass('font-chamorro');
-    expect(screen.getByText('Nine')).toBeInTheDocument();
+    expect(screen.getByText('Nuebi')).toHaveAttribute('lang', 'ch');
+    expect(screen.getByText('Nine')).not.toHaveAttribute('lang');
     expect(screen.getByText('Wed, Nov 4')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /source-backed/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /see the full entry/i })).toHaveAttribute('href', '/words/word-1');
@@ -76,7 +77,8 @@ describe('public word of the day', () => {
     respondWith(Response.json({ ...WORD, word_id: undefined, example: { chamorro: 'Nuebi na patgon.', english: 'Nine children.' } }));
     renderCard();
 
-    expect(await screen.findByText('Nuebi na patgon.')).toHaveClass('font-chamorro');
+    expect(await screen.findByText('Nuebi na patgon.')).toHaveAttribute('lang', 'ch');
+    expect(screen.getByText('Nine children.')).not.toHaveAttribute('lang');
     expect(screen.getByRole('link', { name: /open the dictionary/i })).toHaveAttribute('href', '/vocabulary');
   });
 
@@ -84,11 +86,34 @@ describe('public word of the day', () => {
     const fetchMock = respondWith(new Response('nope', { status: 500 }));
     renderCard();
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Today\'s word is not loading right now.');
+    // A server error is retried once, after the default delay, before the unavailable state shows.
+    expect(await screen.findByRole('status', {}, { timeout: 3000 })).toHaveTextContent('Today\'s word is not loading right now.');
     expect(screen.getByRole('link', { name: /open the dictionary/i })).toHaveAttribute('href', '/vocabulary');
     fetchMock.mockResolvedValue(Response.json(WORD));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Nuebi')).toBeInTheDocument();
+  });
+
+  it('shows the unavailable state with a retry when the request stalls', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn((_url: string, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      }));
+      vi.stubGlobal('fetch', fetchMock);
+      renderCard();
+      expect(screen.getByText('Loading today\'s word')).toBeInTheDocument();
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(9_999); });
+      expect(screen.getByText('Loading today\'s word')).toBeInTheDocument();
+      await act(async () => { await vi.advanceTimersByTimeAsync(2); });
+
+      expect(screen.getByRole('status')).toHaveTextContent('Today\'s word is not loading right now.');
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('skeleton labels the section and marks it busy', () => {
