@@ -530,6 +530,45 @@ def looks_like_chamorro(text: str) -> bool:
     return bool(normalized_words & _CHAMORRO_PASSAGE_MARKERS) or is_probably_chamorro(text)
 
 
+_CHAMORRO_ORTHOGRAPHY = re.compile(r"[åÅñÑ'’áéíóúÁÉÍÓÚ]")
+# Orthography that marks a whole quoted phrase as Chamorro. English
+# contractions ("don't", "it's") are not glottal stops.
+_PHRASE_ORTHOGRAPHY = re.compile(r"(?i)[åñáéíóú]|\w['’](?!(?:t|s|re|ll|ve|d|m)\b)\w|\w['’](?!\w)")
+_QUOTED_SPAN = re.compile(r"[\"“]([^\"”]+)[\"”]")
+
+
+def written_in_chamorro(observed: str, query: str) -> bool:
+    """Chamorro orthography in the word, a final glottal stop the payload
+    dropped ("guma'"), or a word inside a quoted Chamorro phrase ("Si" in
+    "Si Yu'os Ma'åse'"). A word inside single quotes ('mango') does not count."""
+
+    query = query or ""
+    if _CHAMORRO_ORTHOGRAPHY.search(observed) or re.search(
+        r"(?i)(?<![\w'’])" + re.escape(observed) + r"['’](?!\w)", query
+    ):
+        return True
+    word = re.compile(r"(?i)(?<![\w'’])" + re.escape(observed) + r"(?![\w'’])")
+    return any(
+        word.search(span) and _PHRASE_ORTHOGRAPHY.search(span)
+        for span in _QUOTED_SPAN.findall(query)
+    )
+
+
+def names_english_target(observed: str, query: str, direction: str | None = None) -> bool:
+    """Whether a to-Chamorro request names ``observed`` as an English word.
+
+    "What is mango in Chamorro?" and 'Translate "media" into Chamorro.' ask for
+    the English concept, so a Chamorro headword that only shares the spelling
+    (mango' = turmeric, media = half) is not evidence for it. A word the learner
+    writes in Chamorro orthography (guma', Si Yu'os Ma'åse') is still Chamorro.
+    Every dictionary lane applies this one rule before labeling a headword.
+    """
+
+    if direction is None:
+        direction = translation_direction(query)
+    return direction == "to_chamorro" and not written_in_chamorro(observed, query)
+
+
 def translation_direction(query: str) -> Literal["to_chamorro", "to_english", ""]:
     """Return the translation direction of a classified request, if any."""
 

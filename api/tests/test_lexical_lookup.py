@@ -350,3 +350,53 @@ def test_bound_forms_do_not_answer_an_ordinary_english_word(query, excluded):
 def test_an_affix_question_keeps_bound_forms_with_an_explicit_label():
     headers = _headers(lexical_lookup_context("What is the prefix for many in Chamorro?").context)
     assert '[Bound prefix glossed "many" (it attaches to another word; not a standalone translation of "many"): mi-]' in headers
+
+
+def _combined(query: str) -> tuple[str, str]:
+    canonical, _ = get_canonical_tutor_context(query)
+    return canonical, lexical_lookup_context(query, already_supplied=canonical).context
+
+
+@pytest.mark.parametrize(
+    ("query", "expected", "excluded"),
+    [
+        ('What is "media" in Chamorro?', "gasetiria", "media"),
+        ("What is 'media' in Chamorro?", "gasetiria", "media"),
+        ('Translate "media" into Chamorro.', "gasetiria", "media"),
+        ("Translate media into Chamorro.", "gasetiria", "media"),
+        ('Translate "mango" into Chamorro.', "mangga", "mango'"),
+        ("Translate mango in to Chamorro", "mangga", "mango'"),
+    ],
+)
+def test_quoted_and_into_targets_never_promote_a_same_spelling_headword(query, expected, excluded):
+    canonical, lexical = _combined(query)
+    combined = canonical + "\n" + lexical
+    assert expected in combined
+    assert not any(line.startswith("[Exact dictionary headword") for line in _headers(combined))
+    assert excluded not in _strong_headwords(lexical) - {expected}
+
+
+def test_a_quoted_target_without_an_english_gloss_is_a_labeled_canonical_lead():
+    canonical, _ = get_canonical_tutor_context('What is "usa" in Chamorro?')
+    headers = _headers(canonical)
+    assert headers and all(line.startswith('[Chamorro headword spelled like "usa"') for line in headers)
+
+
+@pytest.mark.parametrize(
+    ("query", "headword"),
+    [("What is \"guma'\" in Chamorro?", "guma'"), ("What does \"media\" mean?", "media"),
+     ('Candidate spelling to verify: "media"', "media")],
+)
+def test_chamorro_and_explicit_headword_questions_keep_exact_headwords(query, headword):
+    canonical, _ = get_canonical_tutor_context(query)
+    assert f"[Exact dictionary headword: {headword}]" in canonical
+
+
+@pytest.mark.parametrize(
+    "query", ["What is \"Si Yu'os Ma'åse'\" in Chamorro?", "How do you say \"Si Yu'os Ma'åse'\" in Chamorro?"],
+)
+def test_words_in_a_quoted_chamorro_phrase_stay_chamorro(query):
+    canonical, lexical = _combined(query)
+    assert "[Canonical greetings.thank_you]" in canonical
+    assert "si" in _strong_headwords(lexical)
+    assert "spelled like" not in lexical

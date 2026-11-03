@@ -30,6 +30,7 @@ from src.rag.translation_policy import (
     extract_translation_payload,
     extract_translation_retrieval_payload,
     looks_like_chamorro,
+    names_english_target,
     natural_translation_payload,
     translation_direction,
 )
@@ -46,6 +47,7 @@ from .canonical_context import (
     _normalize_exact_headword,
     _spelling_candidate_index,
     _spelling_candidate_key,
+    spelling_coincidence_label,
 )
 from .chamorro_morphology import attested_root_candidates
 from .dictionary_example_validation import COMMON_ENGLISH_WORDS
@@ -198,7 +200,6 @@ _UNINFLECTED_S = frozenset("""
 news series species always perhaps lens bus gas yes its his hers ours yours theirs
 this thus plus less unless chaos mathematics physics politics
 """.split())
-_CHAMORRO_ORTHOGRAPHY = re.compile(r"[åÅñÑ'’áéíóúÁÉÍÓÚ]")
 
 
 def _syllables(word: str) -> int:
@@ -431,14 +432,6 @@ def _mention_blocks(word: str, forms: Sequence[str]) -> list[_Block]:
     return []
 
 
-def _written_in_chamorro(observed: str, query: str) -> bool:
-    """Chamorro orthography in the word, or a final glottal stop the payload
-    dropped ("guma'"). A word inside single quotes ('mango') does not count."""
-
-    return bool(_CHAMORRO_ORTHOGRAPHY.search(observed) or re.search(
-        r"(?i)(?<![\w'’])" + re.escape(observed) + r"['’](?!\w)", query or ""))
-
-
 def _spelling_coincidences(observed: str, blocks: Sequence[_Block]) -> list[_Block]:
     """Relabel Chamorro headwords that only share an English word's spelling.
 
@@ -447,8 +440,7 @@ def _spelling_coincidences(observed: str, blocks: Sequence[_Block]) -> list[_Blo
     """
 
     return [
-        replace(block, label=(f'Chamorro headword spelled like "{observed}" (if "{observed}" is meant as '
-                              "English, this entry only shares its spelling and is not a translation)"))
+        replace(block, label=spelling_coincidence_label(observed))
         for block in blocks if block.label.startswith(("Exact", "Headword matching"))
     ]
 
@@ -604,7 +596,7 @@ def lexical_lookup_context(
                     blocks = _english_blocks(phrase, gloss, ranked, example_limit, allow_bound=allow_bound)
             if not blocks and chamorro_side:
                 blocks, keys = _chamorro_blocks(phrase, example_limit)
-                if direction == "to_chamorro" and not _written_in_chamorro(phrase, query):
+                if names_english_target(phrase, query, direction):
                     blocks, keys = _spelling_coincidences(phrase, blocks), []
                 sense_keys.extend(keys)
             if blocks:
@@ -634,7 +626,7 @@ def lexical_lookup_context(
         chamorro_blocks: list[_Block] = []
         # An English-to-Chamorro request names an English word unless the
         # token is written in Chamorro orthography.
-        cross_language = direction == "to_chamorro" and not _written_in_chamorro(token, query)
+        cross_language = names_english_target(token, query, direction)
         if chamorro_side or (english_side and not is_english_word):
             chamorro_blocks, keys = _chamorro_blocks(token, example_limit)
             strong = any(block.label.startswith(("Exact", "Headword matching")) for block in chamorro_blocks)

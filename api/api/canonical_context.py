@@ -16,6 +16,7 @@ from src.rag.translation_policy import (
     extract_translation_payload,
     extract_translation_retrieval_payload,
     is_passage_translation,
+    names_english_target,
     translation_direction,
 )
 
@@ -84,12 +85,16 @@ def _exact_dictionary_data() -> tuple[tuple[str, dict], ...]:
     return tuple(dictionaries)
 
 
+_CANDIDATE_SPELLING = re.compile(r'candidate spelling to verify:\s*["“]([^"”]+)["”]', re.I)
+
+
+def spelling_coincidence_label(observed: str) -> str:
+    return (f'Chamorro headword spelled like "{observed}" (if "{observed}" is meant as English, '
+            "this entry only shares its spelling and is not a translation)")
+
+
 def _extract_requested_headword(user_input: str) -> str:
-    candidate_match = re.search(
-        r'candidate spelling to verify:\s*["“]([^"”]+)["”]',
-        user_input,
-        re.I,
-    )
+    candidate_match = _CANDIDATE_SPELLING.search(user_input)
     if candidate_match:
         return candidate_match.group(1).strip()
     if not re.search(r"\b(what does|what is|define|meaning|in english)\b", user_input, re.I):
@@ -432,6 +437,19 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
     requested_english_gloss = _extract_requested_english_gloss(user_input)
     english_gloss_matches = _lookup_exact_english_glosses(requested_english_gloss)
+    # 'What is "media" in Chamorro?' quotes an English word; the headword
+    # "media" (half) only shares its spelling. Same rule as the lexical lane:
+    # drop it beside a real gloss, otherwise label the coincidence.
+    headword_label = "Exact dictionary headword"
+    if (
+        dictionary_matches
+        and not _CANDIDATE_SPELLING.search(user_input)
+        and names_english_target(requested_headword, user_input)
+    ):
+        if english_gloss_matches:
+            dictionary_matches = []
+        else:
+            headword_label = spelling_coincidence_label(requested_headword)
     passage_dictionary_matches = _passage_dictionary_matches(user_input, match_limit=passage_match_limit)
 
     if (
@@ -482,7 +500,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
     for display_name, entry_headword, definition in dictionary_matches:
         lines.extend(
             [
-                f"[Exact dictionary headword: {entry_headword}]",
+                f"[{headword_label}: {entry_headword}]",
                 f"Source: {display_name}",
                 f"Definition: {_format_dictionary_definition(definition)}",
                 "",
