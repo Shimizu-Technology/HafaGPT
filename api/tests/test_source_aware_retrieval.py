@@ -2,6 +2,8 @@ import ast
 import json
 from pathlib import Path
 
+import pytest
+
 from api.lexical_lookup import (
     LexicalLookup,
     homograph_sense_context,
@@ -9,7 +11,7 @@ from api.lexical_lookup import (
     lexical_lookup_request,
 )
 from api.verification_evidence import VerificationLookups
-from src.rag.knowledge_cards import uncovered_card_clauses
+from src.rag.knowledge_cards import get_knowledge_card_context, uncovered_card_clauses
 
 
 SOURCE_PATH = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
@@ -42,6 +44,7 @@ def _load_get_rag_context(
     card_context: str,
     use_rag: bool = True,
     real_lexical: bool = False,
+    real_cards: bool = False,
 ):
     module = ast.parse(SOURCE)
     function = next(
@@ -76,6 +79,8 @@ def _load_get_rag_context(
         "json": json,
         "logger": logger,
     }
+    if real_cards:
+        namespace["get_knowledge_card_context"] = get_knowledge_card_context
     if real_lexical:
         namespace.update(
             lexical_lookup_request=lexical_lookup_request,
@@ -255,6 +260,44 @@ def test_compound_question_keeps_vector_retrieval_for_the_uncovered_clause() -> 
 
     assert "orthography card" in context and context.endswith("vector context")
     assert fake_rag.calls == [("explain possession in detail.", 3)]
+
+
+@pytest.mark.parametrize(
+    ("query", "uncovered"),
+    [
+        ("What is the current Guam CHamoru orthography and explain possession in detail?",
+         "explain possession in detail?"),
+        ("What is the current Guam CHamoru orthography? Explain possession.", "Explain possession."),
+        ("What is the current Guam CHamoru orthography, and how do I write possession?",
+         "how do I write possession?"),
+    ],
+)
+def test_real_card_matcher_keeps_vectors_for_coordinated_and_short_clauses(query, uncovered) -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_cards=True)
+
+    context, _sources = get_rag_context(query)
+
+    assert "[Knowledge card: orthography.guam.current_reference]" in context
+    assert fake_rag.calls == [(uncovered, 3)]
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What is the current Guam CHamoru orthography?",
+        "What is the current Guam CHamoru orthography? Explain more.",
+        "What is the current Guam CHamoru orthography? Thanks!",
+    ],
+)
+def test_real_card_still_settles_a_single_topic(query) -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_cards=True)
+
+    context, _sources = get_rag_context(query)
+
+    assert "[Knowledge card: orthography.guam.current_reference]" in context
+    assert fake_rag.calls == []
 
 
 class SenseRAG(FakeRAG):

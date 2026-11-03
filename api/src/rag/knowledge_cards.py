@@ -375,19 +375,39 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     return [card for _score, card in scored[:limit]]
 
 
+# A coordinated request ("...orthography and explain possession") starts a new
+# clause at "and"/"but"/"plus"/"then" followed by a request or question word.
+_CLAUSE_BOUNDARY = re.compile(
+    r"(?<=[?.!])\s+|\s*;\s*|\n+|"
+    r",?\s+(?:and|but|plus|then)\s+(?:also\s+)?(?=(?:please\s+)?(?:explain|describe|tell|show|give|teach|"
+    r"list|define|compare|translate|help|what|how|why|when|where|which|who|can|could|would|is|are|do|does)\b)",
+    re.I,
+)
+# Words that carry no topic of their own ("Explain more.", "Thanks!").
+_CLAUSE_FILLER = frozenset("""
+explain describe tell show give teach list define more detail details please thanks thank also
+that this what about much again example examples elaborate further with some okay really great
+could would should them they there here
+""".split())
+
+
 def uncovered_card_clauses(query: str) -> str:
     """Return the clauses of a compound question that no approved card matches.
 
     An empty string means the request is a single clause, or every clause is
-    covered, so the matched cards remain the complete answer.
+    covered, so the matched cards remain the complete answer. A short clause
+    counts when it names a topic ("Explain possession.").
     """
 
-    sentences = re.split(r"(?<=[?.!])\s+|\s*;\s*|\n+", query or "")
+    sentences = _CLAUSE_BOUNDARY.split(query or "")
     clauses = [
         re.sub(r"(?i)^\s*(?:and\s+)?(?:also|additionally|plus|then)\b[\s,]*", "", sentence).strip()
         for sentence in sentences
     ]
-    clauses = [clause for clause in clauses if len(clause.split()) >= 3]
+    clauses = [
+        clause for clause in clauses
+        if any(len(word) >= 4 and word not in _CLAUSE_FILLER for word in re.findall(r"[^\W\d_]+", clause.casefold()))
+    ]
     if len(clauses) < 2:
         return ""
     uncovered = [clause for clause in clauses if not matching_production_cards(clause)]
