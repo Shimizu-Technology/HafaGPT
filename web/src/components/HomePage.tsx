@@ -31,7 +31,7 @@ import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { TodayPlanCard } from './TodayPlanCard';
 import { BrandMark } from './BrandMark';
-import { PublicWordCardSkeleton } from './PublicWordCardShell';
+import { PublicWordCardBoundary, PublicWordCardSkeleton } from './PublicWordCardShell';
 import { lazyNamed } from '../lib/lazyNamed';
 
 // Loaded on demand so the signed-in Home and the initial bundle never carry it.
@@ -268,9 +268,11 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
               <Languages className="h-5 w-5" aria-hidden="true" /> Ask or translate
             </Link>
           </div>
-          <Suspense fallback={<PublicWordCardSkeleton />}>
-            <PublicWordOfTheDay />
-          </Suspense>
+          <PublicWordCardBoundary>
+            <Suspense fallback={<PublicWordCardSkeleton />}>
+              <PublicWordOfTheDay />
+            </Suspense>
+          </PublicWordCardBoundary>
         </div>
         <ul aria-label="One welcoming place for" className="mt-8 grid gap-3 border-t border-cream-200 pt-6 text-base text-brown-700 dark:border-slate-700 dark:text-gray-300 sm:grid-cols-2 lg:grid-cols-4">
           {SIGNED_OUT_HIGHLIGHTS.map(({ icon: Icon, text }) => (

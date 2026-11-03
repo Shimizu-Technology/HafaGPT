@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { WordOfTheDay } from '../hooks/useVocabularyQuery';
-import { PublicWordCardSkeleton } from './PublicWordCardShell';
+import { PublicWordCardBoundary, PublicWordCardSkeleton } from './PublicWordCardShell';
 import { PublicWordOfTheDay } from './PublicWordOfTheDay';
 
 const speak = vi.fn().mockResolvedValue(undefined);
@@ -114,6 +114,37 @@ describe('public word of the day', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('keeps the word on screen when a background refresh fails', async () => {
+    const fetchMock = respondWith(Response.json(WORD));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter><PublicWordOfTheDay /></MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('Nuebi')).toBeInTheDocument();
+    fetchMock.mockResolvedValue(new Response('nope', { status: 500 }));
+    await act(async () => { await client.refetchQueries(); });
+    expect(screen.getByText('Nuebi')).toBeInTheDocument();
+    expect(screen.queryByText("Today's word is not loading right now.")).not.toBeInTheDocument();
+  });
+
+  it('a card that fails to render leaves the dictionary link instead of taking Home down', () => {
+    const Broken = () => { throw new Error('chunk failed'); };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    render(
+      <MemoryRouter>
+        <p>Rest of Home</p>
+        <PublicWordCardBoundary><Broken /></PublicWordCardBoundary>
+      </MemoryRouter>,
+    );
+    consoleError.mockRestore();
+    expect(screen.getByText('Rest of Home')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent("Today's word is not loading right now.");
+    expect(screen.getByRole('link', { name: /open the dictionary/i })).toHaveAttribute('href', '/vocabulary');
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
   });
 
   it('skeleton labels the section and marks it busy', () => {

@@ -64,7 +64,7 @@ test('audio starts only when Hear it is tapped, and no account dialog opens', as
   await expect(page.locator('.cl-modalContent, [role="dialog"]')).toHaveCount(0);
 });
 
-test('the word card holds its height while the word loads', async ({ page }) => {
+test('the page below the word card stays put while an ordinary word loads', async ({ page }) => {
   let release!: () => void;
   const held = new Promise<void>(resolve => { release = resolve; });
   await mockPublicApis(page, async route => {
@@ -74,16 +74,44 @@ test('the word card holds its height while the word loads', async ({ page }) => 
   await page.goto('/');
   const card = page.getByRole('region', { name: "Today's word" });
   await expect(card).toHaveAttribute('aria-busy', 'true');
+  // What a visitor notices is the page below moving, not the card's own height: on wide
+  // screens the taller left column absorbs a wrapped row inside the card.
   const below = page.getByRole('heading', { name: 'Public learning tools' });
-  const measure = async () => ({
-    card: (await card.boundingBox())!.height,
-    below: (await below.boundingBox())!.y,
-  });
-  const loading = await measure();
+  await expect(below).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const before = (await below.boundingBox())!.y;
   release();
   await expect(card.getByText('Nuebi')).toBeVisible();
   await expect(card).toHaveAttribute('aria-busy', 'false');
-  expect(await measure()).toEqual(loading);
+  await page.evaluate(() => document.fonts.ready);
+  expect((await below.boundingBox())!.y).toBe(before);
+});
+
+test('a long word with an example moves the page below by no more than the accepted growth', async ({ page }) => {
+  const long = {
+    ...WORD,
+    chamorro: "Na'fåna i addeng-mu!",
+    english: 'A long meaning that needs a second line on a narrow card to fit its whole text',
+    example: { chamorro: "Na'fåna i addeng-mu!", english: 'A short example sentence for the card' },
+  };
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await mockPublicApis(page, async route => {
+    await held;
+    await route.fulfill({ json: long });
+  });
+  await page.goto('/');
+  const below = page.getByRole('heading', { name: 'Public learning tools' });
+  await expect(below).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const before = (await below.boundingBox())!.y;
+  release();
+  const card = page.getByRole('region', { name: "Today's word" });
+  await expect(card).toHaveAttribute('aria-busy', 'false');
+  await page.evaluate(() => document.fonts.ready);
+  const after = (await below.boundingBox())!.y;
+  // Measured: 68.5px wide, 213.5px on a phone, where the card ends the first screen.
+  expect(after - before).toBeLessThanOrEqual(240);
 });
 
 test('an unavailable word leaves a retry and the dictionary instead of a blank card', async ({ page }) => {

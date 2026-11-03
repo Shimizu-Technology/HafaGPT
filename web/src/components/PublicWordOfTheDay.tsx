@@ -4,7 +4,7 @@ import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
 import { useWordOfTheDay } from '../hooks/useVocabularyQuery';
 import { ContentTrustNote } from './ContentTrustNote';
 import { PronunciationButton } from './PronunciationButton';
-import { PublicWordCardShell, PublicWordCardSkeleton } from './PublicWordCardShell';
+import { PublicWordCardShell, PublicWordCardSkeleton, PublicWordCardUnavailable } from './PublicWordCardShell';
 
 /** "2026-11-04" as "Wed, Nov 4". Noon avoids any timezone rollover of the calendar date. */
 function formatWordDate(isoDate: string): string | null {
@@ -19,32 +19,12 @@ function formatWordDate(isoDate: string): string | null {
  * No account and no AI.
  */
 export function PublicWordOfTheDay() {
-  const { data: word, isPending, isError, refetch } = useWordOfTheDay();
+  const { data: word, isPending, refetch } = useWordOfTheDay();
 
   if (isPending) return <PublicWordCardSkeleton />;
 
-  if (isError || !word?.chamorro) {
-    return (
-      <PublicWordCardShell>
-        <h2 id="public-word-heading" className="text-base font-semibold text-brown-950 dark:text-white">Today's word</h2>
-        <div role="status" className="mt-4">
-          <p className="text-base text-brown-700 dark:text-gray-300">Today's word is not loading right now.</p>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            className="pressable inline-flex min-h-11 items-center rounded-xl border border-cream-300 bg-white px-4 text-sm font-semibold text-brown-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-          >
-            Try again
-          </button>
-          <Link to="/vocabulary" className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300">
-            Open the dictionary <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
-      </PublicWordCardShell>
-    );
-  }
+  // A failed background refresh keeps the word already on screen.
+  if (!word?.chamorro) return <PublicWordCardUnavailable onRetry={() => void refetch()} />;
 
   const dateLabel = formatWordDate(word.date);
   // Phrases and long words step down a size so they hold to two lines on a phone.
