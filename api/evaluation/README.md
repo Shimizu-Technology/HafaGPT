@@ -5,6 +5,149 @@
 > Chamorro accuracy. Use `model_benchmark.py` and the blinded native-review process
 > in `../documentation/MODEL_EVALUATION_2026.md` for current model decisions.
 
+## Tutor quality regression suite (Phase 1)
+
+`run_tutor_quality.py` measures routing, retrieval coverage and response behavior
+through **the production `get_chatbot_response` function**. It does not inject an
+answer key. `tutor_quality_v1.json` has 150 cases: 22 anonymized production
+regressions, 40 dictionary lookups, 36 request variants, 12 verification
+follow-ups, 16 school messages, 16 communicative goals, four absent-word cases,
+and four grammar questions. Expected headwords are byte-exact local dictionary
+keys or canonical ledger terms, with source paths. Alternatives count once per
+concept. These attestations do not establish native correctness.
+
+The product serves parents reading immersion-school messages and heritage
+learners composing everyday replies. This suite follows the November 3 program
+(PLAN Phase 1, REPORT, private production review, KB audit, and resource research
+§3), alongside Brain Dump `work/shimizu-tech/hafa-gpt.md`. At baseline the target
+was `origin/main` `93355d9`, Render API / Netlify web; deployment was reported by
+the program and was not independently checked here. Acceptance is an offline
+safety test pass, all-case production-path baselines, source-reference
+validation, cost reporting and exportable native-review worksheets. No UI
+behavior changes, production access or server are required.
+
+The production report supplies short excerpts, not complete conversation
+exports. Personal names are replaced with roles. Multi-turn fixtures retain the
+relevant user/assistant sequence using source-copied terms; they do not invent
+Chamorro sentences. Worksheet cases are **text surrogates**: image reading,
+negation accuracy and cross-run photo consistency remain untested. GDOE-style
+requests are original English requests inspired by the five communication,
+culture and community domains, not copied indicators or a validated grade map.
+`penguin` is absent locally. The mythical `unicorn` is absent as a translation;
+several dictionary definitions mention unicorn **fish**, so those are not a
+matching animal sense.
+
+```bash
+cd api
+# Validate all source references, no DB or API calls.
+.venv/bin/python evaluation/run_tutor_quality.py --validate-only --output /tmp/tq-validate
+
+# Free routing + real retrieval + final prompt assembly. Cached embeddings only;
+# first-run cache misses are explicitly blocked and return exit status 1.
+.venv/bin/python evaluation/run_tutor_quality.py --retrieval-only \
+  --output evaluation/results/local/before-free
+
+# Optional: populate missing embeddings through the production retrieval path,
+# with no chat-model calls. Cloud embedding charges are tiny and reported.
+.venv/bin/python evaluation/run_tutor_quality.py --retrieval-only --allow-paid-embeddings \
+  --output evaluation/results/local/before-embedding-warm
+
+# One full baseline, default CHAT_MODEL from api/.env; serial, $4.50 chat budget.
+.venv/bin/python evaluation/run_tutor_quality.py \
+  --output evaluation/results/local/before-full
+
+# Run on the candidate branch with the SAME JSON and embedding cache.
+.venv/bin/python evaluation/run_tutor_quality.py --retrieval-only \
+  --output evaluation/results/local/after-free
+.venv/bin/python evaluation/run_tutor_quality.py --model gpt-5.6-luna \
+  --budget-usd 4.50 --output evaluation/results/local/after-full
+
+# Combine before/after responses into one randomized packet; keep key separate.
+.venv/bin/python evaluation/run_tutor_quality.py --packet-from \
+  evaluation/results/local/before-full/cases.jsonl \
+  evaluation/results/local/after-full/cases.jsonl \
+  --output evaluation/results/local/blind-comparison --seed 42
+.venv/bin/python evaluation/validate_blind_reviews.py reviewer-one.csv reviewer-two.csv
+
+# Optional English behavior judge. Additional cost within the same chat budget;
+# advisory only, never a Chamorro correctness judge or promotion gate.
+.venv/bin/python evaluation/run_tutor_quality.py --llm-judge \
+  --output evaluation/results/local/advisory
+
+# Retry only failed/missing cases from the SAME suite, model, mode and commit.
+.venv/bin/python evaluation/run_tutor_quality.py \
+  --resume-from evaluation/results/local/before-full/cases.jsonl \
+  --output evaluation/results/local/before-recovered
+
+# Recompute response heuristics without another paid run (e.g. checker changes).
+.venv/bin/python evaluation/run_tutor_quality.py \
+  --rescore-from evaluation/results/local/before-full/cases.jsonl \
+  --output evaluation/results/local/before-rescored
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -q tests/test_tutor_quality.py
+```
+
+For another worktree, use its interpreter and `--env-file /path/to/api/.env`;
+share the ignored cache with `--embedding-cache /absolute/path/embeddings.json`.
+Keep the same suite SHA, collection/embedding contract and model for before/after
+comparisons. Every summary records the source commit, harness/suite hashes,
+model, corpus collection, prices, completion coverage and database audit. Do not
+run two jobs against the same output/cache path. Freeze the JSON for v1; source
+updates that invalidate a headword must be reviewed rather than normalized away.
+
+Each run writes `cases.jsonl`, `summary.json`, and `summary.md`. Full runs also
+export `blind_human_review.csv` and a separate `blind_review_key.json` using the
+existing model benchmark exporter and validator. Two qualified reviewers rate
+identical packets independently; native review is deferred, not passed. A
+single-model packet randomizes case order; combining runs randomizes treatment
+labels within cases. Keep the key from reviewers. Raw outputs/cache/packets are
+ignored under `results/`; commit only safe aggregate summaries. Raw outputs
+contain only the sanitized fixtures and generated replies, but generated replies
+can still be wrong. Do not publish them as language-learning material.
+
+Metric definitions and limits:
+
+- Refusal rate: regex-positive responses / completed answerable responses
+  (`answer` or `best_effort_draft`). `refuse_absent` and `clarify` are excluded.
+  Missing completions and cache-blocked cases do not count as successes.
+- Headword recall (overall and per category): matched expected concepts / expected concepts in completed
+  cases, micro-averaged. A match must occur in retrieved reference text retained
+  in the final system prompt, not in user/history/output. Matching preserves
+  diacritics and apostrophes but ignores case. Text presence is a retrieval
+  proxy, not proof of correct sense or source attribution. Production timeouts
+  remain part of observed retrieval behavior and can lower recall.
+- `must_not`: deterministic signals for sending in English, retracting prior
+  evidence, unsupported verification claims, the reported scared/forgot error,
+  monkey extraction noise, unresolved school abbreviations, and absent-word
+  certainty. These checks can flag quoted corrections and miss paraphrases.
+  Verification checks look for a citation on the same line; inspect the packet
+  before treating a flag as a confirmed defect.
+- Router: raw `classify_translation_request(user_message)` against the annotated
+  expected class, plus the actual contextual retrieval-query class per case.
+  Future history-aware routers may need a compatible adapter. Raw misses on
+  conversational continuations are deliberate regression targets.
+- Latency: nearest-rank p50/p95 end-to-end per completed case. Full includes
+  retrieval and model time; free includes retrieval and prompt assembly only.
+- Cost: OpenRouter-reported chat cost where returned, and a separate estimate
+  from live catalog token prices (no assumed discount). Embeddings use cached
+  real vectors in free mode; warming/full runs report new embedding tokens and
+  an estimate at $0.02/M. The conservative chat/judge guard reserves maximum
+  output cost before each request. Failed upstream calls may lack usage; errors
+  and missing usage remain visible. `--limit` creates a subset, not a full gate.
+
+Persistence safety: before connecting, the CLI prints **only host and dbname**
+from the configured URL and rejects non-local/non-`chamorro_rag` databases. All
+psycopg and psycopg2 connections (including SQLAlchemy's) force and verify read-only
+transactions. PGVector extension/table/collection creation is disabled before
+its singleton import. A SQLAlchemy guard rejects non-SELECT/SHOW statements.
+Fixture history is passed in memory; conversation history and logging are
+stubbed, the conversation DB helper fails closed, and web search returns an unsuccessful stub (no external calls). Suppression is
+recorded per case; the resulting production fallback behavior is measured.
+No user IDs are supplied. Existing collection-contract checks still execute;
+there are no migrations, seed calls or DB startup/reset commands. Missing DB or
+RAG initialization fails before recording a degraded baseline. Unit tests execute
+the real production function body with fake provider/retrieval boundaries and
+prove that logging/history never touch a DB.
+
 ## Current model-selection workflow
 
 ```bash
