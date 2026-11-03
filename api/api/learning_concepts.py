@@ -90,7 +90,9 @@ def curated_concept_id(category_id: str, card_index: int) -> str:
     """Match the established frontend card identity for a curated card."""
 
     normalized_category_id = _normalize_identity_part(category_id)
-    source_id = f"curated:{normalized_category_id}:{card_index}"
+    indices = _MANIFEST.get("card_source_indices", {}).get(normalized_category_id)
+    source_index = indices[card_index] if indices and 0 <= card_index < len(indices) else card_index
+    source_id = f"curated:{normalized_category_id}:{source_index}"
     return f"v1:curated:{_fnv1a(_normalize_identity_part(source_id))}"
 
 
@@ -108,6 +110,15 @@ def validate_curated_concept_manifest(manifest: object) -> None:
     question_concepts = manifest.get("question_concepts")
     if not isinstance(deck_counts, dict) or not isinstance(question_concepts, dict):
         raise ValueError("Curated concept manifest is missing relationship maps")
+
+    source_indices = manifest.get("card_source_indices", {})
+    if not isinstance(source_indices, dict):
+        raise ValueError("Invalid curated card source indices")
+    for category_id, indices in source_indices.items():
+        if (not isinstance(indices, list) or len(indices) != deck_counts.get(category_id)
+                or any(not isinstance(index, int) or isinstance(index, bool) or index < 0 for index in indices)
+                or len(set(indices)) != len(indices)):
+            raise ValueError("Invalid curated card source indices")
 
     for category_id, card_count in deck_counts.items():
         if (

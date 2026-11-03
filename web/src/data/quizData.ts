@@ -834,31 +834,6 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
     difficulty: 'Intermediate',
     questions: [
       {
-        id: id('verb', 1),
-        type: 'multiple_choice',
-        question: 'What does "Hu kånno\'" mean?',
-        options: ['I sleep', 'I eat', 'I go', 'I see'],
-        correctAnswer: 'I eat',
-        explanation: '"Hu kånno\'" means "I eat" — "Hu" is the pronoun and "kånno\'" is the verb.'
-      },
-      {
-        id: id('verb', 2),
-        type: 'multiple_choice',
-        question: 'How do you say "I go" in Chamorro?',
-        options: ['Hu maigo\'', 'Hu hånao', 'Hu tungo\'', 'Hu gimen'],
-        correctAnswer: 'Hu hånao',
-        explanation: '"Hu hånao" means "I go" — "hånao" is the verb for going.'
-      },
-      {
-        id: id('verb', 3),
-        type: 'type_answer',
-        question: 'What does "Hu maigo\'" mean?',
-        correctAnswer: 'I sleep',
-        acceptableAnswers: ['I sleep', 'i sleep', 'sleep'],
-        hint: 'Something you do at night',
-        explanation: '"Hu maigo\'" means "I sleep".'
-      },
-      {
         id: id('verb', 4),
         type: 'fill_blank',
         question: 'Complete: "Hu ___" (I drink)',

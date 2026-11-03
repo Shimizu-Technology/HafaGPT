@@ -368,6 +368,8 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
 
     matches = []
     for entry in _canonical_entries():
+        if entry.get("review_status") not in {"verified", "source_backed", "variant"}:
+            continue
         candidate_phrases = [
             entry.get("english"),
             entry.get("canonical_chamorro"),

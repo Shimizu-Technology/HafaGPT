@@ -14,3 +14,11 @@ Agent-executed affected-flow acceptance:
 6. Versioned sentence pairs contain source/license/attribution/IDs/date/orthography. Loader validates offline, excludes historical material by default, and never connects to a database.
 
 Validation: focused API tests, canonical validators, full `./scripts/check.sh` serially, relevant Vitest and Playwright coverage for changed data surfaces. Production deployment, native language certification, authenticated saved-deck migration, and later RAG ingestion are outside this worker's acceptance.
+
+## Slice A execution
+
+- Offline gate: 906 API tests passed, 34 skipped; 127 Vitest files / 788 tests passed; canonical/governance/routing/audio validators, lint, typecheck, production build, PWA and bundle checks passed. API tests used the existing main-checkout Python environment as an executable only; no database or inference was started.
+- Browser: existing public dictionary entry/search/return journey passed in desktop Chromium and Pixel 7 emulation (2/2), with mocked API fixtures. This verifies the public UI contract, not a live server response. API pairing, ranking, and source-specific ID lookup were checked separately against the real bundled snapshots.
+- Three default cards and three graded questions are withheld. The surviving seven verb cards retain their original progress fingerprints through synchronized `card_source_indices`; held fingerprints are no longer accepted as active curated concepts. Existing user-saved decks and historical results are preserved.
+- Authenticated flashcard/quiz Playwright journeys were not run: this worktree has no authenticated test-user fixture. Native-speaker review, production behavior, and release delivery remain outside this worker's evidence.
+- A small `scripts/dev.sh` change enables isolated ports and API-free web QA. Port 5261 ran via that script with a lifecycle session; its exact Vite process was stopped after QA. No API server, database ingestion, or provider call was started.
