@@ -3,7 +3,7 @@ import { useAuth, useSession, useUser } from '@clerk/clerk-react';
 import { HttpError, useAccountRequest, useAccountMutation } from './useAccountRequest';
 import { FREE_TIER_LIMITS } from '../lib/planConfig';
 import { useEffect } from 'react';
-import { forgetPreparingSend, preparingSends, rememberPreparingSend } from '../lib/pendingReply';
+import { forgetPreparingSend, preparingSends, rememberPreparingSend } from '../lib/preparingSends';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // Web and API deploy independently. Remember compatibility in page memory for

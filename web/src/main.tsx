@@ -67,6 +67,21 @@ if (!CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key. Add VITE_CLERK_PUBLISHABLE_KEY to .env.local');
 }
 
+// Clerk fills these from the dashboard application name ("HafaGPT"); spell the brand here.
+const CLERK_LOCALIZATION = {
+  signIn: {
+    start: { title: 'Sign in to HåfaGPT', titleCombined: 'Continue to HåfaGPT' },
+    emailCode: { subtitle: 'to continue to HåfaGPT' },
+    emailLink: { subtitle: 'to continue to HåfaGPT' },
+    phoneCode: { subtitle: 'to continue to HåfaGPT' },
+  },
+  signUp: {
+    start: { subtitle: 'to continue to HåfaGPT' },
+    emailCode: { subtitle: 'to continue to HåfaGPT' },
+    emailLink: { subtitle: 'to continue to HåfaGPT' },
+  },
+};
+
 // Wrapper component to dynamically update Clerk appearance based on theme
 function ClerkWrapper() {
   const [isDark, setIsDark] = useState(() => {
@@ -94,6 +109,7 @@ function ClerkWrapper() {
     <QueryClientProvider client={queryClient}>
     <ClerkProvider 
       publishableKey={CLERK_PUBLISHABLE_KEY}
+      localization={CLERK_LOCALIZATION}
       appearance={{
         variables: {
           colorPrimary: isDark ? '#88D5D6' : '#B83730',  // Teal for dark, Coral for light

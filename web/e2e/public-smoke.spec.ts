@@ -457,7 +457,8 @@ test('translation shortcut selects translation intent without sending a message'
   const translateTask = page.getByRole('group', { name: 'Tutor task' }).getByRole('button', { name: 'Translate', exact: true });
   await expect(translateTask).toBeVisible();
   await expect(translateTask).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByPlaceholder('Sign in to chat...')).toBeVisible();
+  await expect(page.getByPlaceholder('Paste a phrase, message, or notice…')).toBeVisible();
+  // Nothing to send yet; a guest is asked to sign in only when sending.
   await expect(page.getByRole('button', { name: /Send message/i })).toBeDisabled();
   expect(errors).toEqual([]);
 });
@@ -466,13 +467,13 @@ test('chat empty state and composer remain readable on a narrow phone', async ({
   const errors = monitorRuntimeErrors(page);
 
   await page.goto('/chat?intent=translate');
-  await expect(page.getByRole('heading', { name: 'How can I help?' })).toBeVisible();
+  await expect(page.getByText('Paste a phrase or notice, or try a short translation.')).toBeVisible();
   const translateTask = page.getByRole('group', { name: 'Tutor task' }).getByRole('button', { name: 'Translate', exact: true });
   await expect(translateTask).toBeVisible();
   await expect(translateTask).toHaveAttribute('aria-pressed', 'true');
 
   const composer = page.getByLabel('Message input');
-  await expect(composer).toHaveAttribute('placeholder', 'Sign in to chat...');
+  await expect(composer).toHaveAttribute('placeholder', 'Paste a phrase, message, or notice…');
   await expect(composer).toHaveCSS('font-size', '16px');
   await expect.poll(async () => page.locator('html').evaluate((element) => element.scrollWidth <= window.innerWidth)).toBe(true);
   expect(errors).toEqual([]);
