@@ -1,5 +1,5 @@
 import type { ChatIntent } from '../lib/chatIntent';
-import { ArrowUpRight, MessageCircle } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
 interface WelcomeMessageProps {
   onSelect: (intent: ChatIntent) => void;
@@ -20,15 +20,13 @@ const DESCRIPTIONS: Record<ChatIntent, string> = {
   practice: 'Try a short exchange. Ask for a hint whenever you need one.',
 };
 
+/** A new chat starts at the top with what the chosen task does and a few ways in.
+ *  The page title is the header's h1, so this adds no competing heading. */
 export function WelcomeMessage({ onSelect, onPrompt, disabled = false, intent = 'explain', onStartPractice }: WelcomeMessageProps) {
   return (
-    <div className="mx-auto w-full max-w-xl px-2 py-5 sm:px-4 sm:py-12">
-      <div className="mb-5 text-center">
-        <MessageCircle className="mx-auto mb-3 h-7 w-7 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
-        <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">How can I help?</h2>
-        <p className="mt-2 text-sm leading-relaxed text-brown-600 dark:text-gray-300">{DESCRIPTIONS[intent]}</p>
-      </div>
-      <div className="grid gap-2" aria-label="Example prompts">
+    <div className="mx-auto w-full max-w-2xl pb-5">
+      <p aria-live="polite" className="mb-2 px-1 text-base leading-relaxed text-brown-700 dark:text-gray-300">{DESCRIPTIONS[intent]}</p>
+      <div className="grid gap-2" role="group" aria-label="Example prompts">
         {intent === 'practice' && onStartPractice && (
           <button type="button" disabled={disabled} onClick={onStartPractice}
             className="min-h-11 rounded-xl bg-coral-700 px-4 py-3 text-left text-sm font-semibold text-white hover:bg-coral-800 disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800">

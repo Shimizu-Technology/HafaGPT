@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Chat } from './Chat';
 import { CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, HttpStatusError } from '../lib/sendErrors';
-import { readPendingReply, rememberPendingReply } from '../lib/pendingReply';
+import { clearTutorDrafts, readPendingReply, readTutorDraft, rememberPendingReply } from '../lib/pendingReply';
 
 const state = vi.hoisted(() => ({
   userId: 'user-1',
@@ -114,7 +114,8 @@ vi.mock('./ModeSelector', async importOriginal => {
   const original = await importOriginal<typeof import('./ModeSelector')>();
   return {
     ...original,
-    ModeSelector: () => <div data-testid="task-strip">Tutor tasks</div>,
+    ModeSelector: (props: import('react').ComponentProps<typeof original.ModeSelector>) => <div data-testid="task-strip">Tutor tasks
+      <button type="button" onClick={() => props.onIntentChange('translate')}>Translate</button></div>,
     TaskMenu: (props: import('react').ComponentProps<typeof original.TaskMenu>) => state.realTaskMenu
       ? <original.TaskMenu {...props} /> : <div data-testid="task-menu">{props.intent}</div>,
   };
@@ -133,8 +134,16 @@ vi.mock('./MessageInput', () => ({
     loading,
     onCancel,
     taskControl,
+    placeholder,
+    prefill,
+    requireAccount,
+    draftScope,
   }: {
     disabled: boolean;
+    placeholder?: string;
+    prefill?: { text: string; id: number };
+    requireAccount?: () => void;
+    draftScope?: string;
     taskControl?: React.ReactNode;
     loading?: boolean;
     onCancel?: () => void;
@@ -143,7 +152,9 @@ vi.mock('./MessageInput', () => ({
     completedSend?: { message: string; files?: File[] };
   }) => {
     state.composerReceipt = completedSend;
-    return <>{sendError}<button type="button" disabled={disabled} onClick={() => { void onSend('Test message').then(result => { state.sendResult = result; }); }}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}{taskControl}</>;
+    const send = () => requireAccount ? requireAccount() : void onSend('Test message').then(result => { state.sendResult = result; });
+    return <>{sendError}<button type="button" disabled={disabled} onClick={send} data-placeholder={placeholder} data-prefill={prefill?.text}
+      data-draft={readTutorDraft(draftScope).text}>Chat input</button>{loading && <button type="button" onClick={onCancel}>Stop reply</button>}{taskControl}</>;
   },
 }));
 vi.mock('./WelcomeMessage', () => ({ WelcomeMessage: ({ onPrompt, onStartPractice }: { onPrompt: (prompt: string) => void; onStartPractice: () => void }) => <><h2>Start chatting</h2><button onClick={() => onPrompt('A useful example')}>Example prompt</button><button onClick={onStartPractice}>Start guided practice</button></> }));
@@ -228,6 +239,8 @@ describe('Chat stable conversation route', () => {
     state.checkReplyStatus.mockReset();
     state.cancelPendingReply.mockClear();
     window.localStorage.clear();
+    window.sessionStorage.clear();
+    clearTutorDrafts();
     URL.createObjectURL = vi.fn(() => 'blob:qa-file');
     URL.revokeObjectURL = vi.fn();
     Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
@@ -1155,13 +1168,41 @@ describe('Tutor shell and continuity', () => {
     expect(screen.getByRole('main').style.height).toBe('420px');
     expect(screen.queryByTestId('task-strip')).not.toBeInTheDocument();
   });
-  it('opens sign-in for a guest guided-practice starter without spending usage', () => {
+  it('puts a guest guided-practice starter in the composer without signing in or spending usage', () => {
     state.isSignedIn = false;
     renderChat('/chat?intent=practice');
     fireEvent.click(screen.getByRole('button', { name: 'Start guided practice' }));
-    expect(state.openSignIn).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Chat input' })).toHaveAttribute('data-prefill', 'Help me practice introducing myself');
+    expect(state.openSignIn).not.toHaveBeenCalled();
     expect(state.tryUse).not.toHaveBeenCalled();
     expect(state.sendMessageStream).not.toHaveBeenCalled();
+  });
+
+  it('lets a guest explore every task and asks for an account only on send', () => {
+    state.isSignedIn = false;
+    renderChat('/chat');
+    const composer = screen.getByRole('button', { name: 'Chat input' });
+    expect(composer).toBeEnabled();
+    expect(composer).toHaveAttribute('data-placeholder', 'Ask about a word, grammar, or Guam…');
+    fireEvent.click(screen.getByRole('button', { name: 'Translate' }));
+    expect(state.openSignIn).not.toHaveBeenCalled();
+    expect(screen.getByTestId('chat-path')).toHaveTextContent('/chat?intent=translate');
+    expect(screen.getByRole('button', { name: 'Chat input' })).toHaveAttribute('data-placeholder', 'Paste a phrase, message, or notice…');
+    fireEvent.click(screen.getByRole('button', { name: 'Example prompt' }));
+    expect(screen.getByRole('button', { name: 'Chat input' })).toHaveAttribute('data-prefill', 'A useful example');
+    expect(state.openSignIn).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Chat input' }));
+    expect(state.openSignIn).toHaveBeenCalledOnce();
+    expect(state.sendMessageStream).not.toHaveBeenCalled();
+  });
+
+  it('opens a new chat holding the guest draft after sign-in instead of restoring the last chat', () => {
+    window.localStorage.setItem('active_conversation_id:user-1', 'conv-earlier');
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Please translate this school notice', at: Date.now() }));
+    renderChat('/chat');
+    expect(screen.getByRole('button', { name: 'Chat input' })).toHaveAttribute('data-draft', 'Please translate this school notice');
+    expect(screen.getByTestId('chat-path')).toHaveTextContent(/^\/chat$/);
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
   });
   it('keeps composing available in the native landscape keyboard viewport', () => {
     state.viewport = { isMobile: false, top: 218, height: 77, keyboardOpen: true };
