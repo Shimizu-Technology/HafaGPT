@@ -1,12 +1,89 @@
 {
+  "review_round": 3,
+  "scope": "Revised snapshot; displayed pairs capped at 3 per entry; first rejected pair stops the block",
   "entries": 10350,
-  "before_entries_with_pairs": 8935,
-  "after_entries_with_pairs": 7575,
-  "before_pairs": 19408,
-  "after_pairs": 17723,
-  "changed_entries": 9421,
-  "entries_with_unpaired": 3946,
-  "unpaired_fields": 18126,
-  "review_round_1_added_pairs": 1615,
-  "review_round_1_recovered_entries": 790
+  "snapshot_sha256": "195324ebbb095ef86a2d664f251419a2ef84319679e78337761d235c0b52f6b0",
+  "english_wordlist_size": 1383,
+  "terminal_noun_wordlist_size": 1216,
+  "english_wordlist_sha256": "f36bf699ce06602ac2a99e836414341d3428b6cc1fc38aca2173ed8fbcfed253",
+  "terminal_noun_wordlist_sha256": "9f8037711771a909e1bea83acf56519fc4656fb4318048907332228a89f295c7",
+  "thresholds": {
+    "english_min_share": 0.6,
+    "chamorro_max_english_share": 0.25,
+    "require_headword": true,
+    "english_min_tokens": 3,
+    "chamorro_min_tokens": 2
+  },
+  "shown_pairs": 7390,
+  "entries_with_pairs": 3926,
+  "unpaired_fields": 40422,
+  "entries_with_unpaired": 7674,
+  "calibration": [
+    {
+      "english_min_share": 0.5,
+      "chamorro_max_english_share": 0.25,
+      "require_headword": false,
+      "shown_pairs": 9728,
+      "entries_with_pairs": 4649,
+      "unpaired_fields": 35450,
+      "entries_with_unpaired": 6692
+    },
+    {
+      "english_min_share": 0.6,
+      "chamorro_max_english_share": 0.25,
+      "require_headword": false,
+      "shown_pairs": 8352,
+      "entries_with_pairs": 4222,
+      "unpaired_fields": 38394,
+      "entries_with_unpaired": 7294
+    },
+    {
+      "english_min_share": 0.6,
+      "chamorro_max_english_share": 0.25,
+      "require_headword": true,
+      "shown_pairs": 7390,
+      "entries_with_pairs": 3926,
+      "unpaired_fields": 40422,
+      "entries_with_unpaired": 7674
+    },
+    {
+      "english_min_share": 0.65,
+      "chamorro_max_english_share": 0.25,
+      "require_headword": true,
+      "shown_pairs": 6324,
+      "entries_with_pairs": 3505,
+      "unpaired_fields": 42616,
+      "entries_with_unpaired": 8061
+    },
+    {
+      "english_min_share": 0.7,
+      "chamorro_max_english_share": 0.25,
+      "require_headword": true,
+      "shown_pairs": 5415,
+      "entries_with_pairs": 3126,
+      "unpaired_fields": 44502,
+      "entries_with_unpaired": 8396
+    },
+    {
+      "english_min_share": 0.6,
+      "chamorro_max_english_share": 0.2,
+      "require_headword": true,
+      "shown_pairs": 6392,
+      "entries_with_pairs": 3561,
+      "unpaired_fields": 42516,
+      "entries_with_unpaired": 8049
+    }
+  ],
+  "historical_round_2": {
+    "shown_pairs": 14108,
+    "entries_with_pairs": 6028,
+    "unpaired_fields": 25940,
+    "entries_with_unpaired": 4766
+  },
+  "sample": {
+    "seed": 10303,
+    "size": 60,
+    "population": "all shown pairs in snapshot/pair order",
+    "judgments": "example_pairing_sample_round3.json"
+  }
 }

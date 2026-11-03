@@ -118,3 +118,102 @@ The test-only PostgreSQL database was dropped, the task's web/Playwright
 processes and preview tab were cleaned, and audio manifests remain unchanged.
 No API server was started. CodeRabbit is not awaited; a rate-limit skip is not
 a completed final-head review. The lead owns review and merge.
+
+## Review round 3 — PR #103
+
+Refreshed on 2026-11-04 against `origin/main` at `a9fbcc8`. The affected journey
+is dictionary example display for learners; source wording remains
+accuracy-sensitive. Context: repo `AGENTS.md`, Brain Dump
+`work/shimizu-tech/hafa-gpt.md`, the round-2 handoff, and the lead's round-3
+findings. The worker implements and pushes; the lead reviews and merges.
+The SRS/retirement changes at `50f715a` remain unchanged.
+
+Agent-executed affected-flow acceptance:
+
+- D03: positive validation of both fields before showing each adjacent pair.
+  All four newly reported fixtures and the four round-2 shifted fixtures must
+  stop at the first field. No pairing may resume after any rejection. Preserve
+  rejected fields as unpaired source text without language labels or repair.
+- C03: regenerate counts from the bundled snapshot; compare thresholds and
+  headword retention; manually inspect 60 shown pairs from a fixed seed using
+  source adjacency and the English side only. Record source wording concerns
+  without judging Chamorro correctness or translation equivalence.
+- B03: public dictionary entry → search → return on desktop Chromium and Pixel 7
+  browser emulation with the existing mocked-API Playwright journey. API snapshot
+  tests separately verify actual parsing. No API server or production data is
+  needed. Signed-in, physical/native, production, and deployment acceptance are
+  outside this round.
+
+The parser now uses an original, hand-curated 1,383-token common-English list.
+Apostrophes inside tokens and final glottal stops stay in the token; the English
+score never matches fragments inside those tokens. English requires at least
+three tokens and 60% exact common-English overlap. The Chamorro field requires
+at least two tokens, at most 25% overlap, and an entry-headword signal: an exact
+accent/glottal-normalized token sequence, or a single normalized headword of at
+least four letters within a longer source token. This is an orthographic signal,
+not a morphology judgment. Even a single-token headword is withheld under the
+stricter two-token minimum.
+
+Both fields must pass the source structure, taxonomy, abbreviation, and balanced
+punctuation checks. English also requires a letter/quote start, no unsupported
+one/two-letter fragment token, and evidence of a complete ending/clause. A final
+article+noun phrase requires one of 1,216 original noun/regular-plural candidates
+or a capitalized name. Unknown lowercase nouns in that position are withheld.
+Leading dependent clauses need a source-delimited main clause; terminal
+auxiliaries/contractions, determiners, and unfinished dependent subjects are
+withheld. These deliberately conservative rules can reject good sentences.
+Exploratory sampling exposed additional English extraction gaps and prompted
+these completeness checks before the final sample. No English or Chamorro
+source wording was repaired.
+
+Final counts (three-pair cap): **7,390 shown pairs / 3,926 entries; 40,422
+unpaired fields / 7,674 entries**. The regenerated `example_pairing_counts.json`
+labels round-2 totals as historical and records hashes, configuration, and six
+calibration configurations. At the chosen lexical thresholds, disabling the
+headword requirement would show 8,352 pairs / 4,222 entries; requiring it removes
+962 pairs and 296 entries from display. Raising English overlap to 65% retains
+6,324 pairs, and 70% retains 5,415; lowering the Chamorro ceiling to 20% retains
+6,392. The chosen thresholds keep useful supported examples while withholding
+short or weakly supported fields.
+
+Required fixture results (shown pairs / unpaired fields):
+
+| Fixture | Result |
+| --- | --- |
+| abubun pápagu' | 0 / 7 |
+| melindris | 0 / 8 |
+| priparasión | 0 / 8 |
+| míhinilat | 0 / 8 |
+| suni | 0 / 7 |
+| platitus | 0 / 7 |
+| chungi' | 0 / 7 |
+| linalålu' | 0 / 5 |
+| adiós | 3 / 0 |
+| chinikulåti na kulót (brown) | 1 / 2 |
+| håyu | 3 / 0 |
+| aga' | 2 / 2 |
+| luseru | 0 / 11 |
+
+The third `aga'` pair lacks the required headword signal. `luseru`'s first short
+field has 1/3 English overlap from the shared token `i`, exceeding 25%; the block
+therefore stops even though these are plausible source examples. Both losses
+are intentional consequences of preferring fewer pairs. Metadata keeps its
+existing cutoff and is not included in unpaired-field totals.
+
+Final manual sample: **60 shown pairs from 60 entries**, selected with
+`random.Random(10303).sample(population, 60)` after snapshot-order traversal of
+all 7,390 shown pairs. The worker inspected every raw delimiter-to-pair prefix
+and each English side independently of the validator's verdict. **60/60 preserve
+source adjacency; 60/60 have an English partner with no observed shifted,
+taxonomy, or detached-fragment pair**. Eight records have unchanged source
+spelling/grammar notes, including earlier prefixes; those are not language
+corrections or translation judgments. Individual judgments, English text, and
+raw-prefix hashes are tracked in `example_pairing_sample_round3.json`.
+Reproduce counts with `api/scripts/audit_dictionary_example_pairing.py`; use
+`--check` to detect stale evidence or `--sample NEW_PATH` to write a separate,
+unjudged sample. A regression checks counts and the exact sampled source
+prefixes so annotations cannot silently survive parser/source drift.
+
+D03 and C03 passed locally. Full-gate and B03 execution evidence follows after
+verification. This sample is not proof of language correctness or complete
+English extraction across the whole snapshot.

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .time_utils import get_guam_date
 from .dictionary_glosses import definition_gloss_segments, format_definition
+from .dictionary_example_validation import supported_example_pair
 
 logger = logging.getLogger(__name__)
 
@@ -357,14 +358,15 @@ class DictionaryService:
             for source_index, (word, data) in enumerate(dictionary.items()):
                 word_id = dictionary_word_id(word)
                 if isinstance(data, dict):
+                    examples, unpaired = self._parse_examples(data.get("Other", []), word)
                     entry = {
                         "word_id": word_id,
                         "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": data.get("PartOfSpeech", ""),
                         "definition": data.get("Definition", ""),
-                        "examples": self._extract_examples(data.get("Other", [])),
-                        "unpaired_examples": self._parse_examples(data.get("Other", []))[1],
+                        "examples": examples,
+                        "unpaired_examples": unpaired,
                         "trust": DICTIONARY_TRUST,
                     }
                 else:
@@ -410,7 +412,7 @@ class DictionaryService:
             logger.error(f"Failed to load dictionary: {e}")
     
     @staticmethod
-    def _parse_examples(other_data: list) -> tuple[list[dict], list[str]]:
+    def _parse_examples(other_data: list, headword: str = "") -> tuple[list[dict], list[str]]:
         """Pair only the snapshot's delimited alternating example blocks.
 
         The leading empty field is a delimiter, not a Chamorro sentence. Other
@@ -435,36 +437,10 @@ class DictionaryService:
         examples, unpaired = [], []
         for index in range(0, len(fields), 2):
             pair = fields[index:index + 2]
-            # Plain multiword Latin headings can occupy an example field and
-            # shift the rest of the block. Case and extraction whitespace do
-            # not establish a sentence boundary. Withhold even plausible short
-            # sentences matching this shape rather than guess their language.
-            normalized = " ".join(pair[0].split())
-            heading = re.fullmatch(
-                r"[a-z]{3,}(?:[-/][a-z]+)*(?: [a-z]{2,}(?:[-/][a-z]+)*\.?)+"
-                r"(?:\s*\([^)]*\)|[,;].*)?",
-                normalized, re.I,
-            ) or re.fullmatch(r"[a-z]{3,} \([^)]*\)", normalized, re.I)
-            # Abbreviation fragments (e.g. a detached 'Mr') and fields without
-            # even a common English function word do not establish a partner.
-            # This is an exclusion guard, not language or translation review.
-            english_supported = len(pair) == 2 and len(pair[1].split()) >= 2 and re.search(
-                r"\b(?:the|a|an|is|are|was|were|be|am|will|would|can|could|should|"
-                r"have|has|had|do|does|did|there|this|these|those|they|their|she|her|"
-                r"he|his|we|our|you|your|my|me|us|not|to|of|for|with|from|at|on|in|"
-                r"and|but|when|where|why|how|what|who|which|please|let's|goodbye|"
-                r"made|make|both|all|never|always|often|sometimes)\b",
-                pair[1], re.I,
-            )
-            if len(pair) == 2:
-                english = pair[1]
-                if (english.count('(') != english.count(')')
-                        or english.count('"') % 2
-                        or re.search(r"\b(?:a|an|the|is|are|was|were|to|of|for|with|from|and|or|Mr|Mrs|Dr)$", english, re.I)):
-                    english_supported = False
             # Three or more spaces mark collapsed fields in this extraction
             # (e.g. chinikulåti na kulót); do not split or relabel their text.
-            if (len(pair) < 2 or not all(pair) or heading or not english_supported
+            if (len(pair) < 2 or not all(pair)
+                    or not supported_example_pair(pair[0], pair[1], headword)
                     or any(re.search(r"\S\s{3,}\S|\n|\b(?:Syn|Variant|See|From):|^\d+\)|Information\s+forthcoming|Please\s+check\s+later|^Family\b", field, re.I)
                            for field in pair)):
                 # Never resume after uncertainty: a collapsed/missing field
@@ -475,8 +451,8 @@ class DictionaryService:
             examples.append({"chamorro": chamorro, "english": english})
         return examples[:3], unpaired
 
-    def _extract_examples(self, other_data: list) -> list:
-        return self._parse_examples(other_data)[0]
+    def _extract_examples(self, other_data: list, headword: str = "") -> list:
+        return self._parse_examples(other_data, headword)[0]
 
     def _build_category_cache(self):
         """Pre-categorize words into categories based on definitions."""
