@@ -361,7 +361,8 @@ def _group_key(headword: str) -> str:
 
 def _english_label(word: str, gloss: str, rank: int, *, bound: str = "") -> str:
     if bound:
-        return (f'Bound {bound} glossed "{gloss}" (it attaches to another word; '
+        kind = "Bound form" if bound == "bound form" else f"Bound {bound}"
+        return (f'{kind} glossed "{gloss}" (it attaches to another word; '
                 f'not a standalone translation of "{word}")')
     if gloss != normalize_chamorro_match_text(word, repair_ocr_splits=False):
         # "rating" looked up as "rate": the inflected word may mean something else.

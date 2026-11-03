@@ -445,3 +445,14 @@ def test_complement_and_marker_definitions_are_not_direct_evidence(query, word, 
     canonical, lexical = _combined(query)
     assert excluded not in _direct_headwords(lexical, word)
     assert f"Chamorro headword: {excluded}" not in canonical
+
+
+def test_bound_form_label_follows_what_the_source_says():
+    from api.lexical_lookup import _english_label
+
+    # "ilek-" is "Used with a possessive suffix", so it is a bound form, not a prefix.
+    canonical, _ = get_canonical_tutor_context("What is said in Chamorro?")
+    block = next(b for b in canonical.split("\n\n") if "Chamorro headword: ilek-" in b)
+    assert "This is a bound form attached to another word, not a standalone translation." in block
+    assert "prefix" not in block.replace("Definition:", "").split("\n")[-1]
+    assert _english_label("say", "say", 1, bound="bound form").startswith('Bound form glossed "say"')

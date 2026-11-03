@@ -163,15 +163,18 @@ _BOUND_DEFINITION = re.compile(
     r"\((?:possessive [\w ]*)?(?P<paren>prefix|suffix|infix)\)|--\s*possess?ive (?P<dash>suffix)"
 )
 def _bound_form_kind(headword: str, definition: object) -> str:
-    """Return "prefix", "suffix", or "infix" for a bound entry, else ""."""
+    """Return "prefix", "suffix", "infix", or "bound form" for a bound entry, else "".
 
-    stripped = headword.strip()
-    if stripped[:1] in "-‑‐–":
-        return "suffix"
-    if stripped[-1:] in "-‑‐–":
-        return "prefix"
+    A hyphen shows only that the form attaches to another word. The narrower
+    kind comes from the definition when it names one: "ilek-" is "Used with a
+    possessive suffix", which does not make it a prefix.
+    """
+
     match = _BOUND_DEFINITION.search(" ".join(_format_dictionary_definition(definition).split()))
-    return next((kind.casefold() for kind in match.groups() if kind), "") if match else ""
+    if match:
+        return next(kind.casefold() for kind in match.groups() if kind)
+    stripped = headword.strip()
+    return "bound form" if stripped[:1] in "-‑‐–" or stripped[-1:] in "-‑‐–" else ""
 
 
 # "c--letter of the alphabet": names the letter, and is no translation of a word.
@@ -184,7 +187,7 @@ def _not_a_standalone_translation(headword: str, definition: object) -> str:
 
     kind = _bound_form_kind(headword, definition)
     if kind:
-        return f"a {kind} attached to another word"
+        return f"{'an' if kind == 'infix' else 'a'} {kind} attached to another word"
     if _LETTER_NAME.match(_format_dictionary_definition(definition)):
         return "the name of a letter of the alphabet"
     return ""
