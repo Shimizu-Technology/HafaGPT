@@ -8,6 +8,7 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
+from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
@@ -125,67 +126,6 @@ def _extract_requested_english_gloss(user_input: str) -> str:
     if not words or len(words) > 4 or len(target) > 80:
         return ""
     return target
-
-
-def _definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]:
-    """Return direct gloss keys without indexing examples or incidental prose."""
-
-    definition_text = _format_dictionary_definition(definition)
-    segments: list[tuple[str, int]] = []
-    qualifier_starts = (
-        "also ",
-        "but ",
-        "especially ",
-        "from ",
-        "longer ",
-        "shorter ",
-        "similar ",
-        "that ",
-        "usually ",
-        "used ",
-        "when ",
-        "which ",
-        "with ",
-    )
-
-    def add_segment(raw_segment: str, rank: int) -> None:
-        segment = re.sub(
-            r"(?i)^\s*(?:noun|verb|adjective|adverb|n|v|adj|adv)\.\s*",
-            "",
-            raw_segment,
-        ).strip(" \t\r\n.:–—-")
-        normalized = _normalize_for_match(segment)
-        if normalized:
-            segments.append((normalized, rank))
-        without_parenthetical = re.sub(r"\([^)]*\)", " ", segment)
-        normalized_without_parenthetical = _normalize_for_match(without_parenthetical)
-        if (
-            normalized_without_parenthetical
-            and normalized_without_parenthetical != normalized
-        ):
-            segments.append((normalized_without_parenthetical, max(rank, 2)))
-
-    for clause in re.split(r"[;\n]", definition_text):
-        add_segment(clause, 1)
-
-        dash_parts = re.split(r"--|\s[-–—]\s", clause, maxsplit=1)
-        if len(dash_parts) == 2:
-            add_segment(dash_parts[0], 3)
-
-        comma_parts = [part.strip() for part in clause.split(",")]
-        if len(comma_parts) <= 1 or len(_PASSAGE_WORD_PATTERN.findall(clause)) > 8:
-            continue
-        normalized_tail = _normalize_for_match(comma_parts[1])
-        first_rank = (
-            3
-            if any(normalized_tail.startswith(prefix) for prefix in qualifier_starts)
-            else 1
-        )
-        add_segment(comma_parts[0], first_rank)
-        if first_rank == 1:
-            for comma_part in comma_parts[1:]:
-                add_segment(comma_part, 1)
-    return tuple(segments)
 
 
 @lru_cache(maxsize=1)
