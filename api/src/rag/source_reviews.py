@@ -198,6 +198,8 @@ def build_citation_contract(metadata: dict[str, Any] | None) -> dict[str, Any] |
     public_url = source.get("canonical_url")
     if not public_url and metadata_url.startswith(("https://", "http://")):
         public_url = metadata_url
+    if source.get("citation_url_allowed") is False:
+        public_url = None
     return {
         "source_id": source["id"],
         "name": source["name"],
@@ -223,7 +225,7 @@ def build_registered_source_citation(source_id: str, *, page: int | None = None)
     return {
         "source_id": source_id,
         "name": source["name"],
-        "url": source.get("canonical_url"),
+        "url": source.get("canonical_url") if source.get("citation_url_allowed") is not False else None,
         "page": page,
         "content_role": source["content_role"],
         "region": source["region"],
