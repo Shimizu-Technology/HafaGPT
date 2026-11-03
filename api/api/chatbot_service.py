@@ -1696,7 +1696,8 @@ def get_chatbot_response(
         conversation_length,
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
-        include_vector=not use_web,
+        # A failed or empty web search must not also remove the corpus.
+        include_vector=not web_results_used,
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
@@ -2129,7 +2130,8 @@ def get_chatbot_response_stream(
         max_tokens=token_manager.budget.rag_context,
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
-        include_vector=not use_web,
+        # A failed or empty web search must not also remove the corpus.
+        include_vector=not web_results_used,
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
