@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getQuizCategory } from '../data/quizData';
 import { loadStandaloneQuiz, saveStandaloneQuiz, clearStandaloneQuiz, type StandaloneQuizResume } from './standaloneQuizResume';
 const questions = getQuizCategory('greetings')!.questions;
@@ -45,7 +45,10 @@ describe('retired verb quiz migration', () => {
     expect(partial.results).toEqual(complete.results.slice(0, 1));
     expect(partial.currentIndex).toBe(1);
     expect(partial.attemptId).toBe('same-attempt');
+    const savedAt = partial.updatedAt + 1;
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(savedAt);
     saveStandaloneQuiz('one', 'verbs', 10, partial);
-    expect(loadStandaloneQuiz('one', 'verbs', 10, allowed)).toEqual(partial);
+    clock.mockRestore();
+    expect(loadStandaloneQuiz('one', 'verbs', 10, allowed)).toEqual({ ...partial, updatedAt: savedAt });
   });
 });
