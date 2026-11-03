@@ -222,3 +222,131 @@ def test_oversized_references_are_windowed_around_the_request():
     assert window_reference("short", "possession") == "short"
     head = window_reference(filler * 2, "unrelated", max_chars=500)
     assert head.startswith("Chapter opening") and re.search(r"\[Excerpt: first 500 of \d+ characters\]$", head)
+
+
+def _strong_headwords(context: str) -> set[str]:
+    strong = ("[Direct dictionary gloss", "[Exact dictionary headword", "[Headword matching")
+    return {line.rsplit(": ", 1)[1].rstrip("]") for line in _headers(context) if line.startswith(strong)}
+
+
+@pytest.mark.parametrize(
+    ("word", "expected"),
+    [
+        ("rating", ("rating", "rate")), ("sites", ("sites", "site")), ("posted", ("posted", "post", "poste")),
+        ("stopped", ("stopped", "stopp", "stoppe", "stop")), ("trees", ("trees", "tree")),
+        ("cities", ("cities", "city", "citie")), ("dying", ("dying", "die")), ("uses", ("uses", "use")),
+        ("news", ("news",)), ("said", ("said", "say")),
+    ],
+)
+def test_english_base_forms_must_reinflect_to_the_observed_word(word, expected):
+    from api.lexical_lookup import _english_forms
+
+    # "rat" inflects to "ratting" and "sit" to "sits", so neither is a base form.
+    assert _english_forms(word) == expected
+
+
+@pytest.mark.parametrize(
+    ("query", "excluded"),
+    [("What is rating in Chamorro?", "chå'ka"), ("What is sites in Chamorro?", "mata'chong")],
+)
+def test_inflection_guessing_never_changes_the_concept(query, excluded):
+    assert excluded not in lexical_lookup_context(query).context
+
+
+@pytest.mark.parametrize(
+    ("query", "word", "base"),
+    [("What is posted in Chamorro?", "posted", "post"), ("What is sites in Chamorro?", "sites", "site"),
+     ("I want to say trees", "trees", "tree")],
+)
+def test_inflection_derived_matches_are_labeled_weak(query, word, base):
+    context = lexical_lookup_context(query).context
+    headers = _headers(context)
+    assert headers and not _strong_headwords(context)
+    assert all(line.startswith(f'[Dictionary gloss for "{base}", a possible base form of "{word}"')
+               and "not a direct gloss" in line for line in headers)
+
+
+def test_an_exact_gloss_of_the_observed_word_wins_over_a_base_form():
+    context = lexical_lookup_context("What is said in Chamorro?").context
+    assert not any("possible base form" in line for line in _headers(context))
+    assert "atåki" not in context
+
+
+@pytest.mark.parametrize(
+    ("definition", "excluded"),
+    [
+        ("sweet fruit, such as  pineapple, watermelon, orange, guava", "orange"),
+        ("sea cucumber,  long, rope-like in appearance", "long"),
+        ("attack (someone); said, for instance, of an ailment", "said"),
+        ("Imitate; copy mimic; follow as a pattern, model, or example.", "model"),
+        ("fish, type of tuna, bonito", "bonito"),
+        ("slice, cut (in slices), (R)", "r"),
+    ],
+)
+def test_examples_descriptions_and_usage_notes_are_not_glosses(definition, excluded):
+    assert excluded not in {gloss for gloss, _rank in definition_gloss_segments(definition)}
+
+
+@pytest.mark.parametrize(
+    ("definition", "gloss"),
+    [
+        ("sweet fruit, such as  pineapple, watermelon, orange, guava", "sweet fruit"),
+        ("such as, for example, like", "like"),
+        ("as if, like", "like"),
+        ("including, even", "including"),
+        ("white, light-colored skin", "white"),
+    ],
+)
+def test_a_marker_word_glossed_by_itself_stays_a_gloss(definition, gloss):
+    assert (gloss, 1) in definition_gloss_segments(definition)
+
+
+@pytest.mark.parametrize(
+    ("query", "word", "excluded"),
+    [("What is orange in Chamorro?", "orange", "gulusina"), ("What is long in Chamorro?", "long", "talin moddung"),
+     ("What is model in Chamorro?", "model", "eyak")],
+)
+def test_example_lists_and_descriptions_are_not_direct_evidence(query, word, excluded):
+    canonical, _ = get_canonical_tutor_context(query)
+    assert excluded not in _direct_headwords(lexical_lookup_context(query).context, word)
+    assert excluded not in canonical
+
+
+@pytest.mark.parametrize(
+    ("query", "word", "expected", "excluded"),
+    [("What is mango in Chamorro?", "mango", "mangga", "mango'"),
+     ("What is media in Chamorro?", "media", "gasetiria", "media")],
+)
+def test_an_english_request_does_not_promote_a_same_spelling_chamorro_headword(query, word, expected, excluded):
+    context = lexical_lookup_context(query).context
+    assert expected in _direct_headwords(context, word)
+    assert excluded not in _strong_headwords(context) - {expected}
+    assert not any(line.startswith(("[Exact dictionary headword", "[Headword matching")) for line in _headers(context))
+
+
+def test_a_same_spelling_headword_without_an_english_gloss_is_a_labeled_lead():
+    headers = _headers(lexical_lookup_context("What is usa in Chamorro?").context)
+    assert headers and all(line.startswith('[Chamorro headword spelled like "usa"') and "not a translation" in line
+                           for line in headers)
+
+
+def test_chamorro_orthography_keeps_a_headword_strong_in_an_english_request():
+    assert "guma'" in _strong_headwords(lexical_lookup_context("What is guma' in Chamorro?").context)
+    # An undirected bare word still checks both languages.
+    assert "mango'" in _strong_headwords(lexical_lookup_context("mango").context)
+
+
+@pytest.mark.parametrize(
+    ("query", "excluded"),
+    [("What is many in Chamorro?", {"mi-"}), ("What is more in Chamorro?", {"hat-", "lá-", "la"}),
+     ("What is us in Chamorro?", {"-ta"}), ("What is think in Chamorro?", {"pini'lo-"})],
+)
+def test_bound_forms_do_not_answer_an_ordinary_english_word(query, excluded):
+    context = lexical_lookup_context(query).context
+    assert _strong_headwords(context)
+    assert not excluded & {line.rsplit(": ", 1)[1].rstrip("]") for line in _headers(context)}
+
+
+def test_an_affix_question_keeps_bound_forms_with_an_explicit_label():
+    headers = _headers(lexical_lookup_context("What is the prefix for many in Chamorro?").context)
+    assert '[Bound prefix glossed "many" (it attaches to another word; not a standalone translation of "many"): mi-]' in headers

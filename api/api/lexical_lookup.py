@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from functools import lru_cache
 
 from src.rag.text_normalization import normalize_chamorro_match_text
@@ -68,7 +68,7 @@ _IRREGULAR_ENGLISH = {
     "taught": "teach", "went": "go", "gone": "go", "said": "say",
     "children": "child", "men": "man", "women": "woman", "people": "person",
     "feet": "foot", "teeth": "tooth", "mice": "mouse", "ate": "eat",
-    "eaten": "eat", "came": "come", "saw": "see", "seen": "see",
+    "eaten": "eat", "came": "come", "saw": "see", "seen": "see", "goes": "go",
 }
 # Request scaffolding and function words: looked up as English glosses they
 # only add noise ("I want to say", "in Chamorro").
@@ -191,24 +191,86 @@ def lexical_lookup_request(query: str) -> tuple[str, str] | None:
     return None
 
 
+# Words whose final "s" is not an inflection ("news" is not "new").
+_UNINFLECTED_S = frozenset("""
+news series species always perhaps lens bus gas yes its his hers ours yours theirs
+this thus plus less unless chaos mathematics physics politics
+""".split())
+_CHAMORRO_ORTHOGRAPHY = re.compile(r"[åÅñÑ'’áéíóúÁÉÍÓÚ]")
+
+
+def _syllables(word: str) -> int:
+    return len(re.findall(r"[aeiouy]+", word))
+
+
+def _ends_cvc(word: str) -> bool:
+    """Consonant-vowel-consonant ending that may double before -ed/-ing."""
+
+    return bool(re.search(r"(?:^|[^aeiou])[aeiou][^aeiouwxy]$", word))
+
+
+def _english_inflections(lemma: str) -> frozenset[str]:
+    """Regular plural/third-person, past, and -ing forms of an English lemma."""
+
+    forms = set()
+    if re.search(r"[^aeiou]y$", lemma):
+        forms.update((lemma[:-1] + "ies", lemma[:-1] + "ied", lemma + "ing"))
+    else:
+        forms.add(lemma + ("es" if re.search(r"(?:s|x|z|ch|sh)$", lemma) else "s"))
+        if lemma.endswith("o"):
+            forms.add(lemma + "es")
+        if lemma.endswith("ie"):
+            forms.update((lemma + "d", lemma[:-2] + "ying"))
+        elif lemma.endswith("e"):
+            forms.add(lemma + "d")
+            forms.add(lemma + "ing" if lemma.endswith(("ee", "ye", "oe")) else lemma[:-1] + "ing")
+        elif _ends_cvc(lemma):
+            # "stop" -> "stopped"; a longer word may or may not double
+            # ("admitted", "visited"), so both are accepted there.
+            forms.update((lemma + lemma[-1] + "ed", lemma + lemma[-1] + "ing"))
+            if _syllables(lemma) > 1:
+                forms.update((lemma + "ed", lemma + "ing"))
+        else:
+            forms.update((lemma + "ed", lemma + "ing"))
+    return frozenset(forms)
+
+
+def _english_base_forms(normalized: str) -> tuple[str, ...]:
+    """Lemmas that regularly inflect to ``normalized``, plus irregular ones.
+
+    Each candidate is checked by re-inflecting it, so "rating" yields "rate"
+    (not "rat", whose -ing form is "ratting") and "sites" yields "site" (not
+    "sit"). Function words are never lemmas ("uses" is not "us").
+    """
+
+    if normalized in _UNINFLECTED_S:
+        return ()
+    candidates = [_IRREGULAR_ENGLISH[normalized]] if normalized in _IRREGULAR_ENGLISH else []
+    for suffix, replacement in (("ies", "y"), ("ied", "y"), ("es", ""), ("s", ""), ("ed", ""), ("d", ""),
+                                ("ying", "ie"), ("ing", ""), ("ing", "e")):
+        if normalized.endswith(suffix):
+            candidates.append(normalized[:-len(suffix)] + replacement)
+    for suffix in ("ed", "ing"):
+        stem = normalized[:-len(suffix)] if normalized.endswith(suffix) else ""
+        if len(stem) >= 4 and stem[-1] == stem[-2]:
+            candidates.append(stem[:-1])
+    irregular = _IRREGULAR_ENGLISH.get(normalized)
+    return tuple(dict.fromkeys(
+        candidate for candidate in candidates
+        if candidate == irregular or (
+            len(candidate) >= 3 and candidate != normalized and candidate not in _ENGLISH_STOP_WORDS
+            and candidate != "us" and normalized in _english_inflections(candidate)
+        )
+    ))
+
+
 def _english_forms(word: str) -> tuple[str, ...]:
+    """The word itself first, then validated base forms."""
+
     normalized = normalize_chamorro_match_text(word, repair_ocr_splits=False)
     if not normalized or " " in normalized:
         return ()
-    forms = [normalized]
-    if normalized in _IRREGULAR_ENGLISH:
-        forms.append(_IRREGULAR_ENGLISH[normalized])
-    if len(normalized) >= 5 and normalized.endswith("ies"):
-        forms.append(normalized[:-3] + "y")
-    if len(normalized) >= 5 and normalized.endswith("es"):
-        forms.append(normalized[:-2])
-    if len(normalized) >= 4 and normalized.endswith("s") and not normalized.endswith("ss"):
-        forms.append(normalized[:-1])
-    if len(normalized) >= 5 and normalized.endswith("ed"):
-        forms.extend((normalized[:-2], normalized[:-1]))
-    if len(normalized) >= 6 and normalized.endswith("ing"):
-        forms.extend((normalized[:-3], normalized[:-3] + "e"))
-    return tuple(dict.fromkeys(form for form in forms if len(form) >= 2))
+    return (normalized, *_english_base_forms(normalized))
 
 
 def _is_proper_name(definition: object) -> bool:
@@ -228,6 +290,28 @@ def _is_proper_name(definition: object) -> bool:
 def _is_affix(headword: str) -> bool:
     stripped = headword.strip()
     return stripped[:1] in "-‑‐–" or stripped[-1:] in "-‑‐–"
+
+
+# An unhyphenated headword whose own definition says it is bound: "(Prefix)",
+# "(possessive singular suffix)", "Suffix attached to ...". A definition that
+# only uses one ("Usually used with possessive suffix") does not count.
+_BOUND_DEFINITION = re.compile(
+    r"(?i)^\s*(?:an? )?(?:\w+ )?(?P<lead>prefix|suffix|infix)\b(?=.)|"
+    r"\((?:possessive [\w ]*)?(?P<paren>prefix|suffix|infix)\)|--\s*possess?ive (?P<dash>suffix)"
+)
+_AFFIX_REQUEST = re.compile(r"(?i)\b(?:prefix|suffix|infix|affix|ending)(?:es|s)?\b")
+
+
+def _bound_form_kind(headword: str, definition: object) -> str:
+    """Return "prefix", "suffix", or "infix" for a bound entry, else ""."""
+
+    stripped = headword.strip()
+    if stripped[:1] in "-‑‐–":
+        return "suffix"
+    if stripped[-1:] in "-‑‐–":
+        return "prefix"
+    match = _BOUND_DEFINITION.search(" ".join(_format_dictionary_definition(definition).split()))
+    return next((kind.casefold() for kind in match.groups() if kind), "") if match else ""
 
 
 @lru_cache(maxsize=1)
@@ -291,7 +375,15 @@ def _group_key(headword: str) -> str:
     return _spelling_candidate_key(_normalize_exact_headword(headword)).replace(" ", "")
 
 
-def _english_label(word: str, gloss: str, rank: int) -> str:
+def _english_label(word: str, gloss: str, rank: int, *, bound: str = "") -> str:
+    if bound:
+        return (f'Bound {bound} glossed "{gloss}" (it attaches to another word; '
+                f'not a standalone translation of "{word}")')
+    if gloss != normalize_chamorro_match_text(word, repair_ocr_splits=False):
+        # "rating" looked up as "rate": the inflected word may mean something else.
+        kind = "category gloss" if rank == 3 else "gloss"
+        return (f'Dictionary {kind} for "{gloss}", a possible base form of "{word}" '
+                f'(English inflection inferred; not a direct gloss of "{word}", and its senses may differ)')
     if rank == 1:
         return f'Direct dictionary gloss for "{word}"'
     if rank == 2:
@@ -301,15 +393,19 @@ def _english_label(word: str, gloss: str, rank: int) -> str:
 
 def _english_blocks(
     word: str, gloss: str, ranked: Sequence[tuple[int, str, str, object]], example_limit: int,
-    *, limit: int = MAX_HEADWORDS_PER_WORD, ranks: int = 1,
+    *, limit: int = MAX_HEADWORDS_PER_WORD, ranks: int = 1, allow_bound: bool = False,
 ) -> list[_Block]:
     """Group a gloss's headwords by spelling; one block per distinct headword.
 
     ``ranks`` > 1 also admits the next gloss strength ("taste of" after
-    "taste"), each block labeled with its own strength.
+    "taste"), each block labeled with its own strength. Bound prefixes and
+    suffixes answer only a request that asks about affixes.
     """
 
-    eligible = [match for match in ranked if not _is_proper_name(match[3])]
+    eligible = [
+        match for match in ranked
+        if not _is_proper_name(match[3]) and (allow_bound or not _bound_form_kind(match[2], match[3]))
+    ]
     if not eligible:
         return []
     admitted = sorted({match[0] for match in eligible})[:ranks]
@@ -334,7 +430,8 @@ def _english_blocks(
     for (rank, _key), group in ordered[:limit]:
         _rank, display_name, headword, definition = group[0]
         also = tuple(dict.fromkeys((m[2], m[1]) for m in group[1:] if (m[2], m[1]) != (headword, display_name)))
-        blocks.append(_Block(_english_label(word, gloss, rank), display_name, headword, definition, also,
+        label = _english_label(word, gloss, rank, bound=_bound_form_kind(headword, definition))
+        blocks.append(_Block(label, display_name, headword, definition, also,
                              _examples(display_name, headword, definition, example_limit)))
     return blocks
 
@@ -349,6 +446,28 @@ def _mention_blocks(word: str, forms: Sequence[str]) -> list[_Block]:
             return [_Block(label, display_name, headword, definition)
                     for _length, display_name, headword, definition in matches[:MAX_MENTIONS_PER_WORD]]
     return []
+
+
+def _written_in_chamorro(observed: str, query: str) -> bool:
+    """Chamorro orthography in the word, or a final glottal stop the payload
+    dropped ("guma'"). A word inside single quotes ('mango') does not count."""
+
+    return bool(_CHAMORRO_ORTHOGRAPHY.search(observed) or re.search(
+        r"(?i)(?<![\w'’])" + re.escape(observed) + r"['’](?!\w)", query or ""))
+
+
+def _spelling_coincidences(observed: str, blocks: Sequence[_Block]) -> list[_Block]:
+    """Relabel Chamorro headwords that only share an English word's spelling.
+
+    "What is mango in Chamorro?" asks for the English concept; the headword
+    "mango'" (turmeric) is not evidence for it. Weaker leads are dropped.
+    """
+
+    return [
+        replace(block, label=(f'Chamorro headword spelled like "{observed}" (if "{observed}" is meant as '
+                              "English, this entry only shares its spelling and is not a translation)"))
+        for block in blocks if block.label.startswith(("Exact", "Headword matching"))
+    ]
 
 
 def _chamorro_entries(key: str, *, normalized: bool) -> tuple[tuple[str, str, object], ...]:
@@ -474,6 +593,7 @@ def lexical_lookup_context(
     if not tokens:
         return LexicalLookup()
     english_side = direction in {"to_chamorro", "either"}
+    allow_bound = bool(_AFFIX_REQUEST.search(query))
     chamorro_side = direction in {"to_english", "either"} or looks_like_chamorro(payload)
     content_words = [token for token in tokens if token.casefold() not in _ENGLISH_STOP_WORDS]
     single_word = len(content_words) <= 2
@@ -498,9 +618,11 @@ def lexical_lookup_context(
                 gloss = normalize_chamorro_match_text(phrase, repair_ocr_splits=False)
                 ranked = _exact_english_gloss_index().get(gloss, ())
                 if ranked and ranked[0][0] <= 2:
-                    blocks = _english_blocks(phrase, gloss, ranked, example_limit)
+                    blocks = _english_blocks(phrase, gloss, ranked, example_limit, allow_bound=allow_bound)
             if not blocks and chamorro_side:
                 blocks, keys = _chamorro_blocks(phrase, example_limit)
+                if direction == "to_chamorro" and not _written_in_chamorro(phrase, query):
+                    blocks, keys = _spelling_coincidences(phrase, blocks), []
                 sense_keys.extend(keys)
             if blocks:
                 per_word.append((phrase, blocks))
@@ -524,20 +646,26 @@ def lexical_lookup_context(
                 english_blocks = _english_blocks(
                     token, form, gloss_index[form], example_limit,
                     limit=MAX_SINGLE_WORD_HEADWORDS if single_word else MAX_HEADWORDS_PER_WORD,
-                    ranks=2 if single_word else 1,
+                    ranks=2 if single_word else 1, allow_bound=allow_bound,
                 )
         chamorro_blocks: list[_Block] = []
+        # An English-to-Chamorro request names an English word unless the
+        # token is written in Chamorro orthography.
+        cross_language = direction == "to_chamorro" and not _written_in_chamorro(token, query)
         if chamorro_side or (english_side and not is_english_word):
             chamorro_blocks, keys = _chamorro_blocks(token, example_limit)
             strong = any(block.label.startswith(("Exact", "Headword matching")) for block in chamorro_blocks)
+            if cross_language:
+                chamorro_blocks = [] if english_blocks else _spelling_coincidences(token, chamorro_blocks)
+                keys = []
             # In an English or undirected request, a weak spelling/root lead for
             # an English word, or beside an English gloss, is noise.
-            if direction != "to_english" and not strong and (english_blocks or is_english_word or not chamorro_side):
+            elif direction != "to_english" and not strong and (english_blocks or is_english_word or not chamorro_side):
                 chamorro_blocks, keys = [], []
             sense_keys.extend(keys)
         blocks = chamorro_blocks + english_blocks
-        if not blocks and english_side and single_word:
-            blocks = _mention_blocks(token, forms)
+        if not english_blocks and english_side and single_word and (not blocks or cross_language):
+            blocks = _mention_blocks(token, forms) + blocks
         if blocks:
             per_word.append((token, blocks))
 
@@ -591,7 +719,8 @@ def _assemble(
         "Each word of the request was looked up by headword or English gloss before semantic search. "
         "The bracketed label gives the match strength: only a direct gloss or an exact or "
         "accent-insensitive headword shows the word for that concept. A mention, category, "
-        "spelling, spacing, or root match is a weaker lead; say so if you rely on it.",
+        "base-form, bound-affix, same-spelling, spelling, spacing, or root match is a weaker "
+        "lead; say so if you rely on it.",
         SENSE_SCOPE_RULE,
         "",
     ]
