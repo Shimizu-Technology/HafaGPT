@@ -1,12 +1,11 @@
-import { formatSourceLabel } from '../lib/sourceLabels';
-import { BookOpenCheck, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, Sparkles, ChevronDown, AlertCircle, Loader2, WifiOff } from 'lucide-react';
+import { BookOpen, Info, Search, Copy, Check, Volume2, VolumeX, ThumbsUp, ThumbsDown, FileText, File, ExternalLink, Pencil, X, RotateCcw, ChevronDown, AlertCircle, Loader2, WifiOff } from 'lucide-react';
 import { useState, useEffect, useRef, memo, useMemo, useId } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useSpeech } from '../hooks/useSpeech';
 import type { SourceInfo } from '../types/source';
-import { getChatEvidenceStatus } from '../lib/chatEvidence';
+import { describeAnswerEvidence, getChatEvidenceStatus, groupAnswerReferences } from '../lib/chatEvidence';
 import type { RecoveryPhase } from '../lib/replyRecovery';
 
 const RECOVERY_LABELS: Record<RecoveryPhase, string> = {
@@ -130,13 +129,26 @@ interface MessageProps {
   unavailableAttachments?: string[];
   acceptedEdit?: { message: string };
   messageIndex?: number; // Callback when user saves edited message
+  /** Arrived during this visit. Loaded history renders still; only new messages fade in. */
+  animateIn?: boolean;
+}
+
+/** Waiting for the first words: one quiet opacity loop, static under reduced motion. */
+export function ThinkingDots() {
+  return (
+    <span className="flex items-center gap-1.5" aria-hidden="true">
+      <span className="thinking-dot h-2 w-2 rounded-full bg-teal-600 dark:bg-ocean-400" />
+      <span className="thinking-dot h-2 w-2 rounded-full bg-teal-600 dark:bg-ocean-400" />
+      <span className="thinking-dot h-2 w-2 rounded-full bg-teal-600 dark:bg-ocean-400" />
+    </span>
+  );
 }
 
 // Keep element types stable while content grows so touch targets and history DOM survive.
 const markdownComponents: Components = {
   // Paragraphs
   p: ({ children }) => (
-    <p className="text-base sm:text-[15px] leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
+    <p className="text-base leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
       {children}
     </p>
   ),
@@ -165,12 +177,12 @@ const markdownComponents: Components = {
   em: ({ children }) => <em className="italic">{children}</em>,
   // Lists
   ul: ({ children }) => (
-    <ul className="list-disc ml-4 my-2 space-y-1 text-base sm:text-[15px]">
+    <ul className="list-disc ml-5 my-2 space-y-1 text-base">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal ml-4 my-2 space-y-1 text-base sm:text-[15px]">
+    <ol className="list-decimal ml-5 my-2 space-y-1 text-base">
       {children}
     </ol>
   ),
@@ -250,9 +262,12 @@ const markdownComponents: Components = {
 };
 const markdownPlugins = [remarkGfm];
 
-export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, statusText, recovery, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit, messageIndex, unavailableAttachments, acceptedEdit }: MessageProps) {
+export const Message = memo(function Message({ role, content, imageUrl, file_urls, sources, used_rag, used_web_search, response_time, timestamp, systemType, mode, statusText, recovery, onImageClick, messageId, conversationId, cancelled, isStreaming, canEdit, onEdit, messageIndex, unavailableAttachments, acceptedEdit, animateIn = false }: MessageProps) {
   const isUser = role === 'user';
   const isSystem = role === 'system';
+  // Decided once at mount, so a later identity change never replays the entrance.
+  const [enter] = useState(animateIn);
+  const enterClass = enter ? 'animate-fade-in' : '';
   const { getToken } = useAuth();
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
@@ -280,6 +295,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
     () => getChatEvidenceStatus(sources?.length ?? 0, Boolean(used_web_search)),
     [sources?.length, used_web_search],
   );
+  const references = useMemo(() => groupAnswerReferences(sources), [sources]);
+  const evidenceLine = useMemo(() => sources?.length ? describeAnswerEvidence(sources) : evidenceStatus.label, [sources, evidenceStatus.label]);
   
   // Clean content to prevent unwanted code blocks from leading whitespace
   const cleanedContent = useMemo(() => cleanMarkdownContent(content), [content]);
@@ -438,7 +455,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   if (isSystem && systemType === 'mode_change' && mode) {
     const modeDetails = getModeDetails(mode);
     return (
-      <div className="flex justify-center mb-4 sm:mb-6 animate-fade-in">
+      <div className={`flex justify-center mb-4 sm:mb-6 ${enterClass}`}>
         <div className="bg-cream-200/80 dark:bg-slate-800/80 backdrop-blur-sm border border-cream-300 dark:border-slate-700 rounded-xl px-4 py-2 max-w-md">
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-lg">{modeDetails.icon}</span>
@@ -456,7 +473,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
 
   if (systemType === 'notice') {
     return (
-      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+      <div className={`flex justify-start mb-4 sm:mb-6 ${enterClass}`}>
         <div role="status" className="flex max-w-[85%] items-start gap-2 rounded-2xl rounded-tl-md border border-cream-300 bg-cream-100 px-4 py-3 text-sm text-brown-700 dark:border-slate-700 dark:bg-slate-800/50 dark:text-gray-300 sm:max-w-[75%]">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
           <span>{content}</span>
@@ -467,7 +484,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
 
   if (systemType === 'failed') {
     return (
-      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+      <div className={`flex justify-start mb-4 sm:mb-6 ${enterClass}`}>
         <div className="max-w-[85%] sm:max-w-[75%]">
           <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
@@ -485,7 +502,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   // Cancelled message indicator (works for both system and assistant messages)
   if ((isSystem && systemType === 'cancelled') || cancelled) {
     return (
-      <div className="flex justify-start mb-4 sm:mb-6 animate-fade-in">
+      <div className={`flex justify-start mb-4 sm:mb-6 ${enterClass}`}>
         <div className="max-w-[85%] sm:max-w-[75%]">
           <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
@@ -505,8 +522,9 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
   }
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 animate-fade-in`}>
-      <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] ${isUser ? 'order-2' : 'order-1'}`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 sm:mb-6 ${enterClass}`}>
+      {/* Questions stay compact bubbles; answers get a full reading column capped near 68 characters. */}
+      <div className={isUser ? 'order-2 max-w-[90%] sm:max-w-[85%] md:max-w-[75%]' : 'order-1 w-full min-w-0 max-w-[68ch]'}>
         {!isUser && (
           <div className="mb-2 flex items-center gap-2 px-1 text-xs text-brown-500 dark:text-gray-400">
             <span className="font-semibold text-brown-700 dark:text-gray-300">HåfaGPT</span>
@@ -514,13 +532,11 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           </div>
         )}
 
-        {/* Message Bubble */}
+        {/* Message body */}
         <div
-          className={`rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 ${
-            isUser
-              ? 'bg-coral-700 dark:bg-ocean-700 text-white rounded-tr-md'
-              : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 rounded-tl-md border border-cream-300 dark:border-slate-700'
-          }`}
+          className={isUser
+            ? 'rounded-2xl rounded-tr-md bg-coral-700 px-3 py-2.5 text-white dark:bg-ocean-700 sm:px-4 sm:py-3'
+            : 'px-1 text-brown-800 dark:text-gray-100'}
         >
           {isUser ? (
             <div className="space-y-2">
@@ -657,15 +673,13 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                   </div>
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap break-words leading-relaxed text-base sm:text-[15px]">
+                <div className="whitespace-pre-wrap break-words leading-relaxed text-base">
                   {content}
                 </div>
               )}
             </div>
           ) : (
-            <div className={`prose prose-sm sm:prose-base dark:prose-invert max-w-none transition-[color,background-color,border-color,opacity,transform,scale] duration-200 ${
-              isStreaming && content && content.length > 0 ? 'animate-fade-in-fast' : ''
-            }`}>
+            <div className={`min-w-0 break-words ${isStreaming && content ? 'animate-fade-in-fast' : ''}`}>
               <ReactMarkdown
                 remarkPlugins={markdownPlugins}
                 components={markdownComponents}
@@ -673,19 +687,12 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 {/* Only render content if it's not the thinking placeholder */}
                 {content !== '...' ? cleanedContent : ''}
               </ReactMarkdown>
-              {/* Streaming cursor; removed when done so finished replies have no trailing blank line. */}
-              {isStreaming && content && !statusText && (
-                <span className="inline-block h-4 w-2 animate-pulse rounded-sm bg-teal-500 dark:bg-ocean-400" aria-hidden="true" />
-              )}
-              {/* Thinking indicator - show animated dots while waiting for first chunk */}
-              {isStreaming && (!content || content.length === 0) && (
-                <div className="flex items-center gap-2 py-1 min-h-[1.5rem]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '0ms' }} />
-                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '200ms' }} />
-                    <span className="w-2 h-2 bg-teal-500 dark:bg-ocean-400 rounded-full animate-[bounce_1s_ease-in-out_infinite]" style={{ animationDelay: '400ms' }} />
-                  </div>
-                  <span role="status" className="text-sm text-brown-500 dark:text-gray-400 animate-pulse">{statusText || 'Thinking…'}</span>
+              {/* The growing text shows progress, so there is no streaming cursor. Before the
+                  first words arrive, one quiet indicator and a steady, readable status. */}
+              {isStreaming && !content && (
+                <div className="flex min-h-[1.5rem] items-center gap-2 py-1">
+                  <ThinkingDots />
+                  <span role="status" className="text-sm text-brown-600 dark:text-gray-300">{statusText || 'Thinking…'}</span>
                 </div>
               )}
               {isStreaming && content && statusText && (
@@ -706,6 +713,42 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
           )}
           
         </div>
+
+        {/* Evidence: one readable line per answer saying what it rests on. */}
+        {!isUser && !isSystem && !isStreaming && !recovery && (references.length > 0 ? (
+          <div className="mt-3 px-1">
+            <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={showSources ? sourcesPanelId : undefined}
+              className="-mx-2 flex min-h-11 max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm leading-snug text-brown-700 hover:bg-cream-200/60 dark:text-gray-200 dark:hover:bg-slate-800">
+              <BookOpen className="h-4 w-4 flex-none text-teal-700 dark:text-ocean-300" aria-hidden="true" />
+              <span className="min-w-0">{evidenceLine}</span>
+              <ChevronDown className={`h-4 w-4 flex-none text-brown-600 transition-transform duration-200 ease-out dark:text-gray-400 ${showSources ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
+            {showSources && (
+              <div id={sourcesPanelId} className="mt-1 space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 text-sm text-brown-700 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300">
+                <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="leading-relaxed">
+                  <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
+                </p>
+                <ul className="space-y-1">{references.map(reference => (
+                  <li key={reference.key}>
+                    {reference.url ? <a href={reference.url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
+                      {reference.label}<ExternalLink className="h-3.5 w-3.5 flex-none" aria-hidden="true" />
+                    </a> : <span className="font-medium text-brown-800 dark:text-gray-100">{reference.label}</span>}
+                    {reference.details.map(detail => <p key={detail} className="break-words leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>)}
+                  </li>
+                ))}</ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`}
+            className="mt-3 flex items-start gap-2 px-1 text-sm leading-snug text-brown-700 dark:text-gray-300">
+            {evidenceStatus.level === 'web_informed'
+              ? <Search className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+              : <Info className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />}
+            <span><span className="font-medium">{evidenceStatus.label}.</span> <span className="text-brown-600 dark:text-gray-400">{evidenceStatus.detail}</span></span>
+          </p>
+        ))}
 
         {/* Assistant Actions (Copy + Listen) - Only show when streaming is complete */}
         {!isUser && !isSystem && !isStreaming && !recovery && (
@@ -799,33 +842,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
                 <ThumbsDown className={`w-4 h-4 ${feedback === 'down' ? 'fill-current' : ''}`} />
               </button>
             </div>
-            {/* Sources live in the same row as the actions to keep each reply compact. */}
-            <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={sourcesPanelId}
-              className="ml-auto flex min-h-11 min-w-0 items-center gap-1.5 rounded-lg px-2 text-xs text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-800">
-              {evidenceStatus.level === 'source_supported' ? <BookOpenCheck className="h-4 w-4 flex-none" aria-hidden="true" />
-                : evidenceStatus.level === 'web_informed' ? <Search className="h-4 w-4 flex-none" aria-hidden="true" />
-                  : <Sparkles className="h-4 w-4 flex-none" aria-hidden="true" />}
-              <span className="truncate">{sources?.length ? `Sources (${sources.length})` : evidenceStatus.label}</span>
-              <ChevronDown className={`h-3.5 w-3.5 flex-none transition-transform ${showSources ? 'rotate-180' : ''}`} aria-hidden="true" />
-            </button>
           </div>
-        )}
-        {!isUser && !isSystem && !isStreaming && !recovery && showSources && (
-            <div id={sourcesPanelId} className="mt-1 space-y-2 rounded-xl border border-cream-300 bg-cream-50 p-3 text-xs text-brown-600 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-300">
-              <p role="note" aria-label={`Answer evidence: ${evidenceStatus.label}`} className="text-xs leading-relaxed">
-                <span className="font-semibold">{evidenceStatus.label}</span> · {evidenceStatus.detail}
-              </p>
-              {sources && sources.length > 0 && <ul className="space-y-1">{sources.map((source, index) => {
-                const { label, detail } = formatSourceLabel(source);
-                return <li key={`${source.source_id || source.name}-${source.page || source.locator || index}`}>
-                  {source.url ? <a href={source.url} target="_blank" rel="noopener noreferrer" title={detail}
-                    className="inline-flex min-h-11 items-center gap-1 font-medium text-teal-700 underline underline-offset-2 dark:text-ocean-300">
-                    {label}<ExternalLink className="h-3 w-3 flex-none" aria-hidden="true" />
-                  </a> : <span title={detail} className="font-medium text-brown-800 dark:text-gray-200">{label}</span>}
-                  {detail && <p className="break-words text-xs leading-relaxed text-brown-600 dark:text-gray-400">{detail}</p>}
-                </li>;
-              })}</ul>}
-            </div>
         )}
         
         {copyFailed && <p role="alert" className="mt-1 px-2 text-xs text-red-700 dark:text-red-300">Could not copy this message. Select the text and copy it manually.</p>}

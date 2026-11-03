@@ -1,5 +1,5 @@
-import { beforeEach, expect, it } from 'vitest';
-import { captureDispatchedDraft, clearTutorDrafts, confirmDispatchedDraft, keepTutorDraft, moveTutorDraft, readTutorDraft, tutorDraftKey } from './pendingReply';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { adoptGuestDraft, captureDispatchedDraft, clearTutorDrafts, confirmDispatchedDraft, GUEST_DRAFT_SCOPE, keepTutorDraft, moveTutorDraft, readTutorDraft, reconcileDraftAccount, tutorDraftKey } from './pendingReply';
 beforeEach(clearTutorDrafts);
 it('transfers newer typing from a new chat scope without clearing it for an earlier reply', () => {
   const from = tutorDraftKey('learner', null), to = tutorDraftKey('learner', 'created-chat');
@@ -18,4 +18,191 @@ it('clears only the exact accepted draft after background completion and scope m
   moveTutorDraft(from, to);
   expect(confirmDispatchedDraft('send-1')?.text).toBe('First note');
   expect(readTutorDraft(to).text).toBe('');
+});
+
+it('hands a guest draft to the account that signs in, once, and never across sign-out', () => {
+  window.sessionStorage.clear();
+  keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Guest question');
+  expect(adoptGuestDraft('learner')).toBe(true);
+  expect(readTutorDraft(tutorDraftKey('learner', null)).text).toBe('Guest question');
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+  keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Left behind', files: [] });
+  clearTutorDrafts();
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+});
+
+it('lets a stale guest draft expire', () => {
+  window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Old', at: Date.now() - 31 * 60 * 1000 }));
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+  expect(adoptGuestDraft('learner')).toBe(false);
+});
+
+it('answers a repeated adoption the same way while the draft waits', () => {
+  keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+  expect(adoptGuestDraft('learner')).toBe(true);
+  expect(adoptGuestDraft('learner')).toBe(true);
+  keepTutorDraft(tutorDraftKey('learner', null), { text: '', files: [] });
+  expect(adoptGuestDraft('learner')).toBe(false);
+});
+
+describe('guest draft ownership across accounts', () => {
+  const guestAt = () => JSON.parse(window.sessionStorage.getItem('tutor_guest_draft')!).at as number;
+  afterEach(() => vi.useRealTimers());
+
+  it('gives a draft to the first account that signs in, and to no later account', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount(null);
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Guest question');
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null); // signed out without ever opening the tutor
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+    reconcileDraftAccount('account-b');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+  });
+
+  it('refuses to adopt a draft that another account already owns', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+  });
+
+  it('removes an owned draft when a reloaded page finds nobody signed in', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Owned', at: Date.now(), owner: 'account-a' }));
+    reconcileDraftAccount(null);
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+  });
+
+  it('keeps the first account adopting its own draft later', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    expect(adoptGuestDraft('account-a')).toBe(true);
+  });
+
+  it('does not renew the 30 minutes when unchanged text is restored', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    const first = guestAt();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] }); // a remount re-saves the same text
+    expect(guestAt()).toBe(first);
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+  });
+
+  it('renews the 30 minutes on an actual edit', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question, edited', files: [] });
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Guest question, edited');
+  });
+
+  it('rejects a draft stamped in the future', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Odd', at: Date.now() + 60 * 60 * 1000 }));
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Skewed', at: Date.now() + 1000 }));
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Skewed');
+  });
+
+  it('drops an obsolete stored draft when a newer write fails', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Older draft', files: [] });
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('full', 'QuotaExceededError'); });
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Newer draft', files: [] });
+    write.mockRestore();
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+    expect(adoptGuestDraft('learner')).toBe(false);
+  });
+
+  it('does not carry an oversized draft through sign-in or leave an older one behind', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Older draft', files: [] });
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(20_001), files: [] });
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(20_000), files: [] });
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toHaveLength(20_000);
+  });
+});
+
+it('does not show a draft already bound to an account in the guest composer', () => {
+  window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+  expect(adoptGuestDraft('account-b')).toBe(false);
+  clearTutorDrafts(); // a fresh tab, where account A is the one signing in
+  window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+  expect(adoptGuestDraft('account-a')).toBe(true);
+});
+
+describe('reconciliation is synchronous and guards adoption', () => {
+  beforeEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+
+  it('keeps a bound draft while the guest composer restores empty during sign-in loading', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a'); // signed in on another page; the draft is now A's
+    // After a reload, the guest composer mounts empty before Clerk resolves.
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: readTutorDraft(GUEST_DRAFT_SCOPE).text, files: [] });
+    expect(adoptGuestDraft('account-a')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-a', null)).text).toBe('Guest question');
+  });
+
+  it('binds the draft at sign-in without loading the tutor, so a later account cannot take it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    reconcileDraftAccount('account-b');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+  });
+
+  it('records a fast switch at adoption even if the shell has not reconciled yet', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Guest question', files: [] });
+    reconcileDraftAccount('account-a');
+    // Account B adopts before the shell observed the switch.
+    expect(adoptGuestDraft('account-b')).toBe(false);
+    expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('');
+  });
+});
+
+describe('a temporary storage failure fails closed', () => {
+  beforeEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('never hands a draft to a later account when storage refused to bind or delete it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Private guest question', files: [] });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    reconcileDraftAccount('account-a'); // binding and deletion both fail
+    reconcileDraftAccount(null);
+    setItem.mockRestore();
+    removeItem.mockRestore(); // storage recovers
+    reconcileDraftAccount('account-b');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+  });
+
+  it('keeps a new guest draft typed after the failure', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Old', files: [] });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    setItem.mockRestore(); // writes recover; deletes still fail
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Fresh guest question', files: [] });
+    removeItem.mockRestore();
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Fresh guest question');
+    expect(adoptGuestDraft('account-c')).toBe(true);
+  });
+
+  it('replaces an undeletable record with a tombstone so a reload cannot revive it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Private guest question', files: [] });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    removeItem.mockRestore();
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBe('null');
+  });
 });

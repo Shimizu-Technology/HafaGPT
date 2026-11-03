@@ -8,7 +8,9 @@ describe('WelcomeMessage', () => {
     const onPrompt = vi.fn();
     const onSelect = vi.fn();
     const { rerender } = render(<WelcomeMessage onSelect={onSelect} onPrompt={onPrompt} intent="translate" />);
-    expect(screen.getByRole('heading', { name: 'How can I help?' })).toBeInTheDocument();
+    // The page h1 is the title; the welcome adds no competing heading.
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(screen.getByText('Paste a phrase or notice, or try a short translation.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Translate' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Translate ‘Good morning’ into Chamorro.' }));
     expect(onPrompt).toHaveBeenCalledWith('Translate ‘Good morning’ into Chamorro.');

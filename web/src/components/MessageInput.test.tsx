@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { StrictMode } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
+import { adoptGuestDraft, clearTutorDrafts, GUEST_DRAFT_SCOPE, readTutorDraft, tutorDraftKey } from '../lib/pendingReply';
 
 describe('MessageInput', () => {
   it('updates the typed height floor when the compact layout changes', () => {
@@ -210,5 +212,90 @@ describe('MessageInput keyboard activation', () => {
       expect(onSend).not.toHaveBeenCalled();
       expect(input).toHaveValue('Retained draft');
     });
+  });
+});
+
+describe('MessageInput for a signed-out learner', () => {
+  it('lets a guest type and asks for an account on send without clearing the draft', async () => {
+    const onSend = vi.fn();
+    const requireAccount = vi.fn();
+    render(<MessageInput onSend={onSend} requireAccount={requireAccount} draftScope={GUEST_DRAFT_SCOPE} />);
+    const input = screen.getByRole('textbox');
+    expect(input).not.toHaveAttribute('readonly');
+    fireEvent.change(input, { target: { value: 'Translate this school notice' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
+    expect(requireAccount).toHaveBeenCalledOnce();
+    expect(onSend).not.toHaveBeenCalled();
+    expect(input).toHaveValue('Translate this school notice');
+    // Sign-in finishes with a page load, so the text is held for this tab only.
+    expect(JSON.parse(window.sessionStorage.getItem('tutor_guest_draft')!).text).toBe('Translate this school notice');
+    fireEvent.click(screen.getByRole('button', { name: 'Upload files' }));
+    expect(requireAccount).toHaveBeenCalledTimes(2);
+  });
+
+  it('fills the composer from a tapped starter and applies each tap once', () => {
+    const view = render(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} />);
+    view.rerender(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} prefill={{ text: 'Translate ‘Thank you’ into Chamorro.', id: 1 }} />);
+    const input = screen.getByRole('textbox');
+    expect(input).toHaveValue('Translate ‘Thank you’ into Chamorro.');
+    fireEvent.change(input, { target: { value: 'My own edit' } });
+    view.rerender(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} prefill={{ text: 'Translate ‘Thank you’ into Chamorro.', id: 1 }} />);
+    expect(input).toHaveValue('My own edit');
+  });
+});
+
+describe('MessageInput guest draft lifetime', () => {
+  afterEach(() => { vi.useRealTimers(); window.sessionStorage.clear(); });
+
+  it('does not extend a guest draft by remounting the unchanged composer', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    const first = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question' } });
+    first.unmount();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    const second = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('Guest question');
+    second.unmount();
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('');
+  });
+
+  it('renews a guest draft when the learner edits it', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    const first = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question' } });
+    first.unmount();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    const second = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question, edited' } });
+    second.unmount();
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('Guest question, edited');
+  });
+});
+
+describe('account-owned guest drafts', () => {
+  afterEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+
+  it('never restores another account’s draft into the guest composer, so it cannot be re-saved for someone else', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+    // Clerk still loading after a reload: the composer opens in guest scope.
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New guest text' } });
+    expect(adoptGuestDraft('account-b')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('New guest text');
+  });
+
+  it('does not delete a bound draft when the guest composer mounts during sign-in loading', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+    const view = render(<StrictMode><MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} /></StrictMode>);
+    view.unmount();
+    expect(adoptGuestDraft('account-a')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-a', null)).text).toBe('Account A question');
   });
 });
