@@ -35,7 +35,8 @@ test('wide Home has one bar: theme and sign in live in the app bar, not a second
   await expect(bar.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Toggle theme' })).toHaveCount(1);
   await expect(page.getByRole('button', { name: 'Sign In', exact: true }).filter({ visible: true })).toHaveCount(1);
-  const top = await page.getByRole('heading', { level: 1 }).evaluate(el => el.getBoundingClientRect().top);
+  // The Chamorro greeting leads the page, above the h1.
+  const top = await page.getByText('Håfa Adai', { exact: true }).first().evaluate(el => el.getBoundingClientRect().top);
   expect(top).toBeLessThan(180);
 });
 

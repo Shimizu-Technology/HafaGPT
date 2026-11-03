@@ -1,4 +1,4 @@
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import type { ContentTrust } from '../data/contentTrust';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -171,13 +171,16 @@ async function fetchWordOfTheDay(): Promise<WordOfTheDay> {
   return response.json();
 }
 
+/** Shared by the hook and by callers that start the request before the card's code has loaded. */
+export const wordOfTheDayQueryOptions = queryOptions({
+  queryKey: ['vocabulary', 'word-of-the-day'],
+  queryFn: fetchWordOfTheDay,
+  staleTime: 1000 * 60 * 60, // 1 hour - word changes daily
+  gcTime: 1000 * 60 * 60 * 24, // 24 hours
+});
+
 export function useWordOfTheDay() {
-  return useQuery({
-    queryKey: ['vocabulary', 'word-of-the-day'],
-    queryFn: fetchWordOfTheDay,
-    staleTime: 1000 * 60 * 60, // 1 hour - word changes daily
-    gcTime: 1000 * 60 * 60 * 24, // 24 hours
-  });
+  return useQuery(wordOfTheDayQueryOptions);
 }
 
 // Dictionary Quiz types and hook
